@@ -1,0 +1,116 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Paciente } from "@/lib/types";
+import { apiFetch } from "@/lib/api";
+import useAuthGuard from "@/hooks/useAuthGuard";
+
+function calcularIdade ( dataNascimento?: string ): string {
+    if ( !dataNascimento ) return "—";
+
+    const hoje = new Date();
+    const nascimento = new Date( dataNascimento );
+
+    const diffDias = Math.floor(
+        ( hoje.getTime() - nascimento.getTime() ) / ( 1000 * 60 * 60 * 24 )
+    );
+
+    const anos = Math.floor( diffDias / 365 );
+    if ( anos >= 2 ) return `${anos} anos`;
+    if ( anos === 1 ) return `1 ano`;
+
+    const meses = Math.floor( diffDias / 30 );
+    if ( meses >= 2 ) return `${meses} meses`;
+    if ( meses === 1 ) return `1 mês`;
+
+    return `${diffDias} dias`;
+}
+
+export default function PacienteDetalhePage () {
+    useAuthGuard();
+
+    const { id } = useParams();
+    const router = useRouter();
+
+    const [paciente, setPaciente] = useState<Paciente | null>( null );
+    const [loading, setLoading] = useState( true );
+    const [error, setError] = useState<string | null>( null );
+
+    useEffect( () => {
+        carregar();
+    }, [id] );
+
+    async function carregar () {
+        try {
+            const data = await apiFetch( `/pacientes/${id}/` );
+            setPaciente( data );
+        } catch ( err: any ) {
+            setError( err.message || "Erro ao carregar paciente" );
+        } finally {
+            setLoading( false );
+        }
+    }
+
+    if ( loading ) {
+        return (
+            <div className="page-box fade-in">
+                <div className="skeleton skeleton-row"></div>
+                <div className="skeleton skeleton-row"></div>
+                <div className="skeleton skeleton-row"></div>
+            </div>
+        );
+    }
+
+    if ( error || !paciente ) {
+        return (
+            <div className="page-box fade-in">
+                <p style={{ color: "#d32f2f" }}>
+                    {error || "Paciente não encontrado"}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="page-box fade-in">
+            <h1 className="page-title">Detalhes do Paciente</h1>
+
+            <div className="info-grid">
+                <div><strong>ID:</strong> {paciente.id_custom}</div>
+                <div><strong>Nome:</strong> {paciente.nome}</div>
+                <div><strong>Idade:</strong> {calcularIdade( paciente.data_nascimento )}</div>
+                <div><strong>Gênero:</strong> {paciente.genero || "-"}</div>
+                <div><strong>Telefone:</strong> {paciente.contacto || "-"}</div>
+                <div><strong>Email:</strong> {paciente.email || "-"}</div>
+                <div><strong>Documento:</strong> {paciente.tipo_documento || "-"}</div>
+                <div><strong>Nº Documento:</strong> {paciente.numero_id || "-"}</div>
+                <div><strong>Raça/Origem:</strong> {paciente.raca_origem || "-"}</div>
+                <div><strong>Proveniência:</strong> {paciente.proveniencia || "-"}</div>
+                <div><strong>Morada:</strong> {paciente.morada || "-"}</div>
+                <div>
+                    <strong>Cadastro:</strong>{" "}
+                    {paciente.criado_em
+                        ? new Date( paciente.criado_em ).toLocaleDateString()
+                        : "-"}
+                </div>
+            </div>
+
+            <div style={{ marginTop: 25, display: "flex", gap: 10 }}>
+                <button
+                    className="btn-secondary"
+                    onClick={() => router.push( "/pacientes" )}
+                >
+                    ← Voltar
+                </button>
+
+                <button
+                    className="btn-primary"
+                    onClick={() => router.push( `/pacientes/${id}/editar` )}
+                >
+                    Editar
+                </button>
+            </div>
+        </div>
+    );
+}

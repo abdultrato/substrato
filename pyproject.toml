@@ -1,0 +1,65 @@
+[tool.ruff]
+# --------------------------------------------------
+# Core
+# --------------------------------------------------
+line-length = 120
+target-version = "py311"
+fix = true
+respect-gitignore = true
+
+# arquivos ignorados
+exclude = [
+    ".git",
+    "__pycache__",
+    "migrations",
+    "venv",
+    "build",
+    "dist",
+]
+
+# --------------------------------------------------
+# Lint rules
+# --------------------------------------------------
+[tool.ruff.lint]
+
+# regras ativas
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # warnings
+    "I",   # import sorting
+    "UP",  # modern Python upgrades
+    "B",   # bugbear (erros comuns)
+    "SIM", # simplificações
+]
+
+# regras ignoradas (decisões arquiteturais)
+ignore = [
+    "E501",  # linha longa (controlado pelo formatter)
+    "F403",  # star imports
+    "F405",  # star imports
+]
+
+# --------------------------------------------------
+# Ignorar regras por arquivo
+# --------------------------------------------------
+[tool.ruff.lint.per-file-ignores]
+
+"__init__.py" = ["F401", "F403", "F405"]
+"settings/*.py" = ["F401"]
+"migrations/*.py" = ["E501", "F401"]
+
+# --------------------------------------------------
+# Import sorting (isort integrado)
+# --------------------------------------------------
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "frontend", "payments"]
+combine-as-imports = true
+
+# --------------------------------------------------
+# Formatter
+# --------------------------------------------------
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
