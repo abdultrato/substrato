@@ -1,9 +1,19 @@
-from .base import GatewayPagamento
+from .base import PaymentGateway
 
-class MpesaGateway(GatewayPagamento):
 
-    def iniciar_pagamento(self, valor, referencia):
-        return {"status": "enviado"}
+class EmolaGateway(PaymentGateway):
+    name = "emola"
 
-    def verificar_status(self, referencia):
-        return {"status": "confirmado"}
+    def charge(self, amount, reference, phone):
+        return {
+            "status": "pending",
+            "gateway": self.name,
+            "amount": amount,
+            "reference": reference,
+        }
+
+    def status(self, transaction_id):
+        return {"status": "processing"}
+
+    def refund(self, transaction_id, amount=None):
+        return {"status": "refunded"}

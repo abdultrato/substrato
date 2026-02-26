@@ -24,7 +24,8 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 # =========================================================
-# ENTIDADE
+
+
 # =========================================================
 @admin.register(Entidade)
 class EntidadeAdmin(CoreAdmin):

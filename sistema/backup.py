@@ -1,5 +1,5 @@
 import os
-import shutil
+import subprocess
 from datetime import datetime
 
 from django.conf import settings
@@ -12,19 +12,36 @@ class BackupDatabaseView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        db_path = settings.DATABASES["default"]["NAME"]
 
-        if not os.path.exists(db_path):
-            raise Http404("Database não encontrada.")
+        db = settings.DATABASES["default"]
+
+        if db["ENGINE"] != "django.db.backends.postgresql":
+            raise Http404("Backup automático suportado apenas para PostgreSQL.")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = f"backup_{timestamp}.sqlite3"
-        backup_path = os.path.join(settings.BASE_DIR, backup_name)
+        filename = f"backup_{timestamp}.sql"
+        backup_path = os.path.join(settings.BASE_DIR, filename)
 
-        shutil.copy(db_path, backup_path)
+        comando = [
+            "pg_dump",
+            "-h",
+            db["HOST"],
+            "-U",
+            db["USER"],
+            "-F",
+            "c",
+            "-f",
+            backup_path,
+            db["NAME"],
+        ]
+
+        env = os.environ.copy()
+        env["PGPASSWORD"] = db["PASSWORD"]
+
+        subprocess.run(comando, env=env, check=True)
 
         return FileResponse(
             open(backup_path, "rb"),
             as_attachment=True,
-            filename=backup_name,
+            filename=filename,
         )

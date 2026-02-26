@@ -1,60 +1,31 @@
 from django.db import models
 
-from frontend.fields import MoneyField
-from frontend.models.core import CoreModel
 
-
-class Recibo(CoreModel):
-    """
-    Comprovante financeiro emitido após um pagamento.
-
-    Pode existir múltiplos recibos para uma mesma fatura,
-    dependendo dos pagamentos realizados.
-    """
+class Recibo(models.Model):
 
     fatura = models.ForeignKey(
-        "billing.Fatura",
+        "faturamento.Fatura",
         on_delete=models.CASCADE,
         related_name="recibos",
     )
 
     pagamento = models.ForeignKey(
-        "payments.Pagamento",
+        "pagamentos.Pagamento",
         on_delete=models.PROTECT,
         related_name="recibos",
     )
 
-    numero = models.CharField(
-        max_length=30,
-        unique=True,
-        help_text="Número único do recibo.",
-    )
+    numero = models.CharField(max_length=50, unique=True)
 
-    valor = MoneyField()
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
 
-    emitido_em = models.DateTimeField(
-        auto_now_add=True,
-        help_text="Data/hora de emissão do recibo.",
-    )
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Recibo"
-        verbose_name_plural = "Recibos"
         ordering = ["-criado_em"]
         indexes = [
-            models.Index(fields=["fatura"]),
             models.Index(fields=["numero"]),
-            models.Index(fields=["criado_em"]),
         ]
 
     def __str__(self):
         return f"Recibo {self.numero}"
-
-    def save(self, *args, **kwargs):
-        """
-        Garante que o valor do recibo corresponda ao pagamento.
-        """
-        if self.pagamento and not self.valor:
-            self.valor = self.pagamento.valor
-
-        super().save(*args, **kwargs)

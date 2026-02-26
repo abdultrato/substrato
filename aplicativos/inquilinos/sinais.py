@@ -1,6 +1,9 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .modelos import Inquilino, ConfiguracaoInquilino
+
+from .modelos.inquilino import Inquilino
+from .modelos.configuracao import ConfiguracaoInquilino
+
 
 @receiver(post_save, sender=Inquilino)
 def criar_configuracao(sender, instance, created, **kwargs):

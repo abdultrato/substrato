@@ -1,4 +1,7 @@
+# servicos/base.py
+
 from django.db import transaction
+from functools import wraps
 
 
 class ServiceResult:
@@ -9,9 +12,6 @@ class ServiceResult:
 
 
 class BaseService:
-    """
-    Base para serviços de domínio.
-    """
 
     @classmethod
     def ok(cls, data=None):
@@ -21,12 +21,9 @@ class BaseService:
     def fail(cls, message: str):
         return ServiceResult(False, error=message)
 
-    @classmethod
-    def atomic(cls, func):
-        """
-        decorator para transações seguras
-        """
-
+    @staticmethod
+    def atomic(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             with transaction.atomic():
                 return func(*args, **kwargs)

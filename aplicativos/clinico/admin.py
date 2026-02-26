@@ -1,12 +1,9 @@
 from django.contrib import admin
 
-from .models import (
-    Entidade,
+from .modelos import (
+    Paciente,
     Exame,
     ExameCampo,
-    Fatura,
-    FaturaItem,
-    Paciente,
     RequisicaoAnalise,
     RequisicaoItem,
     ResultadoItem,
@@ -21,15 +18,6 @@ class CoreAdmin(admin.ModelAdmin):
     search_fields = ("id_custom",)
     readonly_fields = ("criado_em", "atualizado_em")
     ordering = ("-criado_em",)
-
-
-# =========================================================
-# ENTIDADE
-# =========================================================
-@admin.register(Entidade)
-class EntidadeAdmin(CoreAdmin):
-    list_display = ("nome", "telefone1", "email", "ativo")
-    search_fields = ("nome", "nuit")
 
 
 # =========================================================
@@ -51,7 +39,7 @@ class ExameCampoInline(admin.TabularInline):
 
 @admin.register(Exame)
 class ExameAdmin(CoreAdmin):
-    list_display = ("nome", "codigo", "preco", "ativo")
+    list_display = ("nome", "codigo", "ativo")
     search_fields = ("nome", "codigo")
     inlines = [ExameCampoInline]
 
@@ -80,18 +68,3 @@ class ResultadoAdmin(CoreAdmin):
     list_display = ("id_custom", "exame_campo", "validado")
     list_filter = ("validado",)
     search_fields = ("id_custom",)
-
-
-# =========================================================
-# FATURA
-# =========================================================
-class FaturaItemInline(admin.TabularInline):
-    model = FaturaItem
-    extra = 0
-
-
-@admin.register(Fatura)
-class FaturaAdmin(CoreAdmin):
-    list_display = ("id_custom", "paciente", "total", "estado")
-    search_fields = ("id_custom", "paciente__nome")
-    inlines = [FaturaItemInline]

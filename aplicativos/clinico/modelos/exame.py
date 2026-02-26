@@ -1,47 +1,47 @@
-from django.core.exceptions import ValidationError as ve
-from django.core.validators import MinValueValidator as mvv
-from django.db import models as m
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.db import models
 
-from frontend.billing.models.fields.laboratory import (
-    MetodoField as mf,
-    SetorField as s,
-)
-from frontend.billing.models.fields.money import MoneyField as p
+from nucleo.modelos.base import ModeloBase
+from nucleo.mixins.modelo.nome import NomeMixin
+from nucleo.mixins.modelo.codigo import CodigoMixin
 
-from .nucleo import (
-    CoreModel as c,
-)
-from .mixins import CodigoMixin as cm, NomeMixin as nm
+from infraestrutura.orm.fields.dinheiro_field import DinheiroField
+from infraestrutura.orm.fields.metodo_field import MetodoField
+from infraestrutura.orm.fields.setor_field import SetorField
+from nucleo.modelos.base import CoreModel
 
 
-class Exame(nm, cm, c):
+class Exame(CoreModel):
     """
     Cadastro corporativo de exames laboratoriais.
     """
 
-    trl_horas = m.PositiveIntegerField(default=24)
+    trl_horas = models.PositiveIntegerField(
+        default=24, help_text="Tempo de resposta em horas."
+    )
 
-    preco = p(
+    preco = DinheiroField(
         default=0,
-        validators=[mvv(0)],
+        validators=[MinValueValidator(0)],
         help_text="Preço bruto do exame (sem IVA).",
     )
 
-    metodo = mf()
-    setor = s()
+    metodo = MetodoField()
+    setor = SetorField()
 
     class Meta:
         verbose_name = "Exame"
         verbose_name_plural = "Exames"
         ordering = ["nome"]
         indexes = [
-            m.Index(fields=["codigo"]),
-            m.Index(fields=["nome"]),
+            models.Index(fields=["codigo"]),
+            models.Index(fields=["nome"]),
         ]
-
-    def __str__(self):
-        return self.nome
 
     def clean(self):
         if self.preco is None:
-            raise ve({"preco": "O exame deve possuir um preço."})
+            raise ValidationError({"preco": "O exame deve possuir um preço."})
+
+    def __str__(self):
+        return self.nome

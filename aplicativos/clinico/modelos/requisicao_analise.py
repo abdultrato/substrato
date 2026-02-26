@@ -1,231 +1,111 @@
-from decimal import Decimal as d
+from django.conf import settings
+from django.db import models
 
-from django.conf import settings as s
-from django.db import models as m
-
-from .nucleo import (
-    ActiveStatusModel as asm,
-    AuditModel as am,
-    CoreModel as cm,
-    SoftDeleteModel as sdm,
-    TimeStampedModel as tsm,
-)
-from .exame import Exame as e
-from .mixins import CustomIDSaveMixin as cism
-from .paciente import Paciente as p
-
-User = s.AUTH_USER_MODEL
+from nucleo.modelos.base import CoreModel
+from .paciente import Paciente
+from .exame import Exame
 
 
-class RequisicaoAnalise(cism, cm, tsm, am, asm, sdm):
-    """
-    Requisição de exames laboratoriais.
-    """
+User = settings.AUTH_USER_MODEL
+
+
+class RequisicaoAnalise(CoreModel):
 
     prefixo = "REQ"
 
-    class Status(m.TextChoices):
-        PENDENTE = "PEND", "Pendente"
+    # =========================================================
+    # STATUS OPERACIONAL
+    # =========================================================
+    class Status(models.TextChoices):
+        CRIADA = "CRI", "Criada"
+        EM_PROCESSAMENTO = "PROC", "Em Processamento"
+        AGUARDANDO_VALIDACAO = "AGV", "Aguardando Validação"
         VALIDADA = "VAL", "Validada"
         CANCELADA = "CANC", "Cancelada"
 
-    # STATUS CLÍNICO AUTOMÁTICO
-    class StatusClinico(m.TextChoices):
+    # =========================================================
+    # STATUS CLÍNICO GLOBAL
+    # =========================================================
+    class StatusClinico(models.TextChoices):
         NORMAL = "normal", "Normal"
         ALERTA = "alerta", "Alerta"
         CRITICO = "critico", "Crítico"
 
-    paciente = m.ForeignKey(
-        p,
-        on_delete=m.CASCADE,
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
         related_name="requisicoes",
     )
 
-    exames = m.ManyToManyField(
-        e,
+    exames = models.ManyToManyField(
+        Exame,
         related_name="requisicoes",
     )
 
-    analista = m.ForeignKey(
+    analista = models.ForeignKey(
         User,
-        on_delete=m.SET_NULL,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="requisicoes_processadas",
     )
 
-    observacoes = m.TextField(blank=True)
+    observacoes = models.TextField(blank=True)
 
-    status = m.CharField(
-        max_length=5,
+    status = models.CharField(
+        max_length=4,
         choices=Status.choices,
-        default=Status.PENDENTE,
+        default=Status.CRIADA,
+        db_index=True,
     )
 
-    # ===============================
-    # CAMPOS CLÍNICOS AUTOMÁTICOS
-    # ===============================
-
-    status_clinico = m.CharField(
+    status_clinico = models.CharField(
         max_length=10,
         choices=StatusClinico.choices,
-        blank=True,
         default=StatusClinico.NORMAL,
+        db_index=True,
     )
 
-    possui_resultado_critico = m.BooleanField(default=False)
-
-    total = m.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=d("0.00"),
-    )
+    possui_resultado_critico = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = "Requisição"
-        verbose_name_plural = "Requisições"
         ordering = ["-criado_em"]
-        indexes = [
-            m.Index(fields=["status"]),
-            m.Index(fields=["criado_em"]),
-        ]
 
     def __str__(self):
-        return f"{self.id_custom} - {self.paciente}"
+        return f"{self.id_custom} - {self.paciente.nome}"
 
     # =========================================================
-    # SNAPSHOT FINANCEIRO
+    # TRANSIÇÃO AUTOMÁTICA DE STATUS
     # =========================================================
-
-    def criar_itens_automaticos(self):
-        self.itens.all().delete()
-
-        total = d("0.00")
-
-        for exame in self.exames.all():
-            item = RequisicaoItem.objects.create(
-                requisicao=self,
-                exame=exame,
-                preco_unitario=exame.preco,
-                quantidade=d("1.00"),
-            )
-            total += item.preco_unitario
-
-        self.total = total
-        self.save(update_fields=["total"])
-
-    # =========================================================
-    # RESULTADOS AUTOMÁTICOS
-    # =========================================================
-
-    def criar_resultados_automaticos(self):
-        from .resultado_analise import ResultadoItem
-
-        for exame in self.exames.prefetch_related("campos"):
-            for campo in exame.campos.all():
-                ResultadoItem.objects.get_or_create(
-                    requisicao=self,
-                    exame_campo=campo,
-                )
-
-    # =========================================================
-    # AVALIAÇÃO CLÍNICA DA REQUISIÇÃO
-    # =========================================================
-
-    def avaliar_status_clinico(self):
-        """
-        Determina o status clínico geral com base nos resultados.
-        """
+    def atualizar_fluxo(self):
 
         resultados = self.resultados.all()
 
         if not resultados.exists():
-            self.status_clinico = self.StatusClinico.NORMAL
-            self.possui_resultado_critico = False
+            self.status = self.Status.CRIADA
+            self.save(update_fields=["status"])
             return
 
-        if resultados.filter(alerta_critico=True).exists():
-            self.status_clinico = self.StatusClinico.CRITICO
-            self.possui_resultado_critico = True
-            return
+        if resultados.filter(valor__isnull=False).exists():
+            self.status = self.Status.EM_PROCESSAMENTO
 
-        if resultados.exclude(status_clinico="normal").exists():
-            self.status_clinico = self.StatusClinico.ALERTA
-            self.possui_resultado_critico = False
-            return
+        if resultados.filter(valor__isnull=True).count() == 0:
+            self.status = self.Status.AGUARDANDO_VALIDACAO
 
-        self.status_clinico = self.StatusClinico.NORMAL
-        self.possui_resultado_critico = False
+        self.save(update_fields=["status"])
 
     # =========================================================
-    # VALIDAÇÃO SEGURA
+    # VALIDAÇÃO FINAL
     # =========================================================
-
     def validar(self, usuario):
-        """
-        Valida requisição somente se não houver resultados críticos.
-        """
-        self.avaliar_status_clinico()
 
-        if self.status_clinico == self.StatusClinico.CRITICO:
-            raise ValueError("Não é possível validar: existem resultados críticos.")
+        if self.status != self.Status.AGUARDANDO_VALIDACAO:
+            raise ValueError("Requisição não está pronta para validação.")
+
+        if self.possui_resultado_critico:
+            raise ValueError("Existem resultados críticos.")
 
         self.status = self.Status.VALIDADA
         self.analista = usuario
+
         self.save(update_fields=["status", "analista"])
-
-    # =========================================================
-    # SAVE OVERRIDE
-    # =========================================================
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        # atualizar status clínico após salvar
-        self.avaliar_status_clinico()
-
-        super().save(
-            update_fields=[
-                "status_clinico",
-                "possui_resultado_critico",
-            ]
-        )
-
-
-class RequisicaoItem(
-    m.Model,
-    tsm,
-    am,
-    sdm,
-    cm,
-):
-    requisicao = m.ForeignKey(
-        RequisicaoAnalise,
-        on_delete=m.CASCADE,
-        related_name="itens",
-    )
-
-    exame = m.ForeignKey(
-        e,
-        on_delete=m.PROTECT,
-    )
-
-    preco_unitario = m.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-    )
-
-    quantidade = m.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=d("1.00"),
-    )
-
-    class Meta:
-        verbose_name = "Item da Requisição"
-        verbose_name_plural = "Itens da Requisição"
-        ordering = ["id"]
-        unique_together = ("requisicao", "exame")
-
-    def __str__(self):
-        return f"{self.exame.nome} ({self.quantidade}x)"

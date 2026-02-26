@@ -1,16 +1,19 @@
 import time
+from django.core.cache import cache
 
-_registros = {}
 
-def permitido(chave, limite=5, intervalo=60):
+def permitido(chave: str, limite=5, intervalo=60):
+
     agora = time.time()
-    tentativas = _registros.get(chave, [])
+    registros = cache.get(chave, [])
 
-    tentativas = [t for t in tentativas if agora - t < intervalo]
+    registros = [t for t in registros if agora - t < intervalo]
 
-    if len(tentativas) >= limite:
+    if len(registros) >= limite:
         return False
 
-    tentativas.append(agora)
-    _registros[chave] = tentativas
+    registros.append(agora)
+
+    cache.set(chave, registros, timeout=intervalo)
+
     return True

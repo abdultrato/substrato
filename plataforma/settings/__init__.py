@@ -1,6 +1,8 @@
-from .base import *
-from .constants import *
-from .development import *
-from .logging import *
-from .production import *
-from .security import *
+import os
+
+ENVIRONMENT = os.getenv("DJANGO_ENV", "development")
+
+if ENVIRONMENT == "production":
+    from .production import *
+else:
+    from .development import *
