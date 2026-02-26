@@ -1,6 +1,6 @@
 from django.db import models
 from nucleo.modelos.base import CoreModel
-from aplicativos.clinico.modelos.requisicao import Requisicao
+from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.paciente import Paciente
 
 
@@ -15,7 +15,7 @@ class Fatura(CoreModel):
         CANCELADA = "CANC", "Cancelada"
 
     requisicao = models.OneToOneField(
-        Requisicao,
+        RequisicaoAnalise,
         on_delete=models.CASCADE,
         related_name="fatura",
     )

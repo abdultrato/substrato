@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.db.models import Sum
 from django.utils.html import format_html
 
-from .modelos.conta import Conta
+from .modelos.contas import Conta
 from .modelos.lancamento import Lancamento
 from .modelos.movimento import Movimento
 
@@ -14,9 +14,9 @@ from .modelos.movimento import Movimento
 
 @admin.register(Conta)
 class ContaAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "nome")
-    search_fields = ("codigo", "nome")
-    ordering = ("codigo",)
+    list_display = ("id_custom", "nome")
+    search_fields = ("id_custom", "nome")
+    ordering = ("id_custom",)
 
 
 # =====================================================

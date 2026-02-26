@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .modelos import Fatura, FaturaItem
+from .modelos.fatura import Fatura
+from  .modelos.fatura_itens import FaturaItem
 
 
 class CoreAdmin(admin.ModelAdmin):

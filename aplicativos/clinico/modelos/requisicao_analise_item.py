@@ -5,7 +5,7 @@ from django.db import models
 from nucleo.modelos.base import CoreModel
 from nucleo.mixins.auditoria import AuditoriaMixin
 from nucleo.mixins.soft_delete import SoftDeleteMixin
-from nucleo.mixins.data_hora import TimeStampMixin
+from nucleo.mixins.modelo.data_hora import TimeStampMixin
 
 from .requisicao_analise import RequisicaoAnalise
 from .exame import Exame

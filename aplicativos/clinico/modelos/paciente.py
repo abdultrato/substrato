@@ -8,9 +8,9 @@ from nucleo.constantes.proveniencia import Proveniencia
 from nucleo.constantes.raca_origem import RacaOrigem
 from nucleo.constantes.tipos_documento import TipoDocumento
 
-from infraestrutura.orm.fields.telefone_field import TelefoneField
-from infraestrutura.orm.fields.email_field import LowerEmailField
-from infraestrutura.orm.fields.nome_field import NomeField
+from infrastrutura.orm.fields.telefone_field import TelefoneField
+from infrastrutura.orm.fields.email_field import NormalizedEmailField
+from infrastrutura.orm.fields.nome_field import NomeField
 
 
 class Paciente(CoreModel):
@@ -25,9 +25,7 @@ class Paciente(CoreModel):
     data_nascimento = models.DateField(null=True, blank=True)
 
     genero = models.CharField(
-        max_length=10,
-        choices=Genero.choices,
-        blank=True,
+        max_length=1, choices=Genero.choices, db_index=True, default=Genero.FEMENINO
     )
 
     raca_origem = models.CharField(
@@ -53,7 +51,7 @@ class Paciente(CoreModel):
 
     contacto = TelefoneField()
 
-    email = LowerEmailField(
+    email = NormalizedEmailField(
         unique=True,
         blank=True,
         null=True,

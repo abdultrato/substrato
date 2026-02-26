@@ -3,10 +3,8 @@ from .modelos.paciente import Paciente
 from .modelos.exame import Exame
 from .modelos.exame_campo import ExameCampo
 from .modelos.requisicao_analise import RequisicaoAnalise
-from .modelos.
-    RequisicaoItem,
-    ResultadoItem,
-)
+from .modelos.requisicao_analise_item import RequisicaoItem
+from .modelos.resultado_analise import ResultadoItem
 
 
 # =========================================================
@@ -38,8 +36,8 @@ class ExameCampoInline(admin.TabularInline):
 
 @admin.register(Exame)
 class ExameAdmin(CoreAdmin):
-    list_display = ("nome", "codigo", "ativo")
-    search_fields = ("nome", "codigo")
+    list_display = ("nome", "ativo")
+    search_fields = ("nome", "id_custom")
     inlines = [ExameCampoInline]
 
 
@@ -48,8 +46,12 @@ class ExameAdmin(CoreAdmin):
 # =========================================================
 class RequisicaoItemInline(admin.TabularInline):
     model = RequisicaoItem
-    extra = 0
+    extra = 1
 
+
+@admin.register(RequisicaoItem)
+class RequisicaoAdmin(admin.ModelAdmin):
+    inlines = [RequisicaoItemInline]
 
 @admin.register(RequisicaoAnalise)
 class RequisicaoAdmin(CoreAdmin):

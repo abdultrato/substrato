@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from frontend.accounting.models.conciliacao import ConciliacaoFinanceira
+from .models.conciliacao import ConciliacaoFinanceira
 
 
 def conciliar_fatura(fatura, valor_recebido):

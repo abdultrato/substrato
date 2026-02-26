@@ -1,25 +1,31 @@
+import uuid
 from django.db import models
 
 
 class CodigoMixin(models.Model):
     """
-    Código identificador corporativo.
-
-    ✔ único
-    ✔ padronizado em uppercase
-    ✔ indexado
+    Geração de código empresarial com prefixo.
     """
 
-    codigo = models.CharField(
+    id_custom = models.CharField(
         max_length=30,
         unique=True,
         db_index=True,
+        editable=False,
     )
+
+    prefixo = None  # Deve ser definido no model
 
     class Meta:
         abstract = True
 
+    def gerar_codigo(self):
+        if not self.prefixo:
+            raise ValueError("Defina o prefixo no modelo.")
+
+        return f"{self.prefixo}-{uuid.uuid4().hex[:8].upper()}"
+
     def save(self, *args, **kwargs):
-        if self.codigo:
-            self.codigo = self.codigo.strip().upper()
+        if not self.id_custom:
+            self.id_custom = self.gerar_codigo()
         super().save(*args, **kwargs)
