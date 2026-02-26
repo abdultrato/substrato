@@ -5,7 +5,6 @@ from nucleo.modelos.base import CoreModel
 from .paciente import Paciente
 from .exame import Exame
 
-
 User = settings.AUTH_USER_MODEL
 
 
@@ -13,9 +12,6 @@ class RequisicaoAnalise(CoreModel):
 
     prefixo = "REQ"
 
-    # =========================================================
-    # STATUS OPERACIONAL
-    # =========================================================
     class Status(models.TextChoices):
         CRIADA = "CRI", "Criada"
         EM_PROCESSAMENTO = "PROC", "Em Processamento"
@@ -23,9 +19,6 @@ class RequisicaoAnalise(CoreModel):
         VALIDADA = "VAL", "Validada"
         CANCELADA = "CANC", "Cancelada"
 
-    # =========================================================
-    # STATUS CLÍNICO GLOBAL
-    # =========================================================
     class StatusClinico(models.TextChoices):
         NORMAL = "normal", "Normal"
         ALERTA = "alerta", "Alerta"
@@ -37,8 +30,10 @@ class RequisicaoAnalise(CoreModel):
         related_name="requisicoes",
     )
 
+    # 🔥 agora usando through
     exames = models.ManyToManyField(
         Exame,
+        through="RequisicaoItem",
         related_name="requisicoes",
     )
 
@@ -71,41 +66,9 @@ class RequisicaoAnalise(CoreModel):
     class Meta:
         ordering = ["-criado_em"]
 
-    def __str__(self):
-        return f"{self.id_custom} - {self.paciente.nome}"
-
-    # =========================================================
-    # TRANSIÇÃO AUTOMÁTICA DE STATUS
-    # =========================================================
-    def atualizar_fluxo(self):
-
-        resultados = self.resultados.all()
-
-        if not resultados.exists():
-            self.status = self.Status.CRIADA
-            self.save(update_fields=["status"])
-            return
-
-        if resultados.filter(valor__isnull=False).exists():
-            self.status = self.Status.EM_PROCESSAMENTO
-
-        if resultados.filter(valor__isnull=True).count() == 0:
-            self.status = self.Status.AGUARDANDO_VALIDACAO
-
+    def aplicar_status(self, novo_status):
+        self.status = novo_status
         self.save(update_fields=["status"])
 
-    # =========================================================
-    # VALIDAÇÃO FINAL
-    # =========================================================
-    def validar(self, usuario):
-
-        if self.status != self.Status.AGUARDANDO_VALIDACAO:
-            raise ValueError("Requisição não está pronta para validação.")
-
-        if self.possui_resultado_critico:
-            raise ValueError("Existem resultados críticos.")
-
-        self.status = self.Status.VALIDADA
-        self.analista = usuario
-
-        self.save(update_fields=["status", "analista"])
+    def __str__(self):
+        return f"{self.id_custom} - {self.paciente.nome}"
