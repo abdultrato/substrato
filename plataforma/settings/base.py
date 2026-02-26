@@ -1,21 +1,23 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
-from .constants import *
-from .security import *
+
+# =========================================================
+# PATH & ENV
+# =========================================================
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env.staging")
 
 
 def get_env(name, default=None, required=False):
     value = os.getenv(name, default)
     if required and not value:
-        raise ImproperlyConfigured(f"Environment variable '{name}' is required")
+        raise ImproperlyConfigured(f"{name} is required")
     return value
 
 
@@ -24,9 +26,14 @@ def get_env(name, default=None, required=False):
 # =========================================================
 
 SECRET_KEY = get_env("DJANGO_SECRET_KEY", required=True)
+
 DEBUG = get_env("DJANGO_DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if host.strip()
+]
 
 
 # =========================================================
@@ -34,22 +41,27 @@ ALLOWED_HOSTS = get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(","
 # =========================================================
 
 INSTALLED_APPS = [
+    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party
     "rest_framework",
+    "rest_framework_simplejwt",
     "django_filters",
     "corsheaders",
-    # Apps internas
+    # Internas
     "aplicativos.identidade",
     "aplicativos.clinico",
     "aplicativos.faturamento",
     "aplicativos.pagamentos",
     "aplicativos.notificacoes",
     "aplicativos.inquilinos",
+    "aplicativos.farmacia",
+    "aplicativos.contabilidade",
 ]
 
 
@@ -63,11 +75,11 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    # Multi-tenant (antes de auth)
+    "infrastrutura.middleware.inquilino.InquilinoMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Multi-tenant
-    "infrastrutura.middleware.inquilino.InquilinoMiddleware",
 ]
 
 
@@ -83,6 +95,26 @@ DATABASES = {
         "PASSWORD": get_env("DB_PASSWORD", required=True),
         "HOST": get_env("DB_HOST", "localhost"),
         "PORT": get_env("DB_PORT", "5432"),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {
+            "connect_timeout": 10,
+        },
+    }
+}
+
+
+# =========================================================
+# CACHE (Redis obrigatório para throttle/idempotência)
+# =========================================================
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": get_env("REDIS_URL", "redis://127.0.0.1:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "TIMEOUT": 300,
     }
 }
 
@@ -115,7 +147,7 @@ TEMPLATES = [
 
 
 # =========================================================
-# STATIC
+# STATIC & MEDIA
 # =========================================================
 
 STATIC_URL = "/static/"
@@ -123,6 +155,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+
+# =========================================================
+# INTERNATIONALIZATION
+# =========================================================
+
+LANGUAGE_CODE = "pt-br"
+TIME_ZONE = "Africa/Maputo"
+
+USE_I18N = True
+USE_TZ = True
 
 
 # =========================================================
@@ -136,7 +179,23 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+    ],
+    # ==========================
+    # THROTTLING
+    # ==========================
+    "DEFAULT_THROTTLE_CLASSES": [
+        "seguranca.throttling.BurstRateThrottle",
+        "seguranca.throttling.SustainedRateThrottle",
+        "seguranca.throttling.AnonBurstRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "burst": "30/min",
+        "sustained": "1000/day",
+        "anon_burst": "10/min",
+        "login": "5/min",
+    },
 }
 
 
@@ -147,24 +206,40 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-REST_FRAMEWORK = {
-    ...
-    "DEFAULT_THROTTLE_CLASSES": [
-        "seguranca.throttling.BurstRateThrottle",
-        "seguranca.throttling.SustainedRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "burst": "30/min",
-        "sustained": "1000/day",
-        "anon_burst": "10/min",
-    },
-}
 
-"DEFAULT_THROTTLE_RATES": {
-    "burst": "30/min",
-    "sustained": "1000/day",
-    "anon_burst": "10/min",
-    "login": "5/min",
-}
+# =========================================================
+# CORS
+# =========================================================
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip()
+        for origin in get_env("CORS_ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+
+
+# =========================================================
+# SECURITY BASICS
+# =========================================================
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+
+# =========================================================
+# DEFAULT PRIMARY KEY
+# =========================================================
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

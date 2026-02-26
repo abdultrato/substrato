@@ -1,10 +1,9 @@
 from django.contrib import admin
-
-from .modelos import (
-    Paciente,
-    Exame,
-    ExameCampo,
-    RequisicaoAnalise,
+from .modelos.paciente import Paciente
+from .modelos.exame import Exame
+from .modelos.exame_campo import ExameCampo,
+from .modelos.requisicao_analise import RequisicaoAnalise
+from .modelos.
     RequisicaoItem,
     ResultadoItem,
 )
