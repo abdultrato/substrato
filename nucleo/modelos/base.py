@@ -85,3 +85,30 @@ class CoreModel(
             models.Index(fields=["ativo"]),
             models.Index(fields=["deletado"]),
         ]
+
+# =========================================================
+# CORE MODEL
+# =========================================================
+
+class InqCoreModel(
+    StatusModel,
+    AuditTimestampModel,
+    CodigoMixin,
+    NomeMixin,
+    OrdemMixin,
+    DescricaoMixin,
+    models.Model,
+):
+    """
+    Modelo base corporativo para inquilino.
+    """
+
+    objects = ManagerAtivo()
+    all_objects = models.Manager()
+
+    class Meta:
+        abstract = True
+        indexes = [
+            models.Index(fields=["ativo"]),
+            models.Index(fields=["deletado"]),
+        ]

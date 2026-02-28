@@ -1,11 +1,9 @@
 from django.db.models import Q
-from rest_framework.permissions import IsAuthenticated as aut
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from frontend.billing.models.paciente import Paciente as p
-from frontend.billing.models.requisicao_analise import RequisicaoAnalise as ra
-from frontend.contabilidade.entidade import Entidade as e
+from aplicativos.clinico.modelos.paciente import Paciente
+from aplicativos.clinico.modelos.resultado_analise import RequisicaoAnalise
 
 
 class GlobalSearchView(APIView):
@@ -19,7 +17,6 @@ class GlobalSearchView(APIView):
                 {
                     "pacientes": [],
                     "requisicoes": [],
-                    "entidades": [],
                 }
             )
 
@@ -35,12 +32,9 @@ class GlobalSearchView(APIView):
             .values("id", "id_custom", "paciente__nome")[:10]
         )
 
-        entidades = list(e.objects.filter(Q(nome__icontains=q) | Q(nuit__icontains=q)).values("id", "nome")[:10])
-
         return Response(
             {
                 "pacientes": pacientes,
                 "requisicoes": requisicoes,
-                "entidades": entidades,
             }
         )

@@ -25,7 +25,7 @@ class Paciente(CoreModel):
     data_nascimento = models.DateField(null=True, blank=True)
 
     genero = models.CharField(
-        max_length=1, choices=Genero.choices, db_index=True, default=Genero.FEMENINO
+        max_length=10, choices=Genero.choices, db_index=True, default=Genero.FEMENINO
     )
 
     raca_origem = models.CharField(

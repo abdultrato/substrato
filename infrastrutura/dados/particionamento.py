@@ -17,3 +17,17 @@ def nome_tabela_particionada(base: str, data: datetime):
     """
     particao = obter_particao_temporal(data)
     return f"{base}_{particao}"
+
+class TenantDatabaseRouter:
+
+    def db_for_read(self, model, **hints):
+        tenant_id = hints.get("tenant_id")
+        if tenant_id:
+            return f"tenant_{tenant_id % 4}"
+        return None
+
+    def db_for_write(self, model, **hints):
+        tenant_id = hints.get("tenant_id")
+        if tenant_id:
+            return f"tenant_{tenant_id % 4}"
+        return None

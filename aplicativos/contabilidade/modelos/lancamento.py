@@ -10,7 +10,7 @@ class Lancamento(CoreModel):
 
     descricao = models.CharField(max_length=255)
 
-    data_contabil = models.DateField(db_index=True)
+    data = models.DateField(db_index=True)
 
     referencia_externa = models.CharField(
         max_length=120,
@@ -22,7 +22,7 @@ class Lancamento(CoreModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=["data_contabil"]),
+            models.Index(fields=["data"]),
             models.Index(fields=["confirmado"]),
         ]
 

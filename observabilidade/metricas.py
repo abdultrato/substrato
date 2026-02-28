@@ -1,5 +1,7 @@
 import time
 
+import logging
+
 _metricas = {
     "requisicoes": 0,
     "erros": 0,
@@ -23,3 +25,25 @@ def obter_metricas():
         "erros": _metricas["erros"],
         "tempo_medio": media,
     }
+
+
+logger = logging.getLogger("metrics")
+
+
+def log_slow_request(path: str, duration: float, threshold: float = 0.5):
+    """
+    Registra requisições lentas.
+
+    :param path: caminho da requisição
+    :param duration: tempo em segundos
+    :param threshold: limite mínimo para logar
+    """
+
+    if duration >= threshold:
+        logger.warning(
+            "SLOW_REQUEST",
+            extra={
+                "path": path,
+                "duracao_segundos": round(duration, 4),
+            },
+        )

@@ -1,52 +1,110 @@
 from django.core.cache import cache
+from django_redis import get_redis_connection
 
 
-def obter_chave(chave):
-    return cache.get(chave)
+DEFAULT_TIMEOUT = 600  # 10 minutos
 
 
-def salvar_chave(chave, valor, timeout=300):
-    cache.set(chave, valor, timeout)
+# =========================================================
+# GENERIC CACHE UTILS
+# =========================================================
 
-
-from django.core.cache import cache
-
-DEFAULT_TIMEOUT = 60 * 10  # 10 minutos
-
-
-def cache_get(key):
-    return cache.get(key)
-
-
-def cache_set(key, value, timeout=DEFAULT_TIMEOUT):
-    cache.set(key, value, timeout)
-
-
-def cache_delete(key):
-    cache.delete(key)
-
-
-def cache_remember(key, func, timeout=DEFAULT_TIMEOUT):
+class CacheService:
     """
-    Busca no cache ou executa função e armazena.
-    """
-    value = cache.get(key)
+    Serviço de cache genérico.
 
-    if value is None:
-        value = func()
+    ✔ Wrapper centralizado
+    ✔ Evita duplicação
+    ✔ Namespace opcional
+    """
+
+    @staticmethod
+    def get(key):
+        return cache.get(key)
+
+    @staticmethod
+    def set(key, value, timeout=DEFAULT_TIMEOUT):
         cache.set(key, value, timeout)
 
-    return value
+    @staticmethod
+    def delete(key):
+        cache.delete(key)
+
+    @staticmethod
+    def remember(key, func, timeout=DEFAULT_TIMEOUT):
+        value = cache.get(key)
+
+        if value is None:
+            value = func()
+            cache.set(key, value, timeout)
+
+        return value
 
 
-from django.core.cache import cache
+# =========================================================
+# TENANT CACHE
+# =========================================================
 
-DEFAULT_TIMEOUT = 600
+class TenantCache:
+    """
+    Cache isolado por tenant.
 
+    ✔ Namespace automático
+    ✔ Seguro para multi-worker
+    ✔ Compatível com rate limit
+    """
 
-def remember(key, func, timeout=DEFAULT_TIMEOUT):
-    value = cache.get(key)
-    if value is None:
-        value = func()
-        cache.set(key, value, timeout)
-    return value
+    PREFIX = "tenant"
+
+    @staticmethod
+    def _key(tenant_id: int, suffix: str) -> str:
+        return f"{TenantCache.PREFIX}:{tenant_id}:{suffix}"
+
+    @staticmethod
+    def get(tenant_id: int, suffix: str):
+        return cache.get(TenantCache._key(tenant_id, suffix))
+
+    @staticmethod
+    def set(tenant_id: int, suffix: str, value, timeout=DEFAULT_TIMEOUT):
+        cache.set(
+            TenantCache._key(tenant_id, suffix),
+            value,
+            timeout,
+        )
+
+    @staticmethod
+    def delete(tenant_id: int, suffix: str):
+        cache.delete(TenantCache._key(tenant_id, suffix))
+
+    @staticmethod
+    def incr(tenant_id: int, suffix: str, amount=1, timeout=DEFAULT_TIMEOUT):
+        """
+        Incremento seguro:
+        ✔ Se chave não existir, cria
+        ✔ Seguro sob concorrência
+        """
+
+        key = TenantCache._key(tenant_id, suffix)
+
+        conn = get_redis_connection("default")
+
+        with conn.pipeline() as pipe:
+            try:
+                pipe.watch(key)
+                current = pipe.get(key)
+
+                pipe.multi()
+
+                if current is None:
+                    pipe.set(key, amount, ex=timeout)
+                    result = amount
+                else:
+                    pipe.incr(key, amount)
+                    result = int(current) + amount
+
+                pipe.execute()
+                return result
+
+            except Exception:
+                pipe.reset()
+                return cache.incr(key, amount)

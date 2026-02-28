@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .modelos.paciente import Paciente
 from .modelos.exame import Exame
 from .modelos.exame_campo import ExameCampo
@@ -8,13 +9,14 @@ from .modelos.resultado_analise import ResultadoItem
 
 
 # =========================================================
-# BASE ADMIN
+# BASE ADMIN CORPORATIVO
 # =========================================================
 class CoreAdmin(admin.ModelAdmin):
     list_filter = ("ativo", "deletado")
     search_fields = ("id_custom",)
     readonly_fields = ("criado_em", "atualizado_em")
     ordering = ("-criado_em",)
+    list_per_page = 50
 
 
 # =========================================================
@@ -24,7 +26,13 @@ class CoreAdmin(admin.ModelAdmin):
 class PacienteAdmin(CoreAdmin):
     list_display = ("nome", "numero_id", "contacto", "ativo")
     search_fields = ("nome", "numero_id", "contacto")
+    autocomplete_fields = ()
 
+@admin.register(ExameCampo)
+class ExameCampoAdmin(CoreAdmin):
+    list_display = ("id_custom", "nome", "exame", "ativo")
+    search_fields = ("id_custom", "nome", "exame__nome")
+    autocomplete_fields = ("exame",)
 
 # =========================================================
 # EXAME
@@ -36,29 +44,27 @@ class ExameCampoInline(admin.TabularInline):
 
 @admin.register(Exame)
 class ExameAdmin(CoreAdmin):
-    list_display = ("nome", "ativo")
-    search_fields = ("nome", "id_custom")
+    list_display = ("id_custom", "nome", "ativo")
+    search_fields = ("id_custom", "nome")
     inlines = [ExameCampoInline]
 
 
 # =========================================================
-# REQUISIÇÃO
+# REQUISIÇÃO (AGREGADO RAIZ)
 # =========================================================
 class RequisicaoItemInline(admin.TabularInline):
     model = RequisicaoItem
     extra = 1
+    autocomplete_fields = ("exame",)
 
-
-@admin.register(RequisicaoItem)
-class RequisicaoAdmin(admin.ModelAdmin):
-    inlines = [RequisicaoItemInline]
 
 @admin.register(RequisicaoAnalise)
-class RequisicaoAdmin(CoreAdmin):
-    list_display = ("id_custom", "paciente", "status", "criado_em")
+class RequisicaoAnaliseAdmin(CoreAdmin):
+    list_display = ("id_custom", "paciente", "status", "status_clinico", "criado_em")
     search_fields = ("id_custom", "paciente__nome")
+    list_filter = ("status", "status_clinico", "ativo")
+    autocomplete_fields = ("paciente", "analista")
     inlines = [RequisicaoItemInline]
-    filter_horizontal = ("exames",)
 
 
 # =========================================================
@@ -69,3 +75,4 @@ class ResultadoAdmin(CoreAdmin):
     list_display = ("id_custom", "exame_campo", "validado")
     list_filter = ("validado",)
     search_fields = ("id_custom",)
+    autocomplete_fields = ("exame_campo",)

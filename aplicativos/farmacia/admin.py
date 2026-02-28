@@ -19,7 +19,7 @@ from .models.item_venda import ItemVenda
 class ProdutoAdmin(admin.ModelAdmin):
 
     list_display = (
-        "codigo",
+        "id_custom",
         "nome",
         "tipo",
         "preco_venda",
@@ -27,7 +27,7 @@ class ProdutoAdmin(admin.ModelAdmin):
         "criado_em",
     )
 
-    search_fields = ("codigo", "nome")
+    search_fields = ("id_custom", "nome")
     list_filter = ("tipo", "ativo")
     ordering = ("nome",)
 

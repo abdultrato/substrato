@@ -15,6 +15,8 @@ class Venda(CoreModel):
     - Indexado para relatórios
     - Escalável
     """
+    
+    prefixo = "VEND"
 
     numero = models.CharField(
         max_length=50,

@@ -13,6 +13,8 @@ class Lote(CoreModel):
     Lote farmacêutico imutável.
     Não armazena saldo.
     """
+    
+    prefixo = "LOTE"
 
     produto = models.ForeignKey(
         "farmacia.Produto",

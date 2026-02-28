@@ -1,4 +1,4 @@
-from .modelos.base import (
+from modelos.base import (
     ActiveStatusModel,
     AuditModel,
     CoreModel,
@@ -7,4 +7,4 @@ from .modelos.base import (
     TimeStampedModel,
 )
 
-from .modelos.managers import ManagerAtivo, QuerySetAtivo
+from modelos.managers import ManagerAtivo, QuerySetAtivo

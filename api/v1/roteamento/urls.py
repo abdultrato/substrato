@@ -50,3 +50,13 @@ urlpatterns = [
     path("notifications/", NotificationsView.as_view()),
     path("permissions/groups/", GroupsPermissionsView.as_view()),
 ]
+
+from django.urls import path, include
+from .router import router
+from .registry import registrar_rotas
+
+registrar_rotas(router)
+
+urlpatterns = [
+		path("", include(router.urls)),
+		]

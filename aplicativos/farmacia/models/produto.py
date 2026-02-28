@@ -25,6 +25,8 @@ class Produto(CoreModel):
     - auditoria
     - inquilino
     """
+    
+    prefixo = "PRODT"
 
     tipo = models.CharField(
         max_length=3,
@@ -48,11 +50,11 @@ class Produto(CoreModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "codigo"],
+                fields=["inquilino", "id_custom"],
                 condition=Q(deletado=False),
                 name="unique_codigo_produto_por_inquilino",
             )
         ]
 
     def __str__(self):
-        return f"{self.codigo} - {self.nome}"
+        return f"{self.id_custom} - {self.nome}"

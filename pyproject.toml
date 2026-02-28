@@ -1,18 +1,15 @@
 [tool.ruff]
-# --------------------------------------------------
-# Core
-# --------------------------------------------------
 line-length = 120
 target-version = "py311"
 fix = true
 respect-gitignore = true
 
-# arquivos ignorados
 exclude = [
     ".git",
     "__pycache__",
     "migrations",
     "venv",
+    ".venv",
     "build",
     "dist",
 ]
@@ -22,39 +19,54 @@ exclude = [
 # --------------------------------------------------
 [tool.ruff.lint]
 
-# regras ativas
 select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "W",   # warnings
-    "I",   # import sorting
-    "UP",  # modern Python upgrades
-    "B",   # bugbear (erros comuns)
-    "SIM", # simplificações
+    "E",      # pycodestyle
+    "F",      # pyflakes
+    "W",      # warnings
+    "I",      # isort
+    "UP",     # python upgrades
+    "B",      # bugbear
+    "SIM",    # simplifications
+    "C4",     # comprehensions
+    "DTZ",    # datetime timezone issues
+    "T20",    # print statements
+    "RET",    # return style
+    "RUF",    # ruff-specific improvements
 ]
 
-# regras ignoradas (decisões arquiteturais)
 ignore = [
-    "E501",  # linha longa (controlado pelo formatter)
-    "F403",  # star imports
-    "F405",  # star imports
+    "E501",   # line length (formatter controla)
 ]
 
 # --------------------------------------------------
-# Ignorar regras por arquivo
+# Per-file ignores
 # --------------------------------------------------
 [tool.ruff.lint.per-file-ignores]
 
-"__init__.py" = ["F401", "F403", "F405"]
+"__init__.py" = ["F401"]
 "settings/*.py" = ["F401"]
 "migrations/*.py" = ["E501", "F401"]
+"tarefas/*.py" = ["B008"]  # Celery bind=True
 
 # --------------------------------------------------
-# Import sorting (isort integrado)
+# Import sorting
 # --------------------------------------------------
 [tool.ruff.lint.isort]
-known-first-party = ["backend", "frontend", "payments"]
+known-first-party = [
+    "aplicativos",
+    "aplicacao",
+    "dominio",
+    "servicos",
+    "infraestrutura",
+    "integracoes",
+    "nucleo",
+    "plataforma",
+    "observabilidade",
+    "seguranca",
+    "sistema",
+]
 combine-as-imports = true
+force-sort-within-sections = true
 
 # --------------------------------------------------
 # Formatter
@@ -63,3 +75,4 @@ combine-as-imports = true
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+docstring-code-format = true

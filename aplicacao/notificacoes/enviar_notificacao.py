@@ -4,15 +4,15 @@ from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from aplicativos.notificacoes.modelos.log_envio import LogEnvio
 from dominio.notificacoes.excecoes import FalhaEnvio
 
-from integracoes.mensageria.email import CanalEmail
-from integracoes.mensageria.sms import CanalSMS
-from integracoes.mensageria.whatsapp import CanalWhatsApp
+from integracoes.mensageria.email import EmailService
+from integracoes.mensageria.sms import SMSService
+from integracoes.mensageria.whatsapp import WhatsAppService
 
 
 CANAIS = {
-    "email": CanalEmail(),
-    "sms": CanalSMS(),
-    "whatsapp": CanalWhatsApp(),
+    "email": EmailService(),
+    "sms": SMSService(),
+    "whatsapp": WhatsAppService(),
 }
 
 

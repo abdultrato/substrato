@@ -1,7 +1,7 @@
 # default settings
 import os
 from django.apps import AppConfig
-
+from . import security, base
 
 ambiente = os.getenv("DJANGO_ENV", "development")
 

@@ -1,17 +1,72 @@
+import logging
 import time
 
-from django.utils.deprecation import MiddlewareMixin
 from observabilidade.metricas import log_slow_request
 
+logger = logging.getLogger("api")
 
-class PerformanceMiddleware(MiddlewareMixin):
+SLOW_REQUEST_THRESHOLD_MS = 1000
 
-    def process_request(self, request):
-        request._start_time = time.perf_counter()
 
-    def process_response(self, request, response):
-        if hasattr(request, "_start_time"):
-            duration = time.perf_counter() - request._start_time
-            log_slow_request(request.path, duration)
+class APILoggingMiddleware:
+    """
+    Logging estruturado + detecção de lentidão.
+    """
 
-        return response
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+
+        start = time.perf_counter()
+        status_code = 500
+
+        try:
+            response = self.get_response(request)
+            status_code = response.status_code
+            return response
+
+        except Exception:
+            logger.exception(
+                "API_EXCEPTION",
+                extra=self._build_extra(request, status_code, 0),
+            )
+            raise
+
+        finally:
+            duration_ms = round(
+                (time.perf_counter() - start) * 1000, 2
+            )
+
+            if duration_ms >= SLOW_REQUEST_THRESHOLD_MS:
+                log_slow_request(
+                    path=request.path,
+                    duration=duration_ms,
+                    tenant_id=self._get_tenant_id(request),
+                )
+
+            logger.info(
+                "API_REQUEST",
+                extra=self._build_extra(
+                    request,
+                    status_code,
+                    duration_ms,
+                ),
+            )
+
+    def _get_tenant_id(self, request):
+        inquilino = getattr(request, "inquilino", None)
+        return getattr(inquilino, "id", None)
+
+    def _build_extra(self, request, status_code, duration_ms):
+        inquilino = getattr(request, "inquilino", None)
+        user = getattr(request, "user", None)
+
+        return {
+            "metodo": request.method,
+            "path": request.get_full_path(),
+            "status_code": status_code,
+            "duracao_ms": duration_ms,
+            "tenant_id": getattr(inquilino, "id", None),
+            "user_id": getattr(user, "id", None),
+        }

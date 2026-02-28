@@ -32,3 +32,6 @@ class APILoggingMiddleware:
         )
 
         return response
+
+def enrich_log(record, request):
+    record.tenant_id = getattr(request, "inquilino", None)

@@ -1,10 +1,8 @@
 import requests
 from django.conf import settings
 
-from .adapters import MessagingService
 
-
-class SMSService(MessagingService):
+class SMSService:
     name = "sms"
 
     def send(self, destination, message, **kwargs):

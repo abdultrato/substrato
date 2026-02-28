@@ -16,6 +16,8 @@ class ItemVenda(CoreModel):
     - Indexado
     - Integridade garantida
     """
+    
+    prefixo = "IVEND"
 
     venda = models.ForeignKey(
         "farmacia.Venda",

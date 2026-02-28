@@ -1,10 +1,8 @@
 import requests
 from django.conf import settings
 
-from .adapters import MessagingService
 
-
-class WhatsAppService(MessagingService):
+class WhatsAppService:
     name = "whatsapp"
 
     def send(self, destination, message, **kwargs):
