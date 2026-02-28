@@ -5,7 +5,7 @@ from django.http import JsonResponse
 
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from infrastrutura.contexto.inquilino import set_inquilino
-from servicos.tenant_usage_service import TenantUsageService
+from servicos.inquilinos.tenant_usage_service import TenantUsageService
 
 
 logger = logging.getLogger("tenant")

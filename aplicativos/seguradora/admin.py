@@ -168,15 +168,18 @@ class AutorizacaoProcedimentoAdmin(admin.ModelAdmin):
     )
 
     def status_colorido(self, obj):
-        colors = {
-            "PENDENTE": "orange",
-            "APROVADA": "green",
-            "NEGADA": "red",
-        }
-        return format_html(
-            '<b style="color:{};">{}</b>',
-            colors.get(obj.status, "black"),
-            obj.status,
-        )
+        try:
+            colors = {
+                "PENDENTE": "orange",
+                "APROVADA": "green",
+                "NEGADA": "red",
+            }
+            return format_html(
+                '<b style="color:{};">{}</b>',
+                colors.get(obj.status, "black"),
+                obj.status,
+            )
+        except Exception:
+            return "-"
 
     status_colorido.short_description = "Status"

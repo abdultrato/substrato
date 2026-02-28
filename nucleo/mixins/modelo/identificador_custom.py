@@ -17,6 +17,7 @@ class IdentificadorCustomMixin(models.Model):
         db_index=True,
         blank=True,
         null=True,
+        verbose_name="ordem",
     )
 
     prefixo = None  # deve ser definido no model concreto

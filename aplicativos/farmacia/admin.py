@@ -59,16 +59,22 @@ class LoteAdmin(admin.ModelAdmin):
     readonly_fields = ("quantidade_inicial", "criado_em")
 
     def saldo_atual(self, obj):
-        return sum(
-            m.quantidade_assinada
-            for m in obj.movimentoestoque_set.all()
-        )
+        try:
+            return sum(
+                m.quantidade_assinada
+                for m in obj.movimentoestoque_set.all()
+            )
+        except Exception:
+            return "-"
     saldo_atual.short_description = "Saldo"
 
     def vencido_status(self, obj):
-        if obj.vencido:
-            return format_html("<span style='color:red;'>Vencido</span>")
-        return "OK"
+        try:
+            if obj.vencido:
+                return format_html("<span style='color:{};'>{}</span>", "red", "Vencido")
+            return "OK"
+        except Exception:
+            return "-"
 
 
 # =========================================================
@@ -118,7 +124,10 @@ class ItemVendaInline(admin.TabularInline):
     autocomplete_fields = ("produto",)
 
     def total_linha(self, obj):
-        return obj.total_linha
+        try:
+            return obj.total_linha
+        except Exception:
+            return "-"
 
 
 # =========================================================

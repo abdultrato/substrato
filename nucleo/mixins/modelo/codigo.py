@@ -12,6 +12,7 @@ class CodigoMixin(models.Model):
         unique=True,
         db_index=True,
         editable=False,
+        verbose_name="ordem",
     )
 
     prefixo = None  # Deve ser definido no model
@@ -19,11 +20,17 @@ class CodigoMixin(models.Model):
     class Meta:
         abstract = True
 
-    def gerar_codigo(self):
-        if not self.prefixo:
-            raise ValueError("Defina o prefixo no modelo.")
+    def _resolver_prefixo(self):
+        if self.prefixo:
+            return str(self.prefixo).strip().upper()
 
-        return f"{self.prefixo}-{uuid.uuid4().hex[:8].upper()}"
+        # Fallback seguro para modelos sem prefixo explícito.
+        nome = self.__class__.__name__
+        return (nome[:3] or "MOD").upper()
+
+    def gerar_codigo(self):
+        prefixo = self._resolver_prefixo()
+        return f"{prefixo}-{uuid.uuid4().hex[:8].upper()}"
 
     def save(self, *args, **kwargs):
         if not self.id_custom:

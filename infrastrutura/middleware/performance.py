@@ -41,7 +41,7 @@ class APILoggingMiddleware:
             if duration_ms >= SLOW_REQUEST_THRESHOLD_MS:
                 log_slow_request(
                     path=request.path,
-                    duration=duration_ms,
+                    duration=duration_ms / 1000,
                     tenant_id=self._get_tenant_id(request),
                 )
 

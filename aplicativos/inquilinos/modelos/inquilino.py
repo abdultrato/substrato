@@ -121,6 +121,9 @@ class Inquilino(InqCoreModel):
             .first()
         )
 
+    def obter_assinatura_ativa(self):
+        return self.assinatura_ativa
+
     def obter_plano_atual(self):
         assinatura = self.assinatura_ativa
         return assinatura.plano if assinatura else None

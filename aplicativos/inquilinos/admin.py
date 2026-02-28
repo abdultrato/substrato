@@ -1,12 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.db.models import Count
 from .modelos.inquilino import  Inquilino
 from .modelos.configuracao import  ConfiguracaoInquilino
 from .modelos.feature_flags import FeatureFlagTenant
 from .modelos.plano_assinatura import PlanoAssinatura
 from .modelos.uso_tenant import UsoTenant
-from nucleo.modelos.base import CoreModel
 
 # ===============================
 # Inline Uso
@@ -61,7 +59,7 @@ class InquilinoAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("plano", "uso", "configuracao")
+            .select_related("uso", "configuracao")
         )
 
     # ---------------------------------
@@ -70,39 +68,49 @@ class InquilinoAdmin(admin.ModelAdmin):
 
     @admin.display(description="Plano")
     def tipo_plano(self, obj):
-        if hasattr(obj, "plano"):
-            return obj.plano.tipo
+        try:
+            plano = obj.obter_plano_atual()
+            if plano:
+                return plano.tipo
+        except Exception:
+            return "-"
         return "-"
 
     @admin.display(description="Usuários")
     def usuarios_ativos(self, obj):
-        if hasattr(obj, "uso"):
-            return obj.uso.usuarios_ativos
+        try:
+            if hasattr(obj, "uso"):
+                return obj.uso.usuarios_ativos
+        except Exception:
+            return "-"
         return 0
 
     @admin.display(description="Uso Req.")
     def uso_requisicoes(self, obj):
-        if hasattr(obj, "uso") and hasattr(obj, "plano"):
-            percentual = obj.uso.percentual_uso_requisicoes()
+        try:
+            if hasattr(obj, "uso") and obj.obter_plano_atual():
+                percentual = obj.uso.percentual_uso_requisicoes()
 
-            cor = "green"
-            if percentual > 80:
-                cor = "orange"
-            if percentual > 100:
-                cor = "red"
+                cor = "green"
+                if percentual > 80:
+                    cor = "orange"
+                if percentual > 100:
+                    cor = "red"
 
-            return format_html(
-                '<b style="color:{};">{:.1f}%</b>',
-                cor,
-                percentual,
-            )
+                return format_html(
+                    '<b style="color:{};">{:.1f}%</b>',
+                    cor,
+                    percentual,
+                )
+        except Exception:
+            return "-"
         return "-"
 
     @admin.display(description="Status")
     def status(self, obj):
         if obj.ativo:
-            return format_html('<span style="color:green;">● Ativo</span>')
-        return format_html('<span style="color:red;">● Inativo</span>')
+            return format_html('<span style="color:{};">{} {}</span>', "green", "●", "Ativo")
+        return format_html('<span style="color:{};">{} {}</span>', "red", "●", "Inativo")
 
     # ---------------------------------
     # Segurança

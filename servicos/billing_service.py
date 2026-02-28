@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from django_redis import get_redis_connection
 
-from servicos.tenant_usage_service import TenantUsageService
+from servicos.inquilinos.tenant_usage_service import TenantUsageService
 from aplicacao.pagamentos.iniciar_pagamento import iniciar_pagamento
 from infrastrutura.cache import TenantCache
 

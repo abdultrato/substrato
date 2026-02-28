@@ -17,6 +17,7 @@ class IdentificadorMixin(models.Model):
         unique=True,
         editable=False,
         db_index=True,
+        verbose_name="ordem",
     )
 
     MAX_TENTATIVAS = 20
@@ -30,7 +31,7 @@ class IdentificadorMixin(models.Model):
         """
         return gerar_codigo(
             prefixo=self.prefixo,
-            model=self.__class__,
+            modelo=self.__class__,
         )
 
     def save(self, *args, **kwargs):

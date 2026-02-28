@@ -30,7 +30,12 @@ def obter_metricas():
 logger = logging.getLogger("metrics")
 
 
-def log_slow_request(path: str, duration: float, threshold: float = 0.5):
+def log_slow_request(
+    path: str,
+    duration: float,
+    threshold: float = 0.5,
+    tenant_id=None,
+):
     """
     Registra requisições lentas.
 
@@ -45,5 +50,6 @@ def log_slow_request(path: str, duration: float, threshold: float = 0.5):
             extra={
                 "path": path,
                 "duracao_segundos": round(duration, 4),
+                "tenant_id": tenant_id,
             },
         )

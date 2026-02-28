@@ -15,7 +15,8 @@ class ServicoContabilidade:
     def criar_lancamento(
         *,
         descricao: str,
-        data_contabil,
+        data=None,
+        data_contabil=None,
         movimentos: list,
         referencia_externa: str = "",
         inquilino=None,
@@ -30,9 +31,13 @@ class ServicoContabilidade:
         if len(movimentos) < 2:
             raise ValidationError("Lançamento deve ter pelo menos dois movimentos.")
 
+        data_lancamento = data or data_contabil
+        if not data_lancamento:
+            raise ValidationError("Data do lançamento é obrigatória.")
+
         lancamento = Lancamento.objects.create(
             descricao=descricao,
-            data_contabil=data_contabil,
+            data=data_lancamento,
             referencia_externa=referencia_externa,
             inquilino=inquilino,
         )

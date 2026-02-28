@@ -1,6 +1,6 @@
 from django.db import models
-from frontend.fields import MoneyField
-from frontend.models.core import CoreModel
+from infrastrutura.orm.fields.dinheiro_field import DinheiroField
+from nucleo.modelos.base import CoreModel
 
 
 class HistoricoPagamento(CoreModel):
@@ -29,7 +29,7 @@ class HistoricoPagamento(CoreModel):
 			db_index = True,
 			)
 	
-	valor = MoneyField(
+	valor = DinheiroField(
 			null = True,
 			blank = True,
 			)

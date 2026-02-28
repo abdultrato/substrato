@@ -1,10 +1,8 @@
-from modelos.base import (
+from .modelos.base import (
     ActiveStatusModel,
     AuditModel,
     CoreModel,
-    ManagerAtivo,
     SoftDeleteModel,
     TimeStampedModel,
 )
-
-from modelos.managers import ManagerAtivo, QuerySetAtivo
+from .modelos.managers import ManagerAtivo, QuerySetAtivo

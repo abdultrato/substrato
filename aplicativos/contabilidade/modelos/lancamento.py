@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Sum
+from django.utils import timezone
 
 from nucleo.modelos.base import CoreModel
 
@@ -10,7 +11,7 @@ class Lancamento(CoreModel):
 
     descricao = models.CharField(max_length=255)
 
-    data = models.DateField(db_index=True)
+    data = models.DateField(db_index=True, default=timezone.localdate)
 
     referencia_externa = models.CharField(
         max_length=120,
@@ -54,4 +55,5 @@ class Lancamento(CoreModel):
         self.save(update_fields=["confirmado"])
 
     def __str__(self):
-        return self.descricao
+        codigo = self.id_custom if getattr(self, "id_custom", None) else "SEM-CODIGO"
+        return f"{codigo} | {self.data} | {self.descricao}"

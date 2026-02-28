@@ -93,11 +93,6 @@ MIDDLEWARE = [
 		"django.middleware.csrf.CsrfViewMiddleware",
 		
 		# ===============================
-		# MULTI-TENANT (ANTES DE AUTH)
-		# ===============================
-		"infrastrutura.middleware.inquilino.TenantMiddleware",
-		
-		# ===============================
 		# AUTH
 		# ===============================
 		"infrastrutura.middleware.inquilino.InquilinoMiddleware",
@@ -108,20 +103,17 @@ MIDDLEWARE = [
 		# ===============================
 		# CONTEXTO (Thread-safe user)
 		# ===============================
-		"infrastrutura.middleware.audit.AuditUserMiddleware",
+		"infrastrutura.middleware.request_user.RequestUserMiddleware",
 		
 		# ===============================
 		# LIMITES POR TENANT
 		# ===============================
-		"infrastrutura.middleware.tenant.TenantLimitMiddleware",
-		"infrastrutura.middleware.tenant.TenantMiddleware",
 		"infrastrutura.middleware.limits.TenantLimitMiddleware",
 		
 		# ===============================
 		# AUDITORIA
 		# ===============================
 		"infrastrutura.middleware.audit.TenantAuditMiddleware",
-		"infrastrutura.middleware.request_user.RequestUserMiddleware",
 		
 		# ===============================
 		# LOGGING (SEMPRE ÚLTIMO)
@@ -208,7 +200,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # =========================================================
 
 LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "Africa/Maputo"
+TIME_ZONE = get_env("DJANGO_TIME_ZONE", "Africa/Maputo")  # UTC+02:00
 
 USE_I18N = True
 USE_TZ = True

@@ -1,9 +1,5 @@
-from .urls import urlpatterns
-from .wsgi import application as wsgi_application
-from .asgi import application as asgi_application
+"""Top-level package for the Django project.
 
-__all__ = [
-		"urlpatterns",
-		"wsgi_application",
-		"asgi_application",
-		]
+Keep this module free of Django imports to avoid side effects during
+settings loading.
+"""

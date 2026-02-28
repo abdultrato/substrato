@@ -10,6 +10,18 @@ from nucleo.mixins.modelo.descricao import DescricaoMixin
 from .managers import ManagerAtivo
 
 
+def _get_authenticated_current_user():
+    try:
+        from infrastrutura.middleware.request_user import get_current_user
+    except Exception:
+        return None
+
+    user = get_current_user()
+    if user and getattr(user, "is_authenticated", False):
+        return user
+    return None
+
+
 # =========================================================
 # STATUS + SOFT DELETE
 # =========================================================
@@ -18,14 +30,36 @@ class StatusModel(models.Model):
     ativo = models.BooleanField(default=True, db_index=True)
     deletado = models.BooleanField(default=False, db_index=True)
     deletado_em = models.DateTimeField(null=True, blank=True)
+    deletado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)s_deletado_por",
+    )
 
     class Meta:
         abstract = True
 
-    def delete(self, using=None, keep_parents=False):
+    def delete(self, using=None, keep_parents=False, user=None):
         self.deletado = True
         self.deletado_em = timezone.now()
-        self.save(update_fields=["deletado", "deletado_em"])
+        actor = user or _get_authenticated_current_user()
+
+        update_fields = ["deletado", "deletado_em"]
+
+        if actor and hasattr(self, "deletado_por_id"):
+            self.deletado_por = actor
+            update_fields.append("deletado_por")
+
+        if actor and hasattr(self, "atualizado_por_id"):
+            self.atualizado_por = actor
+            update_fields.append("atualizado_por")
+
+        if hasattr(self, "atualizado_em"):
+            update_fields.append("atualizado_em")
+
+        self.save(update_fields=update_fields)
 
     def hard_delete(self):
         super().delete()
@@ -108,7 +142,35 @@ class InqCoreModel(
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        actor = _get_authenticated_current_user()
+        is_create = not self.pk
+
+        if actor:
+            if is_create and hasattr(self, "criado_por_id") and not self.criado_por_id:
+                self.criado_por = actor
+            if hasattr(self, "atualizado_por_id"):
+                self.atualizado_por = actor
+
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                fields = set(update_fields)
+                if is_create and hasattr(self, "criado_por_id"):
+                    fields.add("criado_por")
+                if hasattr(self, "atualizado_por_id"):
+                    fields.add("atualizado_por")
+                kwargs["update_fields"] = list(fields)
+
+        super().save(*args, **kwargs)
         indexes = [
             models.Index(fields=["ativo"]),
             models.Index(fields=["deletado"]),
         ]
+
+
+# Backward-compatibility aliases used across the project.
+ActiveStatusModel = StatusModel
+SoftDeleteModel = StatusModel
+TimeStampedModel = AuditTimestampModel
+AuditModel = AuditTimestampModel

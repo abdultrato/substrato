@@ -1,28 +1,31 @@
-from rest_framework.routers import DefaultRouter
+from api.v1.clinico.viewsets import VIEWSET_MAP as CLINICO_VIEWSET_MAP
+from api.v1.contabilidade.viewsets import VIEWSET_MAP as CONTABILIDADE_VIEWSET_MAP
+from api.v1.farmacia.viewsets import VIEWSET_MAP as FARMACIA_VIEWSET_MAP
+from api.v1.faturamento.viewsets import VIEWSET_MAP as FATURAMENTO_VIEWSET_MAP
+from api.v1.identidade.viewsets import VIEWSET_MAP as IDENTIDADE_VIEWSET_MAP
+from api.v1.inquilinos.viewsets import VIEWSET_MAP as INQUILINOS_VIEWSET_MAP
+from api.v1.notificacoes.viewsets import VIEWSET_MAP as NOTIFICACOES_VIEWSET_MAP
+from api.v1.pagamentos.viewsets import VIEWSET_MAP as PAGAMENTOS_VIEWSET_MAP
+from api.v1.seguradora.viewsets import VIEWSET_MAP as SEGURADORA_VIEWSET_MAP
 
-from .clinico.pacientes_viewset import PacientesViewSet
-from .clinico.resultados_viewset import ResultadosViewSet
 
-router = DefaultRouter()
-router.register("pacientes", PacientesViewSet)
-router.register("resultados", ResultadosViewSet)
-from rest_framework.routers import DefaultRouter as dr
+VIEWSET_GROUPS = {
+    "clinico": CLINICO_VIEWSET_MAP,
+    "contabilidade": CONTABILIDADE_VIEWSET_MAP,
+    "farmacia": FARMACIA_VIEWSET_MAP,
+    "faturamento": FATURAMENTO_VIEWSET_MAP,
+    "identidade": IDENTIDADE_VIEWSET_MAP,
+    "inquilinos": INQUILINOS_VIEWSET_MAP,
+    "notificacoes": NOTIFICACOES_VIEWSET_MAP,
+    "pagamentos": PAGAMENTOS_VIEWSET_MAP,
+    "seguradora": SEGURADORA_VIEWSET_MAP,
+}
 
-from frontend.api.views.entidade import EntidadeViewSet as evs
-from frontend.api.views.fatura import FaturaViewSet as fvs
-from frontend.api.views.paciente import PacienteViewSet as pvs
-from frontend.api.views.requisicao import RequisicaoViewSet as rvs
-from frontend.api.views.resultado import ResultadoItemViewSet as rivs
-from frontend.api.viewsets.users import UserViewSet as uvs
 
-router = dr()
-
-router.register(r"entidades", evs, basename="entidade")
-router.register(r"pacientes", pvs, basename="paciente")
-router.register(r"exames", evs, basename="exame")
-router.register(r"requisicoes", rvs, basename="requisicao")
-router.register(r"resultados", rivs, basename="resultado")
-router.register(r"faturas", fvs, basename="fatura")
-router.register(r"users", uvs, basename="users")
-router.register(r"groups", uvs, basename="groups")
-urlpatterns = router.urls
+def registrar_rotas(router):
+    for prefixo, viewsets in VIEWSET_GROUPS.items():
+        for nome_modelo, viewset in sorted(viewsets.items()):
+            rota = f"{prefixo}/{nome_modelo}"
+            basename = f"{prefixo}-{nome_modelo}"
+            router.register(rota, viewset, basename=basename)
+    return router

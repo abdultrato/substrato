@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.core.cache import cache
-from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
 
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from infrastrutura.contexto.inquilino import (
@@ -21,6 +21,8 @@ class InquilinoMiddleware:
     """
 
     CACHE_TIMEOUT = 60 * 10  # 10 minutos
+    DEV_BYPASS_PATH_PREFIXES = ("/admin/", "/static/", "/media/")
+    DEV_BYPASS_PATHS = ("/", "/favicon.ico")
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -30,6 +32,12 @@ class InquilinoMiddleware:
     # =====================================================
 
     def __call__(self, request):
+        if settings.DEBUG and (
+            request.path in self.DEV_BYPASS_PATHS
+            or request.path.startswith(self.DEV_BYPASS_PATH_PREFIXES)
+        ):
+            return self.get_response(request)
+
         host = request.get_host().split(":")[0]
 
         inquilino = self._resolver_inquilino(host)
