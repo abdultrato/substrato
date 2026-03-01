@@ -10,8 +10,18 @@
       <user-name>abdul</user-name>
       <schema-mapping>
         <introspection-scope>
-          <node kind="database" qname="@">
-            <node kind="schema" qname="@" />
+          <node negative="1">
+            <node kind="database" qname="@">
+              <node kind="schema" negative="1" />
+            </node>
+            <node kind="database">
+              <name qname="devdb" />
+              <name qname="meu_banco" />
+              <name qname="postgres" />
+              <name qname="root_db" />
+              <name qname="substrato_dev" />
+              <name qname="sys_db" />
+            </node>
           </node>
         </introspection-scope>
       </schema-mapping>

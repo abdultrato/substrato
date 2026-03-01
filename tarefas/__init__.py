@@ -1,13 +1,13 @@
-from . import gerar_pdf
-from .autorizacao_worker import processar_autorizacao_task
-from .recalcular_faturas import BaseCommand
-from .recalculo import RecalculoFaturasTask
-from .base import TaskBase
-from .cleanup import CleanupTask
-from .create_groups import Command
+"""
+Pacote de tarefas.
 
-__all__ = [
-		"Command", "BaseCommand", "TaskBase", "CleanupTask",
-		"processar_autorizacao_task", "autorizacao_worker", "gerar_pdf",
-		"RecalculoFaturasTask",
-		]
+Mantido leve para evitar importação de dependências opcionais
+durante descoberta de testes.
+"""
+
+try:
+    from . import gerar_pdf
+except Exception:  # pragma: no cover
+    gerar_pdf = None
+
+__all__ = ["gerar_pdf"]

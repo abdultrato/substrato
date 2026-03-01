@@ -1,4 +1,3 @@
-from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -159,15 +158,25 @@ class ExameCampo(CoreModel):
             TipoResultado.TEXTO,
         ):
 
-            if any(
-                [
+            possui_referencias_numericas = any(
+                valor is not None
+                for valor in (
                     self.valor_minimo,
                     self.valor_maximo,
+                    self.critico_baixo,
+                    self.critico_alto,
+                )
+            )
+            possui_referencias_qualitativas = any(
+                valor is not None
+                for valor in (
                     self.valores_normais,
                     self.valores_alterados,
                     self.valores_criticos,
-                ]
-            ):
+                )
+            )
+
+            if possui_referencias_numericas or possui_referencias_qualitativas:
                 raise ValidationError(
                     "Este tipo não deve possuir referências clínicas."
                 )

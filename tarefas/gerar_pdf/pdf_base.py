@@ -20,7 +20,7 @@ import qrcode
 from django.conf import settings
 from PIL import Image
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A5
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
@@ -28,7 +28,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas as rl_canvas
-from reportlab.platypus import Paragraph, Spacer
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
 logger = logging.getLogger("pdf.engine")
 
@@ -39,6 +39,7 @@ logger = logging.getLogger("pdf.engine")
 PAGE_SIZE = A5
 LOGO_PATH = os.path.join(settings.BASE_DIR, "static", "img", "logo.png")
 ADD_FIM_PAGE = True
+HEADER_VERTICAL_INSET = 0.5 * cm
 
 # =========================================================
 # FONTES (fallback seguro)
@@ -200,7 +201,7 @@ def draw_header(canvas_obj, doc):
 
     logo_w, logo_h = 3.0 * cm, 2.5 * cm
     logo_x = left_margin
-    logo_y = page_h - top_margin + 0.9 * cm
+    logo_y = page_h - top_margin + 0.9 * cm - HEADER_VERTICAL_INSET
 
     if logo:
         canvas_obj.drawImage(
@@ -282,15 +283,11 @@ def draw_signatures(canvas_obj, doc, usuario=None):
     canvas_obj.line(x1, y, x1 + width_line, y)
     canvas_obj.line(x2, y, x2 + width_line, y)
 
-    nome = "Téc. de Laboratório"
-    if usuario:
-        nome = (
-            f"{getattr(usuario,'first_name','')} {getattr(usuario,'last_name','')}".strip()
-            or nome
-        )
+    nome = identidade_usuario_institucional(usuario)
 
     canvas_obj.setFont(FONT, 8)
     canvas_obj.drawCentredString(x1 + width_line / 2, y - 10, f"Assinatura de {nome}")
+    canvas_obj.drawCentredString(x2 + width_line / 2, y - 10, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
 
@@ -305,6 +302,19 @@ def on_page(canvas_obj, doc, usuario=None):
     draw_signatures(canvas_obj, doc, usuario)
 
 
+def draw_line_full_width(canvas_obj, doc):
+    page_w, _ = doc.pagesize
+    left_margin = getattr(doc, "leftMargin", 1 * cm)
+    right_margin = getattr(doc, "rightMargin", 1 * cm)
+    y_line = getattr(doc, "bottomMargin", 2 * cm) + 0.15 * cm
+
+    canvas_obj.saveState()
+    canvas_obj.setStrokeColor(colors.lightgrey)
+    canvas_obj.setLineWidth(0.3)
+    canvas_obj.line(left_margin, y_line, page_w - right_margin, y_line)
+    canvas_obj.restoreState()
+
+
 # =========================================================
 # UTILIDADES PARA TABELAS
 # =========================================================
@@ -316,3 +326,114 @@ cell_style = ParagraphStyle("Cell", fontName=FONT, fontSize=8, alignment=TA_LEFT
 def cell_paragraph(text, is_bold=False):
     style = bold_style if is_bold else cell_style
     return Paragraph("" if text is None else str(text), style)
+
+
+def nome_usuario(usuario):
+    if not usuario:
+        return "Sem usuário"
+
+    full_name_fn = getattr(usuario, "get_full_name", None)
+    if callable(full_name_fn):
+        full_name = (full_name_fn() or "").strip()
+        if full_name:
+            return full_name
+
+    for attr in ("nome", "username", "email"):
+        valor = getattr(usuario, attr, None)
+        if valor:
+            return str(valor)
+
+    return "Sem usuário"
+
+
+def grupos_usuario(usuario):
+    if not usuario:
+        return "Sem Grupo"
+
+    groups = getattr(usuario, "groups", None)
+    if groups is None:
+        return "Sem Grupo"
+
+    nomes = []
+    try:
+        if hasattr(groups, "all"):
+            nomes = [g.name for g in groups.all() if getattr(g, "name", None)]
+        elif isinstance(groups, (list, tuple, set)):
+            for g in groups:
+                if isinstance(g, str):
+                    nomes.append(g)
+                else:
+                    nome = getattr(g, "name", None)
+                    if nome:
+                        nomes.append(nome)
+    except Exception:
+        nomes = []
+
+    return ", ".join(nomes) if nomes else "Sem Grupo"
+
+
+def identidade_usuario_institucional(usuario):
+    return f"Téc. de Laboratório | {grupos_usuario(usuario)} | {nome_usuario(usuario)}"
+
+
+def estilo_titulo_documento(name="HeadingDoc"):
+    return ParagraphStyle(
+        name,
+        fontName=FONT_BOLD,
+        fontSize=11,
+        leading=14,
+        textColor=colors.darkblue,
+    )
+
+
+def estilo_secao_documento(name="SectionDoc"):
+    return ParagraphStyle(
+        name,
+        fontName=FONT_BOLD,
+        fontSize=9,
+        textColor=colors.darkblue,
+    )
+
+
+def estilo_info_esquerda(name="InfoLeftDoc"):
+    return ParagraphStyle(
+        name,
+        fontName=FONT,
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#333333"),
+    )
+
+
+def estilo_info_direita(name="InfoRightDoc"):
+    return ParagraphStyle(
+        name,
+        fontName=FONT,
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#333333"),
+        alignment=TA_RIGHT,
+    )
+
+
+def montar_bloco_identificacao(usable_width, left_lines, right_lines):
+    style_left = estilo_info_esquerda("DocLeft")
+    style_right = estilo_info_direita("DocRight")
+
+    left_para = Paragraph("<br/>".join(left_lines), style_left)
+    right_para = Paragraph("<br/>".join(right_lines), style_right)
+
+    table = Table(
+        [[left_para, right_para]],
+        colWidths=[usable_width * 0.62, usable_width * 0.38],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+            ]
+        )
+    )
+    return table

@@ -1,9 +1,7 @@
 import io
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
@@ -16,17 +14,55 @@ from reportlab.platypus import (
 )
 
 from .pdf_base import (
-    FONT,
     FONT_BOLD,
     NumberedCanvas,
     append_fim,
     bold,
-    bold_style,
     cell_paragraph,
-    cell_style,
     draw_line_full_width,
+    identidade_usuario_institucional,
+    estilo_titulo_documento,
+    montar_bloco_identificacao,
+    estilo_secao_documento,
     on_page,
 )
+
+
+def _formatar_data_resultados(requisicao):
+    data = getattr(requisicao, "created_at", None) or getattr(requisicao, "criado_em", None)
+    if not data:
+        return "—"
+    return data.strftime("%d/%m/%Y %H:%M")
+
+
+def _nome_campo(exame_campo):
+    return getattr(exame_campo, "nome_campo", None) or getattr(exame_campo, "nome", None) or "—"
+
+
+def _valor_referencia(exame_campo):
+    valor_referencia = getattr(exame_campo, "valor_referencia", None)
+    if valor_referencia:
+        return valor_referencia
+
+    minimo = getattr(exame_campo, "valor_minimo", None)
+    maximo = getattr(exame_campo, "valor_maximo", None)
+    if minimo is not None or maximo is not None:
+        return f"{minimo if minimo is not None else '—'} - {maximo if maximo is not None else '—'}"
+
+    return "-"
+
+
+def _resolver_usuario_documento(requisicao, resultados_qs):
+    if resultados_qs:
+        for resultado in resultados_qs:
+            usuario_validador = getattr(resultado, "validado_por", None)
+            if usuario_validador:
+                return usuario_validador
+
+    return (
+        getattr(requisicao, "analista", None)
+        or getattr(requisicao, "criado_por", None)
+    )
 
 
 def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[bytes, str]:
@@ -46,24 +82,9 @@ def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[by
 
     elements = []
 
-    style_left = ParagraphStyle(
-        "patient_left",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-    )
-    style_right = ParagraphStyle(
-        "patient_right",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-        alignment=TA_RIGHT,
-    )
-
     paciente = requisicao.paciente
-    analista = requisicao.analista
+    resultados_qs = getattr(requisicao, "resultados", None) or getattr(requisicao, "resultadoitem_set", None)
+    usuario_documento = _resolver_usuario_documento(requisicao, resultados_qs)
 
     left_lines = [
         f"{bold('Paciente')}: {paciente.nome}",
@@ -73,50 +94,33 @@ def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[by
         f"{bold('Contacto e Whatsapp')}: {paciente.contacto or '—'}",
     ]
 
-    if analista:
-        nome_real = getattr(analista, "get_full_name", lambda: "")()
-        apelido = getattr(analista, "apelido", "")
-        tecnico_texto = f"{nome_real} ({apelido})" if apelido else nome_real
-    else:
-        tecnico_texto = "—"
+    tecnico_texto = identidade_usuario_institucional(usuario_documento)
 
     right_lines = [
         f"{bold('E-mail')}: {paciente.email or '—'}",
         f"{bold('Requisição')}: {requisicao.id_custom}",
-        f"{bold('Data dos Resultados')}: {requisicao.created_at.strftime('%d/%m/%Y %H:%M')}",
-        f"{bold('Técn. de Laboratório')}: {tecnico_texto or '—'}",
+        f"{bold('Data dos Resultados')}: {_formatar_data_resultados(requisicao)}",
+        f"{bold('Técn. de Laboratório')}: {tecnico_texto}",
     ]
 
-    left_para = Paragraph("<br/>".join(left_lines), style_left)
-    right_para = Paragraph("<br/>".join(right_lines), style_right)
+    style_title = estilo_titulo_documento("HeadingRes")
+    style_section = estilo_secao_documento("section_res")
 
-    patient_table = Table([[left_para, right_para]], colWidths=[usable_width * 0.62, usable_width * 0.38])
-    patient_table.setStyle(
-        TableStyle(
-            [
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            ]
-        )
+    elements.append(Paragraph("RESULTADOS DE ANÁLISES", style_title))
+    elements.append(Spacer(1, 0.3 * cm))
+
+    patient_table = montar_bloco_identificacao(
+        usable_width=usable_width,
+        left_lines=left_lines,
+        right_lines=right_lines,
     )
     elements.append(patient_table)
     elements.append(Spacer(1, 0.3 * cm))
 
     elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.darkblue))
     elements.append(Spacer(1, 0.3 * cm))
-
-    style_title = ParagraphStyle(
-        "HeadingRes",
-        fontName=FONT_BOLD,
-        fontSize=11,
-        leading=14,
-        textColor=colors.darkblue,
-    )
-    elements.append(Paragraph("RESULTADOS DE ANÁLISES", style_title))
-    elements.append(Spacer(1, 0.3 * cm))
-
-    resultados_qs = getattr(requisicao, "resultados", None) or getattr(requisicao, "resultadoitem_set", None)
+    elements.append(Paragraph("ANÁLISES PROCESSADAS", style_section))
+    elements.append(Spacer(1, 0.2 * cm))
 
     if resultados_qs:
         qs = resultados_qs.select_related("exame_campo__exame")
@@ -130,12 +134,12 @@ def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[by
 
         for exame_nome, resultados in exames_agrupados.items():
             elements.append(Spacer(1, 0.2 * cm))
-            elements.append(Paragraph(exame_nome, bold_style))
+            elements.append(Paragraph(exame_nome, style_section))
             elements.append(Spacer(1, 0.2 * cm))
 
             data = [
                 [
-                    cell_paragraph(resultados[0].exame_campo.exame.metodo, is_bold=True),
+                    cell_paragraph(getattr(resultados[0].exame_campo.exame, "metodo", "-"), is_bold=True),
                     cell_paragraph("Resultado", is_bold=True),
                     cell_paragraph("Unidade", is_bold=True),
                     cell_paragraph("Valor de Ref.", is_bold=True),
@@ -158,10 +162,10 @@ def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[by
 
                 data.append(
                     [
-                        cell_paragraph(r.exame_campo.nome_campo),
+                        cell_paragraph(_nome_campo(r.exame_campo)),
                         cell_paragraph(f"{valor} {r.exame_campo.unidade}" if valor not in (None, "") else "-"),
                         cell_paragraph(r.exame_campo.unidade or "-"),
-                        cell_paragraph(r.exame_campo.valor_referencia or "-"),
+                        cell_paragraph(_valor_referencia(r.exame_campo)),
                     ]
                 )
 
@@ -187,14 +191,14 @@ def gerar_pdf_resultados(requisicao, apenas_validados: bool = False) -> tuple[by
             elements.append(KeepTogether(table))
             elements.append(Spacer(1, 0.3 * cm))
     else:
-        elements.append(Paragraph("Nenhum resultado disponível para esta requisição.", cell_style))
+        elements.append(cell_paragraph("Nenhum resultado disponível para esta requisição."))
 
     append_fim(elements)
 
     doc.build(
         elements,
-        onFirstPage=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
+        onFirstPage=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
+        onLaterPages=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
         canvasmaker=NumberedCanvas,
     )
 

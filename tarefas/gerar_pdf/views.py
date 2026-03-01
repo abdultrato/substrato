@@ -1,17 +1,18 @@
 import io
 import logging
 
+from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
+from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
+from aplicativos.faturamento.modelos.fatura import Fatura
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from reportlab.pdfgen import canvas
 from rest_framework.views import APIView
 
-from .models import Fatura, ResultadoItem
-from .models.requisicao_analise import RequisicaoAnalise
-from .utils.pdf_generator_fatura import gerar_pdf_fatura
-from .utils.pdf_generator_requisicao import gerar_pdf_requisicao
-from .utils.pdf_generator_resultado import gerar_pdf_resultados
+from .pdf_generator_fatura import gerar_pdf_fatura
+from .pdf_generator_requisicao import gerar_pdf_requisicao
+from .pdf_generator_resultado import gerar_pdf_resultados
 
 logger = logging.getLogger("pdf.views")
 
@@ -51,7 +52,7 @@ class ResultadoPdf(APIView):
             pdf = canvas.Canvas(buffer)
 
             pdf.drawString(100, 750, f"Resultado ID: {resultado.id}")
-            pdf.drawString(100, 730, f"Paciente: {resultado.paciente.nome}")
+            pdf.drawString(100, 730, f"Paciente: {resultado.requisicao.paciente.nome}")
 
             pdf.showPage()
             pdf.save()
@@ -153,12 +154,13 @@ def fatura_requisicao_pdf(request, id_custom):
 def fatura_pdf(request, fatura_id_custom):
     try:
         fatura = get_object_or_404(
-            Fatura.objects.select_related("paciente", "requisicao", "seguradora"),
+            Fatura.objects.select_related("paciente", "requisicao"),
             id_custom=fatura_id_custom,
         )
 
         # garante consistência financeira
-        fatura.recalcular_totais(save=True)
+        if hasattr(fatura, "recalcular_totais"):
+            fatura.recalcular_totais(save=True)
 
         pdf_content, filename = gerar_pdf_fatura(fatura, request=request)
 

@@ -3,9 +3,7 @@ import logging
 from decimal import Decimal
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
@@ -18,18 +16,46 @@ from reportlab.platypus import (
 )
 
 from .pdf_base import (
-    FONT,
     FONT_BOLD,
     NumberedCanvas,
     append_fim,
     bold,
     cell_paragraph,
-    cell_style,
     draw_line_full_width,
+    identidade_usuario_institucional,
+    estilo_secao_documento,
+    estilo_titulo_documento,
+    montar_bloco_identificacao,
     on_page,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _formatar_data_requisicao(requisicao):
+    if not requisicao:
+        return "—"
+
+    data = getattr(requisicao, "created_at", None) or getattr(requisicao, "criado_em", None)
+    if not data:
+        return "—"
+
+    try:
+        return data.strftime("%d/%m/%Y %H:%M")
+    except Exception:
+        return "—"
+
+
+def _codigo_exame(exame):
+    return getattr(exame, "codigo", "") or getattr(exame, "id_custom", "") or ""
+
+
+def _resolver_usuario_documento(fatura, requisicao):
+    return (
+        getattr(fatura, "criado_por", None)
+        or getattr(requisicao, "criado_por", None)
+        or getattr(requisicao, "analista", None)
+    )
 
 
 def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
@@ -69,42 +95,13 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     # ==========================
     paciente = getattr(fatura, "paciente", None)
     requisicao = getattr(fatura, "requisicao", None)
-    analista = getattr(requisicao, "analista", None) if requisicao else None
+    usuario_documento = _resolver_usuario_documento(fatura, requisicao)
 
     # ==========================
     # ESTILOS
     # ==========================
-    style_title = ParagraphStyle(
-        "HeadingFat",
-        fontName=FONT_BOLD,
-        fontSize=11,
-        leading=14,
-        textColor=colors.darkblue,
-    )
-
-    style_left = ParagraphStyle(
-        "fat_left",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-    )
-
-    style_right = ParagraphStyle(
-        "fat_right",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-        alignment=TA_RIGHT,
-    )
-
-    style_section = ParagraphStyle(
-        "section_fat",
-        fontName=FONT_BOLD,
-        fontSize=9,
-        textColor=colors.darkblue,
-    )
+    style_title = estilo_titulo_documento("HeadingFat")
+    style_section = estilo_secao_documento("section_fat")
 
     # ==========================
     # CABEÇALHO DO DOCUMENTO
@@ -150,42 +147,25 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     # ==========================
     # BLOCO DIREITA (FATURA)
     # ==========================
-    tecnico_texto = "—"
-    if analista:
-        nome_real = getattr(analista, "get_full_name", lambda: "")() or ""
-        apelido = getattr(analista, "apelido", "") or ""
-        tecnico_texto = f"{nome_real} ({apelido})" if apelido else (nome_real or "—")
+    tecnico_texto = identidade_usuario_institucional(usuario_documento)
 
-    data_requisicao = "—"
-    if requisicao and getattr(requisicao, "created_at", None):
-        try:
-            data_requisicao = requisicao.created_at.strftime("%d/%m/%Y %H:%M")
-        except Exception:
-            data_requisicao = "—"
+    data_requisicao = _formatar_data_requisicao(requisicao)
 
     right_lines = [
         f"{bold('Fatura')}: {getattr(fatura, 'id_custom', '—')}",
         f"{bold('Requisição')}: {getattr(requisicao, 'id_custom', '—') if requisicao else '—'}",
         f"{bold('Data')}: {data_requisicao}",
-        f"{bold('Atendido por')}: {tecnico_texto}",
+        f"{bold('Técn. de Laboratório')}: {tecnico_texto}",
         f"{bold('Estado')}: {getattr(fatura, 'estado', '—')}",
     ]
 
     if link_fatura:
         right_lines.append(f"{bold('Link')}: <a href='{link_fatura}' color='blue'>{link_fatura}</a>")
 
-    left_para = Paragraph("<br/>".join(left_lines), style_left)
-    right_para = Paragraph("<br/>".join(right_lines), style_right)
-
-    info_table = Table([[left_para, right_para]], colWidths=[usable_width * 0.62, usable_width * 0.38])
-    info_table.setStyle(
-        TableStyle(
-            [
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            ]
-        )
+    info_table = montar_bloco_identificacao(
+        usable_width=usable_width,
+        left_lines=left_lines,
+        right_lines=right_lines,
     )
 
     story.append(info_table)
@@ -230,7 +210,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
         exame = getattr(item, "exame", None)
         exame_txt = ""
         if exame:
-            codigo = getattr(exame, "codigo", "") or ""
+            codigo = _codigo_exame(exame)
             nome = getattr(exame, "nome", "") or ""
             exame_txt = f"{codigo.upper()} - {nome}" if codigo else nome
 
@@ -350,7 +330,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
             qr_buf.seek(0)
 
             story.append(Spacer(1, 0.12 * cm))
-            story.append(Paragraph("QR Code para acesso rápido à fatura:", cell_style))
+            story.append(cell_paragraph("QR Code para acesso rápido à fatura:"))
             story.append(Spacer(1, 0.08 * cm))
             story.append(RLImage(qr_buf, width=2.3 * cm, height=2.3 * cm))
         except Exception as e:
@@ -363,8 +343,8 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     # ==========================
     doc.build(
         story,
-        onFirstPage=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
+        onFirstPage=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
+        onLaterPages=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
         canvasmaker=NumberedCanvas,
     )
 

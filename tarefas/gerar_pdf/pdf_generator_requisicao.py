@@ -1,9 +1,7 @@
 import io
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
@@ -16,15 +14,32 @@ from reportlab.platypus import (
 )
 
 from .pdf_base import (
-    FONT,
-    FONT_BOLD,
     NumberedCanvas,
     append_fim,
     bold,
     cell_paragraph,
     draw_line_full_width,
+    identidade_usuario_institucional,
+    estilo_secao_documento,
+    estilo_titulo_documento,
+    montar_bloco_identificacao,
     on_page,
 )
+
+
+def _formatar_data_requisicao(requisicao):
+    data = getattr(requisicao, "created_at", None) or getattr(requisicao, "criado_em", None)
+    if not data:
+        return "—"
+    return data.strftime("%d/%m/%Y %H:%M")
+
+
+def _codigo_exame(exame):
+    return getattr(exame, "codigo", None) or getattr(exame, "id_custom", None) or "—"
+
+
+def _resolver_usuario_documento(requisicao):
+    return getattr(requisicao, "criado_por", None) or getattr(requisicao, "analista", None)
 
 
 def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
@@ -38,19 +53,13 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         pagesize=A5,
         leftMargin=min_margin,
         rightMargin=min_margin,
-        topMargin=3 * cm,
+        topMargin=3.8 * cm,
         bottomMargin=2 * cm,
     )
 
     story = []
 
-    style_title = ParagraphStyle(
-        "HeadingReq",
-        fontName=FONT_BOLD,
-        fontSize=11,
-        leading=14,
-        textColor=colors.darkblue,
-    )
+    style_title = estilo_titulo_documento("HeadingReq")
 
     story.append(Spacer(1, 0.6 * cm))
     story.append(Paragraph("REQUISIÇÃO DE EXAMES", style_title))
@@ -58,23 +67,7 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
 
     paciente = requisicao.paciente
     idade = getattr(paciente, "idade", lambda: "—")()
-    analista = requisicao.analista
-
-    style_left = ParagraphStyle(
-        "req_left",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-    )
-    style_right = ParagraphStyle(
-        "req_right",
-        fontName=FONT,
-        fontSize=8,
-        leading=10,
-        textColor=colors.HexColor("#333333"),
-        alignment=TA_RIGHT,
-    )
+    usuario_documento = _resolver_usuario_documento(requisicao)
 
     left_lines = [
         f"{bold('Paciente')}: {paciente.nome}",
@@ -84,32 +77,19 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         f"{bold('Contacto e Whatsapp')}: {paciente.contacto or '—'}",
     ]
 
-    if analista:
-        nome_real = getattr(analista, "get_full_name", lambda: "")()
-        apelido = getattr(analista, "apelido", "")
-        tecnico_texto = f"{nome_real} ({apelido})" if apelido else nome_real
-    else:
-        tecnico_texto = "—"
+    tecnico_texto = identidade_usuario_institucional(usuario_documento)
 
     right_lines = [
         f"{bold('E-mail')}: {paciente.email or '—'}",
         f"{bold('Requisição')}: {requisicao.id_custom}",
-        f"{bold('Data da Requisição')}: {requisicao.created_at.strftime('%d/%m/%Y %H:%M')}",
-        f"{bold('Analista Clínico')}: {tecnico_texto or '—'}",
+        f"{bold('Data da Requisição')}: {_formatar_data_requisicao(requisicao)}",
+        f"{bold('Técn. de Laboratório')}: {tecnico_texto}",
     ]
 
-    left_para = Paragraph("<br/>".join(left_lines), style_left)
-    right_para = Paragraph("<br/>".join(right_lines), style_right)
-
-    patient_table = Table([[left_para, right_para]], colWidths=[usable_width * 0.62, usable_width * 0.38])
-    patient_table.setStyle(
-        TableStyle(
-            [
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            ]
-        )
+    patient_table = montar_bloco_identificacao(
+        usable_width=usable_width,
+        left_lines=left_lines,
+        right_lines=right_lines,
     )
     story.append(patient_table)
     story.append(Spacer(1, 0.3 * cm))
@@ -117,7 +97,7 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.darkblue))
     story.append(Spacer(1, 0.2 * cm))
 
-    style_section = ParagraphStyle("section_title", fontName=FONT_BOLD, fontSize=9, textColor=colors.darkblue)
+    style_section = estilo_secao_documento("section_title")
     story.append(Paragraph("EXAMES REQUISITADOS", style_section))
     story.append(Spacer(1, 0.2 * cm))
 
@@ -126,7 +106,7 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         [
             [
                 cell_paragraph(
-                    f"{bold('Código')}: {e.codigo.upper()} - {bold('Nome')}: {e.nome.capitalize()} - {bold('Método')}: {e.metodo.capitalize()}"
+                    f"{bold('Código')}: {_codigo_exame(e)} - {bold('Nome')}: {e.nome.capitalize()} - {bold('Método')}: {e.metodo.capitalize()}"
                 )
             ]
             for e in exames
@@ -150,8 +130,8 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
 
     doc.build(
         story,
-        onFirstPage=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, analista), draw_line_full_width(c, d)),
+        onFirstPage=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
+        onLaterPages=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
         canvasmaker=NumberedCanvas,
     )
 
