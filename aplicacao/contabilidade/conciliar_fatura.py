@@ -1,34 +1,59 @@
-from decimal import Decimal
+from decimal import (
+    Decimal,
+    ROUND_HALF_UP,
+)
+
 from django.db import transaction
 
 from aplicativos.contabilidade.modelos.conciliacao import ConciliacaoFinanceira
+from aplicativos.contabilidade.modelos.saldo_conta import SaldoConta
 
 
 @transaction.atomic
-def conciliar_fatura(fatura, valor_recebido):
-    """
-    Concilia fatura com valor recebido do banco/gateway.
-    """
+def executar(
+    fatura,
+    valor_recebido,
+    referencia_externa=None,
+):
 
-    if valor_recebido is None:
-        raise ValueError("Valor recebido não pode ser nulo.")
+    valor_recebido = Decimal(
+        valor_recebido,
+    ).quantize(
+        Decimal(
+            "0.01",
+        ),
+        rounding=ROUND_HALF_UP,
+    )
 
-    valor_recebido = Decimal(valor_recebido).quantize(Decimal("0.01"))
+    # 🔐 Lock pessimista no saldo
+    saldo = SaldoConta.objects.select_for_update().get(
+        conta=fatura.conta_recebivel,
+    )
 
-    if valor_recebido < 0:
-        raise ValueError("Valor recebido inválido.")
+    valor_contabil = saldo.saldo_atual.quantize(
+        Decimal(
+            "0.01",
+        ),
+        rounding=ROUND_HALF_UP,
+    )
 
-    valor_registrado = (fatura.total or Decimal("0.00")).quantize(Decimal("0.01"))
+    divergencia = (valor_contabil - valor_recebido).quantize(
+        Decimal(
+            "0.01",
+        ),
+        rounding=ROUND_HALF_UP,
+    )
 
-    divergencia = (valor_registrado - valor_recebido).quantize(Decimal("0.01"))
-    conciliado = divergencia == Decimal("0.00")
+    conciliado = divergencia == Decimal(
+        "0.00",
+    )
 
-    conciliacao = ConciliacaoFinanceira.objects.create(
+    return ConciliacaoFinanceira.objects.create(
+        inquilino=fatura.inquilino,
         fatura=fatura,
-        valor_registrado=valor_registrado,
+        valor_contabil=valor_contabil,
         valor_recebido=valor_recebido,
         divergencia=divergencia,
         conciliado=conciliado,
+        referencia_externa=referencia_externa,
     )
-
-    return conciliacao
