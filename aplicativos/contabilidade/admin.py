@@ -20,18 +20,18 @@ from .modelos.saldo_conta import SaldoConta
 		)
 class ContaAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"id_custom",
 			"nome",
 			"tipo",
-			"ativa",
+			"ativo",
 			)
 	
 	list_filter = (
 			"tipo",
-			"ativa",
+			"ativo",
 			)
 	search_fields = (
 			"id_custom",
@@ -45,7 +45,7 @@ class ContaAdmin(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -56,7 +56,7 @@ class ContaAdmin(
 
 class LedgerLineInline(
 		admin.TabularInline,
-		):
+		) :
 	model = LedgerLine
 	extra = 0
 	can_delete = False
@@ -71,7 +71,7 @@ class LedgerLineInline(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -85,7 +85,7 @@ class LedgerLineInline(
 		)
 class LedgerEntryAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"id",
@@ -120,21 +120,21 @@ class LedgerEntryAdmin(
 	def has_add_permission(
 			self,
 			request,
-			):
+			) :
 		return False
 	
 	def has_delete_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 	
 	def has_change_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -148,7 +148,7 @@ class LedgerEntryAdmin(
 		)
 class SaldoContaAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"conta",
@@ -166,21 +166,21 @@ class SaldoContaAdmin(
 	def has_add_permission(
 			self,
 			request,
-			):
+			) :
 		return False
 	
 	def has_delete_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 	
 	def has_change_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -191,7 +191,7 @@ class SaldoContaAdmin(
 
 class MovimentoInline(
 		admin.TabularInline,
-		):
+		) :
 	model = Movimento
 	extra = 0
 	can_delete = False
@@ -205,7 +205,7 @@ class MovimentoInline(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -219,7 +219,7 @@ class MovimentoInline(
 		)
 class LancamentoAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"id",
@@ -240,7 +240,7 @@ class LancamentoAdmin(
 	def get_queryset(
 			self,
 			request,
-			):
+			) :
 		qs = super().get_queryset(
 				request,
 				)
@@ -256,13 +256,13 @@ class LancamentoAdmin(
 	def total_debitos(
 			self,
 			obj,
-			):
+			) :
 		return obj.total_deb or 0
 	
 	def total_creditos(
 			self,
 			obj,
-			):
+			) :
 		return obj.total_cred or 0
 	
 	total_debitos.short_description = "Débitos"
@@ -271,21 +271,21 @@ class LancamentoAdmin(
 	def has_add_permission(
 			self,
 			request,
-			):
+			) :
 		return False
 	
 	def has_delete_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 	
 	def has_change_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -299,7 +299,7 @@ class LancamentoAdmin(
 		)
 class MovimentoAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"lancamento",
@@ -316,21 +316,21 @@ class MovimentoAdmin(
 	def has_add_permission(
 			self,
 			request,
-			):
+			) :
 		return False
 	
 	def has_delete_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 	
 	def has_change_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 
 
@@ -344,7 +344,7 @@ class MovimentoAdmin(
 		)
 class ConciliacaoFinanceiraAdmin(
 		admin.ModelAdmin,
-		):
+		) :
 	
 	list_display = (
 			"fatura",
@@ -376,19 +376,19 @@ class ConciliacaoFinanceiraAdmin(
 	def has_add_permission(
 			self,
 			request,
-			):
+			) :
 		return False
 	
 	def has_delete_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False
 	
 	def has_change_permission(
 			self,
 			request,
 			obj = None,
-			):
+			) :
 		return False

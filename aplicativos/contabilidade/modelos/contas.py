@@ -4,30 +4,21 @@ from django.db.models import (
 	Q,
 	)
 
+from nucleo.constantes.contabilidade.tipo_conta import TipoConta
 from nucleo.modelos.base import CoreModel
-
-
-class TipoConta(
-		models.TextChoices,
-		):
-	ATIVO = "ATI", "Ativo"
-	PASSIVO = "PAS", "Passivo"
-	RECEITA = "REC", "Receita"
-	DESPESA = "DES", "Despesa"
-	PATRIMONIO = "PAT", "Patrimônio"
 
 
 class Conta(
 		CoreModel,
-		):
+		) :
 	
 	tipo = models.CharField(
 			max_length = 3,
-			choices = TipoConta.choices,
+			choices = TipoConta.choices, default = TipoConta.DESPESA,
 			db_index = True,
 			)
 	
-	class Meta:
+	class Meta :
 		indexes = [
 				models.Index(
 						fields = [
@@ -61,15 +52,15 @@ class Conta(
 			self,
 			*args,
 			**kwargs,
-			):
+			) :
 		
-		if self.pk:
+		if self.pk :
 			original = Conta.objects.get(
 					pk = self.pk,
 					)
 			
-			if original.tipo != self.tipo:
-				if self.tem_movimentacao():
+			if original.tipo != self.tipo :
+				if self.tem_movimentacao() :
 					raise ValidationError(
 							"Não é permitido alterar o tipo de uma conta já "
 							"utilizada.",
@@ -85,14 +76,14 @@ class Conta(
 			self,
 			*args,
 			**kwargs,
-			):
+			) :
 		raise ValidationError(
 				"Conta não pode ser removida.",
 				)
 	
 	def tem_movimentacao(
 			self,
-			):
+			) :
 		
 		# Verificar LedgerLine se estiver ativo
 		from aplicativos.contabilidade.modelos.ledger_line import LedgerLine
@@ -103,5 +94,5 @@ class Conta(
 	
 	def __str__(
 			self,
-			):
+			) :
 		return f"{self.id_custom} - {self.nome}"

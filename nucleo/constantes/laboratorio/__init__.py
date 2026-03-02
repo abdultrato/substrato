@@ -1,8 +1,6 @@
-from .tipo_resultado import TipoResultado
-from .setor import Setor
 from .metodo import Metodo
-from .unidades import UNIDADES_PADRAO
+from .setor import Setor
+from .tipo_resultado import TipoResultado
+from .unidades import UnidadePadrao
 
-__all__ = [
-		"UNIDADES_PADRAO", "Metodo", "Setor", "TipoResultado",
-		]
+__all__ = ["UnidadePadrao", "Metodo", "Setor", "TipoResultado", ]

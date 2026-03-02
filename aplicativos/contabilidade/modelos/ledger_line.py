@@ -7,9 +7,7 @@ from django.db.models import Q
 from nucleo.modelos.base import CoreModel
 
 
-class LedgerLine(
-		CoreModel,
-		):
+class LedgerLine(CoreModel) :
 	
 	# ===============================
 	# RELACIONAMENTOS
@@ -40,14 +38,8 @@ class LedgerLine(
 	natureza = models.CharField(
 			max_length = 1,
 			choices = [
-					(
-							"D",
-							"Débito",
-							),
-					(
-							"C",
-							"Crédito",
-							),
+					("D", "Débito"),
+					("C", "Crédito"),
 					],
 			)
 	
@@ -60,33 +52,16 @@ class LedgerLine(
 	# META
 	# ===============================
 	
-	class Meta:
+	class Meta :
 		indexes = [
-				models.Index(
-						fields = [
-								"entry",
-								],
-						),
-				models.Index(
-						fields = [
-								"inquilino",
-								"conta",
-								"criado_em",
-								],
-						),
-				models.Index(
-						fields = [
-								"inquilino",
-								"entry",
-								],
-						),
+				models.Index(fields = ["entry"]),
+				models.Index(fields = ["inquilino", "conta", "criado_em"]),
+				models.Index(fields = ["inquilino", "entry"]),
 				]
 		
 		constraints = [
 				models.CheckConstraint(
-						check = Q(
-								valor__gt = 0,
-								),
+						condition = Q(valor__gt = 0),
 						name = "ledgerline_valor_positivo",
 						),
 				]
@@ -95,85 +70,54 @@ class LedgerLine(
 	# 🔎 VALIDAÇÕES DE DOMÍNIO
 	# ======================================
 	
-	def clean(
-			self,
-			):
+	def clean(self) :
 		
-		if self.valor is None or self.valor <= Decimal(
-				"0.00",
-				):
-			raise ValidationError(
-					"Valor deve ser maior que zero.",
-					)
+		if self.valor is None or self.valor <= Decimal("0.00") :
+			raise ValidationError("Valor deve ser maior que zero.")
 		
-		if self.natureza not in (
-					"D",
-					"C",
-				):
-			raise ValidationError(
-					"Natureza inválida.",
-					)
+		if self.natureza not in ("D", "C") :
+			raise ValidationError("Natureza inválida.")
 		
-		if not self.entry_id:
-			raise ValidationError(
-					"Entry é obrigatório.",
-					)
+		if not self.entry_id :
+			raise ValidationError("Entry é obrigatório.")
 		
-		if not self.conta_id:
-			raise ValidationError(
-					"Conta é obrigatória.",
-					)
+		if not self.conta_id :
+			raise ValidationError("Conta é obrigatória.")
 		
-		# 🔐 Multi-tenant enforcement
-		if (
-				self.inquilino_id
-				and self.entry_id
-				and self.entry.inquilino_id != self.inquilino_id
-		):
-			raise ValidationError(
-					"Inquilino da linha difere do LedgerEntry.",
-					)
+		# 🔐 Multi-tenant enforcement (sem query extra desnecessária)
+		if self.inquilino_id and self.entry_id :
+			if self.entry.inquilino_id != self.inquilino_id :
+				raise ValidationError(
+						"Inquilino da linha difere do LedgerEntry.",
+						)
 		
-		if (
-				self.inquilino_id
-				and self.conta_id
-				and self.conta.inquilino_id != self.inquilino_id
-		):
+		if self.inquilino_id and self.conta_id :
+			if self.conta.inquilino_id != self.inquilino_id :
+				raise ValidationError(
+						"Inquilino da linha difere da Conta.",
+						)
+		
+		# 🔒 Segurança adicional (opcional)
+		if hasattr(self.entry, "revertido") and self.entry.revertido :
 			raise ValidationError(
-					"Inquilino da linha difere da Conta.",
+					"Não é permitido adicionar linhas a um LedgerEntry "
+					"revertido.",
 					)
 	
 	# ======================================
 	# 🔐 IMUTABILIDADE FORTE
 	# ======================================
 	
-	def save(
-			self,
-			*args,
-			**kwargs,
-			):
+	def save(self, *args, **kwargs) :
 		
-		if self.pk:
-			raise RuntimeError(
-					"LedgerLine é imutável.",
-					)
+		if self.pk :
+			raise RuntimeError("LedgerLine é imutável.")
 		
 		self.full_clean()
-		return super().save(
-				*args,
-				**kwargs,
-				)
+		return super().save(*args, **kwargs)
 	
-	def delete(
-			self,
-			*args,
-			**kwargs,
-			):
-		raise RuntimeError(
-				"LedgerLine é imutável.",
-				)
+	def delete(self, *args, **kwargs) :
+		raise RuntimeError("LedgerLine é imutável.")
 	
-	def __str__(
-			self,
-			):
+	def __str__(self) :
 		return f"{self.conta_id} | {self.natureza} | {self.valor}"
