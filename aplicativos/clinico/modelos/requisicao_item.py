@@ -54,9 +54,21 @@ class RequisicaoItem(NoNameCoreModel) :
 	# =====================================================
 	
 	def _criar_resultados(self) :
+		"""
+		Cria automaticamente os ResultadoItem
+		herdando o inquilino do agregado raiz.
+		"""
+		
 		campos = self.exame.campos.all()
 		
-		ResultadoItem.objects.bulk_create([ResultadoItem(requisicao = self.requisicao, exame_campo = campo, ) for campo in campos])
+		if not campos.exists() :
+			return
+		
+		inquilino = self.requisicao.inquilino
+		
+		resultados = [ResultadoItem(inquilino = inquilino, requisicao = self.requisicao, exame_campo = campo, ) for campo in campos]
+		
+		ResultadoItem.objects.bulk_create(resultados)
 	
 	# =====================================================
 	
