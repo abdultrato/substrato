@@ -14,38 +14,17 @@ from .modelos.saldo_conta import SaldoConta
 # CONTA (Configuração Estrutural)
 # =====================================================
 
-
-@admin.register(
-		Conta,
-		)
-class ContaAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(Conta)
+class ContaAdmin(admin.ModelAdmin) :
+	list_display = ("id_custom", "nome", "tipo",)
 	
-	list_display = (
-			"id_custom",
-			"nome",
-			"tipo",
-			"ativo",
-			)
+	list_filter = ("tipo",)
 	
-	list_filter = (
-			"tipo",
-			"ativo",
-			)
-	search_fields = (
-			"id_custom",
-			"nome",
-			)
-	ordering = (
-			"id_custom",
-			)
+	search_fields = ("id_custom", "nome",)
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	ordering = ("id_custom",)
+	
+	def has_delete_permission(self, request, obj = None) :
 		return False
 
 
@@ -53,25 +32,14 @@ class ContaAdmin(
 # LEDGER LINE (INLINE READONLY)
 # =====================================================
 
-
-class LedgerLineInline(
-		admin.TabularInline,
-		) :
+class LedgerLineInline(admin.TabularInline) :
 	model = LedgerLine
 	extra = 0
 	can_delete = False
-	readonly_fields = (
-			"conta",
-			"valor",
-			"natureza",
-			"criado_em",
-			)
 	
-	def has_add_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	readonly_fields = ("conta", "valor", "natureza", "criado_em",)
+	
+	def has_add_permission(self, request, obj = None) :
 		return False
 
 
@@ -79,62 +47,27 @@ class LedgerLineInline(
 # LEDGER ENTRY (Núcleo Contábil Imutável)
 # =====================================================
 
-
-@admin.register(
-		LedgerEntry,
-		)
-class LedgerEntryAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(LedgerEntry)
+class LedgerEntryAdmin(admin.ModelAdmin) :
+	list_display = ("id", "data_contabil", "descricao", "referencia_externa", "criado_em",)
 	
-	list_display = (
-			"id",
-			"data_contabil",
-			"descricao",
-			"referencia_externa",
-			"criado_em",
-			)
+	search_fields = ("descricao", "referencia_externa",)
 	
-	search_fields = (
-			"descricao",
-			"referencia_externa",
-			)
+	list_filter = ("data_contabil",)
 	
-	list_filter = (
-			"data_contabil",
-			)
-	ordering = (
-			"-data_contabil",
-			)
-	inlines = [
-			LedgerLineInline,
-			]
+	ordering = ("-data_contabil",)
 	
-	readonly_fields = (
-			"data_contabil",
-			"descricao",
-			"referencia_externa",
-			"criado_em",
-			)
+	inlines = [LedgerLineInline]
 	
-	def has_add_permission(
-			self,
-			request,
-			) :
+	readonly_fields = ("data_contabil", "descricao", "referencia_externa", "criado_em",)
+	
+	def has_add_permission(self, request) :
 		return False
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_delete_permission(self, request, obj = None) :
 		return False
 	
-	def has_change_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_change_permission(self, request, obj = None) :
 		return False
 
 
@@ -142,45 +75,21 @@ class LedgerEntryAdmin(
 # SALDO CONTA (Snapshot Materializado)
 # =====================================================
 
-
-@admin.register(
-		SaldoConta,
-		)
-class SaldoContaAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(SaldoConta)
+class SaldoContaAdmin(admin.ModelAdmin) :
+	list_display = ("conta", "saldo_atual", "atualizado_em",)
 	
-	list_display = (
-			"conta",
-			"saldo_atual",
-			"atualizado_em",
-			)
+	search_fields = ("conta__id_custom",)
 	
-	search_fields = (
-			"conta__id_custom",
-			)
-	ordering = (
-			"-atualizado_em",
-			)
+	ordering = ("-atualizado_em",)
 	
-	def has_add_permission(
-			self,
-			request,
-			) :
+	def has_add_permission(self, request) :
 		return False
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_delete_permission(self, request, obj = None) :
 		return False
 	
-	def has_change_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_change_permission(self, request, obj = None) :
 		return False
 
 
@@ -188,24 +97,14 @@ class SaldoContaAdmin(
 # MOVIMENTO INLINE (Legado - Readonly)
 # =====================================================
 
-
-class MovimentoInline(
-		admin.TabularInline,
-		) :
+class MovimentoInline(admin.TabularInline) :
 	model = Movimento
 	extra = 0
 	can_delete = False
-	readonly_fields = (
-			"conta",
-			"debito",
-			"credito",
-			)
 	
-	def has_add_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	readonly_fields = ("conta", "debito", "credito",)
+	
+	def has_add_permission(self, request, obj = None) :
 		return False
 
 
@@ -213,79 +112,34 @@ class MovimentoInline(
 # LANCAMENTO (Legado - Readonly)
 # =====================================================
 
-
-@admin.register(
-		Lancamento,
-		)
-class LancamentoAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(Lancamento)
+class LancamentoAdmin(admin.ModelAdmin) :
+	list_display = ("id", "descricao", "data", "confirmado", "total_debitos", "total_creditos",)
 	
-	list_display = (
-			"id",
-			"descricao",
-			"data",
-			"confirmado",
-			"total_debitos",
-			"total_creditos",
-			)
+	ordering = ("-data",)
 	
-	ordering = (
-			"-data",
-			)
-	inlines = [
-			MovimentoInline,
-			]
+	inlines = [MovimentoInline]
 	
-	def get_queryset(
-			self,
-			request,
-			) :
-		qs = super().get_queryset(
-				request,
-				)
-		return qs.annotate(
-				total_deb = Sum(
-						"movimentos__debito",
-						),
-				total_cred = Sum(
-						"movimentos__credito",
-						),
-				)
+	def get_queryset(self, request) :
+		qs = super().get_queryset(request)
+		return qs.annotate(total_deb = Sum("movimentos__debito"), total_cred = Sum("movimentos__credito"), )
 	
-	def total_debitos(
-			self,
-			obj,
-			) :
+	def total_debitos(self, obj) :
 		return obj.total_deb or 0
 	
-	def total_creditos(
-			self,
-			obj,
-			) :
+	def total_creditos(self, obj) :
 		return obj.total_cred or 0
 	
 	total_debitos.short_description = "Débitos"
 	total_creditos.short_description = "Créditos"
 	
-	def has_add_permission(
-			self,
-			request,
-			) :
+	def has_add_permission(self, request) :
 		return False
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_delete_permission(self, request, obj = None) :
 		return False
 	
-	def has_change_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_change_permission(self, request, obj = None) :
 		return False
 
 
@@ -293,44 +147,19 @@ class LancamentoAdmin(
 # MOVIMENTO (Standalone - Readonly)
 # =====================================================
 
-
-@admin.register(
-		Movimento,
-		)
-class MovimentoAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(Movimento)
+class MovimentoAdmin(admin.ModelAdmin) :
+	list_display = ("lancamento", "conta", "debito", "credito",)
 	
-	list_display = (
-			"lancamento",
-			"conta",
-			"debito",
-			"credito",
-			)
+	search_fields = ("lancamento__descricao", "conta__id_custom",)
 	
-	search_fields = (
-			"lancamento__descricao",
-			"conta__id_custom",
-			)
-	
-	def has_add_permission(
-			self,
-			request,
-			) :
+	def has_add_permission(self, request) :
 		return False
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_delete_permission(self, request, obj = None) :
 		return False
 	
-	def has_change_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_change_permission(self, request, obj = None) :
 		return False
 
 
@@ -338,57 +167,21 @@ class MovimentoAdmin(
 # CONCILIAÇÃO FINANCEIRA (Auditoria)
 # =====================================================
 
-
-@admin.register(
-		ConciliacaoFinanceira,
-		)
-class ConciliacaoFinanceiraAdmin(
-		admin.ModelAdmin,
-		) :
+@admin.register(ConciliacaoFinanceira)
+class ConciliacaoFinanceiraAdmin(admin.ModelAdmin) :
+	list_display = ("fatura", "valor_contabil", "valor_recebido", "divergencia", "conciliado", "criado_em",)
 	
-	list_display = (
-			"fatura",
-			"valor_contabil",
-			"valor_recebido",
-			"divergencia",
-			"conciliado",
-			"criado_em",
-			)
+	list_filter = ("conciliado", "criado_em",)
 	
-	list_filter = (
-			"conciliado",
-			"criado_em",
-			)
+	ordering = ("-criado_em",)
 	
-	ordering = (
-			"-criado_em",
-			)
+	readonly_fields = ("fatura", "valor_contabil", "valor_recebido", "divergencia", "conciliado", "criado_em",)
 	
-	readonly_fields = (
-			"fatura",
-			"valor_contabil",
-			"valor_recebido",
-			"divergencia",
-			"conciliado",
-			"criado_em",
-			)
-	
-	def has_add_permission(
-			self,
-			request,
-			) :
+	def has_add_permission(self, request) :
 		return False
 	
-	def has_delete_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_delete_permission(self, request, obj = None) :
 		return False
 	
-	def has_change_permission(
-			self,
-			request,
-			obj = None,
-			) :
+	def has_change_permission(self, request, obj = None) :
 		return False

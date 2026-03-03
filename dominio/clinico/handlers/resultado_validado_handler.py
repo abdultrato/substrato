@@ -1,18 +1,12 @@
-# LOCAL: eventos/handlers.py
+# LOCAL: dominio/clinico/handlers/resultado_validado_handler.py
 
 from nucleo.constantes.tipo_evento_clinico import TipoEventoClinico
 
 
 class ResultadoValidadoHandler :
-	"""
-	Handler responsável por reagir ao evento ResultadoValidadoEvent.
-
-	Responsabilidade:
-	- Registrar histórico clínico automaticamente
-	"""
 	
 	@staticmethod
-	def handle(event) -> None :
+	def handle(event) :
 		# 🔒 Import lazy para evitar circular import
 		from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 		from aplicativos.clinico.modelos.historico_clinico import HistoricoClinico

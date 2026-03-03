@@ -1,26 +1,21 @@
+# LOCAL: nucleo/mixins/escopo_inquilino.py
+
 from django.db import models
-from django.db.models import Q
+
+from infrastrutura.contexto.inquilino import get_inquilino
 
 
-class InquilinoMixin(models.Model):
-    """
-    Mixin multi-tenant corporativo.
-
-    Garante:
-    - Escopo por inquilino
-    - Índice estratégico
-    - Base para constraints condicionais
-    """
-
-    inquilino = models.ForeignKey(
-        "inquilinos.Inquilino",
-        on_delete=models.PROTECT,
-        related_name="%(class)ss",
-        db_index=True,
-    )
-
-    class Meta:
-        abstract = True
-        indexes = [
-            models.Index(fields=["inquilino"]),
-        ]
+class InquilinoMixin(models.Model) :
+	inquilino = models.ForeignKey("inquilinos.Inquilino", on_delete = models.PROTECT, related_name = "%(class)ss", db_index = True, )
+	
+	class Meta :
+		abstract = True
+		indexes = [models.Index(fields = ["inquilino"]), ]
+	
+	def save(self, *args, **kwargs) :
+		if not self.inquilino_id :
+			inquilino = get_inquilino()
+			if inquilino :
+				self.inquilino = inquilino
+		
+		super().save(*args, **kwargs)

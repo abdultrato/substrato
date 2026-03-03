@@ -1,34 +1,37 @@
+# LOCAL: infrastrutura/contexto/inquilino.py
 from contextvars import ContextVar
 
+from infrastrutura.contexto.request_user import get_current_user
 
-"""
-Contexto isolado por request.
+_inquilino_ctx: ContextVar = ContextVar("inquilino", default = None)
 
-✔ Seguro para WSGI
-✔ Seguro para ASGI
-✔ Compatível com async
-✔ Sem vazamento entre requisições
-"""
-
-_inquilino_ctx: ContextVar = ContextVar("inquilino", default=None)
+usuario = get_current_user()
 
 
-def set_inquilino(inquilino):
-    """
-    Define o tenant no contexto atual.
-    """
-    _inquilino_ctx.set(inquilino)
+def set_inquilino(inquilino) :
+	"""
+	Define o tenant no contexto atual.
+	Retorna token para restauração segura.
+	"""
+	return _inquilino_ctx.set(inquilino)
 
 
-def get_inquilino():
-    """
-    Obtém o tenant atual.
-    """
-    return _inquilino_ctx.get()
+def get_inquilino() :
+	"""
+	Obtém o tenant atual.
+	"""
+	return _inquilino_ctx.get()
 
 
-def clear_inquilino():
-    """
-    Remove o tenant do contexto.
-    """
-    _inquilino_ctx.set(None)
+def reset_inquilino(token) :
+	"""
+	Restaura estado anterior do contexto.
+	"""
+	_inquilino_ctx.reset(token)
+
+
+def clear_inquilino() :
+	"""
+	Remove explicitamente o tenant do contexto.
+	"""
+	_inquilino_ctx.set(None)

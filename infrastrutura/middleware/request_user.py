@@ -1,22 +1,25 @@
-from threading import local
+# LOCAL: infrastrutura/middleware/request_user.py
 
-_user = local()
+from django.utils.functional import SimpleLazyObject
 
-
-def get_current_user():
-    return getattr(_user, "value", None)
+from infrastrutura.contexto.request_user import (clear_current_user, set_current_user)
 
 
-class RequestUserMiddleware:
-    """
-    Armazena o usuário atual em thread local
-    para auditoria automática.
-    """
+def _get_user(request) :
+	return getattr(request, "user", None)
 
-    def __init__(self, get_response):
-        self.get_response = get_response
 
-    def __call__(self, request):
-        _user.value = getattr(request, "user", None)
-        response = self.get_response(request)
-        return response
+class RequestUserMiddleware :
+	
+	def __init__(self, get_response) :
+		self.get_response = get_response
+	
+	def __call__(self, request) :
+		user = SimpleLazyObject(lambda : _get_user(request))
+		
+		try :
+			set_current_user(user)
+			response = self.get_response(request)
+			return response
+		finally :
+			clear_current_user()

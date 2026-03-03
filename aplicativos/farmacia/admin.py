@@ -1,11 +1,8 @@
-# farmacia/admin.py
 from django.contrib import admin
 from django.db.models import Case, F, IntegerField, Sum, When
 from django.utils.html import format_html
 
-from aplicativos.farmacia.models.movimento import (
-	TipoMovimento,
-	)
+from aplicativos.farmacia.models.movimento import TipoMovimento
 from .models.item_venda import ItemVenda
 from .models.lote import Lote
 from .models.movimento import MovimentoEstoque
@@ -19,18 +16,10 @@ from .models.venda import Venda
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin) :
-	
-	list_display = (
-			"id_custom",
-			"nome",
-			"tipo",
-			"preco_venda",
-			"ativo",
-			"criado_em",
-			)
+	list_display = ("id_custom", "nome", "tipo", "preco_venda", "criado_em",)
 	
 	search_fields = ("id_custom", "nome")
-	list_filter = ("tipo", "ativo")
+	list_filter = ("tipo",)
 	ordering = ("nome",)
 	
 	readonly_fields = ("criado_em", "atualizado_em")
@@ -43,17 +32,9 @@ class ProdutoAdmin(admin.ModelAdmin) :
 # LOTE
 # =========================================================
 
-
 @admin.register(Lote)
 class LoteAdmin(admin.ModelAdmin) :
-	
-	list_display = (
-			"produto",
-			"numero_lote",
-			"validade",
-			"saldo_atual",
-			"vencido_status",
-			)
+	list_display = ("produto", "numero_lote", "validade", "saldo_atual", "vencido_status",)
 	
 	search_fields = ("numero_lote", "produto__nome")
 	list_filter = ("validade",)
@@ -68,21 +49,7 @@ class LoteAdmin(admin.ModelAdmin) :
 	def get_queryset(self, request) :
 		qs = super().get_queryset(request)
 		
-		return qs.annotate(
-				_saldo = Sum(
-						Case(
-								When(
-										movimentoestoque__tipo =
-										TipoMovimento.SAIDA,
-										then = -F(
-												"movimentoestoque__quantidade",
-												),
-										),
-								default = F("movimentoestoque__quantidade"),
-								output_field = IntegerField(),
-								),
-						),
-				)
+		return qs.annotate(_saldo = Sum(Case(When(movimentoestoque__tipo = TipoMovimento.SAIDA, then = -F("movimentoestoque__quantidade"), ), default = F("movimentoestoque__quantidade"), output_field = IntegerField(), )))
 	
 	# =====================================================
 	# SALDO
@@ -99,7 +66,7 @@ class LoteAdmin(admin.ModelAdmin) :
 	# =====================================================
 	
 	def vencido_status(self, obj) :
-		if obj.vencido :
+		if getattr(obj, "vencido", False) :
 			return format_html("<span style='color:red;'>Vencido</span>")
 		return "OK"
 
@@ -110,26 +77,13 @@ class LoteAdmin(admin.ModelAdmin) :
 
 @admin.register(MovimentoEstoque)
 class MovimentoEstoqueAdmin(admin.ModelAdmin) :
-	
-	list_display = (
-			"lote",
-			"tipo",
-			"quantidade",
-			"criado_em",
-			)
+	list_display = ("lote", "tipo", "quantidade", "criado_em",)
 	
 	list_filter = ("tipo", "criado_em")
 	
-	readonly_fields = (
-			
-			"lote",
-			"tipo",
-			"quantidade",
-			"criado_em",
-			)
+	readonly_fields = ("lote", "tipo", "quantidade", "criado_em",)
 	
 	def has_add_permission(self, request) :
-		# Movimentos devem ser feitos via serviço transacional
 		return False
 	
 	def has_delete_permission(self, request, obj = None) :
@@ -159,21 +113,14 @@ class ItemVendaInline(admin.TabularInline) :
 
 @admin.register(Venda)
 class VendaAdmin(admin.ModelAdmin) :
-	
-	list_display = (
-			"numero",
-			"total",
-			"ativo",
-			"criado_em",
-			)
+	list_display = ("numero", "total", "criado_em",)
 	
 	search_fields = ("numero",)
-	list_filter = ("ativo", "criado_em")
+	list_filter = ("criado_em",)
 	
 	inlines = [ItemVendaInline]
 	
 	readonly_fields = ("total", "criado_em", "atualizado_em")
 	
 	list_per_page = 50
-	
 	list_select_related = True

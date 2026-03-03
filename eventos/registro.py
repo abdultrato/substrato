@@ -1,15 +1,9 @@
-from collections import defaultdict
-from typing import Callable
+# LOCAL: eventos/registro.py
 
-_registro_eventos = defaultdict(list)
-
-
-def registrar(evento_nome: str, handler: Callable):
-    """
-    Registra um handler para um evento.
-    """
-    _registro_eventos[evento_nome].append(handler)
+from dominio.clinico.eventos import ResultadoValidadoEvent
+from eventos.bus import event_bus
+from eventos.handlers import ResultadoValidadoHandler
 
 
-def obter_handlers(evento_nome: str):
-    return _registro_eventos.get(evento_nome, [])
+def registrar_handlers() :
+	event_bus.register(ResultadoValidadoEvent, ResultadoValidadoHandler.handle, )

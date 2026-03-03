@@ -1,7 +1,4 @@
-from .base import AuditTimestampModel, StatusModel, CoreModel, InqCoreModel
+from .base import CoreModel, InqCoreModel
 from .managers import ManagerAtivo, QuerySetAtivo
 
-__all__ = [
-		"QuerySetAtivo", "ManagerAtivo", "CoreModel", "InqCoreModel",
-		"StatusModel", "AuditTimestampModel",
-		]
+__all__ = ["QuerySetAtivo", "ManagerAtivo", "CoreModel", "InqCoreModel", ]
