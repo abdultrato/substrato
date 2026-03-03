@@ -6,14 +6,14 @@ from django.db import models, transaction
 
 from dominio.clinico.estado_requisicao import EstadoRequisicao
 from dominio.clinico.state_machine_requisicao import RequisicaoStateMachine
-from nucleo.modelos.base import CoreModel
+from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
 from .paciente import Paciente
 
 User = settings.AUTH_USER_MODEL
 
 
-class RequisicaoAnalise(CoreModel) :
+class RequisicaoAnalise(NoNameCoreModel) :
 	prefixo = "REQ"
 	
 	paciente = models.ForeignKey(Paciente, on_delete = models.CASCADE, related_name = "requisicoes", )
