@@ -9,6 +9,8 @@ from nucleo.modelos.base import NoNameCoreModel
 
 
 class FaturaItem(NoNameCoreModel) :
+	prefixo = "FTIT"
+	
 	fatura = models.ForeignKey("faturamento.Fatura", on_delete = models.CASCADE, related_name = "itens", )
 	
 	exame = models.ForeignKey("clinico.Exame", on_delete = models.PROTECT, )

@@ -8,70 +8,40 @@ from nucleo.modelos.base import CoreModel
 
 
 class LedgerLine(CoreModel) :
+	prefixo = "LL"
 	
 	# ===============================
 	# RELACIONAMENTOS
 	# ===============================
 	
-	entry = models.ForeignKey(
-			"contabilidade.LedgerEntry",
-			on_delete = models.PROTECT,
-			related_name = "linhas",
-			db_index = True,
-			)
+	entry = models.ForeignKey("contabilidade.LedgerEntry", on_delete = models.PROTECT, related_name = "linhas", db_index = True, )
 	
-	conta = models.ForeignKey(
-			"contabilidade.Conta",
-			on_delete = models.PROTECT,
-			db_index = True,
-			)
+	conta = models.ForeignKey("contabilidade.Conta", on_delete = models.PROTECT, db_index = True, )
 	
 	# ===============================
 	# CONTÁBIL
 	# ===============================
 	
-	valor = models.DecimalField(
-			max_digits = 18,
-			decimal_places = 2,
-			)
+	valor = models.DecimalField(max_digits = 18, decimal_places = 2, )
 	
-	natureza = models.CharField(
-			max_length = 1,
-			choices = [
-					("D", "Débito"),
-					("C", "Crédito"),
-					],
-			)
+	natureza = models.CharField(max_length = 1, choices = [("D", "Débito"), ("C", "Crédito"), ], )
 	
-	criado_em = models.DateTimeField(
-			auto_now_add = True,
-			db_index = True,
-			)
+	criado_em = models.DateTimeField(auto_now_add = True, db_index = True, )
 	
 	# ===============================
 	# META
 	# ===============================
 	
 	class Meta :
-		indexes = [
-				models.Index(fields = ["entry"]),
-				models.Index(fields = ["inquilino", "conta", "criado_em"]),
-				models.Index(fields = ["inquilino", "entry"]),
-				]
+		indexes = [models.Index(fields = ["entry"]), models.Index(fields = ["inquilino", "conta", "criado_em"]), models.Index(fields = ["inquilino", "entry"]), ]
 		
-		constraints = [
-				models.CheckConstraint(
-						condition = Q(valor__gt = 0),
-						name = "ledgerline_valor_positivo",
-						),
-				]
+		constraints = [models.CheckConstraint(condition = Q(valor__gt = 0), name = "ledgerline_valor_positivo", ), ]
 	
 	# ======================================
 	# 🔎 VALIDAÇÕES DE DOMÍNIO
 	# ======================================
 	
 	def clean(self) :
-		
 		if self.valor is None or self.valor <= Decimal("0.00") :
 			raise ValidationError("Valor deve ser maior que zero.")
 		
@@ -87,29 +57,22 @@ class LedgerLine(CoreModel) :
 		# 🔐 Multi-tenant enforcement (sem query extra desnecessária)
 		if self.inquilino_id and self.entry_id :
 			if self.entry.inquilino_id != self.inquilino_id :
-				raise ValidationError(
-						"Inquilino da linha difere do LedgerEntry.",
-						)
+				raise ValidationError("Inquilino da linha difere do LedgerEntry.", )
 		
 		if self.inquilino_id and self.conta_id :
 			if self.conta.inquilino_id != self.inquilino_id :
-				raise ValidationError(
-						"Inquilino da linha difere da Conta.",
-						)
+				raise ValidationError("Inquilino da linha difere da Conta.", )
 		
 		# 🔒 Segurança adicional (opcional)
 		if hasattr(self.entry, "revertido") and self.entry.revertido :
-			raise ValidationError(
-					"Não é permitido adicionar linhas a um LedgerEntry "
-					"revertido.",
-					)
+			raise ValidationError("Não é permitido adicionar linhas a um LedgerEntry "
+			                      "revertido.", )
 	
 	# ======================================
 	# 🔐 IMUTABILIDADE FORTE
 	# ======================================
 	
 	def save(self, *args, **kwargs) :
-		
 		if self.pk :
 			raise RuntimeError("LedgerLine é imutável.")
 		

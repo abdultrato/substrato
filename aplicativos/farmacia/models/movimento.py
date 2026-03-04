@@ -13,36 +13,23 @@ class TipoMovimento(models.TextChoices) :
 
 
 class MovimentoEstoque(CoreModel) :
+	prefixo = "MVESQ"
 	
-	lote = models.ForeignKey(
-			"farmacia.Lote",
-			on_delete = models.PROTECT,
-			related_name = "movimentos",
-			db_index = True,
-			)
+	lote = models.ForeignKey("farmacia.Lote", on_delete = models.PROTECT, related_name = "movimentos", db_index = True, )
 	
-	tipo = models.CharField(
-			max_length = 3,
-			choices = TipoMovimento.choices,
-			db_index = True,
-			)
+	tipo = models.CharField(max_length = 3, choices = TipoMovimento.choices, db_index = True, )
 	
-	quantidade = models.PositiveIntegerField(
-			validators = [MinValueValidator(1)],
-			)
+	quantidade = models.PositiveIntegerField(validators = [MinValueValidator(1)], )
 	
 	class Meta :
 		ordering = ["-criado_em"]
-		indexes = [
-				models.Index(fields = ["lote", "criado_em"]),
-				]
+		indexes = [models.Index(fields = ["lote", "criado_em"]), ]
 	
 	# ======================================
 	# VALIDAÇÃO DE DOMÍNIO
 	# ======================================
 	
 	def clean(self) :
-		
 		if not self.lote_id :
 			raise ValidationError("Lote é obrigatório.")
 		
@@ -51,32 +38,13 @@ class MovimentoEstoque(CoreModel) :
 			raise ValidationError("Não é permitido movimentar lote vencido.")
 		
 		# Multi-tenant enforcement
-		if (
-				self.inquilino_id
-				and self.lote.inquilino_id != self.inquilino_id
-		) :
-			raise ValidationError(
-					"Inquilino do movimento difere do lote.",
-					)
+		if (self.inquilino_id and self.lote.inquilino_id != self.inquilino_id) :
+			raise ValidationError("Inquilino do movimento difere do lote.", )
 		
 		# Bloquear saída sem saldo suficiente
 		if self.tipo == TipoMovimento.SAIDA :
-			
-			saldo = (
-					self.lote.movimentos.aggregate(
-							total = Sum(
-									Case(
-											When(
-													tipo = TipoMovimento.SAIDA,
-													then = -F("quantidade"),
-													),
-											default = F("quantidade"),
-											output_field = IntegerField(),
-											),
-									),
-							)["total"]
-					or 0
-			)
+			saldo = (self.lote.movimentos.aggregate(total = Sum(Case(When(tipo = TipoMovimento.SAIDA, then = -F("quantidade"), ), default = F("quantidade"), output_field = IntegerField(), ), ), )[
+				         "total"] or 0)
 			
 			if self.quantidade > saldo :
 				raise ValidationError("Estoque insuficiente.")

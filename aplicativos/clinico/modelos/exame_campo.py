@@ -1,7 +1,8 @@
 # LOCAL: aplicativos/clinico/modelos/exame_campo.py
-
 from django.db import models
 
+from infrastrutura.orm.fields.unidade_field import UnidadeField
+from nucleo.constantes.laboratorio.unidades import UnidadePadrao
 from nucleo.modelos.base import CoreModel
 from .exame import Exame
 
@@ -13,7 +14,7 @@ class ExameCampo(CoreModel) :
 	
 	tipo = models.CharField(max_length = 20)
 	
-	unidade = models.CharField(max_length = 20)
+	unidade = UnidadeField(UnidadePadrao.choices, default = UnidadePadrao.P_UL.label)
 	
 	def __str__(self) :
 		return f"{self.exame.nome} → {self.nome}"

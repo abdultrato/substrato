@@ -39,12 +39,12 @@ class Exame(CoreModel) :
 		verbose_name = "Exame"
 		verbose_name_plural = "Exames"
 		
-		ordering = ["nome"]
+		ordering = ["nome", "criado_em"]
 		
-		indexes = [# Consulta principal (listagem por setor)
+		indexes = [  # Consulta principal (listagem por setor)
 			models.Index(fields = ["setor", "deletado"]), models.Index(fields = ["metodo"]), ]
 		
-		constraints = [# Unicidade lógica por setor (somente não deletados)
+		constraints = [  # Unicidade lógica por setor (somente não deletados)
 			models.UniqueConstraint(fields = ["setor", "nome"], condition = Q(deletado = False), name = "unique_nome_exame_por_setor_nao_deletado", ), ]
 	
 	# =====================================================

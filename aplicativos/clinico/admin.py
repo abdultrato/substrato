@@ -134,7 +134,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin) :
 
 @admin.register(ResultadoItem)
 class ResultadoAdmin(CoreAdmin) :
-	list_display = ("id_custom", "exame_campo", "estado", "data_validacao",)
+	list_display = ("id_custom", "exame_campo", "resultado", "estado", "data_validacao",)
 	
 	list_filter = ("estado", "alerta_critico",)
 	

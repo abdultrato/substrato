@@ -35,7 +35,7 @@ class Produto(CoreModel) :
 	preco_venda = models.DecimalField(max_digits = 14, decimal_places = 2, validators = [MinValueValidator(Decimal("0.00"))], )
 	
 	class Meta :
-		ordering = ["nome"]
+		ordering = ["nome", "criado_em"]
 		
 		indexes = [models.Index(fields = ["tipo"]), models.Index(fields = ["inquilino", ]), ]
 		

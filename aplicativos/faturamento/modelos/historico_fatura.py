@@ -1,7 +1,11 @@
 from django.db import models
 
+from nucleo.modelos.base import CoreModel
 
-class HistoricoFatura(models.Model) :
+
+class HistoricoFatura(CoreModel) :
+	prefixo = "HISFAT"
+	
 	fatura = models.ForeignKey("faturamento.Fatura", on_delete = models.CASCADE, related_name = "historico", )
 	
 	descricao = models.TextField()
