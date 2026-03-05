@@ -1,79 +1,56 @@
-# LOCAL: aplicativos/clinico/modelos/requisicao_item.py
+from django.db import models
 
-from django.core.exceptions import ValidationError
-from django.db import models, transaction
-
-from dominio.clinico.estado_requisicao import EstadoRequisicao
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
+from .resultado import Resultado
 from .resultado_analise import ResultadoItem
 
 
-class _RequisicaoItemManager(models.Manager) :
-	"""
-	Manager privado.
-	Impede criação direta via ORM.
-	"""
-	
-	def create(self, *args, **kwargs) :
-		raise ValidationError("RequisicaoItem deve ser criado via RequisicaoAnalise.adicionar_exame().")
-
-
 class RequisicaoItem(NoNameCoreModel) :
-	prefixo = "REQI"
+	requisicao = models.ForeignKey("RequisicaoAnalise", on_delete = models.CASCADE, related_name = "itens", )
 	
-	requisicao = models.ForeignKey("clinico.RequisicaoAnalise", on_delete = models.CASCADE, related_name = "itens", )
-	
-	exame = models.ForeignKey(Exame, on_delete = models.PROTECT, )
-	
-	objects = _RequisicaoItemManager()
-	all_objects = models.Manager()
+	exame = models.ForeignKey(Exame, on_delete = models.PROTECT, related_name = "requisicoes", )
 	
 	class Meta :
-		ordering = ["id"]
-		constraints = [models.UniqueConstraint(fields = ["requisicao", "exame"], name = "uniq_requisicao_exame", )]
-		indexes = [models.Index(fields = ["requisicao"]), models.Index(fields = ["exame"]), ]
+		unique_together = ("requisicao", "exame")
 	
-	# =====================================================
-	# IMUTÁVEL APÓS CRIAÇÃO
-	# =====================================================
+	# -----------------------------------------------------
 	
 	def save(self, *args, **kwargs) :
-		if self.pk :
-			raise ValidationError("RequisicaoItem é imutável após criação.")
+		criando = self.pk is None
 		
-		if self.requisicao.estado != EstadoRequisicao.CRIADA :
-			raise ValidationError("Só é possível adicionar exames quando a requisição está em estado CRIADA.")
+		if not self.inquilino :
+			self.inquilino = self.requisicao.inquilino
 		
-		with transaction.atomic() :
-			super().save(*args, **kwargs)
+		super().save(*args, **kwargs)
+		
+		if criando :
 			self._criar_resultados()
 	
-	# =====================================================
-	# GERA RESULTADOS AUTOMATICAMENTE
-	# =====================================================
+	# -----------------------------------------------------
 	
 	def _criar_resultados(self) :
-		"""
-		Cria automaticamente os ResultadoItem
-		herdando o inquilino do agregado raiz.
-		"""
+		requisicao = self.requisicao
+		inquilino = requisicao.inquilino
+		
+		# garante que exista um resultado para a requisição
+		resultado, _ = Resultado.objects.get_or_create(requisicao = requisicao, defaults = {"inquilino" : inquilino}, )
 		
 		campos = self.exame.campos.all()
 		
-		if not campos.exists() :
-			return
+		itens = []
 		
-		inquilino = self.requisicao.inquilino
+		for campo in campos :
+			# evita duplicação
+			if ResultadoItem.objects.filter(resultado = resultado, exame_campo = campo, ).exists() :
+				continue
+			
+			itens.append(ResultadoItem(resultado = resultado, exame_campo = campo, inquilino = inquilino, ))
 		
-		resultados = [ResultadoItem(inquilino = inquilino, requisicao = self.requisicao, exame_campo = campo, ) for campo in campos]
-		
-		ResultadoItem.objects.bulk_create(resultados)
+		if itens :
+			ResultadoItem.objects.bulk_create(itens)
 	
-	# =====================================================
-	
-	def delete(self, *args, **kwargs) :
-		raise ValidationError("RequisicaoItem não pode ser removido.")
+	# -----------------------------------------------------
 	
 	def __str__(self) :
-		return self.exame.nome
+		return f"{self.requisicao.id_custom} - {self.exame.nome}"

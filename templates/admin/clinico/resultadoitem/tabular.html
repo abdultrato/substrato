@@ -1,0 +1,31 @@
+{% load i18n admin_urls %}
+
+{% for exame, forms in inline_admin_formset.formset.itens_por_exame.items %}
+
+<h2 style="margin-top:20px;">{{ exame }}</h2>
+
+<table class="admin-resultados">
+	<thead>
+	<tr>
+		<th>Campo</th>
+		<th>Resultado</th>
+		<th>Status</th>
+	</tr>
+	</thead>
+
+	<tbody>
+
+	{% for form in forms %}
+
+	<tr>
+		<td>{{ form.exame_campo }}</td>
+		<td>{{ form.resultado_valor }}</td>
+		<td>{{ form.status_clinico }}</td>
+	</tr>
+
+	{% endfor %}
+
+	</tbody>
+</table>
+
+{% endfor %}

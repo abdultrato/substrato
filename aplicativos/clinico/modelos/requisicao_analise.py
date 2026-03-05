@@ -1,11 +1,10 @@
-# LOCAL: aplicativos/clinico/modelos/requisicao_analise.py
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 
 from dominio.clinico.estado_requisicao import EstadoRequisicao
 from dominio.clinico.state_machine_requisicao import RequisicaoStateMachine
+from nucleo.constantes.laboratorio.status_resultado import IndicadorResultado
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
 from .paciente import Paciente
@@ -18,13 +17,13 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	
 	paciente = models.ForeignKey(Paciente, on_delete = models.CASCADE, related_name = "requisicoes", )
 	
-	exames = models.ManyToManyField(Exame, through = "RequisicaoItem", related_name = "requisicoes", )
+	exames = models.ManyToManyField(Exame, through = "RequisicaoItem", )
 	
 	analista = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, blank = True, related_name = "requisicoes_processadas", )
 	
 	estado = models.CharField(max_length = 30, choices = EstadoRequisicao.CHOICES, default = EstadoRequisicao.CRIADA, db_index = True, )
 	
-	status_clinico = models.CharField(max_length = 10, default = "normal", db_index = True, )
+	status_clinico = models.CharField(max_length = 2, choices = IndicadorResultado.choices, default = IndicadorResultado.NORMAL, db_index = True, )
 	
 	possui_resultado_critico = models.BooleanField(default = False, db_index = True, )
 	
@@ -52,7 +51,14 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	# =====================================================
 	
 	def save(self, *args, **kwargs) :
+		if self.pk :
+			original = (self.__class__.all_objects.filter(pk = self.pk).only("paciente").first())
+			
+			if original and original.paciente_id != self.paciente_id :
+				raise ValidationError("Paciente da requisição é imutável.")
+		
 		self._verificar_estado_terminal()
+		
 		super().save(*args, **kwargs)
 	
 	# =====================================================
@@ -63,47 +69,79 @@ class RequisicaoAnalise(NoNameCoreModel) :
 		if not self._esta_editavel() :
 			raise ValidationError("Não é possível adicionar exames após início do processamento.")
 		
-		if self.itens.filter(exame = exame).exists() :
-			raise ValidationError("Exame já adicionado à requisição.")
-		
 		from .requisicao_item import RequisicaoItem
 		
 		with transaction.atomic() :
-			return RequisicaoItem.all_objects.create(requisicao = self, exame = exame, )
+			try :
+				return RequisicaoItem.all_objects.create(requisicao = self, exame = exame, )
+			
+			except IntegrityError :
+				raise ValidationError("Exame já adicionado à requisição.")
 	
 	# =====================================================
-	# TRANSIÇÃO
+	# TRANSIÇÃO DE ESTADO
 	# =====================================================
 	
 	def transicionar(self, novo_estado) :
-		RequisicaoStateMachine.validar_transicao(self.estado, novo_estado, )
+		with transaction.atomic() :
+			requisicao = (RequisicaoAnalise.all_objects.select_for_update().get(pk = self.pk))
+			
+			RequisicaoStateMachine.validar_transicao(requisicao.estado, novo_estado, )
+			
+			requisicao.estado = novo_estado
+			
+			requisicao.save(update_fields = ["estado"])
+	
+	# =====================================================
+	# RESULTADO
+	# =====================================================
+	
+	def obter_ou_criar_resultado(self) :
+		from .resultado import Resultado
 		
-		self.estado = novo_estado
-		self.save(update_fields = ["estado"])
+		resultado, _ = Resultado.objects.get_or_create(requisicao = self, defaults = {"inquilino" : self.inquilino}, )
+		
+		return resultado
 	
 	# =====================================================
 	# SINCRONIZAÇÃO CLÍNICA
 	# =====================================================
 	
 	def atualizar_status_clinico(self) :
-		resultados = self.resultados.all()
-		
-		if not resultados.exists() :
-			self.status_clinico = "normal"
+		if not hasattr(self, "resultado") :
+			self.status_clinico = IndicadorResultado.NORMAL
 			self.possui_resultado_critico = False
-		else :
-			possui_critico = resultados.filter(alerta_critico = True).exists()
-			
-			self.possui_resultado_critico = possui_critico
-			
-			if possui_critico :
-				self.status_clinico = "critico"
-			else :
-				possui_alerta = resultados.filter(status_clinico__in = ["alto", "baixo"]).exists()
-				
-				self.status_clinico = ("alerta" if possui_alerta else "normal")
 		
-		self.save(update_fields = ["status_clinico", "possui_resultado_critico", ])
+		else :
+			itens = self.resultado.itens.only("alerta_critico", "status_clinico", "estado", )
+			
+			if not itens.exists() :
+				self.status_clinico = IndicadorResultado.NORMAL
+				self.possui_resultado_critico = False
+			
+			else :
+				possui_critico = itens.filter(alerta_critico = True).exists()
+				
+				self.possui_resultado_critico = possui_critico
+				
+				if possui_critico :
+					self.status_clinico = IndicadorResultado.MUITO_ALTO
+				
+				else :
+					possui_alto = itens.filter(status_clinico = IndicadorResultado.ALTO).exists()
+					
+					possui_baixo = itens.filter(status_clinico = IndicadorResultado.BAIXO).exists()
+					
+					if possui_alto :
+						self.status_clinico = IndicadorResultado.ALTO
+					
+					elif possui_baixo :
+						self.status_clinico = IndicadorResultado.BAIXO
+					
+					else :
+						self.status_clinico = IndicadorResultado.NORMAL
+		
+		self.save(update_fields = ["status_clinico", "possui_resultado_critico"])
 		
 		self._auto_validar_se_necessario()
 	
@@ -115,12 +153,17 @@ class RequisicaoAnalise(NoNameCoreModel) :
 		if self.estado != EstadoRequisicao.AGUARDANDO_VALIDACAO :
 			return
 		
-		total = self.resultados.count()
+		if not hasattr(self, "resultado") :
+			return
+		
+		itens = self.resultado.itens.all()
+		
+		total = itens.count()
 		
 		if total == 0 :
 			return
 		
-		validados = self.resultados.filter(estado = "VALIDADO").count()
+		validados = itens.filter(estado = "VALIDADO").count()
 		
 		if validados == total :
 			self.transicionar(EstadoRequisicao.VALIDADA)

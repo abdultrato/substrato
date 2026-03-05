@@ -1,8 +1,6 @@
-# LOCAL: aplicativos/clinico/modelos/resultado_item.py
-
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 from dominio.clinico.estado_resultado import EstadoResultado
@@ -12,7 +10,7 @@ from dominio.clinico.state_machine_resultado import ResultadoStateMachine
 from eventos.bus import event_bus
 from nucleo.modelos.base import NoNameCoreModel
 from .exame_campo import ExameCampo
-from .requisicao_analise import RequisicaoAnalise
+from .resultado import Resultado
 
 User = settings.AUTH_USER_MODEL
 
@@ -20,11 +18,11 @@ User = settings.AUTH_USER_MODEL
 class ResultadoItem(NoNameCoreModel) :
 	prefixo = "RES"
 	
-	requisicao = models.ForeignKey(RequisicaoAnalise, on_delete = models.CASCADE, related_name = "resultados", )
+	resultado = models.ForeignKey(Resultado, on_delete = models.CASCADE, related_name = "itens", )
 	
 	exame_campo = models.ForeignKey(ExameCampo, on_delete = models.CASCADE, related_name = "resultados", )
 	
-	resultado = models.CharField(max_length = 120, blank = True, null = True, )
+	resultado_valor = models.CharField(max_length = 120, blank = True, null = True)
 	
 	status_clinico = models.CharField(max_length = 20, blank = True, )
 	
@@ -39,18 +37,23 @@ class ResultadoItem(NoNameCoreModel) :
 	data_validacao = models.DateTimeField(null = True, blank = True, )
 	
 	class Meta :
-		unique_together = ("requisicao", "exame_campo")
+		unique_together = ("resultado", "exame_campo")
+	
+	# =====================================================
+	# CONSULTA ORIGINAL
+	# =====================================================
+	
+	def _original(self) :
+		if not self.pk :
+			return None
+		
+		return self.__class__.all_objects.filter(pk = self.pk).only("estado", "resultado_valor").first()
 	
 	# =====================================================
 	# PROTEÇÃO ESTADO TERMINAL
 	# =====================================================
 	
-	def _verificar_estado_terminal(self) :
-		if not self.pk :
-			return
-		
-		original = (self.__class__.all_objects.filter(pk = self.pk).only("estado").first())
-		
+	def _verificar_estado_terminal(self, original) :
 		if original and original.estado in EstadoResultado.TERMINAIS :
 			raise ValidationError("Resultado em estado final é imutável.")
 	
@@ -58,13 +61,11 @@ class ResultadoItem(NoNameCoreModel) :
 	# WRITE-ONCE DO RESULTADO
 	# =====================================================
 	
-	def _verificar_write_once(self) :
-		if not self.pk :
+	def _verificar_write_once(self, original) :
+		if not original :
 			return
 		
-		original = (self.__class__.all_objects.filter(pk = self.pk).only("resultado").first())
-		
-		if original and original.resultado is not None and self.resultado != original.resultado :
+		if original.resultado_valor is not None and self.resultado_valor != original.resultado_valor :
 			raise ValidationError("Valor do resultado não pode ser alterado após inserção.")
 	
 	# =====================================================
@@ -72,17 +73,27 @@ class ResultadoItem(NoNameCoreModel) :
 	# =====================================================
 	
 	def save(self, *args, **kwargs) :
-		self._verificar_estado_terminal()
-		self._verificar_write_once()
+		# propagação automática do tenant
+		if not self.inquilino and self.resultado :
+			self.inquilino = self.resultado.inquilino
 		
-		# Interpretação automática enquanto não validado
-		if self.estado != EstadoResultado.VALIDADO :
+		valor_anterior = None
+		
+		if self.pk :
+			valor_anterior = (self.__class__.all_objects.filter(pk = self.pk).values_list("resultado_valor", flat = True).first())
+		
+		valor_alterado = valor_anterior != self.resultado_valor
+		
+		# interpreta apenas se valor mudou
+		if valor_alterado and self.estado != "VALIDADO" :
+			from dominio.clinico.servico_resultado import ServicoResultado
 			ServicoResultado.interpretar(self)
 		
 		super().save(*args, **kwargs)
 		
-		# Sincroniza status clínico global
-		self.requisicao.atualizar_status_clinico()
+		# atualiza status da requisição
+		if self.resultado :
+			self.resultado.requisicao.atualizar_status_clinico()
 	
 	# =====================================================
 	# DELETE PROTEGIDO
@@ -99,28 +110,28 @@ class ResultadoItem(NoNameCoreModel) :
 	# =====================================================
 	
 	def transicionar(self, novo_estado, usuario = None) :
-		ResultadoStateMachine.validar_transicao(self.estado, novo_estado, )
-		
-		if novo_estado in EstadoResultado.TERMINAIS :
-			self._verificar_estado_terminal()
-		
-		if novo_estado == EstadoResultado.VALIDADO :
-			if not self.resultado :
-				raise ValidationError("Não é possível validar resultado vazio.")
+		with transaction.atomic() :
+			resultado = (ResultadoItem.all_objects.select_for_update().get(pk = self.pk))
 			
-			self.validado_por = usuario
-			self.data_validacao = timezone.now()
+			ResultadoStateMachine.validar_transicao(resultado.estado, novo_estado, )
 			
-			# Interpretação final obrigatória
-			ServicoResultado.interpretar(self)
+			if novo_estado == EstadoResultado.VALIDADO :
+				if not resultado.resultado_valor :
+					raise ValidationError("Não é possível validar resultado vazio.")
+				
+				resultado.validado_por = usuario
+				resultado.data_validacao = timezone.now()
+				
+				# interpretação final obrigatória
+				ServicoResultado.interpretar(resultado)
+			
+			resultado.estado = novo_estado
+			
+			resultado.save(update_fields = ["estado", "validado_por", "data_validacao", "status_clinico", "cor_laudo", "alerta_critico", "resultado_valor", ])
 		
-		self.estado = novo_estado
-		
-		self.save(update_fields = ["estado", "validado_por", "data_validacao", "status_clinico", "cor_laudo", "alerta_critico", "resultado", ])
-		
-		# Evento após commit
+		# evento publicado após commit
 		if novo_estado == EstadoResultado.VALIDADO :
-			event_bus.publish_after_commit(ResultadoValidadoEvent(resultado_id = self.id, ))
+			event_bus.publish_after_commit(ResultadoValidadoEvent(resultado_id = self.id))
 	
 	# =====================================================
 	

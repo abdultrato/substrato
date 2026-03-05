@@ -1,5 +1,3 @@
-# LOCAL: aplicativos/clinico/modelos/exame.py
-
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -41,11 +39,18 @@ class Exame(CoreModel) :
 		
 		ordering = ["nome", "criado_em"]
 		
-		indexes = [  # Consulta principal (listagem por setor)
-			models.Index(fields = ["setor", "deletado"]), models.Index(fields = ["metodo"]), ]
+		indexes = [models.Index(fields = ["setor", "deletado"]), models.Index(fields = ["metodo"]), ]
 		
-		constraints = [  # Unicidade lógica por setor (somente não deletados)
-			models.UniqueConstraint(fields = ["setor", "nome"], condition = Q(deletado = False), name = "unique_nome_exame_por_setor_nao_deletado", ), ]
+		constraints = [
+			
+			# unicidade lógica por setor (soft delete)
+			models.UniqueConstraint(fields = ["setor", "nome"], condition = Q(deletado = False), name = "unique_nome_exame_por_setor_nao_deletado", ),
+			
+			# TRL deve ser positivo
+			models.CheckConstraint(condition = Q(trl_horas__gt = 0), name = "trl_horas_positivo", ),
+			
+			# preço não pode ser negativo
+			models.CheckConstraint(condition = Q(preco__gte = 0), name = "preco_nao_negativo", ), ]
 	
 	# =====================================================
 	# VALIDAÇÃO DE DOMÍNIO
@@ -56,14 +61,17 @@ class Exame(CoreModel) :
 		
 		erros = {}
 		
+		if not self.nome :
+			erros["nome"] = "O exame deve possuir um nome."
+		
 		if self.preco is None :
 			erros["preco"] = "O exame deve possuir um preço."
 		
 		if self.preco == Decimal("0.00") :
 			erros["preco"] = "Exame não pode ter preço zero."
 		
-		if not self.nome :
-			erros["nome"] = "O exame deve possuir um nome."
+		if self.trl_horas <= 0 :
+			erros["trl_horas"] = "TRL deve ser maior que zero."
 		
 		if erros :
 			raise ValidationError(erros)

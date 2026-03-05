@@ -1,5 +1,3 @@
-# LOCAL: dominio/clinico/servico_resultado.py
-
 from decimal import Decimal, InvalidOperation
 
 from dominio.clinico.interpretador import interpretar, StatusClinico
@@ -10,16 +8,18 @@ class ServicoResultado :
 	
 	@staticmethod
 	def interpretar(resultado_item) :
+		# garante que o item esteja ligado ao resultado
 		if not resultado_item.resultado :
 			return
 		
-		paciente = resultado_item.requisicao.paciente
+		requisicao = resultado_item.resultado.requisicao
+		paciente = requisicao.paciente
 		exame_campo = resultado_item.exame_campo
 		
 		referencia = ResolverReferenciaClinica.resolver(exame_campo, paciente, )
 		
 		try :
-			valor = Decimal(resultado_item.resultado)
+			valor = Decimal(resultado_item.resultado_valor)
 		except (InvalidOperation, TypeError) :
 			resultado_item.status_clinico = "invalido"
 			resultado_item.cor_laudo = "cinza"

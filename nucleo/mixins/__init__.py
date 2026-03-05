@@ -1,10 +1,7 @@
+from .auditoria import AuditoriaMixin
 from .escopo_inquilino import InquilinoMixin
+from .identificador import IdentificadorMixin
 from .soft_delete import SoftDeleteMixin
 from .versionamento import VersionamentoMixin
-from .auditoria import AuditoriaMixin
-from .identificador import IdentificadorMixin
 
-__all__ = [
-		"IdentificadorMixin", "VersionamentoMixin", "InquilinoMixin",
-		"AuditoriaMixin", "SoftDeleteMixin",
-		]
+__all__ = ["IdentificadorMixin", "VersionamentoMixin", "InquilinoMixin", "AuditoriaMixin", "SoftDeleteMixin", ]

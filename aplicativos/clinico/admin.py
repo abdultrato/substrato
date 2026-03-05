@@ -1,16 +1,19 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
 
-from nucleo.constantes.laboratorio.tipo_resultado import TipoResultado
+from .forms_admin import ResultadoItemInlineFormSet
 from .modelos.exame import Exame
 from .modelos.exame_campo import ExameCampo
 from .modelos.paciente import Paciente
 from .modelos.requisicao_analise import RequisicaoAnalise
 from .modelos.requisicao_item import RequisicaoItem
+from .modelos.resultado import Resultado
 from .modelos.resultado_analise import ResultadoItem
 
 
 # =========================================================
-# BASE ADMIN CORPORATIVO
+# BASE ADMIN
 # =========================================================
 
 class CoreAdmin(admin.ModelAdmin) :
@@ -18,46 +21,7 @@ class CoreAdmin(admin.ModelAdmin) :
 	readonly_fields = ("criado_em", "atualizado_em")
 	ordering = ("-criado_em",)
 	list_per_page = 50
-
-
-# =========================================================
-# FORM DINÂMICO PARA EXAME CAMPO
-# =========================================================
-
-def _aplicar_comportamento_campos_numericos(form_cls) :
-	class ExameCampoAdminForm(form_cls) :
-		CAMPOS_NUMERICOS = ("valor_minimo", "valor_maximo", "critico_baixo", "critico_alto",)
-		
-		class Media :
-			js = ("admin/js/exame_campo_admin.js",)
-		
-		def __init__(self, *args, **kwargs) :
-			super().__init__(*args, **kwargs)
-			
-			tipo = self._tipo_atual()
-			habilitar = str(tipo) == str(TipoResultado.NUMERICO)
-			
-			for campo in self.CAMPOS_NUMERICOS :
-				if campo in self.fields :
-					self.fields[campo].required = False
-					self.fields[campo].disabled = not habilitar
-		
-		def _tipo_atual(self) :
-			if self.is_bound :
-				return self.data.get(self.add_prefix("tipo"))
-			return getattr(self.instance, "tipo", None)
-		
-		def clean(self) :
-			cleaned_data = super().clean()
-			tipo = cleaned_data.get("tipo")
-			
-			if str(tipo) != str(TipoResultado.NUMERICO) :
-				for campo in self.CAMPOS_NUMERICOS :
-					cleaned_data[campo] = None
-			
-			return cleaned_data
-	
-	return ExameCampoAdminForm
+	list_select_related = True
 
 
 # =========================================================
@@ -66,8 +30,9 @@ def _aplicar_comportamento_campos_numericos(form_cls) :
 
 @admin.register(Paciente)
 class PacienteAdmin(CoreAdmin) :
-	list_display = ("nome", "numero_id", "contacto")
-	search_fields = ("nome", "numero_id", "contacto")
+	list_display = ("id_custom", "nome", "numero_id", "contacto",)
+	
+	search_fields = ("id_custom", "nome", "numero_id", "contacto",)
 
 
 # =========================================================
@@ -76,13 +41,11 @@ class PacienteAdmin(CoreAdmin) :
 
 @admin.register(ExameCampo)
 class ExameCampoAdmin(CoreAdmin) :
-	list_display = ("id_custom", "nome", "exame")
-	search_fields = ("id_custom", "nome", "exame__nome")
-	autocomplete_fields = ("exame",)
+	list_display = ("id_custom", "nome", "exame", "tipo",)
 	
-	def get_form(self, request, obj = None, **kwargs) :
-		form_cls = super().get_form(request, obj, **kwargs)
-		return _aplicar_comportamento_campos_numericos(form_cls)
+	search_fields = ("id_custom", "nome", "exame__nome",)
+	
+	autocomplete_fields = ("exame",)
 
 
 # =========================================================
@@ -92,22 +55,21 @@ class ExameCampoAdmin(CoreAdmin) :
 class ExameCampoInline(admin.TabularInline) :
 	model = ExameCampo
 	extra = 0
-	
-	def get_formset(self, request, obj = None, **kwargs) :
-		formset = super().get_formset(request, obj, **kwargs)
-		formset.form = _aplicar_comportamento_campos_numericos(formset.form)
-		return formset
 
 
 @admin.register(Exame)
 class ExameAdmin(CoreAdmin) :
-	list_display = ("id_custom", "nome")
-	search_fields = ("id_custom", "nome")
+	list_display = ("id_custom", "nome", "setor", "metodo", "trl_horas", "preco",)
+	
+	search_fields = ("id_custom", "nome",)
+	
+	list_filter = ("setor", "metodo",)
+	
 	inlines = [ExameCampoInline]
 
 
 # =========================================================
-# REQUISIÇÃO (AGREGADO RAIZ)
+# REQUISIÇÃO
 # =========================================================
 
 class RequisicaoItemInline(admin.TabularInline) :
@@ -118,25 +80,70 @@ class RequisicaoItemInline(admin.TabularInline) :
 
 @admin.register(RequisicaoAnalise)
 class RequisicaoAnaliseAdmin(CoreAdmin) :
-	list_display = ("id_custom", "paciente", "estado", "status_clinico", "criado_em",)
+	list_display = ("id_custom", "paciente", "estado", "status_clinico", "possui_resultado_critico", "lancar_resultado", "criado_em",)
 	
-	search_fields = ("id_custom", "paciente__nome")
+	search_fields = ("id_custom", "paciente__nome",)
 	
-	list_filter = ("estado", "status_clinico",)
+	list_filter = ("estado", "status_clinico", "possui_resultado_critico",)
 	
-	autocomplete_fields = ("paciente", "analista")
+	autocomplete_fields = ("paciente", "analista",)
+	
 	inlines = [RequisicaoItemInline]
+	
+	# -----------------------------------------------------
+	
+	def lancar_resultado(self, obj) :
+		resultado = obj.obter_ou_criar_resultado()
+		
+		url = reverse("admin:clinico_resultado_change", args = [resultado.id], )
+		
+		return format_html('<a class="button" href="{}">Lançar resultados</a>', url, )
+	
+	lancar_resultado.short_description = "Resultados"
 
 
 # =========================================================
-# RESULTADOS
+# RESULTADO ITEM INLINE
 # =========================================================
 
-@admin.register(ResultadoItem)
-class ResultadoAdmin(CoreAdmin) :
-	list_display = ("id_custom", "exame_campo", "resultado", "estado", "data_validacao",)
+class ResultadoItemInline(admin.TabularInline) :
+	model = ResultadoItem
+	formset = ResultadoItemInlineFormSet
 	
-	list_filter = ("estado", "alerta_critico",)
+	extra = 0
 	
-	search_fields = ("id_custom",)
+	fields = ("exame_nome", "exame_campo", "resultado_valor", "status_clinico",)
+	
+	readonly_fields = ("exame_nome", "exame_campo", "status_clinico",)
+	
 	autocomplete_fields = ("exame_campo",)
+	
+	# -----------------------------------------------------
+	
+	def get_queryset(self, request) :
+		qs = super().get_queryset(request)
+		
+		return qs.select_related("exame_campo", "exame_campo__exame", ).order_by("exame_campo__exame__nome", "exame_campo__nome", )
+	
+	# -----------------------------------------------------
+	
+	def exame_nome(self, obj) :
+		if obj.exame_campo and obj.exame_campo.exame :
+			return format_html("<b>{}</b>", obj.exame_campo.exame.nome, )
+		
+		return "-"
+	
+	exame_nome.short_description = "Exame"
+
+
+# =========================================================
+# RESULTADO
+# =========================================================
+
+@admin.register(Resultado)
+class ResultadoAdmin(CoreAdmin) :
+	list_display = ("id_custom", "requisicao", "analista", "finalizado",)
+	
+	raw_id_fields = ("requisicao", "analista",)
+	
+	inlines = [ResultadoItemInline]

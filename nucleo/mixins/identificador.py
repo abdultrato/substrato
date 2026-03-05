@@ -1,37 +1,65 @@
-# LOCAL: nucleo/mixins/identificador.py
-
-from django.db import IntegrityError, models, transaction
-
-from nucleo.identidade.gerar_codigo import gerar_codigo
+from django.db import connection, models
+from django.db.models import Max
+from django.utils.timezone import now
 
 
 class IdentificadorMixin(models.Model) :
-	prefixo: str | None = None
+	"""
+	Gerador de identificador robusto.
+
+	Compatível com:
+	✔ PostgreSQL
+	✔ SQLite
+	✔ concorrência moderada
+	✔ admin do Django
+	"""
 	
-	id_custom = models.CharField(max_length = 20, unique = True, editable = False, db_index = True, )
+	id_custom = models.CharField(max_length = 30, unique = True, db_index = True, editable = False, blank = True, null = True, verbose_name = "ordem", )
 	
-	MAX_TENTATIVAS = 20
+	prefixo = None
 	
 	class Meta :
 		abstract = True
 	
-	def _gerar_id(self) :
-		return gerar_codigo(prefixo = self.prefixo, modelo = self.__class__, )
+	# -----------------------------------------------------
+	
+	@classmethod
+	def _next_sequence(cls) :
+		# PostgreSQL
+		if connection.vendor == "postgresql" :
+			sequence_name = f"{cls._meta.db_table}_seq"
+			
+			with connection.cursor() as cursor :
+				cursor.execute(f"CREATE SEQUENCE IF NOT EXISTS {sequence_name};")
+				
+				cursor.execute(f"SELECT nextval('{sequence_name}');")
+				
+				return cursor.fetchone()[0]
+		
+		# SQLite fallback
+		
+		ultimo = (cls.all_objects.aggregate(max_id = Max("id_custom")))
+		
+		return (cls.objects.count() or 0) + 1
+	
+	# -----------------------------------------------------
+	
+	def gerar_identificador(self) :
+		if self.id_custom or not self.prefixo :
+			return
+		
+		numero = self.__class__._next_sequence()
+		
+		data_str = now().strftime("%Y%m%d")
+		
+		self.id_custom = f"{self.prefixo}{data_str}{numero:06d}"
+	
+	# -----------------------------------------------------
 	
 	def save(self, *args, **kwargs) :
-		if self.pk and self.id_custom :
-			return super().save(*args, **kwargs)
+		criando = self._state.adding
 		
-		if not self.prefixo :
-			raise ValueError(f"{self.__class__.__name__} precisa definir atributo 'prefixo'.")
+		if criando and not self.id_custom :
+			self.gerar_identificador()
 		
-		for _ in range(self.MAX_TENTATIVAS) :
-			try :
-				with transaction.atomic() :
-					if not self.id_custom :
-						self.id_custom = self._gerar_id()
-					return super().save(*args, **kwargs)
-			except IntegrityError :
-				self.id_custom = None
-		
-		raise IntegrityError(f"Falha ao gerar id_custom único para {self.__class__.__name__}")
+		super().save(*args, **kwargs)

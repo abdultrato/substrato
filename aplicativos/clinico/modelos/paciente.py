@@ -27,15 +27,15 @@ class Paciente(CoreModel) :
 	
 	tipo_documento = models.CharField(max_length = 50, choices = TipoDocumento.choices, default = TipoDocumento.BI, )
 	
-	numero_id = models.CharField(max_length = 50, unique = True, blank = True, null = True, )
+	numero_id = models.CharField("Numero do documento", max_length = 50, unique = True, blank = True, null = True, )
 	
 	morada = models.CharField(max_length = 150)
 	
-	contacto = TelefoneField()
+	contacto = TelefoneField(verbose_name = "Contacto", blank = True, null = True)
 	
-	email = NormalizedEmailField(unique = True, blank = True, null = True, )
+	email = NormalizedEmailField(verbose_name = "E-mail", unique = True, blank = True, null = True, )
 	
-	proveniencia = models.CharField(max_length = 50, choices = Proveniencia.choices, blank = True, default = Proveniencia.OUTRO, )
+	proveniencia = models.CharField("Proveniencia", max_length = 50, choices = Proveniencia.choices, blank = True, default = Proveniencia.CLINICA_EXTERNA, )
 	
 	class Meta :
 		verbose_name = "Paciente"
