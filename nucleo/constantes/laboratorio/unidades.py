@@ -13,3 +13,4 @@ class UnidadePadrao(models.TextChoices) :
 	U_L = "u/l", "u/l"
 	P_UL = "p/µL", "p/µL"
 	PH = "ph", "ph"
+	FL = "fl", "fl"

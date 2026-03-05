@@ -22,20 +22,20 @@ class Exame(CoreModel) :
 	# CAMPOS
 	# =====================================================
 	
-	trl_horas = models.PositiveIntegerField(default = 24, help_text = "Tempo de resposta em horas.", )
+	trl_horas = models.PositiveIntegerField(verbose_name = "Tempo de resposta (em horas)", default = 24, help_text = "Tempo de resposta em horas.", )
 	
-	preco = DinheiroField(default = Decimal("0.00"), validators = [MinValueValidator(Decimal("0.00"))], help_text = "Preço do exame.", )
+	preco = DinheiroField(verbose_name = "preço do exame", default = Decimal("0.00"), validators = [MinValueValidator(Decimal("0.00"))], help_text = "preço do exame.", )
 	
-	metodo = MetodoField(db_index = True)
-	setor = SetorField(db_index = True)
+	metodo = MetodoField(verbose_name = "método do exame", db_index = True)
+	setor = SetorField(verbose_name = "sector do exame", db_index = True)
 	
 	# =====================================================
 	# META
 	# =====================================================
 	
 	class Meta :
-		verbose_name = "Exame"
-		verbose_name_plural = "Exames"
+		verbose_name = "Exame disponível no sistema"
+		verbose_name_plural = "Exames disponíveis no sistema"
 		
 		ordering = ["nome", "criado_em"]
 		
@@ -81,4 +81,4 @@ class Exame(CoreModel) :
 	# =====================================================
 	
 	def __str__(self) :
-		return f"{self.id_custom or 'NOVO'} - {self.nome or 'Sem nome'}"
+		return f"{self.nome or 'exame sem nome'}"

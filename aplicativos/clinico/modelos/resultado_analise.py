@@ -30,7 +30,7 @@ class ResultadoItem(NoNameCoreModel) :
 	
 	alerta_critico = models.BooleanField(default = False, )
 	
-	estado = models.CharField(max_length = 30, choices = EstadoResultado.CHOICES, default = EstadoResultado.PENDENTE, db_index = True, )
+	estado = models.CharField(max_length = 30, choices = EstadoResultado.CHOICES, default = EstadoResultado.VALIDADO, db_index = True, )
 	
 	validado_por = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, blank = True, related_name = "resultados_validados", )
 	

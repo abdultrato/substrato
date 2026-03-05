@@ -2,9 +2,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
-from dominio.clinico.estado_requisicao import EstadoRequisicao
+from dominio.clinico.estado_resultado import EstadoResultado
 from dominio.clinico.state_machine_requisicao import RequisicaoStateMachine
-from nucleo.constantes.laboratorio.status_resultado import IndicadorResultado
+from nucleo.constantes.laboratorio.status_clinico import StatusClinico
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
 from .paciente import Paciente
@@ -19,11 +19,11 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	
 	exames = models.ManyToManyField(Exame, through = "RequisicaoItem", )
 	
-	analista = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, blank = True, related_name = "requisicoes_processadas", )
+	analista = models.ForeignKey(User, verbose_name = "O Usuario", on_delete = models.SET_NULL, null = True, blank = True, related_name = "requisicoes_processadas", )
 	
-	estado = models.CharField(max_length = 30, choices = EstadoRequisicao.CHOICES, default = EstadoRequisicao.CRIADA, db_index = True, )
+	estado = models.CharField(max_length = 30, choices = EstadoResultado.CHOICES, default = EstadoResultado.PENDENTE, db_index = True, )
 	
-	status_clinico = models.CharField(max_length = 2, choices = IndicadorResultado.choices, default = IndicadorResultado.NORMAL, db_index = True, )
+	status_clinico = models.CharField(max_length = 50, choices = StatusClinico.choices, default = StatusClinico.NAO_URGENTE, db_index = True, )
 	
 	possui_resultado_critico = models.BooleanField(default = False, db_index = True, )
 	
@@ -35,7 +35,7 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	# =====================================================
 	
 	def _esta_editavel(self) :
-		return self.estado == EstadoRequisicao.CRIADA
+		return self.estado == EstadoResultado.PENDENTE
 	
 	def _verificar_estado_terminal(self) :
 		if not self.pk :
@@ -43,7 +43,7 @@ class RequisicaoAnalise(NoNameCoreModel) :
 		
 		original = (self.__class__.all_objects.filter(pk = self.pk).only("estado").first())
 		
-		if original and original.estado in EstadoRequisicao.TERMINAIS :
+		if original and original.estado in EstadoResultado.VALIDADO :
 			raise ValidationError("Requisição finalizada é imutável.")
 	
 	# =====================================================
@@ -109,14 +109,14 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	
 	def atualizar_status_clinico(self) :
 		if not hasattr(self, "resultado") :
-			self.status_clinico = IndicadorResultado.NORMAL
+			self.status_clinico = StatusClinico.NAO_URGENTE
 			self.possui_resultado_critico = False
 		
 		else :
 			itens = self.resultado.itens.only("alerta_critico", "status_clinico", "estado", )
 			
 			if not itens.exists() :
-				self.status_clinico = IndicadorResultado.NORMAL
+				self.status_clinico = StatusClinico.NAO_URGENTE
 				self.possui_resultado_critico = False
 			
 			else :
@@ -125,21 +125,21 @@ class RequisicaoAnalise(NoNameCoreModel) :
 				self.possui_resultado_critico = possui_critico
 				
 				if possui_critico :
-					self.status_clinico = IndicadorResultado.MUITO_ALTO
+					self.status_clinico = StatusClinico.URGENTISSIMO
 				
 				else :
-					possui_alto = itens.filter(status_clinico = IndicadorResultado.ALTO).exists()
+					possui_alto = itens.filter(status_clinico = StatusClinico.URGENTE).exists()
 					
-					possui_baixo = itens.filter(status_clinico = IndicadorResultado.BAIXO).exists()
+					possui_baixo = itens.filter(status_clinico = StatusClinico.MUITO_URGENTE).exists()
 					
 					if possui_alto :
-						self.status_clinico = IndicadorResultado.ALTO
+						self.status_clinico = StatusClinico.MUITO_URGENTE
 					
 					elif possui_baixo :
-						self.status_clinico = IndicadorResultado.BAIXO
+						self.status_clinico = StatusClinico.URGENTE
 					
 					else :
-						self.status_clinico = IndicadorResultado.NORMAL
+						self.status_clinico = StatusClinico.NAO_URGENTE
 		
 		self.save(update_fields = ["status_clinico", "possui_resultado_critico"])
 		
@@ -150,7 +150,7 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	# =====================================================
 	
 	def _auto_validar_se_necessario(self) :
-		if self.estado != EstadoRequisicao.AGUARDANDO_VALIDACAO :
+		if self.estado != EstadoResultado.TERMINAIS :
 			return
 		
 		if not hasattr(self, "resultado") :

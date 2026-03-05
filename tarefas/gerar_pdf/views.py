@@ -1,18 +1,8 @@
-import io
 import logging
 
-from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
-from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 from aplicativos.faturamento.modelos.fatura import Fatura
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import Http404, HttpResponse
-from django.shortcuts import get_object_or_404
-from reportlab.pdfgen import canvas
-from rest_framework.views import APIView
-
 from .pdf_generator_fatura import gerar_pdf_fatura
 from .pdf_generator_requisicao import gerar_pdf_requisicao
-from .pdf_generator_resultado import gerar_pdf_resultados
 
 logger = logging.getLogger("pdf.views")
 
@@ -21,48 +11,35 @@ logger = logging.getLogger("pdf.views")
 # =========================================================
 
 
-class RequisicaoPdf(APIView):
-    def get(self, request, pk):
-        try:
-            requisicao = get_object_or_404(RequisicaoAnalise, pk=pk)
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
 
-            buffer = io.BytesIO()
-            pdf = canvas.Canvas(buffer)
+from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 
-            pdf.drawString(100, 750, f"Requisição ID: {requisicao.id}")
-            pdf.drawString(100, 730, f"Paciente: {requisicao.paciente.nome}")
-
-            pdf.showPage()
-            pdf.save()
-
-            buffer.seek(0)
-            return HttpResponse(buffer, content_type="application/pdf")
-
-        except Exception as err:
-            logger.exception("Erro ao gerar PDF simples de requisição.")
-            raise Http404("Erro ao gerar PDF") from err
+from .pdf_generator_resultado import gerar_pdf_resultados
 
 
-class ResultadoPdf(APIView):
-    def get(self, request, pk):
-        try:
-            resultado = get_object_or_404(ResultadoItem, pk=pk)
-
-            buffer = io.BytesIO()
-            pdf = canvas.Canvas(buffer)
-
-            pdf.drawString(100, 750, f"Resultado ID: {resultado.id}")
-            pdf.drawString(100, 730, f"Paciente: {resultado.requisicao.paciente.nome}")
-
-            pdf.showPage()
-            pdf.save()
-
-            buffer.seek(0)
-            return HttpResponse(buffer, content_type="application/pdf")
-
-        except Exception as err:
-            logger.exception("Erro ao gerar PDF simples de resultado.")
-            raise Http404("Erro ao gerar PDF") from err
+@staff_member_required
+def resultado_pdf(request, id_custom) :
+	"""
+	Gera o PDF institucional de resultados laboratoriais.
+	"""
+	
+	try :
+		requisicao = get_object_or_404(RequisicaoAnalise.objects.select_related("paciente", "analista", ).prefetch_related("resultado__itens__exame_campo__exame", ), id_custom = id_custom, )
+		
+		pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados = True, )
+		
+		response = HttpResponse(pdf_bytes, content_type = "application/pdf", )
+		
+		response["Content-Disposition"] = f'inline; filename="{filename}"'
+		
+		return response
+	
+	except Exception as err :
+		logger.exception("Erro ao gerar PDF de resultados.")
+		raise Http404("Não foi possível gerar o documento.") from err
 
 
 # =========================================================
@@ -70,22 +47,19 @@ class ResultadoPdf(APIView):
 # =========================================================
 
 
-def pdf_requisicao(request, requisicao_id):
-    try:
-        requisicao = get_object_or_404(
-            RequisicaoAnalise.objects.select_related("paciente"),
-            id=requisicao_id,
-        )
-
-        pdf_bytes, filename = gerar_pdf_requisicao(requisicao)
-
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-    except Exception as err:
-        logger.exception("Falha ao gerar PDF da requisição.")
-        raise Http404("Não foi possível gerar o documento.") from err
+def pdf_requisicao(request, requisicao_id) :
+	try :
+		requisicao = get_object_or_404(RequisicaoAnalise.objects.select_related("paciente"), id = requisicao_id, )
+		
+		pdf_bytes, filename = gerar_pdf_requisicao(requisicao)
+		
+		response = HttpResponse(pdf_bytes, content_type = "application/pdf")
+		response["Content-Disposition"] = f'attachment; filename="{filename}"'
+		return response
+	
+	except Exception as err :
+		logger.exception("Falha ao gerar PDF da requisição.")
+		raise Http404("Não foi possível gerar o documento.") from err
 
 
 # =========================================================
@@ -93,25 +67,19 @@ def pdf_requisicao(request, requisicao_id):
 # =========================================================
 
 
-def pdf_resultados(request, requisicao_id):
-    try:
-        requisicao = get_object_or_404(
-            RequisicaoAnalise.objects.select_related("paciente"),
-            id=requisicao_id,
-        )
-
-        pdf_bytes, filename = gerar_pdf_resultados(
-            requisicao,
-            apenas_validados=True,
-        )
-
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-    except Exception as err:
-        logger.exception("Falha ao gerar PDF de resultados.")
-        raise Http404("Não foi possível gerar o documento.") from err
+def pdf_resultados(request, requisicao_id) :
+	try :
+		requisicao = get_object_or_404(RequisicaoAnalise.objects.select_related("paciente"), id = requisicao_id, )
+		
+		pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados = True, )
+		
+		response = HttpResponse(pdf_bytes, content_type = "application/pdf")
+		response["Content-Disposition"] = f'attachment; filename="{filename}"'
+		return response
+	
+	except Exception as err :
+		logger.exception("Falha ao gerar PDF de resultados.")
+		raise Http404("Não foi possível gerar o documento.") from err
 
 
 # =========================================================
@@ -120,29 +88,25 @@ def pdf_resultados(request, requisicao_id):
 
 
 @staff_member_required
-def fatura_requisicao_pdf(request, id_custom):
-    try:
-        requisicao = (
-            RequisicaoAnalise.objects.select_related("paciente", "analista")
-            .prefetch_related("exames")
-            .get(id_custom=id_custom)
-        )
-    except RequisicaoAnalise.DoesNotExist:
-        raise Http404("Requisição não encontrada")
-    except Exception as err:
-        logger.exception("Erro ao buscar requisição para fatura.")
-        raise Http404("Erro interno.") from err
-
-    try:
-        pdf_content, filename = gerar_pdf_fatura(requisicao)
-
-        response = HttpResponse(pdf_content, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{filename}"'
-        return response
-
-    except Exception as err:
-        logger.exception("Erro ao gerar PDF da fatura por requisição.")
-        raise Http404("Erro ao gerar documento.") from err
+def fatura_requisicao_pdf(request, id_custom) :
+	try :
+		requisicao = (RequisicaoAnalise.objects.select_related("paciente", "analista").prefetch_related("exames").get(id_custom = id_custom))
+	except RequisicaoAnalise.DoesNotExist :
+		raise Http404("Requisição não encontrada")
+	except Exception as err :
+		logger.exception("Erro ao buscar requisição para fatura.")
+		raise Http404("Erro interno.") from err
+	
+	try :
+		pdf_content, filename = gerar_pdf_fatura(requisicao)
+		
+		response = HttpResponse(pdf_content, content_type = "application/pdf")
+		response["Content-Disposition"] = f'inline; filename="{filename}"'
+		return response
+	
+	except Exception as err :
+		logger.exception("Erro ao gerar PDF da fatura por requisição.")
+		raise Http404("Erro ao gerar documento.") from err
 
 
 # =========================================================
@@ -151,23 +115,20 @@ def fatura_requisicao_pdf(request, id_custom):
 
 
 @staff_member_required
-def fatura_pdf(request, fatura_id_custom):
-    try:
-        fatura = get_object_or_404(
-            Fatura.objects.select_related("paciente", "requisicao"),
-            id_custom=fatura_id_custom,
-        )
-
-        # garante consistência financeira
-        if hasattr(fatura, "recalcular_totais"):
-            fatura.recalcular_totais(save=True)
-
-        pdf_content, filename = gerar_pdf_fatura(fatura, request=request)
-
-        response = HttpResponse(pdf_content, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{filename}"'
-        return response
-
-    except Exception as err:
-        logger.exception("Erro ao gerar PDF da fatura.")
-        raise Http404("Não foi possível gerar o documento.") from err
+def fatura_pdf(request, fatura_id_custom) :
+	try :
+		fatura = get_object_or_404(Fatura.objects.select_related("paciente", "requisicao"), id_custom = fatura_id_custom, )
+		
+		# garante consistência financeira
+		if hasattr(fatura, "recalcular_totais") :
+			fatura.recalcular_totais(save = True)
+		
+		pdf_content, filename = gerar_pdf_fatura(fatura, request = request)
+		
+		response = HttpResponse(pdf_content, content_type = "application/pdf")
+		response["Content-Disposition"] = f'inline; filename="{filename}"'
+		return response
+	
+	except Exception as err :
+		logger.exception("Erro ao gerar PDF da fatura.")
+		raise Http404("Não foi possível gerar o documento.") from err
