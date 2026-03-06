@@ -1,43 +1,70 @@
-from decimal import Decimal, InvalidOperation
+# LOCAL: dominio/clinico/servico_resultado.py
 
-from dominio.clinico.interpretador import interpretar, StatusClinico
-from dominio.clinico.valores_referencia import ResolverReferenciaClinica
+from dominio.clinico.estado_resultado import EstadoResultado
 
 
 class ServicoResultado :
 	
 	@staticmethod
 	def interpretar(resultado_item) :
-		# garante que o item esteja ligado ao resultado
-		if not resultado_item.resultado :
+		campo = resultado_item.exame_campo
+		
+		indicador = campo.interpretar_resultado(resultado_item.resultado_valor)
+		
+		if not indicador :
 			return
 		
-		requisicao = resultado_item.resultado.requisicao
-		paciente = requisicao.paciente
-		exame_campo = resultado_item.exame_campo
+		resultado_item.status_clinico = indicador
 		
-		referencia = ResolverReferenciaClinica.resolver(exame_campo, paciente, )
+		cores = {"NORMAL" : "preto", "BAIXO" : "azul", "ALTO" : "vermelho", "CRITICO_BAIXO" : "vermelho", "CRITICO_ALTO" : "vermelho", }
 		
-		try :
-			valor = Decimal(resultado_item.resultado_valor)
-		except (InvalidOperation, TypeError) :
-			resultado_item.status_clinico = "invalido"
-			resultado_item.cor_laudo = "cinza"
-			resultado_item.alerta_critico = False
-			return
+		resultado_item.cor_laudo = cores.get(indicador)
 		
-		status = interpretar(valor, referencia)
-		
-		resultado_item.status_clinico = status
-		
-		if status == StatusClinico.CRITICO :
-			resultado_item.cor_laudo = "vermelho"
+		if "CRITICO" in indicador :
 			resultado_item.alerta_critico = True
 		
-		elif status in (StatusClinico.ALTO, StatusClinico.BAIXO) :
-			resultado_item.cor_laudo = "amarelo"
-			resultado_item.alerta_critico = False
+		ServicoResultado._delta_check(resultado_item)
 		
-		else :
-			resultado_item.cor_laudo = "verde"
-			resultado_item.alerta_critico = False
+		ServicoResultado._auto_validar(resultado_item)
+	
+	# =====================================================
+	# DELTA CHECK
+	# =====================================================
+	
+	@staticmethod
+	def _delta_check(resultado_item) :
+		campo = resultado_item.exame_campo
+		
+		if not campo.delta_max :
+			return
+		
+		anterior = (
+			resultado_item.__class__.objects.filter(resultado__paciente = resultado_item.resultado.paciente, exame_campo = campo, ).exclude(pk = resultado_item.pk).order_by("-criado_em").first())
+		
+		if not anterior :
+			return
+		
+		try :
+			atual = float(resultado_item.resultado_valor)
+			antigo = float(anterior.resultado_valor)
+		except :
+			return
+		
+		delta = abs(atual - antigo)
+		
+		if delta > campo.delta_max :
+			resultado_item.alerta_critico = True
+	
+	# =====================================================
+	# AUTOVALIDAÇÃO
+	# =====================================================
+	
+	@staticmethod
+	def _auto_validar(resultado_item) :
+		if resultado_item.alerta_critico :
+			return
+		
+		if resultado_item.status_clinico != "NORMAL" :
+			return
+		
+		resultado_item.estado = EstadoResultado.VALIDADO

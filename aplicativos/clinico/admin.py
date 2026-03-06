@@ -21,7 +21,6 @@ class CoreAdmin(admin.ModelAdmin) :
 	readonly_fields = ("criado_em", "atualizado_em")
 	ordering = ("-criado_em",)
 	list_per_page = 50
-	list_select_related = True
 
 
 # =========================================================
@@ -42,10 +41,19 @@ class PacienteAdmin(CoreAdmin) :
 @admin.register(ExameCampo)
 class ExameCampoAdmin(CoreAdmin) :
 	list_display = ("id_custom", "nome", "exame", "tipo", "unidade", "referencia",)
-	
 	search_fields = ("id_custom", "nome", "exame__nome",)
 	
 	autocomplete_fields = ("exame",)
+	
+	list_select_related = ("exame",)
+	
+	def referencia(self, obj) :
+		if obj.referencia_min and obj.referencia_max :
+			return f"{obj.referencia_min} - {obj.referencia_max}"
+		
+		return "-"
+	
+	referencia.short_description = "Referência"
 
 
 # =========================================================
@@ -65,7 +73,7 @@ class ExameAdmin(CoreAdmin) :
 	
 	list_filter = ("setor", "metodo",)
 	
-	inlines = [ExameCampoInline]
+	inlines = (ExameCampoInline,)
 
 
 # =========================================================
@@ -75,6 +83,7 @@ class ExameAdmin(CoreAdmin) :
 class RequisicaoItemInline(admin.TabularInline) :
 	model = RequisicaoItem
 	extra = 1
+	
 	autocomplete_fields = ("exame",)
 
 
@@ -84,11 +93,13 @@ class RequisicaoAnaliseAdmin(CoreAdmin) :
 	
 	search_fields = ("id_custom", "paciente__nome",)
 	
-	list_filter = ("status_clinico", "possui_resultado_critico",)
+	list_filter = ("status_clinico",)
 	
 	autocomplete_fields = ("paciente", "analista",)
 	
-	inlines = [RequisicaoItemInline]
+	list_select_related = ("paciente", "analista",)
+	
+	inlines = (RequisicaoItemInline,)
 	
 	# -----------------------------------------------------
 	
@@ -113,17 +124,14 @@ class RequisicaoAnaliseAdmin(CoreAdmin) :
 		if not itens.exists() :
 			return format_html('<span style="color:gray;">Sem resultados</span>')
 		
-		# resultado crítico
-		if obj.possui_resultado_critico :
+		if itens.filter(alerta_critico = True).exists() :
 			cor = "#c0392b"
 			texto = "PDF Crítico"
 		
-		# resultados ainda pendentes
 		elif itens.filter(estado = "VALIDADO").count() != itens.count() :
 			cor = "#e67e22"
 			texto = "PDF Parcial"
 		
-		# todos validados
 		else :
 			cor = "#27ae60"
 			texto = "PDF Final"
@@ -131,8 +139,6 @@ class RequisicaoAnaliseAdmin(CoreAdmin) :
 		url = reverse("resultado_pdf", args = [obj.id_custom], )
 		
 		return format_html('<a style="background:{};color:white;padding:4px 10px;border-radius:4px;text-decoration:none;" target="_blank" href="{}">{}</a>', cor, url, texto, )
-	
-	ver_pdf_resultado.short_description = "Resultado PDF"
 	
 	ver_pdf_resultado.short_description = "Resultado PDF"
 
@@ -147,9 +153,9 @@ class ResultadoItemInline(admin.TabularInline) :
 	
 	extra = 0
 	
-	fields = ("exame_nome", "exame_campo", "resultado_valor", "status_clinico", "estado",)
+	fields = ("exame_nome", "exame_campo", "resultado_valor", "resultado_colorido", "interpretacao", "referencia", "estado",)
 	
-	readonly_fields = ("exame_nome", "exame_campo", "status_clinico",)
+	readonly_fields = ("exame_nome", "resultado_colorido", "interpretacao", "referencia",)
 	
 	autocomplete_fields = ("exame_campo",)
 	
@@ -169,6 +175,39 @@ class ResultadoItemInline(admin.TabularInline) :
 		return "-"
 	
 	exame_nome.short_description = "Exame"
+	
+	# -----------------------------------------------------
+	
+	def referencia(self, obj) :
+		if not obj.exame_campo :
+			return "-"
+		
+		return f"{obj.exame_campo.referencia_min} - {obj.exame_campo.referencia_max}"
+	
+	referencia.short_description = "Referência"
+	
+	# -----------------------------------------------------
+	
+	def interpretacao(self, obj) :
+		if not obj.status_clinico :
+			return "-"
+		
+		cores = {"NORMAL" : "#2c3e50", "BAIXO" : "#2980b9", "ALTO" : "#e74c3c", "CRITICO_BAIXO" : "#c0392b", "CRITICO_ALTO" : "#c0392b", }
+		
+		cor = cores.get(obj.status_clinico, "#2c3e50")
+		
+		return format_html("<strong style='color:{}'>{}</strong>", cor, obj.status_clinico, )
+	
+	interpretacao.short_description = "Interpretação"
+	
+	# -----------------------------------------------------
+	
+	def resultado_colorido(self, obj) :
+		cor = obj.cor_laudo or "#2c3e50"
+		
+		return format_html("<strong style='color:{}'>{}</strong>", cor, obj.resultado_valor or "-", )
+	
+	resultado_colorido.short_description = "Resultado"
 
 
 # =========================================================
@@ -177,8 +216,10 @@ class ResultadoItemInline(admin.TabularInline) :
 
 @admin.register(Resultado)
 class ResultadoAdmin(CoreAdmin) :
-	list_display = ("id_custom", "requisicao", "analista", "finalizado",)
+	list_display = ("id_custom", "requisicao", "analista", "finalizado", "criado_em",)
+	
+	list_select_related = ("requisicao", "analista",)
 	
 	raw_id_fields = ("requisicao", "analista",)
-	
-	inlines = [ResultadoItemInline]
+	readonly_fields = ("id_custom", "requisicao", "analista", "criado_em",)
+	inlines = (ResultadoItemInline,)
