@@ -1,6 +1,8 @@
 # LOCAL: dominio/clinico/servico_resultado.py
 
 from dominio.clinico.estado_resultado import EstadoResultado
+from dominio.clinico.regras_paciente import InterpretadorResultado as InterpretadorReferencia
+from dominio.clinico.valores_referencia import ResolverReferenciaClinica
 
 
 class ServicoResultado :
@@ -9,7 +11,27 @@ class ServicoResultado :
 	def interpretar(resultado_item) :
 		campo = resultado_item.exame_campo
 		
-		indicador = campo.interpretar_resultado(resultado_item.resultado_valor)
+		indicador = None
+		novo_cor = None
+		novo_alerta = None
+		
+		# prioriza referência clínica (sexo/idade) quando existir
+		paciente = None
+		if resultado_item.resultado and resultado_item.resultado.requisicao :
+			paciente = resultado_item.resultado.requisicao.paciente
+		
+		if paciente :
+			referencia = ResolverReferenciaClinica.resolver(campo, paciente)
+			if referencia :
+				dados = InterpretadorReferencia.interpretar(str(resultado_item.resultado_valor) if resultado_item.resultado_valor is not None else None, referencia)
+				if dados :
+					indicador = dados.get("status_clinico")
+					novo_cor = dados.get("cor_laudo")
+					novo_alerta = dados.get("alerta_critico")
+		
+		# fallback para referência simples do ExameCampo
+		if not indicador :
+			indicador = campo.interpretar_resultado(resultado_item.resultado_valor)
 		
 		if not indicador :
 			return
@@ -18,9 +40,14 @@ class ServicoResultado :
 		
 		cores = {"NORMAL" : "preto", "BAIXO" : "azul", "ALTO" : "vermelho", "CRITICO_BAIXO" : "vermelho", "CRITICO_ALTO" : "vermelho", }
 		
-		resultado_item.cor_laudo = cores.get(indicador)
+		if novo_cor :
+			resultado_item.cor_laudo = novo_cor
+		else :
+			resultado_item.cor_laudo = cores.get(indicador)
 		
-		if "CRITICO" in indicador :
+		if novo_alerta is not None :
+			resultado_item.alerta_critico = bool(novo_alerta)
+		elif "CRITICO" in indicador :
 			resultado_item.alerta_critico = True
 		
 		ServicoResultado._delta_check(resultado_item)
