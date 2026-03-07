@@ -19,17 +19,17 @@ class ExameCampo(CoreModel) :
 	unidade = models.CharField(max_length = 30, choices = UnidadePadrao.choices, default = UnidadePadrao.P_UL, verbose_name = "Unidade de medida", )
 	
 	# intervalos normais
-	referencia_min = models.DecimalField(max_digits = 10, decimal_places = 3, null = True, blank = True, verbose_name = "Referência mínima", )
+	referencia_min = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True, verbose_name = "Referência mínima", )
 	
-	referencia_max = models.DecimalField(max_digits = 10, decimal_places = 3, null = True, blank = True, verbose_name = "Referência máxima", )
+	referencia_max = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True, verbose_name = "Referência máxima", )
 	
 	# limites críticos
-	critico_min = models.DecimalField(max_digits = 10, decimal_places = 3, null = True, blank = True, verbose_name = "Valor crítico mínimo", )
+	critico_min = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True, verbose_name = "Valor crítico mínimo", )
 	
-	critico_max = models.DecimalField(max_digits = 10, decimal_places = 3, null = True, blank = True, verbose_name = "Valor crítico máximo", )
+	critico_max = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True, verbose_name = "Valor crítico máximo", )
 	
 	# delta check
-	delta_max = models.DecimalField(max_digits = 10, decimal_places = 3, null = True, blank = True, verbose_name = "Delta máximo permitido", )
+	delta_max = models.DecimalField(max_digits = 10, decimal_places = 2, null = True, blank = True, verbose_name = "Delta máximo permitido", )
 	
 	class Meta :
 		verbose_name = "parâmetro de exame"
