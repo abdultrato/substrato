@@ -1,12 +1,15 @@
 from django.db import models
 
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
 from .resultado import Resultado
 from .resultado_analise import ResultadoItem
 
 
-class RequisicaoItem(NoNameCoreModel) :
+class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel) :
+	fonte_inquilino = "paciente"
+	
 	requisicao = models.ForeignKey("RequisicaoAnalise", on_delete = models.CASCADE, related_name = "itens", )
 	
 	exame = models.ForeignKey(Exame, on_delete = models.PROTECT, related_name = "requisicoes", )

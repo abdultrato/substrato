@@ -4,6 +4,8 @@ from dominio.clinico.estado_resultado import EstadoResultado
 from dominio.clinico.regras_paciente import InterpretadorResultado as InterpretadorReferencia
 from dominio.clinico.valores_referencia import ResolverReferenciaClinica
 
+CORES_STATUS = {"NORMAL" : "preto", "BAIXO" : "azul", "ALTO" : "vermelho", "CRITICO_BAIXO" : "vermelho", "CRITICO_ALTO" : "vermelho", }
+
 
 class ServicoResultado :
 	
@@ -15,42 +17,72 @@ class ServicoResultado :
 		novo_cor = None
 		novo_alerta = None
 		
-		# prioriza referência clínica (sexo/idade) quando existir
+		# =====================================================
+		# RESOLVER PACIENTE
+		# =====================================================
+		
 		paciente = None
+		
 		if resultado_item.resultado and resultado_item.resultado.requisicao :
 			paciente = resultado_item.resultado.requisicao.paciente
 		
+		# =====================================================
+		# REFERÊNCIA CLÍNICA (sexo / idade)
+		# =====================================================
+		
 		if paciente :
 			referencia = ResolverReferenciaClinica.resolver(campo, paciente)
+			
 			if referencia :
-				dados = InterpretadorReferencia.interpretar(str(resultado_item.resultado_valor) if resultado_item.resultado_valor is not None else None, referencia)
+				valor = (str(resultado_item.resultado_valor) if resultado_item.resultado_valor is not None else None)
+				
+				dados = InterpretadorReferencia.interpretar(valor, referencia)
+				
 				if dados :
 					indicador = dados.get("status_clinico")
 					novo_cor = dados.get("cor_laudo")
 					novo_alerta = dados.get("alerta_critico")
 		
-		# fallback para referência simples do ExameCampo
-		if not indicador :
+		# =====================================================
+		# FALLBACK PARA REFERÊNCIA DO CAMPO
+		# =====================================================
+		
+		if indicador is None :
 			indicador = campo.interpretar_resultado(resultado_item.resultado_valor)
 		
-		if not indicador :
+		if indicador is None :
 			return
 		
 		resultado_item.status_clinico = indicador
 		
-		cores = {"NORMAL" : "preto", "BAIXO" : "azul", "ALTO" : "vermelho", "CRITICO_BAIXO" : "vermelho", "CRITICO_ALTO" : "vermelho", }
+		# =====================================================
+		# COR DO RESULTADO
+		# =====================================================
 		
 		if novo_cor :
 			resultado_item.cor_laudo = novo_cor
 		else :
-			resultado_item.cor_laudo = cores.get(indicador)
+			resultado_item.cor_laudo = CORES_STATUS.get(indicador)
+		
+		# =====================================================
+		# ALERTA CRÍTICO
+		# =====================================================
 		
 		if novo_alerta is not None :
 			resultado_item.alerta_critico = bool(novo_alerta)
+		
 		elif "CRITICO" in indicador :
 			resultado_item.alerta_critico = True
 		
+		# =====================================================
+		# DELTA CHECK
+		# =====================================================
+		
 		ServicoResultado._delta_check(resultado_item)
+		
+		# =====================================================
+		# AUTOVALIDAÇÃO
+		# =====================================================
 		
 		ServicoResultado._auto_validar(resultado_item)
 	
@@ -65,8 +97,15 @@ class ServicoResultado :
 		if not campo.delta_max :
 			return
 		
-		anterior = (
-			resultado_item.__class__.objects.filter(resultado__paciente = resultado_item.resultado.paciente, exame_campo = campo, ).exclude(pk = resultado_item.pk).order_by("-criado_em").first())
+		paciente = None
+		
+		if resultado_item.resultado and resultado_item.resultado.requisicao :
+			paciente = resultado_item.resultado.requisicao.paciente
+		
+		if not paciente :
+			return
+		
+		anterior = (resultado_item.__class__.objects.filter(resultado__requisicao__paciente = paciente, exame_campo = campo, ).exclude(pk = resultado_item.pk).order_by("-criado_em").first())
 		
 		if not anterior :
 			return
@@ -74,7 +113,7 @@ class ServicoResultado :
 		try :
 			atual = float(resultado_item.resultado_valor)
 			antigo = float(anterior.resultado_valor)
-		except :
+		except Exception :
 			return
 		
 		delta = abs(atual - antigo)

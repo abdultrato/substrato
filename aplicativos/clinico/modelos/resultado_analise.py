@@ -11,6 +11,7 @@ from dominio.clinico.estado_resultado import EstadoResultado
 from dominio.clinico.eventos import ResultadoValidadoEvent
 from dominio.clinico.state_machine_resultado import ResultadoStateMachine
 from eventos.bus import event_bus
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import NoNameCoreModel
 from .exame_campo import ExameCampo
 from .resultado import Resultado
@@ -18,7 +19,9 @@ from .resultado import Resultado
 User = settings.AUTH_USER_MODEL
 
 
-class ResultadoItem(NoNameCoreModel) :
+class ResultadoItem(PropagarInquilinoMixin, NoNameCoreModel) :
+	fonte_inquilino = "paciente"
+	
 	prefixo = "RES"
 	
 	resultado = models.ForeignKey(Resultado, on_delete = models.CASCADE, related_name = "itens", )
@@ -26,17 +29,17 @@ class ResultadoItem(NoNameCoreModel) :
 	exame_campo = models.ForeignKey(ExameCampo, on_delete = models.CASCADE, related_name = "resultados", )
 	
 	# valor numérico do resultado
-	resultado_valor = models.DecimalField(max_digits = 12, decimal_places = 3, null = True, blank = True)
+	resultado_valor = models.DecimalField(max_digits = 12, decimal_places = 2, null = True, blank = True)
 	
 	status_clinico = models.CharField(max_length = 20, blank = True)
 	
-	cor_laudo = models.CharField(max_length = 20, blank = True)
+	cor_laudo = models.CharField(max_length = 20, blank = True, null = True)
 	
 	alerta_critico = models.BooleanField(default = False)
 	
 	estado = models.CharField(max_length = 30, choices = EstadoResultado.CHOICES, default = EstadoResultado.PENDENTE, db_index = True, )
 	
-	validado_por = models.ForeignKey(User, on_delete = models.SET_NULL, null = True, blank = True, related_name = "resultados_validados", )
+	validado_por = models.ForeignKey(User, on_delete = models.SET_NULL, verbose_name = "Resultado", null = True, blank = True, related_name = "resultados_validados", )
 	
 	data_validacao = models.DateTimeField(null = True, blank = True)
 	
@@ -120,3 +123,28 @@ class ResultadoItem(NoNameCoreModel) :
 	
 	def __str__(self) :
 		return f"{self.id_custom} - {self.exame_campo.nome}"
+	
+	# =====================================================
+	# RESULTADO FORMATADO
+	# =====================================================
+	
+	@property
+	def resultado_valor_formatado(self) :
+		"""
+		Retorna o valor do resultado acompanhado do símbolo clínico.
+
+		Exemplos:
+		6.2 ↓↓
+		14.1 ↑
+		4.5
+		"""
+		
+		if self.resultado_valor is None :
+			return "-"
+		
+		simbolo = self.status_clinico or ""
+		
+		if simbolo and simbolo != "N" :
+			return f"{self.resultado_valor} {simbolo}"
+		
+		return str(self.resultado_valor)

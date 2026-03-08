@@ -51,6 +51,10 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	# =====================================================
 	
 	def save(self, *args, **kwargs) :
+		# garantir propagação de tenant
+		if not self.inquilino and self.paciente :
+			self.inquilino = self.paciente.inquilino
+		
 		if self.pk :
 			original = (self.__class__.all_objects.filter(pk = self.pk).only("paciente").first())
 			
@@ -96,12 +100,15 @@ class RequisicaoAnalise(NoNameCoreModel) :
 	# RESULTADO
 	# =====================================================
 	
-	def obter_ou_criar_resultado(self) :
+	def obter_resultado(self) :
 		from .resultado import Resultado
 		
-		resultado, _ = Resultado.objects.get_or_create(requisicao = self, defaults = {"inquilino" : self.inquilino}, )
+		return Resultado.objects.filter(requisicao = self).first()
+	
+	def criar_resultado(self) :
+		from .resultado import Resultado
 		
-		return resultado
+		return Resultado.objects.create(requisicao = self, inquilino = self.inquilino, )
 	
 	# =====================================================
 	# SINCRONIZAÇÃO CLÍNICA
@@ -141,12 +148,12 @@ class RequisicaoAnalise(NoNameCoreModel) :
 					else :
 						self.status_clinico = StatusClinico.NAO_URGENTE
 		
-		self.save(update_fields = ["status_clinico", "possui_resultado_critico"])
+		self.save(update_fields = ["status_clinico", "possui_resultado_critico", ])
 		
 		self._auto_validar_se_necessario()
 	
 	# =====================================================
-	# AUTO-TRANSIÇÃO PARA VALIDADA
+	# AUTO TRANSIÇÃO PARA VALIDADA
 	# =====================================================
 	
 	def _auto_validar_se_necessario(self) :
@@ -166,9 +173,17 @@ class RequisicaoAnalise(NoNameCoreModel) :
 		validados = itens.filter(estado = "VALIDADO").count()
 		
 		if validados == total :
+			from dominio.clinico.estado_requisicao import EstadoRequisicao
+			
 			self.transicionar(EstadoRequisicao.VALIDADA)
 	
 	# =====================================================
+	
+	@property
+	def inquilino_do_paciente(self) :
+		if self.paciente :
+			return getattr(self.paciente, "inquilino", None)
+		return None
 	
 	def __str__(self) :
 		return f"{self.id_custom} - {self.paciente.nome}"

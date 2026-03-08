@@ -3,7 +3,7 @@ import io
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
 from reportlab.lib.units import cm
-from reportlab.platypus import (HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, )
+from reportlab.platypus import (HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, )
 
 from dominio.clinico.estado_resultado import EstadoResultado
 from .pdf_base import (append_fim, bold, cell_paragraph, draw_line_full_width, estilo_secao_documento, estilo_titulo_documento, FONT_BOLD, identidade_usuario_institucional, montar_bloco_identificacao, NumberedCanvas, on_page)
@@ -113,7 +113,7 @@ def gerar_pdf_resultados(requisicao, apenas_validados = True) -> tuple[bytes, st
 			for r in resultados :
 				campo = r.exame_campo
 				
-				valor = r.resultado_valor or "-"
+				valor = r.resultado_valor_formatado or "-"
 				
 				data.append([cell_paragraph(campo.nome), cell_paragraph(valor), cell_paragraph(campo.unidade or "-"), cell_paragraph(campo.referencia or "-"), ])
 			
@@ -121,7 +121,7 @@ def gerar_pdf_resultados(requisicao, apenas_validados = True) -> tuple[bytes, st
 			
 			table.setStyle(TableStyle([("FONTNAME", (0, 0), (-1, 0), FONT_BOLD), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 2), ("RIGHTPADDING", (0, 0), (-1, -1), 2), ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.darkblue), ]))
 			
-			elements.append(KeepTogether(table))
+			elements.append(table)
 			elements.append(Spacer(1, 0.3 * cm))
 	
 	else :

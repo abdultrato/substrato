@@ -30,7 +30,7 @@ class CoreAdmin(admin.ModelAdmin) :
 @admin.register(Paciente)
 class PacienteAdmin(CoreAdmin) :
 	list_display = ("id_custom", "nome", "numero_id", "contacto",)
-	
+	readonly_fields = ("id_custom", "idade", "versao", "criado_em", "criado_por", "criado_por_id", "deletado_em", "deletado_por", "atualizado_por", "atualizado_em", "deletado_por_id")
 	search_fields = ("id_custom", "nome", "numero_id", "contacto",)
 
 
@@ -98,19 +98,20 @@ class RequisicaoAnaliseAdmin(CoreAdmin) :
 	autocomplete_fields = ("paciente", "analista",)
 	
 	list_select_related = ("paciente", "analista",)
-	
+	readonly_fields = ("criado_em", "criado_por_id", "criado_por", "deletado_em", "deletado_por_id", "deletado_por", "id_custom", "paciente_id", "status_clinico", "versao", "atualizado_por")
 	inlines = (RequisicaoItemInline,)
 	
 	# -----------------------------------------------------
 	
 	def lancar_resultado(self, obj) :
-		resultado = obj.obter_ou_criar_resultado()
+		resultado = obj.obter_resultado()
+		
+		if not resultado :
+			return "—"
 		
 		url = reverse("admin:clinico_resultado_change", args = [resultado.id], )
 		
-		return format_html('<a class="button" href="{}">Lançar resultados</a>', url, )
-	
-	lancar_resultado.short_description = "Resultados"
+		return format_html('<a class="button" href="{}">Lançar resultados</a>', url)
 	
 	# -----------------------------------------------------
 	
@@ -152,13 +153,16 @@ class ResultadoItemInline(admin.TabularInline) :
 	formset = ResultadoItemInlineFormSet
 	
 	extra = 0
+	can_delete = False
 	
-	fields = ("exame_nome", "exame_campo", "resultado_valor", "resultado_colorido", "interpretacao", "referencia", "estado",)
+	fields = ("exame_nome", "exame_campo", "resultado_colorido", "referencia", "resultado_valor", "estado",)
 	
-	readonly_fields = ("exame_nome", "resultado_colorido", "interpretacao", "referencia",)
+	readonly_fields = ("exame_nome", "exame_campo", "referencia", "resultado_colorido", "interpretacao",)
 	
 	autocomplete_fields = ("exame_campo",)
 	
+	# -----------------------------------------------------
+	# QUERY OTIMIZADA
 	# -----------------------------------------------------
 	
 	def get_queryset(self, request) :
@@ -167,47 +171,59 @@ class ResultadoItemInline(admin.TabularInline) :
 		return qs.select_related("exame_campo", "exame_campo__exame", ).order_by("exame_campo__exame__nome", "exame_campo__nome", )
 	
 	# -----------------------------------------------------
+	# EXAME
+	# -----------------------------------------------------
 	
 	def exame_nome(self, obj) :
-		if obj.exame_campo and obj.exame_campo.exame :
-			return format_html("<b>{}</b>", obj.exame_campo.exame.nome, )
+		campo = getattr(obj, "exame_campo", None)
+		
+		if campo and campo.exame :
+			return format_html("<strong>{}</strong>", campo.exame.nome)
 		
 		return "-"
 	
 	exame_nome.short_description = "Exame"
 	
 	# -----------------------------------------------------
+	# REFERÊNCIA (usa propriedade do model)
+	# -----------------------------------------------------
 	
 	def referencia(self, obj) :
-		if not obj.exame_campo :
+		campo = getattr(obj, "exame_campo", None)
+		
+		if not campo :
 			return "-"
 		
-		return f"{obj.exame_campo.referencia_min} - {obj.exame_campo.referencia_max}"
+		return campo.referencia or "-"
 	
 	referencia.short_description = "Referência"
 	
+	# -----------------------------------------------------
+	# RESULTADO COLORIDO
+	# -----------------------------------------------------
+	
+	def resultado_colorido(self, obj) :
+		cor = obj.cor_laudo or "#2c3e50"
+		
+		return format_html("<strong style='color:{}'>{}</strong>", cor, obj.resultado_valor_formatado)
+	
+	resultado_colorido.short_description = "Resultado"
+	
+	# -----------------------------------------------------
+	# INTERPRETAÇÃO
 	# -----------------------------------------------------
 	
 	def interpretacao(self, obj) :
 		if not obj.status_clinico :
 			return "-"
 		
-		cores = {"NORMAL" : "#2c3e50", "BAIXO" : "#2980b9", "ALTO" : "#e74c3c", "CRITICO_BAIXO" : "#c0392b", "CRITICO_ALTO" : "#c0392b", }
+		cores = {"NORMAL" : "#2c3e50", "BAIXO" : "#2980b9", "ALTO" : "#e67e22", "CRITICO_BAIXO" : "#c0392b", "CRITICO_ALTO" : "#c0392b", }
 		
 		cor = cores.get(obj.status_clinico, "#2c3e50")
 		
 		return format_html("<strong style='color:{}'>{}</strong>", cor, obj.status_clinico, )
 	
 	interpretacao.short_description = "Interpretação"
-	
-	# -----------------------------------------------------
-	
-	def resultado_colorido(self, obj) :
-		cor = obj.cor_laudo or "#2c3e50"
-		
-		return format_html("<strong style='color:{}'>{}</strong>", cor, obj.resultado_valor or "-", )
-	
-	resultado_colorido.short_description = "Resultado"
 
 
 # =========================================================

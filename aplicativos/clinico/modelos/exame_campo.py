@@ -6,10 +6,11 @@ from django.db import models
 
 from nucleo.constantes.laboratorio.tipo_resultado import TipoResultado
 from nucleo.constantes.laboratorio.unidades import UnidadePadrao
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import CoreModel
 
 
-class ExameCampo(CoreModel) :
+class ExameCampo(PropagarInquilinoMixin, CoreModel) :
 	prefixo = "CMP"
 	
 	exame = models.ForeignKey("clinico.Exame", on_delete = models.CASCADE, related_name = "campos", verbose_name = "Exame", )
@@ -36,7 +37,33 @@ class ExameCampo(CoreModel) :
 		verbose_name_plural = "parâmetros de exame"
 	
 	def __str__(self) :
-		return f"{self.exame.nome} → {self.nome}"
+		return self.nome
+	
+	# =====================================================
+	# INTERVALO DE REFERÊNCIA FORMATADO
+	# =====================================================
+	
+	@property
+	def referencia(self) :
+		"""
+		Retorna o intervalo de referência formatado.
+		Exemplo:
+		4.0 – 10.0
+		>= 4.0
+		<= 10.0
+		"""
+		if self.referencia_min is None and self.referencia_max is None :
+			return None
+		
+		if self.referencia_min is not None and self.referencia_max is not None :
+			return f"{self.referencia_min} – {self.referencia_max}"
+		
+		if self.referencia_min is not None :
+			return f">= {self.referencia_min}"
+		
+		if self.referencia_max is not None :
+			return f"<= {self.referencia_max}"
+		return None
 	
 	# =====================================================
 	# INTERPRETAÇÃO BÁSICA
@@ -53,16 +80,16 @@ class ExameCampo(CoreModel) :
 		
 		# valores críticos
 		if self.critico_min is not None and valor < self.critico_min :
-			return "CRITICO_BAIXO"
+			return "↓↓"
 		
 		if self.critico_max is not None and valor > self.critico_max :
-			return "CRITICO_ALTO"
+			return "↑↑"
 		
 		# intervalo normal
 		if self.referencia_min is not None and valor < self.referencia_min :
-			return "BAIXO"
+			return "↓"
 		
 		if self.referencia_max is not None and valor > self.referencia_max :
-			return "ALTO"
+			return "↑"
 		
-		return "NORMAL"
+		return "N"

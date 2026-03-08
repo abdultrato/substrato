@@ -8,14 +8,15 @@ from django.db.models import Q
 from infrastrutura.orm.fields.dinheiro_field import DinheiroField
 from infrastrutura.orm.fields.metodo_field import MetodoField
 from infrastrutura.orm.fields.setor_field import SetorField
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import CoreModel
 
 
-class Exame(CoreModel) :
+class Exame(PropagarInquilinoMixin, CoreModel) :
 	"""
 	Cadastro de exames laboratoriais.
 	"""
-	
+	fonte_inquilino = "paciente"
 	prefixo = "EXA"
 	
 	# =====================================================
