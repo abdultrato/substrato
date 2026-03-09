@@ -1,22 +1,16 @@
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
-from django.db.models import F, Q
+from django.db import models, transaction
+from django.db.models import DecimalField, F, Q, Sum
+from django.db.models.functions import Coalesce
 
 from nucleo.modelos.base import CoreModel
 
 
 class ItemVenda(CoreModel):
-    """
-    Item financeiro da venda.
-    Enterprise-ready:
-    - Auditável
-    - Soft delete
-    - Indexado
-    - Integridade garantida
-    """
-    
+
     prefixo = "IVEND"
 
     venda = models.ForeignKey(
@@ -32,17 +26,17 @@ class ItemVenda(CoreModel):
         db_index=True,
     )
 
-    quantidade = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)]
-    )
+    quantidade = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     preco_unitario = models.DecimalField(
         max_digits=14,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
+        blank=True,
     )
 
     class Meta:
+
         verbose_name = "Item da Venda"
         verbose_name_plural = "Itens da Venda"
 
@@ -53,7 +47,6 @@ class ItemVenda(CoreModel):
         ]
 
         constraints = [
-            # Impede duplicar produto na mesma venda
             models.UniqueConstraint(
                 fields=["venda", "produto"],
                 condition=Q(deletado=False),
@@ -74,17 +67,117 @@ class ItemVenda(CoreModel):
     # ==========================================
 
     def clean(self):
+
         super().clean()
 
         if self.quantidade <= 0:
-            raise ValidationError(
-                {"quantidade": "Quantidade deve ser maior que zero."}
+            raise ValidationError({"quantidade": "Quantidade deve ser maior que zero."})
+
+        if self.preco_unitario is not None and self.preco_unitario < Decimal("0.00"):
+            raise ValidationError({"preco_unitario": "Preço unitário inválido."})
+
+        # impedir troca de produto após criação
+        if self.pk:
+            original = ItemVenda.all_objects.get(pk=self.pk)
+            if original.produto_id != self.produto_id:
+                raise ValidationError({"produto": "Produto não pode ser alterado."})
+
+    # ==========================================
+    # ATUALIZA TOTAL DA VENDA
+    # ==========================================
+
+    def atualizar_total_venda(self):
+
+        total = self.venda.itens.aggregate(
+            total=Coalesce(
+                Sum(
+                    F("quantidade") * F("preco_unitario"),
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Decimal("0.00"),
+            )
+        )["total"]
+
+        self.venda.total = total
+        self.venda.save(update_fields=["total"])
+
+    # ==========================================
+    # BAIXA DE ESTOQUE (FEFO)
+    # ==========================================
+
+    def baixar_estoque(self):
+
+        from aplicativos.farmacia.models.lote import Lote
+        from aplicativos.farmacia.models.movimento import (
+            MovimentoEstoque,
+            TipoMovimento,
+        )
+
+        restante = self.quantidade
+
+        for lote in Lote.disponiveis(self.produto):
+
+            if restante <= 0:
+                break
+
+            saldo = lote.saldo()
+
+            consumir = min(restante, saldo)
+
+            MovimentoEstoque.objects.create(
+                lote=lote,
+                tipo=TipoMovimento.SAIDA,
+                quantidade=consumir,
+                item_venda=self,
+                inquilino=self.inquilino,
             )
 
-        if self.preco_unitario < Decimal("0.00"):
-            raise ValidationError(
-                {"preco_unitario": "Preço unitário inválido."}
+            restante -= consumir
+
+        if restante > 0:
+            raise ValidationError("Estoque insuficiente.")
+
+    # ==========================================
+    # SAVE
+    # ==========================================
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+
+        criando = self.pk is None
+
+        if criando and not self.preco_unitario:
+            self.preco_unitario = self.produto.preco_venda
+
+        super().save(*args, **kwargs)
+
+        if criando:
+            self.baixar_estoque()
+
+        self.atualizar_total_venda()
+
+    # ==========================================
+    # DELETE
+    # ==========================================
+
+    def delete(self, *args, **kwargs):
+
+        venda = self.venda
+
+        super().delete(*args, **kwargs)
+
+        total = venda.itens.aggregate(
+            total=Coalesce(
+                Sum(
+                    F("quantidade") * F("preco_unitario"),
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Decimal("0.00"),
             )
+        )["total"]
+
+        venda.total = total
+        venda.save(update_fields=["total"])
 
     def __str__(self):
         return f"{self.produto} x{self.quantidade}"
