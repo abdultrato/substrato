@@ -1,126 +1,515 @@
 from django.contrib import admin
-from django.db.models import Case, F, IntegerField, Sum, When
+from django.db.models import Case, F, IntegerField, Min, Sum, When
+from django.db.models.functions import Coalesce
 from django.utils.html import format_html
 
-from aplicativos.farmacia.models.movimento import TipoMovimento
 from .models.item_venda import ItemVenda
 from .models.lote import Lote
 from .models.movimento import MovimentoEstoque
 from .models.produto import Produto
 from .models.venda import Venda
 
-
 # =========================================================
 # PRODUTO
 # =========================================================
 
+
 @admin.register(Produto)
-class ProdutoAdmin(admin.ModelAdmin) :
-	list_display = ("id_custom", "nome", "tipo", "preco_venda", "criado_em",)
-	
-	search_fields = ("id_custom", "nome")
-	list_filter = ("tipo",)
-	ordering = ("nome",)
-	
-	readonly_fields = ("criado_em", "atualizado_em")
-	
-	list_select_related = True
-	list_per_page = 50
+class ProdutoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id_custom",
+        "nome",
+        "categoria",
+        "preco_venda",
+        "estoque_total",
+        "proximo_vencimento",
+        "criado_em",
+    )
+
+    search_fields = ("id_custom", "nome")
+    list_filter = ("categoria",)
+    ordering = ("nome",)
+    list_per_page = 50
+
+    readonly_fields = (
+        "criado_em",
+        "criado_por",
+        "atualizado_em",
+        "atualizado_por",
+        "versao",
+        "deletado_em",
+        "deletado_por",
+    )
+
+    fieldsets = (
+        (
+            "Informações do Produto",
+            {
+                "fields": (
+                    "nome",
+                    "categoria",
+                    "preco_venda",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                    "deletado_em",
+                    "deletado_por",
+                ),
+            },
+        ),
+    )
+
+    # =========================
+    # QUERY OTIMIZADA
+    # =========================
+
+    def get_queryset(self, request):
+
+        qs = super().get_queryset(request)
+
+        qs = qs.annotate(
+            quantidade_lotes=Coalesce(
+                Sum("lotes__quantidade_inicial"),
+                0,
+            ),
+            movimentos_total=Coalesce(
+                Sum(
+                    Case(
+                        When(
+                            lotes__movimentos__tipo="SAI",
+                            then=-F("lotes__movimentos__quantidade"),
+                        ),
+                        default=F("lotes__movimentos__quantidade"),
+                        output_field=IntegerField(),
+                    )
+                ),
+                0,
+            ),
+            proximo_vencimento=Min("lotes__validade"),
+        )
+
+        return qs.annotate(
+            estoque_total_calc=F("quantidade_lotes") + F("movimentos_total")
+        )
+
+    # =========================
+    # ESTOQUE
+    # =========================
+
+    def estoque_total(self, obj):
+
+        estoque = obj.estoque_total_calc or 0
+
+        if estoque <= 5:
+            return format_html(
+                "<span style='color:red;font-weight:bold'>{}</span>",
+                estoque,
+            )
+
+        return estoque
+
+    estoque_total.short_description = "Estoque"
+
+    # =========================
+    # VENCIMENTO
+    # =========================
+
+    def proximo_vencimento(self, obj):
+
+        if not obj.proximo_vencimento:
+            return "-"
+
+        return obj.proximo_vencimento
+
+    proximo_vencimento.short_description = "Próximo vencimento"
 
 
 # =========================================================
 # LOTE
 # =========================================================
 
+
 @admin.register(Lote)
-class LoteAdmin(admin.ModelAdmin) :
-	list_display = ("produto", "numero_lote", "validade", "saldo_atual", "vencido_status",)
-	
-	search_fields = ("numero_lote", "produto__nome")
-	list_filter = ("validade",)
-	list_select_related = ("produto",)
-	
-	readonly_fields = ("criado_em",)
-	
-	# =====================================================
-	# QUERY OTIMIZADA
-	# =====================================================
-	
-	def get_queryset(self, request) :
-		qs = super().get_queryset(request)
-		
-		return qs.annotate(_saldo = Sum(Case(When(movimentoestoque__tipo = TipoMovimento.SAIDA, then = -F("movimentoestoque__quantidade"), ), default = F("movimentoestoque__quantidade"), output_field = IntegerField(), )))
-	
-	# =====================================================
-	# SALDO
-	# =====================================================
-	
-	def saldo_atual(self, obj) :
-		return obj._saldo or 0
-	
-	saldo_atual.short_description = "Saldo"
-	saldo_atual.admin_order_field = "_saldo"
-	
-	# =====================================================
-	# STATUS
-	# =====================================================
-	
-	def vencido_status(self, obj) :
-		if getattr(obj, "vencido", False) :
-			return format_html("<span style='color:red;'>Vencido</span>")
-		return "OK"
+class LoteAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "produto",
+        "numero_lote",
+        "validade",
+        "quantidade_inicial",
+        "saldo_atual",
+        "vencido_status",
+    )
+
+    search_fields = (
+        "numero_lote",
+        "produto__nome",
+    )
+
+    list_filter = (
+        "validade",
+        "produto",
+    )
+
+    ordering = ("validade",)
+
+    list_select_related = ("produto",)
+
+    readonly_fields = (
+        "criado_em",
+        "criado_por",
+        "atualizado_em",
+        "atualizado_por",
+        "versao",
+        "deletado_em",
+        "deletado_por",
+    )
+
+    fieldsets = (
+        (
+            "Informações do Lote",
+            {
+                "fields": (
+                    "produto",
+                    "numero_lote",
+                    "validade",
+                    "quantidade_inicial",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                    "deletado_em",
+                    "deletado_por",
+                ),
+            },
+        ),
+    )
+
+    list_per_page = 50
+
+    # =========================
+    # QUERY OTIMIZADA
+    # =========================
+
+    def get_queryset(self, request):
+
+        qs = super().get_queryset(request)
+
+        return qs.annotate(
+            saldo_calc=F("quantidade_inicial")
+            + Coalesce(
+                Sum(
+                    Case(
+                        When(
+                            movimentos__tipo="SAI",
+                            then=-F("movimentos__quantidade"),
+                        ),
+                        default=F("movimentos__quantidade"),
+                        output_field=IntegerField(),
+                    )
+                ),
+                0,
+            )
+        )
+
+    # =========================
+    # SALDO
+    # =========================
+
+    def saldo_atual(self, obj):
+
+        saldo = obj.saldo_calc
+
+        if saldo <= 5:
+            return format_html(
+                "<span style='color:red;font-weight:bold'>{}</span>", saldo
+            )
+
+        return saldo
+
+    saldo_atual.short_description = "Saldo"
+    saldo_atual.admin_order_field = "saldo_calc"
+
+    # =========================
+    # STATUS
+    # =========================
+
+    def vencido_status(self, obj):
+
+        if obj.vencido:
+            return format_html(
+                "<span style='color:red;font-weight:bold'>Vencido</span>"
+            )
+
+        return format_html("<span style='color:green;font-weight:bold'>OK</span>")
+
+    vencido_status.short_description = "Status"
 
 
 # =========================================================
-# MOVIMENTO
+# MOVIMENTO ESTOQUE
 # =========================================================
+
 
 @admin.register(MovimentoEstoque)
-class MovimentoEstoqueAdmin(admin.ModelAdmin) :
-	list_display = ("lote", "tipo", "quantidade", "criado_em",)
-	
-	list_filter = ("tipo", "criado_em")
-	
-	readonly_fields = ("lote", "tipo", "quantidade", "criado_em",)
-	
-	def has_add_permission(self, request) :
-		return False
-	
-	def has_delete_permission(self, request, obj = None) :
-		return False
+class MovimentoEstoqueAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "lote",
+        "tipo",
+        "quantidade",
+        "criado_em",
+    )
+
+    list_filter = (
+        "tipo",
+        "criado_em",
+    )
+
+    search_fields = (
+        "lote__numero_lote",
+        "lote__produto__nome",
+    )
+
+    list_select_related = (
+        "lote",
+        "lote__produto",
+    )
+
+    ordering = ("-criado_em",)
+
+    readonly_fields = (
+        "lote",
+        "tipo",
+        "quantidade",
+        "criado_em",
+        "criado_por",
+        "atualizado_em",
+        "atualizado_por",
+        "versao",
+    )
+
+    fieldsets = (
+        (
+            "Movimento",
+            {
+                "fields": (
+                    "lote",
+                    "tipo",
+                    "quantidade",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
+    )
+
+    list_per_page = 50
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # =========================================================
 # ITEM VENDA INLINE
 # =========================================================
 
-class ItemVendaInline(admin.TabularInline) :
-	model = ItemVenda
-	extra = 0
-	readonly_fields = ("total_linha",)
-	autocomplete_fields = ("produto",)
-	
-	def total_linha(self, obj) :
-		try :
-			return obj.total_linha
-		except Exception :
-			return "-"
+
+class ItemVendaInline(admin.TabularInline):
+
+    model = ItemVenda
+    extra = 0
+
+    autocomplete_fields = ("produto",)
+
+    readonly_fields = ("total_linha_formatado",)
+
+    fields = (
+        "produto",
+        "quantidade",
+        "preco_unitario",
+        "total_linha_formatado",
+    )
+
+    def total_linha_formatado(self, obj):
+
+        if not obj.pk:
+            return "-"
+
+        return f"{obj.total_linha:.2f}"
+
+    total_linha_formatado.short_description = "Total"
 
 
 # =========================================================
 # VENDA
 # =========================================================
 
+
 @admin.register(Venda)
-class VendaAdmin(admin.ModelAdmin) :
-	list_display = ("numero", "total", "criado_em",)
-	
-	search_fields = ("numero",)
-	list_filter = ("criado_em",)
-	
-	inlines = [ItemVendaInline]
-	
-	readonly_fields = ("total", "criado_em", "atualizado_em")
-	
-	list_per_page = 50
-	list_select_related = True
+class VendaAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "numero",
+        "total",
+        "criado_em",
+    )
+
+    search_fields = (
+        "numero",
+        "id_custom",
+    )
+
+    list_filter = ("criado_em",)
+
+    ordering = ("-criado_em",)
+
+    list_per_page = 50
+
+    inlines = [ItemVendaInline]
+
+    readonly_fields = (
+        "numero",
+        "total",
+        "criado_em",
+        "criado_por",
+        "atualizado_em",
+        "atualizado_por",
+        "versao",
+        "deletado_em",
+        "deletado_por",
+    )
+
+    fieldsets = (
+        (
+            "Informações da Venda",
+            {
+                "fields": (
+                    "numero",
+                    "total",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                    "deletado_em",
+                    "deletado_por",
+                ),
+            },
+        ),
+    )
+
+
+from django.contrib import admin
+
+from .models.categoria_produto import CategoriaProduto
+
+
+@admin.register(CategoriaProduto)
+class CategoriaProdutoAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "nome",
+        "categoria_pai",
+        "nivel_categoria",
+        "criado_em",
+    )
+
+    search_fields = ("nome",)
+
+    list_filter = ("categoria_pai",)
+
+    ordering = ("nome",)
+
+    list_per_page = 50
+
+    list_select_related = ("categoria_pai",)
+
+    readonly_fields = (
+        "criado_em",
+        "criado_por",
+        "atualizado_em",
+        "atualizado_por",
+        "versao",
+        "deletado_em",
+        "deletado_por",
+    )
+
+    fieldsets = (
+        (
+            "Informações da Categoria",
+            {
+                "fields": (
+                    "nome",
+                    "descricao",
+                    "categoria_pai",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                    "deletado_em",
+                    "deletado_por",
+                ),
+            },
+        ),
+    )
+
+    # =====================================
+    # NÍVEL DA CATEGORIA
+    # =====================================
+
+    def nivel_categoria(self, obj):
+        return obj.nivel
+
+    nivel_categoria.short_description = "Nível"

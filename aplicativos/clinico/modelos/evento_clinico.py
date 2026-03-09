@@ -3,13 +3,14 @@ from django.db import models
 from django.db.models import Q
 
 from nucleo.constantes.tipo_evento_clinico import TipoEventoClinico
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import CoreModel
 from .paciente import Paciente
 from .requisicao_analise import RequisicaoAnalise
 from .resultado_analise import ResultadoItem
 
 
-class EventoClinico(CoreModel) :
+class EventoClinico(PropagarInquilinoMixin, CoreModel) :
 	"""
 	Registro imutável de eventos clínicos.
 
@@ -18,7 +19,7 @@ class EventoClinico(CoreModel) :
 	• histórico médico
 	• rastreabilidade laboratorial
 	"""
-	
+	fonte_inquilino = "paciente"
 	prefixo = "EVT"
 	
 	paciente = models.ForeignKey(Paciente, on_delete = models.CASCADE, related_name = "eventos_clinicos", )
@@ -36,7 +37,7 @@ class EventoClinico(CoreModel) :
 		
 		indexes = [models.Index(fields = ["paciente"]), models.Index(fields = ["tipo_evento"]), models.Index(fields = ["criado_em"]), models.Index(fields = ["requisicao"]), models.Index(fields = ["resultado"]), ]
 		
-		constraints = [# evento deve ter pelo menos requisicao ou resultado
+		constraints = [  # evento deve ter pelo menos requisicao ou resultado
 			models.CheckConstraint(check = (Q(requisicao__isnull = False) | Q(resultado__isnull = False)), name = "evento_clinico_deve_ter_contexto", )]
 	
 	# =====================================================
