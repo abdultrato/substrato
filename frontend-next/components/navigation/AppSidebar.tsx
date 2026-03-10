@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+    BriefcaseMedical,
     LayoutDashboard,
     Users,
     ClipboardList,
@@ -21,6 +22,7 @@ interface Item {
 
 const items: Item[] = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "Recepção", href: "/recepcao", icon: BriefcaseMedical },
     { label: "Pacientes", href: "/pacientes", icon: Users },
     { label: "Requisições", href: "/requisicoes", icon: ClipboardList },
     { label: "Exames", href: "/exames", icon: FlaskConical },
