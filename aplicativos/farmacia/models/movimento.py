@@ -127,6 +127,8 @@ class MovimentoEstoque(CoreModel):
     # =====================================
 
     def save(self, *args, **kwargs):
+        if not self.nome and self.lote_id:
+            self.nome = f"{self.get_tipo_display()} - Lote {self.lote.numero_lote}"
 
         self.full_clean()
 

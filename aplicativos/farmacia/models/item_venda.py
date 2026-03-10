@@ -120,11 +120,20 @@ class ItemVenda(CoreModel):
             if restante <= 0:
                 break
 
-            saldo = lote.saldo()
+            saldo_lote = getattr(lote, "saldo", None)
+            if callable(saldo_lote):
+                saldo = saldo_lote()
+            elif saldo_lote is None:
+                saldo = lote.saldo()
+            else:
+                saldo = saldo_lote
 
             consumir = min(restante, saldo)
+            if consumir <= 0:
+                continue
 
             MovimentoEstoque.objects.create(
+                nome=f"Saída {self.venda.numero or self.venda.id_custom} - {self.produto.nome}",
                 lote=lote,
                 tipo=TipoMovimento.SAIDA,
                 quantidade=consumir,
@@ -148,6 +157,8 @@ class ItemVenda(CoreModel):
 
         if criando and not self.preco_unitario:
             self.preco_unitario = self.produto.preco_venda
+        if not self.nome:
+            self.nome = f"Item {self.produto.nome}"
 
         super().save(*args, **kwargs)
 

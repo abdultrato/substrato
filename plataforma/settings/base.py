@@ -55,7 +55,7 @@ INSTALLED_APPS = [
 	"rest_framework", "rest_framework_simplejwt", "django_filters", "corsheaders",
 	
 	# Internas
-	"aplicativos.identidade", "aplicativos.seguradora.apps.SeguradoraConfig", "aplicativos.clinico", "aplicativos.faturamento", "aplicativos.pagamentos", "aplicativos.notificacoes", "aplicativos.inquilinos", "aplicativos.farmacia", "aplicativos.contabilidade", ]
+		"aplicativos.identidade", "aplicativos.seguradora.apps.SeguradoraConfig", "aplicativos.clinico", "aplicativos.enfermagem.apps.EnfermagemConfig", "aplicativos.faturamento", "aplicativos.pagamentos", "aplicativos.notificacoes", "aplicativos.inquilinos", "aplicativos.farmacia", "aplicativos.contabilidade", ]
 
 # =========================================================
 # MIDDLEWARE

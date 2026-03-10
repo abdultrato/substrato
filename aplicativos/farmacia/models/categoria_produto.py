@@ -8,6 +8,16 @@ from nucleo.modelos.base import CoreModel
 class CategoriaProduto(CoreModel):
 
     prefixo = "CATP"
+    CATEGORIAS_PAI_REFERENCIA = (
+        "Medicamentos",
+        "Sistema Nervoso",
+        "Analgésicos",
+        "Outros Analgésicos e Antipiréticos",
+        "Anti-infecciosos para Uso Sistêmico",
+        "Antibacterianos para Uso Sistêmico",
+        "Beta-lactâmicos, Penicilinas",
+        "Penicilinas de Espectro Estendido",
+    )
 
     descricao = models.TextField(
         blank=True,
@@ -69,6 +79,14 @@ class CategoriaProduto(CoreModel):
             pai = pai.categoria_pai
 
         return nivel
+
+    @classmethod
+    def categorias_pai_referencia(cls):
+        """
+        Categorias-pai sugeridas para cadastro inicial.
+        Não cria registros no banco de dados.
+        """
+        return cls.CATEGORIAS_PAI_REFERENCIA
 
     # ======================================
     # REPRESENTAÇÃO

@@ -7,6 +7,9 @@ from .modelos.historico_fatura import HistoricoFatura
 def registrar_evento_fatura(sender, instance, created, **kwargs):
     if created:
         HistoricoFatura.objects.create(
+            inquilino=instance.inquilino,
+            nome="Fatura criada",
             fatura=instance,
-            descricao="Fatura criada"
+            descricao="Fatura criada",
+            tipo_evento="CRIACAO",
         )

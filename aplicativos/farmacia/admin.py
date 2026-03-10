@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.db.models import Case, F, IntegerField, Min, Sum, When
 from django.db.models.functions import Coalesce
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
+from .models.categoria_produto import CategoriaProduto
 from .models.item_venda import ItemVenda
 from .models.lote import Lote
 from .models.movimento import MovimentoEstoque
@@ -258,10 +259,16 @@ class LoteAdmin(admin.ModelAdmin):
 
         if obj.vencido:
             return format_html(
-                "<span style='color:red;font-weight:bold'>Vencido</span>"
+                "<span style='color:{};font-weight:bold'>{}</span>",
+                "red",
+                "Vencido",
             )
 
-        return format_html("<span style='color:green;font-weight:bold'>OK</span>")
+        return format_html(
+            "<span style='color:{};font-weight:bold'>{}</span>",
+            "green",
+            "OK",
+        )
 
     vencido_status.short_description = "Status"
 
@@ -442,11 +449,6 @@ class VendaAdmin(admin.ModelAdmin):
     )
 
 
-from django.contrib import admin
-
-from .models.categoria_produto import CategoriaProduto
-
-
 @admin.register(CategoriaProduto)
 class CategoriaProdutoAdmin(admin.ModelAdmin):
 
@@ -468,6 +470,7 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
     list_select_related = ("categoria_pai",)
 
     readonly_fields = (
+        "categorias_pai_referencia",
         "criado_em",
         "criado_por",
         "atualizado_em",
@@ -486,6 +489,13 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
                     "descricao",
                     "categoria_pai",
                 )
+            },
+        ),
+        (
+            "Categorias-pai de Referência",
+            {
+                "description": "Sugestões para classificação inicial (não salvas automaticamente no banco de dados).",
+                "fields": ("categorias_pai_referencia",),
             },
         ),
         (
@@ -513,3 +523,16 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
         return obj.nivel
 
     nivel_categoria.short_description = "Nível"
+
+    def categorias_pai_referencia(self, obj):
+        itens = format_html_join(
+            "",
+            "<li>{}</li>",
+            (
+                (categoria,)
+                for categoria in CategoriaProduto.categorias_pai_referencia()
+            ),
+        )
+        return format_html("<ul>{}</ul>", itens)
+
+    categorias_pai_referencia.short_description = "Categorias sugeridas"

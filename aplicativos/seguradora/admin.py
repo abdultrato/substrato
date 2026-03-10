@@ -20,7 +20,7 @@ class SeguradoraAdmin(admin.ModelAdmin) :
 	
 	readonly_fields = ("id_custom", "criado_em", "atualizado_em",)
 	
-	fieldsets = (("Informações Gerais", {"fields" : ("id_custom", "nome", "descricao", "ativa",)}), ("Contato", {"fields" : ("email", "telefone",)}), ("Auditoria", {"fields" : ("criado_em", "atualizado_em", "criado_por", "atualizado_por",)}),)
+	fieldsets = (("Informações Gerais", {"fields" : ("id_custom", "nome", "ativa",)}), ("Contato", {"fields" : ("email", "telefone",)}), ("Auditoria", {"fields" : ("criado_em", "atualizado_em", "criado_por", "atualizado_por",)}),)
 
 
 # =====================================================

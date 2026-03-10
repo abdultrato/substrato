@@ -437,6 +437,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
     list_per_page = 50
 
     readonly_fields = (
+        "id_custom",
         "criado_em",
         "criado_por_id",
         "criado_por",

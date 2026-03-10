@@ -55,6 +55,8 @@ class Lote(CoreModel):
     # =====================================================
 
     def save(self, *args, **kwargs):
+        if not self.nome and self.numero_lote and self.produto_id:
+            self.nome = f"Lote {self.numero_lote} - {self.produto.nome}"
 
         if self.pk:
 
