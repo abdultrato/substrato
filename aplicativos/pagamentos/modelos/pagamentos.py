@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from infrastrutura.orm.fields.dinheiro_field import DinheiroField
 from nucleo.modelos.base import CoreModel
@@ -84,8 +85,10 @@ class Pagamento(CoreModel):
 				)
 		
 		self.status = self.Status.CONFIRMADO
-		self.save(update_fields = ["status"])
-		self._atualizar_fatura()
+		if not self.pago_em:
+			self.pago_em = timezone.now()
+		self.save(update_fields = ["status", "pago_em"])
+		self._atualizar_fatura(pagamento = self)
 	
 	def falhar(self):
 		if self.status != self.Status.PENDENTE:
@@ -117,6 +120,6 @@ class Pagamento(CoreModel):
 	# INTEGRAÇÃO COM FATURA
 	# =========================
 	
-	def _atualizar_fatura(self):
+	def _atualizar_fatura(self, pagamento = None):
 		if self.fatura_id:
-			self.fatura.atualizar_estado_pagamento()
+			self.fatura.atualizar_estado_pagamento(pagamento = pagamento)

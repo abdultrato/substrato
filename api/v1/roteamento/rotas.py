@@ -7,6 +7,7 @@ from api.v1.identidade.viewsets import VIEWSET_MAP as IDENTIDADE_VIEWSET_MAP
 from api.v1.inquilinos.viewsets import VIEWSET_MAP as INQUILINOS_VIEWSET_MAP
 from api.v1.notificacoes.viewsets import VIEWSET_MAP as NOTIFICACOES_VIEWSET_MAP
 from api.v1.pagamentos.viewsets import VIEWSET_MAP as PAGAMENTOS_VIEWSET_MAP
+from api.v1.recepcao.viewsets import VIEWSET_MAP as RECEPCAO_VIEWSET_MAP
 from api.v1.seguradora.viewsets import VIEWSET_MAP as SEGURADORA_VIEWSET_MAP
 
 
@@ -20,6 +21,7 @@ VIEWSET_GROUPS = {
     "inquilinos": INQUILINOS_VIEWSET_MAP,
     "notificacoes": NOTIFICACOES_VIEWSET_MAP,
     "pagamentos": PAGAMENTOS_VIEWSET_MAP,
+    "recepcao": RECEPCAO_VIEWSET_MAP,
     "seguradora": SEGURADORA_VIEWSET_MAP,
 }
 

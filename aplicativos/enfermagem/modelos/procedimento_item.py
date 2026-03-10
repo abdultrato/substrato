@@ -156,9 +156,11 @@ class ProcedimentoItem(NoNameCoreModel):
 
         materiais = self.catalogo.materiais_padrao.select_related("produto").all()
         for material_padrao in materiais:
+            quantidade_material = material_padrao.quantidade_padrao * self.quantidade
             lote = (
                 Lote.disponiveis(material_padrao.produto)
                 .filter(inquilino_id=self.inquilino_id)
+                .filter(saldo__gte=quantidade_material)
                 .first()
             )
             if lote is None:
@@ -181,7 +183,7 @@ class ProcedimentoItem(NoNameCoreModel):
                 procedimento_item=self,
                 produto=material_padrao.produto,
                 lote=lote,
-                quantidade=material_padrao.quantidade_padrao * self.quantidade,
+                quantidade=quantidade_material,
                 custo_unitario=custo,
                 observacao=material_padrao.observacao,
             )

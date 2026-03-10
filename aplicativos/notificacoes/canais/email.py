@@ -1,12 +1,14 @@
-from django.core.mail import send_mail
 from .base import CanalBase
+from integracoes.mensageria.email import EmailService
+
 
 class CanalEmail(CanalBase):
+    def __init__(self):
+        self._servico = EmailService()
 
-    def enviar(self, destino, mensagem):
-        send_mail(
-            subject="Notificação",
+    def enviar(self, destino, mensagem, assunto=None, **kwargs):
+        return self._servico.send(
+            destination=destino,
             message=mensagem,
-            from_email=None,
-            recipient_list=[destino],
+            subject=assunto or "Notificação",
         )

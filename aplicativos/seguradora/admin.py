@@ -54,7 +54,7 @@ class AutorizacaoProcedimentoAdmin(admin.ModelAdmin) :
 	
 	search_fields = ("id_custom", "requisicao_id", "codigo_autorizacao",)
 	
-	readonly_fields = ("id_custom", "status", "codigo_autorizacao", "data_resposta", "criado_em", "atualizado_em",)
+	readonly_fields = ("id_custom", "codigo_autorizacao", "data_resposta", "criado_em", "atualizado_em",)
 	
 	autocomplete_fields = ("plano",)
 	

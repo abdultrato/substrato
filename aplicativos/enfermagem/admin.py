@@ -1,4 +1,10 @@
 from django.contrib import admin
+from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+
+from aplicativos.farmacia.models.lote import Lote
+from aplicativos.farmacia.models.produto import Produto
 
 from .modelos import (
     ProcedimentoCatalogo,
@@ -11,6 +17,41 @@ from .modelos import (
     RegistroEnfermagem,
     SinalVitalEnfermagem,
 )
+
+
+def _queryset_produtos_disponiveis():
+    hoje = timezone.localdate()
+
+    lotes_disponiveis = (
+        Lote.objects.filter(
+            produto_id=OuterRef("pk"),
+            validade__gte=hoje,
+        )
+        .annotate(
+            saldo_calc=F("quantidade_inicial")
+            + Coalesce(
+                Sum(
+                    Case(
+                        When(
+                            movimentos__deletado=False,
+                            movimentos__tipo="SAI",
+                            then=-F("movimentos__quantidade"),
+                        ),
+                        When(
+                            movimentos__deletado=False,
+                            then=F("movimentos__quantidade"),
+                        ),
+                        default=0,
+                        output_field=IntegerField(),
+                    )
+                ),
+                0,
+            )
+        )
+        .filter(saldo_calc__gt=0)
+    )
+
+    return Produto.objects.filter(Exists(lotes_disponiveis)).order_by("nome")
 
 
 class ProcedimentoItemInline(admin.TabularInline):
@@ -32,13 +73,19 @@ class ProcedimentoMaterialInline(admin.TabularInline):
     fields = (
         "procedimento_item",
         "produto",
-        "lote",
         "quantidade",
+        "lote",
         "movimento_estoque",
         "observacao",
     )
-    readonly_fields = ("procedimento_item", "movimento_estoque")
-    autocomplete_fields = ("produto", "lote")
+    readonly_fields = ("procedimento_item", "lote", "movimento_estoque")
+    autocomplete_fields = ("produto",)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "produto":
+            kwargs["queryset"] = _queryset_produtos_disponiveis()
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
@@ -394,8 +441,6 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "procedimento",
         "procedimento_item",
         "produto",
-        "lote",
-        "movimento_estoque",
     )
     list_select_related = (
         "procedimento",
@@ -407,6 +452,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     ordering = ("-criado_em",)
     readonly_fields = (
         "id_custom",
+        "lote",
         "movimento_estoque",
         "criado_em",
         "atualizado_em",
@@ -444,6 +490,12 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "produto":
+            kwargs["queryset"] = _queryset_produtos_disponiveis()
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(ProcedimentoItemValor)

@@ -147,6 +147,28 @@ class ProcedimentoMaterial(NoNameCoreModel):
 
         return Decimal("0.00")
 
+    def _selecionar_lote_automatico(self):
+        if self.lote_id or not self.produto_id:
+            return
+
+        quantidade = self.quantidade or 0
+
+        lotes_disponiveis = Lote.disponiveis(self.produto)
+        if self.inquilino_id:
+            lotes_disponiveis = lotes_disponiveis.filter(inquilino_id=self.inquilino_id)
+
+        lote = lotes_disponiveis.filter(saldo__gte=quantidade).first()
+        if lote is None:
+            raise ValidationError(
+                {
+                    "produto": (
+                        "Sem lote válido com saldo suficiente para este material."
+                    )
+                }
+            )
+
+        self.lote = lote
+
     def _upsert_valor(self):
         from aplicativos.enfermagem.modelos.procedimento_material_valor import (
             ProcedimentoMaterialValor,
@@ -180,6 +202,7 @@ class ProcedimentoMaterial(NoNameCoreModel):
         if not self.inquilino_id and self.procedimento_id:
             self.inquilino_id = self.procedimento.inquilino_id
 
+        self._selecionar_lote_automatico()
         self.full_clean()
         super().save(*args, **kwargs)
 

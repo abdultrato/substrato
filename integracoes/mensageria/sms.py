@@ -1,4 +1,3 @@
-import requests
 from django.conf import settings
 
 
@@ -6,6 +5,8 @@ class SMSService:
     name = "sms"
 
     def send(self, destination, message, **kwargs):
+        import requests
+
         payload = {
             "to": destination,
             "message": message,
