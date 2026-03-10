@@ -71,3 +71,7 @@ zipp==3.23.0
 
 contextvars
 django-qrcode
+celery==5.3.4
+django-celery-beat==2.5.0
+django-celery-results==2.5.1
+redis==5.0.1

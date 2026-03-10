@@ -1,0 +1,101 @@
+# ============================================================================
+# .DOCKERIGNORE - Arquivos a ignorar no build
+# ============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info
+dist
+build
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+*.py[cod]
+*$py.class
+.env
+.env.*
+!.env.example
+venv/
+ENV/
+env/
+.venv
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+.npm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.iml
+
+# Test
+.pytest_cache/
+.tox/
+htmlcov/
+.coverage
+tests/
+
+# Database
+*.sqlite3
+*.db
+db.sqlite3
+
+# Media
+media/
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Documentation
+docs/
+*.md
+README.rst
+
+# CI/CD
+.github/workflows/
+.gitlab-ci.yml
+.circleci/
+Jenkinsfile
+
+# Other
+.env.local
+.env.*.local
+*.tfstate
+*.tfstate.*
+terraform/
+docker-compose.dev.yml

@@ -1,0 +1,59 @@
+# ============================================================================
+# FRONTEND - NEXT.JS DOCKERFILE
+# Multi-stage build para otimizar tamanho
+# ============================================================================
+
+# Stage 1: Builder
+FROM node:20-alpine as builder
+
+WORKDIR /app
+
+# Copiar package files
+COPY frontend-next/package.json frontend-next/package-lock.json* frontend-next/yarn.lock* ./
+
+# Instalar dependências
+RUN npm ci || npm install
+
+# Copiar código
+COPY frontend-next .
+
+# Build da aplicação
+RUN npm run build
+
+# ============================================================================
+# Stage 2: Runtime
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar dumb-init para gerenciamento de processos
+RUN apk add --no-cache dumb-init
+
+# Copiar apenas arquivos necessários do builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/next.config.* ./
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+# Mudar propriedade para o usuário nextjs
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
+# Expor porta
+EXPOSE 3000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Usar dumb-init para iniciar a aplicação
+ENTRYPOINT ["dumb-init", "--"]
+
+# Comando padrão
+CMD ["npm", "start"]

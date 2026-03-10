@@ -1,0 +1,259 @@
+# ============================================================================
+# DOCKER COMPOSE - DESENVOLVIMENTO
+# ============================================================================
+
+version: '3.9'
+
+services:
+
+  # =========================================================================
+  # POSTGRESQL DATABASE
+  # =========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: substrato_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-substrato_db}
+      POSTGRES_USER: ${POSTGRES_USER:-substrato_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=pt_BR.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-substrato_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # REDIS - CACHE & CELERY BROKER
+  # =========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: substrato_redis
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # DJANGO BACKEND
+  # =========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: substrato_backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class sync --timeout 120 --access-logfile - --error-logfile -"
+    environment:
+      DJANGO_ENV: development
+      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-key-change-in-production}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend,0.0.0.0}
+      
+      # Database
+      DB_ENGINE: postgres
+      DB_NAME: ${POSTGRES_DB:-substrato_db}
+      DB_USER: ${POSTGRES_USER:-substrato_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      DB_HOST: db
+      DB_PORT: "5432"
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      
+      # Email (optional)
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      
+      # Timezone
+      TZ: America/Sao_Paulo
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # CELERY WORKER - ASYNC TASKS
+  # =========================================================================
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: substrato_celery
+    command: celery -A plataforma worker -l info --concurrency=2
+    environment:
+      DJANGO_ENV: development
+      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-key-change-in-production}
+      
+      # Database
+      DB_ENGINE: postgres
+      DB_NAME: ${POSTGRES_DB:-substrato_db}
+      DB_USER: ${POSTGRES_USER:-substrato_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      DB_HOST: db
+      DB_PORT: "5432"
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      TZ: America/Sao_Paulo
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # CELERY BEAT - SCHEDULED TASKS
+  # =========================================================================
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: substrato_celery_beat
+    command: celery -A plataforma beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      DJANGO_ENV: development
+      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-insecure-key-change-in-production}
+      
+      # Database
+      DB_ENGINE: postgres
+      DB_NAME: ${POSTGRES_DB:-substrato_db}
+      DB_USER: ${POSTGRES_USER:-substrato_user}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      DB_HOST: db
+      DB_PORT: "5432"
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      TZ: America/Sao_Paulo
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # NEXT.JS FRONTEND
+  # =========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: substrato_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      NODE_ENV: development
+      TZ: America/Sao_Paulo
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend-next:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
+  # NGINX - REVERSE PROXY
+  # =========================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: substrato_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - substrato
+    restart: unless-stopped
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  substrato:
+    driver: bridge
