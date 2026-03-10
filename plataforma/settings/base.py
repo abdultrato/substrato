@@ -52,10 +52,10 @@ INSTALLED_APPS = [
 	"django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
 	
 	# Third-party
-	"rest_framework", "rest_framework_simplejwt", "django_filters", "corsheaders",
+	"rest_framework", "rest_framework_simplejwt", "django_filters", "corsheaders", "drf_spectacular",
 	
 	# Internas
-		"aplicativos.identidade", "aplicativos.seguradora.apps.SeguradoraConfig", "aplicativos.clinico", "aplicativos.enfermagem.apps.EnfermagemConfig", "aplicativos.faturamento", "aplicativos.pagamentos", "aplicativos.notificacoes", "aplicativos.inquilinos", "aplicativos.farmacia", "aplicativos.contabilidade", ]
+		"aplicativos.identidade", "aplicativos.seguradora.apps.SeguradoraConfig", "aplicativos.clinico", "aplicativos.enfermagem.apps.EnfermagemConfig", "aplicativos.faturamento", "aplicativos.pagamentos", "aplicativos.notificacoes", "aplicativos.inquilinos", "aplicativos.farmacia", "aplicativos.contabilidade", "aplicativos.recepcao.apps.RecepcaoConfig", ]
 
 # =========================================================
 # MIDDLEWARE
@@ -154,7 +154,10 @@ REST_FRAMEWORK = {
 	
 	"DEFAULT_THROTTLE_CLASSES"       : ["seguranca.throttling.BurstRateThrottle", "seguranca.throttling.SustainedRateThrottle", "seguranca.throttling.AnonBurstRateThrottle", ],
 	
-	"DEFAULT_THROTTLE_RATES"         : {"burst" : "30/min", "sustained" : "1000/day", "anon_burst" : "10/min", "login" : "5/min", }, }
+	"DEFAULT_THROTTLE_RATES"         : {"burst" : "30/min", "sustained" : "1000/day", "anon_burst" : "10/min", "login" : "5/min", },
+	
+	"DEFAULT_SCHEMA_CLASS"           : "drf_spectacular.openapi.AutoSchema",
+}
 
 # =========================================================
 # JWT
@@ -205,7 +208,85 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 # =========================================================
+# NOTIFICAÇÕES
+# =========================================================
+
+DEFAULT_FROM_EMAIL = get_env("DEFAULT_FROM_EMAIL", "no-reply@substrato.local")
+
+NOTIFICACOES_EMAIL_ATIVAS = get_env("NOTIFICACOES_EMAIL_ATIVAS", "True").lower() == "true"
+NOTIFICACOES_SMS_ATIVAS = get_env("NOTIFICACOES_SMS_ATIVAS", "False").lower() == "true"
+NOTIFICACOES_WHATSAPP_ATIVAS = get_env("NOTIFICACOES_WHATSAPP_ATIVAS", "False").lower() == "true"
+
+SMS_API_URL = get_env("SMS_API_URL", "")
+SMS_API_KEY = get_env("SMS_API_KEY", "")
+
+WHATSAPP_API_URL = get_env("WHATSAPP_API_URL", "")
+WHATSAPP_API_KEY = get_env("WHATSAPP_API_KEY", "")
+
+# =========================================================
 # DEFAULT PRIMARY KEY
 # =========================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =========================================================
+# DRF-SPECTACULAR (OpenAPI/Swagger)
+# =========================================================
+
+SPECTACULAR_SETTINGS = {
+"TITLE": "Substrato API",
+"DESCRIPTION": "API REST da Plataforma Substrato - Gestão Hospitalar e Laboratorial",
+"VERSION": "1.0.0",
+"SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+"SERVE_AUTHENTICATION": None,
+
+# Temas disponíveis: swagger-ui, redoc
+"SWAGGER_UI_SETTINGS": {
+"deepLinking": True,
+"persistAuthorizationData": True,
+"displayOperationId": True,
+},
+
+# Customizações
+"CONTACT": {
+"name": "Substrato Support",
+"email": "suporte@substrato.com",
+},
+"LICENSE": {
+"name": "MIT",
+},
+
+# Tags
+"TAGS_SORTER": "alpha",
+"OPERATION_SORTER": "alpha",
+
+# Componentes
+"COMPONENT_SPLIT_REQUEST": True,
+"COMPONENT_NO_READ_ONLY_REQUIRED": True,
+
+# Autenticação
+"SECURITY_DEFINITIONS": {
+"Bearer": {
+"type": "http",
+"scheme": "bearer",
+"bearerFormat": "JWT",
+}
+},
+"SECURITY": [
+{
+"Bearer": []
+}
+],
+
+# Esquemas
+"SCHEMA_COERCE_DECIMAL_STRINGS": False,
+"MULTI_USE_SERIALIZER_CLASSES": True,
+
+# URLs
+"SERVERS": [
+{
+"url": "/api/v1",
+"description": "Development",
+},
+],
+}
