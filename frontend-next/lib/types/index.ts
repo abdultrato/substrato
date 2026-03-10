@@ -1,0 +1,5 @@
+export * from "./paciente"
+export * from "./exame"
+export * from "./requisicao"
+export * from "./entidade"
+export * from "./fatura"
