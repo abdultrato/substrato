@@ -46,8 +46,8 @@ class MovimentoEstoqueViewSet(ModelViewSet):
     serializer_class = MovimentoEstoqueSerializer
     filterset_class = MovimentoEstoqueFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ['id_custom', 'nome', 'descricao', 'tipo']
-    ordering_fields = ['inquilino', 'id_custom', 'descricao', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'produto', 'lote', 'tipo', 'quantidade']
+    search_fields = ['id_custom', 'nome', 'descricao', 'tipo', 'origem']
+    ordering_fields = ['inquilino', 'id_custom', 'descricao', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'lote', 'tipo', 'origem', 'item_venda', 'quantidade']
     ordering = ['-criado_em']
 
     def get_queryset(self):

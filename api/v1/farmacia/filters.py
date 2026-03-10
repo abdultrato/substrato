@@ -34,7 +34,7 @@ class LoteFilter(SafeFilterSet) :
 class MovimentoEstoqueFilter(SafeFilterSet) :
 	class Meta :
 		model = MovimentoEstoque
-		fields = ['inquilino', 'id_custom', 'descricao', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'lote', 'tipo', 'quantidade', ]
+		fields = ['inquilino', 'id_custom', 'descricao', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'lote', 'tipo', 'origem', 'item_venda', 'quantidade', ]
 
 
 # =====================================================

@@ -13,6 +13,12 @@ class TipoMovimento(models.TextChoices):
     AJUSTE = "AJU", "Ajuste"
 
 
+class OrigemMovimento(models.TextChoices):
+    VENDA = "VEND", "Venda"
+    PROCEDIMENTO = "PROC", "Procedimento"
+    AJUSTE = "AJUS", "Ajuste"
+
+
 class MovimentoEstoque(CoreModel):
 
     prefixo = "MVESQ"
@@ -27,6 +33,12 @@ class MovimentoEstoque(CoreModel):
     tipo = models.CharField(
         max_length=3,
         choices=TipoMovimento.choices,
+        db_index=True,
+    )
+    origem = models.CharField(
+        max_length=4,
+        choices=OrigemMovimento.choices,
+        default=OrigemMovimento.AJUSTE,
         db_index=True,
     )
 
@@ -47,6 +59,7 @@ class MovimentoEstoque(CoreModel):
         indexes = [
             models.Index(fields=["lote", "criado_em"]),
             models.Index(fields=["tipo"]),
+            models.Index(fields=["origem"]),
         ]
 
     # =====================================
@@ -91,10 +104,25 @@ class MovimentoEstoque(CoreModel):
         if self.inquilino_id and self.lote.inquilino_id != self.inquilino_id:
             raise ValidationError("Inquilino do movimento difere do lote.")
 
-        # coerência venda / saída
-        if self.tipo == TipoMovimento.SAIDA and not self.item_venda:
+        if (
+            self.item_venda_id
+            and self.inquilino_id
+            and self.item_venda.inquilino_id != self.inquilino_id
+        ):
+            raise ValidationError("Inquilino do movimento difere do item de venda.")
+
+        # coerência origem / tipo / vínculo de venda
+        if self.origem == OrigemMovimento.VENDA and self.tipo != TipoMovimento.SAIDA:
+            raise ValidationError("Movimento com origem em venda deve ser de saída.")
+
+        if self.tipo == TipoMovimento.SAIDA and self.origem == OrigemMovimento.VENDA and not self.item_venda:
             raise ValidationError(
                 "Movimentos de saída devem estar ligados a um ItemVenda."
+            )
+
+        if self.tipo == TipoMovimento.SAIDA and self.origem != OrigemMovimento.VENDA and self.item_venda:
+            raise ValidationError(
+                "Saídas que não são de venda não devem estar ligadas a ItemVenda."
             )
 
         if self.tipo == TipoMovimento.ENTRADA and self.item_venda:
@@ -128,7 +156,14 @@ class MovimentoEstoque(CoreModel):
 
     def save(self, *args, **kwargs):
         if not self.nome and self.lote_id:
-            self.nome = f"{self.get_tipo_display()} - Lote {self.lote.numero_lote}"
+            if self.origem == OrigemMovimento.VENDA and self.item_venda_id:
+                venda = self.item_venda.venda
+                referencia = venda.numero or venda.id_custom
+                self.nome = f"Venda {referencia} - Lote {self.lote.numero_lote}"
+            elif self.origem == OrigemMovimento.PROCEDIMENTO:
+                self.nome = f"Procedimento - Lote {self.lote.numero_lote}"
+            else:
+                self.nome = f"{self.get_tipo_display()} - Lote {self.lote.numero_lote}"
 
         self.full_clean()
 

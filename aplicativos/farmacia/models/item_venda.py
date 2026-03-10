@@ -110,6 +110,7 @@ class ItemVenda(CoreModel):
         from aplicativos.farmacia.models.lote import Lote
         from aplicativos.farmacia.models.movimento import (
             MovimentoEstoque,
+            OrigemMovimento,
             TipoMovimento,
         )
 
@@ -136,6 +137,7 @@ class ItemVenda(CoreModel):
                 nome=f"Saída {self.venda.numero or self.venda.id_custom} - {self.produto.nome}",
                 lote=lote,
                 tipo=TipoMovimento.SAIDA,
+                origem=OrigemMovimento.VENDA,
                 quantidade=consumir,
                 item_venda=self,
                 inquilino=self.inquilino,

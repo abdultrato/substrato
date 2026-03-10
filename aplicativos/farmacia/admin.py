@@ -284,18 +284,23 @@ class MovimentoEstoqueAdmin(admin.ModelAdmin):
     list_display = (
         "lote",
         "tipo",
+        "origem",
+        "item_venda",
         "quantidade",
         "criado_em",
     )
 
     list_filter = (
         "tipo",
+        "origem",
         "criado_em",
     )
 
     search_fields = (
         "lote__numero_lote",
         "lote__produto__nome",
+        "item_venda__venda__numero",
+        "item_venda__venda__id_custom",
     )
 
     list_select_related = (
@@ -308,6 +313,8 @@ class MovimentoEstoqueAdmin(admin.ModelAdmin):
     readonly_fields = (
         "lote",
         "tipo",
+        "origem",
+        "item_venda",
         "quantidade",
         "criado_em",
         "criado_por",
@@ -323,6 +330,8 @@ class MovimentoEstoqueAdmin(admin.ModelAdmin):
                 "fields": (
                     "lote",
                     "tipo",
+                    "origem",
+                    "item_venda",
                     "quantidade",
                 )
             },

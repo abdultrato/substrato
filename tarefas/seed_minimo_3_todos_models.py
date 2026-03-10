@@ -14,8 +14,13 @@ from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado import Resultado
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 from aplicativos.enfermagem.modelos import (
+    ProcedimentoCatalogo,
+    ProcedimentoCatalogoMaterial,
     Procedimento,
     ProcedimentoItem,
+    ProcedimentoItemValor,
+    ProcedimentoMaterial,
+    ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
 )
@@ -264,6 +269,7 @@ def ensure_clinico(tenants, users):
 
 def ensure_enfermagem(users):
     pacientes = list(Paciente.objects.order_by("id")[:MIN_REGISTROS])
+    produtos = list(Produto.objects.order_by("id"))
 
     prioridade = choice_value(RegistroEnfermagem, "prioridade")
 
@@ -303,18 +309,103 @@ def ensure_enfermagem(users):
             observacoes=f"Procedimento seed {idx}",
         )
 
+    while total(ProcedimentoCatalogo) < MIN_REGISTROS:
+        idx = total(ProcedimentoCatalogo) + 1
+        paciente = pacientes[(idx - 1) % len(pacientes)]
+        ProcedimentoCatalogo.objects.create(
+            inquilino=paciente.inquilino,
+            nome=f"Procedimento Catálogo {idx}",
+            descricao=f"Descrição catálogo seed {idx}",
+            preco_padrao=Decimal("350.00") + Decimal(idx),
+        )
+
+    catalogos = list(ProcedimentoCatalogo.objects.order_by("id"))
+    while total(ProcedimentoCatalogoMaterial) < MIN_REGISTROS:
+        idx = total(ProcedimentoCatalogoMaterial) + 1
+        catalogo = catalogos[(idx - 1) % len(catalogos)]
+
+        produto = next(
+            (
+                candidato
+                for candidato in produtos
+                if candidato.inquilino_id == catalogo.inquilino_id
+                and not ProcedimentoCatalogoMaterial.objects.filter(
+                    catalogo=catalogo, produto=candidato
+                ).exists()
+            ),
+            None,
+        )
+        if produto is None:
+            break
+
+        ProcedimentoCatalogoMaterial.objects.create(
+            inquilino=catalogo.inquilino,
+            catalogo=catalogo,
+            produto=produto,
+            quantidade_padrao=1,
+            custo_unitario_padrao=produto.preco_venda,
+            observacao=f"Material padrão seed {idx}",
+        )
+
     procedimentos = list(Procedimento.objects.order_by("id")[:MIN_REGISTROS])
     while total(ProcedimentoItem) < MIN_REGISTROS:
         idx = total(ProcedimentoItem) + 1
         procedimento = procedimentos[(idx - 1) % len(procedimentos)]
+        catalogo = next(
+            (
+                c
+                for c in catalogos
+                if c.inquilino_id == procedimento.inquilino_id
+            ),
+            None,
+        )
         ProcedimentoItem.objects.create(
             inquilino=procedimento.inquilino,
             procedimento=procedimento,
-            descricao=f"Item de procedimento seed {idx}",
+            catalogo=catalogo,
+            descricao="" if catalogo else f"Item de procedimento seed {idx}",
             quantidade=1,
+            preco_unitario=Decimal("0.00") if catalogo else Decimal("150.00"),
             realizado=True,
             observacao=f"Observação seed {idx}",
         )
+
+    lotes = list(Lote.objects.select_related("produto").order_by("validade", "id"))
+
+    while total(ProcedimentoMaterial) < MIN_REGISTROS:
+        idx = total(ProcedimentoMaterial) + 1
+        procedimento = procedimentos[(idx - 1) % len(procedimentos)]
+        lote = next(
+            (
+                candidato
+                for candidato in lotes
+                if candidato.inquilino_id == procedimento.inquilino_id
+                and candidato.saldo() > 0
+            ),
+            None,
+        )
+        if lote is None:
+            break
+
+        ProcedimentoMaterial.objects.create(
+            inquilino=procedimento.inquilino,
+            procedimento=procedimento,
+            produto=lote.produto,
+            lote=lote,
+            quantidade=1,
+            custo_unitario=lote.produto.preco_venda,
+            observacao=f"Material seed {idx}",
+        )
+
+    for item in ProcedimentoItem.objects.filter(deletado=False):
+        if not ProcedimentoItemValor.objects.filter(item=item, deletado=False).exists():
+            item.save()
+
+    for material in ProcedimentoMaterial.objects.filter(deletado=False):
+        if not ProcedimentoMaterialValor.objects.filter(
+            material=material, deletado=False
+        ).exists():
+            material.save()
 
 
 def ensure_seguradora(tenants):
@@ -713,12 +804,12 @@ def main():
     users = ensure_usuarios()
     ensure_config_uso(tenants)
     ensure_clinico(tenants, users)
+    ensure_farmacia(tenants)
     ensure_enfermagem(users)
     ensure_seguradora(tenants)
     ensure_faturamento()
     ensure_pagamentos()
     ensure_contabilidade(tenants)
-    ensure_farmacia(tenants)
     ensure_identidade(users)
     ensure_notificacoes()
     report()

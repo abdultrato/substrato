@@ -2,19 +2,34 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from aplicativos.enfermagem.modelos import (
+    ProcedimentoCatalogo,
+    ProcedimentoCatalogoMaterial,
     Procedimento,
     ProcedimentoItem,
+    ProcedimentoItemValor,
+    ProcedimentoMaterial,
+    ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
 )
 from .filters import (
+    ProcedimentoCatalogoFilter,
+    ProcedimentoCatalogoMaterialFilter,
     ProcedimentoFilter,
     ProcedimentoItemFilter,
+    ProcedimentoItemValorFilter,
+    ProcedimentoMaterialFilter,
+    ProcedimentoMaterialValorFilter,
     RegistroEnfermagemFilter,
     SinalVitalEnfermagemFilter,
 )
 from .serializers import (
+    ProcedimentoCatalogoMaterialSerializer,
+    ProcedimentoCatalogoSerializer,
     ProcedimentoItemSerializer,
+    ProcedimentoItemValorSerializer,
+    ProcedimentoMaterialSerializer,
+    ProcedimentoMaterialValorSerializer,
     ProcedimentoSerializer,
     RegistroEnfermagemSerializer,
     SinalVitalEnfermagemSerializer,
@@ -53,6 +68,66 @@ class RegistroEnfermagemViewSet(ModelViewSet):
         return queryset
 
 
+class ProcedimentoCatalogoViewSet(ModelViewSet):
+    queryset = ProcedimentoCatalogo.objects.all()
+    serializer_class = ProcedimentoCatalogoSerializer
+    filterset_class = ProcedimentoCatalogoFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "nome",
+        "descricao",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "nome",
+        "preco_padrao",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["nome", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class ProcedimentoCatalogoMaterialViewSet(ModelViewSet):
+    queryset = ProcedimentoCatalogoMaterial.objects.all()
+    serializer_class = ProcedimentoCatalogoMaterialSerializer
+    filterset_class = ProcedimentoCatalogoMaterialFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "catalogo__nome",
+        "produto__nome",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "catalogo",
+        "produto",
+        "quantidade_padrao",
+        "custo_unitario_padrao",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["catalogo", "produto", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
 class ProcedimentoViewSet(ModelViewSet):
     queryset = Procedimento.objects.all()
     serializer_class = ProcedimentoSerializer
@@ -69,6 +144,9 @@ class ProcedimentoViewSet(ModelViewSet):
         "paciente",
         "profissional",
         "data_realizacao",
+        "subtotal_servicos",
+        "subtotal_materiais",
+        "total",
         "criado_em",
         "atualizado_em",
         "deletado",
@@ -91,6 +169,7 @@ class ProcedimentoItemViewSet(ModelViewSet):
     search_fields = [
         "id_custom",
         "descricao",
+        "catalogo__nome",
         "procedimento__id_custom",
         "procedimento__paciente__nome",
     ]
@@ -98,9 +177,106 @@ class ProcedimentoItemViewSet(ModelViewSet):
         "inquilino",
         "id_custom",
         "procedimento",
+        "catalogo",
         "descricao",
         "quantidade",
         "realizado",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class ProcedimentoItemValorViewSet(ModelViewSet):
+    queryset = ProcedimentoItemValor.objects.all()
+    serializer_class = ProcedimentoItemValorSerializer
+    filterset_class = ProcedimentoItemValorFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "item__id_custom",
+        "item__descricao",
+        "item__procedimento__id_custom",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "item",
+        "preco_unitario",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class ProcedimentoMaterialViewSet(ModelViewSet):
+    queryset = ProcedimentoMaterial.objects.all()
+    serializer_class = ProcedimentoMaterialSerializer
+    filterset_class = ProcedimentoMaterialFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "produto__nome",
+        "lote__numero_lote",
+        "procedimento__id_custom",
+        "procedimento__paciente__nome",
+        "procedimento_item__id_custom",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "procedimento",
+        "procedimento_item",
+        "produto",
+        "lote",
+        "quantidade",
+        "movimento_estoque",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class ProcedimentoMaterialValorViewSet(ModelViewSet):
+    queryset = ProcedimentoMaterialValor.objects.all()
+    serializer_class = ProcedimentoMaterialValorSerializer
+    filterset_class = ProcedimentoMaterialValorFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "material__id_custom",
+        "material__produto__nome",
+        "material__procedimento__id_custom",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "material",
+        "custo_unitario",
         "criado_em",
         "atualizado_em",
         "deletado",
@@ -151,16 +327,26 @@ class SinalVitalEnfermagemViewSet(ModelViewSet):
 
 
 VIEWSET_MAP = {
+    "procedimentocatalogo": ProcedimentoCatalogoViewSet,
+    "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialViewSet,
     "procedimento": ProcedimentoViewSet,
     "procedimentoitem": ProcedimentoItemViewSet,
+    "procedimentoitemvalor": ProcedimentoItemValorViewSet,
+    "procedimentomaterial": ProcedimentoMaterialViewSet,
+    "procedimentomaterialvalor": ProcedimentoMaterialValorViewSet,
     "registroenfermagem": RegistroEnfermagemViewSet,
     "sinalvitalenfermagem": SinalVitalEnfermagemViewSet,
 }
 
 
 __all__ = [
+    "ProcedimentoCatalogoViewSet",
+    "ProcedimentoCatalogoMaterialViewSet",
     "ProcedimentoViewSet",
     "ProcedimentoItemViewSet",
+    "ProcedimentoItemValorViewSet",
+    "ProcedimentoMaterialViewSet",
+    "ProcedimentoMaterialValorViewSet",
     "RegistroEnfermagemViewSet",
     "SinalVitalEnfermagemViewSet",
     "VIEWSET_MAP",

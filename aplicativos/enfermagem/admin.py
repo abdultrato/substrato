@@ -1,8 +1,13 @@
 from django.contrib import admin
 
 from .modelos import (
+    ProcedimentoCatalogo,
+    ProcedimentoCatalogoMaterial,
     Procedimento,
     ProcedimentoItem,
+    ProcedimentoItemValor,
+    ProcedimentoMaterial,
+    ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
 )
@@ -12,10 +17,151 @@ class ProcedimentoItemInline(admin.TabularInline):
     model = ProcedimentoItem
     extra = 1
     fields = (
+        "catalogo",
         "descricao",
         "quantidade",
         "realizado",
         "observacao",
+    )
+    autocomplete_fields = ("catalogo",)
+
+
+class ProcedimentoMaterialInline(admin.TabularInline):
+    model = ProcedimentoMaterial
+    extra = 1
+    fields = (
+        "procedimento_item",
+        "produto",
+        "lote",
+        "quantidade",
+        "movimento_estoque",
+        "observacao",
+    )
+    readonly_fields = ("procedimento_item", "movimento_estoque")
+    autocomplete_fields = ("produto", "lote")
+
+
+class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
+    model = ProcedimentoCatalogoMaterial
+    extra = 1
+    fields = (
+        "produto",
+        "quantidade_padrao",
+        "custo_unitario_padrao",
+        "observacao",
+    )
+    autocomplete_fields = ("produto",)
+
+
+@admin.register(ProcedimentoCatalogo)
+class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
+    list_display = (
+        "id_custom",
+        "nome",
+        "preco_padrao",
+        "criado_em",
+    )
+    search_fields = (
+        "id_custom",
+        "nome",
+        "descricao",
+    )
+    list_filter = ("criado_em",)
+    ordering = ("nome",)
+    readonly_fields = (
+        "id_custom",
+        "criado_em",
+        "atualizado_em",
+        "criado_por",
+        "atualizado_por",
+        "versao",
+    )
+    inlines = (ProcedimentoCatalogoMaterialInline,)
+    fieldsets = (
+        (
+            "Procedimento do Catálogo",
+            {
+                "fields": (
+                    "id_custom",
+                    "nome",
+                    "descricao",
+                    "preco_padrao",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "atualizado_em",
+                    "criado_por",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(ProcedimentoCatalogoMaterial)
+class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
+    list_display = (
+        "id_custom",
+        "catalogo",
+        "produto",
+        "quantidade_padrao",
+        "custo_unitario_padrao",
+        "criado_em",
+    )
+    search_fields = (
+        "id_custom",
+        "catalogo__nome",
+        "produto__nome",
+    )
+    list_filter = (
+        "catalogo",
+        "criado_em",
+    )
+    ordering = ("catalogo", "produto")
+    autocomplete_fields = ("catalogo", "produto")
+    list_select_related = ("catalogo", "produto")
+    readonly_fields = (
+        "id_custom",
+        "criado_em",
+        "atualizado_em",
+        "criado_por",
+        "atualizado_por",
+        "versao",
+    )
+    fieldsets = (
+        (
+            "Material Padrão",
+            {
+                "fields": (
+                    "id_custom",
+                    "catalogo",
+                    "produto",
+                    "quantidade_padrao",
+                    "custo_unitario_padrao",
+                    "observacao",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "atualizado_em",
+                    "criado_por",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
     )
 
 
@@ -88,6 +234,8 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "profissional",
         "data_realizacao",
         "itens_total",
+        "materiais_total",
+        "total",
         "criado_em",
     )
     search_fields = (
@@ -107,13 +255,16 @@ class ProcedimentoAdmin(admin.ModelAdmin):
     ordering = ("-data_realizacao",)
     readonly_fields = (
         "id_custom",
+        "subtotal_servicos",
+        "subtotal_materiais",
+        "total",
         "criado_em",
         "atualizado_em",
         "criado_por",
         "atualizado_por",
         "versao",
     )
-    inlines = (ProcedimentoItemInline,)
+    inlines = (ProcedimentoItemInline, ProcedimentoMaterialInline)
     fieldsets = (
         (
             "Procedimento",
@@ -125,6 +276,9 @@ class ProcedimentoAdmin(admin.ModelAdmin):
                     "profissional",
                     "data_realizacao",
                     "observacoes",
+                    "subtotal_servicos",
+                    "subtotal_materiais",
+                    "total",
                 )
             },
         ),
@@ -148,12 +302,18 @@ class ProcedimentoAdmin(admin.ModelAdmin):
 
     itens_total.short_description = "Itens"
 
+    def materiais_total(self, obj):
+        return obj.materiais.count()
+
+    materiais_total.short_description = "Materiais"
+
 
 @admin.register(ProcedimentoItem)
 class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "procedimento",
+        "catalogo",
         "descricao",
         "quantidade",
         "realizado",
@@ -161,13 +321,14 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "id_custom",
+        "catalogo__nome",
         "descricao",
         "procedimento__id_custom",
         "procedimento__paciente__nome",
     )
     list_filter = ("realizado", "criado_em")
-    autocomplete_fields = ("procedimento",)
-    list_select_related = ("procedimento", "procedimento__paciente")
+    autocomplete_fields = ("procedimento", "catalogo")
+    list_select_related = ("procedimento", "procedimento__paciente", "catalogo")
     ordering = ("-criado_em",)
     readonly_fields = (
         "id_custom",
@@ -184,10 +345,194 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
                 "fields": (
                     "id_custom",
                     "procedimento",
+                    "catalogo",
                     "descricao",
                     "quantidade",
                     "realizado",
                     "observacao",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "atualizado_em",
+                    "criado_por",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(ProcedimentoMaterial)
+class ProcedimentoMaterialAdmin(admin.ModelAdmin):
+    list_display = (
+        "id_custom",
+        "procedimento",
+        "procedimento_item",
+        "produto",
+        "lote",
+        "quantidade",
+        "movimento_estoque",
+        "criado_em",
+    )
+    search_fields = (
+        "id_custom",
+        "produto__nome",
+        "lote__numero_lote",
+        "procedimento__id_custom",
+        "procedimento__paciente__nome",
+        "procedimento_item__id_custom",
+    )
+    list_filter = ("criado_em", "produto")
+    autocomplete_fields = (
+        "procedimento",
+        "procedimento_item",
+        "produto",
+        "lote",
+        "movimento_estoque",
+    )
+    list_select_related = (
+        "procedimento",
+        "procedimento_item",
+        "produto",
+        "lote",
+        "movimento_estoque",
+    )
+    ordering = ("-criado_em",)
+    readonly_fields = (
+        "id_custom",
+        "movimento_estoque",
+        "criado_em",
+        "atualizado_em",
+        "criado_por",
+        "atualizado_por",
+        "versao",
+    )
+    fieldsets = (
+        (
+            "Material do Procedimento",
+            {
+                "fields": (
+                    "id_custom",
+                    "procedimento",
+                    "procedimento_item",
+                    "produto",
+                    "lote",
+                    "quantidade",
+                    "movimento_estoque",
+                    "observacao",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "atualizado_em",
+                    "criado_por",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(ProcedimentoItemValor)
+class ProcedimentoItemValorAdmin(admin.ModelAdmin):
+    list_display = (
+        "id_custom",
+        "item",
+        "preco_unitario",
+        "criado_em",
+    )
+    search_fields = (
+        "id_custom",
+        "item__id_custom",
+        "item__descricao",
+        "item__procedimento__id_custom",
+    )
+    list_filter = ("criado_em",)
+    autocomplete_fields = ("item",)
+    list_select_related = ("item", "item__procedimento")
+    ordering = ("-criado_em",)
+    readonly_fields = (
+        "id_custom",
+        "criado_em",
+        "atualizado_em",
+        "criado_por",
+        "atualizado_por",
+        "versao",
+    )
+    fieldsets = (
+        (
+            "Valor do Item",
+            {
+                "fields": (
+                    "id_custom",
+                    "item",
+                    "preco_unitario",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "atualizado_em",
+                    "criado_por",
+                    "atualizado_por",
+                    "versao",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(ProcedimentoMaterialValor)
+class ProcedimentoMaterialValorAdmin(admin.ModelAdmin):
+    list_display = (
+        "id_custom",
+        "material",
+        "custo_unitario",
+        "criado_em",
+    )
+    search_fields = (
+        "id_custom",
+        "material__id_custom",
+        "material__produto__nome",
+        "material__procedimento__id_custom",
+    )
+    list_filter = ("criado_em",)
+    autocomplete_fields = ("material",)
+    list_select_related = ("material", "material__procedimento", "material__produto")
+    ordering = ("-criado_em",)
+    readonly_fields = (
+        "id_custom",
+        "criado_em",
+        "atualizado_em",
+        "criado_por",
+        "atualizado_por",
+        "versao",
+    )
+    fieldsets = (
+        (
+            "Valor do Material",
+            {
+                "fields": (
+                    "id_custom",
+                    "material",
+                    "custo_unitario",
                 )
             },
         ),
