@@ -1,0 +1,69 @@
+name: 🚀 Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/develop' && 'staging' || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 📝 Set environment
+      run: |
+        if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+          echo "DEPLOY_ENV=staging" >> $GITHUB_ENV
+          echo "DEPLOY_URL=https://staging.seudominio.com" >> $GITHUB_ENV
+        else
+          echo "DEPLOY_ENV=production" >> $GITHUB_ENV
+          echo "DEPLOY_URL=https://seudominio.com" >> $GITHUB_ENV
+        fi
+    
+    - name: 🔐 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+      continue-on-error: true
+    
+    - name: 📦 Deploy to ECS
+      id: deploy
+      run: |
+        echo "Deploying to ${{ env.DEPLOY_ENV }}..."
+        echo "url=${{ env.DEPLOY_URL }}" >> $GITHUB_OUTPUT
+        # Adicione seus comandos de deploy aqui
+        # Exemplo: aws ecs update-service ...
+      continue-on-error: true
+    
+    - name: 🔔 Send Slack notification
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        text: 'Deploy to ${{ env.DEPLOY_ENV }} ${{ job.status }}'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      continue-on-error: true
+    
+    - name: ✅ Deployment Summary
+      run: |
+        echo "✅ Deployment to ${{ env.DEPLOY_ENV }} completed!"
+        echo "📍 URL: ${{ env.DEPLOY_URL }}"
