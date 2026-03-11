@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-    BriefcaseMedical,
+    Briefcase as BriefcaseIcon,
     LayoutDashboard,
     Users,
     ClipboardList,
@@ -22,7 +22,7 @@ interface Item {
 
 const items: Item[] = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Recepção", href: "/recepcao", icon: BriefcaseMedical },
+    { label: "Recepção", href: "/recepcao", icon: BriefcaseIcon },
     { label: "Pacientes", href: "/pacientes", icon: Users },
     { label: "Requisições", href: "/requisicoes", icon: ClipboardList },
     { label: "Exames", href: "/exames", icon: FlaskConical },

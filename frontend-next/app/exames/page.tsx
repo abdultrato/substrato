@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ExamesService } from "@/lib/api-client/services/ExamesService";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import Link from "next/link";
-import { ExameList } from "@/types";
+import { ExameList } from "@/lib/types";
 
 export default function ExamesPage () {
     useAuthGuard();
@@ -16,7 +17,9 @@ export default function ExamesPage () {
     }, [] );
 
     async function carregar () {
-        setExames( await apiFetch( "/exames/" ) );
+        const r = await ExamesService.clinicoExamesList();
+        const data = r && (r as any).results ? (r as any).results : (r as any);
+        setExames( data || [] );
     }
 
     async function remover ( id: number ) {

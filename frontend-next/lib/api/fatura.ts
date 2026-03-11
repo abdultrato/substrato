@@ -15,3 +15,23 @@ export async function atualizarFatura(id: number, payload: any) {
 export async function deletarFatura(id: number) {
   return apiFetch(`/faturas/${id}/`, { method: "DELETE" })
 }
+
+export async function obterFatura(id: number) {
+  return apiFetch(`/faturas/${id}/`)
+}
+
+export async function emitirFatura(id: number) {
+  // best-effort: call an action endpoint if available
+  return apiFetch(`/faturas/${id}/emitir/`, { method: "POST" })
+}
+
+export async function anularFatura(id: number) {
+  return apiFetch(`/faturas/${id}/anular/`, { method: "POST" })
+}
+
+export async function gerarPdfFatura(id: number) {
+  // return Blob
+  const res = await fetch(`/api/v1/faturas/${id}/pdf/`, { credentials: "include" })
+  if (!res.ok) throw new Error("Erro ao gerar PDF")
+  return await res.blob()
+}

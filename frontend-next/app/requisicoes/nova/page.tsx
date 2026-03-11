@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { Paciente, Exame } from "@/types";
+import { Paciente, Exame } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
 export default function NovaRequisicaoPage () {

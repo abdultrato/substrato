@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
-import { apiFetch } from "@/lib/api";
+import { PacientesService } from "@/lib/api-client/services/PacientesService";
 import useAuthGuard from "@/hooks/useAuthGuard";
 
 function calcularIdade ( dataNascimento?: string ): string {
@@ -54,8 +54,9 @@ export default function PacientesPage () {
 
     async function carregarPacientes () {
         try {
-            const data = await apiFetch( "/pacientes/" );
-            setPacientes( data );
+            const r = await PacientesService.clinicoPacientesList();
+            const data = r && (r as any).results ? (r as any).results : (r as any);
+            setPacientes( data || [] );
         } catch {
             setError( "Erro ao carregar pacientes" );
         } finally {
@@ -95,16 +96,11 @@ export default function PacientesPage () {
         try {
             setSaving( true );
 
-            const url = editingId
-                ? `/pacientes/${editingId}/`
-                : "/pacientes/";
-
-            const method = editingId ? "PUT" : "POST";
-
-            await apiFetch( url, {
-                method,
-                body: JSON.stringify( form ),
-            } );
+            if ( editingId ) {
+                await PacientesService.clinicoPacientesUpdate( editingId, form as any );
+            } else {
+                await PacientesService.clinicoPacientesCreate( form as any );
+            }
 
             resetForm();
             carregarPacientes();
@@ -118,7 +114,7 @@ export default function PacientesPage () {
     async function apagarPaciente ( id: number ) {
         if ( !confirm( "Deseja remover este paciente?" ) ) return;
 
-        await apiFetch( `/pacientes/${id}/`, { method: "DELETE" } );
+        await PacientesService.clinicoPacientesDestroy( id );
         carregarPacientes();
     }
 

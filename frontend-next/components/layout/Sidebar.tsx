@@ -4,7 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SessionUser } from "@/lib/session"
 import {
-    BriefcaseMedical,
+    Briefcase as BriefcaseIcon,
+
     Users,
     FileText,
     FlaskConical,
@@ -36,7 +37,7 @@ const NAV_ITEMS: NavItem[] = [
     {
         href: "/recepcao",
         label: "Recepção",
-        icon: BriefcaseMedical,
+        icon: BriefcaseIcon,
         groups: ["Administrador", "Recepcionista"],
     },
     {

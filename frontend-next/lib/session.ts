@@ -2,6 +2,7 @@ export type SessionUser = {
   id: number
   username?: string
   full_name?: string
+  groups?: string[]
 }
 
 export function getSessionUser(): SessionUser | null {

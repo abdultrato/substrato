@@ -11,6 +11,7 @@ export type Paciente = {
   email?: string
   proveniencia?: string
   morada?: string
+  criado_em?: string
 }
 
 export type PacienteCreateDTO = Omit<Paciente, 'id' | 'id_custom'>

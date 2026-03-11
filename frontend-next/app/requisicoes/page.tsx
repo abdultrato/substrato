@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { Requisicao, Paciente, Exame } from "@/types";
+import { Requisicao, Paciente, Exame } from "@/lib/types";
 import Link from "next/link";
 
 export default function RequisicoesPage () {

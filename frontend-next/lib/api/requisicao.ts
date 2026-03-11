@@ -15,3 +15,11 @@ export async function atualizarRequisicao(id: number, payload: any) {
 export async function deletarRequisicao(id: number) {
   return apiFetch(`/requisicoes/${id}/`, { method: "DELETE" })
 }
+
+export async function cancelarRequisicao(id: number) {
+  return apiFetch(`/requisicoes/${id}/cancelar/`, { method: "POST" })
+}
+
+export async function validarResultados(id: number) {
+  return apiFetch(`/requisicoes/${id}/validar_resultados/`, { method: "POST" })
+}

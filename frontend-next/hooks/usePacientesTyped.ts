@@ -12,7 +12,7 @@ import { OpenAPI } from '@/lib/api-client/core/OpenAPI'
 
 // Configuração do cliente OpenAPI
 OpenAPI.BASE = '/api/v1'
-OpenAPI.TOKEN = () => {
+OpenAPI.TOKEN = async () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('access_token') || ''
   }
@@ -61,12 +61,21 @@ export function usePacientesTyped(
         offset
       )
       
-      setState(prev => ({
-        ...prev,
-        data: response.results || [],
-        total: response.count || 0,
-        loading: false,
-      }))
+      if (response.success) {
+        setState(prev => ({
+          ...prev,
+          data: response.data.results || [],
+          total: response.data.count || 0,
+          loading: false,
+        }))
+      } else {
+        const err = (response as any).error
+        setState(prev => ({
+          ...prev,
+          error: err,
+          loading: false,
+        }))
+      }
     } catch (err) {
       setState(prev => ({
         ...prev,
@@ -110,7 +119,7 @@ export function usePacientesTyped(
         }))
         return result.data
       } else {
-        const errors = getValidationErrors(result.error)
+        const errors = getValidationErrors((result as any).error)
         setState(prev => ({
           ...prev,
           validationErrors: errors,
@@ -142,7 +151,7 @@ export function usePacientesTyped(
         }))
         return result.data
       } else {
-        const errors = getValidationErrors(result.error)
+        const errors = getValidationErrors((result as any).error)
         setState(prev => ({
           ...prev,
           validationErrors: errors,

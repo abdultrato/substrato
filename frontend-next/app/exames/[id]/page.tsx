@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { ExameDetail } from "@/types";
+import { Exame } from "@/lib/types";
 
 export default function ExameDetailPage ( { params }: any ) {
     useAuthGuard();
 
-    const [exame, setExame] = useState<ExameDetail | null>( null );
+    const [exame, setExame] = useState<Exame | null>( null );
 
     useEffect( () => {
         carregar();

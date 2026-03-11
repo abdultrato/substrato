@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PacienteCreateDTO } from "@/lib/types";
-import { apiFetch } from "@/lib/api";
+import { PacientesService } from "@/lib/api-client/services/PacientesService";
 
 export default function NovoPacientePage () {
     const router = useRouter();
@@ -43,10 +43,7 @@ export default function NovoPacientePage () {
         setError( null );
 
         try {
-            await apiFetch( "/pacientes/", {
-                method: "POST",
-                body: JSON.stringify( form ),
-            } );
+            await PacientesService.clinicoPacientesCreate( form as any );
 
             router.push( "/pacientes" );
         } catch ( err: any ) {

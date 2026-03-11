@@ -12,3 +12,4 @@ export type Entidade = {
 }
 
 export type EntidadeCreateDTO = Omit<Entidade, 'id'>
+export type EntidadeUpdateDTO = Partial<EntidadeCreateDTO>

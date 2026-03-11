@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import (
+	F,
+	Q,
+	)
 
 from nucleo.constantes.genero import Genero
 from nucleo.modelos.base import CoreModel
@@ -44,14 +47,15 @@ class ReferenciaClinica(CoreModel) :
 		constraints = [
 			
 			# faixa etária válida
-			models.CheckConstraint(condition = (
+			models.CheckConstraint(check = (
 					Q(idade_maxima_dias__gte = F("idade_minima_dias")) | Q(idade_minima_dias__isnull = True) | Q(idade_maxima_dias__isnull = True)), name = "ref_idade_intervalo_valido", ),
 			
 			# intervalo clínico válido
-			models.CheckConstraint(condition = (Q(valor_maximo__gte = F("valor_minimo")) | Q(valor_minimo__isnull = True) | Q(valor_maximo__isnull = True)), name = "ref_valor_intervalo_valido", ),
+			models.CheckConstraint(check = (Q(valor_maximo__gte = F(
+					"valor_minimo")) | Q(valor_minimo__isnull = True) | Q(valor_maximo__isnull = True)), name = "ref_valor_intervalo_valido", ),
 			
 			# intervalo crítico válido
-			models.CheckConstraint(condition = (
+			models.CheckConstraint(check = (
 					Q(critico_alto__gte = F("critico_baixo")) | Q(critico_baixo__isnull = True) | Q(critico_alto__isnull = True)), name = "ref_critico_intervalo_valido", ), ]
 	
 	# =====================================================
