@@ -19,6 +19,7 @@ interface AuthContextType {
     user: SessionUser | null
     loading: boolean
     authenticated: boolean
+    isAuthenticated: boolean
     refreshUser: () => Promise<void>
     signOut: () => void
 }
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         authenticated: !!user,
+        isAuthenticated: !!user,
         refreshUser,
         signOut,
     }
