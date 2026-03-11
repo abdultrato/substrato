@@ -192,26 +192,29 @@ services:
   # =========================================================================
   # NEXT.JS FRONTEND
   # =========================================================================
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: substrato_frontend
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
-      NODE_ENV: development
-      TZ: America/Sao_Paulo
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend-next:/app
-      - /app/node_modules
-      - /app/.next
-    networks:
-      - substrato
-    restart: unless-stopped
+  # =========================================================================
+  # FRONTEND - NEXT.JS (comentado enquanto TypeScript é corrigido)
+  # =========================================================================
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.frontend
+  #   container_name: substrato_frontend
+  #   environment:
+  #     NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+  #     NODE_ENV: development
+  #     TZ: America/Sao_Paulo
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:3000"
+  #   depends_on:
+  #     - backend
+  #   volumes:
+  #     - ./frontend-next:/app
+  #     - /app/node_modules
+  #     - /app/.next
+  #   networks:
+  #     - substrato
+  #   restart: unless-stopped
 
   # =========================================================================
   # NGINX - REVERSE PROXY
@@ -227,7 +230,6 @@ services:
       - "80:80"
     depends_on:
       - backend
-      - frontend
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
