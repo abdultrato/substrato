@@ -13,7 +13,7 @@ export default function EditarEntidadePage() {
     const {id} = useParams();
     const router = useRouter();
 
-    const [form, setForm] = useState<Entidade | null>(null);
+    const [form, setForm] = useState<any | null>(null);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -84,21 +84,21 @@ export default function EditarEntidadePage() {
 
                 <input
                     name="slogan"
-                    value={form.slogan || ""}
+                    value={(form as any).slogan || ""}
                     onChange={handleChange}
                     placeholder="Slogan"
                 />
 
                 <input
                     name="endereco_sede"
-                    value={form.endereco_sede || ""}
+                    value={(form as any).endereco_sede || ""}
                     onChange={handleChange}
                     placeholder="Endereço"
                 />
 
                 <input
                     name="telefone1"
-                    value={form.telefone1 || ""}
+                    value={(form as any).telefone1 || ""}
                     onChange={handleChange}
                     placeholder="Telefone"
                 />
@@ -128,7 +128,7 @@ export default function EditarEntidadePage() {
                     <input
                         type="checkbox"
                         name="ativo"
-                        checked={form.ativo}
+                        checked={!!form.ativo}
                         onChange={handleChange}
                     />
                     Ativo
