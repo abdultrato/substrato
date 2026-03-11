@@ -1,0 +1,11 @@
+{
+  "input": "./schema.json",
+  "output": "./lib/api-client",
+  "httpClient": "fetch",
+  "useUnionTypes": true,
+  "exportCore": true,
+  "exportServices": true,
+  "exportModels": true,
+  "exportSchemas": true,
+  "clientName": "SubstratoAPI"
+}

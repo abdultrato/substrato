@@ -1,0 +1,522 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Substrato API",
+    "description": "API REST da Plataforma Substrato - Gestão Hospitalar e Laboratorial",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Production API"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Paciente": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "id_custom": {
+            "type": "string",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "genero": {
+            "type": "string",
+            "enum": ["M", "F"],
+            "nullable": true
+          },
+          "raca_origem": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo_documento": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "contacto": {
+            "type": "string",
+            "nullable": true
+          },
+          "morada": {
+            "type": "string",
+            "nullable": true
+          },
+          "proveniencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": ["id", "nome"]
+      },
+      "Exame": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "nome"]
+      },
+      "RequisicaoAnalise": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "paciente": {
+            "type": "integer"
+          },
+          "data_requisicao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pendente", "processada", "completa", "cancelada"]
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": ["id", "paciente", "data_requisicao", "status"]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access": {
+            "type": "string"
+          },
+          "refresh": {
+            "type": "string"
+          }
+        },
+        "required": ["access", "refresh"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/clinico/pacientes/": {
+      "get": {
+        "operationId": "clinico_pacientes_list",
+        "description": "Listar pacientes",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Filtrar por nome ou email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Campo para ordenação",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Paciente"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "clinico_pacientes_create",
+        "description": "Criar novo paciente",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paciente"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clinico/pacientes/{id}/": {
+      "get": {
+        "operationId": "clinico_pacientes_retrieve",
+        "description": "Obter detalhes de um paciente",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "clinico_pacientes_update",
+        "description": "Atualizar paciente",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paciente"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "clinico_pacientes_partial_update",
+        "description": "Atualizar parcialmente um paciente",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paciente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "clinico_pacientes_destroy",
+        "description": "Deletar um paciente",
+        "tags": ["Pacientes"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Paciente deletado com sucesso"
+          }
+        }
+      }
+    },
+    "/clinico/exames/": {
+      "get": {
+        "operationId": "clinico_exames_list",
+        "description": "Listar exames",
+        "tags": ["Exames"],
+        "security": [{"Bearer": []}],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Exame"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identidade/token/": {
+      "post": {
+        "operationId": "identidade_token_create",
+        "description": "Login - Obter tokens JWT",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                },
+                "required": ["username", "password"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/identidade/token/refresh/": {
+      "post": {
+        "operationId": "identidade_token_refresh_create",
+        "description": "Refresh - Obter novo access token",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh": {
+                    "type": "string"
+                  }
+                },
+                "required": ["refresh"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
