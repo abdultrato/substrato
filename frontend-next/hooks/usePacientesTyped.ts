@@ -1,13 +1,13 @@
 /**
- * Hook para consumir a API de forma tipada usando o cliente gerado
- * Exemplo: const { data, loading, error } = usePacientes()
+ * Hook para consumir a API de forma tipada com validação Zod
+ * Exemplo: const { pacientes, loading, error } = usePacientesTyped()
  */
 
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { PacientesService } from '@/lib/api-client/services/PacientesService'
-import type { Paciente } from '@/lib/api-client/models/Paciente'
+import { ValidatedPacientesService, getValidationErrors } from '@/lib/api/validated-client'
+import { PacienteSchema, type Paciente } from '@/lib/validators/schemas'
 import { OpenAPI } from '@/lib/api-client/core/OpenAPI'
 
 // Configuração do cliente OpenAPI
@@ -19,14 +19,19 @@ OpenAPI.TOKEN = () => {
   return ''
 }
 
+interface ValidationError {
+  [key: string]: string
+}
+
 interface PacientesState {
   data: Paciente[]
   loading: boolean
   error: Error | null
+  validationErrors: ValidationError | null
   total: number
 }
 
-export function usePacientes(
+export function usePacientesTyped(
   search?: string,
   ordering?: string,
   limit: number = 20,
@@ -36,14 +41,20 @@ export function usePacientes(
     data: [],
     loading: false,
     error: null,
+    validationErrors: null,
     total: 0,
   })
 
   const fetchPacientes = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }))
+    setState(prev => ({ 
+      ...prev, 
+      loading: true, 
+      error: null,
+      validationErrors: null 
+    }))
     
     try {
-      const response = await PacientesService.clinicoPacientesList(
+      const response = await ValidatedPacientesService.list(
         search,
         ordering,
         limit,
@@ -69,17 +80,44 @@ export function usePacientes(
     fetchPacientes()
   }, [fetchPacientes])
 
-  const criar = useCallback(async (paciente: Omit<Paciente, 'id' | 'criado_em'>) => {
-    setState(prev => ({ ...prev, loading: true }))
+  const criar = useCallback(async (pacienteData: Omit<Paciente, 'id' | 'criado_em'>) => {
+    setState(prev => ({ ...prev, loading: true, validationErrors: null }))
     
     try {
-      const novoP = await PacientesService.clinicoPacientesCreate(paciente as Paciente)
-      setState(prev => ({
-        ...prev,
-        data: [...prev.data, novoP],
-        loading: false,
-      }))
-      return novoP
+      // Validação em tempo de compilação + runtime
+      const validacao = PacienteSchema.safeParse({
+        id: 0, // fake id para validação
+        ...pacienteData,
+      })
+
+      if (!validacao.success) {
+        const errors = getValidationErrors(validacao.error)
+        setState(prev => ({
+          ...prev,
+          validationErrors: errors,
+          loading: false,
+        }))
+        throw new Error('Validação falhou: ' + JSON.stringify(errors))
+      }
+
+      const result = await ValidatedPacientesService.create(pacienteData)
+      
+      if (result.success) {
+        setState(prev => ({
+          ...prev,
+          data: [...prev.data, result.data],
+          loading: false,
+        }))
+        return result.data
+      } else {
+        const errors = getValidationErrors(result.error)
+        setState(prev => ({
+          ...prev,
+          validationErrors: errors,
+          loading: false,
+        }))
+        throw new Error('Validação de resposta falhou')
+      }
     } catch (err) {
       setState(prev => ({
         ...prev,
@@ -90,17 +128,28 @@ export function usePacientes(
     }
   }, [])
 
-  const atualizar = useCallback(async (id: number, paciente: Partial<Paciente>) => {
-    setState(prev => ({ ...prev, loading: true }))
+  const atualizar = useCallback(async (id: number, pacienteData: Partial<Paciente>) => {
+    setState(prev => ({ ...prev, loading: true, validationErrors: null }))
     
     try {
-      const atualizado = await PacientesService.clinicoPacientesPartialUpdate(id, paciente as Paciente)
-      setState(prev => ({
-        ...prev,
-        data: prev.data.map(p => p.id === id ? atualizado : p),
-        loading: false,
-      }))
-      return atualizado
+      const result = await ValidatedPacientesService.update(id, pacienteData)
+      
+      if (result.success) {
+        setState(prev => ({
+          ...prev,
+          data: prev.data.map(p => p.id === id ? result.data : p),
+          loading: false,
+        }))
+        return result.data
+      } else {
+        const errors = getValidationErrors(result.error)
+        setState(prev => ({
+          ...prev,
+          validationErrors: errors,
+          loading: false,
+        }))
+        throw new Error('Validação de resposta falhou')
+      }
     } catch (err) {
       setState(prev => ({
         ...prev,
@@ -115,7 +164,7 @@ export function usePacientes(
     setState(prev => ({ ...prev, loading: true }))
     
     try {
-      await PacientesService.clinicoPacientesDestroy(id)
+      await ValidatedPacientesService.delete(id)
       setState(prev => ({
         ...prev,
         data: prev.data.filter(p => p.id !== id),
@@ -135,6 +184,7 @@ export function usePacientes(
     pacientes: state.data,
     loading: state.loading,
     error: state.error,
+    validationErrors: state.validationErrors,
     total: state.total,
     criar,
     atualizar,
