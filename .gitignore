@@ -179,7 +179,8 @@ Thumbs.db
 staticfiles/
 # SQLite DBs
 *.sqlite3
-test_db.sqlite3*
+test_db*
+db_*
 # Build artifacts
 dist/
 build/
@@ -189,3 +190,12 @@ build/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+# pytest
+.pytest_cache/
+# Coverage
+.coverage/
+htmlcov/
+# IDE & Editor
+*.swp
+*.swo
+*~

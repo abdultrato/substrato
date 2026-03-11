@@ -1,5 +1,2 @@
-export * from "./paciente"
-export * from "./exame"
-export * from "./requisicao"
-export * from "./entidade"
-export * from "./fatura"
+export * from './entidade'
+export type EntidadeList = import('./entidade').Entidade
