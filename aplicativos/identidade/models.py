@@ -1,1 +1,7 @@
-from .modelos.usuario import Usuario
+from .modelos import PasswordResetToken, PerfilProfissional, Usuario
+
+__all__ = [
+    "PasswordResetToken",
+    "PerfilProfissional",
+    "Usuario",
+]

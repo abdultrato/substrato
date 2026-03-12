@@ -15,6 +15,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { apiFetch } from "@/lib/api"
 
 interface WorkspaceResumo {
     checkins_hoje: number
@@ -100,16 +101,8 @@ export default function RecepcaoPage() {
     useEffect(() => {
         async function carregarWorkspace() {
             try {
-                const response = await fetch("/api/v1/recepcao/workspace/", {
-                    credentials: "include",
-                })
-
-                if (!response.ok) {
-                    throw new Error("Falha ao carregar a área de trabalho da recepção.")
-                }
-
-                const data = (await response.json()) as WorkspaceRecepcao
-                setWorkspace(data)
+                const data = await apiFetch<WorkspaceRecepcao>("/recepcao/workspace/")
+                setWorkspace(data || EMPTY_WORKSPACE)
             } catch (error) {
                 setErro(
                     error instanceof Error

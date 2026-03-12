@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
-import { PacientesService } from "@/lib/api-client/services/PacientesService";
+import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 
 function calcularIdade ( dataNascimento?: string ): string {
@@ -40,7 +40,7 @@ export default function PacientesPage () {
         data_nascimento: "",
         genero: "",
         raca_origem: "Negra",
-        tipo_documento: "Bilhete de Identidade",
+        tipo_documento: "BI",
         numero_id: "",
         contacto: "",
         email: "",
@@ -54,7 +54,7 @@ export default function PacientesPage () {
 
     async function carregarPacientes () {
         try {
-            const r = await PacientesService.clinicoPacientesList();
+            const r = await apiFetch<any>( "/pacientes/" );
             const data = r && (r as any).results ? (r as any).results : (r as any);
             setPacientes( data || [] );
         } catch {
@@ -77,7 +77,7 @@ export default function PacientesPage () {
             data_nascimento: "",
             genero: "",
             raca_origem: "Negra",
-            tipo_documento: "Bilhete de Identidade",
+            tipo_documento: "BI",
             numero_id: "",
             contacto: "",
             email: "",
@@ -97,9 +97,9 @@ export default function PacientesPage () {
             setSaving( true );
 
             if ( editingId ) {
-                await PacientesService.clinicoPacientesUpdate( editingId, form as any );
+                await apiFetch( `/pacientes/${editingId}/`, { method: "PUT", body: JSON.stringify( form ) } );
             } else {
-                await PacientesService.clinicoPacientesCreate( form as any );
+                await apiFetch( "/pacientes/", { method: "POST", body: JSON.stringify( form ) } );
             }
 
             resetForm();
@@ -114,7 +114,7 @@ export default function PacientesPage () {
     async function apagarPaciente ( id: number ) {
         if ( !confirm( "Deseja remover este paciente?" ) ) return;
 
-        await PacientesService.clinicoPacientesDestroy( id );
+        await apiFetch( `/pacientes/${id}/`, { method: "DELETE" } );
         carregarPacientes();
     }
 

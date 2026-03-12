@@ -3,19 +3,25 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { Exame } from "@/lib/types";
+import { Exame, ExameCampo } from "@/lib/types";
 
 export default function ExameDetailPage ( { params }: any ) {
     useAuthGuard();
 
     const [exame, setExame] = useState<Exame | null>( null );
+    const [campos, setCampos] = useState<ExameCampo[]>( [] );
 
     useEffect( () => {
         carregar();
     }, [] );
 
     async function carregar () {
-        setExame( await apiFetch( `/exames/${params.id}/` ) );
+        const ex = await apiFetch<Exame>( `/exames/${params.id}/` );
+        setExame( ex );
+
+        const r = await apiFetch<any>( `/clinico/examecampo/?exame=${params.id}` );
+        const data = r && (r as any).results ? (r as any).results : (r as any);
+        setCampos( Array.isArray( data ) ? data : [] );
     }
 
     if ( !exame ) return <p>Carregando...</p>;
@@ -23,14 +29,16 @@ export default function ExameDetailPage ( { params }: any ) {
     return (
         <div className="page-box">
             <h1>{exame.nome}</h1>
-            <p>Código: {exame.codigo}</p>
+            <p>Código: {exame.id_custom}</p>
             <p>Método: {exame.metodo}</p>
             <p>Setor: {exame.setor}</p>
 
             <h3>Campos</h3>
-            {exame.campos.map( c => (
+            {campos.length === 0 ? (
+                <p>Sem campos cadastrados.</p>
+            ) : campos.map( c => (
                 <div key={c.id}>
-                    {c.nome_campo} ({c.unidade}) → {c.valor_referencia}
+                    {c.nome || "-"} ({c.unidade || "-"})
                 </div>
             ) )}
         </div>

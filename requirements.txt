@@ -1,16 +1,20 @@
-# Core Django (4.2 LTS - compatible with ALL dependencies including django-celery-beat)
-Django==4.2.13
-djangorestframework==3.15.0
-drf-spectacular==0.27.0
-
-# Django Extensions
+asgiref==3.11.0
+attrs==25.4.0
+cffi==2.0.0
+charset-normalizer==3.4.4
+crispy-bootstrap5==2025.6
+cryptography==46.0.4
+cycler==0.12.1
+defusedxml==0.7.1
+diff-match-patch==20241021
+Django==4.2.16
 django-appconf==1.2.0
 django-axes==8.1.0
 django-cors-headers==4.9.0
 django-countries==8.2.0
 django-crispy-forms==2.5
 django-extensions==4.1
-django-filter==24.3
+django-filter==23.5
 django-import-export==4.3.14
 django-jazzmin==3.0.1
 django-phonenumber-field==8.4.0
@@ -18,60 +22,51 @@ django-phonenumbers==1.0.1
 django-redis==6.0.0
 django-select2==8.4.8
 django-simple-history==3.11.0
+django-tabbed-admin==1.0.4
 django-widget-tweaks==1.5.1
-crispy-bootstrap5==2024.10
-
-# REST/API
-djangorestframework-jwt==1.11.0
-djangorestframework-simplejwt==5.5.1
-
-# Async & Background Tasks
-celery==5.4.0
-django-celery-beat==2.6.0
-django-celery-results==2.5.1
-redis==5.0.1
-
-# Database
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+drf-spectacular==0.29.0
+et_xmlfile==2.0.0
+Faker==40.1.2
+gunicorn==23.0.0
+idna==3.11
+importlib_metadata==8.7.1
+importlib_resources==6.5.2
+inflection==0.5.1
+Jinja2==3.1.6
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+kiwisolver==1.4.9
+MarkupPy==1.18
+MarkupSafe==3.0.3
+odfpy==1.4.1
+openpyxl==3.1.5
+packaging==25.0
+phonenumbers==9.0.21
+pillow==12.1.0
 psycopg==3.3.2
 psycopg-binary==3.3.2
-
-# Server
-gunicorn==23.0.0
-whitenoise==6.11.0
-
-# Data Processing
-pandas==2.2.3
-numpy==1.26.4
-matplotlib==3.9.2
-openpyxl==3.1.5
-tablib==3.9.0
-reportlab==4.2.5
-odfpy==1.4.1
-
-# Testing & Development
-factory-boy==3.3.0
-faker==40.1.2
-pytest==8.3.4
-pytest-django==4.8.0
-pytest-factoryboy==2.7.0
-pytest-cov==6.0.0
-
-# Utilities
-python-dateutil==2.8.2
-python-dotenv==1.2.1
-requests==2.32.3
-pillow==10.4.0
-phonenumbers==9.0.21
 pycountry==26.2.16
+pycparser==2.23
 PyJWT==1.7.1
-
-# Security
-cryptography==43.0.0
-pyOpenSSL==25.1.0
-defusedxml==0.7.1
-diff-match-patch==20241021
-
-# Other
-contextvars
-django-qrcode==0.3
-django-tabbed-admin==1.0.4
+pyOpenSSL==25.3.0
+pyparsing==3.3.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
+pytz==2025.2
+PyYAML==6.0.3
+qrcode==8.2
+redis==7.2.1
+referencing==0.37.0
+reportlab==4.4.7
+rpds-py==0.30.0
+six==1.17.0
+sqlparse==0.5.5
+tablib==3.9.0
+typing_extensions==4.15.0
+tzdata==2025.3
+unicorn==2.1.4
+uritemplate==4.2.0
+whitenoise==6.11.0
+zipp==3.23.0

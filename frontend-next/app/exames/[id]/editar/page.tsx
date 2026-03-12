@@ -36,8 +36,50 @@ export default function EditarExamePage ( { params }: any ) {
         <form onSubmit={salvar} className="page-box">
             <h1>Editar Exame</h1>
 
-            <input value={form.nome} onChange={e => setForm( { ...form, nome: e.target.value } )} />
-            <input value={form.codigo} onChange={e => setForm( { ...form, codigo: e.target.value } )} />
+            <input
+                placeholder="Nome"
+                value={form.nome || ""}
+                onChange={e => setForm( { ...form, nome: e.target.value } )}
+            />
+
+            <input
+                type="number"
+                placeholder="Preço"
+                step="0.01"
+                value={form.preco ?? 0}
+                onChange={e => setForm( { ...form, preco: Number( e.target.value ) } )}
+            />
+
+            <input
+                type="number"
+                placeholder="TRL (horas)"
+                value={form.trl_horas ?? 24}
+                onChange={e => setForm( { ...form, trl_horas: Number( e.target.value ) } )}
+            />
+
+            <label>Método</label>
+            <select
+                value={form.metodo || "Enzimatico"}
+                onChange={e => setForm( { ...form, metodo: e.target.value } )}
+            >
+                <option value="Enzimatico">Enzimático</option>
+                <option value="Colorimetrico">Colorimétrico</option>
+                <option value="ELISA">ELISA</option>
+                <option value="PCR">PCR</option>
+                <option value="Outro">Outro</option>
+            </select>
+
+            <label>Setor</label>
+            <select
+                value={form.setor || "Bioquimica"}
+                onChange={e => setForm( { ...form, setor: e.target.value } )}
+            >
+                <option value="Bioquimica">Bioquímica</option>
+                <option value="Hematologia">Hematologia</option>
+                <option value="Microbiologia">Microbiologia</option>
+                <option value="Imunologia">Imunologia</option>
+                <option value="Outro">Outro</option>
+            </select>
 
             <button className="btn-primary">Salvar</button>
         </form>

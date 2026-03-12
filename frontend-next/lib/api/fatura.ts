@@ -30,8 +30,5 @@ export async function anularFatura(id: number) {
 }
 
 export async function gerarPdfFatura(id: number) {
-  // return Blob
-  const res = await fetch(`/api/v1/faturas/${id}/pdf/`, { credentials: "include" })
-  if (!res.ok) throw new Error("Erro ao gerar PDF")
-  return await res.blob()
+  return apiFetch<Blob>(`/faturas/${id}/pdf/`, { method: "GET", responseType: "blob" })
 }

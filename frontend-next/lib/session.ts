@@ -5,6 +5,8 @@ export type SessionUser = {
   groups?: string[]
 }
 
+import { clearTokens } from "./tokens"
+
 export function getSessionUser(): SessionUser | null {
   if (typeof localStorage === "undefined") return null
   const s = localStorage.getItem("sessionUser")
@@ -30,5 +32,6 @@ export function logout() {
   try {
     fetch("/api/v1/auth/logout/", { method: "POST", credentials: "include" })
   } catch {}
+  clearTokens()
   if (typeof localStorage !== 'undefined') localStorage.removeItem("sessionUser")
 }

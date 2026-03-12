@@ -1,39 +1,40 @@
 from decimal import Decimal
 
-from django.core.validators import MinValueValidator
 from django.db import models
 
+from infrastrutura.orm.fields.dinheiro_field import DinheiroField
+from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import NoNameCoreModel
 
 
-class ProcedimentoMaterialValor(NoNameCoreModel):
-    prefixo = "PMVLR"
-
-    material = models.OneToOneField(
-        "enfermagem.ProcedimentoMaterial",
-        on_delete=models.CASCADE,
-        related_name="valor",
-    )
-    custo_unitario = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-    )
-
-    class Meta:
-        ordering = ["-criado_em"]
-        verbose_name = "Valor do Material de Procedimento"
-        verbose_name_plural = "Valores dos Materiais de Procedimento"
-        indexes = [
-            models.Index(fields=["inquilino", "material"]),
-            models.Index(fields=["custo_unitario"]),
-        ]
-
-    def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.material_id:
-            self.inquilino_id = self.material.inquilino_id
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.material} - {self.custo_unitario}"
+class ProcedimentoMaterialValor(PropagarInquilinoMixin, NoNameCoreModel):
+	"""
+	Valor unitário efetivo de um material consumido em procedimento.
+	"""
+	
+	fonte_inquilino = "material"
+	prefixo = "PMV"
+	
+	material = models.OneToOneField(
+			"enfermagem.ProcedimentoMaterial",
+			on_delete=models.CASCADE,
+			related_name="valor",
+			db_index=True,
+			)
+	
+	custo_unitario = DinheiroField(
+			default=Decimal("0.00"),
+			)
+	
+	ativo = models.BooleanField(
+			default=True,
+			db_index=True,
+			)
+	
+	class Meta:
+		verbose_name = "Valor do Material do Procedimento"
+		verbose_name_plural = "Valores dos Materiais do Procedimento"
+		ordering = ["-criado_em"]
+	
+	def __str__(self):
+		return f"{self.material_id} - {self.custo_unitario}"

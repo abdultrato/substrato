@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PacienteCreateDTO } from "@/lib/types";
-import { PacientesService } from "@/lib/api-client/services/PacientesService";
+import { apiFetch } from "@/lib/api";
+import useAuthGuard from "@/hooks/useAuthGuard";
 
 export default function NovoPacientePage () {
+    useAuthGuard();
     const router = useRouter();
 
     const [form, setForm] = useState<PacienteCreateDTO>( {
@@ -13,7 +15,7 @@ export default function NovoPacientePage () {
         data_nascimento: "",
         genero: "",
         raca_origem: "Negra",
-        tipo_documento: "Bilhete de Identidade",
+        tipo_documento: "BI",
         numero_id: "",
         contacto: "",
         email: "",
@@ -43,7 +45,10 @@ export default function NovoPacientePage () {
         setError( null );
 
         try {
-            await PacientesService.clinicoPacientesCreate( form as any );
+            await apiFetch( "/pacientes/", {
+                method: "POST",
+                body: JSON.stringify( form ),
+            } );
 
             router.push( "/pacientes" );
         } catch ( err: any ) {
@@ -100,13 +105,14 @@ export default function NovoPacientePage () {
                     value={form.tipo_documento}
                     onChange={handleChange}
                 >
-                    <option>Bilhete de Identidade</option>
-                    <option>Passaporte</option>
-                    <option>Carta de condução</option>
-                    <option>Cartão de Recenseamento</option>
-                    <option>DIRE</option>
-                    <option>Cartão de Saúde</option>
-                    <option>Outro</option>
+                    <option value="BI">Bilhete de Identidade</option>
+                    <option value="PASS">Passaporte</option>
+                    <option value="CC">Carta de Condução</option>
+                    <option value="DIRE">DIRE</option>
+                    <option value="NUIT">NUIT</option>
+                    <option value="CE">Cartão de Eleitor</option>
+                    <option value="CN">Certidão de Nascimento</option>
+                    <option value="OUT">Outro</option>
                 </select>
 
                 <input

@@ -1,2 +1,3 @@
 class FalhaEnvio(Exception):
     pass
+

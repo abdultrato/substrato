@@ -12,6 +12,7 @@ import {
     ClipboardList,
     Receipt,
     Shield,
+    Layers,
 } from "lucide-react"
 
 interface Props {
@@ -63,6 +64,12 @@ const NAV_ITEMS: NavItem[] = [
         label: "Faturas",
         icon: Receipt,
         groups: ["Administrador", "Recepcionista"],
+    },
+    {
+        href: "/modulos",
+        label: "Módulos",
+        icon: Layers,
+        groups: ["Administrador"],
     },
     {
         href: "/admin",

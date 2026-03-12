@@ -18,7 +18,7 @@ export default function EditarPacientePage () {
         data_nascimento: "",
         genero: "",
         raca_origem: "Negra",
-        tipo_documento: "Bilhete de Identidade",
+        tipo_documento: "BI",
         numero_id: "",
         contacto: "",
         email: "",
@@ -44,7 +44,7 @@ export default function EditarPacientePage () {
                 genero: data.genero || "",
                 raca_origem: data.raca_origem || "Negra",
                 tipo_documento:
-                    data.tipo_documento || "Bilhete de Identidade",
+                    data.tipo_documento || "BI",
                 numero_id: data.numero_id || "",
                 contacto: data.contacto || "",
                 email: data.email || "",
@@ -141,13 +141,14 @@ export default function EditarPacientePage () {
                     value={form.tipo_documento}
                     onChange={handleChange}
                 >
-                    <option>Bilhete de Identidade</option>
-                    <option>Passaporte</option>
-                    <option>Carta de condução</option>
-                    <option>Cartão de Recenseamento</option>
-                    <option>DIRE</option>
-                    <option>Cartão de Saúde</option>
-                    <option>Outro</option>
+                    <option value="BI">Bilhete de Identidade</option>
+                    <option value="PASS">Passaporte</option>
+                    <option value="CC">Carta de Condução</option>
+                    <option value="DIRE">DIRE</option>
+                    <option value="NUIT">NUIT</option>
+                    <option value="CE">Cartão de Eleitor</option>
+                    <option value="CN">Certidão de Nascimento</option>
+                    <option value="OUT">Outro</option>
                 </select>
 
                 <input

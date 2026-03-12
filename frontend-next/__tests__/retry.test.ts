@@ -58,6 +58,7 @@ describe('Retry Logic', () => {
           status: 503,
           title: 'Service Unavailable',
           detail: 'Server is down',
+          code: 'TEST_ERROR',
         })
       })
 
@@ -81,6 +82,7 @@ describe('Retry Logic', () => {
           status: 400,
           title: 'Bad Request',
           detail: 'Invalid data',
+          code: 'TEST_ERROR',
         })
       })
 
@@ -107,6 +109,7 @@ describe('Retry Logic', () => {
             status: 500,
             title: 'Internal Server Error',
             detail: 'Server error',
+            code: 'TEST_ERROR',
           })
         }
         return 'success'
@@ -129,6 +132,7 @@ describe('Retry Logic', () => {
           status: 500,
           title: 'Internal Server Error',
           detail: 'Server error',
+          code: 'TEST_ERROR',
         })
       })
 
@@ -158,6 +162,7 @@ describe('Retry Logic', () => {
             status: 429,
             title: 'Too Many Requests',
             detail: 'Rate limited',
+            code: 'TEST_ERROR',
           })
         }
         return 'success'
@@ -183,6 +188,7 @@ describe('Retry Logic', () => {
             status: 408,
             title: 'Request Timeout',
             detail: 'Request timed out',
+            code: 'TEST_ERROR',
           })
         }
         return 'success'
@@ -203,6 +209,7 @@ describe('Retry Logic', () => {
         status: 503,
         title: 'Service Unavailable',
         detail: 'Server is down',
+        code: 'TEST_ERROR',
       })
 
       const fn = vi.fn(async () => {
@@ -238,6 +245,7 @@ describe('Retry Logic', () => {
             status: 500,
             title: 'Error',
             detail: 'Error',
+            code: 'TEST_ERROR',
           })
         }
         return 'success'
@@ -265,6 +273,7 @@ describe('Retry Logic', () => {
         status: 500,
         title: 'Internal Server Error',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(true)
     })
@@ -275,6 +284,7 @@ describe('Retry Logic', () => {
         status: 503,
         title: 'Service Unavailable',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(true)
     })
@@ -285,6 +295,7 @@ describe('Retry Logic', () => {
         status: 429,
         title: 'Too Many Requests',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(true)
     })
@@ -295,6 +306,7 @@ describe('Retry Logic', () => {
         status: 408,
         title: 'Request Timeout',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(true)
     })
@@ -305,6 +317,7 @@ describe('Retry Logic', () => {
         status: 400,
         title: 'Bad Request',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(false)
     })
@@ -315,6 +328,7 @@ describe('Retry Logic', () => {
         status: 401,
         title: 'Unauthorized',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(false)
     })
@@ -325,6 +339,7 @@ describe('Retry Logic', () => {
         status: 403,
         title: 'Forbidden',
         detail: 'Error',
+        code: 'TEST_ERROR',
       })
       expect(error.isRetryable()).toBe(false)
     })

@@ -1,19 +1,23 @@
 export type Requisicao = {
   id: number
   id_custom?: string
-  codigo?: string
-  paciente_id?: number
-  paciente_nome?: string
+  paciente?: number
+  analista?: number | null
   exames?: number[]
-  exame_ids?: number[]
-  status?: string
-  observacoes?: string | null
+  estado?: string
+  status_clinico?: string
+  possui_resultado_critico?: boolean
+  criado_em?: string
+  atualizado_em?: string
 }
 
 export type ResultadoItem = {
   id: number
-  requisicao_id: number
-  resultado: string
+  requisicao?: number
+  exame_campo?: number
+  resultado?: string
+  valor?: string | number | null
+  estado?: string
 }
 
 export type RequisicaoCreateDTO = Omit<Requisicao, 'id' | 'id_custom'>

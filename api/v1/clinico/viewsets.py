@@ -1,5 +1,13 @@
-from drf_spectacular.decorators import extend_schema, extend_schema_field
-from drf_spectacular.openapi import OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import (
+	extend_schema,
+	extend_schema_field,
+	OpenApiParameter,
+	OpenApiTypes,
+	)
+from drf_spectacular.openapi import (
+	OpenApiParameter,
+	OpenApiTypes,
+	)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 

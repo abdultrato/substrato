@@ -3,6 +3,7 @@ from datetime import date
 from django.db import models
 
 from infrastrutura.orm.fields.email_field import NormalizedEmailField
+from infrastrutura.orm.fields.endereco_field import EnderecoField
 from infrastrutura.orm.fields.telefone_field import TelefoneField
 from nucleo.constantes.genero import Genero
 from nucleo.constantes.proveniencia import Proveniencia
@@ -66,9 +67,8 @@ class Paciente(CoreModel):
         null=True,
     )
 
-    morada = models.CharField(
-        verbose_name="Morada",
-        max_length=150,
+    morada = EnderecoField(
+        verbose_name="Morada", help_text="Endereço estruturado do paciente"
     )
 
     contacto = TelefoneField(

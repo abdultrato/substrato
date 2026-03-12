@@ -1,18 +1,21 @@
 -- ============================================================================
--- INIT-DB.SQL - Script de inicialização do banco de dados
+-- INIT-DB.SQL
+-- Script de inicialização do PostgreSQL
 -- ============================================================================
 
--- Criar extensões
+-- Extensões úteis
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "btree_gin";
 
--- Criar schemas
+-- Garantir schema
 CREATE SCHEMA IF NOT EXISTS public;
 
--- Ajustes de performance
-ALTER DATABASE substrato_db SET statement_timeout = '30s';
-ALTER DATABASE substrato_db SET lock_timeout = '10s';
-ALTER DATABASE substrato_db SET idle_in_transaction_session_timeout = '60s';
+-- Configurações de desempenho
+ALTER DATABASE substrato SET statement_timeout = '30s';
+ALTER DATABASE substrato SET lock_timeout = '10s';
+ALTER DATABASE substrato SET idle_in_transaction_session_timeout = '60s';
 
--- Log de conexão
-\echo 'PostgreSQL database initialized successfully!'
+-- Timezone padrão
+ALTER DATABASE substrato SET timezone TO 'UTC';

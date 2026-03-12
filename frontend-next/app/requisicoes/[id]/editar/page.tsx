@@ -22,8 +22,6 @@ export default function EditarRequisicaoPage ( {
     const [exames, setExames] = useState<Exame[]>( [] );
 
     const [paciente, setPaciente] = useState( "" );
-    const [observacoes, setObservacoes] = useState( "" );
-    const [status, setStatus] = useState( "PEND" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
 
     useEffect( () => {
@@ -42,8 +40,6 @@ export default function EditarRequisicaoPage ( {
             setExames( exs || [] );
 
             setPaciente( req.paciente?.toString() || "" );
-            setObservacoes( req.observacoes || "" );
-            setStatus( req.status || "PEND" );
             setSelecionados( req.exames || [] );
         } catch {
             setError( "Erro ao carregar dados" );
@@ -80,10 +76,7 @@ export default function EditarRequisicaoPage ( {
             await apiFetch( `/requisicoes/${params.id}/`, {
                 method: "PATCH",
                 body: JSON.stringify( {
-                    paciente,
                     exames: selecionados,
-                    observacoes,
-                    status,
                 } ),
             } );
 
@@ -109,6 +102,7 @@ export default function EditarRequisicaoPage ( {
             <select
                 value={paciente}
                 onChange={e => setPaciente( e.target.value )}
+                disabled
             >
                 <option value="">Selecione</option>
                 {pacientes.map( p => (
@@ -117,21 +111,6 @@ export default function EditarRequisicaoPage ( {
                     </option>
                 ) )}
             </select>
-
-            <label>Status</label>
-            <select
-                value={status}
-                onChange={e => setStatus( e.target.value )}
-            >
-                <option value="PEND">Pendente</option>
-                <option value="VAL">Validada</option>
-            </select>
-
-            <label>Observações</label>
-            <textarea
-                value={observacoes}
-                onChange={e => setObservacoes( e.target.value )}
-            />
 
             <h3>Exames</h3>
 

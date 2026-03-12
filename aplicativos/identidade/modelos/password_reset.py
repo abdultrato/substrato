@@ -1,53 +1,35 @@
-import uuid
-from datetime import timedelta
+import secrets
 
-from django.conf import settings
 from django.db import models
-from django.utils.timezone import now
 
 
 class PasswordResetToken(models.Model):
-    """
-    Token seguro para redefinição de senha.
-    """
-
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        "identidade.Usuario",
         on_delete=models.CASCADE,
         related_name="password_reset_tokens",
+        db_index=True,
     )
 
-    token = models.UUIDField(
-        default=uuid.uuid4,
-        unique=True,
-        editable=False,
-    )
-
-    criado_em = models.DateTimeField(auto_now_add=True)
-
-    usado = models.BooleanField(default=False)
+    token = models.CharField(max_length=128, unique=True, db_index=True, blank=True)
+    usado = models.BooleanField(default=False, db_index=True)
+    criado_em = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["-criado_em"]
+        verbose_name = "Token de Reset de Password"
+        verbose_name_plural = "Tokens de Reset de Password"
         indexes = [
-            models.Index(fields=["token"]),
-            models.Index(fields=["user", "usado"]),
+            models.Index(fields=["user", "criado_em"]),
+            models.Index(fields=["usado"]),
         ]
 
-    def expirado(self) -> bool:
-        return now() > self.criado_em + timedelta(minutes=60)
-
     def save(self, *args, **kwargs):
-        """
-        Invalida tokens anteriores ativos ao criar um novo.
-        """
-        if not self.pk:
-            PasswordResetToken.objects.filter(
-                user=self.user,
-                usado=False,
-            ).update(usado=True)
+        if not self.token:
+            # 32 bytes -> ~43 chars base64url; cabe no campo e e seguro.
+            self.token = secrets.token_urlsafe(32)
+        return super().save(*args, **kwargs)
 
-        super().save(*args, **kwargs)
+    def __str__(self) -> str:
+        return f"{self.user_id} - {'usado' if self.usado else 'ativo'}"
 
-    def __str__(self):
-        return f"ResetToken({self.user_id})"

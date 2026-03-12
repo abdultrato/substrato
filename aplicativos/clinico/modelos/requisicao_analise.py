@@ -81,8 +81,8 @@ class RequisicaoAnalise(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         # garantir propagação de tenant
-        if not self.inquilino and self.paciente:
-            self.inquilino = self.paciente.inquilino
+        if not self.inquilino_id and self.paciente_id:
+            self.inquilino_id = self.paciente.inquilino_id
 
         if self.pk:
             original = (

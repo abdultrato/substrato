@@ -185,17 +185,14 @@ staticfiles/
 test_db*
 db_*
 # Build artifacts
-# Logs
-*.log
+
 # lockfiles
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 # pytest
-.pytest_cache/
 # Coverage
 .coverage/
-htmlcov/
 # IDE & Editor
 *.swp
 *.swo

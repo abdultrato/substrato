@@ -1,29 +1,33 @@
 from decimal import Decimal
 
-from django.core.validators import MinValueValidator
 from django.db import models
 
-from nucleo.modelos.base import CoreModel
+from infrastrutura.orm.fields.dinheiro_field import DinheiroField
+from nucleo.modelos import CoreModel
 
 
 class ProcedimentoCatalogo(CoreModel):
-    prefixo = "PROCCAT"
+    """
+    Catálogo de procedimentos de enfermagem.
+
+    Usado como base para:
+    - valor padrão (`preco_padrao`)
+    - materiais padrão (`materiais_padrao`)
+    """
+
+    prefixo = "PCAT"
 
     descricao = models.TextField(blank=True, default="")
-    preco_padrao = models.DecimalField(
-        max_digits=14,
-        decimal_places=2,
+
+    preco_padrao = DinheiroField(
+        verbose_name="Preço padrão",
         default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
     )
 
     class Meta:
-        ordering = ["nome", "criado_em"]
-        verbose_name = "Procedimento de Catálogo"
-        verbose_name_plural = "Procedimentos de Catálogo"
-        indexes = [
-            models.Index(fields=["inquilino", "nome"]),
-        ]
+        verbose_name = "Procedimento (Catálogo)"
+        verbose_name_plural = "Procedimentos (Catálogo)"
+        ordering = ["nome"]
 
-    def __str__(self):
-        return f"{self.nome} ({self.preco_padrao})"
+    def __str__(self) -> str:
+        return self.nome or f"Procedimento {self.pk}"

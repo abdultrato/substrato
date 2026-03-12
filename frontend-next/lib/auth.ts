@@ -1,4 +1,5 @@
 import { apiFetch } from "./api/index"
+import { clearTokens, setTokens } from "./tokens"
 import { setSessionUser } from "./session"
 
 export async function login(username: string, password: string) {
@@ -10,6 +11,9 @@ export async function login(username: string, password: string) {
   })
 
   if (!res.ok) throw new Error("Invalid credentials")
+
+  const tokens = (await res.json()) as any
+  setTokens({ access: tokens?.access, refresh: tokens?.refresh })
 
   try {
     const user = await apiFetch("/auth/user/")
@@ -38,5 +42,6 @@ export function logout() {
   } catch (e) {
     // ignore
   }
+  clearTokens()
   if (typeof localStorage !== 'undefined') localStorage.removeItem("sessionUser")
 }

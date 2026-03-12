@@ -32,11 +32,46 @@ class ExameCampoFilter(SafeFilterSet) :
 # PACIENTE
 # =====================================================
 
-class PacienteFilter(SafeFilterSet) :
-	class Meta :
-		model = Paciente
-		fields = ["inquilino", "id_custom", "deletado", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "nome", "data_nascimento", "genero", "raca_origem", "tipo_documento", "numero_id", "morada", "contacto", "email", "proveniencia", ]
+import django_filters
 
+from api.core.filters import SafeFilterSet
+from aplicativos.clinico.modelos import Paciente
+from infrastrutura.orm.fields.endereco_field import EnderecoField
+
+
+class PacienteFilter(SafeFilterSet):
+	
+	class Meta:
+		model = Paciente
+		
+		fields = [
+				"inquilino",
+				"id_custom",
+				"deletado",
+				"criado_em",
+				"atualizado_em",
+				"criado_por",
+				"atualizado_por",
+				"nome",
+				"data_nascimento",
+				"genero",
+				"raca_origem",
+				"tipo_documento",
+				"numero_id",
+				"morada",
+				"contacto",
+				"email",
+				"proveniencia",
+				]
+		
+		filter_overrides = {
+				EnderecoField: {
+						"filter_class": django_filters.CharFilter,
+						"extra": lambda f: {
+								"lookup_expr": "icontains"
+								},
+						},
+				}
 
 # =====================================================
 # REQUISIÇÃO

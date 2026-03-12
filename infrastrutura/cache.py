@@ -85,8 +85,15 @@ class TenantCache:
         """
 
         key = TenantCache._key(tenant_id, suffix)
-
-        conn = get_redis_connection("default")
+        try:
+            conn = get_redis_connection("default")
+        except NotImplementedError:
+            # Ex.: LocMemCache em desenvolvimento.
+            try:
+                return cache.incr(key, amount)
+            except Exception:
+                cache.set(key, amount, timeout)
+                return amount
 
         with conn.pipeline() as pipe:
             try:

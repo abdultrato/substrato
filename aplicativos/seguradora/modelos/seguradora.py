@@ -1,23 +1,36 @@
 from django.db import models
-from nucleo.modelos.base import CoreModel
+
+from nucleo.modelos import CoreModel
+from nucleo.mixins.modelo.descricao import DescricaoMixin
+from nucleo.mixins.modelo.ordem import OrdemMixin
 
 
-class Seguradora(CoreModel):
+class Seguradora(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Representa uma seguradora / convênio.
+    Cadastro de seguradoras/planos de saude.
     """
 
     prefixo = "SEG"
 
-    codigo_externo = models.CharField(max_length=50, blank=True, null=True)
+    codigo_externo = models.CharField(
+        max_length=60,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
     email = models.EmailField(blank=True, null=True)
-    telefone = models.CharField(max_length=20, blank=True, null=True)
+    telefone = models.CharField(max_length=30, blank=True, null=True)
 
-    ativa = models.BooleanField(default=True)
+    # `ativa` e um atributo de negocio (diferente do soft delete)
+    ativa = models.BooleanField(default=True, db_index=True)
+
+    # Compatibilidade com filtros/viewsets gerados
+    ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         verbose_name = "Seguradora"
         verbose_name_plural = "Seguradoras"
 
-    def __str__(self):
-        return self.nome
+    def __str__(self) -> str:
+        return self.nome or f"Seguradora {self.pk}"
+

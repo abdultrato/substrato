@@ -32,17 +32,6 @@ export default function RequisicaoDetail ( {
         }
     }
 
-    function statusColor ( status: string ) {
-        switch ( status ) {
-            case "VAL":
-                return "green";
-            case "PEND":
-                return "orange";
-            default:
-                return "gray";
-        }
-    }
-
     if ( loading ) return <p>Carregando...</p>;
     if ( error ) return <p style={{ color: "red" }}>{error}</p>;
     if ( !req ) return null;
@@ -53,35 +42,16 @@ export default function RequisicaoDetail ( {
                 <Link href={`/requisicoes/${req.id}/editar`} className="btn-secondary">
                     Editar
                 </Link>
-
-                <Link
-                    href={`/requisicoes/${req.id}/resultados`}
-                    className="btn-primary"
-                >
-                    Resultados
-                </Link>
             </div>
 
             <h1>Requisição {req.id_custom}</h1>
 
             <p>
-                <b>Paciente:</b> {req.paciente_nome}
+                <b>Paciente (ID):</b> {req.paciente || "—"}
             </p>
 
             <p>
-                <b>Status:</b>{" "}
-                <span
-                    style={{
-                        color: statusColor( req.status ),
-                        fontWeight: "bold",
-                    }}
-                >
-                    {req.status}
-                </span>
-            </p>
-
-            <p>
-                <b>Observações:</b> {req.observacoes || "—"}
+                <b>Estado:</b> {req.estado || "—"}
             </p>
 
             <hr />

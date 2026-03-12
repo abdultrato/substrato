@@ -9,11 +9,45 @@ from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 
 
+class MoradaField(serializers.Field):
+	"""
+	Compat layer:
+	- Frontend envia `morada` como string
+	- Modelo usa JSONField (EnderecoField)
+	"""
+
+	def to_representation(self, value):
+		if value is None:
+			return ""
+		if isinstance(value, str):
+			return value
+		if isinstance(value, dict):
+			parts = []
+			for k in ("rua", "numero", "bairro", "cidade", "provincia"):
+				v = value.get(k)
+				if v:
+					parts.append(str(v).strip())
+			return ", ".join([p for p in parts if p]) or ""
+		return str(value)
+
+	def to_internal_value(self, data):
+		if data is None:
+			return {}
+		if isinstance(data, dict):
+			return data
+		if isinstance(data, str):
+			txt = data.strip()
+			return {"rua": txt} if txt else {}
+		raise serializers.ValidationError("Morada deve ser texto ou objeto JSON.")
+
+
 class PacienteSerializer(serializers.ModelSerializer):
 	"""
 	Serializer para a entidade Paciente com validação robusta.
 	Inclui campos de paciente para leitura/escrita com validação de domínio.
 	"""
+
+	morada = MoradaField()
 
 	class Meta:
 		model = Paciente
@@ -24,9 +58,9 @@ class PacienteSerializer(serializers.ModelSerializer):
 			'tipo_documento', 'numero_id',
 			'morada', 'proveniencia',
 			'gestante', 'idade_gestacional_semanas',
-			'ativo', 'criado_em', 'atualizado_em',
+			'criado_em', 'atualizado_em',
 		]
-		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em', 'ativo']
+		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
 		extra_kwargs = {
 			'nome': {
 				'required': True,
@@ -59,7 +93,8 @@ class PacienteSerializer(serializers.ModelSerializer):
 				'help_text': 'Data de nascimento do paciente (formato YYYY-MM-DD)',
 			},
 			'genero': {
-				'required': True,
+				# O modelo já define default, então não pode ser required=True
+				'required': False,
 				'help_text': 'Gênero do paciente (M ou F)',
 			},
 			'raca_origem': {
@@ -76,16 +111,6 @@ class PacienteSerializer(serializers.ModelSerializer):
 				'help_text': 'Número único do documento de identidade',
 				'error_messages': {
 					'unique': 'Este número de documento já está registrado',
-				}
-			},
-			'morada': {
-				'required': True,
-				'min_length': 5,
-				'max_length': 150,
-				'help_text': 'Endereço residencial do paciente',
-				'error_messages': {
-					'required': 'Morada é obrigatória',
-					'min_length': 'Morada deve ter no mínimo 5 caracteres',
 				}
 			},
 			'proveniencia': {
@@ -138,9 +163,9 @@ class ExameSerializer(serializers.ModelSerializer):
 			'trl_horas',
 			'preco',
 			'metodo', 'setor',
-			'ativo', 'criado_em', 'atualizado_em',
+			'criado_em', 'atualizado_em',
 		]
-		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em', 'ativo']
+		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
 		extra_kwargs = {
 			'nome': {
 				'required': True,
@@ -154,7 +179,8 @@ class ExameSerializer(serializers.ModelSerializer):
 				}
 			},
 			'trl_horas': {
-				'required': True,
+				# O modelo já define default.
+				'required': False,
 				'min_value': 1,
 				'max_value': 720,  # 30 dias máximo
 				'help_text': 'Tempo de resposta em horas (1-720)',
@@ -165,7 +191,8 @@ class ExameSerializer(serializers.ModelSerializer):
 				}
 			},
 			'preco': {
-				'required': True,
+				# O modelo já define default (mas validamos > 0 em validate_preco).
+				'required': False,
 				'decimal_places': 2,
 				'help_text': 'Preço do exame em unidades monetárias (≥0.01)',
 				'error_messages': {
@@ -217,19 +244,74 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 	Agrupa múltiplos exames para um paciente.
 	"""
 
+	# DRF marca ManyToMany com `through` como read-only por padrão. Mantemos a
+	# chave `exames` (compatível com o frontend) mas tratamos manualmente.
+	exames = serializers.PrimaryKeyRelatedField(
+		many=True,
+		queryset=Exame.objects.all(),
+		required=False,
+	)
+
 	class Meta:
 		model = RequisicaoAnalise
-		fields = '__all__'
+		fields = [
+			'id',
+			'id_custom',
+			'inquilino',
+			'paciente',
+			'exames',
+			'analista',
+			'estado',
+			'status_clinico',
+			'possui_resultado_critico',
+			'criado_em',
+			'atualizado_em',
+		]
+		read_only_fields = [
+			'id',
+			'id_custom',
+			'inquilino',
+			'possui_resultado_critico',
+			'criado_em',
+			'atualizado_em',
+		]
 		extra_kwargs = {
 			'paciente': {
 				'required': True,
 				'help_text': 'Paciente para o qual a análise foi requisitada',
 			},
-			'data_requisicao': {
-				'required': True,
-				'help_text': 'Data da requisição do exame',
-			},
 		}
+
+	def create(self, validated_data):
+		# `exames` é ManyToMany com `through`, então precisamos criar os itens manualmente.
+		exames = validated_data.pop('exames', [])
+		requisicao = RequisicaoAnalise.objects.create(**validated_data)
+
+		for exame in exames:
+			requisicao.adicionar_exame(exame)
+
+		return requisicao
+
+	def update(self, instance, validated_data):
+		exames = validated_data.pop('exames', None)
+
+		instance = super().update(instance, validated_data)
+
+		if exames is not None:
+			desejados = {e.id for e in exames}
+			atuais = set(instance.itens.values_list('exame_id', flat=True))
+
+			remover = atuais - desejados
+			adicionar = desejados - atuais
+
+			if remover:
+				# Remove fisicamente para não bloquear re-adição por `unique_together`.
+				instance.itens.filter(exame_id__in=remover).delete()
+
+			for exame in Exame.objects.filter(id__in=adicionar):
+				instance.adicionar_exame(exame)
+
+		return instance
 
 
 class RequisicaoItemSerializer(serializers.ModelSerializer):

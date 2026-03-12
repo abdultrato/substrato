@@ -1,72 +1,69 @@
-# ============================================================================
-# BACKEND - DJANGO DOCKERFILE
-# Multi-stage build para reduzir tamanho final
-# ============================================================================
-
-# Stage 1: Builder
-FROM python:3.13-slim as builder
+# ==========================================================
+# STAGE 1 — BUILDER
+# ==========================================================
+FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
-# Instalar dependências do sistema para compilação
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+
 COPY requirements.txt .
 
-# Instalar dependências Python
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel
 
-# ============================================================================
-# Stage 2: Runtime
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip wheel \
+    --prefer-binary \
+    --wheel-dir /wheels \
+    -r requirements.txt
+
+
+# ==========================================================
+# STAGE 2 — RUNTIME
+# ==========================================================
 FROM python:3.13-slim
 
 WORKDIR /app
 
-# Instalar dependências mínimas de runtime
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DJANGO_SETTINGS_MODULE=plataforma.settings.development
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
     libpq5 \
+    postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar dependências instaladas do builder
-COPY --from=builder /usr/local /usr/local
+COPY --from=builder /wheels /wheels
 
-# Copiar código da aplicação
-COPY . .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* \
+    && rm -rf /wheels
 
-# Configurar PATH para incluir o diretório de dependências
-ENV PATH=/usr/local/bin:$PATH \
-    PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    DJANGO_SETTINGS_MODULE=plataforma.settings.development
+# criar usuário antes de copiar arquivos
+RUN useradd -m -u 1000 appuser
 
-# Criar usuário não-root por segurança
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/staticfiles && \
-    mkdir -p /app/media && \
-    chown -R appuser:appuser /app
+# copiar código já com owner correto
+COPY --chown=appuser:appuser . .
 
-# Tornar script executável
+RUN mkdir -p /app/staticfiles /app/media
+
 RUN chmod +x /app/entrypoint.sh
 
-# Mudar para usuário não-root
 USER appuser
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health/live || exit 1
-
-# Expor porta
 EXPOSE 8000
 
-# Executar o entrypoint
+HEALTHCHECK CMD curl -f http://localhost:8000/health/live || exit 1
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Comando padrão
-CMD ["gunicorn", "plataforma.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "sync", "--timeout", "120"]
+CMD gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 3 --worker-class gthread --threads 4 --timeout 120 --access-logfile - --error-logfile -

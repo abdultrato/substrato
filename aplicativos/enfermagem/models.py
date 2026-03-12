@@ -1,4 +1,6 @@
 from .modelos import (
+    EvolucaoEnfermagem,
+    PrescricaoEnfermagem,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
     Procedimento,
@@ -20,4 +22,6 @@ __all__ = [
     "ProcedimentoMaterialValor",
     "RegistroEnfermagem",
     "SinalVitalEnfermagem",
+    "EvolucaoEnfermagem",
+    "PrescricaoEnfermagem",
 ]

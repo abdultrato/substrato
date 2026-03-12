@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExamesService } from "@/lib/api-client/services/ExamesService";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import Link from "next/link";
-import { ExameList } from "@/lib/types";
+import { Exame } from "@/lib/types";
 
 export default function ExamesPage () {
     useAuthGuard();
 
-    const [exames, setExames] = useState<ExameList[]>( [] );
+    const [exames, setExames] = useState<Exame[]>( [] );
 
     useEffect( () => {
         carregar();
     }, [] );
 
     async function carregar () {
-        const r = await ExamesService.clinicoExamesList();
+        const r = await apiFetch<any>( "/exames/" );
         const data = r && (r as any).results ? (r as any).results : (r as any);
         setExames( data || [] );
     }
@@ -43,7 +42,8 @@ export default function ExamesPage () {
                         <th>Código</th>
                         <th>Setor</th>
                         <th>Método</th>
-                        <th>Campos</th>
+                        <th>TRL (h)</th>
+                        <th>Preço</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -51,13 +51,13 @@ export default function ExamesPage () {
                     {exames.map( e => (
                         <tr key={e.id}>
                             <td>{e.nome}</td>
-                            <td>{e.codigo}</td>
+                            <td>{e.id_custom}</td>
                             <td>{e.setor}</td>
                             <td>{e.metodo}</td>
-                            <td>{e.total_campos}</td>
+                            <td>{e.trl_horas}</td>
+                            <td>{e.preco}</td>
                             <td>
                                 <Link href={`/exames/${e.id}`}>Ver</Link>{" "}
-                                <Link href={`/exames/${e.id}/editar`}>Editar</Link>{" "}
                                 <button onClick={() => remover( e.id )}>Apagar</button>
                             </td>
                         </tr>

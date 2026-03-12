@@ -1,101 +1,121 @@
-# ============================================================================
-# .DOCKERIGNORE - Arquivos a ignorar no build
-# ============================================================================
-
-# Git
+# ==========================================================
+# GIT
+# ==========================================================
 .git
 .gitignore
 .gitattributes
 
-# Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
+# ==========================================================
+# PYTHON
+# ==========================================================
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
 *.egg
 *.egg-info
-dist
-build
+dist/
+build/
 .Python
 pip-log.txt
 pip-delete-this-directory.txt
+
 .tox/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
-coverage.xml
-*.cover
 .hypothesis/
 .pytest_cache/
-*.py[cod]
-*$py.class
+coverage.xml
+htmlcov/
+
+venv/
+env/
+ENV/
+.venv/
+
+# ==========================================================
+# ENVIRONMENT
+# ==========================================================
 .env
 .env.*
 !.env.example
-venv/
-ENV/
-env/
-.venv
+.env.local
+.env.*.local
 
-# Node
+# ==========================================================
+# NODE / NEXTJS
+# ==========================================================
 node_modules/
-npm-debug.log
-yarn-error.log
 .next/
 .npm
+npm-debug.log
+yarn-error.log
 
-# IDE
+# ==========================================================
+# IDE / EDITORS
+# ==========================================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
-*.sublime-project
-*.sublime-workspace
+Thumbs.db
+*.iml
 .project
 .pydevproject
 .settings/
-*.iml
 
-# Test
-.pytest_cache/
-.tox/
-htmlcov/
-.coverage
-tests/
-
-# Database
+# ==========================================================
+# DATABASE
+# ==========================================================
 *.sqlite3
+*.sqlite3.bak*
 *.db
 db.sqlite3
 
-# Media
+# ==========================================================
+# MEDIA / USER FILES
+# ==========================================================
 media/
 uploads/
+staticfiles/
 
-# OS
-.DS_Store
-Thumbs.db
-*.log
+# ==========================================================
+# TESTS
+# ==========================================================
+tests/
 
-# Documentation
+# ==========================================================
+# DOCUMENTATION
+# ==========================================================
 docs/
 *.md
 README.rst
 
+# ==========================================================
 # CI/CD
+# ==========================================================
 .github/workflows/
 .gitlab-ci.yml
 .circleci/
 Jenkinsfile
 
-# Other
-.env.local
-.env.*.local
+# ==========================================================
+# TERRAFORM
+# ==========================================================
 *.tfstate
 *.tfstate.*
 terraform/
-docker-compose.dev.yml
+
+# ==========================================================
+# LOGS
+# ==========================================================
+*.log
+.venv
+media
+staticfiles
+node_modules
+__pycache__
+*.pyc

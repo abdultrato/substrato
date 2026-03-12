@@ -1,32 +1,49 @@
+from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from nucleo.modelos.base import CoreModel
-from .seguradora import Seguradora
+
+from nucleo.mixins.modelo.descricao import DescricaoMixin
+from nucleo.mixins.modelo.ordem import OrdemMixin
+from nucleo.modelos import CoreModel
 
 
-class PlanoCobertura(CoreModel):
+class PlanoCobertura(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Plano específico dentro da seguradora.
+    Plano de cobertura associado a uma seguradora.
     """
 
     prefixo = "PLC"
 
     seguradora = models.ForeignKey(
-        Seguradora,
-        on_delete=models.CASCADE,
+        "seguradora.Seguradora",
+        on_delete=models.PROTECT,
         related_name="planos",
     )
 
     percentual_cobertura = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=100.00,
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
+        help_text="Percentual de cobertura (0-100).",
     )
 
-    exige_autorizacao = models.BooleanField(default=False)
+    exige_autorizacao = models.BooleanField(default=False, db_index=True)
+
+    # Compatibilidade com filtros/viewsets gerados
+    ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         verbose_name = "Plano de Cobertura"
         verbose_name_plural = "Planos de Cobertura"
 
-    def __str__(self):
-        return f"{self.seguradora.nome} - {self.nome}"
+    def percentual_final(self) -> Decimal:
+        return self.percentual_cobertura
+
+    def __str__(self) -> str:
+        return self.nome or f"Plano {self.pk}"
+

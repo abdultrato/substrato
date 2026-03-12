@@ -1,3 +1,6 @@
 from .modelos import CheckinRecepcao
 
-__all__ = ["CheckinRecepcao"]
+__all__ = [
+    "CheckinRecepcao",
+]
+

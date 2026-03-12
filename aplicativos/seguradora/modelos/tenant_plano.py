@@ -1,47 +1,59 @@
+from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from nucleo.modelos.base import CoreModel
+
+from nucleo.mixins.modelo.descricao import DescricaoMixin
+from nucleo.mixins.modelo.ordem import OrdemMixin
+from nucleo.modelos import CoreModel
 
 
-class TenantPlanoCobertura(CoreModel):
+class TenantPlanoCobertura(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Permite customizar plano por tenant.
+    Override de plano por inquilino.
+
+    Se existir registro ativo para (inquilino, plano_global), usa-se este
+    percentual no calculo de coparticipacao.
     """
 
-    prefixo = "TPLC"
+    prefixo = "TPL"
 
     plano_global = models.ForeignKey(
         "seguradora.PlanoCobertura",
-        on_delete=models.PROTECT,
-        related_name="customizacoes",
+        on_delete=models.CASCADE,
+        related_name="overrides_por_tenant",
     )
 
-    percentual_cobertura_custom = models.DecimalField(
+    percentual_override = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        null=True,
         blank=True,
+        null=True,
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
+        help_text="Se vazio, usa o percentual do plano global.",
     )
 
-    exige_autorizacao_custom = models.BooleanField(
-        null=True,
-        blank=True,
-    )
+    # Compatibilidade com servicos/filters gerados
+    ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
-        unique_together = ("inquilino", "plano_global")
-        verbose_name = "Plano Customizado do Tenant"
-        verbose_name_plural = "Planos Customizados do Tenant"
+        verbose_name = "Plano por Tenant"
+        verbose_name_plural = "Planos por Tenant"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["inquilino", "plano_global"],
+                name="uniq_tenant_plano_global",
+            )
+        ]
 
-    def percentual_final(self):
-        return (
-            self.percentual_cobertura_custom
-            if self.percentual_cobertura_custom is not None
-            else self.plano_global.percentual_cobertura
-        )
+    def percentual_final(self) -> Decimal:
+        if self.percentual_override is None:
+            return self.plano_global.percentual_final()
+        return self.percentual_override
 
-    def exige_autorizacao_final(self):
-        return (
-            self.exige_autorizacao_custom
-            if self.exige_autorizacao_custom is not None
-            else self.plano_global.exige_autorizacao
-        )
+    def __str__(self) -> str:
+        return f"{self.inquilino_id} - {self.plano_global_id}"
+

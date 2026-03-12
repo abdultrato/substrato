@@ -14,10 +14,7 @@ export default function NovaRequisicaoPage () {
     const [exames, setExames] = useState<Exame[]>( [] );
 
     const [paciente, setPaciente] = useState( "" );
-    const [analista, setAnalista] = useState( "" );
-    const [observacoes, setObservacoes] = useState( "" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
-    const [status, setStatus] = useState( "PEND" );
 
     useEffect( () => {
         carregar();
@@ -38,15 +35,20 @@ export default function NovaRequisicaoPage () {
 
     async function salvar ( e: any ) {
         e.preventDefault();
+        if ( !paciente ) {
+            alert( "Selecione um paciente." );
+            return;
+        }
+        if ( selecionados.length === 0 ) {
+            alert( "Selecione pelo menos um exame." );
+            return;
+        }
 
         const nova = await apiFetch( "/requisicoes/", {
             method: "POST",
             body: JSON.stringify( {
-                paciente,
+                paciente: Number( paciente ),
                 exames: selecionados,
-                observacoes,
-                status,
-                analista: analista || null,
             } ),
         } );
 
@@ -66,18 +68,6 @@ export default function NovaRequisicaoPage () {
                     </option>
                 ) )}
             </select>
-
-            <label>Status</label>
-            <select value={status} onChange={e => setStatus( e.target.value )}>
-                <option value="PEND">Pendente</option>
-                <option value="VAL">Validada</option>
-            </select>
-
-            <textarea
-                placeholder="Observações"
-                value={observacoes}
-                onChange={e => setObservacoes( e.target.value )}
-            />
 
             <h3>Exames</h3>
 

@@ -16,10 +16,47 @@ class InquilinoMiddleware :
 	
 	def __call__(self, request) :
 		# ---------------------------------
-		# BYPASS TOTAL EM DESENVOLVIMENTO
+		# DESENVOLVIMENTO (DEBUG)
 		# ---------------------------------
+		# Em DEBUG, ainda precisamos definir um tenant na thread-local para permitir
+		# criação/validação de modelos que exigem `inquilino` via InquilinoMixin.
+		# Caso não exista nenhum tenant no banco, cria um tenant local (somente DEBUG).
 		if settings.DEBUG :
-			return self.get_response(request)
+			host = ""
+			try :
+				host = request.get_host().split(":")[0].lower().strip()
+			except Exception :
+				host = ""
+			
+			inquilino = None
+			
+			if host :
+				inquilino = (Inquilino.objects.filter(dominio = host).order_by("id").first())
+			
+			if not inquilino :
+				inquilino = (Inquilino.objects.filter(ativo = True).order_by("id").first())
+			
+			if not inquilino :
+				# Tenant mínimo para desenvolvimento local.
+				try :
+					inquilino = Inquilino.objects.create(
+							nome = "Tenant Local",
+							identificador = "local",
+							dominio = host or "localhost",
+							ativo = True,
+							status_comercial = Inquilino.StatusComercial.TRIAL,
+							)
+				except Exception :
+					# Fallback para corrida/conflito de unique.
+					inquilino = (Inquilino.objects.filter(identificador = "local").order_by("id").first())
+			
+			token = set_inquilino(inquilino)
+			request.inquilino = inquilino
+			
+			try :
+				return self.get_response(request)
+			finally :
+				reset_inquilino(token)
 		
 		host = request.get_host().split(":")[0].lower().strip()
 		

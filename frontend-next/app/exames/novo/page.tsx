@@ -11,27 +11,14 @@ export default function NovoExamePage () {
 
     const [form, setForm] = useState( {
         nome: "",
-        codigo: "",
         preco: 0,
         trl_horas: 24,
-        metodo: "OUTRO",
-        setor: "OUTRO",
+        metodo: "Enzimatico",
+        setor: "Bioquimica",
     } );
-
-    const [campos, setCampos] = useState( [
-        { nome_campo: "", tipo: "NUM", unidade: "", valor_referencia: "", ordem: 1 },
-    ] );
 
     function update ( field: string, value: any ) {
         setForm( prev => ( { ...prev, [field]: value } ) );
-    }
-
-    function updateCampo ( i: number, field: string, value: any ) {
-        setCampos( prev => prev.map( ( c, idx ) => idx === i ? { ...c, [field]: value } : c ) );
-    }
-
-    function addCampo () {
-        setCampos( prev => [...prev, { nome_campo: "", tipo: "NUM", unidade: "", valor_referencia: "", ordem: prev.length + 1 }] );
     }
 
     async function salvar ( e: any ) {
@@ -39,7 +26,7 @@ export default function NovoExamePage () {
 
         await apiFetch( "/exames/", {
             method: "POST",
-            body: JSON.stringify( { ...form, campos } ),
+            body: JSON.stringify( form ),
         } );
 
         router.push( "/exames" );
@@ -50,42 +37,26 @@ export default function NovoExamePage () {
             <h1>Novo Exame</h1>
 
             <input placeholder="Nome" onChange={e => update( "nome", e.target.value )} required />
-            <input placeholder="Código" onChange={e => update( "codigo", e.target.value )} required />
-            <input type="number" placeholder="Preço" onChange={e => update( "preco", e.target.value )} />
+            <input type="number" step="0.01" placeholder="Preço" onChange={e => update( "preco", Number( e.target.value ) )} required />
+            <input type="number" placeholder="TRL (horas)" onChange={e => update( "trl_horas", Number( e.target.value ) )} required />
 
             <label>Método</label>
-            <select onChange={e => update( "metodo", e.target.value )}>
-                <option>Enzimático</option>
-                <option>Imunológico</option>
-                <option>ELISA</option>
-                <option>PCR</option>
-                <option>Outro</option>
+            <select value={form.metodo} onChange={e => update( "metodo", e.target.value )}>
+                <option value="Enzimatico">Enzimático</option>
+                <option value="Colorimetrico">Colorimétrico</option>
+                <option value="ELISA">ELISA</option>
+                <option value="PCR">PCR</option>
+                <option value="Outro">Outro</option>
             </select>
 
             <label>Setor</label>
-            <select onChange={e => update( "setor", e.target.value )}>
-                <option>Bioquímica</option>
-                <option>Hematologia</option>
-                <option>Microbiologia</option>
-                <option>Imunologia</option>
-                <option>Outro</option>
+            <select value={form.setor} onChange={e => update( "setor", e.target.value )}>
+                <option value="Bioquimica">Bioquímica</option>
+                <option value="Hematologia">Hematologia</option>
+                <option value="Microbiologia">Microbiologia</option>
+                <option value="Imunologia">Imunologia</option>
+                <option value="Outro">Outro</option>
             </select>
-
-            <h3>Campos</h3>
-
-            {campos.map( ( c, i ) => (
-                <div key={i}>
-                    <input placeholder="Indicador" onChange={e => updateCampo( i, "nome_campo", e.target.value )} />
-                    <select onChange={e => updateCampo( i, "tipo", e.target.value )}>
-                        <option value="NUM">Numérico</option>
-                        <option value="TXT">Texto</option>
-                    </select>
-                    <input placeholder="Unidade" onChange={e => updateCampo( i, "unidade", e.target.value )} />
-                    <input placeholder="Referência" onChange={e => updateCampo( i, "valor_referencia", e.target.value )} />
-                </div>
-            ) )}
-
-            <button type="button" onClick={addCampo}>+ Campo</button>
             <button className="btn-primary">Salvar</button>
         </form>
     );

@@ -1,22 +1,33 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================================================
 # ENTRYPOINT.SH - Script de inicialização do Django
 # ============================================================================
 
-set -e
+set -euo pipefail
+
+log() {
+  echo "[substrato] $1"
+}
 
 echo "=================================================="
-echo "🚀 Iniciando Substrato..."
+log "🚀 Iniciando Substrato..."
 echo "=================================================="
 
-# Aguardar banco de dados ficar pronto
-echo "⏳ Aguardando banco de dados..."
-python << END
+STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-30}
+
+# ============================================================================
+# Aguardar PostgreSQL
+# ============================================================================
+
+log "⏳ Aguardando banco de dados..."
+
+python <<'PY'
 import psycopg
 import time
 import os
+import sys
 
-max_retries = 30
+max_retries = int(os.getenv("STARTUP_TIMEOUT", "30"))
 retries = 0
 
 db_host = os.getenv("DB_HOST", "localhost")
@@ -37,25 +48,30 @@ while retries < max_retries:
         )
         conn.close()
         print("✅ Banco de dados disponível!")
-        break
-    except (psycopg.OperationalError, psycopg.Error) as e:
+        sys.exit(0)
+    except Exception:
         retries += 1
-        if retries < max_retries:
-            print(f"⏳ Aguardando BD... ({retries}/{max_retries})")
-            time.sleep(1)
-        else:
-            print("❌ Banco de dados não está disponível!")
-            exit(1)
-END
+        print(f"⏳ Aguardando BD... ({retries}/{max_retries})")
+        time.sleep(0.5)
 
+print("❌ Banco de dados não está disponível!")
+sys.exit(1)
+PY
+
+
+# ============================================================================
 # Aguardar Redis
-echo "⏳ Aguardando Redis..."
-python << END
+# ============================================================================
+
+log "⏳ Aguardando Redis..."
+
+python <<'PY'
 import redis
 import time
 import os
+import sys
 
-max_retries = 30
+max_retries = int(os.getenv("STARTUP_TIMEOUT", "30"))
 retries = 0
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -65,54 +81,82 @@ while retries < max_retries:
         r = redis.from_url(redis_url)
         r.ping()
         print("✅ Redis disponível!")
-        break
-    except Exception as e:
+        sys.exit(0)
+    except Exception:
         retries += 1
-        if retries < max_retries:
-            print(f"⏳ Aguardando Redis... ({retries}/{max_retries})")
-            time.sleep(1)
-        else:
-            print("❌ Redis não está disponível!")
-            exit(1)
-END
+        print(f"⏳ Aguardando Redis... ({retries}/{max_retries})")
+        time.sleep(0.5)
 
-# Executar migrations
-echo "🔄 Executando migrations..."
+print("❌ Redis não está disponível!")
+sys.exit(1)
+PY
+
+
+# ============================================================================
+# Django migrations
+# ============================================================================
+
+log "🔄 Executando migrations..."
 python manage.py migrate --noinput
 
-# Criar superuser se não existir (desenvolvimento apenas)
-if [ "$DJANGO_DEBUG" = "True" ]; then
-    echo "👤 Criando superuser de desenvolvimento..."
-    python << END
+
+# ============================================================================
+# Superuser automático (apenas dev)
+# ============================================================================
+
+if [ "${DJANGO_DEBUG:-False}" = "True" ]; then
+
+log "👤 Verificando superuser..."
+
+python <<'PY'
+import django
+django.setup()
+
 from django.contrib.auth import get_user_model
-from django.db import connection
-from django.conf import settings
 
 User = get_user_model()
 
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@exemplo.com', 'admin123')
-    print("✅ Superuser 'admin' criado com senha 'admin123'")
+if not User.objects.filter(username="admin").exists():
+    User.objects.create_superuser(
+        "admin",
+        "admin@exemplo.com",
+        "admin123"
+    )
+    print("✅ Superuser 'admin' criado")
 else:
-    print("ℹ️  Superuser 'admin' já existe")
-END
+    print("ℹ️  Superuser já existe")
+PY
+
 fi
 
-# Coletar arquivos estáticos
-echo "📦 Coletando arquivos estáticos..."
+
+# ============================================================================
+# Static files
+# ============================================================================
+
+log "📦 Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput --clear
 
-# Limpar cache
-echo "🧹 Limpando cache..."
-python << END
+
+# ============================================================================
+# Limpeza de cache
+# ============================================================================
+
+log "🧹 Limpando cache..."
+
+python <<'PY'
+import django
+django.setup()
+
 from django.core.cache import cache
+
 cache.clear()
 print("✅ Cache limpo!")
-END
+PY
+
 
 echo "=================================================="
-echo "✅ Inicialização concluída!"
+log "✅ Inicialização concluída!"
 echo "=================================================="
 
-# Executar comando passado
 exec "$@"

@@ -15,12 +15,21 @@ export default function RequisicoesPage () {
 
     const [paciente, setPaciente] = useState( "" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
-    const [observacoes, setObservacoes] = useState( "" );
 
     async function carregar () {
-        setRequisicoes( await apiFetch( "/requisicoes/" ) );
-        setPacientes( await apiFetch( "/pacientes/" ) );
-        setExames( await apiFetch( "/exames/" ) );
+        const [reqs, pacs, exs] = await Promise.all( [
+            apiFetch<any>( "/requisicoes/" ),
+            apiFetch<any>( "/pacientes/" ),
+            apiFetch<any>( "/exames/" ),
+        ] );
+
+        const reqData = reqs && (reqs as any).results ? (reqs as any).results : (reqs as any);
+        const pacData = pacs && (pacs as any).results ? (pacs as any).results : (pacs as any);
+        const exData = exs && (exs as any).results ? (exs as any).results : (exs as any);
+
+        setRequisicoes( Array.isArray( reqData ) ? reqData : [] );
+        setPacientes( Array.isArray( pacData ) ? pacData : [] );
+        setExames( Array.isArray( exData ) ? exData : [] );
     }
 
     useEffect( () => {
@@ -28,12 +37,19 @@ export default function RequisicoesPage () {
     }, [] );
 
     async function criar () {
+        if ( !paciente ) {
+            alert( "Selecione um paciente." );
+            return;
+        }
+        if ( selecionados.length === 0 ) {
+            alert( "Selecione pelo menos um exame." );
+            return;
+        }
         const nova = await apiFetch<Requisicao>( "/requisicoes/", {
             method: "POST",
             body: JSON.stringify( {
-                paciente,
+                paciente: Number( paciente ),
                 exames: selecionados,
-                observacoes,
             } ),
         } );
 
@@ -78,12 +94,6 @@ export default function RequisicoesPage () {
                     </label>
                 ) )}
 
-                <textarea
-                    placeholder="Observações"
-                    value={observacoes}
-                    onChange={e => setObservacoes( e.target.value )}
-                />
-
                 <button onClick={criar}>Criar</button>
             </div>
 
@@ -102,8 +112,8 @@ export default function RequisicoesPage () {
                             <td>
                                 <Link href={`/requisicoes/${r.id}`}>{r.id_custom}</Link>
                             </td>
-                            <td>{r.paciente_nome}</td>
-                            <td>{r.status}</td>
+                            <td>{pacientes.find( p => p.id === r.paciente )?.nome || "-"}</td>
+                            <td>{r.estado}</td>
                         </tr>
                     ) )}
                 </tbody>
