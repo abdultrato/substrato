@@ -11,6 +11,8 @@ import { apiFetch } from "@/lib/api"
 
 type Row = Record<string, any>
 
+type RowHref = (row: Row) => string
+
 function pickLabel(row: Row): string {
   const candidates = [
     "nome",
@@ -41,10 +43,14 @@ export default function ResourceListPage({
   title,
   endpoint,
   adminListHref,
+  createHref,
+  rowHref,
 }: {
   title: string
   endpoint: string
   adminListHref?: string
+  createHref?: string
+  rowHref?: RowHref
 }) {
   const { loading } = useAuthGuard()
   const [data, setData] = useState<Row[]>([])
@@ -76,7 +82,18 @@ export default function ResourceListPage({
     () => [
       {
         header: "Código",
-        render: (row: Row) => row.id_custom || row.id || "-",
+        render: (row: Row) => {
+          const label = row.id_custom || row.id || "-"
+          if (!rowHref) return label
+          return (
+            <Link
+              href={rowHref(row)}
+              className="font-medium text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-500"
+            >
+              {label}
+            </Link>
+          )
+        },
       },
       {
         header: "Nome",
@@ -104,14 +121,25 @@ export default function ResourceListPage({
           title={title}
           subtitle={endpoint}
           actions={
-            adminListHref ? (
-              <Link
-                href={adminListHref}
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Abrir no admin
-              </Link>
-            ) : null
+            <>
+              {createHref ? (
+                <Link
+                  href={createHref}
+                  className="inline-flex items-center rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                >
+                  Novo
+                </Link>
+              ) : null}
+
+              {adminListHref ? (
+                <Link
+                  href={adminListHref}
+                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  Abrir no admin
+                </Link>
+              ) : null}
+            </>
           }
         />
 
@@ -134,4 +162,3 @@ export default function ResourceListPage({
     </AppLayout>
   )
 }
-

@@ -2,6 +2,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from aplicativos.enfermagem.modelos import (
+    EvolucaoEnfermagem,
+    PrescricaoEnfermagem,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
     Procedimento,
@@ -13,6 +15,8 @@ from aplicativos.enfermagem.modelos import (
     SinalVitalEnfermagem,
 )
 from .filters import (
+    EvolucaoEnfermagemFilter,
+    PrescricaoEnfermagemFilter,
     ProcedimentoCatalogoFilter,
     ProcedimentoCatalogoMaterialFilter,
     ProcedimentoFilter,
@@ -24,6 +28,8 @@ from .filters import (
     SinalVitalEnfermagemFilter,
 )
 from .serializers import (
+    EvolucaoEnfermagemSerializer,
+    PrescricaoEnfermagemSerializer,
     ProcedimentoCatalogoMaterialSerializer,
     ProcedimentoCatalogoSerializer,
     ProcedimentoItemSerializer,
@@ -326,7 +332,71 @@ class SinalVitalEnfermagemViewSet(ModelViewSet):
         return queryset
 
 
+class PrescricaoEnfermagemViewSet(ModelViewSet):
+    queryset = PrescricaoEnfermagem.objects.all()
+    serializer_class = PrescricaoEnfermagemSerializer
+    filterset_class = PrescricaoEnfermagemFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "nome",
+        "paciente__nome",
+        "descricao",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "nome",
+        "paciente",
+        "ativo",
+        "data_prescricao",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["-data_prescricao", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class EvolucaoEnfermagemViewSet(ModelViewSet):
+    queryset = EvolucaoEnfermagem.objects.all()
+    serializer_class = EvolucaoEnfermagemSerializer
+    filterset_class = EvolucaoEnfermagemFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "nome",
+        "paciente__nome",
+        "observacao",
+    ]
+    ordering_fields = [
+        "inquilino",
+        "id_custom",
+        "nome",
+        "paciente",
+        "data_evolucao",
+        "criado_em",
+        "atualizado_em",
+        "deletado",
+    ]
+    ordering = ["-data_evolucao", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
 VIEWSET_MAP = {
+    "evolucaoenfermagem": EvolucaoEnfermagemViewSet,
     "procedimentocatalogo": ProcedimentoCatalogoViewSet,
     "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialViewSet,
     "procedimento": ProcedimentoViewSet,
@@ -334,12 +404,15 @@ VIEWSET_MAP = {
     "procedimentoitemvalor": ProcedimentoItemValorViewSet,
     "procedimentomaterial": ProcedimentoMaterialViewSet,
     "procedimentomaterialvalor": ProcedimentoMaterialValorViewSet,
+    "prescricaoenfermagem": PrescricaoEnfermagemViewSet,
     "registroenfermagem": RegistroEnfermagemViewSet,
     "sinalvitalenfermagem": SinalVitalEnfermagemViewSet,
 }
 
 
 __all__ = [
+    "EvolucaoEnfermagemViewSet",
+    "PrescricaoEnfermagemViewSet",
     "ProcedimentoCatalogoViewSet",
     "ProcedimentoCatalogoMaterialViewSet",
     "ProcedimentoViewSet",

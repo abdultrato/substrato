@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from aplicativos.enfermagem.modelos import (
+    EvolucaoEnfermagem,
+    PrescricaoEnfermagem,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
     Procedimento,
@@ -81,7 +83,20 @@ class SinalVitalEnfermagemSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class PrescricaoEnfermagemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrescricaoEnfermagem
+        fields = "__all__"
+
+
+class EvolucaoEnfermagemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvolucaoEnfermagem
+        fields = "__all__"
+
+
 SERIALIZER_MAP = {
+    "evolucaoenfermagem": EvolucaoEnfermagemSerializer,
     "procedimentocatalogo": ProcedimentoCatalogoSerializer,
     "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialSerializer,
     "procedimento": ProcedimentoSerializer,
@@ -89,6 +104,7 @@ SERIALIZER_MAP = {
     "procedimentoitemvalor": ProcedimentoItemValorSerializer,
     "procedimentomaterial": ProcedimentoMaterialSerializer,
     "procedimentomaterialvalor": ProcedimentoMaterialValorSerializer,
+    "prescricaoenfermagem": PrescricaoEnfermagemSerializer,
     "registroenfermagem": RegistroEnfermagemSerializer,
     "sinalvitalenfermagem": SinalVitalEnfermagemSerializer,
 }

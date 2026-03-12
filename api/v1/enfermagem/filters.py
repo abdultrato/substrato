@@ -1,6 +1,8 @@
 from api.core.filters import SafeFilterSet
 
 from aplicativos.enfermagem.modelos import (
+    EvolucaoEnfermagem,
+    PrescricaoEnfermagem,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
     Procedimento,
@@ -156,7 +158,39 @@ class SinalVitalEnfermagemFilter(SafeFilterSet):
         ]
 
 
+class PrescricaoEnfermagemFilter(SafeFilterSet):
+    class Meta:
+        model = PrescricaoEnfermagem
+        fields = [
+            "inquilino",
+            "id_custom",
+            "nome",
+            "paciente",
+            "ativo",
+            "data_prescricao",
+            "criado_em",
+            "atualizado_em",
+            "deletado",
+        ]
+
+
+class EvolucaoEnfermagemFilter(SafeFilterSet):
+    class Meta:
+        model = EvolucaoEnfermagem
+        fields = [
+            "inquilino",
+            "id_custom",
+            "nome",
+            "paciente",
+            "data_evolucao",
+            "criado_em",
+            "atualizado_em",
+            "deletado",
+        ]
+
+
 FILTER_MAP = {
+    "evolucaoenfermagem": EvolucaoEnfermagemFilter,
     "procedimentocatalogo": ProcedimentoCatalogoFilter,
     "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialFilter,
     "procedimento": ProcedimentoFilter,
@@ -164,6 +198,7 @@ FILTER_MAP = {
     "procedimentoitemvalor": ProcedimentoItemValorFilter,
     "procedimentomaterial": ProcedimentoMaterialFilter,
     "procedimentomaterialvalor": ProcedimentoMaterialValorFilter,
+    "prescricaoenfermagem": PrescricaoEnfermagemFilter,
     "registroenfermagem": RegistroEnfermagemFilter,
     "sinalvitalenfermagem": SinalVitalEnfermagemFilter,
 }

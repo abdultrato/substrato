@@ -2,11 +2,26 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { EstadoCfbEnum } from './EstadoCfbEnum';
+import type { StatusClinicoEnum } from './StatusClinicoEnum';
+/**
+ * Serializer para requisições de análise laboratorial.
+ * Agrupa múltiplos exames para um paciente.
+ */
 export type RequisicaoAnalise = {
-    readonly id: number;
+    readonly id?: number;
+    readonly id_custom?: string | null;
+    readonly inquilino?: number;
+    /**
+     * Paciente para o qual a análise foi requisitada
+     */
     paciente: number;
-    data_requisicao: string;
-    status: 'pendente' | 'processada' | 'completa' | 'cancelada';
+    exames?: Array<number>;
+    analista?: number | null;
+    estado?: EstadoCfbEnum;
+    status_clinico?: StatusClinicoEnum;
+    readonly possui_resultado_critico?: boolean;
     readonly criado_em?: string;
+    readonly atualizado_em?: string;
 };
 
