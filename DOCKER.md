@@ -10,7 +10,7 @@
 
 ```bash
 docker --version
-docker-compose --version
+docker compose version
 ```
 
 ---
@@ -32,20 +32,19 @@ cp .env.docker .env
 ### 3️⃣ Build e iniciar containers
 
 ```bash
-# Build das imagens (primeira vez)
-docker-compose build
-
-# Iniciar todos os serviços
-docker-compose up -d
+# Iniciar todos os serviços (com build)
+docker compose up --build -d
+# ou (ver logs no terminal):
+docker compose up --build
 
 # Ver logs em tempo real
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### 4️⃣ Verificar status
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Você deve ver todos os serviços com status `Up`:
@@ -77,64 +76,64 @@ substrato_nginx       Up
 ### Parar containers
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Parar e remover volumes (⚠️ Remove dados!)
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Ver logs de um serviço específico
 
 ```bash
 # Backend
-docker-compose logs -f backend
+docker compose logs -f backend
 
 # Frontend
-docker-compose logs -f frontend
+docker compose logs -f frontend
 
 # Celery
-docker-compose logs -f celery
+docker compose logs -f celery
 
 # Banco de dados
-docker-compose logs -f db
+docker compose logs -f db
 ```
 
 ### Executar comando dentro do container
 
 ```bash
 # Django management
-docker-compose exec backend python manage.py createsuperuser
-docker-compose exec backend python manage.py shell
-docker-compose exec backend python manage.py migrate
+docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py shell
+docker compose exec backend python manage.py migrate
 
 # PostgreSQL
-docker-compose exec db psql -U substrato_user -d substrato_db
+docker compose exec db psql -U substrato_user -d substrato
 
 # Redis CLI
-docker-compose exec redis redis-cli
+docker compose exec redis redis-cli
 
 # Node (Frontend)
-docker-compose exec frontend npm list
+docker compose exec frontend npm list
 ```
 
 ### Rebuild de um serviço específico
 
 ```bash
-docker-compose build backend
-docker-compose up -d backend
+docker compose build backend
+docker compose up -d backend
 ```
 
 ### Limpar tudo (⚠️ Cuidado!)
 
 ```bash
 # Remove containers, networks, volumes
-docker-compose down -v
+docker compose down -v
 
 # Remove imagens também
-docker-compose down -v --rmi all
+docker compose down -v --rmi all
 ```
 
 ---
@@ -150,7 +149,7 @@ DJANGO_SECRET_KEY=dev-...      # Mudar em produção
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 
 # Database
-POSTGRES_DB=substrato_db
+POSTGRES_DB=substrato
 POSTGRES_USER=substrato_user
 POSTGRES_PASSWORD=dev_password # Mudar em produção!
 
@@ -166,8 +165,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 Edite `.env` e reinicie:
 
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up --build -d
 ```
 
 ---
@@ -177,31 +176,31 @@ docker-compose up -d
 ### Executar migrations
 
 ```bash
-docker-compose exec backend python manage.py migrate
+docker compose exec backend python manage.py migrate
 ```
 
 ### Criar novo usuário
 
 ```bash
-docker-compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py createsuperuser
 ```
 
 ### Backup do banco
 
 ```bash
-docker-compose exec db pg_dump -U substrato_user substrato_db > backup.sql
+docker compose exec db pg_dump -U substrato_user substrato > backup.sql
 ```
 
 ### Restaurar banco
 
 ```bash
-docker-compose exec -T db psql -U substrato_user substrato_db < backup.sql
+docker compose exec -T db psql -U substrato_user substrato < backup.sql
 ```
 
 ### Acessar psql
 
 ```bash
-docker-compose exec db psql -U substrato_user -d substrato_db
+docker compose exec db psql -U substrato_user -d substrato
 ```
 
 ---
@@ -211,19 +210,19 @@ docker-compose exec db psql -U substrato_user -d substrato_db
 ### Ver tarefas ativas
 
 ```bash
-docker-compose exec backend python -m celery -A plataforma inspect active
+docker compose exec backend python -m celery -A plataforma inspect active
 ```
 
 ### Ver workers
 
 ```bash
-docker-compose exec backend python -m celery -A plataforma inspect stats
+docker compose exec backend python -m celery -A plataforma inspect stats
 ```
 
 ### Limpar fila
 
 ```bash
-docker-compose exec backend python -m celery -A plataforma purge
+docker compose exec backend python -m celery -A plataforma purge
 ```
 
 ---
@@ -235,13 +234,13 @@ docker-compose exec backend python -m celery -A plataforma purge
 Todos os serviços possuem healthchecks. Verificar status:
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 Se um serviço não ficar `healthy`, ver logs:
 
 ```bash
-docker-compose logs <service_name>
+docker compose logs <service_name>
 ```
 
 ### Métricas
@@ -249,7 +248,7 @@ docker-compose logs <service_name>
 Backend expõe métricas em:
 
 ```
-http://localhost:8000/metricas
+http://localhost:8000/metrics
 ```
 
 ---
@@ -272,22 +271,22 @@ kill -9 <PID>
 
 ```bash
 # Ver logs detalhados
-docker-compose logs backend
+docker compose logs backend
 
 # Rebuild
-docker-compose build --no-cache backend
-docker-compose up -d backend
+docker compose build --no-cache backend
+docker compose up -d backend
 ```
 
 ### Banco de dados recusa conexão
 
 ```bash
 # Aguardar healthcheck
-docker-compose logs db
+docker compose logs db
 
 # Resetar banco
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up --build -d
 ```
 
 ### Frontend não carrega
@@ -297,14 +296,14 @@ docker-compose up -d
 curl http://localhost:8000/health/live
 
 # Ver logs frontend
-docker-compose logs frontend
+docker compose logs frontend
 ```
 
 ### Permissão negada em scripts
 
 ```bash
 chmod +x entrypoint.sh
-docker-compose rebuild backend
+docker compose up --build -d backend
 ```
 
 ---
@@ -314,8 +313,8 @@ docker-compose rebuild backend
 ### Usar docker-compose.prod.yml
 
 ```bash
-docker-compose -f docker-compose.prod.yml build
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Configurar variáveis de produção
@@ -350,7 +349,7 @@ cp /etc/letsencrypt/live/seu-dominio.com/privkey.pem ssl/key.pem
 3. Iniciar containers
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Renovação automática de certificados
@@ -358,7 +357,7 @@ docker-compose -f docker-compose.prod.yml up -d
 Usar Certbot com webroot ou hook:
 
 ```bash
-certbot renew --deploy-hook "docker-compose -f docker-compose.prod.yml restart nginx"
+certbot renew --deploy-hook "docker compose -f docker-compose.prod.yml restart nginx"
 ```
 
 ---

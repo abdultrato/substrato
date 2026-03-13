@@ -8,6 +8,8 @@ from nucleo.modelos.base import CoreModel
 
 class Conta(CoreModel, ) :
 	prefixo = "CNT"
+	# Alias direto para facilitar acesso via Conta.Tipo.*
+	Tipo = TipoConta
 	
 	tipo = models.CharField(max_length = 3, choices = TipoConta.choices, default = TipoConta.DESPESA, db_index = True, )
 	

@@ -99,11 +99,11 @@ export default function PacientesPage() {
 // app/pacientes/page.tsx
 'use client'
 
-import { usePacientesTyped } from '@/hooks/usePacientesTyped'
+import {  } from '@/hooks/'
 
 export default function PacientesPage() {
   // ✅ Hook customizado com tipos gerados
-  const { pacientes, loading, error, criar, atualizar, deletar } = usePacientesTyped(
+  const { pacientes, loading, error, criar, atualizar, deletar } = (
     undefined,     // search
     '-criado_em',  // ordering
     20,            // limit

@@ -72,6 +72,12 @@ const NAV_ITEMS: NavItem[] = [
         groups: ["Administrador"],
     },
     {
+        href: "/recursos",
+        label: "Recursos API",
+        icon: Layers,
+        groups: ["Administrador"],
+    },
+    {
         href: "/admin",
         label: "Administração",
         icon: Shield,

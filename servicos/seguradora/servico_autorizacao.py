@@ -11,14 +11,16 @@ class ServicoAutorizacao:
         if not deve_solicitar_autorizacao(plano):
             return None
 
-        return AutorizacaoProcedimento.objects.create(
+        autorizacao = AutorizacaoProcedimento.objects.create(
             requisicao_id=requisicao_id,
             plano=plano,
         )
 
-publicar_evento(
-    AUTORIZACAO_SOLICITADA,
-    {
-        "autorizacao_id": autorizacao.id,
-    }
-)
+        publicar_evento(
+            AUTORIZACAO_SOLICITADA,
+            {
+                "autorizacao_id": autorizacao.id,
+            }
+        )
+
+        return autorizacao

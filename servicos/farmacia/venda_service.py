@@ -2,6 +2,7 @@
 
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from farmacia.models import ItemVenda
 from farmacia.services.estoque_service import EstoqueService

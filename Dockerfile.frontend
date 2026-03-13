@@ -8,6 +8,12 @@ FROM node:20-alpine as builder
 
 WORKDIR /app
 
+# Importante: `rewrites()` do Next.js é calculado no build. Se o backend ficar
+# como 127.0.0.1 aqui, o container do frontend não consegue falar com o backend
+# no docker network. Em compose, passamos BACKEND_URL=http://backend:8000.
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=$BACKEND_URL
+
 # Copiar package files
 COPY frontend-next/package.json frontend-next/package-lock.json* frontend-next/yarn.lock* ./
 
@@ -26,22 +32,23 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Mantém o valor disponível em runtime (útil para debug; rewrites é calculado no build).
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=$BACKEND_URL
+
 # Instalar dumb-init para gerenciamento de processos
 RUN apk add --no-cache dumb-init
-
-# Copiar apenas arquivos necessários do builder
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/next.config.* ./
 
 # Criar usuário não-root
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Mudar propriedade para o usuário nextjs
-RUN chown -R nextjs:nodejs /app
+# Copiar apenas arquivos necessários do builder já com owner correto
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.* ./
 
 USER nextjs
 
@@ -50,7 +57,7 @@ EXPOSE 3000
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+    CMD node -e "require('http').get('http://localhost:3000/', (r) => {if (r.statusCode >= 400) throw new Error(r.statusCode)})"
 
 # Usar dumb-init para iniciar a aplicação
 ENTRYPOINT ["dumb-init", "--"]

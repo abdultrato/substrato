@@ -40,6 +40,21 @@ class Movimento(CoreModel):
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
+    def __init__(self, *args, **kwargs):
+        valor = kwargs.pop("valor", None)
+        direcao = kwargs.get("debito", None)
+
+        if valor is not None and isinstance(direcao, bool):
+            valor_decimal = Decimal(valor)
+            if direcao:
+                kwargs["debito"] = valor_decimal
+                kwargs["credito"] = Decimal("0.00")
+            else:
+                kwargs["debito"] = Decimal("0.00")
+                kwargs["credito"] = valor_decimal
+
+        super().__init__(*args, **kwargs)
+
     class Meta:
         ordering = ["-criado_em"]
         indexes = [
@@ -55,4 +70,3 @@ class Movimento(CoreModel):
 
     def __str__(self) -> str:
         return f"{self.conta_id} D{self.debito} C{self.credito}"
-

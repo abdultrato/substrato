@@ -96,6 +96,27 @@ class ExameViewSet(ModelViewSet):
 
 
 @extend_schema(
+	description='Gerenciamento de exames médicos (imagem/diagnóstico)',
+	tags=['Clínico - Exames Médicos'],
+)
+class ExameMedicoViewSet(ModelViewSet):
+	queryset = ExameMedico.objects.all()
+	serializer_class = ExameMedicoSerializer
+	filterset_class = ExameMedicoFilter
+	permission_classes = [IsAuthenticated]
+	search_fields = ['id_custom', 'nome', 'descricao', 'metodo', 'setor']
+	ordering_fields = ['inquilino', 'id_custom', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'nome', 'descricao', 'trl_horas', 'preco', 'metodo', 'setor']
+	ordering = ['-criado_em']
+
+	def get_queryset(self):
+		queryset = super().get_queryset()
+		inquilino = getattr(self.request, "inquilino", None)
+		if inquilino is not None:
+			queryset = queryset.filter(inquilino=inquilino)
+		return queryset
+
+
+@extend_schema(
 	description='Gerenciamento de campos de exames',
 	tags=['Clínico - Campos de Exame'],
 )
@@ -108,6 +129,27 @@ class ExameCampoViewSet(ModelViewSet):
 	permission_classes = [IsAuthenticated]
 	search_fields = ['id_custom', 'nome', 'tipo', 'unidade', 'descricao']
 	ordering_fields = ['inquilino', 'id_custom', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'exame', 'tipo', 'unidade', 'descricao', 'valor_minimo', 'valor_maximo', 'critico_baixo', 'critico_alto', 'valores_normais', 'valores_alterados', 'valores_criticos', 'delta_check_ativo', 'detectar_tendencia', 'destacar_no_laudo']
+	ordering = ['-criado_em']
+
+	def get_queryset(self):
+		queryset = super().get_queryset()
+		inquilino = getattr(self.request, "inquilino", None)
+		if inquilino is not None:
+			queryset = queryset.filter(inquilino=inquilino)
+		return queryset
+
+
+@extend_schema(
+	description='Gerenciamento de campos de exames médicos',
+	tags=['Clínico - Campos de Exame Médico'],
+)
+class ExameMedicoCampoViewSet(ModelViewSet):
+	queryset = ExameMedicoCampo.objects.all()
+	serializer_class = ExameMedicoCampoSerializer
+	filterset_class = ExameMedicoCampoFilter
+	permission_classes = [IsAuthenticated]
+	search_fields = ['id_custom', 'nome', 'tipo', 'unidade', 'descricao']
+	ordering_fields = ['inquilino', 'id_custom', 'nome', 'ordem', 'ativo', 'deletado', 'deletado_em', 'criado_em', 'atualizado_em', 'criado_por', 'atualizado_por', 'exame', 'tipo', 'unidade', 'descricao']
 	ordering = ['-criado_em']
 
 	def get_queryset(self):
@@ -264,7 +306,9 @@ class ResultadoItemViewSet(ModelViewSet):
 
 VIEWSET_MAP = {
 	'exame': ExameViewSet,
+	'examemedico': ExameMedicoViewSet,
 	'examecampo': ExameCampoViewSet,
+	'examemedicocampo': ExameMedicoCampoViewSet,
 	'paciente': PacienteViewSet,
 	'requisicaoanalise': RequisicaoAnaliseViewSet,
 	'requisicaoitem': RequisicaoItemViewSet,
@@ -273,7 +317,9 @@ VIEWSET_MAP = {
 
 __all__ = [
 	'ExameViewSet',
+	'ExameMedicoViewSet',
 	'ExameCampoViewSet',
+	'ExameMedicoCampoViewSet',
 	'PacienteViewSet',
 	'RequisicaoAnaliseViewSet',
 	'RequisicaoItemViewSet',

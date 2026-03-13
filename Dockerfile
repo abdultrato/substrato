@@ -54,7 +54,8 @@ RUN useradd -m -u 1000 appuser
 # copiar código já com owner correto
 COPY --chown=appuser:appuser . .
 
-RUN mkdir -p /app/staticfiles /app/media
+RUN mkdir -p /app/staticfiles /app/media \
+    && chown -R appuser:appuser /app/staticfiles /app/media
 
 RUN chmod +x /app/entrypoint.sh
 

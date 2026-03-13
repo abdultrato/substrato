@@ -7,7 +7,7 @@ from aplicativos.clinico.modelos.resultado_analise import RequisicaoAnalise
 
 
 class GlobalSearchView(APIView):
-    permission_classes = [aut]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         q = request.query_params.get("q", "").strip()
@@ -21,13 +21,15 @@ class GlobalSearchView(APIView):
             )
 
         pacientes = list(
-            p.objects.filter(Q(nome__icontains=q) | Q(numero_id__icontains=q) | Q(id_custom__icontains=q)).values(
+            Paciente.objects.filter(
+                Q(nome__icontains=q) | Q(numero_id__icontains=q) | Q(id_custom__icontains=q)
+            ).values(
                 "id", "id_custom", "nome"
             )[:10]
         )
 
         requisicoes = list(
-            ra.objects.filter(Q(id_custom__icontains=q) | Q(paciente__nome__icontains=q))
+            RequisicaoAnalise.objects.filter(Q(id_custom__icontains=q) | Q(paciente__nome__icontains=q))
             .select_related("paciente")
             .values("id", "id_custom", "paciente__nome")[:10]
         )

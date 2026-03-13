@@ -113,18 +113,31 @@ import django
 django.setup()
 
 from django.contrib.auth import get_user_model
+from aplicativos.inquilinos.modelos.inquilino import Inquilino
 
 User = get_user_model()
+
+tenant, _ = Inquilino.objects.get_or_create(
+    identificador="default",
+    defaults={"nome": "Tenant Default"},
+)
 
 if not User.objects.filter(username="admin").exists():
     User.objects.create_superuser(
         "admin",
         "admin@exemplo.com",
-        "admin123"
+        "admin123",
+        inquilino=tenant,
     )
     print("✅ Superuser 'admin' criado")
 else:
-    print("ℹ️  Superuser já existe")
+    user = User.objects.get(username="admin")
+    if not getattr(user, "inquilino_id", None):
+        user.inquilino = tenant
+        user.save(update_fields=["inquilino"])
+        print("ℹ️  Superuser existente associado ao tenant padrão")
+    else:
+        print("ℹ️  Superuser já existe")
 PY
 
 fi
@@ -135,7 +148,21 @@ fi
 # ============================================================================
 
 log "📦 Coletando arquivos estáticos..."
-python manage.py collectstatic --noinput --clear
+if python - <<'PY'
+import os
+from pathlib import Path
+root = Path(os.getenv("STATIC_ROOT", "/app/staticfiles"))
+root.mkdir(parents=True, exist_ok=True)
+can_write = os.access(root, os.W_OK)
+print(f"STATIC_ROOT={root} | write={can_write}")
+if not can_write:
+    raise SystemExit(1)
+PY
+then
+  python manage.py collectstatic --noinput --clear || echo "[substrato] ⚠️  collectstatic falhou, prosseguindo (ambiente dev)."
+else
+  echo "[substrato] ⚠️  STATIC_ROOT sem permissão de escrita, pulando collectstatic."
+fi
 
 
 # ============================================================================

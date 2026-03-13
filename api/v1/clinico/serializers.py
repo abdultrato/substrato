@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.clinico.modelos.exame_campo import ExameCampo
+from aplicativos.clinico.modelos.exames_medicos import ExameMedico, ExameMedicoCampo
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
@@ -217,6 +218,21 @@ class ExameSerializer(serializers.ModelSerializer):
 		return value
 
 
+class ExameMedicoSerializer(serializers.ModelSerializer):
+	"""Serializer para Exame Médico (imagem/diagnóstico)."""
+	class Meta:
+		model = ExameMedico
+		fields = [
+			'id', 'id_custom',
+			'nome',
+			'trl_horas',
+			'preco',
+			'metodo', 'setor',
+			'criado_em', 'atualizado_em',
+		]
+		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
+
+
 class ExameCampoSerializer(serializers.ModelSerializer):
 	"""
 	Serializer para campos de exame.
@@ -236,6 +252,13 @@ class ExameCampoSerializer(serializers.ModelSerializer):
 				'help_text': 'Unidade de medida do parâmetro (ex: mg/dL, g/L)',
 			},
 		}
+
+
+class ExameMedicoCampoSerializer(serializers.ModelSerializer):
+	"""Serializer para parâmetros de exame médico."""
+	class Meta:
+		model = ExameMedicoCampo
+		fields = '__all__'
 
 
 class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
@@ -359,7 +382,9 @@ class ResultadoItemSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
 	'exame': ExameSerializer,
+	'examemedico': ExameMedicoSerializer,
 	'examecampo': ExameCampoSerializer,
+	'examemedicocampo': ExameMedicoCampoSerializer,
 	'paciente': PacienteSerializer,
 	'requisicaoanalise': RequisicaoAnaliseSerializer,
 	'requisicaoitem': RequisicaoItemSerializer,

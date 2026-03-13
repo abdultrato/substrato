@@ -2,14 +2,17 @@
 # MAKEFILE - Docker Commands
 # ============================================================================
 
-.PHONY: help build up down logs shell migrate createsuperuser clean test lint
+COMPOSE ?= docker compose
+
+.PHONY: help build up up-build down logs shell migrate createsuperuser clean test lint
 
 help:
 	@echo "🐳 Substrato - Docker Commands"
 	@echo ""
 	@echo "Gerenciamento:"
 	@echo "  make build              - Build das imagens Docker"
-	@echo "  make up                 - Iniciar containers"
+	@echo "  make up                 - Iniciar containers (com build)"
+	@echo "  make up-build           - Iniciar em foreground (com build)"
 	@echo "  make down               - Parar containers"
 	@echo "  make logs               - Ver logs em tempo real"
 	@echo "  make clean              - Remover volumes e dados"
@@ -39,62 +42,65 @@ help:
 	@echo ""
 
 build:
-	docker-compose build
+	$(COMPOSE) build
 
 up:
-	docker-compose up -d
+	$(COMPOSE) up --build -d
 	@echo "✅ Containers iniciados!"
 	@echo "Backend:  http://localhost:8000"
 	@echo "Frontend: http://localhost:3000"
 
+up-build:
+	$(COMPOSE) up --build
+
 down:
-	docker-compose down
+	$(COMPOSE) down
 
 restart:
-	docker-compose restart
+	$(COMPOSE) restart
 
 logs:
-	docker-compose logs -f
+	$(COMPOSE) logs -f
 
 logs-backend:
-	docker-compose logs -f backend
+	$(COMPOSE) logs -f backend
 
 logs-frontend:
-	docker-compose logs -f frontend
+	$(COMPOSE) logs -f frontend
 
 logs-db:
-	docker-compose logs -f db
+	$(COMPOSE) logs -f db
 
 logs-redis:
-	docker-compose logs -f redis
+	$(COMPOSE) logs -f redis
 
 logs-celery:
-	docker-compose logs -f celery
+	$(COMPOSE) logs -f celery
 
 migrate:
-	docker-compose exec backend python manage.py migrate
+	$(COMPOSE) exec backend python manage.py migrate
 
 makemigrations:
-	docker-compose exec backend python manage.py makemigrations
+	$(COMPOSE) exec backend python manage.py makemigrations
 
 createsuperuser:
-	docker-compose exec backend python manage.py createsuperuser
+	$(COMPOSE) exec backend python manage.py createsuperuser
 
 shell:
-	docker-compose exec backend python manage.py shell
+	$(COMPOSE) exec backend python manage.py shell
 
 static:
-	docker-compose exec backend python manage.py collectstatic --noinput
+	$(COMPOSE) exec backend python manage.py collectstatic --noinput
 
 dbshell:
-	docker-compose exec db psql -U substrato_user -d substrato_db
+	$(COMPOSE) exec db psql -U substrato_user -d substrato
 
 dbreset:
 	@echo "⚠️  Isso vai RESETAR o banco de dados!"
 	@read -p "Digite 'sim' para confirmar: " confirm; \
 	if [ "$$confirm" = "sim" ]; then \
-		docker-compose exec db dropdb -U substrato_user substrato_db; \
-		docker-compose exec db createdb -U substrato_user substrato_db; \
+		$(COMPOSE) exec db dropdb -U substrato_user --if-exists --maintenance-db=postgres substrato; \
+		$(COMPOSE) exec db createdb -U substrato_user --maintenance-db=postgres substrato; \
 		make migrate; \
 		echo "✅ Banco resetado!"; \
 	else \
@@ -102,67 +108,82 @@ dbreset:
 	fi
 
 npm-install:
-	docker-compose exec frontend npm install
+	$(COMPOSE) exec frontend npm install
 
 npm-build:
-	docker-compose exec frontend npm run build
+	$(COMPOSE) exec frontend npm run build
+
+schema:
+	python manage.py spectacular --file frontend-next/schema.json
+	python scripts/convert_schema_json.py
+
+types:
+	cd frontend-next && npm run generate:api
+
+schema-types: schema types
+
+coverage-backend:
+	pytest --cov=. --cov-report=term-missing
+
+coverage-frontend:
+	cd frontend-next && npm test -- --coverage
 
 test:
-	docker-compose exec backend python manage.py test
+	$(COMPOSE) exec backend python manage.py test
 
 lint:
-	docker-compose exec backend ruff check .
+	$(COMPOSE) exec backend ruff check .
 
 format:
-	docker-compose exec backend ruff format .
+	$(COMPOSE) exec backend ruff format .
 
 clean:
-	docker-compose down -v
+	$(COMPOSE) down -v
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	@echo "✅ Tudo limpo!"
 
 ps:
-	docker-compose ps
+	$(COMPOSE) ps
 
 stats:
 	docker stats
 
 celery-inspect:
-	docker-compose exec backend python -m celery -A plataforma inspect active
+	$(COMPOSE) exec backend python -m celery -A plataforma inspect active
 
 celery-purge:
-	docker-compose exec backend python -m celery -A plataforma purge
+	$(COMPOSE) exec backend python -m celery -A plataforma purge
 
 redis-cli:
-	docker-compose exec redis redis-cli
+	$(COMPOSE) exec redis redis-cli
 
 backup:
 	@mkdir -p backups
-	docker-compose exec db pg_dump -U substrato_user substrato_db > backups/db_`date +%Y%m%d_%H%M%S`.sql
+	$(COMPOSE) exec -T db pg_dump -U substrato_user substrato > backups/db_`date +%Y%m%d_%H%M%S`.sql
 	@echo "✅ Backup realizado!"
 
 restore:
 	@read -p "Arquivo para restaurar: " file; \
-	docker-compose exec -T db psql -U substrato_user substrato_db < $$file; \
+	$(COMPOSE) exec -T db psql -U substrato_user substrato < $$file; \
 	echo "✅ Restaurado!"
 
 bash-backend:
-	docker-compose exec backend bash
+	$(COMPOSE) exec backend bash
 
 bash-frontend:
-	docker-compose exec frontend sh
+	$(COMPOSE) exec frontend sh
 
 bash-db:
-	docker-compose exec db bash
+	$(COMPOSE) exec db bash
 
 prod-up:
-	docker-compose -f docker-compose.prod.yml up -d
+	$(COMPOSE) -f docker-compose.prod.yml up -d
 
 prod-down:
-	docker-compose -f docker-compose.prod.yml down
+	$(COMPOSE) -f docker-compose.prod.yml down
 
 prod-logs:
-	docker-compose -f docker-compose.prod.yml logs -f
+	$(COMPOSE) -f docker-compose.prod.yml logs -f
 
 .DEFAULT_GOAL := help

@@ -56,27 +56,39 @@ fi
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
 
-# Build
-log "✓ Building imagens..."
-$COMPOSE build
-
 # Start
-log "✓ Iniciando serviços..."
-$COMPOSE up -d
+log "✓ Iniciando serviços (com build)..."
+$COMPOSE up --build -d
 
 # Esperar containers ficarem healthy
 log "✓ Aguardando containers..."
 
-for service in backend db redis; do
+for service in db redis backend frontend; do
   echo -n "   → $service "
-  for i in {1..30}; do
-    status=$($COMPOSE ps --format json | jq -r ".[] | select(.Service==\"$service\") | .Health")
-    if [[ "$status" == "healthy" ]]; then
-      ok "✓"
+  ready=false
+  status="unknown"
+  for i in {1..90}; do
+    cid=$($COMPOSE ps -q "$service" 2>/dev/null || true)
+    if [[ -z "${cid:-}" ]]; then
+      status="missing"
+      break
+    fi
+
+    status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid" 2>/dev/null || echo "unknown")
+    if [[ "$status" == "healthy" || "$status" == "running" ]]; then
+      ready=true
       break
     fi
     sleep 1
   done
+
+  if [[ "$ready" == "true" ]]; then
+    ok "✓ ($status)"
+  elif [[ "$status" == "missing" ]]; then
+    err "✗ (container não encontrado)"
+  else
+    err "✗ (timeout: $status)"
+  fi
 done
 
 # Status

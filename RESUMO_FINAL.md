@@ -34,7 +34,7 @@ frontend-next/
 │   │   ├── api-client.ts          ← Generic client (FASE 4)
 │   │   ├── query-builder.ts       ← Query builders (FASE 4)
 │   │   ├── typed-client.ts        ← Services (FASE 4)
-│   │   └── validated-client.ts    ← Old pattern (backward compat)
+│   │   └── .ts    ← Old pattern (backward compat)
 │   ├── errors/
 │   │   ├── api-error.ts           ← RFC 7807 types (FASE 3)
 │   │   └── retry.ts               ← Retry logic (FASE 3)
@@ -77,13 +77,13 @@ api/
 - openapi-typescript-codegen v0.30.0
 - 15 TypeScript files generated (models, services, core)
 - OpenAPI 3.0.3 schema
-- Hook usePacientesTyped
+- Hook 
 - 2 documentation guides
 
 ### FASE 2: Runtime Validation with Zod
 - Zod v4.3.6
 - 5 schemas (Paciente, Exame, RequisicaoAnalise, Token, Error)
-- ValidatedPacientesService wrapper
+-  wrapper
 - 18 test cases
 - Comprehensive validation documentation
 

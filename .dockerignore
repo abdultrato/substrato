@@ -48,6 +48,8 @@ ENV/
 # ==========================================================
 node_modules/
 .next/
+frontend-next/node_modules/
+frontend-next/.next/
 .npm
 npm-debug.log
 yarn-error.log

@@ -32,10 +32,10 @@ frontend-next/
 │   └── schemas.ts                 # ← NOVO: Schemas Zod para todos tipos
 │
 ├── lib/api/
-│   └── validated-client.ts        # ← NOVO: API client com validação integrada
+│   └── .ts        # ← NOVO: API client com validação integrada
 │
 ├── hooks/
-│   └── usePacientesTyped.ts       # ← ATUALIZADO: Usa validated-client
+│   └── .ts       # ← ATUALIZADO: Usa 
 │
 └── __tests__/
     └── validators.test.ts         # ← NOVO: Testes de validação
@@ -108,22 +108,22 @@ const token = TokenResponseSchema.safeParse({
 
 ## 🔧 API Client Validado
 
-### ValidatedPacientesService
+### 
 
 Wrapper que valida automaticamente respostas da API:
 
 ```typescript
-import { ValidatedPacientesService } from '@/lib/api/validated-client'
+import {  } from '@/lib/api/'
 
 // ✅ Lista com validação automática
-const response = await ValidatedPacientesService.list(
+const response = await .list(
   'João',      // search
   '-criado_em' // ordering
 )
 // response.results já é Paciente[] validado!
 
 // ✅ Criar com validação
-const result = await ValidatedPacientesService.create({
+const result = await .create({
   nome: 'Maria',
   email: 'maria@example.com',
 })
@@ -137,22 +137,22 @@ if (result.success) {
 }
 
 // ✅ Atualizar
-const updateResult = await ValidatedPacientesService.update(1, {
+const updateResult = await .update(1, {
   email: 'novo@example.com',
 })
 
 // ✅ Deletar
-await ValidatedPacientesService.delete(1)
+await .delete(1)
 ```
 
 ---
 
 ## 🎣 Hook com Validação Integrada
 
-### usePacientesTyped (Agora com Validação!)
+###  (Agora com Validação!)
 
 ```typescript
-import { usePacientesTyped } from '@/hooks/usePacientesTyped'
+import {  } from '@/hooks/'
 
 export function PacientesPage() {
   const {
@@ -164,7 +164,7 @@ export function PacientesPage() {
     atualizar,
     deletar,
     refetch,
-  } = usePacientesTyped()
+  } = ()
 
   // Usar validationErrors em formulário
   const handleCreate = async (formData: any) => {
@@ -295,12 +295,12 @@ Usuário entra dados
         ↓
 ComponenteForm
         ↓
-await criar(formData) ← Hook usePacientesTyped
+await criar(formData) ← Hook 
         ↓
 Validação Zod (runtime) ← ✅ FASE 2
         ↓
 Se válido:
-    ↓ ValidatedPacientesService.create()
+    ↓ .create()
     ↓ PacientesService.clinicoPacientesCreate() (API client)
     ↓ Resposta do Backend
     ↓ Validação Zod novamente! ← ✅ Double-check
@@ -345,8 +345,8 @@ Se inválido:
 
 ### Criados
 - ✨ `lib/validators/schemas.ts` (277 linhas)
-- ✨ `lib/api/validated-client.ts` (243 linhas)
-- ✨ `hooks/usePacientesTyped.ts` (182 linhas) - Atualizado
+- ✨ `lib/api/.ts` (243 linhas)
+- ✨ `hooks/.ts` (182 linhas) - Atualizado
 - ✨ `__tests__/validators.test.ts` (290 linhas)
 
 ### Modificados

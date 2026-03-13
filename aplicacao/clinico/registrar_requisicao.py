@@ -1,9 +1,13 @@
-from aplicacao.seguradora.solicitar_autorizacao import (
-    SolicitarAutorizacaoUseCase
-)
+from aplicacao.seguradora.solicitar_autorizacao import SolicitarAutorizacaoUseCase
 
-if paciente.plano_cobertura:
-    SolicitarAutorizacaoUseCase.executar(
-        requisicao=requisicao,
-        plano=paciente.plano_cobertura,
-    )
+
+def registrar_requisicao(requisicao, paciente):
+    """
+    Dispara solicitação de autorização junto à seguradora quando o paciente possui cobertura.
+    """
+    plano = getattr(paciente, "plano_cobertura", None)
+    if plano:
+        SolicitarAutorizacaoUseCase.executar(
+            requisicao=requisicao,
+            plano=plano,
+        )

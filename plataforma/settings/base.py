@@ -64,6 +64,8 @@ DJANGO_APPS = [
 		]
 
 THIRD_PARTY_APPS = [
+		"django_prometheus",
+		"django_celery_beat",
 		"rest_framework",
 		"rest_framework_simplejwt",
 		"django_filters",
@@ -88,12 +90,29 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 # =========================================================
+# JAZZMIN (tema do Django Admin)
+# =========================================================
+#
+# Precisa vir ANTES de `django.contrib.admin` para sobrescrever templates/static.
+INSTALLED_APPS = ["jazzmin"] + INSTALLED_APPS
+
+JAZZMIN_SETTINGS = {
+		"site_title": "Substrato Admin",
+		"site_header": "Substrato",
+		"site_brand": "Substrato",
+		"welcome_sign": "Bem-vindo ao Substrato",
+		"copyright": "Substrato",
+		}
+
+# =========================================================
 # MIDDLEWARE
 # =========================================================
 
 MIDDLEWARE = [
+		"django_prometheus.middleware.PrometheusBeforeMiddleware",
 		
 		"django.middleware.security.SecurityMiddleware",
+		"whitenoise.middleware.WhiteNoiseMiddleware",
 		"corsheaders.middleware.CorsMiddleware",
 		
 		"django.contrib.sessions.middleware.SessionMiddleware",
@@ -118,6 +137,8 @@ MIDDLEWARE = [
 		
 		# logging
 		"infrastrutura.middleware.performance.APILoggingMiddleware",
+		
+		"django_prometheus.middleware.PrometheusAfterMiddleware",
 		]
 
 # =========================================================
@@ -154,7 +175,7 @@ else:
 	try:
 		DATABASES = {
 				"default": {
-						"ENGINE": "django.db.backends.postgresql",
+						"ENGINE": "django_prometheus.db.backends.postgresql",
 						"NAME": get_env("DB_NAME", required=True),
 						"USER": get_env("DB_USER", required=True),
 						"PASSWORD": get_env("DB_PASSWORD", required=True),

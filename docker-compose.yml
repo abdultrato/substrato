@@ -53,17 +53,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_backend
-    command: >
-      sh -c "
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      gunicorn plataforma.wsgi:application
-      --bind 0.0.0.0:8000
-      --workers 4
-      --timeout 120
-      --access-logfile -
-      --error-logfile -
-      "
+    command: gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
     environment:
       DJANGO_ENV: development
       DJANGO_SETTINGS_MODULE: plataforma.settings.development
@@ -101,6 +91,28 @@ services:
     restart: unless-stopped
 
   # =========================================================================
+  # FRONTEND (NEXT.JS)
+  # =========================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        BACKEND_URL: http://backend:8000
+    container_name: substrato_frontend
+    environment:
+      BACKEND_URL: http://backend:8000
+      TZ: Africa/Maputo
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - substrato
+    restart: unless-stopped
+
+  # =========================================================================
   # CELERY WORKER
   # =========================================================================
   celery:
@@ -109,6 +121,8 @@ services:
       dockerfile: Dockerfile
     container_name: substrato_celery
     command: celery -A plataforma worker -l info --concurrency=2
+    healthcheck:
+      disable: true
 
     environment:
       DJANGO_SETTINGS_MODULE: plataforma.settings.development
@@ -147,6 +161,8 @@ services:
       dockerfile: Dockerfile
     container_name: substrato_celery_beat
     command: celery -A plataforma beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    healthcheck:
+      disable: true
 
     environment:
       DJANGO_SETTINGS_MODULE: plataforma.settings.development

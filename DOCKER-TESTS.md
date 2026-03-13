@@ -15,7 +15,7 @@ ls -lh scripts/init-db.sql Makefile nginx.conf
 ### 2. Validar Sintaxe Docker Compose
 
 ```bash
-docker-compose config
+docker compose config
 ```
 
 **Esperado**: Sem erros
@@ -59,7 +59,7 @@ docker build -f Dockerfile.frontend -t substrato_frontend:latest .
 
 ```bash
 # Verificar serviços definidos
-docker-compose config | grep "services:" -A 100 | head -50
+docker compose config | grep "services:" -A 100 | head -50
 ```
 
 **Esperado**: 7 serviços listados
@@ -91,13 +91,13 @@ Se você tiver Docker instalado, pode testar:
 
 ```bash
 # 1. Iniciar stack (vai baixar ~2GB de imagens na primeira vez)
-docker-compose up -d
+docker compose up --build -d
 
 # 2. Aguardar 30-60 segundos
 sleep 60
 
 # 3. Verificar containers
-docker-compose ps
+docker compose ps
 
 # 4. Testar healthcheck do backend
 curl http://localhost:8000/health/live
@@ -106,7 +106,7 @@ curl http://localhost:8000/health/live
 curl http://localhost:3000
 
 # 6. Parar
-docker-compose down
+docker compose down
 ```
 
 ---
@@ -137,7 +137,7 @@ docker-compose down
 ### Imediato
 1. Revisar `.env.docker` e ajustar conforme necessário
 2. Ler `DOCKER.md` integralmente
-3. Testar com `docker-compose up -d` quando tiver tempo
+3. Testar com `docker compose up --build -d` quando tiver tempo
 
 ### Curto Prazo
 1. Implementar GitHub Actions CI/CD

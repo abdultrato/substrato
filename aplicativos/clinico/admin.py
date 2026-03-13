@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from .forms_admin import ResultadoItemInlineFormSet
 from .modelos.exame import Exame
 from .modelos.exame_campo import ExameCampo
+from .modelos.exames_medicos import ExameMedico, ExameMedicoCampo
 from .modelos.paciente import Paciente
 from .modelos.requisicao_analise import RequisicaoAnalise
 from .modelos.requisicao_item import RequisicaoItem
@@ -340,6 +341,114 @@ class ExameAdmin(CoreAdmin):
     fieldsets = (
         (
             "Informações do Exame",
+            {
+                "fields": (
+                    "inquilino",
+                    "id_custom",
+                    "nome",
+                    "setor",
+                    "metodo",
+                )
+            },
+        ),
+        (
+            "Configuração Clínica",
+            {
+                "fields": (
+                    "trl_horas",
+                    "preco",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "criado_em",
+                    "criado_por",
+                    "criado_por_id",
+                    "atualizado_em",
+                    "atualizado_por",
+                    "versao",
+                    "deletado_em",
+                    "deletado_por",
+                    "deletado_por_id",
+                ),
+            },
+        ),
+    )
+
+
+# =========================================================
+# EXAME MÉDICO
+# =========================================================
+
+
+class ExameMedicoCampoInline(admin.TabularInline):
+    model = ExameMedicoCampo
+    extra = 0
+    fields = (
+        "inquilino",
+        "nome",
+        "tipo",
+        "unidade",
+        "referencia_min",
+        "referencia_max",
+        "critico_min",
+        "critico_max",
+        "delta_max",
+    )
+    ordering = ("nome",)
+    show_change_link = True
+    verbose_name = "Parâmetro do exame médico"
+    verbose_name_plural = "Parâmetros do exame médico"
+
+
+@admin.register(ExameMedico)
+class ExameMedicoAdmin(CoreAdmin):
+
+    list_display = (
+        "id_custom",
+        "nome",
+        "setor",
+        "metodo",
+        "trl_horas",
+        "preco",
+    )
+
+    search_fields = (
+        "id_custom",
+        "nome",
+    )
+
+    list_filter = (
+        "setor",
+        "metodo",
+    )
+
+    ordering = ("nome",)
+
+    list_per_page = 50
+
+    inlines = (ExameMedicoCampoInline,)
+
+    readonly_fields = (
+        "id_custom",
+        "versao",
+        "criado_em",
+        "criado_por",
+        "criado_por_id",
+        "atualizado_em",
+        "atualizado_por",
+        "deletado_em",
+        "deletado_por",
+        "deletado_por_id",
+    )
+
+    fieldsets = (
+        (
+            "Informações do Exame Médico",
             {
                 "fields": (
                     "inquilino",

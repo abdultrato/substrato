@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from nucleo.modelos import CoreModel
+from aplicativos.inquilinos.modelos.inquilino import Inquilino
 
 
 class Usuario(AbstractUser, CoreModel):
@@ -24,6 +25,14 @@ class Usuario(AbstractUser, CoreModel):
 		verbose_name = "Usuário"
 		verbose_name_plural = "Usuários"
 		ordering = ["username"]
+	
+	def save(self, *args, **kwargs):
+		# Garantir associação a um inquilino mesmo em ambientes sem contexto (ex.: createsuperuser)
+		if not self.inquilino_id:
+			tenant = Inquilino.objects.order_by("id").first()
+			if tenant:
+				self.inquilino = tenant
+		super().save(*args, **kwargs)
 	
 	def __str__(self):
 		return self.username

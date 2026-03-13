@@ -2,6 +2,7 @@ from api.core.filters import SafeFilterSet
 
 from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.clinico.modelos.exame_campo import ExameCampo
+from aplicativos.clinico.modelos.exames_medicos import ExameMedico, ExameMedicoCampo
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
@@ -18,6 +19,12 @@ class ExameFilter(SafeFilterSet) :
 		fields = ["inquilino", "id_custom", "deletado", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "nome", "trl_horas", "preco", "metodo", "setor", ]
 
 
+class ExameMedicoFilter(SafeFilterSet):
+	class Meta:
+		model = ExameMedico
+		fields = ["inquilino", "id_custom", "deletado", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "nome", "trl_horas", "preco", "metodo", "setor", ]
+
+
 # =====================================================
 # EXAME CAMPO
 # =====================================================
@@ -27,6 +34,11 @@ class ExameCampoFilter(SafeFilterSet) :
 		model = ExameCampo
 		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "exame", "nome", "tipo", "unidade", ]
 
+
+class ExameMedicoCampoFilter(SafeFilterSet):
+	class Meta:
+		model = ExameMedicoCampo
+		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "exame", "nome", "tipo", "unidade", ]
 
 # =====================================================
 # PACIENTE
@@ -107,4 +119,13 @@ class ResultadoItemFilter(SafeFilterSet) :
 # MAPA
 # =====================================================
 
-FILTER_MAP = {"exame" : ExameFilter, "examecampo" : ExameCampoFilter, "paciente" : PacienteFilter, "requisicaoanalise" : RequisicaoAnaliseFilter, "requisicaoitem" : RequisicaoItemFilter, "resultadoitem" : ResultadoItemFilter, }
+FILTER_MAP = {
+		"exame" : ExameFilter,
+		"examemedico": ExameMedicoFilter,
+		"examecampo" : ExameCampoFilter,
+		"examemedicocampo": ExameMedicoCampoFilter,
+		"paciente" : PacienteFilter,
+		"requisicaoanalise" : RequisicaoAnaliseFilter,
+		"requisicaoitem" : RequisicaoItemFilter,
+		"resultadoitem" : ResultadoItemFilter,
+		}

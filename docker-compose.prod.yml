@@ -21,8 +21,11 @@ services:
 
   backend:
     image: substrato_backend:latest
+    env_file:
+      - .env.prod
     environment:
       DJANGO_SETTINGS_MODULE: plataforma.settings.production
+      DJANGO_DEBUG: "False"
       REDIS_URL: redis://redis:6379/0
     labels:
       - "traefik.enable=true"
@@ -30,6 +33,8 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=le"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    volumes:
+      - media_volume:/app/media
     depends_on:
       - db
       - redis
@@ -50,7 +55,11 @@ services:
 
   celery:
     image: substrato_backend:latest
+    env_file:
+      - .env.prod
     command: celery -A plataforma worker -l info
+    healthcheck:
+      disable: true
     depends_on:
       - redis
       - db
@@ -59,7 +68,11 @@ services:
 
   celery_beat:
     image: substrato_backend:latest
-    command: celery -A plataforma beat -l info
+    env_file:
+      - .env.prod
+    command: celery -A plataforma beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    healthcheck:
+      disable: true
     depends_on:
       - redis
       - db
@@ -96,6 +109,22 @@ services:
     image: grafana/grafana
     ports:
       - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./monitoring/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - internal
+
+  celery_exporter:
+    image: ghcr.io/ovh/celery-exporter:latest
+    environment:
+      BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - redis
     networks:
       - internal
 
@@ -103,6 +132,7 @@ volumes:
   postgres_data:
   redis_data:
   traefik_letsencrypt:
+  media_volume:
 
 networks:
   web:

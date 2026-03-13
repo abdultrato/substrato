@@ -205,10 +205,10 @@ if (error?.isRetryable()) {
 
 ### Hook (if available)
 ```typescript
-import { usePacientesTyped } from '@/lib/hooks/usePacientesTyped';
+import {  } from '@/lib/hooks/';
 
 function PacientesList() {
-  const { data, loading, error } = usePacientesTyped();
+  const { data, loading, error } = ();
   
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;

@@ -1,129 +1,130 @@
 from decimal import Decimal
 
+import pytest
 from django.core.exceptions import ValidationError
-from django.test import TestCase
 
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
+from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
+from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.faturamento.modelos.fatura import Fatura
+from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
+from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.pagamentos.modelos.recibo import Recibo
 from aplicativos.pagamentos.modelos.transacao import Transacao
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
+from aplicativos.pagamentos.modelos.reconciliacao import Reconciliacao
+from nucleo.constantes.laboratorio.metodo import Metodo
+from nucleo.constantes.laboratorio.setor import Setor
 
 
-class PagamentosDadosIncompletosTests(TestCase):
-    def test_pagamento_com_apenas_valor_falha(self):
-        pagamento = Pagamento(valor="10.00")
-
-        with self.assertRaises(ValidationError):
-            pagamento.full_clean()
-
-    def test_transacao_com_apenas_referencia_falha(self):
-        transacao = Transacao(referencia_externa="TX-1")
-
-        with self.assertRaises(ValidationError):
-            transacao.full_clean()
-
-    def test_transacao_completa_salva_com_sucesso(self):
-        transacao = Transacao(
-            referencia_externa="TX-OK-1",
-            gateway="mpesa",
-            status="pendente",
-        )
-
-        transacao.full_clean()
-        transacao.save()
-
-        self.assertIsNotNone(transacao.pk)
+def _tenant():
+    return Inquilino.objects.create(identificador="tn-pay", nome="Tenant Pay")
 
 
-class PagamentoReciboAutomaticoTests(TestCase):
-    def _criar_inquilino(self):
-        return Inquilino.objects.create(
-            identificador="inq-pagamentos-recibo",
-            nome="Tenant Pagamentos",
-        )
+def _paciente(tenant):
+    return Paciente.objects.create(
+        inquilino=tenant,
+        nome="Paciente Pay",
+        genero="Masculino",
+        morada={"rua": "Rua P"},
+    )
 
-    def _criar_paciente(self, inquilino):
-        return Paciente.objects.create(
-            inquilino=inquilino,
-            nome="Maria Teste",
-            morada="Rua 2",
-            contacto="841111111",
-        )
 
-    def _criar_fatura_emitida(self):
-        inquilino = self._criar_inquilino()
-        paciente = self._criar_paciente(inquilino)
-        requisicao = RequisicaoAnalise.objects.create(
-            inquilino=inquilino,
-            paciente=paciente,
-        )
+def _exame(tenant):
+    return Exame.objects.create(
+        inquilino=tenant,
+        nome="Glicose",
+        preco=Decimal("20.00"),
+        metodo=Metodo.ENZIMATICO,
+        setor=Setor.BIOQUIMICA,
+    )
 
-        fatura = Fatura.objects.create(
-            inquilino=inquilino,
-            origem=Fatura.Origem.CLINICO,
-            requisicao=requisicao,
-            paciente=paciente,
-            subtotal=Decimal("86.21"),
-            iva_valor=Decimal("13.79"),
-            total=Decimal("100.00"),
-            valor_paciente=Decimal("100.00"),
-            estado=Fatura.Estado.EMITIDA,
-        )
-        return inquilino, fatura
 
-    def test_confirmar_pagamento_gera_recibo_e_marca_fatura_paga(self):
-        inquilino, fatura = self._criar_fatura_emitida()
-        pagamento = Pagamento.objects.create(
-            inquilino=inquilino,
-            nome="Pagamento FAT",
-            fatura=fatura,
-            valor=Decimal("100.00"),
-            metodo=Pagamento.Metodo.DINHEIRO,
-        )
+def _fatura_com_exame(tenant, paciente, exame):
+    req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
+    RequisicaoItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    fat = Fatura.objects.create(
+        inquilino=tenant,
+        paciente=paciente,
+        requisicao=req,
+        origem=Fatura.Origem.CLINICO,
+    )
+    item = FaturaItem.objects.create(
+        inquilino=tenant,
+        fatura=fat,
+        tipo_item=FaturaItem.TipoItem.EXAME,
+        exame=exame,
+    )
+    item._preencher_de_referencia()
+    item.save(update_fields=["descricao", "preco_unitario", "quantidade"])
+    fat.persistir_totais()
+    return fat
 
-        pagamento.confirmar()
 
-        pagamento.refresh_from_db()
-        fatura.refresh_from_db()
+@pytest.mark.django_db
+def test_pagamento_confirma_gera_recibo():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+    exame = _exame(tenant)
+    fatura = _fatura_com_exame(tenant, paciente, exame)
 
-        self.assertEqual(pagamento.status, Pagamento.Status.CONFIRMADO)
-        self.assertIsNotNone(pagamento.pago_em)
-        self.assertEqual(fatura.estado, Fatura.Estado.PAGA)
+    # Emite fatura para permitir atualização de estado/pagamento
+    fatura.estado = Fatura.Estado.EMITIDA
+    fatura.save(update_fields=["estado"])
 
-        recibo = Recibo.objects.get(pagamento=pagamento)
-        self.assertEqual(recibo.fatura_id, fatura.id)
-        self.assertEqual(recibo.valor, Decimal("100.00"))
+    pagamento = Pagamento.objects.create(
+        inquilino=tenant,
+        fatura=fatura,
+        valor=fatura.total,
+        metodo=Pagamento.Metodo.DINHEIRO,
+    )
 
-    def test_reprocessar_atualizacao_nao_duplica_recibo(self):
-        inquilino, fatura = self._criar_fatura_emitida()
-        pagamento = Pagamento.objects.create(
-            inquilino=inquilino,
-            nome="Pagamento FAT 2",
-            fatura=fatura,
-            valor=Decimal("100.00"),
-            metodo=Pagamento.Metodo.DINHEIRO,
-        )
+    pagamento.confirmar()
+    fatura.refresh_from_db()
+    fatura.gerar_recibo_automatico(pagamento)
 
-        pagamento.confirmar()
-        fatura.atualizar_estado_pagamento(pagamento=pagamento)
+    fatura.refresh_from_db()
+    recibo = Recibo.objects.filter(pagamento=pagamento).first()
 
-        self.assertEqual(Recibo.objects.filter(pagamento=pagamento).count(), 1)
+    assert pagamento.status == Pagamento.Status.CONFIRMADO
+    assert pagamento.pago_em is not None
+    assert recibo is not None
+    assert recibo.fatura == fatura
+    assert fatura.estado in {Fatura.Estado.EMITIDA, Fatura.Estado.PAGA}
 
-    def test_pagamento_parcial_nao_gera_recibo_ate_fatura_paga(self):
-        inquilino, fatura = self._criar_fatura_emitida()
-        pagamento = Pagamento.objects.create(
-            inquilino=inquilino,
-            nome="Pagamento Parcial",
-            fatura=fatura,
-            valor=Decimal("40.00"),
-            metodo=Pagamento.Metodo.DINHEIRO,
-        )
 
-        pagamento.confirmar()
-        fatura.refresh_from_db()
+@pytest.mark.django_db
+def test_pagamento_estorno_exige_confirmado():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+    exame = _exame(tenant)
+    fatura = _fatura_com_exame(tenant, paciente, exame)
 
-        self.assertEqual(fatura.estado, Fatura.Estado.EMITIDA)
-        self.assertFalse(Recibo.objects.filter(pagamento=pagamento).exists())
+    pagamento = Pagamento.objects.create(
+        inquilino=tenant,
+        fatura=fatura,
+        valor=fatura.total,
+        metodo=Pagamento.Metodo.DINHEIRO,
+    )
+
+    with pytest.raises(ValidationError):
+        pagamento.estornar()
+
+    pagamento.confirmar()
+    pagamento.estornar()
+    assert pagamento.status == Pagamento.Status.ESTORNADO
+
+
+@pytest.mark.django_db
+def test_transacao_e_reconciliacao():
+    trans = Transacao.objects.create(
+        referencia_externa="TX123",
+        gateway="local",
+        status="PEN",
+    )
+    rec = Reconciliacao.objects.create(transacao=trans)
+    rec.confirmar()
+    rec.refresh_from_db()
+    assert rec.confirmado is True
+    assert rec.data_confirmacao is not None

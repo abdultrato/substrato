@@ -3,12 +3,14 @@ Factories para testes usando factory-boy
 """
 import factory
 from faker import Faker
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from aplicativos.inquilinos.models import Inquilino
-from aplicativos.identidade.models import Permissao, Papel
-from aplicativos.clinico.models import Paciente, Exame
+from aplicativos.inquilinos.modelos.inquilino import Inquilino
+from aplicativos.clinico.modelos.paciente import Paciente
+from aplicativos.clinico.modelos.exame import Exame
+
+User = get_user_model()
 
 fake = Faker(['pt_BR'])
 
@@ -26,6 +28,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Faker('email')
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
+    nome = factory.Faker('name')
     is_active = True
     is_staff = False
     is_superuser = False
@@ -56,18 +59,9 @@ class InquilinoFactory(factory.django.DjangoModelFactory):
         model = Inquilino
 
     nome = factory.Faker('company')
-    slug = factory.Faker('slug')
+    identificador = factory.Faker('slug')
+    dominio = factory.Faker('domain_name')
     ativo = True
-    data_criacao = factory.LazyFunction(timezone.now)
-
-    @factory.post_generation
-    def usuarios(obj, create, extracted, **kwargs):
-        """Associar usuários após criação"""
-        if not create:
-            return
-        if extracted:
-            for user in extracted:
-                obj.usuarios.add(user)
 
 
 # ============================================================================
@@ -81,10 +75,10 @@ class PacienteFactory(factory.django.DjangoModelFactory):
 
     nome = factory.Faker('name')
     email = factory.Faker('email')
-    cpf = factory.LazyFunction(lambda: fake.cpf())
     data_nascimento = factory.Faker('date_of_birth')
-    telefone = factory.LazyFunction(lambda: fake.phone_number())
-    genero = factory.Faker('word', word_list=['M', 'F', 'O'])
+    contacto = factory.LazyFunction(lambda: fake.phone_number())
+    genero = factory.Faker('word', word_list=['Masculino', 'Femenino'])
+    morada = factory.LazyFunction(lambda: {"rua": fake.street_name(), "cidade": fake.city()})
     ativo = True
 
     @classmethod
@@ -100,11 +94,11 @@ class ExameFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Exame
 
+    nome = factory.Faker('word')
+    preco = factory.Faker('pyfloat', left_digits=3, right_digits=2, positive=True)
+    metodo = factory.Faker('word', word_list=['ELISA', 'PCR', 'Colorimetrico'])
+    setor = factory.Faker('word')
     paciente = factory.SubFactory(PacienteFactory)
-    tipo = factory.Faker('word', word_list=['Sangue', 'Urina', 'Raio-X'])
-    descricao = factory.Faker('text', max_nb_chars=200)
-    data_solicitacao = factory.LazyFunction(timezone.now)
-    status = factory.Faker('word', word_list=['Pendente', 'Realizado', 'Cancelado'])
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):

@@ -1,8 +1,10 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
+from .exames_medicos import ExameMedico
 from .resultado import Resultado
 from .resultado_analise import ResultadoItem
 
@@ -20,18 +22,44 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
         Exame,
         on_delete=models.PROTECT,
         related_name="requisicoes",
+        null=True,
+        blank=True,
+    )
+
+    exame_medico = models.ForeignKey(
+        ExameMedico,
+        on_delete=models.PROTECT,
+        related_name="requisicoes",
+        null=True,
+        blank=True,
     )
 
     class Meta:
-        unique_together = ("requisicao", "exame")
+        indexes = [
+            models.Index(fields=["requisicao", "exame"]),
+            models.Index(fields=["requisicao", "exame_medico"]),
+        ]
 
     # -----------------------------------------------------
+
+    def clean(self):
+        # exige exatamente um tipo de exame
+        if bool(self.exame) == bool(self.exame_medico):
+            raise ValidationError("Informe apenas um exame (laboratorial OU médico) por item.")
+
+        # evita duplicidade manualmente (já que removemos unique_together)
+        qs = self.__class__.all_objects.filter(requisicao=self.requisicao)
+        if self.exame and qs.filter(exame=self.exame).exclude(pk=self.pk).exists():
+            raise ValidationError("Exame já adicionado à requisição.")
+        if self.exame_medico and qs.filter(exame_medico=self.exame_medico).exclude(pk=self.pk).exists():
+            raise ValidationError("Exame médico já adicionado à requisição.")
 
     def save(self, *args, **kwargs):
 
         if not self.inquilino_id and self.requisicao:
             self.inquilino_id = self.requisicao.inquilino_id
 
+        self.full_clean()
         super().save(*args, **kwargs)
 
     # -----------------------------------------------------
@@ -46,25 +74,34 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
             defaults={"inquilino": inquilino},
         )
 
-        campos = self.exame.campos.all()
+        exame_base = self.exame or self.exame_medico
+        if not exame_base:
+            return
+
+        campos = getattr(exame_base, "campos", None)
+        if campos is None:
+            return
+        campos_qs = campos.all()
 
         itens = []
 
         for campo in campos:
             # evita duplicação
-            if ResultadoItem.objects.filter(
-                resultado=resultado,
-                exame_campo=campo,
-            ).exists():
-                continue
-
-            itens.append(
-                ResultadoItem(
+            # resultado para exame laboratorial usa ResultadoItem
+            if self.exame:
+                if ResultadoItem.objects.filter(
                     resultado=resultado,
                     exame_campo=campo,
-                    inquilino=inquilino,
+                ).exists():
+                    continue
+                itens.append(
+                    ResultadoItem(
+                        resultado=resultado,
+                        exame_campo=campo,
+                        inquilino=inquilino,
+                    )
                 )
-            )
+            # exames médicos ainda não geram itens específicos (imagem/laudo)
 
         if itens:
             ResultadoItem.objects.bulk_create(itens)
@@ -72,4 +109,5 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
     # -----------------------------------------------------
 
     def __str__(self):
-        return f"{self.requisicao.id_custom} - {self.exame.nome}"
+        nome = getattr(self.exame, "nome", None) or getattr(self.exame_medico, "nome", "")
+        return f"{self.requisicao.id_custom} - {nome}"
