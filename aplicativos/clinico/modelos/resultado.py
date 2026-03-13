@@ -48,6 +48,11 @@ class Resultado(NoNameCoreModel) :
 		requisicao_itens = (self.requisicao.itens.select_related("exame").prefetch_related("exame__campos"))
 		
 		for item in requisicao_itens :
+			# Requisições podem conter itens de exame médico (imagem), que ainda não
+			# geram `ResultadoItem`. Evita erro quando `item.exame` é None.
+			if not item.exame_id :
+				continue
+			
 			for campo in item.exame.campos.all() :
 				itens.append(ResultadoItem(resultado = self, exame_campo = campo, inquilino = inquilino,  # ESSENCIAL para multi-tenant
 					))

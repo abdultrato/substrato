@@ -26,6 +26,7 @@ class FaturaItemInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = (
         "exame",
+        "exame_medico",
         "procedimento_item",
         "procedimento_material",
     )
@@ -33,6 +34,7 @@ class FaturaItemInline(admin.TabularInline):
     fields = (
         "tipo_item",
         "exame",
+        "exame_medico",
         "item_venda",
         "procedimento_item",
         "procedimento_material",

@@ -13,6 +13,7 @@ class FaturaItem(NoNameCoreModel):
 
     class TipoItem(models.TextChoices):
         EXAME = "EXA", "Exame"
+        EXAME_MEDICO = "EXM", "Exame médico"
         ITEM_VENDA = "FAR", "Item de farmácia"
         PROCEDIMENTO_ITEM = "PRC", "Serviço de enfermagem"
         PROCEDIMENTO_MATERIAL = "MAT", "Material de enfermagem"
@@ -32,6 +33,12 @@ class FaturaItem(NoNameCoreModel):
 
     exame = models.ForeignKey(
         "clinico.Exame",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    exame_medico = models.ForeignKey(
+        "clinico.ExameMedico",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -75,6 +82,11 @@ class FaturaItem(NoNameCoreModel):
                 name="unique_exame_por_fatura",
             ),
             models.UniqueConstraint(
+                fields=["fatura", "exame_medico"],
+                condition=Q(exame_medico__isnull=False, deletado=False),
+                name="unique_exame_medico_por_fatura",
+            ),
+            models.UniqueConstraint(
                 fields=["fatura", "item_venda"],
                 condition=Q(item_venda__isnull=False, deletado=False),
                 name="unique_item_venda_por_fatura",
@@ -100,6 +112,7 @@ class FaturaItem(NoNameCoreModel):
     def _origem_esperada(self):
         return {
             self.TipoItem.EXAME: self.fatura.Origem.CLINICO,
+            self.TipoItem.EXAME_MEDICO: self.fatura.Origem.CLINICO,
             self.TipoItem.ITEM_VENDA: self.fatura.Origem.FARMACIA,
             self.TipoItem.PROCEDIMENTO_ITEM: self.fatura.Origem.ENFERMAGEM,
             self.TipoItem.PROCEDIMENTO_MATERIAL: self.fatura.Origem.ENFERMAGEM,
@@ -112,6 +125,13 @@ class FaturaItem(NoNameCoreModel):
                 self.descricao = self.exame.nome
             if self.preco_unitario == Decimal("0.00"):
                 self.preco_unitario = self.exame.preco
+            return
+
+        if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
+            if not self.descricao.strip():
+                self.descricao = self.exame_medico.nome
+            if self.preco_unitario == Decimal("0.00"):
+                self.preco_unitario = self.exame_medico.preco
             return
 
         if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
@@ -147,12 +167,14 @@ class FaturaItem(NoNameCoreModel):
 
         referencias = {
             "exame": bool(self.exame_id),
+            "exame_medico": bool(self.exame_medico_id),
             "item_venda": bool(self.item_venda_id),
             "procedimento_item": bool(self.procedimento_item_id),
             "procedimento_material": bool(self.procedimento_material_id),
         }
         tipo_para_campo = {
             self.TipoItem.EXAME: "exame",
+            self.TipoItem.EXAME_MEDICO: "exame_medico",
             self.TipoItem.ITEM_VENDA: "item_venda",
             self.TipoItem.PROCEDIMENTO_ITEM: "procedimento_item",
             self.TipoItem.PROCEDIMENTO_MATERIAL: "procedimento_material",
@@ -204,6 +226,15 @@ class FaturaItem(NoNameCoreModel):
             if not existe_no_contexto:
                 raise ValidationError(
                     {"exame": "Exame não pertence à requisição da fatura."}
+                )
+
+        if self.exame_medico_id and self.fatura.requisicao_id:
+            existe_no_contexto = self.fatura.requisicao.itens.filter(
+                exame_medico_id=self.exame_medico_id
+            ).exists()
+            if not existe_no_contexto:
+                raise ValidationError(
+                    {"exame_medico": "Exame médico não pertence à requisição da fatura."}
                 )
 
         if self.item_venda_id and self.fatura.venda_id:

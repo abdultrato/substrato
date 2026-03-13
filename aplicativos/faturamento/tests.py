@@ -4,6 +4,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from aplicativos.clinico.modelos.exame import Exame
+from aplicativos.clinico.modelos.exames_medicos import ExameMedico
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
@@ -37,6 +38,16 @@ def _exame(tenant):
     )
 
 
+def _exame_medico(tenant):
+    return ExameMedico.objects.create(
+        inquilino=tenant,
+        nome="Ecografia abdominal",
+        preco=Decimal("150.00"),
+        metodo=Metodo.ENZIMATICO,
+        setor=Setor.IMUNOLOGIA,
+    )
+
+
 @pytest.mark.django_db
 def test_fatura_clinico_recalcula_totais():
     tenant = _tenant()
@@ -67,6 +78,41 @@ def test_fatura_clinico_recalcula_totais():
     assert fatura.subtotal == exame.preco
     assert fatura.total == fatura.subtotal + fatura.iva_valor
     assert fatura.valor_paciente == fatura.total
+
+
+@pytest.mark.django_db
+def test_fatura_clinico_sincroniza_exame_medico():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+    exame_medico = _exame_medico(tenant)
+
+    req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
+    RequisicaoItem.objects.create(
+        inquilino=tenant,
+        requisicao=req,
+        exame_medico=exame_medico,
+    )
+
+    fatura = Fatura.objects.create(
+        inquilino=tenant,
+        paciente=paciente,
+        requisicao=req,
+        origem=Fatura.Origem.CLINICO,
+    )
+
+    fatura.sincronizar_itens_da_origem()
+    fatura.refresh_from_db()
+
+    itens = list(fatura.itens.filter(deletado=False))
+    assert len(itens) == 1
+
+    item = itens[0]
+    assert item.tipo_item == FaturaItem.TipoItem.EXAME_MEDICO
+    assert item.exame_medico_id == exame_medico.id
+    assert item.exame_id is None
+    assert item.descricao == exame_medico.nome
+    assert item.preco_unitario == exame_medico.preco
+    assert fatura.subtotal == exame_medico.preco
 
 
 @pytest.mark.django_db

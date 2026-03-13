@@ -188,7 +188,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
         ]
     ]
 
-    itens_qs = fatura.itens.select_related("exame").all()
+    itens_qs = fatura.itens.select_related("exame", "exame_medico").all()
     subtotal_geral = Decimal("0.00")
 
     for item in itens_qs:
@@ -207,7 +207,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
         total_linha = (qtd * preco_unit).quantize(Decimal("0.01"))
         subtotal_geral += total_linha
 
-        exame = getattr(item, "exame", None)
+        exame = getattr(item, "exame", None) or getattr(item, "exame_medico", None)
         exame_txt = ""
         if exame:
             codigo = _codigo_exame(exame)

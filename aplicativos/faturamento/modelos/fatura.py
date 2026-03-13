@@ -259,14 +259,26 @@ class Fatura(NoNameCoreModel):
             item.delete()
 
         if self.origem == self.Origem.CLINICO:
-            itens_requisicao = self.requisicao.itens.select_related("exame")
+            itens_requisicao = self.requisicao.itens.select_related(
+                "exame",
+                "exame_medico",
+            )
             for item in itens_requisicao:
-                FaturaItem.objects.create(
-                    inquilino=self.inquilino,
-                    fatura=self,
-                    tipo_item=FaturaItem.TipoItem.EXAME,
-                    exame=item.exame,
-                )
+                if item.exame_id:
+                    FaturaItem.objects.create(
+                        inquilino=self.inquilino,
+                        fatura=self,
+                        tipo_item=FaturaItem.TipoItem.EXAME,
+                        exame=item.exame,
+                    )
+
+                elif item.exame_medico_id:
+                    FaturaItem.objects.create(
+                        inquilino=self.inquilino,
+                        fatura=self,
+                        tipo_item=FaturaItem.TipoItem.EXAME_MEDICO,
+                        exame_medico=item.exame_medico,
+                    )
 
         elif self.origem == self.Origem.FARMACIA:
             itens_venda = self.venda.itens.select_related("produto")
