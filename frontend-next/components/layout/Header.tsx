@@ -38,7 +38,7 @@ export default function Header ( { user }: Props ) {
     return (
         <header className="h-14 border-b bg-white flex items-center justify-between px-6">
             <h1 className="font-semibold text-gray-800">
-                Sistema Laboratorial
+                Substrato
             </h1>
 
             <div className="relative" ref={menuRef}>

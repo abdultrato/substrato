@@ -25,6 +25,9 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
         )
     }
 
+    // Auth guard will redirect, but avoid rendering protected shells while it's happening.
+    if ( !user ) return null
+
     if ( requiredGroups?.length && !userHasAnyGroup( user, requiredGroups ) ) {
         return (
             <div className="flex min-h-screen">

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react"
 import {
   FileText,
   FileDown,
-  FlaskConical,
   ListChecks,
   Shield,
 } from "lucide-react"
@@ -150,10 +149,10 @@ export default function LaboratorioPage() {
             icon={ListChecks}
           />
           <ActionTile
-            title="Catálogo de exames"
-            description="Cadastro e revisão de exames laboratoriais."
-            href="/exames"
-            icon={FlaskConical}
+            title="Resultados (admin)"
+            description="Lançar e validar resultados com rastreabilidade (Django admin)."
+            href="/admin/clinico/resultado/"
+            icon={Shield}
           />
           <ActionTile
             title="PDF de resultados"
@@ -181,4 +180,3 @@ export default function LaboratorioPage() {
     </AppLayout>
   )
 }
-

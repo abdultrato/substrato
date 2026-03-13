@@ -5,6 +5,8 @@ import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Paciente, Exame } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function EditarRequisicaoPage ( {
     params,
@@ -88,51 +90,66 @@ export default function EditarRequisicaoPage ( {
         }
     }
 
-    if ( loading ) return <p>Carregando...</p>;
+    const requiredGroups = [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ]
+
+    if ( loading ) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <p>Carregando...</p>
+            </AppLayout>
+        )
+    }
 
     return (
-        <form onSubmit={salvar} className="page-box fade-in">
-            <h1>Editar Requisição</h1>
+        <AppLayout requiredGroups={requiredGroups}>
+            <form onSubmit={salvar} className="page-box fade-in">
+                <h1>Editar Requisição</h1>
 
-            {error && (
-                <p style={{ color: "#d32f2f" }}>{error}</p>
-            )}
+                {error && (
+                    <p style={{ color: "#d32f2f" }}>{error}</p>
+                )}
 
-            <label>Paciente</label>
-            <select
-                value={paciente}
-                onChange={e => setPaciente( e.target.value )}
-                disabled
-            >
-                <option value="">Selecione</option>
-                {pacientes.map( p => (
-                    <option key={p.id} value={p.id}>
-                        {p.nome}
-                    </option>
-                ) )}
-            </select>
+                <label>Paciente</label>
+                <select
+                    value={paciente}
+                    onChange={e => setPaciente( e.target.value )}
+                    disabled
+                >
+                    <option value="">Selecione</option>
+                    {pacientes.map( p => (
+                        <option key={p.id} value={p.id}>
+                            {p.nome}
+                        </option>
+                    ) )}
+                </select>
 
-            <h3>Exames</h3>
+                <h3>Exames</h3>
 
-            <div style={{ display: "grid", gap: 6 }}>
-                {exames.map( e => (
-                    <label key={e.id}>
-                        <input
-                            type="checkbox"
-                            checked={selecionados.includes( e.id )}
-                            onChange={() => toggleExame( e.id )}
-                        />
-                        {e.nome}
-                    </label>
-                ) )}
-            </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                    {exames.map( e => (
+                        <label key={e.id}>
+                            <input
+                                type="checkbox"
+                                checked={selecionados.includes( e.id )}
+                                onChange={() => toggleExame( e.id )}
+                            />
+                            {e.nome}
+                        </label>
+                    ) )}
+                </div>
 
-            <button
-                className={`btn-primary ${saving ? "btn-loading" : ""}`}
-                disabled={saving}
-            >
-                {saving ? "Salvando..." : "Salvar alterações"}
-            </button>
-        </form>
+                <button
+                    className={`btn-primary ${saving ? "btn-loading" : ""}`}
+                    disabled={saving}
+                >
+                    {saving ? "Salvando..." : "Salvar alterações"}
+                </button>
+            </form>
+        </AppLayout>
     );
 }

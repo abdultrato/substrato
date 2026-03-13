@@ -5,6 +5,8 @@ import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Paciente, Exame } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function NovaRequisicaoPage () {
     useAuthGuard();
@@ -56,33 +58,42 @@ export default function NovaRequisicaoPage () {
     }
 
     return (
-        <form onSubmit={salvar} className="page-box">
-            <h1>Nova Requisição</h1>
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <form onSubmit={salvar} className="page-box">
+                <h1>Nova Requisição</h1>
 
-            <label>Paciente</label>
-            <select value={paciente} onChange={e => setPaciente( e.target.value )} required>
-                <option value="">Selecione</option>
-                {pacientes.map( p => (
-                    <option key={p.id} value={p.id}>
-                        {p.nome}
-                    </option>
+                <label>Paciente</label>
+                <select value={paciente} onChange={e => setPaciente( e.target.value )} required>
+                    <option value="">Selecione</option>
+                    {pacientes.map( p => (
+                        <option key={p.id} value={p.id}>
+                            {p.nome}
+                        </option>
+                    ) )}
+                </select>
+
+                <h3>Exames</h3>
+
+                {exames.map( e => (
+                    <label key={e.id}>
+                        <input
+                            type="checkbox"
+                            checked={selecionados.includes( e.id )}
+                            onChange={() => toggleExame( e.id )}
+                        />
+                        {e.nome}
+                    </label>
                 ) )}
-            </select>
 
-            <h3>Exames</h3>
-
-            {exames.map( e => (
-                <label key={e.id}>
-                    <input
-                        type="checkbox"
-                        checked={selecionados.includes( e.id )}
-                        onChange={() => toggleExame( e.id )}
-                    />
-                    {e.nome}
-                </label>
-            ) )}
-
-            <button className="btn-primary">Criar Requisição</button>
-        </form>
+                <button className="btn-primary">Criar Requisição</button>
+            </form>
+        </AppLayout>
     );
 }

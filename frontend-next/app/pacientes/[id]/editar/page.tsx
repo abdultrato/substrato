@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function EditarPacientePage () {
     useAuthGuard();
@@ -86,25 +88,44 @@ export default function EditarPacientePage () {
 
     if ( loading ) {
         return (
-            <div className="page-box fade-in">
-                <div className="skeleton skeleton-row"></div>
-                <div className="skeleton skeleton-row"></div>
-                <div className="skeleton skeleton-row"></div>
-            </div>
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.ENFERMAGEM,
+                    GROUPS.MEDICINA,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <div className="page-box fade-in">
+                    <div className="skeleton skeleton-row"></div>
+                    <div className="skeleton skeleton-row"></div>
+                    <div className="skeleton skeleton-row"></div>
+                </div>
+            </AppLayout>
         );
     }
 
     return (
-        <div className="page-box fade-in">
-            <h1 className="page-title">Editar Paciente</h1>
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.ENFERMAGEM,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">Editar Paciente</h1>
 
-            {error && (
-                <p style={{ color: "#d32f2f", marginBottom: 10 }}>
-                    {error}
-                </p>
-            )}
+                {error && (
+                    <p style={{ color: "#d32f2f", marginBottom: 10 }}>
+                        {error}
+                    </p>
+                )}
 
-            <form onSubmit={handleSubmit} className="grid">
+                <form onSubmit={handleSubmit} className="grid">
 
                 <input
                     name="nome"
@@ -208,7 +229,8 @@ export default function EditarPacientePage () {
                     {saving ? "Salvando..." : "Salvar Alterações"}
                 </button>
 
-            </form>
-        </div>
+                </form>
+            </div>
+        </AppLayout>
     );
 }

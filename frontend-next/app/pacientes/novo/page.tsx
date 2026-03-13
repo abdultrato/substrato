@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function NovoPacientePage () {
     useAuthGuard();
@@ -59,12 +61,21 @@ export default function NovoPacientePage () {
     }
 
     return (
-        <div className="page-box fade-in">
-            <h1 className="page-title">Novo Paciência</h1>
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.ENFERMAGEM,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">Novo Paciente</h1>
 
-            {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
+                {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
 
-            <form onSubmit={handleSubmit} className="grid">
+                <form onSubmit={handleSubmit} className="grid">
 
                 <input
                     name="nome"
@@ -167,7 +178,8 @@ export default function NovoPacientePage () {
                 <button type="submit" disabled={loading} className="btn-primary">
                     {loading ? "Salvando..." : "Salvar Paciente"}
                 </button>
-            </form>
-        </div>
+                </form>
+            </div>
+        </AppLayout>
     );
 }

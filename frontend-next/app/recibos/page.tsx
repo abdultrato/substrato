@@ -68,7 +68,6 @@ export default function RecibosPage() {
         GROUPS.ADMIN,
         GROUPS.RECEPCAO,
         GROUPS.CONTABILIDADE,
-        GROUPS.TECNICO_ADMINISTRATIVO,
       ]}
     >
       <div className="space-y-6">
@@ -100,4 +99,3 @@ export default function RecibosPage() {
     </AppLayout>
   )
 }
-

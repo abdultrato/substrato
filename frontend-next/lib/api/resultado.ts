@@ -1,24 +1,34 @@
 import { apiFetch } from "./index"
 
 export async function listarResultados(params?: any) {
-  // params can be used to filter by requisicao etc.
+  // ResultadoItem lives under /clinico/resultadoitem/ in the API v1.
   const query = params ? new URLSearchParams(params as any).toString() : ""
-  const url = query ? `/resultados/?${query}` : "/resultados/"
+  const url = query ? `/clinico/resultadoitem/?${query}` : "/clinico/resultadoitem/"
   return apiFetch(url)
 }
 
 export async function criarResultado(payload: any) {
-  return apiFetch("/resultados/", { method: "POST", body: JSON.stringify(payload) })
+  return apiFetch("/clinico/resultadoitem/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function atualizarResultado(id: number, payload: any) {
-  return apiFetch(`/resultados/${id}/`, { method: "PUT", body: JSON.stringify(payload) })
+  return apiFetch(`/clinico/resultadoitem/${id}/`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function deletarResultado(id: number) {
-  return apiFetch(`/resultados/${id}/`, { method: "DELETE" })
+  return apiFetch(`/clinico/resultadoitem/${id}/`, { method: "DELETE" })
 }
 
 export async function validarResultado(id: number) {
-  return apiFetch(`/resultados/${id}/validar/`, { method: "POST" })
+  // API v1 currently exposes CRUD. Validation can be expressed as a state update.
+  return apiFetch(`/clinico/resultadoitem/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ estado: "validado" }),
+  })
 }

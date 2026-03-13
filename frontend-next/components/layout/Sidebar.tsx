@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SessionUser } from "@/lib/session"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
     Briefcase as BriefcaseIcon,
 
@@ -15,7 +16,6 @@ import {
     HeartPulse,
     Stethoscope,
     Pill,
-    BriefcaseMedical,
     Calculator,
     Shield,
     Layers,
@@ -45,108 +45,117 @@ const NAV_ITEMS: NavItem[] = [
         href: "/recepcao",
         label: "Recepção",
         icon: BriefcaseIcon,
-        groups: ["Administrador", "Recepcionista"],
+        groups: [GROUPS.ADMIN, GROUPS.RECEPCAO],
     },
     {
         href: "/laboratorio",
         label: "Laboratório",
         icon: Microscope,
-        groups: ["Administrador", "Técnico de Laboratório"],
+        groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
     },
     {
         href: "/enfermagem",
         label: "Enfermagem",
         icon: HeartPulse,
-        groups: ["Administrador", "Enfermeiro"],
+        groups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
     },
     {
         href: "/medicina",
         label: "Medicina",
         icon: Stethoscope,
-        groups: ["Administrador", "Médico"],
+        groups: [GROUPS.ADMIN, GROUPS.MEDICINA],
     },
     {
         href: "/medicina-ocupacional",
         label: "Med. Ocupacional",
-        icon: BriefcaseMedical,
-        groups: ["Administrador", "Medicina Ocupacional"],
+        icon: BriefcaseIcon,
+        groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
     },
     {
         href: "/farmacia",
         label: "Farmácia",
         icon: Pill,
-        groups: ["Administrador", "Técnico de Farmácia"],
+        groups: [GROUPS.ADMIN, GROUPS.FARMACIA],
     },
     {
         href: "/contabilidade",
         label: "Contabilidade",
         icon: Calculator,
-        groups: ["Administrador", "Contabilidade", "Técnico Administrativo"],
+        groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
     },
     {
         href: "/pacientes",
         label: "Pacientes",
         icon: Users,
-        groups: ["Administrador", "Recepcionista", "Enfermeiro", "Médico", "Medicina Ocupacional"],
+        groups: [
+            GROUPS.ADMIN,
+            GROUPS.RECEPCAO,
+            GROUPS.ENFERMAGEM,
+            GROUPS.MEDICINA,
+            GROUPS.MEDICINA_OCUPACIONAL,
+        ],
     },
     {
         href: "/requisicoes",
         label: "Requisições",
         icon: FileText,
-        groups: ["Administrador", "Recepcionista", "Médico", "Medicina Ocupacional"],
+        groups: [
+            GROUPS.ADMIN,
+            GROUPS.RECEPCAO,
+            GROUPS.MEDICINA,
+            GROUPS.MEDICINA_OCUPACIONAL,
+        ],
     },
     {
         href: "/exames",
         label: "Exames",
         icon: FlaskConical,
-        groups: ["Administrador", "Técnico de Laboratório"],
+        groups: [GROUPS.ADMIN],
     },
     {
         href: "/faturas",
         label: "Faturas",
         icon: Receipt,
-        groups: ["Administrador", "Recepcionista", "Contabilidade", "Técnico Administrativo"],
+        groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
         href: "/recibos",
         label: "Recibos",
         icon: Receipt,
-        groups: ["Administrador", "Recepcionista", "Contabilidade", "Técnico Administrativo"],
+        groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
         href: "/modulos",
         label: "Módulos",
         icon: Layers,
-        groups: ["Administrador"],
+        groups: [GROUPS.ADMIN],
     },
     {
         href: "/recursos",
         label: "Recursos API",
         icon: Layers,
-        groups: ["Administrador"],
+        groups: [GROUPS.ADMIN],
     },
     {
         href: "/admin",
         label: "Administração",
         icon: Shield,
-        groups: ["Administrador"],
+        groups: [GROUPS.ADMIN],
     },
 ]
 
 export default function Sidebar ( { user }: Props ) {
     const pathname = usePathname()
 
-    const userGroups = user?.groups ?? []
-
     function hasAccess ( item: NavItem ) {
         if ( !item.groups ) return true
-        return item.groups.some( ( g ) => userGroups.includes( g ) )
+        return userHasAnyGroup( user, item.groups )
     }
 
     return (
         <aside className="w-64 bg-white border-r hidden md:flex flex-col">
             <div className="p-6 font-bold text-gray-800 tracking-wide">
-                CLIDIS
+                SUBSTRATO
             </div>
 
             <nav className="flex flex-col gap-1 px-3">
@@ -174,7 +183,7 @@ export default function Sidebar ( { user }: Props ) {
             </nav>
 
             <div className="mt-auto p-4 text-xs text-gray-400">
-                Sistema Laboratorial v1.0
+                Substrato Platform
             </div>
         </aside>
     )

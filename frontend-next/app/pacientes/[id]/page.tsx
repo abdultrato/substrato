@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Paciente } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 function calcularIdade ( dataNascimento?: string ): string {
     if ( !dataNascimento ) return "—";
@@ -54,63 +56,93 @@ export default function PacienteDetalhePage () {
 
     if ( loading ) {
         return (
-            <div className="page-box fade-in">
-                <div className="skeleton skeleton-row"></div>
-                <div className="skeleton skeleton-row"></div>
-                <div className="skeleton skeleton-row"></div>
-            </div>
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.ENFERMAGEM,
+                    GROUPS.MEDICINA,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <div className="page-box fade-in">
+                    <div className="skeleton skeleton-row"></div>
+                    <div className="skeleton skeleton-row"></div>
+                    <div className="skeleton skeleton-row"></div>
+                </div>
+            </AppLayout>
         );
     }
 
     if ( error || !paciente ) {
         return (
-            <div className="page-box fade-in">
-                <p style={{ color: "#d32f2f" }}>
-                    {error || "Paciente não encontrado"}
-                </p>
-            </div>
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.ENFERMAGEM,
+                    GROUPS.MEDICINA,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <div className="page-box fade-in">
+                    <p style={{ color: "#d32f2f" }}>
+                        {error || "Paciente não encontrado"}
+                    </p>
+                </div>
+            </AppLayout>
         );
     }
 
     return (
-        <div className="page-box fade-in">
-            <h1 className="page-title">Detalhes do Paciente</h1>
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.ENFERMAGEM,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">Detalhes do Paciente</h1>
 
-            <div className="info-grid">
-                <div><strong>ID:</strong> {paciente.id_custom}</div>
-                <div><strong>Nome:</strong> {paciente.nome}</div>
-                <div><strong>Idade:</strong> {calcularIdade( paciente.data_nascimento )}</div>
-                <div><strong>Gênero:</strong> {paciente.genero || "-"}</div>
-                <div><strong>Telefone:</strong> {paciente.contacto || "-"}</div>
-                <div><strong>Email:</strong> {paciente.email || "-"}</div>
-                <div><strong>Documento:</strong> {paciente.tipo_documento || "-"}</div>
-                <div><strong>Nº Documento:</strong> {paciente.numero_id || "-"}</div>
-                <div><strong>Raça/Origem:</strong> {paciente.raca_origem || "-"}</div>
-                <div><strong>Proveniência:</strong> {paciente.proveniencia || "-"}</div>
-                <div><strong>Morada:</strong> {paciente.morada || "-"}</div>
-                <div>
-                    <strong>Cadastro:</strong>{" "}
-                    {paciente.criado_em
-                        ? new Date( paciente.criado_em ).toLocaleDateString()
-                        : "-"}
+                <div className="info-grid">
+                    <div><strong>ID:</strong> {paciente.id_custom}</div>
+                    <div><strong>Nome:</strong> {paciente.nome}</div>
+                    <div><strong>Idade:</strong> {calcularIdade( paciente.data_nascimento )}</div>
+                    <div><strong>Gênero:</strong> {paciente.genero || "-"}</div>
+                    <div><strong>Telefone:</strong> {paciente.contacto || "-"}</div>
+                    <div><strong>Email:</strong> {paciente.email || "-"}</div>
+                    <div><strong>Documento:</strong> {paciente.tipo_documento || "-"}</div>
+                    <div><strong>Nº Documento:</strong> {paciente.numero_id || "-"}</div>
+                    <div><strong>Raça/Origem:</strong> {paciente.raca_origem || "-"}</div>
+                    <div><strong>Proveniência:</strong> {paciente.proveniencia || "-"}</div>
+                    <div><strong>Morada:</strong> {paciente.morada || "-"}</div>
+                    <div>
+                        <strong>Cadastro:</strong>{" "}
+                        {paciente.criado_em
+                            ? new Date( paciente.criado_em ).toLocaleDateString()
+                            : "-"}
+                    </div>
+                </div>
+
+                <div style={{ marginTop: 25, display: "flex", gap: 10 }}>
+                    <button
+                        className="btn-secondary"
+                        onClick={() => router.push( "/pacientes" )}
+                    >
+                        ← Voltar
+                    </button>
+
+                    <button
+                        className="btn-primary"
+                        onClick={() => router.push( `/pacientes/${id}/editar` )}
+                    >
+                        Editar
+                    </button>
                 </div>
             </div>
-
-            <div style={{ marginTop: 25, display: "flex", gap: 10 }}>
-                <button
-                    className="btn-secondary"
-                    onClick={() => router.push( "/pacientes" )}
-                >
-                    ← Voltar
-                </button>
-
-                <button
-                    className="btn-primary"
-                    onClick={() => router.push( `/pacientes/${id}/editar` )}
-                >
-                    Editar
-                </button>
-            </div>
-        </div>
+        </AppLayout>
     );
 }

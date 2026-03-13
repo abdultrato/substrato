@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { login } from "@/lib/auth";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
 
@@ -10,7 +10,6 @@ export default function LoginPage () {
     useAuthGuard( { requireAuth: false } )
 
     const router = useRouter();
-    const searchParams = useSearchParams()
     const [user, setUser] = useState( "" );
     const [pass, setPass] = useState( "" );
     const [error, setError] = useState( "" );
@@ -21,7 +20,10 @@ export default function LoginPage () {
 
         try {
             const sessionUser = await login( user, pass );
-            const next = searchParams.get( "next" )
+            const next =
+                typeof window !== "undefined"
+                    ? new URLSearchParams( window.location.search ).get( "next" )
+                    : null
             router.push( next || getDefaultWorkspaceHref( sessionUser ) );
         } catch {
             setError( "Usuário ou senha inválidos" );

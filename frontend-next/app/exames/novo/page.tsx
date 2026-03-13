@@ -4,6 +4,8 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useRouter } from "next/navigation";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function NovoExamePage () {
     useAuthGuard();
@@ -33,31 +35,33 @@ export default function NovoExamePage () {
     }
 
     return (
-        <form onSubmit={salvar} className="page-box">
-            <h1>Novo Exame</h1>
+        <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+            <form onSubmit={salvar} className="page-box">
+                <h1>Novo Exame</h1>
 
-            <input placeholder="Nome" onChange={e => update( "nome", e.target.value )} required />
-            <input type="number" step="0.01" placeholder="Preço" onChange={e => update( "preco", Number( e.target.value ) )} required />
-            <input type="number" placeholder="TRL (horas)" onChange={e => update( "trl_horas", Number( e.target.value ) )} required />
+                <input placeholder="Nome" onChange={e => update( "nome", e.target.value )} required />
+                <input type="number" step="0.01" placeholder="Preço" onChange={e => update( "preco", Number( e.target.value ) )} required />
+                <input type="number" placeholder="TRL (horas)" onChange={e => update( "trl_horas", Number( e.target.value ) )} required />
 
-            <label>Método</label>
-            <select value={form.metodo} onChange={e => update( "metodo", e.target.value )}>
-                <option value="Enzimatico">Enzimático</option>
-                <option value="Colorimetrico">Colorimétrico</option>
-                <option value="ELISA">ELISA</option>
-                <option value="PCR">PCR</option>
-                <option value="Outro">Outro</option>
-            </select>
+                <label>Método</label>
+                <select value={form.metodo} onChange={e => update( "metodo", e.target.value )}>
+                    <option value="Enzimatico">Enzimático</option>
+                    <option value="Colorimetrico">Colorimétrico</option>
+                    <option value="ELISA">ELISA</option>
+                    <option value="PCR">PCR</option>
+                    <option value="Outro">Outro</option>
+                </select>
 
-            <label>Setor</label>
-            <select value={form.setor} onChange={e => update( "setor", e.target.value )}>
-                <option value="Bioquimica">Bioquímica</option>
-                <option value="Hematologia">Hematologia</option>
-                <option value="Microbiologia">Microbiologia</option>
-                <option value="Imunologia">Imunologia</option>
-                <option value="Outro">Outro</option>
-            </select>
-            <button className="btn-primary">Salvar</button>
-        </form>
+                <label>Setor</label>
+                <select value={form.setor} onChange={e => update( "setor", e.target.value )}>
+                    <option value="Bioquimica">Bioquímica</option>
+                    <option value="Hematologia">Hematologia</option>
+                    <option value="Microbiologia">Microbiologia</option>
+                    <option value="Imunologia">Imunologia</option>
+                    <option value="Outro">Outro</option>
+                </select>
+                <button className="btn-primary">Salvar</button>
+            </form>
+        </AppLayout>
     );
 }

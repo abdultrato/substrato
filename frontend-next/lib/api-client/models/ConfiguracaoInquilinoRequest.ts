@@ -1,0 +1,19 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+export type ConfiguracaoInquilinoRequest = {
+    deletado?: boolean;
+    deletado_em?: string | null;
+    versao?: number;
+    fuso_horario?: string;
+    moeda?: string;
+    idioma?: string;
+    permite_multi_unidade?: boolean;
+    limite_usuarios?: number;
+    criado_por?: number | null;
+    atualizado_por?: number | null;
+    deletado_por?: number | null;
+    inquilino: number;
+};
+

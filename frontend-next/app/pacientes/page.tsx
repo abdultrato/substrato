@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 function calcularIdade ( dataNascimento?: string ): string {
     if ( !dataNascimento ) return "—";
@@ -136,137 +138,161 @@ export default function PacientesPage () {
         window.scrollTo( { top: 0, behavior: "smooth" } );
     }
 
-    if ( loading ) return <p>Carregando...</p>;
+    if ( loading ) {
+        return (
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.ENFERMAGEM,
+                    GROUPS.MEDICINA,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <p>Carregando...</p>
+            </AppLayout>
+        );
+    }
 
     return (
-        <div className="page-box fade-in">
-            <h1 className="page-title">Pacientes</h1>
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.ENFERMAGEM,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">Pacientes</h1>
 
-            {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
+                {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
 
-            {/* FORM */}
-            <div className="page-box" style={{ marginBottom: 20 }}>
-                <h2>{editingId ? "Editar paciente" : "Novo paciente"}</h2>
+                {/* FORM */}
+                <div className="page-box" style={{ marginBottom: 20 }}>
+                    <h2>{editingId ? "Editar paciente" : "Novo paciente"}</h2>
 
-                <form className="grid">
-                    <input
-                        name="nome"
-                        placeholder="Nome completo"
-                        value={form.nome}
-                        onChange={handleChange}
-                    />
+                    <form className="grid">
+                        <input
+                            name="nome"
+                            placeholder="Nome completo"
+                            value={form.nome}
+                            onChange={handleChange}
+                        />
 
-                    <input
-                        type="date"
-                        name="data_nascimento"
-                        value={form.data_nascimento}
-                        onChange={handleChange}
-                    />
+                        <input
+                            type="date"
+                            name="data_nascimento"
+                            value={form.data_nascimento}
+                            onChange={handleChange}
+                        />
 
-                    <select name="genero" value={form.genero} onChange={handleChange}>
-                        <option value="">Gênero</option>
-                        <option>Masculino</option>
-                        <option>Femenino</option>
-                    </select>
+                        <select name="genero" value={form.genero} onChange={handleChange}>
+                            <option value="">Gênero</option>
+                            <option>Masculino</option>
+                            <option>Femenino</option>
+                        </select>
 
-                    <select
-                        name="raca_origem"
-                        value={form.raca_origem}
-                        onChange={handleChange}
-                    >
-                        <option>Branca</option>
-                        <option>Negra</option>
-                        <option>Parda</option>
-                        <option>Amarela</option>
-                        <option>Indígena</option>
-                        <option>Outro</option>
-                    </select>
+                        <select
+                            name="raca_origem"
+                            value={form.raca_origem}
+                            onChange={handleChange}
+                        >
+                            <option>Branca</option>
+                            <option>Negra</option>
+                            <option>Parda</option>
+                            <option>Amarela</option>
+                            <option>Indígena</option>
+                            <option>Outro</option>
+                        </select>
 
-                    <input
-                        name="numero_id"
-                        placeholder="Documento"
-                        value={form.numero_id}
-                        onChange={handleChange}
-                    />
+                        <input
+                            name="numero_id"
+                            placeholder="Documento"
+                            value={form.numero_id}
+                            onChange={handleChange}
+                        />
 
-                    <input
-                        name="contacto"
-                        placeholder="Telefone"
-                        value={form.contacto}
-                        onChange={handleChange}
-                    />
+                        <input
+                            name="contacto"
+                            placeholder="Telefone"
+                            value={form.contacto}
+                            onChange={handleChange}
+                        />
 
-                    <input
-                        name="email"
-                        placeholder="Email"
-                        value={form.email}
-                        onChange={handleChange}
-                    />
+                        <input
+                            name="email"
+                            placeholder="Email"
+                            value={form.email}
+                            onChange={handleChange}
+                        />
 
-                    <input
-                        name="morada"
-                        placeholder="Morada"
-                        value={form.morada}
-                        onChange={handleChange}
-                    />
-                </form>
+                        <input
+                            name="morada"
+                            placeholder="Morada"
+                            value={form.morada}
+                            onChange={handleChange}
+                        />
+                    </form>
 
-                <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
-                    <button
-                        onClick={salvarPaciente}
-                        className={`btn-primary ${saving ? "btn-loading" : ""}`}
-                    >
-                        {editingId ? "Atualizar" : "Criar"}
-                    </button>
-
-                    {editingId && (
-                        <button onClick={resetForm} className="btn-secondary">
-                            Cancelar
+                    <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
+                        <button
+                            onClick={salvarPaciente}
+                            className={`btn-primary ${saving ? "btn-loading" : ""}`}
+                        >
+                            {editingId ? "Atualizar" : "Criar"}
                         </button>
-                    )}
+
+                        {editingId && (
+                            <button onClick={resetForm} className="btn-secondary">
+                                Cancelar
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* TABELA */}
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Entrada</th>
+                                <th>Nome</th>
+                                <th>Idade</th>
+                                <th>Gênero</th>
+                                <th>Contacto</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pacientes.map( ( p ) => (
+                                <tr key={p.id}>
+                                    <td>{p.id_custom}</td>
+                                    <td>{p.nome}</td>
+                                    <td>{calcularIdade( p.data_nascimento )}</td>
+                                    <td>{p.genero || "-"}</td>
+                                    <td>{p.contacto || "-"}</td>
+                                    <td style={{ display: "flex", gap: 6 }}>
+                                        <button
+                                            onClick={() => iniciarEdicao( p )}
+                                            className="btn-secondary"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => apagarPaciente( p.id )}
+                                            className="btn-danger"
+                                        >
+                                            Apagar
+                                        </button>
+                                    </td>
+                                </tr>
+                            ) )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            {/* TABELA */}
-            <div className="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Entrada</th>
-                            <th>Nome</th>
-                            <th>Idade</th>
-                            <th>Gênero</th>
-                            <th>Contacto</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {pacientes.map( ( p ) => (
-                            <tr key={p.id}>
-                                <td>{p.id_custom}</td>
-                                <td>{p.nome}</td>
-                                <td>{calcularIdade( p.data_nascimento )}</td>
-                                <td>{p.genero || "-"}</td>
-                                <td>{p.contacto || "-"}</td>
-                                <td style={{ display: "flex", gap: 6 }}>
-                                    <button
-                                        onClick={() => iniciarEdicao( p )}
-                                        className="btn-secondary"
-                                    >
-                                        Editar
-                                    </button>
-                                    <button
-                                        onClick={() => apagarPaciente( p.id )}
-                                        className="btn-danger"
-                                    >
-                                        Apagar
-                                    </button>
-                                </td>
-                            </tr>
-                        ) )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        </AppLayout>
     );
 }

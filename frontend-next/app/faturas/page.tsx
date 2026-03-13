@@ -135,7 +135,6 @@ export default function FaturasPage() {
         GROUPS.ADMIN,
         GROUPS.RECEPCAO,
         GROUPS.CONTABILIDADE,
-        GROUPS.TECNICO_ADMINISTRATIVO,
       ]}
     >
       <div className="space-y-6">

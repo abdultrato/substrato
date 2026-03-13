@@ -82,13 +82,13 @@ const atalhos = [
     {
         title: "Faturas",
         description: "Abrir o backoffice de faturamento para emissão e revisão.",
-        href: "/admin/faturamento/fatura/",
+        href: "/faturas",
         icon: CreditCard,
     },
     {
         title: "Recibos",
         description: "Consultar recibos já gerados no módulo de pagamentos.",
-        href: "/admin/pagamentos/recibo/",
+        href: "/recibos",
         icon: Receipt,
     },
 ]

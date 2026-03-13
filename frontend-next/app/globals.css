@@ -66,13 +66,14 @@ body {
 /* ==============================
    TITULOS
 ================================ */
-h1 {
+.page-box h1,
+.page-box .page-title {
     text-align: center;
     color: var(--primary-700);
     margin-bottom: 16px;
 }
 
-h2 {
+.page-box h2 {
     color: var(--primary-600);
     margin-bottom: 10px;
 }
@@ -86,22 +87,19 @@ form.grid {
     gap: 20px;
 }
 
-input, select, textarea {
+.page-box input,
+.page-box select,
+.page-box textarea {
     width: 100%;
     padding: 8px 10px;
     border: 1px solid var(--gray-300);
     border-radius: 6px;
 }
 
-input:focus, select:focus {
-    outline: none;
-    border-color: var(--primary-500);
-}
-
 /* ==============================
    BOTÕES
 ================================ */
-button {
+.page-box button {
     padding: 8px 14px;
     border: none;
     border-radius: 6px;
@@ -143,28 +141,33 @@ button {
     border-radius: var(--radius-md);
 }
 
-table {
+.page-box table,
+.table-container table {
     width: 100%;
     border-collapse: collapse;
     min-width: 600px;
 }
 
-th {
+.page-box th,
+.table-container th {
     background: darkgrey;
     padding: 10px;
 }
 
-td {
+.page-box td,
+.table-container td {
     padding: 6px;
     font-size: .85em;
 }
 
 /* zebra */
-tbody tr:nth-child(even) {
+.page-box tbody tr:nth-child(even),
+.table-container tbody tr:nth-child(even) {
     background: var(--gray-100);
 }
 
-tr:hover {
+.page-box tr:hover,
+.table-container tr:hover {
     background: var(--gray-200);
 }
 
@@ -236,20 +239,20 @@ tr:hover {
 }
 
 /* micro feedback */
-button,
-a,
-input,
-select {
+.page-box button,
+.page-box a,
+.page-box input,
+.page-box select {
     transition: all .18s ease;
 }
 
-button:hover,
-a:hover {
+.page-box button:hover,
+.page-box a:hover {
     transform: translateY(-1px);
 }
 
 /* clique */
-button:active {
+.page-box button:active {
     transform: scale(.97);
 }
 
@@ -345,9 +348,9 @@ button:active {
     }
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+.page-box input:focus,
+.page-box select:focus,
+.page-box textarea:focus {
     outline: none;
     border-color: var(--primary-500);
     box-shadow: 0 0 0 2px rgba(200, 40, 40, 0.15);

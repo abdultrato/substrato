@@ -5,6 +5,8 @@ import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Requisicao, Paciente, Exame } from "@/lib/types";
 import Link from "next/link";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function RequisicoesPage () {
     useAuthGuard();
@@ -57,67 +59,76 @@ export default function RequisicoesPage () {
     }
 
     return (
-        <div className="page-box">
-            <h1>Requisições</h1>
-            <Link href="/requisicoes/nova" className="btn-primary">
-                Nova requisição
-            </Link>
-
-
-            {/* CRIAR */}
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.MEDICINA,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
             <div className="page-box">
-                <h2>Nova requisição</h2>
+                <h1>Requisições</h1>
+                <Link href="/requisicoes/nova" className="btn-primary">
+                    Nova requisição
+                </Link>
 
-                <select value={paciente} onChange={e => setPaciente( e.target.value )}>
-                    <option value="">Paciente</option>
-                    {pacientes.map( p => (
-                        <option key={p.id} value={p.id}>
-                            {p.nome}
-                        </option>
+
+                {/* CRIAR */}
+                <div className="page-box">
+                    <h2>Nova requisição</h2>
+
+                    <select value={paciente} onChange={e => setPaciente( e.target.value )}>
+                        <option value="">Paciente</option>
+                        {pacientes.map( p => (
+                            <option key={p.id} value={p.id}>
+                                {p.nome}
+                            </option>
+                        ) )}
+                    </select>
+
+                    <h3>Exames</h3>
+
+                    {exames.map( e => (
+                        <label key={e.id}>
+                            <input
+                                type="checkbox"
+                                checked={selecionados.includes( e.id )}
+                                onChange={ev =>
+                                    ev.target.checked
+                                        ? setSelecionados( [...selecionados, e.id] )
+                                        : setSelecionados( selecionados.filter( x => x !== e.id ) )
+                                }
+                            />
+                            {e.nome}
+                        </label>
                     ) )}
-                </select>
 
-                <h3>Exames</h3>
+                    <button onClick={criar}>Criar</button>
+                </div>
 
-                {exames.map( e => (
-                    <label key={e.id}>
-                        <input
-                            type="checkbox"
-                            checked={selecionados.includes( e.id )}
-                            onChange={ev =>
-                                ev.target.checked
-                                    ? setSelecionados( [...selecionados, e.id] )
-                                    : setSelecionados( selecionados.filter( x => x !== e.id ) )
-                            }
-                        />
-                        {e.nome}
-                    </label>
-                ) )}
-
-                <button onClick={criar}>Criar</button>
-            </div>
-
-            {/* LISTA */}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Paciente</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {requisicoes.map( r => (
-                        <tr key={r.id}>
-                            <td>
-                                <Link href={`/requisicoes/${r.id}`}>{r.id_custom}</Link>
-                            </td>
-                            <td>{pacientes.find( p => p.id === r.paciente )?.nome || "-"}</td>
-                            <td>{r.estado}</td>
+                {/* LISTA */}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Paciente</th>
+                            <th>Status</th>
                         </tr>
-                    ) )}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        {requisicoes.map( r => (
+                            <tr key={r.id}>
+                                <td>
+                                    <Link href={`/requisicoes/${r.id}`}>{r.id_custom}</Link>
+                                </td>
+                                <td>{pacientes.find( p => p.id === r.paciente )?.nome || "-"}</td>
+                                <td>{r.estado}</td>
+                            </tr>
+                        ) )}
+                    </tbody>
+                </table>
+            </div>
+        </AppLayout>
     );
 }

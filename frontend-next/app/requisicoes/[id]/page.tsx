@@ -5,6 +5,8 @@ import { apiFetch } from "@/lib/api";
 import { Requisicao } from "@/lib/types";
 import Link from "next/link";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function RequisicaoDetail ( {
     params,
@@ -32,49 +34,70 @@ export default function RequisicaoDetail ( {
         }
     }
 
-    if ( loading ) return <p>Carregando...</p>;
-    if ( error ) return <p style={{ color: "red" }}>{error}</p>;
+    const requiredGroups = [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ]
+
+    if ( loading ) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <p>Carregando...</p>
+            </AppLayout>
+        )
+    }
+    if ( error ) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <p style={{ color: "red" }}>{error}</p>
+            </AppLayout>
+        )
+    }
     if ( !req ) return null;
 
     return (
-        <div className="page-box fade-in">
-            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                <Link href={`/requisicoes/${req.id}/editar`} className="btn-secondary">
-                    Editar
-                </Link>
+        <AppLayout requiredGroups={requiredGroups}>
+            <div className="page-box fade-in">
+                <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                    <Link href={`/requisicoes/${req.id}/editar`} className="btn-secondary">
+                        Editar
+                    </Link>
+                </div>
+
+                <h1>Requisição {req.id_custom}</h1>
+
+                <p>
+                    <b>Paciente (ID):</b> {req.paciente || "—"}
+                </p>
+
+                <p>
+                    <b>Estado:</b> {req.estado || "—"}
+                </p>
+
+                <hr />
+
+                <h3>Exames</h3>
+
+                {req.exames && req.exames.length > 0 ? (
+                    <ul>
+                        {req.exames.map( ( id: number ) => (
+                            <li key={id}>Exame #{id}</li>
+                        ) )}
+                    </ul>
+                ) : (
+                    <p>Nenhum exame associado</p>
+                )}
+
+                <hr />
+
+                <div style={{ marginTop: 10 }}>
+                    <Link href="/requisicoes" className="btn-secondary">
+                        ← Voltar
+                    </Link>
+                </div>
             </div>
-
-            <h1>Requisição {req.id_custom}</h1>
-
-            <p>
-                <b>Paciente (ID):</b> {req.paciente || "—"}
-            </p>
-
-            <p>
-                <b>Estado:</b> {req.estado || "—"}
-            </p>
-
-            <hr />
-
-            <h3>Exames</h3>
-
-            {req.exames && req.exames.length > 0 ? (
-                <ul>
-                    {req.exames.map( ( id: number ) => (
-                        <li key={id}>Exame #{id}</li>
-                    ) )}
-                </ul>
-            ) : (
-                <p>Nenhum exame associado</p>
-            )}
-
-            <hr />
-
-            <div style={{ marginTop: 10 }}>
-                <Link href="/requisicoes" className="btn-secondary">
-                    ← Voltar
-                </Link>
-            </div>
-        </div>
+        </AppLayout>
     );
 }

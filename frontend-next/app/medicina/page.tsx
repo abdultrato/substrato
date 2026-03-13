@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
-  ClipboardPlus,
+  FilePlus2,
   Stethoscope,
   Users,
   HeartPulse,
@@ -94,7 +94,7 @@ export default function MedicinaPage() {
             title="Nova requisição (laboratório)"
             description="Solicitar exames laboratoriais para um paciente."
             href="/requisicoes/nova"
-            icon={ClipboardPlus}
+            icon={FilePlus2}
           />
           <ActionTile
             title="Exames médicos (catálogo)"

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
@@ -46,6 +46,8 @@ class Command(BaseCommand):
 			created = True
 
 		grupo_admin, _ = Group.objects.get_or_create(name="Administrador")
+		# Garantir que o grupo Administrador sempre tenha acesso total.
+		grupo_admin.permissions.set(Permission.objects.all())
 		user.groups.add(grupo_admin)
 
 		self.stdout.write(f"Tenant: {tenant.id} {tenant.identificador} ({tenant.nome})")
