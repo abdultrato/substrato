@@ -3,28 +3,44 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { Paciente, Exame } from "@/lib/types";
+import { useAuth } from "@/hooks/useAuth";
+import { Paciente, Exame, ExameMedico } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
-import { GROUPS } from "@/lib/rbac";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 export default function NovaRequisicaoPage () {
     useAuthGuard();
     const router = useRouter();
+    const { user } = useAuth();
 
     const [pacientes, setPacientes] = useState<Paciente[]>( [] );
-    const [exames, setExames] = useState<Exame[]>( [] );
+    const [exames, setExames] = useState<Array<Exame | ExameMedico>>( [] );
 
     const [paciente, setPaciente] = useState( "" );
+    const [tipo, setTipo] = useState<"LAB" | "MED">( "LAB" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
 
     useEffect( () => {
-        carregar();
+        carregarPacientes();
     }, [] );
 
-    async function carregar () {
+    useEffect(() => {
+        // ao trocar de setor, limpa seleção e carrega catálogo correto
+        setSelecionados([]);
+        carregarExames();
+    }, [tipo]);
+
+    async function carregarPacientes () {
         setPacientes( await apiFetch( "/pacientes/" ) );
-        setExames( await apiFetch( "/exames/" ) );
+    }
+
+    async function carregarExames () {
+        if ( tipo === "MED" ) {
+            setExames( await apiFetch( "/exames-medicos/" ) );
+        } else {
+            setExames( await apiFetch( "/exames/" ) );
+        }
     }
 
     function toggleExame ( id: number ) {
@@ -46,16 +62,28 @@ export default function NovaRequisicaoPage () {
             return;
         }
 
+        const payload: any = {
+            paciente: Number( paciente ),
+            tipo,
+        };
+
+        if ( tipo === "MED" ) payload.exames_medicos = selecionados;
+        else payload.exames = selecionados;
+
         const nova = await apiFetch( "/requisicoes/", {
             method: "POST",
-            body: JSON.stringify( {
-                paciente: Number( paciente ),
-                exames: selecionados,
-            } ),
+            body: JSON.stringify( payload ),
         } );
 
         router.push( `/requisicoes/${nova.id}` );
     }
+
+    const podeCriarExameMedico = userHasAnyGroup(user, [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ])
 
     return (
         <AppLayout
@@ -77,6 +105,17 @@ export default function NovaRequisicaoPage () {
                             {p.nome}
                         </option>
                     ) )}
+                </select>
+
+                <label>Setor</label>
+                <select
+                    value={tipo}
+                    onChange={(e) => setTipo(e.target.value as any)}
+                >
+                    <option value="LAB">Laboratório</option>
+                    {podeCriarExameMedico ? (
+                        <option value="MED">Exames médicos</option>
+                    ) : null}
                 </select>
 
                 <h3>Exames</h3>

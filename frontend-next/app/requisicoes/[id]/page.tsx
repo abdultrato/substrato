@@ -69,21 +69,27 @@ export default function RequisicaoDetail ( {
                 <h1>Requisição {req.id_custom}</h1>
 
                 <p>
-                    <b>Paciente (ID):</b> {req.paciente || "—"}
+                    <b>Paciente:</b> {req.paciente_nome || req.paciente || "—"}
                 </p>
 
                 <p>
                     <b>Estado:</b> {req.estado || "—"}
                 </p>
 
+                <p>
+                    <b>Setor:</b> {req.tipo === "MED" ? "Exames médicos" : "Laboratório"}
+                </p>
+
                 <hr />
 
                 <h3>Exames</h3>
 
-                {req.exames && req.exames.length > 0 ? (
+                {req.itens && req.itens.length > 0 ? (
                     <ul>
-                        {req.exames.map( ( id: number ) => (
-                            <li key={id}>Exame #{id}</li>
+                        {req.itens.map( ( it: any ) => (
+                            <li key={it.id}>
+                                {it.exame_nome || it.exame_medico_nome || `Item #${it.id}`}
+                            </li>
                         ) )}
                     </ul>
                 ) : (

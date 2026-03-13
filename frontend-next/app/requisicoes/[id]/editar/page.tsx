@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { Paciente, Exame } from "@/lib/types";
+import { Paciente, Exame, ExameMedico, Requisicao } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
@@ -21,9 +21,10 @@ export default function EditarRequisicaoPage ( {
     const [error, setError] = useState<string | null>( null );
 
     const [pacientes, setPacientes] = useState<Paciente[]>( [] );
-    const [exames, setExames] = useState<Exame[]>( [] );
+    const [exames, setExames] = useState<Array<Exame | ExameMedico>>( [] );
 
     const [paciente, setPaciente] = useState( "" );
+    const [tipo, setTipo] = useState<"LAB" | "MED">( "LAB" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
 
     useEffect( () => {
@@ -32,17 +33,20 @@ export default function EditarRequisicaoPage ( {
 
     async function carregar () {
         try {
-            const [req, pacs, exs] = await Promise.all( [
-                apiFetch( `/requisicoes/${params.id}/` ),
+            const req = await apiFetch<Requisicao>( `/requisicoes/${params.id}/` );
+            const tipoReq = (req?.tipo as any) || "LAB";
+
+            const [pacs, exs] = await Promise.all( [
                 apiFetch( "/pacientes/" ),
-                apiFetch( "/exames/" ),
+                apiFetch( tipoReq === "MED" ? "/exames-medicos/" : "/exames/" ),
             ] );
 
             setPacientes( pacs || [] );
             setExames( exs || [] );
 
             setPaciente( req.paciente?.toString() || "" );
-            setSelecionados( req.exames || [] );
+            setTipo( tipoReq );
+            setSelecionados( tipoReq === "MED" ? (req.exames_medicos || []) : (req.exames || []) );
         } catch {
             setError( "Erro ao carregar dados" );
         } finally {
@@ -75,11 +79,13 @@ export default function EditarRequisicaoPage ( {
         setError( null );
 
         try {
+            const payload: any = {}
+            if ( tipo === "MED" ) payload.exames_medicos = selecionados
+            else payload.exames = selecionados
+
             await apiFetch( `/requisicoes/${params.id}/`, {
                 method: "PATCH",
-                body: JSON.stringify( {
-                    exames: selecionados,
-                } ),
+                body: JSON.stringify( payload ),
             } );
 
             router.push( `/requisicoes/${params.id}` );
@@ -127,6 +133,9 @@ export default function EditarRequisicaoPage ( {
                         </option>
                     ) )}
                 </select>
+
+                <label>Setor</label>
+                <input value={tipo === "MED" ? "Exames médicos" : "Laboratório"} disabled />
 
                 <h3>Exames</h3>
 

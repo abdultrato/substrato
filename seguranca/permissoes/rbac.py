@@ -52,6 +52,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Catálogo (somente leitura para criar requisições)
             "clinico-exame": SAFE_METHODS,
             "clinico-examecampo": SAFE_METHODS,
+            "clinico-examemedico": SAFE_METHODS,
+            "clinico-examemedicocampo": SAFE_METHODS,
             # Financeiro
             "faturamento-fatura": SAFE_METHODS | WRITE_METHODS,
             "faturamento-faturaitem": SAFE_METHODS | WRITE_METHODS,
@@ -75,6 +77,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-requisicaoitem": SAFE_METHODS,
             # Para mapear exame id -> nome na UI atual
             "clinico-exame": SAFE_METHODS,
+            "clinico-examemedico": SAFE_METHODS,
+            "clinico-examemedicocampo": SAFE_METHODS,
             # Enfermagem (CRUD operacional)
             "enfermagem-registroenfermagem": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-sinalvitalenfermagem": SAFE_METHODS | WRITE_METHODS,

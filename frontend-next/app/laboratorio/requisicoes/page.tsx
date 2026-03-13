@@ -41,7 +41,9 @@ export default function LaboratorioRequisicoesPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<any>(`/requisicoes/?estado=${encodeURIComponent(estado)}`)
+        const res = await apiFetch<any>(
+          `/requisicoes/?tipo=LAB&estado=${encodeURIComponent(estado)}`
+        )
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
         setData(Array.isArray(items) ? items : [])
@@ -61,7 +63,7 @@ export default function LaboratorioRequisicoesPage() {
   const columns = useMemo(
     () => [
       { header: "Código", render: (r: RequisicaoRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente || "-" },
+      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
       { header: "Prioridade", render: (r: RequisicaoRow) => r.status_clinico || "-" },
       { header: "Crítico", render: (r: RequisicaoRow) => (r.possui_resultado_critico ? "SIM" : "—") },
       {

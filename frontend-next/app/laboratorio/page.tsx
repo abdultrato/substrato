@@ -52,9 +52,9 @@ export default function LaboratorioPage() {
           reqCriticas,
           resItensPendentes,
         ] = await Promise.all([
-          apiFetch<any>("/requisicoes/?estado=pendente"),
-          apiFetch<any>("/requisicoes/?estado=aguardando_validacao"),
-          apiFetch<any>("/requisicoes/?possui_resultado_critico=true"),
+          apiFetch<any>("/requisicoes/?tipo=LAB&estado=pendente"),
+          apiFetch<any>("/requisicoes/?tipo=LAB&estado=aguardando_validacao"),
+          apiFetch<any>("/requisicoes/?tipo=LAB&possui_resultado_critico=true"),
           apiFetch<any>("/clinico/resultadoitem/?estado=pendente"),
         ])
 
@@ -82,7 +82,7 @@ export default function LaboratorioPage() {
   const columns = useMemo(
     () => [
       { header: "Código", render: (r: RequisicaoRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente || "-" },
+      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
       { header: "Estado", render: (r: RequisicaoRow) => r.estado || "-" },
       {
         header: "Ações",

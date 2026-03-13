@@ -10,6 +10,7 @@ from drf_spectacular.openapi import (
 	)
 from django.http import HttpResponse
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
@@ -265,9 +266,35 @@ class RequisicaoAnaliseViewSet(ModelViewSet):
 		Gera o PDF institucional de resultados laboratoriais (somente validados).
 
 		- Autenticação via JWT (API v1)
-		- RBAC controla acesso (ex.: Técnico de Laboratório pode emitir)
+		- RBAC controla acesso; reforçamos aqui para evitar exposição acidental
+		  do PDF a perfis que apenas "consultam" requisições.
 		"""
+		from seguranca.permissoes.rbac import GROUPS as RBAC_GROUPS, _normalize
+
+		user = getattr(request, "user", None)
+		if not user or not getattr(user, "is_authenticated", False):
+			raise PermissionDenied("Autenticação obrigatória.")
+
+		if not getattr(user, "is_superuser", False):
+			try:
+				raw_groups = list(user.groups.values_list("name", flat=True))
+			except Exception:
+				raw_groups = []
+			user_groups = {_normalize(g) for g in raw_groups if g}
+			permitidos = {
+				_normalize(RBAC_GROUPS["ADMIN"]),
+				_normalize(RBAC_GROUPS["LABORATORIO"]),
+			}
+			if not (user_groups & permitidos):
+				raise PermissionDenied(
+					"Apenas Técnico de Laboratório ou Administrador pode emitir PDF de resultados."
+				)
+
 		requisicao = self.get_object()
+		# PDF de resultados aplica-se ao fluxo laboratorial.
+		if requisicao.tipo != requisicao.Tipo.LABORATORIO:
+			raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
+
 		from tarefas.gerar_pdf.pdf_generator_resultado import gerar_pdf_resultados
 
 		pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados=True)

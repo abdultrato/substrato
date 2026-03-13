@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+import unicodedata
 
 from .forms_admin import ResultadoItemInlineFormSet
 from .modelos.exame import Exame
@@ -12,6 +13,32 @@ from .modelos.requisicao_analise import RequisicaoAnalise
 from .modelos.requisicao_item import RequisicaoItem
 from .modelos.resultado import Resultado
 from .modelos.resultado_analise import ResultadoItem
+
+# =========================================================
+# RBAC HELPERS (DJANGO ADMIN)
+# =========================================================
+
+
+def _normalize_group(value: str) -> str:
+    value = (value or "").strip().lower()
+    if not value:
+        return ""
+    value = unicodedata.normalize("NFD", value)
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+
+
+def _user_has_any_group(user, group_names: list[str]) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False):
+        return True
+    try:
+        raw = list(user.groups.values_list("name", flat=True))
+    except Exception:
+        raw = []
+    have = {_normalize_group(x) for x in raw if x}
+    return any(_normalize_group(g) in have for g in (group_names or []))
+
 
 # =========================================================
 # BASE ADMIN
@@ -493,7 +520,7 @@ class ExameMedicoAdmin(CoreAdmin):
 # =========================================================
 
 
-class RequisicaoItemInline(admin.TabularInline):
+class RequisicaoItemLabInline(admin.TabularInline):
 
     model = RequisicaoItem
     extra = 1
@@ -501,6 +528,22 @@ class RequisicaoItemInline(admin.TabularInline):
     autocomplete_fields = ("exame",)
 
     fields = ("exame",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(exame__isnull=False)
+
+
+class RequisicaoItemMedInline(admin.TabularInline):
+
+    model = RequisicaoItem
+    extra = 1
+
+    autocomplete_fields = ("exame_medico",)
+
+    fields = ("exame_medico",)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(exame_medico__isnull=False)
 
 
 # =========================================================
@@ -514,10 +557,9 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "paciente",
+        "tipo",
         "estado",
         "status_clinico",
-        "lancar_resultado",
-        "ver_pdf_resultado",
         "criado_em",
     )
 
@@ -557,7 +599,8 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
         "versao",
     )
 
-    inlines = (RequisicaoItemInline,)
+    # Inlines são escolhidos dinamicamente (por tipo/setor).
+    inlines: tuple = ()
 
     # =====================================================
     # FIELDSETS
@@ -578,6 +621,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             {
                 "fields": (
                     "paciente",
+                    "tipo",
                     "analista",
                     "estado",
                     "status_clinico",
@@ -601,6 +645,50 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             },
         ),
     )
+
+    # =====================================================
+    # UI POR PERFIL (RESTRIÇÕES DE LANÇAMENTO)
+    # =====================================================
+
+    def get_list_display(self, request):
+        base = [
+            "id_custom",
+            "paciente",
+            "tipo",
+            "estado",
+            "status_clinico",
+            "criado_em",
+        ]
+
+        # "Lançar resultados" / PDF somente para Administrador e Técnico de Laboratório.
+        if _user_has_any_group(request.user, ["Administrador", "Técnico de Laboratório"]):
+            base.insert(5, "lancar_resultado")
+            base.insert(6, "ver_pdf_resultado")
+
+        return tuple(base)
+
+    def get_readonly_fields(self, request, obj=None):
+        ro = list(super().get_readonly_fields(request, obj))
+        # Tipo/setor só pode ser definido na criação.
+        if obj is not None and "tipo" not in ro:
+            ro.append("tipo")
+        return tuple(ro)
+
+    def get_inline_instances(self, request, obj=None):
+        # Requisição por setor: mostrar apenas os itens relevantes no change form.
+        inline_classes = []
+        if obj is None:
+            # No add form mostramos ambos para permitir escolher o tipo antes de salvar.
+            inline_classes = [RequisicaoItemLabInline, RequisicaoItemMedInline]
+        else:
+            if obj.tipo == RequisicaoAnalise.Tipo.EXAME_MEDICO:
+                inline_classes = [RequisicaoItemMedInline]
+            else:
+                inline_classes = [RequisicaoItemLabInline]
+
+        return [
+            inline_class(self.model, self.admin_site) for inline_class in inline_classes
+        ]
 
     # -----------------------------------------------------
     # LANÇAR RESULTADO

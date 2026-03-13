@@ -32,7 +32,7 @@ export default function EnfermagemPage() {
         setErro(null)
 
         const [reqs, procs] = await Promise.all([
-          apiFetch<any>("/requisicoes/?estado=pendente"),
+          apiFetch<any>("/requisicoes/?tipo=LAB&estado=pendente"),
           apiFetch<any>("/enfermagem/procedimento/"),
         ])
 
@@ -128,4 +128,3 @@ export default function EnfermagemPage() {
     </AppLayout>
   )
 }
-

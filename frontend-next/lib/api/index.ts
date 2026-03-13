@@ -11,6 +11,7 @@ function rewriteUrl(url: string): string {
   const aliases: Array<[string, string]> = [
     ["/pacientes", "/clinico/paciente"],
     ["/exames", "/clinico/exame"],
+    ["/exames-medicos", "/clinico/examemedico"],
     ["/requisicoes", "/clinico/requisicaoanalise"],
     ["/faturas", "/faturamento/fatura"],
     ["/consultas", "/consultas/consulta"],

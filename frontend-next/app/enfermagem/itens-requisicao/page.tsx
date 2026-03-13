@@ -17,6 +17,7 @@ export default function EnfermagemItensRequisicaoPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<Row[]>([])
   const [exames, setExames] = useState<ExameRow[]>([])
+  const [examesMedicos, setExamesMedicos] = useState<ExameRow[]>([])
 
   useEffect(() => {
     let mounted = true
@@ -25,22 +26,25 @@ export default function EnfermagemItensRequisicaoPage() {
         setLoading(true)
         setErro(null)
 
-        const [itemsRes, examesRes] = await Promise.all([
+        const [itemsRes, examesRes, examesMedicosRes] = await Promise.all([
           apiFetch<any>(
             requisicao
               ? `/clinico/requisicaoitem/?requisicao=${encodeURIComponent(requisicao)}`
               : "/clinico/requisicaoitem/"
           ),
           apiFetch<any>("/exames/"),
+          apiFetch<any>("/exames-medicos/"),
         ])
 
         const list = (v: any) => (v && v.results ? v.results : v) || []
         const items = list(itemsRes)
         const exs = list(examesRes)
+        const exsMed = list(examesMedicosRes)
 
         if (!mounted) return
         setData(Array.isArray(items) ? items.slice(0, 200) : [])
         setExames(Array.isArray(exs) ? exs : [])
+        setExamesMedicos(Array.isArray(exsMed) ? exsMed : [])
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar itens.")
@@ -63,13 +67,28 @@ export default function EnfermagemItensRequisicaoPage() {
     return map
   }, [exames])
 
+  const exameMedById = useMemo(() => {
+    const map = new Map<number, string>()
+    examesMedicos.forEach((e) => {
+      if (typeof e.id === "number") map.set(e.id, e.nome || e.id_custom || String(e.id))
+    })
+    return map
+  }, [examesMedicos])
+
   const columns = useMemo(
     () => [
       { header: "Código", render: (r: Row) => r.id_custom || r.id || "-" },
       { header: "Requisição", render: (r: Row) => r.requisicao || "-" },
-      { header: "Exame", render: (r: Row) => exameById.get(r.exame) || r.exame || "-" },
+      {
+        header: "Exame",
+        render: (r: Row) => {
+          if (r.exame) return exameById.get(r.exame) || r.exame || "-"
+          if (r.exame_medico) return exameMedById.get(r.exame_medico) || r.exame_medico || "-"
+          return "-"
+        },
+      },
     ],
-    [exameById]
+    [exameById, exameMedById]
   )
 
   return (
@@ -106,4 +125,3 @@ export default function EnfermagemItensRequisicaoPage() {
     </AppLayout>
   )
 }
-

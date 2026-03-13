@@ -263,8 +263,10 @@ class ExameMedicoCampoSerializer(serializers.ModelSerializer):
 
 class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 	"""
-	Serializer para requisições de análise laboratorial.
-	Agrupa múltiplos exames para um paciente.
+	Serializer para requisições (por setor).
+
+	- LAB: aceita `exames` (laboratoriais)
+	- MED: aceita `exames_medicos`
 	"""
 
 	# DRF marca ManyToMany com `through` como read-only por padrão. Mantemos a
@@ -275,6 +277,32 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 		required=False,
 	)
 
+	exames_medicos = serializers.PrimaryKeyRelatedField(
+		many=True,
+		queryset=ExameMedico.objects.all(),
+		required=False,
+	)
+
+	paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
+	paciente_codigo = serializers.CharField(source="paciente.id_custom", read_only=True)
+
+	class RequisicaoItemResumoSerializer(serializers.ModelSerializer):
+		exame_nome = serializers.CharField(source="exame.nome", read_only=True)
+		exame_medico_nome = serializers.CharField(source="exame_medico.nome", read_only=True)
+
+		class Meta:
+			model = RequisicaoItem
+			fields = [
+				"id",
+				"id_custom",
+				"exame",
+				"exame_nome",
+				"exame_medico",
+				"exame_medico_nome",
+			]
+
+	itens = RequisicaoItemResumoSerializer(many=True, read_only=True)
+
 	class Meta:
 		model = RequisicaoAnalise
 		fields = [
@@ -282,7 +310,12 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 			'id_custom',
 			'inquilino',
 			'paciente',
+			'paciente_nome',
+			'paciente_codigo',
+			'tipo',
 			'exames',
+			'exames_medicos',
+			'itens',
 			'analista',
 			'estado',
 			'status_clinico',
@@ -294,6 +327,9 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 			'id',
 			'id_custom',
 			'inquilino',
+			'paciente_nome',
+			'paciente_codigo',
+			'itens',
 			'possui_resultado_critico',
 			'criado_em',
 			'atualizado_em',
@@ -303,36 +339,116 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 				'required': True,
 				'help_text': 'Paciente para o qual a análise foi requisitada',
 			},
+			"tipo": {
+				"required": False,
+				"help_text": "Tipo/setor da requisição (LAB ou MED).",
+			},
 		}
 
+	def validate(self, attrs):
+		# Normaliza para permitir "default LAB" quando não informado.
+		tipo = attrs.get("tipo") or getattr(self.instance, "tipo", None) or RequisicaoAnalise.Tipo.LABORATORIO
+
+		exames = attrs.get("exames", None)
+		exames_medicos = attrs.get("exames_medicos", None)
+
+		# Regra: requisição por setor, sem mistura.
+		if tipo == RequisicaoAnalise.Tipo.LABORATORIO:
+			if exames_medicos:
+				raise serializers.ValidationError(
+					{"exames_medicos": "Requisição LAB não aceita exames médicos."}
+				)
+		elif tipo == RequisicaoAnalise.Tipo.EXAME_MEDICO:
+			if exames:
+				raise serializers.ValidationError(
+					{"exames": "Requisição MED não aceita exames laboratoriais."}
+				)
+		else:
+			raise serializers.ValidationError({"tipo": "Tipo de requisição inválido."})
+
+		# No create: exigir pelo menos um item.
+		if self.instance is None:
+			if tipo == RequisicaoAnalise.Tipo.LABORATORIO and not exames:
+				raise serializers.ValidationError(
+					{"exames": "Informe ao menos um exame laboratorial."}
+				)
+			if tipo == RequisicaoAnalise.Tipo.EXAME_MEDICO and not exames_medicos:
+				raise serializers.ValidationError(
+					{"exames_medicos": "Informe ao menos um exame médico."}
+				)
+
+		return attrs
+
 	def create(self, validated_data):
-		# `exames` é ManyToMany com `through`, então precisamos criar os itens manualmente.
+		# `exames` (LAB) é ManyToMany com `through`. `exames_medicos` (MED) é derivado dos itens.
 		exames = validated_data.pop('exames', [])
+		exames_medicos = validated_data.pop("exames_medicos", [])
+
+		tipo = validated_data.get("tipo") or RequisicaoAnalise.Tipo.LABORATORIO
+
 		requisicao = RequisicaoAnalise.objects.create(**validated_data)
 
-		for exame in exames:
-			requisicao.adicionar_exame(exame)
+		if tipo == RequisicaoAnalise.Tipo.LABORATORIO:
+			for exame in exames:
+				requisicao.adicionar_exame(exame)
+		elif tipo == RequisicaoAnalise.Tipo.EXAME_MEDICO:
+			for exame_medico in exames_medicos:
+				requisicao.adicionar_exame_medico(exame_medico)
 
 		return requisicao
 
 	def update(self, instance, validated_data):
+		# tipo é imutável por regra de setor
+		tipo_novo = validated_data.get("tipo", instance.tipo)
+		if tipo_novo != instance.tipo:
+			raise serializers.ValidationError({"tipo": "Tipo/setor da requisição é imutável."})
+
 		exames = validated_data.pop('exames', None)
+		exames_medicos = validated_data.pop("exames_medicos", None)
 
 		instance = super().update(instance, validated_data)
 
-		if exames is not None:
-			desejados = {e.id for e in exames}
-			atuais = set(instance.itens.values_list('exame_id', flat=True))
+		if instance.tipo == RequisicaoAnalise.Tipo.LABORATORIO:
+			if exames_medicos is not None:
+				raise serializers.ValidationError(
+					{"exames_medicos": "Requisição LAB não aceita exames médicos."}
+				)
+			if exames is not None:
+				desejados = {e.id for e in exames}
+				atuais = set(
+					instance.itens.filter(exame__isnull=False).values_list('exame_id', flat=True)
+				)
 
-			remover = atuais - desejados
-			adicionar = desejados - atuais
+				remover = atuais - desejados
+				adicionar = desejados - atuais
 
-			if remover:
-				# Remove fisicamente para não bloquear re-adição por `unique_together`.
-				instance.itens.filter(exame_id__in=remover).delete()
+				if remover:
+					instance.itens.filter(exame_id__in=remover).delete()
 
-			for exame in Exame.objects.filter(id__in=adicionar):
-				instance.adicionar_exame(exame)
+				for exame in Exame.objects.filter(id__in=adicionar):
+					instance.adicionar_exame(exame)
+
+		elif instance.tipo == RequisicaoAnalise.Tipo.EXAME_MEDICO:
+			if exames is not None:
+				raise serializers.ValidationError(
+					{"exames": "Requisição MED não aceita exames laboratoriais."}
+				)
+			if exames_medicos is not None:
+				desejados = {e.id for e in exames_medicos}
+				atuais = set(
+					instance.itens.filter(exame_medico__isnull=False).values_list(
+						'exame_medico_id', flat=True
+					)
+				)
+
+				remover = atuais - desejados
+				adicionar = desejados - atuais
+
+				if remover:
+					instance.itens.filter(exame_medico_id__in=remover).delete()
+
+				for exame_medico in ExameMedico.objects.filter(id__in=adicionar):
+					instance.adicionar_exame_medico(exame_medico)
 
 		return instance
 
@@ -350,10 +466,6 @@ class RequisicaoItemSerializer(serializers.ModelSerializer):
 			'requisicao': {
 				'required': True,
 				'help_text': 'Requisição pai que contém este item',
-			},
-			'exame': {
-				'required': True,
-				'help_text': 'Exame incluído nesta requisição',
 			},
 		}
 

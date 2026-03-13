@@ -96,7 +96,11 @@ def test_fatura_clinico_sincroniza_exame_medico():
     paciente = _paciente(tenant)
     exame_medico = _exame_medico(tenant)
 
-    req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
+    req = RequisicaoAnalise.objects.create(
+        inquilino=tenant,
+        paciente=paciente,
+        tipo=RequisicaoAnalise.Tipo.EXAME_MEDICO,
+    )
     RequisicaoItem.objects.create(
         inquilino=tenant,
         requisicao=req,

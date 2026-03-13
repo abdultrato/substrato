@@ -92,7 +92,7 @@ class PacienteFilter(SafeFilterSet):
 class RequisicaoAnaliseFilter(SafeFilterSet) :
 	class Meta :
 		model = RequisicaoAnalise
-		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "paciente", "analista", "estado", "status_clinico", "possui_resultado_critico", ]
+		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "paciente", "analista", "tipo", "estado", "status_clinico", "possui_resultado_critico", ]
 
 
 # =====================================================
@@ -102,7 +102,7 @@ class RequisicaoAnaliseFilter(SafeFilterSet) :
 class RequisicaoItemFilter(SafeFilterSet) :
 	class Meta :
 		model = RequisicaoItem
-		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "requisicao", "exame", ]
+		fields = ["inquilino", "id_custom", "criado_em", "atualizado_em", "criado_por", "atualizado_por", "requisicao", "exame", "exame_medico", ]
 
 
 # =====================================================

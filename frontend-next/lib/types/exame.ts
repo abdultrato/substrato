@@ -25,3 +25,6 @@ export type Exame = {
   criado_em?: string
   atualizado_em?: string
 }
+
+// Exame médico (imagem/diagnóstico). Mantemos shape compatível com Exame para simplificar UI.
+export type ExameMedico = Exame

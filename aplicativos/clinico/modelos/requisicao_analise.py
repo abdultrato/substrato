@@ -15,10 +15,21 @@ User = settings.AUTH_USER_MODEL
 class RequisicaoAnalise(NoNameCoreModel):
     prefixo = "REQ"
 
+    class Tipo(models.TextChoices):
+        LABORATORIO = "LAB", "Laboratório"
+        EXAME_MEDICO = "MED", "Exame médico"
+
     paciente = models.ForeignKey(
         Paciente,
         on_delete=models.CASCADE,
         related_name="requisicoes",
+    )
+
+    tipo = models.CharField(
+        max_length=3,
+        choices=Tipo.choices,
+        default=Tipo.LABORATORIO,
+        db_index=True,
     )
 
     exames = models.ManyToManyField(
@@ -86,11 +97,16 @@ class RequisicaoAnalise(NoNameCoreModel):
 
         if self.pk:
             original = (
-                self.__class__.all_objects.filter(pk=self.pk).only("paciente").first()
+                self.__class__.all_objects.filter(pk=self.pk)
+                .only("paciente", "tipo")
+                .first()
             )
 
             if original and original.paciente_id != self.paciente_id:
                 raise ValidationError("Paciente da requisição é imutável.")
+
+            if original and original.tipo != self.tipo:
+                raise ValidationError("Tipo/setor da requisição é imutável.")
 
         self._verificar_estado_terminal()
 
@@ -101,6 +117,11 @@ class RequisicaoAnalise(NoNameCoreModel):
     # =====================================================
 
     def adicionar_exame(self, exame: Exame):
+        if self.tipo != self.Tipo.LABORATORIO:
+            raise ValidationError(
+                "Esta requisição é de exames médicos e não aceita exames laboratoriais."
+            )
+
         if not self._esta_editavel():
             raise ValidationError(
                 "Não é possível adicionar exames após início do processamento."
@@ -117,6 +138,28 @@ class RequisicaoAnalise(NoNameCoreModel):
 
             except IntegrityError:
                 raise ValidationError("Exame já adicionado à requisição.")
+
+    def adicionar_exame_medico(self, exame_medico):
+        if self.tipo != self.Tipo.EXAME_MEDICO:
+            raise ValidationError(
+                "Esta requisição é laboratorial e não aceita exames médicos."
+            )
+
+        if not self._esta_editavel():
+            raise ValidationError(
+                "Não é possível adicionar exames após início do processamento."
+            )
+
+        from .requisicao_item import RequisicaoItem
+
+        with transaction.atomic():
+            try:
+                return RequisicaoItem.all_objects.create(
+                    requisicao=self,
+                    exame_medico=exame_medico,
+                )
+            except IntegrityError:
+                raise ValidationError("Exame médico já adicionado à requisição.")
 
     # =====================================================
     # TRANSIÇÃO DE ESTADO
@@ -152,6 +195,26 @@ class RequisicaoAnalise(NoNameCoreModel):
         return Resultado.objects.create(
             requisicao=self,
             inquilino=self.inquilino,
+        )
+
+    # =====================================================
+    # VIEWS/DRF HELPERS
+    # =====================================================
+
+    @property
+    def exames_medicos(self):
+        """
+        Exames médicos associados via RequisicaoItem.
+
+        Nota: não existe ManyToMany explícito para ExameMedico; essa propriedade
+        existe para suportar serialização (API) e manter a regra de "requisição
+        por setor" sem duplicar modelo.
+        """
+        from .exames_medicos import ExameMedico
+
+        return (
+            ExameMedico.objects.filter(requisicoes__requisicao=self, requisicoes__deletado=False)
+            .distinct()
         )
 
     # =====================================================
