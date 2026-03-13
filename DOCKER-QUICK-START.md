@@ -10,6 +10,19 @@ cp .env.docker .env
 
 ### 2. Iniciar
 
+**Linux/Kali:**
+```bash
+./docker-up.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+./docker-up.ps1
+```
+
+Esses scripts automatizam o processo de build e inicialização, incluindo verificação de dependências e criação do arquivo .env.
+
+Alternativamente, você pode executar manualmente:
 ```bash
 docker compose up --build -d
 # ou (ver logs no terminal):

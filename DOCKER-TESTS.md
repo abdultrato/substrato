@@ -43,17 +43,26 @@ cat .env | grep -E "DJANGO|POSTGRES|REDIS"
 
 **Esperado**: Variáveis presentes
 
-#### Passo B: Build das imagens (OPCIONAL - leva tempo)
+#### Passo B: Build e iniciar containers
 
+**Linux/Kali:**
 ```bash
-# Build backend
-docker build -f Dockerfile -t substrato_backend:latest .
-
-# Build frontend
-docker build -f Dockerfile.frontend -t substrato_frontend:latest .
+./docker-up.sh
 ```
 
-**Esperado**: Builds com sucesso
+**Windows (PowerShell):**
+```powershell
+./docker-up.ps1
+```
+
+Esses scripts automatizam o processo de build e inicialização, incluindo verificação de dependências e criação do arquivo .env.
+
+Alternativamente, você pode executar manualmente:
+```bash
+docker compose up --build -d
+```
+
+**Esperado**: Containers iniciados com sucesso
 
 #### Passo C: Verificar compose
 
