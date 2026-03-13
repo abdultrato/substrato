@@ -21,6 +21,7 @@ interface AuthContextType {
     authenticated: boolean
     isAuthenticated: boolean
     refreshUser: () => Promise<void>
+    signIn: (user: SessionUser) => void
     signOut: () => void
 }
 
@@ -45,6 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
+    const signIn = useCallback((u: SessionUser) => {
+        // O login persiste no localStorage; aqui sincronizamos o estado em memória
+        // para evitar loop de redirecionamento em páginas protegidas.
+        setUser(u)
+    }, [])
+
     useEffect(() => {
         const stored = getSessionUser()
 
@@ -67,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authenticated: !!user,
         isAuthenticated: !!user,
         refreshUser,
+        signIn,
         signOut,
     }
 

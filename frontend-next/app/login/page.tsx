@@ -5,11 +5,13 @@ import { login } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
+import useAuth from "@/hooks/useAuth";
 
 export default function LoginPage () {
     useAuthGuard( { requireAuth: false } )
 
     const router = useRouter();
+    const { signIn } = useAuth()
     const [user, setUser] = useState( "" );
     const [pass, setPass] = useState( "" );
     const [error, setError] = useState( "" );
@@ -20,6 +22,7 @@ export default function LoginPage () {
 
         try {
             const sessionUser = await login( user, pass );
+            if ( sessionUser ) signIn( sessionUser )
             const next =
                 typeof window !== "undefined"
                     ? new URLSearchParams( window.location.search ).get( "next" )
