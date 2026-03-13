@@ -12,6 +12,8 @@ const nextConfig = {
 
       // Admin + static/media proxy (useful for links in the UI)
       { source: "/admin/:path*", destination: `${backend}/admin/:path*` },
+      // PDFs (Django views, e.g. /pdf/resultado/<id_custom>/)
+      { source: "/pdf/:path*", destination: `${backend}/pdf/:path*` },
       { source: "/static/:path*", destination: `${backend}/static/:path*` },
       { source: "/media/:path*", destination: `${backend}/media/:path*` },
     ]
@@ -19,4 +21,3 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
-

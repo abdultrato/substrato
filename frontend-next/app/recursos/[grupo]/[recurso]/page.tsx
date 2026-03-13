@@ -7,6 +7,7 @@ import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function RecursosRecursoPage({
   params,
@@ -51,6 +52,7 @@ export default function RecursosRecursoPage({
       rowHref={(row) =>
         `${basePath}/${row.id ?? row.pk ?? row.id_custom ?? ""}`.replace(/\/?$/, "")
       }
+      requiredGroups={[GROUPS.ADMIN]}
     />
   )
 }

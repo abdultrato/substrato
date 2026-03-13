@@ -7,6 +7,7 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function NovoRecursoPage({
   params,
@@ -20,7 +21,7 @@ export default function NovoRecursoPage({
 
   if (!found) {
     return (
-      <AppLayout>
+      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -38,7 +39,7 @@ export default function NovoRecursoPage({
   }
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
           title={`Novo ${found.resource.label}`}

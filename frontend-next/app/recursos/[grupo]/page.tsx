@@ -6,6 +6,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleGroup } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function RecursosGrupoPage({
   params,
@@ -19,7 +20,7 @@ export default function RecursosGrupoPage({
 
   if (!group) {
     return (
-      <AppLayout>
+      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
         <div className="space-y-6">
           <PageHeader title="Módulo não encontrado" subtitle={params.grupo} />
           <div className="text-sm text-gray-600">
@@ -34,7 +35,7 @@ export default function RecursosGrupoPage({
   }
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader title={group.label} subtitle="Recursos disponíveis" />
 

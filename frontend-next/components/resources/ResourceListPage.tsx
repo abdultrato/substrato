@@ -45,12 +45,14 @@ export default function ResourceListPage({
   adminListHref,
   createHref,
   rowHref,
+  requiredGroups,
 }: {
   title: string
   endpoint: string
   adminListHref?: string
   createHref?: string
   rowHref?: RowHref
+  requiredGroups?: string[]
 }) {
   const { loading } = useAuthGuard()
   const [data, setData] = useState<Row[]>([])
@@ -115,7 +117,7 @@ export default function ResourceListPage({
   if (loading) return null
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
           title={title}

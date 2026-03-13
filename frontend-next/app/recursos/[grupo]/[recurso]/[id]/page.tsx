@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 function ensureTrailingSlash(url: string) {
   return url.endsWith("/") ? url : `${url}/`
@@ -53,7 +54,7 @@ export default function RecursoDetalhePage({
 
   if (!found) {
     return (
-      <AppLayout>
+      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -88,7 +89,7 @@ export default function RecursoDetalhePage({
   const basePath = `/recursos/${params.grupo}/${params.recurso}`
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
           title={`${found.resource.label} — ${params.id}`}

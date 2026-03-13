@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function ModuloRecursoPage({
   params,
@@ -42,7 +43,7 @@ export default function ModuloRecursoPage({
       title={`${found.group.label} / ${found.resource.label}`}
       endpoint={found.resource.endpoint}
       adminListHref={found.resource.adminListHref}
+      requiredGroups={[GROUPS.ADMIN]}
     />
   )
 }
-

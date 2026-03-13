@@ -9,6 +9,7 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function EditarRecursoPage({
   params,
@@ -48,7 +49,7 @@ export default function EditarRecursoPage({
 
   if (!found) {
     return (
-      <AppLayout>
+      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -68,7 +69,7 @@ export default function EditarRecursoPage({
   const basePath = `/recursos/${params.grupo}/${params.recurso}`
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
           title={`Editar ${found.resource.label} — ${params.id}`}

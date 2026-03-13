@@ -8,6 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
+import { GROUPS } from "@/lib/rbac"
 
 type FaturaRow = Record<string, any>
 
@@ -129,7 +130,14 @@ export default function FaturasPage() {
   if (loading) return null
 
   return (
-    <AppLayout>
+    <AppLayout
+      requiredGroups={[
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.CONTABILIDADE,
+        GROUPS.TECNICO_ADMINISTRATIVO,
+      ]}
+    >
       <div className="space-y-6">
         <PageHeader
           title="Faturas"
@@ -159,4 +167,3 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
-

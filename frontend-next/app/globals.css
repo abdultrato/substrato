@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ==============================
    PALETA / VARIÁVEIS
 ================================ */
@@ -38,75 +42,14 @@ html, body {
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: var(--bg);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(168, 35, 35, 0.18), transparent 60%),
+        radial-gradient(900px 700px at 110% 0%, rgba(2, 132, 199, 0.10), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(168, 35, 35, 0.08), transparent 55%),
+        var(--bg);
     color: var(--text);
-    padding-bottom: 800px;
     transition: background .5s ease, color .5s ease;
-}
-
-/* ==============================
-   HEADER FIXO
-================================ */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 120px;
-    background: var(--primary-600);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 24px;
-    box-shadow: 2px 2px 20px rgba(2, 2, 2, 0.46);
-    z-index: 1000;
-}
-
-header img {
-    height: 55px;
-    margin-right: 20px;
-    width: 55px;
-    border-radius: 50%;
-    background: #ffffff;
-}
-
-header h1 {
-    padding-top: 10px;
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: #fff;
-}
-
-/* NAV */
-nav {
-    display: flex;
-    gap: 20px;
-}
-
-nav a {
-    color: #fff;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-nav a:hover {
-    color: var(--primary-300);
-}
-
-/* ==============================
-   MAIN (layout clínico original)
-================================ */
-main {
-    margin-top: 120px;
-    width: 90vw;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 20px;
-    background-color: var(--card);
-    border-radius: 0 0 10px 10px;
-    box-shadow: 2px 2px 20px rgba(2, 2, 2, 0.46);
 }
 
 /* ==============================
@@ -240,17 +183,7 @@ tr:hover {
 /* ==============================
    FOOTER FIXO
 ================================ */
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--primary-500);
-    color: #fff;
-    text-align: center;
-    padding: 5px;
-    font-weight: 700;
-}
+/* Removido: layout atual usa header/sidebar próprios via React. */
 
 /* ==============================
    HOMEPAGE

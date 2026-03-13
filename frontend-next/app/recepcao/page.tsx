@@ -16,6 +16,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
+import { GROUPS } from "@/lib/rbac"
 
 interface WorkspaceResumo {
     checkins_hoje: number
@@ -120,7 +121,7 @@ export default function RecepcaoPage() {
     if (loading) return null
 
     return (
-        <AppLayout>
+        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
             <div className="space-y-6">
                 <PageHeader
                     title="Recepção"

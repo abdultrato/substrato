@@ -6,13 +6,14 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { MODULES } from "@/lib/modules"
+import { GROUPS } from "@/lib/rbac"
 
 export default function RecursosPage() {
   const { loading } = useAuthGuard()
   if (loading) return null
 
   return (
-    <AppLayout>
+    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
           title="Recursos da API v1"
