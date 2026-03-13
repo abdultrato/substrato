@@ -8,6 +8,7 @@ REST_FRAMEWORK = {
 }
 """
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status
@@ -169,6 +170,48 @@ def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optiona
     
     Chamado automaticamente pelo DRF quando uma exceção é lançada
     """
+
+    # Model/domain validation errors (django.core.exceptions.ValidationError) are not
+    # handled by DRF's default exception handler. Convert them to RFC 7807 400 here.
+    if isinstance(exc, DjangoValidationError):
+        request_path = context.get("request").path if context.get("request") else None
+
+        validation_errors: Any
+        if hasattr(exc, "message_dict"):
+            validation_errors = exc.message_dict
+        elif hasattr(exc, "messages"):
+            validation_errors = exc.messages
+        else:
+            validation_errors = str(exc)
+
+        def _first_message(value: Any) -> str:
+            if isinstance(value, (list, tuple)) and value:
+                return _first_message(value[0])
+            if isinstance(value, dict) and value:
+                # Try to pick a stable first key for message extraction.
+                k = sorted(value.keys(), key=lambda x: str(x))[0]
+                return _first_message(value[k])
+            return str(value)
+
+        detail = (
+            _first_message(validation_errors)
+            if validation_errors not in (None, "", [])
+            else "Erro de validação."
+        )
+
+        problem_details = {
+            "type": "about:blank",
+            "status": status.HTTP_400_BAD_REQUEST,
+            "title": "Bad Request",
+            "detail": detail,
+            "instance": request_path,
+            "code": "VALIDATION_ERROR",
+        }
+
+        if isinstance(validation_errors, dict):
+            problem_details["validationErrors"] = validation_errors
+
+        return Response(problem_details, status=status.HTTP_400_BAD_REQUEST)
     
     # Tentar usar handler padrão do DRF primeiro
     response = exception_handler(exc, context)

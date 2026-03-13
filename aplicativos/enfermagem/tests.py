@@ -180,3 +180,36 @@ def test_registro_e_sinal_vital():
     assert registro.inquilino == tenant
     assert sv.inquilino == tenant
     assert sv.registro == registro
+
+
+@pytest.mark.django_db
+def test_procedimento_item_catalogo_cria_material_pendente_quando_sem_estoque():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+
+    proc = Procedimento.objects.create(paciente=paciente)
+    produto = _produto(tenant)
+
+    catalogo = ProcedimentoCatalogo.objects.create(inquilino=tenant, nome="Curativo", preco_padrao=Decimal("10.00"))
+    ProcedimentoCatalogoMaterial.objects.create(
+        inquilino=tenant,
+        catalogo=catalogo,
+        produto=produto,
+        quantidade_padrao=Decimal("1.00"),
+        custo_unitario_padrao=Decimal("2.50"),
+    )
+
+    item = ProcedimentoItem.objects.create(
+        inquilino=tenant,
+        procedimento=proc,
+        catalogo=catalogo,
+        quantidade=1,
+    )
+
+    materiais = list(item.materiais_gerados.filter(deletado=False))
+    assert len(materiais) == 1
+
+    material = materiais[0]
+    assert material.produto_id == produto.id
+    assert material.lote_id is None
+    assert material.movimento_estoque_id is None

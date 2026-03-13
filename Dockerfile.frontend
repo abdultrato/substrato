@@ -4,7 +4,7 @@
 # ============================================================================
 
 # Stage 1: Builder
-FROM node:20-alpine as builder
+FROM node:20-bookworm-slim as builder
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ RUN npm run build
 
 # ============================================================================
 # Stage 2: Runtime
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
@@ -37,11 +37,12 @@ ARG BACKEND_URL=http://backend:8000
 ENV BACKEND_URL=$BACKEND_URL
 
 # Instalar dumb-init para gerenciamento de processos
-RUN apk add --no-cache dumb-init
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init \
+    && rm -rf /var/lib/apt/lists/*
 
 # Criar usuário não-root
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -m -u 1001 -g nodejs nextjs
 
 # Copiar apenas arquivos necessários do builder já com owner correto
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import unicodedata
+
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -10,13 +12,39 @@ CANONICAL_GROUPS: list[str] = [
     "Administrador",
     # Operacao
     "Recepcionista",
-    "Tecnico de Laboratorio",
+    "Técnico de Laboratório",
     "Enfermeiro",
-    "Medico",
-    "Tecnico de Farmacia",
+    "Médico",
+    "Técnico de Farmácia",
     "Medicina Ocupacional",
     "Contabilidade",
 ]
+
+ALIASES: dict[str, list[str]] = {
+    # Canonical -> aliases seen historically (sem/partial acentos).
+    "Técnico de Laboratório": [
+        "Tecnico de Laboratorio",
+        "Tecnico de Laboratório",
+        "Técnico de Laboratorio",
+    ],
+    "Técnico de Farmácia": [
+        "Tecnico de Farmacia",
+        "Tecnico de Farmácia",
+        "Técnico de Farmacia",
+    ],
+    "Médico": [
+        "Medico",
+    ],
+}
+
+
+def _normalize(value: str) -> str:
+    value = (value or "").strip().lower()
+    if not value:
+        return ""
+    value = unicodedata.normalize("NFD", value)
+    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+    return value
 
 
 class Command(BaseCommand):
@@ -41,16 +69,74 @@ class Command(BaseCommand):
 
         targets = ["Administrador"] if admin_only else CANONICAL_GROUPS
 
+        # Index existing groups by a normalized key to allow accent unification.
+        existing_by_norm: dict[str, list[Group]] = {}
+        for g in Group.objects.all():
+            existing_by_norm.setdefault(_normalize(g.name), []).append(g)
+
+        def ensure_group(canonical_name: str) -> Group:
+            norm = _normalize(canonical_name)
+            existing = existing_by_norm.get(norm, [])
+
+            if not existing:
+                if dry_run:
+                    self.stdout.write(f"[dry-run] Grupo seria criado: {canonical_name}")
+                    # Return a transient object; caller must avoid mutating it on dry-run.
+                    return Group(name=canonical_name)
+
+                group = Group.objects.create(name=canonical_name)
+                existing_by_norm.setdefault(norm, []).append(group)
+                self.stdout.write(f"Grupo criado: {canonical_name}")
+                return group
+
+            # If there are multiple variants (com/sem acento), choose/rename/merge.
+            canonical = next((g for g in existing if g.name == canonical_name), None)
+            if not canonical:
+                # Reuse the first variant and rename it to the canonical name.
+                canonical = existing[0]
+                if canonical.name != canonical_name:
+                    if dry_run:
+                        self.stdout.write(
+                            f"[dry-run] Grupo seria renomeado: {canonical.name} -> {canonical_name}"
+                        )
+                    else:
+                        old = canonical.name
+                        canonical.name = canonical_name
+                        canonical.save(update_fields=["name"])
+                        self.stdout.write(f"Grupo renomeado: {old} -> {canonical_name}")
+
+            # Merge any remaining variants into the canonical group.
+            for other in list(existing):
+                if other.id == getattr(canonical, "id", None):
+                    continue
+                if other.name == canonical_name:
+                    continue
+
+                if dry_run:
+                    self.stdout.write(
+                        f"[dry-run] Grupo seria mesclado: {other.name} -> {canonical_name}"
+                    )
+                    continue
+
+                # Merge perms/users, then drop the alias group.
+                canonical.permissions.add(*other.permissions.all())
+                canonical.user_set.add(*other.user_set.all())
+                other.delete()
+                self.stdout.write(f"Grupo mesclado e removido: {other.name} -> {canonical_name}")
+
+            self.stdout.write(f"Grupo ok: {canonical_name}")
+            return canonical
+
         for name in targets:
-            group, created = Group.objects.get_or_create(name=name)
-            if created:
-                self.stdout.write(f"Grupo criado: {name}")
-            else:
-                self.stdout.write(f"Grupo ok: {name}")
+            # Ensure canonical group + merge aliases.
+            for alias in ALIASES.get(name, []):
+                # Touch aliases in the index so they can be merged if they exist.
+                _ = existing_by_norm.get(_normalize(alias), [])
+            group = ensure_group(name)
 
             if name == "Administrador":
                 total = Permission.objects.count()
-                current = group.permissions.count()
+                current = 0 if dry_run or not getattr(group, "id", None) else group.permissions.count()
 
                 if dry_run:
                     self.stdout.write(
@@ -63,4 +149,3 @@ class Command(BaseCommand):
                             f"Administrador atualizado: {current} -> {total} permissoes."
                         )
                     )
-

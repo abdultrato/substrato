@@ -20,6 +20,15 @@ import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
 
+async function abrirPdfResultados(requisicaoId: number) {
+  const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
+    responseType: "blob",
+  })
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener,noreferrer")
+  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+}
+
 export default function LaboratorioPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -88,15 +97,14 @@ export default function LaboratorioPage() {
               Admin
             </Link>
 
-            {r.id_custom ? (
-              <Link
-                href={`/pdf/resultado/${r.id_custom}/`}
-                target="_blank"
-                rel="noreferrer"
+            {r.id ? (
+              <button
+                type="button"
+                onClick={() => abrirPdfResultados(Number(r.id))}
                 className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 PDF
-              </Link>
+              </button>
             ) : null}
           </div>
         ),

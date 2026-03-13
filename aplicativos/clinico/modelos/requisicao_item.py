@@ -85,7 +85,7 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         itens = []
 
-        for campo in campos:
+        for campo in campos_qs:
             # evita duplicação
             # resultado para exame laboratorial usa ResultadoItem
             if self.exame:

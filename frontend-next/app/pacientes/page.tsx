@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
-import { GROUPS } from "@/lib/rbac";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 function calcularIdade ( dataNascimento?: string ): string {
     if ( !dataNascimento ) return "—";
@@ -30,6 +32,14 @@ function calcularIdade ( dataNascimento?: string ): string {
 
 export default function PacientesPage () {
     useAuthGuard();
+    const { user } = useAuth();
+
+    const podeEditar = userHasAnyGroup( user, [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ] );
+    const podeApagar = userHasAnyGroup( user, [GROUPS.ADMIN] );
 
     const [pacientes, setPacientes] = useState<Paciente[]>( [] );
     const [loading, setLoading] = useState( true );
@@ -90,6 +100,10 @@ export default function PacientesPage () {
     }
 
     async function salvarPaciente () {
+        if ( !podeEditar ) {
+            setError( "Sem permissão para criar/editar pacientes." );
+            return;
+        }
         if ( !form.nome.trim() ) {
             setError( "Nome é obrigatório" );
             return;
@@ -114,6 +128,10 @@ export default function PacientesPage () {
     }
 
     async function apagarPaciente ( id: number ) {
+        if ( !podeApagar ) {
+            setError( "Sem permissão para apagar pacientes." );
+            return;
+        }
         if ( !confirm( "Deseja remover este paciente?" ) ) return;
 
         await apiFetch( `/pacientes/${id}/`, { method: "DELETE" } );
@@ -121,6 +139,10 @@ export default function PacientesPage () {
     }
 
     function iniciarEdicao ( p: Paciente ) {
+        if ( !podeEditar ) {
+            setError( "Sem permissão para editar pacientes." );
+            return;
+        }
         setForm( {
             nome: p.nome || "",
             data_nascimento: p.data_nascimento || "",
@@ -170,87 +192,96 @@ export default function PacientesPage () {
                 {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
 
                 {/* FORM */}
-                <div className="page-box" style={{ marginBottom: 20 }}>
-                    <h2>{editingId ? "Editar paciente" : "Novo paciente"}</h2>
+                {podeEditar ? (
+                    <div className="page-box" style={{ marginBottom: 20 }}>
+                        <h2>{editingId ? "Editar paciente" : "Novo paciente"}</h2>
 
-                    <form className="grid">
-                        <input
-                            name="nome"
-                            placeholder="Nome completo"
-                            value={form.nome}
-                            onChange={handleChange}
-                        />
+                        <form className="grid">
+                            <input
+                                name="nome"
+                                placeholder="Nome completo"
+                                value={form.nome}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            type="date"
-                            name="data_nascimento"
-                            value={form.data_nascimento}
-                            onChange={handleChange}
-                        />
+                            <input
+                                type="date"
+                                name="data_nascimento"
+                                value={form.data_nascimento}
+                                onChange={handleChange}
+                            />
 
-                        <select name="genero" value={form.genero} onChange={handleChange}>
-                            <option value="">Gênero</option>
-                            <option>Masculino</option>
-                            <option>Femenino</option>
-                        </select>
+                            <select name="genero" value={form.genero} onChange={handleChange}>
+                                <option value="">Gênero</option>
+                                <option>Masculino</option>
+                                <option>Femenino</option>
+                            </select>
 
-                        <select
-                            name="raca_origem"
-                            value={form.raca_origem}
-                            onChange={handleChange}
-                        >
-                            <option>Branca</option>
-                            <option>Negra</option>
-                            <option>Parda</option>
-                            <option>Amarela</option>
-                            <option>Indígena</option>
-                            <option>Outro</option>
-                        </select>
+                            <select
+                                name="raca_origem"
+                                value={form.raca_origem}
+                                onChange={handleChange}
+                            >
+                                <option>Branca</option>
+                                <option>Negra</option>
+                                <option>Parda</option>
+                                <option>Amarela</option>
+                                <option>Indígena</option>
+                                <option>Outro</option>
+                            </select>
 
-                        <input
-                            name="numero_id"
-                            placeholder="Documento"
-                            value={form.numero_id}
-                            onChange={handleChange}
-                        />
+                            <input
+                                name="numero_id"
+                                placeholder="Documento"
+                                value={form.numero_id}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            name="contacto"
-                            placeholder="Telefone"
-                            value={form.contacto}
-                            onChange={handleChange}
-                        />
+                            <input
+                                name="contacto"
+                                placeholder="Telefone"
+                                value={form.contacto}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            name="email"
-                            placeholder="Email"
-                            value={form.email}
-                            onChange={handleChange}
-                        />
+                            <input
+                                name="email"
+                                placeholder="Email"
+                                value={form.email}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            name="morada"
-                            placeholder="Morada"
-                            value={form.morada}
-                            onChange={handleChange}
-                        />
-                    </form>
+                            <input
+                                name="morada"
+                                placeholder="Morada"
+                                value={form.morada}
+                                onChange={handleChange}
+                            />
+                        </form>
 
-                    <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
-                        <button
-                            onClick={salvarPaciente}
-                            className={`btn-primary ${saving ? "btn-loading" : ""}`}
-                        >
-                            {editingId ? "Atualizar" : "Criar"}
-                        </button>
-
-                        {editingId && (
-                            <button onClick={resetForm} className="btn-secondary">
-                                Cancelar
+                        <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
+                            <button
+                                onClick={salvarPaciente}
+                                className={`btn-primary ${saving ? "btn-loading" : ""}`}
+                            >
+                                {editingId ? "Atualizar" : "Criar"}
                             </button>
-                        )}
+
+                            {editingId && (
+                                <button onClick={resetForm} className="btn-secondary">
+                                    Cancelar
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="page-box" style={{ marginBottom: 20 }}>
+                        <h2>Somente leitura</h2>
+                        <p style={{ color: "#555", marginTop: 6 }}>
+                            O seu perfil pode consultar pacientes, mas não pode criar/editar.
+                        </p>
+                    </div>
+                )}
 
                 {/* TABELA */}
                 <div className="table-container">
@@ -274,18 +305,25 @@ export default function PacientesPage () {
                                     <td>{p.genero || "-"}</td>
                                     <td>{p.contacto || "-"}</td>
                                     <td style={{ display: "flex", gap: 6 }}>
-                                        <button
-                                            onClick={() => iniciarEdicao( p )}
-                                            className="btn-secondary"
-                                        >
-                                            Editar
-                                        </button>
-                                        <button
-                                            onClick={() => apagarPaciente( p.id )}
-                                            className="btn-danger"
-                                        >
-                                            Apagar
-                                        </button>
+                                        <Link href={`/pacientes/${p.id}`} className="btn-secondary">
+                                            Ver
+                                        </Link>
+                                        {podeEditar && (
+                                            <button
+                                                onClick={() => iniciarEdicao( p )}
+                                                className="btn-secondary"
+                                            >
+                                                Editar
+                                            </button>
+                                        )}
+                                        {podeApagar && (
+                                            <button
+                                                onClick={() => apagarPaciente( p.id )}
+                                                className="btn-danger"
+                                            >
+                                                Apagar
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ) )}

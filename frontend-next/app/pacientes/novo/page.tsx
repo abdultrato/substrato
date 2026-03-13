@@ -65,8 +65,6 @@ export default function NovoPacientePage () {
             requiredGroups={[
                 GROUPS.ADMIN,
                 GROUPS.RECEPCAO,
-                GROUPS.ENFERMAGEM,
-                GROUPS.MEDICINA,
                 GROUPS.MEDICINA_OCUPACIONAL,
             ]}
         >

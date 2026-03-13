@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.utils import timezone
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,10 +9,11 @@ from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.faturamento.modelos.fatura import Fatura
 from dominio.clinico.estado_resultado import EstadoResultado
+from seguranca.permissoes.grupos import IsAdminOrContabilidade
 
 
 class DashboardStatsView(APIView):
-	permission_classes = [IsAuthenticated]
+	permission_classes = [IsAdminOrContabilidade]
 
 	def get(self, request):
 		inquilino = getattr(request, "inquilino", None)
@@ -50,4 +50,3 @@ class DashboardStatsView(APIView):
 				"faturamento_hoje": float(faturamento_hoje),
 			}
 		)
-

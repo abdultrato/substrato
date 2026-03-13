@@ -8,6 +8,8 @@ from drf_spectacular.openapi import (
 	OpenApiParameter,
 	OpenApiTypes,
 	)
+from django.http import HttpResponse
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
@@ -256,6 +258,22 @@ class RequisicaoAnaliseViewSet(ModelViewSet):
 		if inquilino is not None:
 			queryset = queryset.filter(inquilino=inquilino)
 		return queryset
+
+	@action(detail=True, methods=["get"])
+	def pdf_resultados(self, request, pk=None):
+		"""
+		Gera o PDF institucional de resultados laboratoriais (somente validados).
+
+		- Autenticação via JWT (API v1)
+		- RBAC controla acesso (ex.: Técnico de Laboratório pode emitir)
+		"""
+		requisicao = self.get_object()
+		from tarefas.gerar_pdf.pdf_generator_resultado import gerar_pdf_resultados
+
+		pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados=True)
+		resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+		resp["Content-Disposition"] = f'inline; filename="{filename}"'
+		return resp
 
 
 @extend_schema(

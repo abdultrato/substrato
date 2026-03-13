@@ -1,11 +1,12 @@
 from django.contrib.auth.models import Group
-from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from seguranca.permissoes import IsAdmin
+
 
 class GroupsPermissionsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
     def get(self, request):
         groups = Group.objects.all()

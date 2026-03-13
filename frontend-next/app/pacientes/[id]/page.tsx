@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Paciente } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
-import { GROUPS } from "@/lib/rbac";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 function calcularIdade ( dataNascimento?: string ): string {
     if ( !dataNascimento ) return "—";
@@ -31,9 +32,16 @@ function calcularIdade ( dataNascimento?: string ): string {
 
 export default function PacienteDetalhePage () {
     useAuthGuard();
+    const { user } = useAuth();
 
     const { id } = useParams();
     const router = useRouter();
+
+    const podeEditar = userHasAnyGroup( user, [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ] );
 
     const [paciente, setPaciente] = useState<Paciente | null>( null );
     const [loading, setLoading] = useState( true );
@@ -135,12 +143,18 @@ export default function PacienteDetalhePage () {
                         ← Voltar
                     </button>
 
-                    <button
-                        className="btn-primary"
-                        onClick={() => router.push( `/pacientes/${id}/editar` )}
-                    >
-                        Editar
-                    </button>
+                    {podeEditar ? (
+                        <button
+                            className="btn-primary"
+                            onClick={() => router.push( `/pacientes/${id}/editar` )}
+                        >
+                            Editar
+                        </button>
+                    ) : (
+                        <span style={{ color: "#666", alignSelf: "center", fontSize: 13 }}>
+                            Somente leitura
+                        </span>
+                    )}
                 </div>
             </div>
         </AppLayout>

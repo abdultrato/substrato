@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import DecimalField, F, Sum
 from django.db.models.functions import Coalesce
 
@@ -23,6 +23,7 @@ class Fatura(NoNameCoreModel):
         CLINICO = "CLI", "Clínico"
         FARMACIA = "FAR", "Farmácia"
         ENFERMAGEM = "ENF", "Enfermagem"
+        CONSULTA = "CON", "Consulta"
 
     origem = models.CharField(
         max_length=3,
@@ -47,6 +48,13 @@ class Fatura(NoNameCoreModel):
     )
     procedimento = models.OneToOneField(
         "enfermagem.Procedimento",
+        on_delete=models.PROTECT,
+        related_name="fatura",
+        null=True,
+        blank=True,
+    )
+    consulta = models.OneToOneField(
+        "consultas.ConsultaMedica",
         on_delete=models.PROTECT,
         related_name="fatura",
         null=True,
@@ -189,6 +197,8 @@ class Fatura(NoNameCoreModel):
             return self.venda
         if self.origem == self.Origem.ENFERMAGEM:
             return self.procedimento
+        if self.origem == self.Origem.CONSULTA:
+            return self.consulta
         return None
 
     def _validar_origem(self):
@@ -196,6 +206,7 @@ class Fatura(NoNameCoreModel):
             self.Origem.CLINICO: "requisicao",
             self.Origem.FARMACIA: "venda",
             self.Origem.ENFERMAGEM: "procedimento",
+            self.Origem.CONSULTA: "consulta",
         }
         campo_esperado = campos_origem[self.origem]
 
@@ -203,6 +214,7 @@ class Fatura(NoNameCoreModel):
             "requisicao": bool(self.requisicao_id),
             "venda": bool(self.venda_id),
             "procedimento": bool(self.procedimento_id),
+            "consulta": bool(self.consulta_id),
         }
         if sum(vinculados.values()) != 1:
             raise ValidationError(
@@ -242,6 +254,13 @@ class Fatura(NoNameCoreModel):
             if self.venda.inquilino_id != self.inquilino_id:
                 raise ValidationError(
                     {"venda": "Venda e fatura devem pertencer ao mesmo inquilino."}
+                )
+
+        if self.origem == self.Origem.CONSULTA and self.consulta_id:
+            self.paciente = self.consulta.paciente
+            if self.consulta.inquilino_id != self.inquilino_id:
+                raise ValidationError(
+                    {"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."}
                 )
 
         if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
@@ -309,18 +328,75 @@ class Fatura(NoNameCoreModel):
                     procedimento_material=material,
                 )
 
+        elif self.origem == self.Origem.CONSULTA:
+            descricao = f"Consulta: {getattr(self.consulta, 'tipo', '')}".strip()
+            if not descricao:
+                descricao = "Consulta"
+            FaturaItem.objects.create(
+                inquilino=self.inquilino,
+                fatura=self,
+                tipo_item=FaturaItem.TipoItem.AJUSTE,
+                descricao=descricao,
+                quantidade=Decimal("1.00"),
+                preco_unitario=getattr(self.consulta, "preco", Decimal("0.00")) or Decimal("0.00"),
+            )
+
         self.persistir_totais()
 
     # ==========================================
     # EMISSÃO
     # ==========================================
 
+    @transaction.atomic
     def emitir(self):
         if self.estado != self.Estado.RASCUNHO:
             raise ValidationError("Somente faturas em rascunho podem ser emitidas.")
 
         if not self.itens.filter(deletado=False).exists():
             raise ValidationError("Fatura sem itens.")
+
+        if self.origem == self.Origem.ENFERMAGEM and self.procedimento_id:
+            from aplicativos.farmacia.models.lote import Lote
+
+            pendentes = (
+                self.procedimento.materiais.filter(movimento_estoque__isnull=True)
+                .select_related("produto")
+                .all()
+            )
+
+            faltas = []
+            for material in pendentes:
+                # Regra atual: cada consumo precisa caber em um lote válido.
+                lotes = Lote.disponiveis(material.produto)
+                if self.inquilino_id:
+                    lotes = lotes.filter(inquilino_id=self.inquilino_id)
+
+                best = lotes.order_by("-saldo").first()
+                disponivel = int(getattr(best, "saldo", 0) or 0) if best else 0
+                necessario = int(material.quantidade or 0)
+
+                if disponivel < necessario:
+                    faltas.append(
+                        (
+                            f"{material.produto.nome} (produto_id={material.produto_id}): "
+                            f"necessario {necessario}, disponivel {disponivel}"
+                        )
+                    )
+
+            if faltas:
+                raise ValidationError(
+                    {
+                        "estoque": (
+                            "Estoque insuficiente na farmácia para emitir a fatura. "
+                            "Atualize o estoque e tente novamente."
+                        ),
+                        "itens": faltas,
+                    }
+                )
+
+            # Baixa/lança o estoque pendente antes de emitir.
+            for material in pendentes:
+                material.save(alocar_estoque=True)
 
         self.persistir_totais()
         self.estado = self.Estado.EMITIDA

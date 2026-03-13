@@ -1,4 +1,6 @@
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
 from aplicativos.enfermagem.modelos import (
@@ -199,6 +201,40 @@ class ProcedimentoItemViewSet(ModelViewSet):
         if inquilino is not None:
             queryset = queryset.filter(inquilino=inquilino)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        item = serializer.instance
+        warnings = []
+        if item is not None:
+            pendentes = (
+                item.materiais_gerados.filter(movimento_estoque__isnull=True)
+                .select_related("produto")
+                .all()
+            )
+            for material in pendentes:
+                warnings.append(
+                    {
+                        "tipo": "ESTOQUE_INSUFICIENTE",
+                        "produto_id": material.produto_id,
+                        "produto": material.produto.nome,
+                        "quantidade": material.quantidade,
+                        "mensagem": (
+                            f"Estoque insuficiente na farmácia para "
+                            f"'{material.produto.nome}'."
+                        ),
+                    }
+                )
+
+        data = dict(serializer.data)
+        if warnings:
+            data["warnings"] = warnings
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ProcedimentoItemValorViewSet(ModelViewSet):

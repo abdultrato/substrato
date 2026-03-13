@@ -13,6 +13,7 @@ function rewriteUrl(url: string): string {
     ["/exames", "/clinico/exame"],
     ["/requisicoes", "/clinico/requisicaoanalise"],
     ["/faturas", "/faturamento/fatura"],
+    ["/consultas", "/consultas/consulta"],
   ]
 
   for (const [from, to] of aliases) {

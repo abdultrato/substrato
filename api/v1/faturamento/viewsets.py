@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
@@ -32,10 +31,7 @@ class FaturaViewSet(ModelViewSet):
     @action(detail=True, methods=["post"])
     def emitir(self, request, pk=None):
         fatura = self.get_object()
-        try:
-            fatura.emitir()
-        except DjangoValidationError as exc:
-            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        fatura.emitir()
         return Response(self.get_serializer(fatura).data)
 
     @action(detail=True, methods=["post"])

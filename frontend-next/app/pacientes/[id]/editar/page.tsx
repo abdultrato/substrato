@@ -92,8 +92,6 @@ export default function EditarPacientePage () {
                 requiredGroups={[
                     GROUPS.ADMIN,
                     GROUPS.RECEPCAO,
-                    GROUPS.ENFERMAGEM,
-                    GROUPS.MEDICINA,
                     GROUPS.MEDICINA_OCUPACIONAL,
                 ]}
             >
@@ -111,8 +109,6 @@ export default function EditarPacientePage () {
             requiredGroups={[
                 GROUPS.ADMIN,
                 GROUPS.RECEPCAO,
-                GROUPS.ENFERMAGEM,
-                GROUPS.MEDICINA,
                 GROUPS.MEDICINA_OCUPACIONAL,
             ]}
         >

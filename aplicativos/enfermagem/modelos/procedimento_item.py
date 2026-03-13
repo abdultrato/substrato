@@ -156,37 +156,61 @@ class ProcedimentoItem(NoNameCoreModel):
 
         materiais = self.catalogo.materiais_padrao.select_related("produto").all()
         for material_padrao in materiais:
-            quantidade_material = material_padrao.quantidade_padrao * self.quantidade
-            lote = (
-                Lote.disponiveis(material_padrao.produto)
-                .filter(inquilino_id=self.inquilino_id)
-                .filter(saldo__gte=quantidade_material)
-                .first()
+            quantidade_material = material_padrao.quantidade_padrao * Decimal(
+                self.quantidade or 0
             )
-            if lote is None:
+            if quantidade_material <= 0:
+                continue
+
+            # ProcedimentoMaterial.quantidade é inteiro (unidades). Mantemos uma validação
+            # defensiva aqui para evitar truncamento silencioso.
+            if quantidade_material % 1 != 0:
                 raise ValidationError(
                     {
                         "catalogo": (
-                            f"Sem estoque disponível para material padrão "
-                            f"'{material_padrao.produto.nome}'."
+                            f"Quantidade do material padrão '{material_padrao.produto.nome}' "
+                            f"deve ser inteira (configuração do catálogo)."
                         )
                     }
                 )
+            quantidade_material_int = int(quantidade_material)
+
+            lote = (
+                Lote.disponiveis(material_padrao.produto)
+                .filter(inquilino_id=self.inquilino_id)
+                .filter(saldo__gte=quantidade_material_int)
+                .first()
+            )
 
             custo = material_padrao.custo_unitario_padrao
             if custo in (None, Decimal("0.00")):
                 custo = material_padrao.produto.preco_venda
 
-            ProcedimentoMaterial.objects.create(
-                inquilino=self.inquilino,
-                procedimento=self.procedimento,
-                procedimento_item=self,
-                produto=material_padrao.produto,
-                lote=lote,
-                quantidade=quantidade_material,
-                custo_unitario=custo,
-                observacao=material_padrao.observacao,
-            )
+            if lote is None:
+                # Permite criar a requisição do procedimento mesmo com falta de estoque.
+                # A baixa de estoque será exigida no momento da faturação/emissão.
+                material = ProcedimentoMaterial(
+                    inquilino=self.inquilino,
+                    procedimento=self.procedimento,
+                    procedimento_item=self,
+                    produto=material_padrao.produto,
+                    lote=None,
+                    quantidade=quantidade_material_int,
+                    custo_unitario=custo,
+                    observacao=material_padrao.observacao,
+                )
+                material.save(alocar_estoque=False)
+            else:
+                ProcedimentoMaterial.objects.create(
+                    inquilino=self.inquilino,
+                    procedimento=self.procedimento,
+                    procedimento_item=self,
+                    produto=material_padrao.produto,
+                    lote=lote,
+                    quantidade=quantidade_material_int,
+                    custo_unitario=custo,
+                    observacao=material_padrao.observacao,
+                )
 
     @transaction.atomic
     def save(self, *args, **kwargs):

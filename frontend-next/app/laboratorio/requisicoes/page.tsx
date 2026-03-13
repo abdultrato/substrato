@@ -12,6 +12,15 @@ import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
 
+async function abrirPdfResultados(requisicaoId: number) {
+  const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
+    responseType: "blob",
+  })
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener,noreferrer")
+  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+}
+
 const ESTADOS = [
   { value: "pendente", label: "Pendente" },
   { value: "em_analise", label: "Em análise" },
@@ -70,15 +79,14 @@ export default function LaboratorioRequisicoesPage() {
             </Link>
 
             {r.id_custom ? (
-              <Link
-                href={`/pdf/resultado/${r.id_custom}/`}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => abrirPdfResultados(Number(r.id))}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <FileDown size={14} />
                 PDF
-              </Link>
+              </button>
             ) : null}
           </div>
         ),
@@ -132,4 +140,3 @@ export default function LaboratorioRequisicoesPage() {
     </AppLayout>
   )
 }
-

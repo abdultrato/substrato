@@ -4,6 +4,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useEffect, useState } from "react"
 import http from "@/lib/http"
+import { GROUPS } from "@/lib/rbac"
 import {
     ClipboardList,
     FlaskConical,
@@ -38,7 +39,7 @@ export default function DashboardPage () {
     if ( loading ) return null
 
     return (
-        <AppLayout>
+        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
             <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800">
                     Dashboard

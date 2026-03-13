@@ -19,6 +19,9 @@ import {
     Calculator,
     Shield,
     Layers,
+    Activity,
+    BarChart3,
+    CalendarClock,
 } from "lucide-react"
 
 interface Props {
@@ -40,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
         href: "/",
         label: "Dashboard",
         icon: ClipboardList,
+        groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
     },
     {
         href: "/recepcao",
@@ -82,6 +86,30 @@ const NAV_ITEMS: NavItem[] = [
         label: "Contabilidade",
         icon: Calculator,
         groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
+    },
+    {
+        href: "/consultas",
+        label: "Consultas",
+        icon: CalendarClock,
+        groups: [
+            GROUPS.ADMIN,
+            GROUPS.RECEPCAO,
+            GROUPS.MEDICINA,
+            GROUPS.MEDICINA_OCUPACIONAL,
+            GROUPS.CONTABILIDADE,
+        ],
+    },
+    {
+        href: "/estatisticas",
+        label: "Estatísticas",
+        icon: BarChart3,
+        groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
+    },
+    {
+        href: "/auditoria",
+        label: "Auditoria",
+        icon: Activity,
+        groups: [GROUPS.ADMIN],
     },
     {
         href: "/pacientes",

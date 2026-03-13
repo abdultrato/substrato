@@ -1,4 +1,6 @@
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
+
+from seguranca.permissoes.grupos import IsAdmin
 
 
 class AdminOnlyMixin:
@@ -6,7 +8,7 @@ class AdminOnlyMixin:
     Apenas administradores.
     """
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdmin]
 
 
 class AuthenticatedMixin:

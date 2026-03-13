@@ -64,12 +64,30 @@ class InquilinoMiddleware :
 			return JsonResponse({"erro" : "Host inválido."}, status = 400)
 		
 		inquilino = self._resolver_inquilino(host)
+
+		# Integrações de equipamentos (machine-to-machine) podem autenticar tenant via
+		# API key, sem depender do domínio do Host.
+		if not inquilino and request.path.startswith("/api/v1/integracoes/equipamentos/") :
+			try :
+				from aplicativos.integracoes_equipamentos.modelos.credencial import (IntegracaoCredencial, )
+
+				raw_key = (request.headers.get("X-Integration-Key") or request.META.get("HTTP_X_INTEGRATION_KEY") or "").strip()
+				cred = IntegracaoCredencial.validar_chave(raw_key)
+				if cred and getattr(cred, "equipamento_id", None) :
+					inquilino = cred.equipamento.inquilino
+			except Exception :
+				# Se falhar, segue sem tenant; a view retornará 401.
+				inquilino = None
 		
 		token = set_inquilino(inquilino)
 		request.inquilino = inquilino
 		
 		try :
 			if not inquilino :
+				# Para integrações de equipamentos, deixamos a view tratar autenticação
+				# (retornando 401/403 conforme credencial).
+				if request.path.startswith("/api/v1/integracoes/equipamentos/") :
+					return self.get_response(request)
 				return JsonResponse({"erro" : "Tenant não encontrado."}, status = 404)
 			
 			if not inquilino.ativo :

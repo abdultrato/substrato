@@ -3,7 +3,7 @@ from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from backend.frontend.api.views.permissions import IsAdmin
+from seguranca.permissoes import IsAdmin
 
 
 class MetricsView(APIView):

@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -8,6 +9,15 @@ from aplicativos.clinico.modelos.exames_medicos import ExameMedico
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
+from aplicativos.enfermagem.modelos import (
+    Procedimento,
+    ProcedimentoCatalogo,
+    ProcedimentoCatalogoMaterial,
+    ProcedimentoItem,
+)
+from aplicativos.farmacia.models.categoria_produto import CategoriaProduto
+from aplicativos.farmacia.models.lote import Lote
+from aplicativos.farmacia.models.produto import Produto
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
@@ -150,3 +160,70 @@ def test_item_exame_origem_incompativel():
     )
     with pytest.raises(ValidationError):
         item.full_clean()
+
+
+@pytest.mark.django_db
+def test_fatura_enfermagem_bloqueia_emissao_quando_material_sem_estoque_e_libera_apos_atualizacao():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+
+    proc = Procedimento.objects.create(paciente=paciente)
+
+    cat = CategoriaProduto.objects.create(inquilino=tenant, nome="Cat Mat", descricao="")
+    produto = Produto.objects.create(
+        inquilino=tenant,
+        nome="Soro",
+        tipo=Produto.TipoProduto.MATERIAL,
+        preco_venda=Decimal("5.00"),
+        categoria=cat,
+    )
+
+    catalogo = ProcedimentoCatalogo.objects.create(
+        inquilino=tenant,
+        nome="Soro IV",
+        preco_padrao=Decimal("10.00"),
+    )
+    ProcedimentoCatalogoMaterial.objects.create(
+        inquilino=tenant,
+        catalogo=catalogo,
+        produto=produto,
+        quantidade_padrao=Decimal("1.00"),
+        custo_unitario_padrao=Decimal("2.50"),
+    )
+
+    ProcedimentoItem.objects.create(
+        inquilino=tenant,
+        procedimento=proc,
+        catalogo=catalogo,
+        quantidade=1,
+    )
+
+    fatura = Fatura.objects.create(
+        inquilino=tenant,
+        origem=Fatura.Origem.ENFERMAGEM,
+        procedimento=proc,
+    )
+    fatura.sincronizar_itens_da_origem()
+
+    with pytest.raises(ValidationError) as exc:
+        fatura.emitir()
+
+    assert "Estoque insuficiente" in str(exc.value)
+    assert "itens" in getattr(exc.value, "message_dict", {})
+
+    lote = Lote.objects.create(
+        inquilino=tenant,
+        produto=produto,
+        numero_lote="L999",
+        validade=date.today() + timedelta(days=60),
+        quantidade_inicial=10,
+    )
+
+    fatura.emitir()
+    fatura.refresh_from_db()
+    assert fatura.estado == Fatura.Estado.EMITIDA
+
+    material = proc.materiais.get(produto=produto)
+    material.refresh_from_db()
+    assert material.lote_id == lote.id
+    assert material.movimento_estoque_id is not None

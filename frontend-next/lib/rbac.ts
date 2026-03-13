@@ -3,10 +3,10 @@ import { SessionUser } from "@/lib/session"
 export const GROUPS = {
   ADMIN: "Administrador",
   RECEPCAO: "Recepcionista",
-  LABORATORIO: "Tecnico de Laboratorio",
+  LABORATORIO: "Técnico de Laboratório",
   ENFERMAGEM: "Enfermeiro",
-  FARMACIA: "Tecnico de Farmacia",
-  MEDICINA: "Medico",
+  FARMACIA: "Técnico de Farmácia",
+  MEDICINA: "Médico",
   MEDICINA_OCUPACIONAL: "Medicina Ocupacional",
   CONTABILIDADE: "Contabilidade",
 } as const
@@ -35,6 +35,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Dashboard",
     href: "/",
     description: "Visão geral do dia e indicadores operacionais.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },
   {
     key: "recepcao",
@@ -115,8 +116,8 @@ export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[
 }
 
 export function getDefaultWorkspaceHref(user: SessionUser | null): string {
-  // Admins keep the dashboard as their home by default.
-  if (userHasAnyGroup(user, [GROUPS.ADMIN])) return "/"
+  // Admin + contabilidade usam o dashboard como home por padrão.
+  if (userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE])) return "/"
 
   const first = getAccessibleWorkspaces(user).find((w) => w.key !== "dashboard")
   return first?.href || "/"

@@ -41,6 +41,8 @@ class ProcedimentoMaterial(NoNameCoreModel):
         on_delete=models.PROTECT,
         related_name="consumos_procedimento",
         db_index=True,
+        null=True,
+        blank=True,
     )
     quantidade = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
@@ -115,23 +117,47 @@ class ProcedimentoMaterial(NoNameCoreModel):
                 {"lote": "Lote e procedimento devem pertencer ao mesmo inquilino."}
             )
 
-        if not self.pk and self.lote_id and self.lote.vencido:
+        # Permitimos manter históricos de consumo mesmo após a validade ter passado,
+        # mas não permitimos "baixar" estoque de lote já vencido.
+        if self.lote_id and self.lote.vencido and not self.movimento_estoque_id:
             raise ValidationError({"lote": "Não é permitido consumir lote vencido."})
 
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
-            campos_immutaveis = (
-                "procedimento_id",
-                "produto_id",
-                "lote_id",
-                "quantidade",
-                "procedimento_item_id",
-            )
-            if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
-                raise ValidationError(
-                    "Material já lançado no estoque é imutável. "
-                    "Faça estorno e inclua um novo lançamento."
+            # Depois que o material for lançado no estoque, ele se torna imutável.
+            if original.movimento_estoque_id:
+                campos_immutaveis = (
+                    "procedimento_id",
+                    "produto_id",
+                    "lote_id",
+                    "quantidade",
+                    "procedimento_item_id",
                 )
+                if any(
+                    getattr(original, campo) != getattr(self, campo)
+                    for campo in campos_immutaveis
+                ):
+                    raise ValidationError(
+                        "Material já lançado no estoque é imutável. "
+                        "Faça estorno e inclua um novo lançamento."
+                    )
+            else:
+                # Enquanto estiver pendente (sem movimento_estoque), permitimos
+                # escolher lote e lançar o movimento posteriormente, mas
+                # mantemos a referência e quantidade imutáveis.
+                campos_immutaveis = (
+                    "procedimento_id",
+                    "produto_id",
+                    "quantidade",
+                    "procedimento_item_id",
+                )
+                if any(
+                    getattr(original, campo) != getattr(self, campo)
+                    for campo in campos_immutaveis
+                ):
+                    raise ValidationError(
+                        "Material pendente é imutável (exceto lote/baixa de estoque)."
+                    )
 
     def _resolver_custo_unitario(self):
         if self.custo_unitario and self.custo_unitario > 0:
@@ -197,16 +223,23 @@ class ProcedimentoMaterial(NoNameCoreModel):
 
     @transaction.atomic
     def save(self, *args, **kwargs):
+        alocar_estoque = bool(kwargs.pop("alocar_estoque", True))
         criando = self.pk is None
 
         if not self.inquilino_id and self.procedimento_id:
             self.inquilino_id = self.procedimento.inquilino_id
 
-        self._selecionar_lote_automatico()
+        if alocar_estoque:
+            self._selecionar_lote_automatico()
         self.full_clean()
         super().save(*args, **kwargs)
 
-        if criando:
+        if alocar_estoque and self.movimento_estoque_id is None:
+            if not self.lote_id:
+                raise ValidationError(
+                    {"lote": "Lote é obrigatório para baixar estoque do material."}
+                )
+
             lote = Lote.objects.select_for_update().get(pk=self.lote_id)
             if self.quantidade > lote.saldo():
                 raise ValidationError(

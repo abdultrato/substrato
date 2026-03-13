@@ -78,6 +78,7 @@ LOCAL_APPS = [
 		"aplicativos.seguradora.apps.SeguradoraConfig",
 		"aplicativos.clinico",
 		"aplicativos.enfermagem.apps.EnfermagemConfig",
+		"aplicativos.integracoes_equipamentos.apps.IntegracoesEquipamentosConfig",
 			"aplicativos.faturamento",
 			"aplicativos.pagamentos",
 			"aplicativos.notificacoes.apps.NotificacoesConfig",
@@ -85,6 +86,8 @@ LOCAL_APPS = [
 			"aplicativos.farmacia",
 			"aplicativos.contabilidade",
 			"aplicativos.recepcao.apps.RecepcaoConfig",
+			"aplicativos.auditoria_atividades",
+			"aplicativos.consultas",
 			]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

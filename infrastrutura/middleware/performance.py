@@ -37,6 +37,12 @@ class APILoggingMiddleware:
             duration_ms = round(
                 (time.perf_counter() - start) * 1000, 2
             )
+            # Consumido por TenantAuditMiddleware para persistência em BD.
+            try:
+                request.duracao_ms = duration_ms
+                request.status_code = status_code
+            except Exception:
+                pass
 
             if duration_ms >= SLOW_REQUEST_THRESHOLD_MS:
                 log_slow_request(

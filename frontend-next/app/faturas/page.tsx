@@ -7,8 +7,9 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type FaturaRow = Record<string, any>
 
@@ -21,10 +22,13 @@ function money(v: any): string {
 
 export default function FaturasPage() {
   const { loading } = useAuthGuard()
+  const { user } = useAuth()
   const [faturas, setFaturas] = useState<FaturaRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [acaoId, setAcaoId] = useState<number | null>(null)
+
+  const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
 
   async function carregar() {
     try {
@@ -45,6 +49,10 @@ export default function FaturasPage() {
   }, [])
 
   async function emitir(id: number) {
+    if (!podeAlterar) {
+      setErro("Sem permissão para emitir fatura.")
+      return
+    }
     try {
       setAcaoId(id)
       await apiFetch(`/faturas/${id}/emitir/`, { method: "POST" })
@@ -57,6 +65,10 @@ export default function FaturasPage() {
   }
 
   async function anular(id: number) {
+    if (!podeAlterar) {
+      setErro("Sem permissão para anular fatura.")
+      return
+    }
     if (!confirm("Anular esta fatura?")) return
     try {
       setAcaoId(id)
@@ -99,13 +111,15 @@ export default function FaturasPage() {
         header: "Ações",
         render: (f: FaturaRow) => (
           <div className="flex flex-wrap gap-2">
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={acaoId === f.id}
-              onClick={() => emitir(f.id)}
-            >
-              Emitir
-            </button>
+            {podeAlterar ? (
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={acaoId === f.id}
+                onClick={() => emitir(f.id)}
+              >
+                Emitir
+              </button>
+            ) : null}
             <button
               className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               disabled={acaoId === f.id}
@@ -113,18 +127,20 @@ export default function FaturasPage() {
             >
               PDF
             </button>
-            <button
-              className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-              disabled={acaoId === f.id}
-              onClick={() => anular(f.id)}
-            >
-              Anular
-            </button>
+            {podeAlterar ? (
+              <button
+                className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                disabled={acaoId === f.id}
+                onClick={() => anular(f.id)}
+              >
+                Anular
+              </button>
+            ) : null}
           </div>
         ),
       },
     ],
-    [acaoId]
+    [acaoId, podeAlterar]
   )
 
   if (loading) return null
