@@ -127,10 +127,11 @@ class ServicoResultado :
 	
 	@staticmethod
 	def _auto_validar(resultado_item) :
-		if resultado_item.alerta_critico :
-			return
-		
-		if resultado_item.status_clinico != "NORMAL" :
-			return
-		
-		resultado_item.estado = EstadoResultado.VALIDADO
+		"""
+		Auto-validação foi desativada.
+
+		Motivo: o fluxo do laboratório exige a sequência
+		"lançar -> gravar -> validar" (com auditoria em `validado_por` e `data_validacao`).
+		A validação deve acontecer via `ResultadoItem.transicionar(VALIDADO, usuario=...)`.
+		"""
+		return

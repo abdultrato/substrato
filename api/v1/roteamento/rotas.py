@@ -4,6 +4,7 @@ from api.v1.clinico.viewsets import VIEWSET_MAP as CLINICO_VIEWSET_MAP
 from api.v1.consultas.viewsets import VIEWSET_MAP as CONSULTAS_VIEWSET_MAP
 from api.v1.contabilidade.viewsets import VIEWSET_MAP as CONTABILIDADE_VIEWSET_MAP
 from api.v1.enfermagem.viewsets import VIEWSET_MAP as ENFERMAGEM_VIEWSET_MAP
+from api.v1.entidades.viewsets import VIEWSET_MAP as ENTIDADES_VIEWSET_MAP
 from api.v1.farmacia.viewsets import VIEWSET_MAP as FARMACIA_VIEWSET_MAP
 from api.v1.faturamento.viewsets import VIEWSET_MAP as FATURAMENTO_VIEWSET_MAP
 from api.v1.identidade.viewsets import VIEWSET_MAP as IDENTIDADE_VIEWSET_MAP
@@ -12,6 +13,11 @@ from api.v1.notificacoes.viewsets import VIEWSET_MAP as NOTIFICACOES_VIEWSET_MAP
 from api.v1.pagamentos.viewsets import VIEWSET_MAP as PAGAMENTOS_VIEWSET_MAP
 from api.v1.recepcao.viewsets import VIEWSET_MAP as RECEPCAO_VIEWSET_MAP
 from api.v1.seguradora.viewsets import VIEWSET_MAP as SEGURADORA_VIEWSET_MAP
+from api.v1.prontuario.viewsets import VIEWSET_MAP as PRONTUARIO_VIEWSET_MAP
+from api.v1.maternidade.viewsets import VIEWSET_MAP as MATERNIDADE_VIEWSET_MAP
+from api.v1.cirurgia.viewsets import VIEWSET_MAP as CIRURGIA_VIEWSET_MAP
+from api.v1.recursos_humanos.viewsets import VIEWSET_MAP as RECURSOS_HUMANOS_VIEWSET_MAP
+from api.v1.monitoramento.viewsets import VIEWSET_MAP as MONITORAMENTO_VIEWSET_MAP
 from seguranca.permissoes.rbac import RBACPermission
 
 
@@ -22,6 +28,7 @@ VIEWSET_GROUPS = {
     "consultas": CONSULTAS_VIEWSET_MAP,
     "contabilidade": CONTABILIDADE_VIEWSET_MAP,
     "enfermagem": ENFERMAGEM_VIEWSET_MAP,
+    "entidades": ENTIDADES_VIEWSET_MAP,
     "farmacia": FARMACIA_VIEWSET_MAP,
     "faturamento": FATURAMENTO_VIEWSET_MAP,
     "identidade": IDENTIDADE_VIEWSET_MAP,
@@ -30,6 +37,11 @@ VIEWSET_GROUPS = {
     "pagamentos": PAGAMENTOS_VIEWSET_MAP,
     "recepcao": RECEPCAO_VIEWSET_MAP,
     "seguradora": SEGURADORA_VIEWSET_MAP,
+    "prontuario": PRONTUARIO_VIEWSET_MAP,
+    "maternidade": MATERNIDADE_VIEWSET_MAP,
+    "cirurgia": CIRURGIA_VIEWSET_MAP,
+    "recursos_humanos": RECURSOS_HUMANOS_VIEWSET_MAP,
+    "monitoramento": MONITORAMENTO_VIEWSET_MAP,
 }
 
 

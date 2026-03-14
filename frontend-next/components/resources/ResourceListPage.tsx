@@ -90,7 +90,7 @@ export default function ResourceListPage({
           return (
             <Link
               href={rowHref(row)}
-              className="font-medium text-gray-900 underline decoration-gray-300 underline-offset-2 hover:decoration-gray-500"
+              className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
             >
               {label}
             </Link>
@@ -127,7 +127,7 @@ export default function ResourceListPage({
               {createHref ? (
                 <Link
                   href={createHref}
-                  className="inline-flex items-center rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
                 >
                   Novo
                 </Link>
@@ -136,7 +136,7 @@ export default function ResourceListPage({
               {adminListHref ? (
                 <Link
                   href={adminListHref}
-                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                 >
                   Abrir no admin
                 </Link>
@@ -152,7 +152,7 @@ export default function ResourceListPage({
         )}
 
         {loadingData ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
+          <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
           <DataTable<Row>
             columns={columns as any}

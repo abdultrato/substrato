@@ -26,6 +26,30 @@
 }
 
 /* ==============================
+   DARK MODE TOKENS
+================================ */
+.dark {
+    --primary-700: #fecaca;
+    --primary-600: #ef4444;
+    --primary-500: #f87171;
+    --primary-400: #fb7185;
+    --primary-300: #ffe4e6;
+
+    --gray-900: #e5e7eb;
+    --gray-700: #cbd5e1;
+    --gray-500: #94a3b8;
+    --gray-300: #334155;
+    --gray-200: #1e293b;
+    --gray-100: #0b1220;
+
+    --shadow-md: 0 12px 34px rgba(0, 0, 0, .55);
+    --bg: #0b1220;
+    --card: #0f172a;
+    --text: #e5e7eb;
+    --border: #1e293b;
+}
+
+/* ==============================
    RESET
 ================================ */
 * {
@@ -50,6 +74,14 @@ body {
         var(--bg);
     color: var(--text);
     transition: background .5s ease, color .5s ease;
+}
+
+.dark body {
+    background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(239, 68, 68, 0.18), transparent 60%),
+        radial-gradient(900px 700px at 110% 0%, rgba(56, 189, 248, 0.10), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(239, 68, 68, 0.10), transparent 55%),
+        var(--bg);
 }
 
 /* ==============================
@@ -150,7 +182,8 @@ form.grid {
 
 .page-box th,
 .table-container th {
-    background: darkgrey;
+    background: var(--gray-200);
+    color: var(--text);
     padding: 10px;
 }
 
@@ -519,6 +552,43 @@ form.grid {
     object-fit: contain; /* preserva transparência */
     display: block;
 }
+
+/* ==============================
+   TAILWIND DARK OVERRIDES
+================================
+Evita editar centenas de classes utilitárias: remapeia as cores mais usadas
+quando `html.dark` estiver ativo.
+*/
+.dark .bg-white { background-color: var(--card); }
+.dark .bg-gray-50 { background-color: var(--gray-100); }
+.dark .bg-slate-50 { background-color: var(--gray-100); }
+.dark .bg-gray-100 { background-color: var(--gray-200); }
+
+.dark .text-gray-900,
+.dark .text-slate-900,
+.dark .text-gray-800,
+.dark .text-slate-800 { color: var(--text); }
+
+.dark .text-gray-700,
+.dark .text-slate-700,
+.dark .text-gray-600,
+.dark .text-slate-600 { color: var(--gray-700); }
+
+.dark .text-gray-500,
+.dark .text-slate-500,
+.dark .text-gray-400,
+.dark .text-slate-400 { color: var(--gray-500); }
+
+.dark .border-gray-200,
+.dark .border-slate-200,
+.dark .border-gray-300,
+.dark .border-slate-300 { border-color: var(--border); }
+
+.dark .hover\\:bg-gray-50:hover,
+.dark .hover\\:bg-slate-50:hover { background-color: var(--gray-100); }
+
+.dark .hover\\:bg-gray-100:hover { background-color: var(--gray-200); }
+.dark .hover\\:bg-gray-200:hover { background-color: var(--gray-300); }
 
 /* ==============================
    FORMULÁRIO

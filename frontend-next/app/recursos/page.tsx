@@ -25,10 +25,10 @@ export default function RecursosPage() {
             <Link
               key={m.key}
               href={`/recursos/${m.key}`}
-              className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-sm transition hover:bg-[var(--gray-100)]"
             >
-              <div className="text-sm font-semibold text-gray-900">{m.label}</div>
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="text-sm font-semibold text-[var(--text)]">{m.label}</div>
+              <div className="mt-1 text-xs text-[var(--gray-500)]">
                 {m.resources.length} recursos
               </div>
             </Link>

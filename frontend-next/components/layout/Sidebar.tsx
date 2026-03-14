@@ -22,7 +22,10 @@ import {
     Activity,
     BarChart3,
     CalendarClock,
+    Moon,
+    Sun,
 } from "lucide-react"
+import useTheme from "@/hooks/useTheme"
 
 interface Props {
     user: SessionUser | null
@@ -100,6 +103,12 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
+        href: "/recursos/recursos_humanos",
+        label: "Recursos Humanos",
+        icon: BriefcaseIcon,
+        groups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS],
+    },
+    {
         href: "/estatisticas",
         label: "Estatísticas",
         icon: BarChart3,
@@ -131,6 +140,16 @@ const NAV_ITEMS: NavItem[] = [
             GROUPS.ADMIN,
             GROUPS.RECEPCAO,
             GROUPS.MEDICINA,
+            GROUPS.MEDICINA_OCUPACIONAL,
+        ],
+    },
+    {
+        href: "/entidades",
+        label: "Empresas",
+        icon: BriefcaseIcon,
+        groups: [
+            GROUPS.ADMIN,
+            GROUPS.RECEPCAO,
             GROUPS.MEDICINA_OCUPACIONAL,
         ],
     },
@@ -174,6 +193,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar ( { user }: Props ) {
     const pathname = usePathname()
+    const { isDark, toggle: toggleTheme } = useTheme()
 
     function hasAccess ( item: NavItem ) {
         if ( !item.groups ) return true
@@ -181,8 +201,8 @@ export default function Sidebar ( { user }: Props ) {
     }
 
     return (
-        <aside className="w-64 bg-white border-r hidden md:flex flex-col">
-            <div className="p-6 font-bold text-gray-800 tracking-wide">
+        <aside className="w-64 bg-[var(--card)] border-r border-[var(--border)] hidden md:flex flex-col">
+            <div className="p-6 font-bold text-[var(--text)] tracking-wide">
                 SUBSTRATO
             </div>
 
@@ -198,8 +218,8 @@ export default function Sidebar ( { user }: Props ) {
                             className={`
                 flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
                 ${active
-                                    ? "bg-gray-900 text-white"
-                                    : "text-gray-700 hover:bg-gray-100"
+                                    ? "bg-[var(--primary-600)] text-white"
+                                    : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
                                 }
               `}
                         >
@@ -210,8 +230,26 @@ export default function Sidebar ( { user }: Props ) {
                 } )}
             </nav>
 
-            <div className="mt-auto p-4 text-xs text-gray-400">
-                Substrato Platform
+            <div className="mt-auto p-4">
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="flex w-full items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition hover:bg-[var(--gray-100)]"
+                    aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
+                    title={isDark ? "Modo claro" : "Modo escuro"}
+                >
+                    <span className="flex items-center gap-2">
+                        {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        Tema
+                    </span>
+                    <span className="text-[11px] font-medium text-[var(--gray-500)]">
+                        {isDark ? "Claro" : "Escuro"}
+                    </span>
+                </button>
+
+                <div className="mt-3 text-xs text-[var(--gray-500)]">
+                    Substrato Platform
+                </div>
             </div>
         </aside>
     )

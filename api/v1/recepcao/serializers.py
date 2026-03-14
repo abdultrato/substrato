@@ -10,6 +10,7 @@ from nucleo.constantes.laboratorio.status_clinico import StatusClinico
 
 
 CORE_READ_ONLY_FIELDS = (
+    "id",
     "id_custom",
     "inquilino",
     "criado_por",
@@ -19,6 +20,7 @@ CORE_READ_ONLY_FIELDS = (
     "deletado",
     "deletado_em",
     "deletado_por",
+    "versao",
 )
 
 
@@ -33,37 +35,16 @@ class CheckinRecepcaoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CheckinRecepcao
-        fields = [
-            "id",
-            "id_custom",
-            "inquilino",
-            "paciente",
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + (
             "paciente_nome",
             "paciente_codigo",
-            "requisicao",
             "requisicao_codigo",
-            "fatura",
             "fatura_codigo",
-            "atendente",
-            "atendente_nome",
-            "prioridade",
-            "prioridade_display",
-            "estado",
             "estado_display",
-            "motivo",
-            "observacoes",
-            "chegou_em",
-            "chamado_em",
-            "concluido_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
-        ]
-        read_only_fields = CORE_READ_ONLY_FIELDS
+            "prioridade_display",
+            "atendente_nome",
+        )
 
     def get_atendente_nome(self, obj):
         if not obj.atendente_id:

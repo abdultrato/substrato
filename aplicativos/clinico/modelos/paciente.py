@@ -92,6 +92,16 @@ class Paciente(CoreModel):
         default=Proveniencia.CLINICA_EXTERNA,
     )
 
+    empresa_origem = models.ForeignKey(
+        "entidades.Empresa",
+        verbose_name="Empresa (origem)",
+        help_text="Para medicina ocupacional, indique a empresa de origem do paciente.",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pacientes",
+    )
+
     class Meta:
         verbose_name = "Paciente"
         verbose_name_plural = "Pacientes"
@@ -108,6 +118,7 @@ class Paciente(CoreModel):
             models.Index(fields=["numero_id"]),
             models.Index(fields=["genero"]),
             models.Index(fields=["data_nascimento"]),
+            models.Index(fields=["empresa_origem"]),
         ]
 
     # =========================================================

@@ -5,7 +5,8 @@ import {useParams, useRouter} from "next/navigation";
 import {apiFetch} from "@/lib/api";
 import {Entidade} from "@/lib/types";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import {logout} from "@/lib/auth";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function EditarEntidadePage() {
     useAuthGuard(); // 🔐 proteção automática
@@ -30,13 +31,15 @@ export default function EditarEntidadePage() {
     }, [id]);
 
     function handleChange(
-        e: React.ChangeEvent<HTMLInputElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) {
-        const {name, value, type, checked} = e.target;
+        const {name} = e.target;
+        const isCheckbox = (e.target as HTMLInputElement).type === "checkbox";
+        const nextValue = isCheckbox ? (e.target as HTMLInputElement).checked : e.target.value;
 
         setForm(prev =>
             prev
-                ? {...prev, [name]: type === "checkbox" ? checked : value}
+                ? {...prev, [name]: nextValue}
                 : prev
         );
     }
@@ -59,85 +62,121 @@ export default function EditarEntidadePage() {
         }
     }
 
-    if (!form) return <p>Carregando...</p>;
+    if (!form) {
+        return (
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <p>Carregando...</p>
+            </AppLayout>
+        )
+    }
 
     return (
-        <div className="container fade-in">
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">Editar Empresa</h1>
 
-            {/* Header actions */}
-            <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                <h1>Editar Entidade</h1>
-                <button className="btn-secondary" onClick={logout}>
-                    Terminar sessão
-                </button>
-            </div>
-
-            <form onSubmit={salvar} className="grid">
-
-                <input
-                    name="nome"
-                    value={form.nome}
-                    onChange={handleChange}
-                    placeholder="Nome"
-                    required
-                />
-
-                <input
-                    name="slogan"
-                    value={(form as any).slogan || ""}
-                    onChange={handleChange}
-                    placeholder="Slogan"
-                />
-
-                <input
-                    name="endereco_sede"
-                    value={(form as any).endereco_sede || ""}
-                    onChange={handleChange}
-                    placeholder="Endereço"
-                />
-
-                <input
-                    name="telefone1"
-                    value={(form as any).telefone1 || ""}
-                    onChange={handleChange}
-                    placeholder="Telefone"
-                />
-
-                <input
-                    name="telefone2"
-                    value={form.telefone2 || ""}
-                    onChange={handleChange}
-                    placeholder="Telefone 2"
-                />
-
-                <input
-                    name="email"
-                    value={form.email || ""}
-                    onChange={handleChange}
-                    placeholder="Email"
-                />
-
-                <input
-                    name="nuit"
-                    value={form.nuit || ""}
-                    onChange={handleChange}
-                    placeholder="NUIT"
-                />
-
-                <label style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                <form onSubmit={salvar} className="grid">
                     <input
-                        type="checkbox"
-                        name="ativo"
-                        checked={!!form.ativo}
+                        name="nome"
+                        value={form.nome}
                         onChange={handleChange}
+                        placeholder="Nome"
+                        required
                     />
-                    Ativo
-                </label>
 
-                <button className="btn-primary" disabled={saving}>
-                    {saving ? "Salvando..." : "Salvar"}
-                </button>
-            </form>
-        </div>
+                    <input
+                        name="endereco_sede"
+                        value={(form as any).endereco_sede || ""}
+                        onChange={handleChange}
+                        placeholder="Local / Sede"
+                    />
+
+                    <input
+                        name="contactos"
+                        value={(form as any).contactos || ""}
+                        onChange={handleChange}
+                        placeholder="Contactos (pessoa/departamento)"
+                    />
+
+                    <input
+                        name="telefone1"
+                        value={(form as any).telefone1 || ""}
+                        onChange={handleChange}
+                        placeholder="Telefone"
+                    />
+
+                    <input
+                        name="telefone2"
+                        value={(form as any).telefone2 || ""}
+                        onChange={handleChange}
+                        placeholder="Telefone (alternativo)"
+                    />
+
+                    <input
+                        name="email"
+                        value={(form as any).email || ""}
+                        onChange={handleChange}
+                        placeholder="E-mail"
+                    />
+
+                    <input
+                        name="nuit"
+                        value={(form as any).nuit || ""}
+                        onChange={handleChange}
+                        placeholder="NUIT"
+                    />
+
+                    <input
+                        name="nib"
+                        value={(form as any).nib || ""}
+                        onChange={handleChange}
+                        placeholder="NIB / Conta bancária"
+                    />
+
+                    <textarea
+                        name="observacoes"
+                        value={(form as any).observacoes || ""}
+                        onChange={handleChange}
+                        placeholder="Observações"
+                        rows={3}
+                    />
+
+                    <label style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                        <input
+                            type="checkbox"
+                            name="ativo"
+                            checked={!!(form as any).ativo}
+                            onChange={handleChange}
+                        />
+                        Ativo
+                    </label>
+
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button className="btn-primary" disabled={saving}>
+                            {saving ? "Salvando..." : "Salvar"}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => router.push( "/entidades" )}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </AppLayout>
     );
 }

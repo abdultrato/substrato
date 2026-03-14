@@ -23,6 +23,7 @@ class ProdutoAdmin(admin.ModelAdmin):
         "nome",
         "categoria",
         "preco_venda",
+        "iva_percentual",
         "estoque_total",
         "proximo_vencimento",
         "criado_em",
@@ -51,6 +52,7 @@ class ProdutoAdmin(admin.ModelAdmin):
                     "nome",
                     "categoria",
                     "preco_venda",
+                    "iva_percentual",
                 )
             },
         ),
@@ -401,6 +403,7 @@ class VendaAdmin(admin.ModelAdmin):
 
     list_display = (
         "numero",
+        "paciente",
         "total",
         "criado_em",
     )
@@ -436,6 +439,7 @@ class VendaAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "numero",
+                    "paciente",
                     "total",
                 )
             },
@@ -456,6 +460,8 @@ class VendaAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    autocomplete_fields = ("paciente",)
 
 
 @admin.register(CategoriaProduto)

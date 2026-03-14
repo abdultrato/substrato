@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
-import { Shield, FileDown } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Shield, FileDown, FlaskConical } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -34,6 +34,14 @@ export default function LaboratorioRequisicoesPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<RequisicaoRow[]>([])
+
+  const onPdf = useCallback(async (id: number) => {
+    try {
+      await abrirPdfResultados(id)
+    } catch (e: any) {
+      setErro(e?.message || "Falha ao gerar PDF de resultados.")
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -70,6 +78,16 @@ export default function LaboratorioRequisicoesPage() {
         header: "Ações",
         render: (r: RequisicaoRow) => (
           <div className="flex flex-wrap gap-2">
+            {r.id ? (
+              <Link
+                href={`/laboratorio/requisicoes/${r.id}`}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                <FlaskConical size={14} />
+                Lançar
+              </Link>
+            ) : null}
+
             <Link
               href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
               target="_blank"
@@ -83,7 +101,7 @@ export default function LaboratorioRequisicoesPage() {
             {r.id_custom ? (
               <button
                 type="button"
-                onClick={() => abrirPdfResultados(Number(r.id))}
+                onClick={() => onPdf(Number(r.id))}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <FileDown size={14} />
@@ -94,7 +112,7 @@ export default function LaboratorioRequisicoesPage() {
         ),
       },
     ],
-    []
+    [onPdf]
   )
 
   return (

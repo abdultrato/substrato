@@ -160,12 +160,30 @@ def _ensure_groups_permissions() -> None:
     ]:
         _grant_group_model_perms(contab, app_label=app_label, model=model, actions=actions)
 
+    # Recursos Humanos: gestão interna (funcionários, cargos, horários, etc.)
+    rh = _ensure_group(RBAC_GROUPS["RECURSOS_HUMANOS"])
+    for app_label, model, actions in [
+        ("recursos_humanos", "cargo", ["view", "add", "change"]),
+        ("recursos_humanos", "funcionario", ["view", "add", "change"]),
+        ("recursos_humanos", "horariotrabalho", ["view", "add", "change"]),
+        ("recursos_humanos", "falta", ["view", "add", "change"]),
+        ("recursos_humanos", "ferias", ["view", "add", "change"]),
+        ("recursos_humanos", "dispensa", ["view", "add", "change"]),
+        ("recursos_humanos", "horaextra", ["view", "add", "change"]),
+        ("recursos_humanos", "folhapagamento", ["view", "add", "change"]),
+        # Necessário para vincular Usuario <-> Funcionario no admin.
+        ("identidade", "usuario", ["view", "change"]),
+    ]:
+        _grant_group_model_perms(rh, app_label=app_label, model=model, actions=actions)
+
 
 class Command(BaseCommand):
     help = "Cria 1 usuario por grupo (RBAC), com senha padrao, para testes e demos."
 
     def add_arguments(self, parser):
-        parser.add_argument("--password", default="substrato123")
+        # Keep consistent with other dev bootstrap flows (entrypoint/bootstrap_dev)
+        # and docs which use admin/admin123.
+        parser.add_argument("--password", default="admin123")
         parser.add_argument(
             "--reset-password",
             action="store_true",
@@ -191,6 +209,21 @@ class Command(BaseCommand):
 
         tenant = _ensure_tenant()
 
+        # Configuração mínima para o agendamento de consultas (choices de especialidade).
+        try:
+            from decimal import Decimal
+
+            from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
+
+            EspecialidadeConsulta.objects.get_or_create(
+                inquilino=tenant,
+                nome="Consulta Geral",
+                defaults={"preco_base": Decimal("0.00"), "ativo": True},
+            )
+        except Exception:
+            # Não falha bootstrap por causa de app opcional/config.
+            pass
+
         # Ensure groups exist + sane Django admin permissions.
         for name in RBAC_GROUPS.values():
             _ensure_group(name)
@@ -205,6 +238,7 @@ class Command(BaseCommand):
             _RoleUser("farmacia", "farmacia@local", "Tecnico de Farmacia", RBAC_GROUPS["FARMACIA"]),
             _RoleUser("ocupacional", "ocupacional@local", "Medicina Ocupacional", RBAC_GROUPS["MEDICINA_OCUPACIONAL"]),
             _RoleUser("contabilidade", "contabilidade@local", "Contabilidade", RBAC_GROUPS["CONTABILIDADE"]),
+            _RoleUser("rh", "rh@local", "Gestor de RH", RBAC_GROUPS["RECURSOS_HUMANOS"]),
         ]
 
         User = get_user_model()
@@ -250,6 +284,10 @@ class Command(BaseCommand):
                 if getattr(user, "is_active", True) is False:
                     user.is_active = True
                     fields_to_update.append("is_active")
+                # Evita superuser em contas operacionais/gestores de setor.
+                if getattr(user, "is_superuser", False):
+                    user.is_superuser = False
+                    fields_to_update.append("is_superuser")
 
                 if reset_password:
                     user.set_password(password)

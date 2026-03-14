@@ -1,8 +1,3 @@
-# LOCAL: eventos/handlers.py
-
-from nucleo.constantes.tipo_evento_clinico import TipoEventoClinico
-
-
 class ResultadoValidadoHandler :
 	"""
 	Handler responsável por reagir ao evento ResultadoValidadoEvent.
@@ -17,12 +12,28 @@ class ResultadoValidadoHandler :
 		from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 		from aplicativos.clinico.modelos.historico_clinico import HistoricoClinico
 		
-		resultado = (
-			ResultadoItem.all_objects.select_related("requisicao__paciente", "exame_campo", ).only("resultado", "data_validacao", "exame_campo__nome", "requisicao__paciente", ).get(pk = event.resultado_id))
+		item = (
+			ResultadoItem.all_objects.select_related(
+				"resultado",
+				"resultado__requisicao",
+				"resultado__requisicao__paciente",
+				"exame_campo",
+			)
+			.only(
+				"resultado_valor",
+				"data_validacao",
+				"exame_campo__nome",
+				"resultado__requisicao__paciente",
+			)
+			.get(pk=event.resultado_id)
+		)
 		
-		paciente = resultado.requisicao.paciente
+		paciente = item.resultado.requisicao.paciente
 		
-		descricao = (f"Resultado validado: "
-		             f"{resultado.exame_campo.nome} = {resultado.resultado}")
+		descricao = f"Resultado validado: {item.exame_campo.nome} = {item.resultado_valor}"
 		
-		HistoricoClinico.objects.create(paciente = paciente, tipo_evento = TipoEventoClinico.RESULTADO_VALIDADO, descricao = descricao, data_evento = resultado.data_validacao, )
+		# HistoricoClinico é um log simples (sem tipo_evento).
+		HistoricoClinico.objects.create(
+			paciente=paciente,
+			descricao=descricao,
+		)

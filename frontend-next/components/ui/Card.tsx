@@ -14,17 +14,17 @@ export default function Card ( {
     children,
 }: Props ) {
     return (
-        <div className="bg-white rounded-xl border shadow-sm">
+        <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-sm">
             {( title || actions ) && (
                 <div className="flex items-start justify-between px-5 pt-4 pb-2">
                     <div>
                         {title && (
-                            <h3 className="text-sm font-semibold text-gray-800">
+                            <h3 className="text-sm font-semibold text-[var(--text)]">
                                 {title}
                             </h3>
                         )}
                         {subtitle && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-[var(--gray-500)] mt-1">
                                 {subtitle}
                             </p>
                         )}

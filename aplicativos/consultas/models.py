@@ -1,6 +1,7 @@
-from .modelos import ConsultaMedica
+from .modelos import ConsultaMedica, EspecialidadeConsulta, Feriado
 
 __all__ = [
     "ConsultaMedica",
+    "EspecialidadeConsulta",
+    "Feriado",
 ]
-

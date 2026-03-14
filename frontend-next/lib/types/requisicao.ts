@@ -5,6 +5,10 @@ export type Requisicao = {
   paciente?: number
   paciente_nome?: string
   paciente_codigo?: string
+  empresa_solicitante?: number | null
+  empresa_solicitante_nome?: string | null
+  empresa_executora_externa?: number | null
+  empresa_executora_externa_nome?: string | null
   analista?: number | null
   exames?: number[]
   exames_medicos?: number[]
@@ -40,6 +44,8 @@ export type RequisicaoCreateDTO = {
   exames?: number[]
   exames_medicos?: number[]
   status_clinico?: string
+  empresa_solicitante?: number | null
+  empresa_executora_externa?: number | null
 }
 
 export type RequisicaoUpdateDTO = Partial<{

@@ -15,6 +15,7 @@ export type FormField = {
   name: string
   label: string
   required: boolean
+  readOnly?: boolean
   type:
     | "text"
     | "number"
@@ -30,7 +31,22 @@ export type FormField = {
 
 type FormSpec = {
   fields: FormField[]
+  submitFields: FormField[]
 }
+
+const ALWAYS_READONLY_FIELDS = new Set([
+  "id",
+  "id_custom",
+  "inquilino",
+  "criado_por",
+  "atualizado_por",
+  "criado_em",
+  "atualizado_em",
+  "deletado",
+  "deletado_em",
+  "deletado_por",
+  "versao",
+])
 
 // Resolve $ref inside components.schemas
 function resolveRef(ref: string): any {
@@ -76,13 +92,38 @@ function schemaToFields(reqSchema: any, requiredList: string[] = []): FormField[
       label,
       required,
       type,
+      readOnly: !!prop?.readOnly,
       enumValues: prop?.enum,
       enumLabels: prop?.["x-enumNames"] || prop?.["x-choices"],
     }
   })
 }
 
-function findPathObject(endpoint: string, method: HttpMethod) {
+function normalizePath(path: string): string {
+  const p = String(path || "").split("?")[0].split("#")[0]
+  if (!p) return "/"
+  const withSlash = p.startsWith("/") ? p : `/${p}`
+  return withSlash.replace(/\/+$/, "") || "/"
+}
+
+function pathSegments(path: string): string[] {
+  const n = normalizePath(path)
+  return n.split("/").filter(Boolean)
+}
+
+function matchesTemplate(template: string, actual: string): boolean {
+  const t = pathSegments(template)
+  const a = pathSegments(actual)
+  if (t.length !== a.length) return false
+  for (let i = 0; i < t.length; i++) {
+    const seg = t[i]
+    if (seg.startsWith("{") && seg.endsWith("}")) continue
+    if (seg !== a[i]) return false
+  }
+  return true
+}
+
+function findPathItem(endpoint: string) {
   const paths = (schema as any).paths || {}
   const candidates = [
     `/api/v1${endpoint}`,
@@ -92,9 +133,8 @@ function findPathObject(endpoint: string, method: HttpMethod) {
   ]
   for (const key of Object.keys(paths)) {
     for (const cand of candidates) {
-      if (key === cand) {
-        const obj = (paths as any)[key]
-        if (obj?.[method]) return obj[method]
+      if (matchesTemplate(key, cand)) {
+        return { key, item: (paths as any)[key] }
       }
     }
   }
@@ -102,10 +142,46 @@ function findPathObject(endpoint: string, method: HttpMethod) {
 }
 
 export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | null {
-  const pathObj = findPathObject(endpoint, method)
-  const req = pathObj?.requestBody?.content?.["application/json"]?.schema
+  const found = findPathItem(endpoint)
+  const op = found?.item?.[method]
+  const req = op?.requestBody?.content?.["application/json"]?.schema
   if (!req) return null
-  const required = req.required || []
-  const fields = schemaToFields(req, required as string[])
-  return { fields }
+
+  const reqNorm = normalizeSchema(req)
+  const reqRequired = (reqNorm?.required || []) as string[]
+  const reqFields = schemaToFields(reqNorm, reqRequired)
+  const reqFieldNames = new Set(reqFields.map((f) => f.name))
+
+  // Prefer the write response schema; fallback to GET response schema.
+  const resp =
+    op?.responses?.["200"] ||
+    op?.responses?.["201"] ||
+    found?.item?.get?.responses?.["200"] ||
+    found?.item?.get?.responses?.["201"]
+  const respSchema = resp?.content?.["application/json"]?.schema
+  const respNorm = normalizeSchema(respSchema)
+  const respRequired = (respNorm?.required || []) as string[]
+  const respFields = schemaToFields(respNorm, respRequired)
+
+  const baseFields = respFields.length ? respFields : reqFields
+
+  // Merge: expose all response fields, but only submit writable request fields.
+  const fields: FormField[] = baseFields.map((f) => {
+    const inReq = reqFieldNames.has(f.name)
+    const readOnly = ALWAYS_READONLY_FIELDS.has(f.name) || f.readOnly || !inReq
+    return {
+      ...f,
+      required: inReq ? reqRequired.includes(f.name) : false,
+      readOnly,
+    }
+  })
+
+  // Include request-only fields (rare) that might not appear in response schema.
+  for (const f of reqFields) {
+    if (fields.some((x) => x.name === f.name)) continue
+    fields.push({ ...f, readOnly: ALWAYS_READONLY_FIELDS.has(f.name) ? true : false })
+  }
+
+  const submitFields = fields.filter((f) => !f.readOnly)
+  return { fields, submitFields }
 }

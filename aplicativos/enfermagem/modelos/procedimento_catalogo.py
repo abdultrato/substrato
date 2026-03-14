@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from infrastrutura.orm.fields.dinheiro_field import DinheiroField
@@ -17,11 +18,23 @@ class ProcedimentoCatalogo(CoreModel):
 
     prefixo = "PCAT"
 
-    descricao = models.TextField(blank=True, default="")
+    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
 
     preco_padrao = DinheiroField(
         verbose_name="Preço padrão",
         default=Decimal("0.00"),
+    )
+
+    iva_percentual = models.DecimalField(
+        verbose_name="IVA (%)",
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("16.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
+        help_text="Taxa de IVA aplicada ao procedimento (0 a 100).",
     )
 
     class Meta:

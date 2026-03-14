@@ -76,6 +76,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
 		"aplicativos.identidade",
 		"aplicativos.seguradora.apps.SeguradoraConfig",
+		"aplicativos.entidades.apps.EntidadesConfig",
 		"aplicativos.clinico",
 		"aplicativos.enfermagem.apps.EnfermagemConfig",
 		"aplicativos.integracoes_equipamentos.apps.IntegracoesEquipamentosConfig",
@@ -88,6 +89,11 @@ LOCAL_APPS = [
 			"aplicativos.recepcao.apps.RecepcaoConfig",
 			"aplicativos.auditoria_atividades",
 			"aplicativos.consultas",
+			"aplicativos.prontuario.apps.ProntuarioConfig",
+			"aplicativos.maternidade.apps.MaternidadeConfig",
+			"aplicativos.cirurgia.apps.CirurgiaConfig",
+			"aplicativos.recursos_humanos.apps.RecursosHumanosConfig",
+			"aplicativos.monitoramento.apps.MonitoramentoConfig",
 			]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -124,6 +130,9 @@ MIDDLEWARE = [
 		
 		# multi-tenant
 		"infrastrutura.middleware.inquilino.InquilinoMiddleware",
+		
+		# captura de erros (persistência em BD para monitoramento)
+		"infrastrutura.middleware.errors.ErrorCaptureMiddleware",
 		
 		"django.contrib.auth.middleware.AuthenticationMiddleware",
 		"django.contrib.messages.middleware.MessageMiddleware",
@@ -234,6 +243,18 @@ CACHES = {
 AUTH_USER_MODEL = "identidade.Usuario"
 
 # =========================================================
+# SUPERUSER POLICY
+# =========================================================
+#
+# Superuser ignora RBAC e pode atravessar tenants. Para reduzir riscos,
+# restringimos superusers a uma allowlist explícita (normalmente vazia).
+SUPERUSER_ALLOWLIST = [
+		u.strip()
+		for u in get_env("SUBSTRATO_SUPERUSER_ALLOWLIST", "").split(",")
+		if u.strip()
+		]
+
+# =========================================================
 # TEMPLATES
 # =========================================================
 
@@ -320,6 +341,18 @@ if not DEBUG:
 			for origin in get_env("CORS_ALLOWED_ORIGINS", "").split(",")
 			if origin.strip()
 			]
+
+# =========================================================
+# CSRF
+# =========================================================
+#
+# Necessário quando o backend (especialmente Django Admin) é acessado por outro
+# origin via proxy/reverse-proxy (ex.: frontend em :3000 apontando para backend :8000).
+CSRF_TRUSTED_ORIGINS = [
+		origin.strip()
+		for origin in get_env("CSRF_TRUSTED_ORIGINS", "").split(",")
+		if origin.strip()
+		]
 
 # =========================================================
 # SECURITY

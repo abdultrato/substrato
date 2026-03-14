@@ -37,6 +37,14 @@ def gerar_pdf_resultados(requisicao, apenas_validados = True) -> tuple[bytes, st
 	elements = []
 	
 	paciente = requisicao.paciente
+
+	# Código de barras no header (repete em todas páginas)
+	try:
+		resultado_obj = getattr(requisicao, "resultado", None)
+		cod_resultado = getattr(resultado_obj, "id_custom", None) or getattr(requisicao, "id_custom", "")
+		doc.barcode_value = f"PAC:{getattr(paciente, 'id_custom', '')}|RES:{cod_resultado}"
+	except Exception:
+		doc.barcode_value = None
 	
 	# =====================================
 	# RESULTADOS
@@ -59,6 +67,16 @@ def gerar_pdf_resultados(requisicao, apenas_validados = True) -> tuple[bytes, st
 	# =====================================
 	
 	left_lines = [f"{bold('Paciente')}: {paciente.nome}", f"{bold('Idade')}: {paciente.idade()} - {bold('Gênero')}: {paciente.genero or '—'} - {bold('Raça')}: {paciente.raca_origem}", f"{bold('Documento')}: {paciente.tipo_documento}: {paciente.numero_id or 'Não forneceu documento'}", f"{bold('Proveniência')}: {paciente.proveniencia or '—'}", f"{bold('Contacto')}: {paciente.contacto or '—'}", ]
+
+	empresa_origem = getattr(paciente, "empresa_origem", None)
+	empresa_solicitante = getattr(requisicao, "empresa_solicitante", None)
+	empresa_executora = getattr(requisicao, "empresa_executora_externa", None)
+	if empresa_solicitante:
+		left_lines.append(f"{bold('Empresa solicitante')}: {getattr(empresa_solicitante, 'nome', '—')}")
+	elif empresa_origem:
+		left_lines.append(f"{bold('Empresa')}: {getattr(empresa_origem, 'nome', '—')}")
+	if empresa_executora:
+		left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'nome', '—')}")
 	
 	tecnico_texto = identidade_usuario_institucional(usuario_documento)
 	

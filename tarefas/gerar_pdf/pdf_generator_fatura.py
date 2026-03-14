@@ -97,6 +97,12 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     requisicao = getattr(fatura, "requisicao", None)
     usuario_documento = _resolver_usuario_documento(fatura, requisicao)
 
+    # Código de barras no header (repete em todas páginas)
+    try:
+        doc.barcode_value = f"PAC:{getattr(paciente, 'id_custom', '')}|FAT:{getattr(fatura, 'id_custom', '')}"
+    except Exception:
+        doc.barcode_value = None
+
     # ==========================
     # ESTILOS
     # ==========================
@@ -141,6 +147,16 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
 
         if getattr(paciente, "proveniencia", None):
             left_lines.append(f"{bold('Proveniência')}: {getattr(paciente, 'proveniencia', '—') or '—'}")
+
+        empresa_origem = getattr(paciente, "empresa_origem", None)
+        empresa_solicitante = getattr(requisicao, "empresa_solicitante", None) if requisicao else None
+        empresa_executora = getattr(requisicao, "empresa_executora_externa", None) if requisicao else None
+        if empresa_solicitante:
+            left_lines.append(f"{bold('Empresa solicitante')}: {getattr(empresa_solicitante, 'nome', '—')}")
+        elif empresa_origem:
+            left_lines.append(f"{bold('Empresa')}: {getattr(empresa_origem, 'nome', '—')}")
+        if empresa_executora:
+            left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'nome', '—')}")
     else:
         left_lines = [f"{bold('Paciente')}: —"]
 

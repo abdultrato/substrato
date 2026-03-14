@@ -10,15 +10,14 @@ import os
 # Adiciona o diretório do projeto ao path
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Configuração mínima Django para que funcione
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'plataforma.settings.development')
+# Configuração mínima Django para que funcione.
+# Mantém o mesmo comportamento do `manage.py` (resolve dev/prod via DJANGO_ENV).
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
 
 import django
 django.setup()
 
-from rest_framework.inspectors import ViewInspector
 from drf_spectacular.generators import SchemaGenerator
-from drf_spectacular.openapi import AutoSchema
 
 def generate_schema():
     """Gera o schema OpenAPI"""

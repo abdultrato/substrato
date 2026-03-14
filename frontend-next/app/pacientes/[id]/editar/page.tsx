@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Paciente, PacienteCreateDTO } from "@/lib/types";
+import { Entidade, Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -26,8 +26,10 @@ export default function EditarPacientePage () {
         email: "",
         proveniencia: "",
         morada: "",
+        empresa_origem: null,
     } );
 
+    const [empresas, setEmpresas] = useState<Entidade[]>( [] );
     const [loading, setLoading] = useState( true );
     const [saving, setSaving] = useState( false );
     const [error, setError] = useState<string | null>( null );
@@ -38,7 +40,12 @@ export default function EditarPacientePage () {
 
     async function carregar () {
         try {
-            const data: Paciente = await apiFetch( `/pacientes/${pacienteId}/` );
+            const [data, emps] = await Promise.all( [
+                apiFetch<Paciente>( `/pacientes/${pacienteId}/` ),
+                apiFetch<Entidade[]>( "/entidades/" ),
+            ] );
+
+            setEmpresas( emps || [] );
 
             setForm( {
                 nome: data.nome || "",
@@ -52,6 +59,7 @@ export default function EditarPacientePage () {
                 email: data.email || "",
                 proveniencia: data.proveniencia || "",
                 morada: data.morada || "",
+                empresa_origem: (data as any).empresa_origem ?? null,
             } );
         } catch ( err: any ) {
             setError( err.message || "Erro ao carregar paciente" );
@@ -64,11 +72,22 @@ export default function EditarPacientePage () {
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) {
         const { name, value } = e.target;
-        setForm( prev => ( { ...prev, [name]: value } ) );
+        setForm( prev => ( {
+            ...prev,
+            [name]: name === "empresa_origem" ? ( value ? Number( value ) : null ) : value,
+        } ) );
     }
 
     async function handleSubmit ( e: React.FormEvent ) {
         e.preventDefault();
+
+        if (
+            form.proveniencia === "Medicina Ocupacional" &&
+            !form.empresa_origem
+        ) {
+            setError( "Selecione a empresa de origem para Medicina Ocupacional." );
+            return;
+        }
         setSaving( true );
         setError( null );
 
@@ -208,6 +227,19 @@ export default function EditarPacientePage () {
                     <option>Dentária</option>
                     <option>Oftalmologia</option>
                     <option>Outro</option>
+                </select>
+
+                <select
+                    name="empresa_origem"
+                    value={form.empresa_origem ? String( form.empresa_origem ) : ""}
+                    onChange={handleChange}
+                >
+                    <option value="">Empresa de origem (opcional)</option>
+                    {empresas.map( ( e ) => (
+                        <option key={e.id} value={e.id}>
+                            {e.nome}
+                        </option>
+                    ) )}
                 </select>
 
                 <input

@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
+import Pagination from "@/components/ui/Pagination";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 function calcularIdade ( dataNascimento?: string ): string {
@@ -46,6 +47,10 @@ export default function PacientesPage () {
     const [saving, setSaving] = useState( false );
     const [error, setError] = useState<string | null>( null );
     const [editingId, setEditingId] = useState<number | null>( null );
+    const [page, setPage] = useState( 1 );
+    const [pageSize, setPageSize] = useState( 50 );
+    const [totalItems, setTotalItems] = useState( 0 );
+    const [totalPages, setTotalPages] = useState( 1 );
 
     const [form, setForm] = useState<PacienteCreateDTO>( {
         nome: "",
@@ -62,15 +67,33 @@ export default function PacientesPage () {
 
     useEffect( () => {
         carregarPacientes();
-    }, [] );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, pageSize] );
 
     async function carregarPacientes () {
         try {
-            const r = await apiFetch<any>( "/pacientes/" );
-            const data = r && (r as any).results ? (r as any).results : (r as any);
-            setPacientes( data || [] );
-        } catch {
-            setError( "Erro ao carregar pacientes" );
+            setLoading( true );
+            setError( null );
+
+            const { items, meta } = await apiFetchList<Paciente>( "/pacientes/", {
+                page,
+                pageSize,
+            } );
+
+            const total = meta.total ?? items.length;
+            const computedTotalPages =
+                meta.totalPages ??
+                (total && pageSize ? Math.max( 1, Math.ceil( total / pageSize ) ) : 1);
+
+            setPacientes( items );
+            setTotalItems( total || 0 );
+            setTotalPages( computedTotalPages );
+
+            if ( page > computedTotalPages ) {
+                setPage( computedTotalPages );
+            }
+        } catch ( err: any ) {
+            setError( err?.message || "Erro ao carregar pacientes" );
         } finally {
             setLoading( false );
         }
@@ -148,7 +171,7 @@ export default function PacientesPage () {
             data_nascimento: p.data_nascimento || "",
             genero: p.genero || "",
             raca_origem: p.raca_origem || "Negra",
-            tipo_documento: p.tipo_documento || "Bilhete de Identidade",
+            tipo_documento: p.tipo_documento || "BI",
             numero_id: p.numero_id || "",
             contacto: p.contacto || "",
             email: p.email || "",
@@ -330,6 +353,29 @@ export default function PacientesPage () {
                         </tbody>
                     </table>
                 </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 13, color: "#555" }}>
+                        Total: {totalItems}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <label style={{ fontSize: 13, color: "#555" }}>Por página</label>
+                        <select
+                            value={pageSize}
+                            onChange={( e ) => {
+                                setPage( 1 );
+                                setPageSize( Number( e.target.value ) );
+                            }}
+                        >
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+                </div>
+
+                <Pagination page={page} totalPages={totalPages} onChange={setPage} />
             </div>
         </AppLayout>
     );

@@ -9,7 +9,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 export default function FarmaciaPage() {
@@ -32,12 +32,10 @@ export default function FarmaciaPage() {
           apiFetch<any>("/farmacia/movimentoestoque/"),
         ])
 
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
         if (!mounted) return
-        setProdutos(Array.isArray(list(prods)) ? list(prods).length : 0)
-        setLotes(Array.isArray(list(lots)) ? list(lots).length : 0)
-        setMovimentos(Array.isArray(list(movs)) ? list(movs).length : 0)
+        setProdutos(extractTotalCount(prods))
+        setLotes(extractTotalCount(lots))
+        setMovimentos(extractTotalCount(movs))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace da farmácia.")
@@ -102,12 +100,12 @@ export default function FarmaciaPage() {
           />
         </div>
 
-        <Card
-          title="Nota"
-          subtitle="Este workspace é focado em almoxarifado (sem expor telas clínicas)."
-        >
+          <Card
+            title="Nota"
+            subtitle="Este workspace é focado em almoxarifado (sem expor telas clínicas)."
+          >
           <div className="text-sm text-slate-700">
-            Se a jornada incluir "levantamento de medicação" ligada a uma requisição clínica, ainda precisamos
+            Se a jornada incluir &quot;levantamento de medicação&quot; ligada a uma requisição clínica, ainda precisamos
             do vínculo explícito entre requisição e saída de estoque no backend/serializers.
           </div>
         </Card>

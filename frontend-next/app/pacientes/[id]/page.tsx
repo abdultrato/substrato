@@ -125,11 +125,12 @@ export default function PacienteDetalhePage () {
                     <div><strong>Documento:</strong> {paciente.tipo_documento || "-"}</div>
                     <div><strong>Nº Documento:</strong> {paciente.numero_id || "-"}</div>
                     <div><strong>Raça/Origem:</strong> {paciente.raca_origem || "-"}</div>
-                    <div><strong>Proveniência:</strong> {paciente.proveniencia || "-"}</div>
-                    <div><strong>Morada:</strong> {paciente.morada || "-"}</div>
-                    <div>
-                        <strong>Cadastro:</strong>{" "}
-                        {paciente.criado_em
+                <div><strong>Proveniência:</strong> {paciente.proveniencia || "-"}</div>
+                <div><strong>Empresa:</strong> {paciente.empresa_origem_nome || "-"}</div>
+                <div><strong>Morada:</strong> {paciente.morada || "-"}</div>
+                <div>
+                    <strong>Cadastro:</strong>{" "}
+                    {paciente.criado_em
                             ? new Date( paciente.criado_em ).toLocaleDateString()
                             : "-"}
                     </div>

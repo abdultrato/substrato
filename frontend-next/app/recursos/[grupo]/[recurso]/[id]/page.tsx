@@ -23,6 +23,10 @@ export default function RecursoDetalhePage({
   const { loading } = useAuthGuard()
   const router = useRouter()
   const found = findModuleResource(params.grupo, params.recurso)
+  const requiredGroups =
+    params.grupo === "recursos_humanos"
+      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
+      : [GROUPS.ADMIN]
   const [data, setData] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -54,7 +58,7 @@ export default function RecursoDetalhePage({
 
   if (!found) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+      <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -62,7 +66,7 @@ export default function RecursoDetalhePage({
           />
           <Link
             href={`/recursos/${params.grupo}`}
-            className="text-sm text-gray-700 underline"
+            className="text-sm text-[var(--gray-700)] underline"
           >
             Voltar
           </Link>
@@ -89,7 +93,7 @@ export default function RecursoDetalhePage({
   const basePath = `/recursos/${params.grupo}/${params.recurso}`
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
           title={`${found.resource.label} — ${params.id}`}
@@ -98,7 +102,7 @@ export default function RecursoDetalhePage({
             <div className="flex gap-3">
               <Link
                 href={`${basePath}/${params.id}/editar`}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
                 Editar
               </Link>
@@ -111,7 +115,7 @@ export default function RecursoDetalhePage({
               </button>
               <Link
                 href={basePath}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
                 Voltar
               </Link>
@@ -126,9 +130,9 @@ export default function RecursoDetalhePage({
         )}
 
         {loadingData ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
+          <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
-          <pre className="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-800">
+          <pre className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-4 text-xs text-[var(--text)]">
             {JSON.stringify(data, null, 2)}
           </pre>
         )}

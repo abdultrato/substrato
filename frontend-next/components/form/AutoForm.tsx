@@ -51,10 +51,12 @@ function renderInput(
   field: FormField,
   value: any,
   onChange: (v: any) => void,
-  error?: string
+  error?: string,
+  opts?: { readOnly?: boolean }
 ) {
   const common =
-    "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-gray-400 focus:outline-none"
+    "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10"
+  const disabled = !!opts?.readOnly
 
   switch (field.type) {
     case "boolean":
@@ -64,6 +66,7 @@ function renderInput(
           checked={!!value}
           onChange={(e) => onChange(e.target.checked)}
           className="h-4 w-4"
+          disabled={disabled}
         />
       )
     case "integer":
@@ -74,6 +77,7 @@ function renderInput(
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
           className={common}
+          disabled={disabled}
         />
       )
     case "date":
@@ -83,6 +87,7 @@ function renderInput(
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
           className={common}
+          disabled={disabled}
         />
       )
     case "datetime":
@@ -92,6 +97,7 @@ function renderInput(
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
           className={common}
+          disabled={disabled}
         />
       )
     case "select":
@@ -100,6 +106,7 @@ function renderInput(
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
           className={common}
+          disabled={disabled}
         >
           <option value="">Selecione...</option>
           {(field.enumValues || []).map((opt, idx) => {
@@ -127,6 +134,7 @@ function renderInput(
           }
           className={common}
           placeholder="valor1, valor2"
+          disabled={disabled}
         />
       )
     default:
@@ -136,6 +144,7 @@ function renderInput(
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
           className={common}
+          disabled={disabled}
         />
       )
   }
@@ -157,7 +166,7 @@ export default function AutoForm({
   const schema = useMemo(() => {
     if (!formSpec) return null
     const shape: Record<string, z.ZodTypeAny> = {}
-    formSpec.fields.forEach((f) => {
+    formSpec.submitFields.forEach((f) => {
       shape[f.name] = fieldToZod(f)
     })
     return z.object(shape)
@@ -205,13 +214,48 @@ export default function AutoForm({
   return (
     <div className="space-y-4">
       {message && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-4 py-2 text-sm text-[var(--text)]">
           {message}
         </div>
       )}
+
+      {formSpec.fields.some((f) => f.readOnly && values[f.name] !== undefined && values[f.name] !== null && values[f.name] !== "") ? (
+        <details className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+          <summary className="cursor-pointer select-none text-sm font-semibold text-[var(--text)]">
+            Campos somente leitura
+          </summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {formSpec.fields
+              .filter(
+                (f) =>
+                  f.readOnly &&
+                  values[f.name] !== undefined &&
+                  values[f.name] !== null &&
+                  values[f.name] !== ""
+              )
+              .map((field) => (
+                <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{field.label}</span>
+                  </div>
+                  <div className="opacity-80">
+                    {renderInput(
+                      field,
+                      values[field.name],
+                      () => {},
+                      undefined,
+                      { readOnly: true }
+                    )}
+                  </div>
+                </label>
+              ))}
+          </div>
+        </details>
+      ) : null}
+
       <div className="grid gap-4 md:grid-cols-2">
-        {formSpec.fields.map((field) => (
-          <label key={field.name} className="space-y-1 text-sm text-gray-700">
+        {formSpec.fields.filter((f) => !f.readOnly).map((field) => (
+          <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
             <div className="flex items-center justify-between">
               <span className="font-medium">
                 {field.label}
@@ -234,7 +278,7 @@ export default function AutoForm({
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60"
+          className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
         >
           {submitting ? "Salvando..." : submitLabel}
         </button>

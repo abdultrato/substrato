@@ -16,6 +16,10 @@ export default function RecursosRecursoPage({
 }) {
   const { loading } = useAuthGuard()
   const found = findModuleResource(params.grupo, params.recurso)
+  const requiredGroups =
+    params.grupo === "recursos_humanos"
+      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
+      : [GROUPS.ADMIN]
 
   if (loading) return null
 
@@ -27,12 +31,12 @@ export default function RecursosRecursoPage({
             title="Recurso não encontrado"
             subtitle={`${params.grupo}/${params.recurso}`}
           />
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-[var(--gray-700)]">
             O recurso solicitado não existe na lista atual.
           </div>
           <Link
             href={`/recursos/${params.grupo}`}
-            className="text-sm text-gray-700 underline"
+            className="text-sm text-[var(--gray-700)] underline"
           >
             Voltar
           </Link>
@@ -52,7 +56,7 @@ export default function RecursosRecursoPage({
       rowHref={(row) =>
         `${basePath}/${row.id ?? row.pk ?? row.id_custom ?? ""}`.replace(/\/?$/, "")
       }
-      requiredGroups={[GROUPS.ADMIN]}
+      requiredGroups={requiredGroups}
     />
   )
 }

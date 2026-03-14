@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -27,6 +28,11 @@ class Usuario(AbstractUser, CoreModel):
 		ordering = ["username"]
 	
 	def save(self, *args, **kwargs):
+		# Política: superuser deve ser exceção (ignora RBAC e atravessa tenants).
+		allowlist = set(getattr(settings, "SUPERUSER_ALLOWLIST", []) or [])
+		if getattr(self, "is_superuser", False) and (self.username not in allowlist):
+			self.is_superuser = False
+
 		# Garantir associação a um inquilino mesmo em ambientes sem contexto (ex.: createsuperuser)
 		if not self.inquilino_id:
 			tenant = Inquilino.objects.order_by("id").first()

@@ -1,6 +1,10 @@
+from datetime import datetime, time
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 from decimal import Decimal
 
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -9,14 +13,25 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
+from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
+from aplicativos.consultas.modelos.feriado import Feriado
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
 from aplicativos.identidade.modelos.usuario import Usuario
 
-from .filters import ConsultaMedicaFilter, MedicoFilter
+from .filters import (
+    ConsultaMedicaFilter,
+    EspecialidadeConsultaFilter,
+    FeriadoFilter,
+    MedicoFilter,
+)
 from .serializers import (
     ConsultaMedicaSerializer,
+    RemarcarConsultaSerializer,
+    CancelarConsultaSerializer,
     CriarFaturaConsultaSerializer,
+    EspecialidadeConsultaSerializer,
+    FeriadoSerializer,
     MedicoSerializer,
 )
 
@@ -35,12 +50,48 @@ class MedicosViewSet(ReadOnlyModelViewSet):
         inquilino = getattr(self.request, "inquilino", None)
         if inquilino is not None:
             qs = qs.filter(inquilino=inquilino)
-        # Grupo canônico com acento.
-        return qs.filter(groups__name="Médico")
+        # Grupo canônico com acento OU cargo RH marcado como médico.
+        return qs.filter(
+            Q(groups__name="Médico")
+            | Q(
+                perfil_profissional__funcionario__cargo__eh_medico=True,
+                perfil_profissional__funcionario__estado="ATIVO",
+                perfil_profissional__ativo=True,
+            )
+        ).distinct()
+
+
+class TenantScopedModelViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            qs = qs.filter(inquilino=inquilino)
+        return qs
+
+
+class EspecialidadeConsultaViewSet(TenantScopedModelViewSet):
+    queryset = EspecialidadeConsulta.objects.all()
+    serializer_class = EspecialidadeConsultaSerializer
+    filterset_class = EspecialidadeConsultaFilter
+    search_fields = ["id_custom", "nome"]
+    ordering_fields = ["nome", "preco_base", "criado_em"]
+    ordering = ["nome"]
+
+
+class FeriadoViewSet(TenantScopedModelViewSet):
+    queryset = Feriado.objects.all()
+    serializer_class = FeriadoSerializer
+    filterset_class = FeriadoFilter
+    search_fields = ["id_custom", "descricao"]
+    ordering_fields = ["data", "ativo", "criado_em"]
+    ordering = ["-data", "-criado_em"]
 
 
 class ConsultaMedicaViewSet(ModelViewSet):
-    queryset = ConsultaMedica.objects.select_related("paciente", "medico").all()
+    queryset = ConsultaMedica.objects.select_related("paciente", "medico", "especialidade").all()
     serializer_class = ConsultaMedicaSerializer
     filterset_class = ConsultaMedicaFilter
     permission_classes = [IsAuthenticated]
@@ -54,6 +105,117 @@ class ConsultaMedicaViewSet(ModelViewSet):
         if inquilino is not None:
             qs = qs.filter(inquilino=inquilino)
         return qs
+
+    @action(detail=False, methods=["get"], url_path="preco")
+    def preco(self, request):
+        """
+        Preview de preço (normal vs feriado) para uma especialidade + data/hora.
+
+        Query params:
+        - especialidade: id (obrigatório)
+        - agendada_para: datetime ISO (opcional; default: now)
+        """
+        inquilino = getattr(request, "inquilino", None)
+        if inquilino is None:
+            raise ValidationError("Tenant não identificado.")
+
+        especialidade_id = (request.query_params.get("especialidade") or "").strip()
+        if not especialidade_id:
+            raise ValidationError({"especialidade": "Informe o id da especialidade."})
+
+        especialidade = EspecialidadeConsulta.objects.filter(
+            inquilino=inquilino, pk=especialidade_id
+        ).first()
+        if not especialidade:
+            raise ValidationError({"especialidade": "Especialidade não encontrada."})
+
+        raw_dt = (request.query_params.get("agendada_para") or "").strip()
+        dt = parse_datetime(raw_dt) if raw_dt else None
+        if raw_dt and not dt:
+            # Aceita YYYY-MM-DD também.
+            d = parse_date(raw_dt)
+            if not d:
+                raise ValidationError({"agendada_para": "Datetime inválido (use ISO 8601)."})
+            dt = timezone.make_aware(datetime.combine(d, time.min))
+
+        if not dt:
+            dt = timezone.now()
+
+        consulta = ConsultaMedica(
+            inquilino=inquilino,
+            especialidade=especialidade,
+            agendada_para=dt,
+            tipo="tmp",
+            preco=Decimal("0.00"),
+        )
+
+        # Reusa a mesma regra do model (feriado + acrescimo percentual).
+        consulta._sincronizar_especialidade_e_preco(None)
+
+        percentual = str(consulta._acrescimo_percentual_feriado())
+        try:
+            moeda = getattr(getattr(inquilino, "configuracao", None), "moeda", "MZN")
+        except Exception:
+            moeda = "MZN"
+
+        return Response(
+            {
+                "especialidade": especialidade.id,
+                "especialidade_nome": especialidade.nome,
+                "preco_base": str(especialidade.preco_base or Decimal("0.00")),
+                "eh_feriado": bool(consulta._is_feriado()),
+                "percentual_feriado": percentual,
+                "preco_final": str(consulta.preco or Decimal("0.00")),
+                "moeda": moeda,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"])
+    def agenda(self, request):
+        """
+        Lista agenda de consultas por médico e intervalo.
+
+        Query params:
+        - medico: id do usuário (opcional)
+        - start: datetime ISO (opcional)
+        - end: datetime ISO (opcional)
+        - estado: MARCADA|CONCLUIDA|CANCELADA (opcional)
+        """
+
+        qs = self.get_queryset()
+
+        medico = (request.query_params.get("medico") or "").strip()
+        if medico:
+            qs = qs.filter(medico_id=medico)
+
+        estado = (request.query_params.get("estado") or "").strip()
+        if estado:
+            qs = qs.filter(estado=estado)
+
+        start = (request.query_params.get("start") or "").strip()
+        if start:
+            dt = parse_datetime(start)
+            if not dt:
+                raise ValidationError({"start": "Datetime inválido (use ISO 8601)."})
+            qs = qs.filter(agendada_para__gte=dt)
+
+        end = (request.query_params.get("end") or "").strip()
+        if end:
+            dt = parse_datetime(end)
+            if not dt:
+                raise ValidationError({"end": "Datetime inválido (use ISO 8601)."})
+            qs = qs.filter(agendada_para__lte=dt)
+
+        qs = qs.order_by("agendada_para", "id")
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            ser = self.get_serializer(page, many=True)
+            return self.get_paginated_response(ser.data)
+
+        ser = self.get_serializer(qs, many=True)
+        return Response(ser.data, status=status.HTTP_200_OK)
 
     @transaction.atomic
     @action(detail=True, methods=["post"])
@@ -97,10 +259,69 @@ class ConsultaMedicaViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @transaction.atomic
+    @action(detail=True, methods=["post"])
+    def remarcar(self, request, pk=None):
+        consulta = self.get_object()
+
+        if consulta.estado in {ConsultaMedica.Estado.CANCELADA, ConsultaMedica.Estado.CONCLUIDA}:
+            raise ValidationError("Consulta não pode ser remarcada (já finalizada).")
+
+        payload = RemarcarConsultaSerializer(data=request.data or {})
+        payload.is_valid(raise_exception=True)
+
+        consulta.agendada_para = payload.validated_data["agendada_para"]
+        consulta.save(update_fields=["agendada_para"])
+
+        return Response(
+            ConsultaMedicaSerializer(consulta).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @transaction.atomic
+    @action(detail=True, methods=["post"])
+    def cancelar(self, request, pk=None):
+        consulta = self.get_object()
+
+        if consulta.estado == ConsultaMedica.Estado.CONCLUIDA:
+            raise ValidationError("Consulta concluída não pode ser cancelada.")
+
+        # Aceita payload para extensão futura (motivo).
+        payload = CancelarConsultaSerializer(data=request.data or {})
+        payload.is_valid(raise_exception=True)
+
+        consulta.estado = ConsultaMedica.Estado.CANCELADA
+        consulta.cancelada_em = timezone.now()
+        consulta.save(update_fields=["estado", "cancelada_em"])
+
+        return Response(
+            ConsultaMedicaSerializer(consulta).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @transaction.atomic
+    @action(detail=True, methods=["post"])
+    def concluir(self, request, pk=None):
+        consulta = self.get_object()
+
+        if consulta.estado == ConsultaMedica.Estado.CANCELADA:
+            raise ValidationError("Consulta cancelada não pode ser concluída.")
+
+        consulta.estado = ConsultaMedica.Estado.CONCLUIDA
+        consulta.concluida_em = timezone.now()
+        consulta.save(update_fields=["estado", "concluida_em"])
+
+        return Response(
+            ConsultaMedicaSerializer(consulta).data,
+            status=status.HTTP_200_OK,
+        )
+
 
 VIEWSET_MAP = {
     "consulta": ConsultaMedicaViewSet,
     "medicos": MedicosViewSet,
+    "especialidade": EspecialidadeConsultaViewSet,
+    "feriado": FeriadoViewSet,
 }
 
 __all__ = [
@@ -108,4 +329,3 @@ __all__ = [
     "MedicosViewSet",
     "VIEWSET_MAP",
 ]
-

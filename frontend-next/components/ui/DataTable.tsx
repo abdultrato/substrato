@@ -22,16 +22,16 @@ export default function DataTable<T> ( {
 }: Props<T> ) {
     if ( !data.length ) {
         return (
-            <div className="text-center py-10 text-sm text-gray-500">
+            <div className="text-center py-10 text-sm text-[var(--gray-500)]">
                 {emptyMessage}
             </div>
         )
     }
 
     return (
-        <div className="overflow-x-auto rounded-lg border bg-white">
+        <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--card)]">
             <table className="min-w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+                <thead className="bg-[var(--gray-100)] text-[var(--gray-700)]">
                     <tr>
                         {columns.map( ( col, idx ) => (
                             <th
@@ -46,7 +46,7 @@ export default function DataTable<T> ( {
 
                 <tbody className="divide-y">
                     {data.map( ( row, i ) => (
-                        <tr key={i} className="hover:bg-gray-50">
+                        <tr key={i} className="hover:bg-[var(--gray-100)]">
                             {columns.map( ( col, idx ) => (
                                 <td
                                     key={idx}

@@ -16,12 +16,16 @@ export default function NovoRecursoPage({
 }) {
   const { loading } = useAuthGuard()
   const found = findModuleResource(params.grupo, params.recurso)
+  const requiredGroups =
+    params.grupo === "recursos_humanos"
+      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
+      : [GROUPS.ADMIN]
 
   if (loading) return null
 
   if (!found) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+      <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -39,7 +43,7 @@ export default function NovoRecursoPage({
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
           title={`Novo ${found.resource.label}`}
@@ -47,7 +51,7 @@ export default function NovoRecursoPage({
           actions={
             <Link
               href={`/recursos/${params.grupo}/${params.recurso}`}
-              className="text-sm text-gray-700 underline"
+              className="text-sm text-[var(--gray-700)] underline"
             >
               Voltar
             </Link>

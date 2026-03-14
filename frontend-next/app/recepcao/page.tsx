@@ -6,6 +6,8 @@ import {
     ClipboardList,
     CreditCard,
     FilePlus2,
+    FileText,
+    CalendarClock,
     Receipt,
     UserPlus,
     Users,
@@ -80,6 +82,12 @@ const atalhos = [
         icon: FilePlus2,
     },
     {
+        title: "Requisição externa",
+        description: "Criar requisição para empresa solicitante ou terceirizada.",
+        href: "/requisicoes/externa/nova",
+        icon: FileText,
+    },
+    {
         title: "Faturas",
         description: "Abrir o backoffice de faturamento para emissão e revisão.",
         href: "/faturas",
@@ -90,6 +98,12 @@ const atalhos = [
         description: "Consultar recibos já gerados no módulo de pagamentos.",
         href: "/recibos",
         icon: Receipt,
+    },
+    {
+        title: "Agendar consulta",
+        description: "Marcar consulta médica e (opcionalmente) emitir fatura.",
+        href: "/consultas",
+        icon: CalendarClock,
     },
 ]
 

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   FileText,
   FileDown,
@@ -15,7 +15,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import DataTable from "@/components/ui/DataTable"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extractResults, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
@@ -34,9 +34,18 @@ export default function LaboratorioPage() {
   const [loading, setLoading] = useState(true)
 
   const [pendentes, setPendentes] = useState<RequisicaoRow[]>([])
+  const [pendentesTotal, setPendentesTotal] = useState<number>(0)
   const [aguardandoValidacao, setAguardandoValidacao] = useState<number>(0)
   const [criticas, setCriticas] = useState<number>(0)
   const [itensPendentes, setItensPendentes] = useState<number>(0)
+
+  const onPdf = useCallback(async (id: number) => {
+    try {
+      await abrirPdfResultados(id)
+    } catch (e: any) {
+      setErro(e?.message || "Falha ao gerar PDF de resultados.")
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -58,13 +67,12 @@ export default function LaboratorioPage() {
           apiFetch<any>("/clinico/resultadoitem/?estado=pendente"),
         ])
 
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
         if (!mounted) return
-        setPendentes(Array.isArray(list(reqPendentes)) ? list(reqPendentes).slice(0, 10) : [])
-        setAguardandoValidacao(Array.isArray(list(reqAguardando)) ? list(reqAguardando).length : 0)
-        setCriticas(Array.isArray(list(reqCriticas)) ? list(reqCriticas).length : 0)
-        setItensPendentes(Array.isArray(list(resItensPendentes)) ? list(resItensPendentes).length : 0)
+        setPendentes(extractResults<RequisicaoRow>(reqPendentes).slice(0, 10))
+        setPendentesTotal(extractTotalCount(reqPendentes))
+        setAguardandoValidacao(extractTotalCount(reqAguardando))
+        setCriticas(extractTotalCount(reqCriticas))
+        setItensPendentes(extractTotalCount(resItensPendentes))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace do laboratório.")
@@ -100,7 +108,7 @@ export default function LaboratorioPage() {
             {r.id ? (
               <button
                 type="button"
-                onClick={() => abrirPdfResultados(Number(r.id))}
+                onClick={() => onPdf(Number(r.id))}
                 className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 PDF
@@ -110,7 +118,7 @@ export default function LaboratorioPage() {
         ),
       },
     ],
-    []
+    [onPdf]
   )
 
   return (
@@ -137,7 +145,7 @@ export default function LaboratorioPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Requisições pendentes" value={loading ? "..." : pendentes.length} />
+          <MetricCard label="Requisições pendentes" value={loading ? "..." : pendentesTotal} />
           <MetricCard label="Aguardando validação" value={loading ? "..." : aguardandoValidacao} />
           <MetricCard label="Críticas" value={loading ? "..." : criticas} hint="Flag possui_resultado_critico" />
           <MetricCard label="Itens de resultado pendentes" value={loading ? "..." : itensPendentes} />

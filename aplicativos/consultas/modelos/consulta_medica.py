@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -41,6 +42,15 @@ class ConsultaMedica(NoNameCoreModel):
         null=True,
         blank=True,
         related_name="consultas_realizadas",
+        db_index=True,
+    )
+
+    especialidade = models.ForeignKey(
+        "consultas.EspecialidadeConsulta",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="consultas",
         db_index=True,
     )
 
@@ -86,12 +96,99 @@ class ConsultaMedica(NoNameCoreModel):
         if self.medico_id and self.inquilino_id and self.medico.inquilino_id != self.inquilino_id:
             raise ValidationError({"medico": "Médico e consulta devem pertencer ao mesmo inquilino."})
 
+        if self.especialidade_id and self.inquilino_id and self.especialidade.inquilino_id != self.inquilino_id:
+            raise ValidationError(
+                {"especialidade": "Especialidade e consulta devem pertencer ao mesmo inquilino."}
+            )
+
+    def _tenant_timezone(self):
+        """
+        Retorna ZoneInfo do tenant (ou None para timezone default).
+        """
+        try:
+            cfg = getattr(self.inquilino, "configuracao", None)
+            tz = (getattr(cfg, "fuso_horario", "") or "").strip()
+            if not tz:
+                return None
+            return ZoneInfo(tz)
+        except Exception:
+            return None
+
+    def _is_feriado(self) -> bool:
+        if not self.inquilino_id or not self.agendada_para:
+            return False
+        from .feriado import Feriado
+
+        tz = self._tenant_timezone()
+        if timezone.is_aware(self.agendada_para):
+            local_date = timezone.localtime(self.agendada_para, tz).date() if tz else timezone.localtime(self.agendada_para).date()
+        else:
+            local_date = self.agendada_para.date()
+
+        return Feriado.objects.filter(inquilino_id=self.inquilino_id, data=local_date, ativo=True).exists()
+
+    def _acrescimo_percentual_feriado(self) -> Decimal:
+        try:
+            cfg = getattr(self.inquilino, "configuracao", None)
+            raw = getattr(cfg, "acrescimo_percentual_consulta_feriado", None)
+        except Exception:
+            raw = None
+
+        if raw is None or raw == "":
+            return Decimal("0.00")
+        try:
+            return Decimal(raw)
+        except Exception:
+            return Decimal("0.00")
+
+    def _sincronizar_especialidade_e_preco(self, update_fields: set[str] | None = None) -> None:
+        """
+        Se houver especialidade, sincroniza:
+        - tipo = especialidade.nome
+        - preco = preco_base (+ acrescimo feriado)
+        """
+        if not self.especialidade_id:
+            return
+
+        especialidade = getattr(self, "especialidade", None)
+        if not especialidade:
+            return
+
+        self.tipo = (especialidade.nome or "").strip()
+
+        base = especialidade.preco_base if especialidade.preco_base is not None else Decimal("0.00")
+        final = base
+
+        if self._is_feriado():
+            perc = self._acrescimo_percentual_feriado()
+            try:
+                multiplier = Decimal("1.00") + (perc / Decimal("100.00"))
+                final = (base * multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            except Exception:
+                final = base
+
+        self.preco = final
+
+        if update_fields is not None:
+            update_fields.add("tipo")
+            update_fields.add("preco")
+
     def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        update_set: set[str] | None = set(update_fields) if update_fields else None
+
         if not self.inquilino_id and self.paciente_id:
             self.inquilino_id = self.paciente.inquilino_id
+            if update_set is not None:
+                update_set.add("inquilino")
+
+        self._sincronizar_especialidade_e_preco(update_set)
+
+        if update_set is not None:
+            kwargs["update_fields"] = list(update_set)
+
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.id_custom} - {self.paciente.nome} ({self.tipo})"
-

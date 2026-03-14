@@ -8,13 +8,14 @@ class HistoricoFatura(CoreModel):
 
     fatura = models.ForeignKey(
         "faturamento.Fatura",
+        verbose_name="Fatura",
         on_delete=models.CASCADE,
         related_name="historico",
         db_index=True,
     )
 
-    tipo_evento = models.CharField(max_length=40, db_index=True)
-    descricao = models.TextField(blank=True, default="")
+    tipo_evento = models.CharField(verbose_name="Tipo de evento", max_length=40, db_index=True)
+    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
 
     class Meta:
         verbose_name = "Histórico de Fatura"
@@ -27,4 +28,3 @@ class HistoricoFatura(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"{self.fatura_id} - {self.tipo_evento}"
-

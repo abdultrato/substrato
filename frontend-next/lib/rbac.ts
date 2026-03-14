@@ -9,6 +9,7 @@ export const GROUPS = {
   MEDICINA: "Médico",
   MEDICINA_OCUPACIONAL: "Medicina Ocupacional",
   CONTABILIDADE: "Contabilidade",
+  RECURSOS_HUMANOS: "Gestor de RH",
 } as const
 
 export type WorkspaceKey =
@@ -20,6 +21,7 @@ export type WorkspaceKey =
   | "farmacia"
   | "medicina-ocupacional"
   | "contabilidade"
+  | "recursos-humanos"
 
 export type WorkspaceDef = {
   key: WorkspaceKey
@@ -85,6 +87,13 @@ export const WORKSPACES: WorkspaceDef[] = [
     href: "/contabilidade",
     description: "Contas, lançamentos e auditoria (somente leitura para recepção).",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
+  },
+  {
+    key: "recursos-humanos",
+    label: "Recursos Humanos",
+    href: "/recursos/recursos_humanos",
+    description: "Gestão de funcionários, cargos e escalas de trabalho.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS],
   },
 ]
 

@@ -73,6 +73,14 @@ export default function RequisicaoDetail ( {
                 </p>
 
                 <p>
+                    <b>Empresa solicitante:</b> {req.empresa_solicitante_nome || "—"}
+                </p>
+
+                <p>
+                    <b>Executora externa:</b> {req.empresa_executora_externa_nome || "—"}
+                </p>
+
+                <p>
                     <b>Estado:</b> {req.estado || "—"}
                 </p>
 

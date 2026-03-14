@@ -43,19 +43,19 @@ export default function Modal ( {
             />
 
             <div
-                className={`relative bg-white rounded-xl shadow-lg w-full ${widths[width]} mx-4`}
+                className={`relative bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-lg w-full ${widths[width]} mx-4`}
             >
                 {( title || onClose ) && (
-                    <div className="flex items-center justify-between px-5 py-3 border-b">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
                         {title && (
-                            <h3 className="text-sm font-semibold text-gray-800">
+                            <h3 className="text-sm font-semibold text-[var(--text)]">
                                 {title}
                             </h3>
                         )}
 
                         <button
                             onClick={onClose}
-                            className="p-1 rounded hover:bg-gray-100"
+                            className="p-1 rounded hover:bg-[var(--gray-100)] text-[var(--text)]"
                         >
                             <X size={18} />
                         </button>

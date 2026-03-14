@@ -8,6 +8,22 @@ from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
+from nucleo.constantes.proveniencia import Proveniencia
+
+
+CORE_READ_ONLY_FIELDS = [
+	"id",
+	"id_custom",
+	"inquilino",
+	"criado_por",
+	"atualizado_por",
+	"criado_em",
+	"atualizado_em",
+	"deletado",
+	"deletado_em",
+	"deletado_por",
+	"versao",
+]
 
 
 class MoradaField(serializers.Field):
@@ -49,19 +65,14 @@ class PacienteSerializer(serializers.ModelSerializer):
 	"""
 
 	morada = MoradaField()
+	empresa_origem_nome = serializers.CharField(source="empresa_origem.nome", read_only=True)
 
 	class Meta:
 		model = Paciente
-		fields = [
-			'id', 'id_custom',
-			'nome', 'email', 'contacto',
-			'data_nascimento', 'genero', 'raca_origem',
-			'tipo_documento', 'numero_id',
-			'morada', 'proveniencia',
-			'gestante', 'idade_gestacional_semanas',
-			'criado_em', 'atualizado_em',
-		]
-		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
+		# Expor todos os campos do modelo (incluindo os de auditoria/tenant).
+		# Campos corporativos permanecem read-only para evitar manipulação via API.
+		fields = "__all__"
+		read_only_fields = CORE_READ_ONLY_FIELDS
 		extra_kwargs = {
 			'nome': {
 				'required': True,
@@ -147,6 +158,14 @@ class PacienteSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError({
 				'idade_gestacional_semanas': 'Idade gestacional é obrigatória quando gestante é true'
 			})
+
+		# Medicina ocupacional: paciente deve estar associado a uma empresa.
+		proveniencia = data.get("proveniencia") if "proveniencia" in data else getattr(self.instance, "proveniencia", None)
+		empresa = data.get("empresa_origem") if "empresa_origem" in data else getattr(self.instance, "empresa_origem", None)
+		if proveniencia == Proveniencia.MEDICINA_OCUPACIONAL and not empresa:
+			raise serializers.ValidationError(
+				{"empresa_origem": "Empresa é obrigatória quando a proveniência é Medicina Ocupacional."}
+			)
 		return data
 
 
@@ -158,15 +177,8 @@ class ExameSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Exame
-		fields = [
-			'id', 'id_custom',
-			'nome',
-			'trl_horas',
-			'preco',
-			'metodo', 'setor',
-			'criado_em', 'atualizado_em',
-		]
-		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
+		fields = "__all__"
+		read_only_fields = CORE_READ_ONLY_FIELDS
 		extra_kwargs = {
 			'nome': {
 				'required': True,
@@ -205,11 +217,14 @@ class ExameSerializer(serializers.ModelSerializer):
 				'required': True,
 				'help_text': 'Método utilizado para realizar o exame',
 			},
-			'setor': {
-				'required': True,
-				'help_text': 'Setor do laboratório responsável pelo exame',
-			},
-		}
+				'setor': {
+					# O modelo permite null/blank (e há constraint de unicidade).
+					# DRF injeta `default=None` para campos nullable em constraints, então
+					# não podemos forçar required=True aqui.
+					'required': False,
+					'help_text': 'Setor do laboratório responsável pelo exame',
+				},
+			}
 
 	def validate_preco(self, value):
 		"""Validação que preço deve ser positivo."""
@@ -222,15 +237,8 @@ class ExameMedicoSerializer(serializers.ModelSerializer):
 	"""Serializer para Exame Médico (imagem/diagnóstico)."""
 	class Meta:
 		model = ExameMedico
-		fields = [
-			'id', 'id_custom',
-			'nome',
-			'trl_horas',
-			'preco',
-			'metodo', 'setor',
-			'criado_em', 'atualizado_em',
-		]
-		read_only_fields = ['id', 'id_custom', 'criado_em', 'atualizado_em']
+		fields = "__all__"
+		read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 class ExameCampoSerializer(serializers.ModelSerializer):
@@ -285,6 +293,8 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 
 	paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
 	paciente_codigo = serializers.CharField(source="paciente.id_custom", read_only=True)
+	empresa_solicitante_nome = serializers.CharField(source="empresa_solicitante.nome", read_only=True)
+	empresa_executora_externa_nome = serializers.CharField(source="empresa_executora_externa.nome", read_only=True)
 
 	class RequisicaoItemResumoSerializer(serializers.ModelSerializer):
 		exame_nome = serializers.CharField(source="exame.nome", read_only=True)
@@ -305,34 +315,15 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = RequisicaoAnalise
-		fields = [
-			'id',
-			'id_custom',
-			'inquilino',
-			'paciente',
-			'paciente_nome',
-			'paciente_codigo',
-			'tipo',
-			'exames',
-			'exames_medicos',
-			'itens',
-			'analista',
-			'estado',
-			'status_clinico',
-			'possui_resultado_critico',
-			'criado_em',
-			'atualizado_em',
-		]
+		fields = "__all__"
 		read_only_fields = [
-			'id',
-			'id_custom',
-			'inquilino',
-			'paciente_nome',
-			'paciente_codigo',
-			'itens',
-			'possui_resultado_critico',
-			'criado_em',
-			'atualizado_em',
+			*CORE_READ_ONLY_FIELDS,
+			"paciente_nome",
+			"paciente_codigo",
+			"empresa_solicitante_nome",
+			"empresa_executora_externa_nome",
+			"itens",
+			"possui_resultado_critico",
 		]
 		extra_kwargs = {
 			'paciente': {
@@ -351,6 +342,19 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 
 		exames = attrs.get("exames", None)
 		exames_medicos = attrs.get("exames_medicos", None)
+		empresa_solicitante = attrs.get("empresa_solicitante", None)
+		empresa_executora_externa = attrs.get("empresa_executora_externa", None)
+
+		# Multi-tenant safety: empresas precisam estar no mesmo inquilino da request.
+		req = self.context.get("request")
+		tenant = getattr(req, "inquilino", None) if req is not None else None
+		for field_name, empresa in (
+			("empresa_solicitante", empresa_solicitante),
+			("empresa_executora_externa", empresa_executora_externa),
+		):
+			if empresa is not None and tenant is not None:
+				if getattr(empresa, "inquilino_id", None) != getattr(tenant, "id", None):
+					raise serializers.ValidationError({field_name: "Empresa fora do escopo do inquilino."})
 
 		# Regra: requisição por setor, sem mistura.
 		if tipo == RequisicaoAnalise.Tipo.LABORATORIO:
@@ -385,6 +389,15 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
 		exames_medicos = validated_data.pop("exames_medicos", [])
 
 		tipo = validated_data.get("tipo") or RequisicaoAnalise.Tipo.LABORATORIO
+
+		# Auto-associar empresa solicitante pela empresa do paciente (quando não fornecida).
+		if not validated_data.get("empresa_solicitante") and validated_data.get("paciente"):
+			try:
+				empresa_origem = getattr(validated_data["paciente"], "empresa_origem", None)
+				if empresa_origem is not None:
+					validated_data["empresa_solicitante"] = empresa_origem
+			except Exception:
+				pass
 
 		requisicao = RequisicaoAnalise.objects.create(**validated_data)
 
@@ -490,6 +503,76 @@ class ResultadoItemSerializer(serializers.ModelSerializer):
 				'help_text': 'Valor medido do parâmetro',
 			},
 		}
+
+
+class ResultadoItemLaboratorioSerializer(serializers.ModelSerializer):
+	"""
+	Serializer enxuto para a tela do laboratório.
+
+	Inclui campos derivados para evitar N+1 requests no frontend.
+	"""
+
+	exame_nome = serializers.CharField(source="exame_campo.exame.nome", read_only=True)
+	exame_id = serializers.IntegerField(source="exame_campo.exame_id", read_only=True)
+
+	exame_campo_nome = serializers.CharField(source="exame_campo.nome", read_only=True)
+	exame_campo_unidade = serializers.CharField(source="exame_campo.unidade", read_only=True)
+	exame_campo_tipo = serializers.CharField(source="exame_campo.tipo", read_only=True)
+	exame_campo_referencia = serializers.CharField(source="exame_campo.referencia", read_only=True)
+
+	paciente_nome = serializers.CharField(source="resultado.requisicao.paciente.nome", read_only=True)
+	requisicao_id = serializers.IntegerField(source="resultado.requisicao_id", read_only=True)
+	requisicao_codigo = serializers.CharField(source="resultado.requisicao.id_custom", read_only=True)
+
+	class Meta:
+		model = ResultadoItem
+		fields = [
+			"id",
+			"id_custom",
+			"resultado",
+			"requisicao_id",
+			"requisicao_codigo",
+			"paciente_nome",
+			"exame_campo",
+			"exame_id",
+			"exame_nome",
+			"exame_campo_nome",
+			"exame_campo_unidade",
+			"exame_campo_tipo",
+			"exame_campo_referencia",
+			"resultado_valor",
+			"status_clinico",
+			"cor_laudo",
+			"alerta_critico",
+			"estado",
+			"validado_por",
+			"data_validacao",
+			"criado_em",
+			"atualizado_em",
+		]
+		read_only_fields = [
+			"id",
+			"id_custom",
+			"resultado",
+			"requisicao_id",
+			"requisicao_codigo",
+			"paciente_nome",
+			"exame_campo",
+			"exame_id",
+			"exame_nome",
+			"exame_campo_nome",
+			"exame_campo_unidade",
+			"exame_campo_tipo",
+			"exame_campo_referencia",
+			"status_clinico",
+			"cor_laudo",
+			"alerta_critico",
+			"estado",
+			"validado_por",
+			"data_validacao",
+			"criado_em",
+			"atualizado_em",
+		]
 
 
 SERIALIZER_MAP = {

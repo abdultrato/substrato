@@ -9,7 +9,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 export default function MedicinaOcupacionalPage() {
@@ -30,11 +30,9 @@ export default function MedicinaOcupacionalPage() {
           apiFetch<any>("/requisicoes/"),
         ])
 
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
         if (!mounted) return
-        setPacientes(Array.isArray(list(pacs)) ? list(pacs).length : 0)
-        setRequisicoes(Array.isArray(list(reqs)) ? list(reqs).length : 0)
+        setPacientes(extractTotalCount(pacs))
+        setRequisicoes(extractTotalCount(reqs))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace de medicina ocupacional.")

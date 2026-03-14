@@ -15,7 +15,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 export default function EnfermagemPage() {
@@ -36,11 +36,9 @@ export default function EnfermagemPage() {
           apiFetch<any>("/enfermagem/procedimento/"),
         ])
 
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
         if (!mounted) return
-        setRequisicoesPendentes(Array.isArray(list(reqs)) ? list(reqs).length : 0)
-        setProcedimentos(Array.isArray(list(procs)) ? list(procs).length : 0)
+        setRequisicoesPendentes(extractTotalCount(reqs))
+        setProcedimentos(extractTotalCount(procs))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace de enfermagem.")

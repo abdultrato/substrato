@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
@@ -31,19 +31,31 @@ class Exame(PropagarInquilinoMixin, CoreModel):
 			)
 	
 	preco = DinheiroField(
-			verbose_name="preço do exame",
+			verbose_name="Preço do exame",
 			default=Decimal("0.00"),
 			validators=[MinValueValidator(Decimal("0.00"))],
-			help_text="preço do exame.",
+			help_text="Preço do exame.",
+			)
+
+	iva_percentual = models.DecimalField(
+			verbose_name="IVA (%)",
+			max_digits=5,
+			decimal_places=2,
+			default=Decimal("16.00"),
+			validators=[
+					MinValueValidator(Decimal("0.00")),
+					MaxValueValidator(Decimal("100.00")),
+					],
+			help_text="Taxa de IVA aplicada ao exame (0 a 100).",
 			)
 	
 	metodo = MetodoField(
-			verbose_name="método do exame",
+			verbose_name="Método do exame",
 			db_index=True,
 			)
 	
 	setor = SetorField(
-			verbose_name="sector do exame",
+			verbose_name="Setor do exame",
 			db_index=True,
 			)
 	

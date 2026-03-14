@@ -12,6 +12,22 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Paciente = { id: number; nome: string }
 type Medico = { id: number; nome?: string; username?: string }
+type Especialidade = {
+  id: number
+  nome?: string
+  preco_base?: string | number
+  ativo?: boolean
+}
+
+type PrecoPreview = {
+  especialidade: number
+  especialidade_nome?: string
+  preco_base?: string
+  eh_feriado?: boolean
+  percentual_feriado?: string
+  preco_final?: string
+  moeda?: string
+}
 
 type ConsultaRow = {
   id: number
@@ -66,19 +82,21 @@ export default function ConsultasPage() {
   const [consultas, setConsultas] = useState<ConsultaRow[]>([])
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [medicos, setMedicos] = useState<Medico[]>([])
+  const [especialidades, setEspecialidades] = useState<Especialidade[]>([])
 
   const [pacienteId, setPacienteId] = useState("")
   const [medicoId, setMedicoId] = useState("")
-  const [tipo, setTipo] = useState("Consulta Geral")
-  const [preco, setPreco] = useState("0.00")
+  const [especialidadeId, setEspecialidadeId] = useState("")
   const [agendadaPara, setAgendadaPara] = useState("")
   const [salvando, setSalvando] = useState(false)
+  const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
 
   async function carregar() {
-    const [cons, pacs, meds] = await Promise.all([
+    const [cons, pacs, meds, especs] = await Promise.all([
       apiFetch<any>("/consultas/"),
       apiFetch<any>("/pacientes/"),
       apiFetch<any>("/consultas/medicos/"),
+      apiFetch<any>("/consultas/especialidade/"),
     ])
 
     const list = (v: any) => (v && v.results ? v.results : v) || []
@@ -86,6 +104,9 @@ export default function ConsultasPage() {
     setConsultas(Array.isArray(list(cons)) ? list(cons) : [])
     setPacientes(Array.isArray(list(pacs)) ? list(pacs) : [])
     setMedicos(Array.isArray(list(meds)) ? list(meds) : [])
+    const especItems = Array.isArray(list(especs)) ? (list(especs) as Especialidade[]) : []
+    setEspecialidades(especItems)
+    setEspecialidadeId((prev) => prev || (especItems[0]?.id ? String(especItems[0].id) : ""))
   }
 
   useEffect(() => {
@@ -117,8 +138,8 @@ export default function ConsultasPage() {
       alert("Selecione um paciente.")
       return
     }
-    if (!tipo.trim()) {
-      alert("Informe o tipo da consulta.")
+    if (!especialidadeId) {
+      alert("Selecione uma especialidade.")
       return
     }
 
@@ -126,8 +147,7 @@ export default function ConsultasPage() {
     try {
       const payload: any = {
         paciente: Number(pacienteId),
-        tipo: tipo.trim(),
-        preco,
+        especialidade: Number(especialidadeId),
       }
 
       if (medicoId) payload.medico = Number(medicoId)
@@ -144,9 +164,9 @@ export default function ConsultasPage() {
 
       setPacienteId("")
       setMedicoId("")
-      setTipo("Consulta Geral")
-      setPreco("0.00")
+      setEspecialidadeId("")
       setAgendadaPara("")
+      setPrecoPreview(null)
 
       await carregar()
     } catch (e: any) {
@@ -169,6 +189,61 @@ export default function ConsultasPage() {
     }
   }
 
+  async function cancelarConsulta(consultaId: number) {
+    if (!canWrite) return
+    if (!confirm("Cancelar esta consulta?")) return
+    try {
+      await apiFetch(`/consultas/${consultaId}/cancelar/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      await carregar()
+    } catch (e: any) {
+      alert(e?.message || "Falha ao cancelar consulta.")
+    }
+  }
+
+  async function concluirConsulta(consultaId: number) {
+    if (!canWrite) return
+    if (!confirm("Marcar esta consulta como concluída?")) return
+    try {
+      await apiFetch(`/consultas/${consultaId}/concluir/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      await carregar()
+    } catch (e: any) {
+      alert(e?.message || "Falha ao concluir consulta.")
+    }
+  }
+
+  async function remarcarConsulta(row: ConsultaRow) {
+    if (!canWrite) return
+    const current = row.agendada_para ? new Date(row.agendada_para) : null
+    const defaultValue = current && !Number.isNaN(current.getTime())
+      ? current.toISOString().slice(0, 16) // yyyy-mm-ddThh:mm
+      : ""
+
+    const input = prompt(
+      "Nova data/hora (YYYY-MM-DDTHH:mm):",
+      defaultValue
+    )
+    if (!input) return
+
+    const d = new Date(input)
+    const value = Number.isNaN(d.getTime()) ? input : d.toISOString()
+
+    try {
+      await apiFetch(`/consultas/${row.id}/remarcar/`, {
+        method: "POST",
+        body: JSON.stringify({ agendada_para: value }),
+      })
+      await carregar()
+    } catch (e: any) {
+      alert(e?.message || "Falha ao remarcar consulta.")
+    }
+  }
+
   const columns = useMemo(
     () => [
       { header: "Código", render: (r: ConsultaRow) => r.id_custom || r.id },
@@ -186,6 +261,36 @@ export default function ConsultasPage() {
         header: "Ações",
         render: (r: ConsultaRow) => (
           <div className="flex flex-wrap gap-2">
+            {canWrite && r.estado === "MARCADA" ? (
+              <button
+                type="button"
+                onClick={() => remarcarConsulta(r)}
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Remarcar
+              </button>
+            ) : null}
+
+            {canWrite && r.estado === "MARCADA" ? (
+              <button
+                type="button"
+                onClick={() => concluirConsulta(r.id)}
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Concluir
+              </button>
+            ) : null}
+
+            {canWrite && r.estado !== "CANCELADA" && r.estado !== "CONCLUIDA" ? (
+              <button
+                type="button"
+                onClick={() => cancelarConsulta(r.id)}
+                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+              >
+                Cancelar
+              </button>
+            ) : null}
+
             {r.fatura_id ? (
               <button
                 type="button"
@@ -211,6 +316,35 @@ export default function ConsultasPage() {
     ],
     [canWrite]
   )
+
+  useEffect(() => {
+    let mounted = true
+    async function loadPreview() {
+      if (!especialidadeId) {
+        if (mounted) setPrecoPreview(null)
+        return
+      }
+
+      try {
+        const params = new URLSearchParams()
+        params.set("especialidade", String(especialidadeId))
+        if (agendadaPara) {
+          const d = new Date(agendadaPara)
+          const value = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
+          params.set("agendada_para", value)
+        }
+        const res = await apiFetch<PrecoPreview>(`/consultas/consulta/preco/?${params.toString()}`)
+        if (mounted) setPrecoPreview(res || null)
+      } catch {
+        if (mounted) setPrecoPreview(null)
+      }
+    }
+
+    loadPreview()
+    return () => {
+      mounted = false
+    }
+  }, [especialidadeId, agendadaPara])
 
   return (
     <AppLayout
@@ -271,25 +405,41 @@ export default function ConsultasPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Tipo</label>
-                <input
-                  value={tipo}
-                  onChange={(e) => setTipo(e.target.value)}
+                <label className="text-xs text-gray-600">Especialidade</label>
+                <select
+                  value={especialidadeId}
+                  onChange={(e) => setEspecialidadeId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                  placeholder="Ex.: Consulta Geral"
                   required
-                />
+                >
+                  <option value="">Selecione</option>
+                  {especialidades
+                    .filter((x) => x.ativo !== false)
+                    .map((esp) => (
+                      <option key={esp.id} value={esp.id}>
+                        {esp.nome || `Especialidade ${esp.id}`}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Preço (MZN)</label>
-                <input
-                  value={preco}
-                  onChange={(e) => setPreco(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                />
+                <label className="text-xs text-gray-600">
+                  Preço {precoPreview?.moeda ? `(${precoPreview.moeda})` : "(MZN)"}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={precoPreview?.preco_final || ""}
+                    readOnly
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
+                    placeholder={especialidadeId ? "Calculando..." : "Selecione uma especialidade"}
+                  />
+                  {precoPreview?.eh_feriado ? (
+                    <span className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                      Feriado{precoPreview?.percentual_feriado ? ` +${precoPreview.percentual_feriado}%` : ""}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -335,4 +485,3 @@ export default function ConsultasPage() {
     </AppLayout>
   )
 }
-

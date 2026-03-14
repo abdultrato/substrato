@@ -37,6 +37,13 @@ export const MODULES: ModuleGroup[] = [
     ],
   },
   {
+    key: "entidades",
+    label: "Entidades",
+    resources: [
+      { key: "empresa", label: "Empresas", endpoint: "/entidades/empresa/", adminListHref: "/admin/entidades/empresa/" },
+    ],
+  },
+  {
     key: "faturamento",
     label: "Faturamento",
     resources: [
@@ -103,6 +110,16 @@ export const MODULES: ModuleGroup[] = [
     ],
   },
   {
+    key: "consultas",
+    label: "Consultas",
+    resources: [
+      { key: "consulta", label: "Consultas", endpoint: "/consultas/consulta/", adminListHref: "/admin/consultas/consultamedica/" },
+      { key: "medicos", label: "Médicos", endpoint: "/consultas/medicos/" },
+      { key: "especialidade", label: "Especialidades", endpoint: "/consultas/especialidade/", adminListHref: "/admin/consultas/especialidadeconsulta/" },
+      { key: "feriado", label: "Feriados", endpoint: "/consultas/feriado/", adminListHref: "/admin/consultas/feriado/" },
+    ],
+  },
+  {
     key: "inquilinos",
     label: "Inquilinos",
     resources: [
@@ -128,6 +145,51 @@ export const MODULES: ModuleGroup[] = [
       { key: "usuario", label: "Usuários", endpoint: "/identidade/usuario/", adminListHref: "/admin/identidade/usuario/" },
       { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identidade/perfilprofissional/", adminListHref: "/admin/identidade/perfilprofissional/" },
       { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identidade/passwordresettoken/", adminListHref: "/admin/identidade/passwordresettoken/" },
+    ],
+  },
+  {
+    key: "prontuario",
+    label: "Prontuário",
+    resources: [
+      { key: "registro", label: "Cardex", endpoint: "/prontuario/registro/", adminListHref: "/admin/prontuario/registroprontuario/" },
+      { key: "prescricaoitem", label: "Itens de Prescrição", endpoint: "/prontuario/prescricaoitem/", adminListHref: "/admin/prontuario/prescricaoitem/" },
+    ],
+  },
+  {
+    key: "maternidade",
+    label: "Maternidade",
+    resources: [
+      { key: "gestacao", label: "Gestações", endpoint: "/maternidade/gestacao/", adminListHref: "/admin/maternidade/gestacao/" },
+    ],
+  },
+  {
+    key: "cirurgia",
+    label: "Cirurgia",
+    resources: [
+      { key: "cirurgia", label: "Cirurgias", endpoint: "/cirurgia/cirurgia/", adminListHref: "/admin/cirurgia/cirurgia/" },
+      { key: "procedimentocirurgico", label: "Procedimentos Cirúrgicos", endpoint: "/cirurgia/procedimentocirurgico/", adminListHref: "/admin/cirurgia/procedimentocirurgico/" },
+    ],
+  },
+  {
+    key: "recursos_humanos",
+    label: "Recursos Humanos",
+    resources: [
+      { key: "cargo", label: "Cargos", endpoint: "/recursos_humanos/cargo/", adminListHref: "/admin/recursos_humanos/cargo/" },
+      { key: "funcionario", label: "Funcionários", endpoint: "/recursos_humanos/funcionario/", adminListHref: "/admin/recursos_humanos/funcionario/" },
+      { key: "agregadofamiliar", label: "Agregados Familiares", endpoint: "/recursos_humanos/agregadofamiliar/", adminListHref: "/admin/recursos_humanos/agregadofamiliar/" },
+      { key: "horario", label: "Horários", endpoint: "/recursos_humanos/horario/", adminListHref: "/admin/recursos_humanos/horariotrabalho/" },
+      { key: "falta", label: "Faltas", endpoint: "/recursos_humanos/falta/", adminListHref: "/admin/recursos_humanos/falta/" },
+      { key: "ferias", label: "Férias", endpoint: "/recursos_humanos/ferias/", adminListHref: "/admin/recursos_humanos/ferias/" },
+      { key: "dispensa", label: "Dispensas", endpoint: "/recursos_humanos/dispensa/", adminListHref: "/admin/recursos_humanos/dispensa/" },
+      { key: "horaextra", label: "Horas Extras", endpoint: "/recursos_humanos/horaextra/", adminListHref: "/admin/recursos_humanos/horaextra/" },
+      { key: "folhapagamento", label: "Folhas de Pagamento", endpoint: "/recursos_humanos/folhapagamento/", adminListHref: "/admin/recursos_humanos/folhapagamento/" },
+    ],
+  },
+  {
+    key: "monitoramento",
+    label: "Monitoramento",
+    resources: [
+      { key: "erro", label: "Erros do Sistema", endpoint: "/monitoramento/erro/", adminListHref: "/admin/monitoramento/errosistema/" },
     ],
   },
 ]

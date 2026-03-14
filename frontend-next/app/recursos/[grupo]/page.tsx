@@ -15,12 +15,16 @@ export default function RecursosGrupoPage({
 }) {
   const { loading } = useAuthGuard()
   const group = findModuleGroup(params.grupo)
+  const requiredGroups =
+    params.grupo === "recursos_humanos"
+      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
+      : [GROUPS.ADMIN]
 
   if (loading) return null
 
   if (!group) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+      <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
           <PageHeader title="Módulo não encontrado" subtitle={params.grupo} />
           <div className="text-sm text-gray-600">
@@ -35,7 +39,7 @@ export default function RecursosGrupoPage({
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader title={group.label} subtitle="Recursos disponíveis" />
 
@@ -44,18 +48,18 @@ export default function RecursosGrupoPage({
             <Link
               key={r.key}
               href={`/recursos/${group.key}/${r.key}`}
-              className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-sm transition hover:bg-[var(--gray-100)]"
             >
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-sm font-semibold text-[var(--text)]">
                 {r.label}
               </div>
-              <div className="mt-1 text-xs text-gray-500">{r.endpoint}</div>
+              <div className="mt-1 text-xs text-[var(--gray-500)]">{r.endpoint}</div>
             </Link>
           ))}
         </div>
 
         <div className="pt-2">
-          <Link href="/recursos" className="text-sm text-gray-700 underline">
+          <Link href="/recursos" className="text-sm text-[var(--gray-700)] underline">
             Voltar
           </Link>
         </div>

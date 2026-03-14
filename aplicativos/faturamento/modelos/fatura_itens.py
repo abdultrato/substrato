@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
@@ -21,10 +22,12 @@ class FaturaItem(NoNameCoreModel):
 
     fatura = models.ForeignKey(
         "faturamento.Fatura",
+        verbose_name="Fatura",
         on_delete=models.CASCADE,
         related_name="itens",
     )
     tipo_item = models.CharField(
+        verbose_name="Tipo de item",
         max_length=3,
         choices=TipoItem.choices,
         default=TipoItem.EXAME,
@@ -33,48 +36,71 @@ class FaturaItem(NoNameCoreModel):
 
     exame = models.ForeignKey(
         "clinico.Exame",
+        verbose_name="Exame",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
     exame_medico = models.ForeignKey(
         "clinico.ExameMedico",
+        verbose_name="Exame médico",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
     item_venda = models.ForeignKey(
         "farmacia.ItemVenda",
+        verbose_name="Item de venda",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
     procedimento_item = models.ForeignKey(
         "enfermagem.ProcedimentoItem",
+        verbose_name="Item de procedimento",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
     procedimento_material = models.ForeignKey(
         "enfermagem.ProcedimentoMaterial",
+        verbose_name="Material de procedimento",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
 
-    descricao = models.CharField(max_length=255, blank=True)
+    descricao = models.CharField(verbose_name="Descrição", max_length=255, blank=True, default="")
     quantidade = models.DecimalField(
+        verbose_name="Quantidade",
         max_digits=10,
         decimal_places=2,
         default=Decimal("1.00"),
     )
     preco_unitario = models.DecimalField(
+        verbose_name="Preço unitário",
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
+    iva_percentual = models.DecimalField(
+        verbose_name="IVA (%)",
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=None,
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            MaxValueValidator(Decimal("100.00")),
+        ],
+        help_text="Deixe em branco para herdar do item (exame/produto/procedimento).",
+    )
+
     class Meta:
+        verbose_name = "Item de Fatura"
+        verbose_name_plural = "Itens de Fatura"
         constraints = [
             models.UniqueConstraint(
                 fields=["fatura", "exame"],
@@ -109,6 +135,26 @@ class FaturaItem(NoNameCoreModel):
             self.quantidade or Decimal("0.00")
         )
 
+    @property
+    def total_sem_iva(self) -> Decimal:
+        return self.total or Decimal("0.00")
+
+    @property
+    def iva_valor(self) -> Decimal:
+        base = self.total_sem_iva or Decimal("0.00")
+        perc = self.iva_percentual
+        if perc is None or perc == "":
+            perc = Decimal("0.00")
+        try:
+            valor = base * (Decimal(perc) / Decimal("100.00"))
+            return valor.quantize(Decimal("0.01"))
+        except Exception:
+            return Decimal("0.00")
+
+    @property
+    def total_com_iva(self) -> Decimal:
+        return (self.total_sem_iva or Decimal("0.00")) + (self.iva_valor or Decimal("0.00"))
+
     def _origem_esperada(self):
         return {
             self.TipoItem.EXAME: self.fatura.Origem.CLINICO,
@@ -119,12 +165,48 @@ class FaturaItem(NoNameCoreModel):
             self.TipoItem.AJUSTE: None,
         }[self.tipo_item]
 
+    def _resolver_iva_percentual_referencia(self) -> Decimal:
+        """
+        Resolve IVA (%) a partir da referência do item.
+        Mantém 16% como padrão defensivo (compatível com o comportamento anterior),
+        permitindo configurar IVA individual por item no catálogo.
+        """
+        if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
+            return getattr(self.exame, "iva_percentual", None) or Decimal("0.00")
+
+        if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
+            return getattr(self.exame_medico, "iva_percentual", None) or Decimal("0.00")
+
+        if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
+            produto = getattr(self.item_venda, "produto", None)
+            return getattr(produto, "iva_percentual", None) or Decimal("0.00")
+
+        if self.tipo_item == self.TipoItem.PROCEDIMENTO_ITEM and self.procedimento_item_id:
+            catalogo = getattr(self.procedimento_item, "catalogo", None)
+            if catalogo is not None:
+                return getattr(catalogo, "iva_percentual", None) or Decimal("0.00")
+            return Decimal("16.00")
+
+        if (
+            self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL
+            and self.procedimento_material_id
+        ):
+            produto = getattr(self.procedimento_material, "produto", None)
+            return getattr(produto, "iva_percentual", None) or Decimal("0.00")
+
+        if self.tipo_item == self.TipoItem.AJUSTE:
+            return Decimal("16.00")
+
+        return Decimal("0.00")
+
     def _preencher_de_referencia(self):
         if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
             if not self.descricao.strip():
                 self.descricao = self.exame.nome
             if self.preco_unitario == Decimal("0.00"):
                 self.preco_unitario = self.exame.preco
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
         if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
@@ -132,12 +214,16 @@ class FaturaItem(NoNameCoreModel):
                 self.descricao = self.exame_medico.nome
             if self.preco_unitario == Decimal("0.00"):
                 self.preco_unitario = self.exame_medico.preco
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
         if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
             self.descricao = self.item_venda.produto.nome
             self.quantidade = Decimal(self.item_venda.quantidade)
             self.preco_unitario = self.item_venda.preco_unitario
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
         if self.tipo_item == self.TipoItem.PROCEDIMENTO_ITEM and self.procedimento_item_id:
@@ -148,6 +234,8 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.procedimento_item.valor.preco_unitario
             except ObjectDoesNotExist:
                 self.preco_unitario = self.procedimento_item.preco_unitario
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
         if (
@@ -161,6 +249,13 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.procedimento_material.valor.custo_unitario
             except ObjectDoesNotExist:
                 self.preco_unitario = self.procedimento_material.custo_unitario
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
+            return
+
+        if self.tipo_item == self.TipoItem.AJUSTE:
+            if self.iva_percentual is None:
+                self.iva_percentual = self._resolver_iva_percentual_referencia()
 
     def clean(self):
         super().clean()
@@ -243,27 +338,33 @@ class FaturaItem(NoNameCoreModel):
                     {"item_venda": "Item de venda não pertence à venda da fatura."}
                 )
 
-        if self.procedimento_item_id and self.fatura.procedimento_id:
-            if self.procedimento_item.procedimento_id != self.fatura.procedimento_id:
+        if self.procedimento_item_id and self.fatura.origem == self.fatura.Origem.ENFERMAGEM:
+            permitido = False
+            if self.fatura.procedimento_id and self.procedimento_item.procedimento_id == self.fatura.procedimento_id:
+                permitido = True
+            if not permitido and self.fatura_id and self.fatura.procedimentos.filter(
+                pk=self.procedimento_item.procedimento_id
+            ).exists():
+                permitido = True
+            if not permitido:
                 raise ValidationError(
-                    {
-                        "procedimento_item": (
-                            "Item de procedimento não pertence ao procedimento da fatura."
-                        )
-                    }
+                    {"procedimento_item": "Item de procedimento não pertence aos procedimentos da fatura."}
                 )
 
-        if self.procedimento_material_id and self.fatura.procedimento_id:
+        if self.procedimento_material_id and self.fatura.origem == self.fatura.Origem.ENFERMAGEM:
+            permitido = False
             if (
-                self.procedimento_material.procedimento_id
-                != self.fatura.procedimento_id
+                self.fatura.procedimento_id
+                and self.procedimento_material.procedimento_id == self.fatura.procedimento_id
             ):
+                permitido = True
+            if not permitido and self.fatura_id and self.fatura.procedimentos.filter(
+                pk=self.procedimento_material.procedimento_id
+            ).exists():
+                permitido = True
+            if not permitido:
                 raise ValidationError(
-                    {
-                        "procedimento_material": (
-                            "Material não pertence ao procedimento da fatura."
-                        )
-                    }
+                    {"procedimento_material": "Material não pertence aos procedimentos da fatura."}
                 )
 
     def save(self, *args, **kwargs):

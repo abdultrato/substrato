@@ -40,6 +40,15 @@ class FaturaViewSet(ModelViewSet):
         if fatura.estado != Fatura.Estado.CANCELADA:
             fatura.estado = Fatura.Estado.CANCELADA
             fatura.save(update_fields=["estado"])
+            try:
+                linhas = [
+                    f"Origem: {fatura.get_origem_display()}",
+                    f"Paciente: {getattr(fatura.paciente, 'nome', '-')}",
+                    f"Total com IVA: {getattr(fatura, 'total', 0):.2f}",
+                ]
+                fatura.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=linhas)
+            except Exception:
+                pass
         return Response(self.get_serializer(fatura).data)
 
     @action(detail=True, methods=["get"])

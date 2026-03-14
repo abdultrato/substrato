@@ -13,6 +13,7 @@ PDF Base Engine — Clinical Enterprise Grade
 import io
 import logging
 import os
+import unicodedata
 from datetime import datetime
 from functools import lru_cache
 
@@ -28,6 +29,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas as rl_canvas
+from reportlab.graphics.barcode import code128
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
 logger = logging.getLogger("pdf.engine")
@@ -123,7 +125,7 @@ def append_fim(elements) :
 	if not ADD_FIM_PAGE or not isinstance(elements, list) :
 		return
 	
-	style = ParagraphStyle("fim", fontName = FONT, fontSize = 9, alignment = TA_CENTER, textColor = colors.HexColor("#333333"), )
+	style = ParagraphStyle("fim", fontName = FONT, fontSize = 10, alignment = TA_CENTER, textColor = colors.HexColor("#333333"), )
 	
 	elements.append(Spacer(1, 0.35 * cm))
 	elements.append(Paragraph("Fim", style))
@@ -162,12 +164,52 @@ class NumberedCanvas(rl_canvas.Canvas) :
 		page_w, _ = self._pagesize
 		
 		try :
-			self.setFont(FONT, 7)
+			self.setFont(FONT, 10)
 		except Exception :
-			self.setFont("Helvetica", 7)
+			self.setFont("Helvetica", 10)
 		
-		footer = f"Relatório gerado automaticamente em {now_str}"
-		self.drawRightString(page_w - 1 * cm, 0.7 * cm, f"{footer} — Página {self._pageNumber} de {total_pages}", )
+		footer = f"Gerado em {now_str} | Página {self._pageNumber}/{total_pages}"
+		self.drawRightString(page_w - 1 * cm, 0.7 * cm, footer, )
+
+
+# =========================================================
+# CÓDIGO DE BARRAS (CODE128)
+# =========================================================
+
+
+def _sanitizar_codigo_barra(valor: str) -> str:
+	valor = ("" if valor is None else str(valor)).strip()
+	if not valor:
+		return ""
+	# Remove acentos e limita a ASCII imprimível.
+	valor = unicodedata.normalize("NFKD", valor)
+	valor = "".join(ch for ch in valor if unicodedata.category(ch) != "Mn")
+	valor = valor.encode("ascii", "ignore").decode("ascii")
+	valor = "".join(ch for ch in valor if 32 <= ord(ch) <= 126)
+	return valor
+
+
+def draw_barcode(canvas_obj, doc, x, y, max_width) -> None:
+	valor = getattr(doc, "barcode_value", None)
+	payload = _sanitizar_codigo_barra(valor)
+	if not payload:
+		return
+	try:
+		bar = code128.Code128(payload, barHeight=0.45 * cm, barWidth=0.35)
+		bar.humanReadable = False
+
+		scale_x = 1.0
+		if max_width and getattr(bar, "width", 0) and bar.width > max_width:
+			scale_x = max_width / bar.width
+
+		canvas_obj.saveState()
+		canvas_obj.translate(x, y)
+		if scale_x != 1.0:
+			canvas_obj.scale(scale_x, 1.0)
+		bar.drawOn(canvas_obj, 0, 0)
+		canvas_obj.restoreState()
+	except Exception as err:
+		logger.warning("Falha ao desenhar código de barras.", exc_info=err)
 
 
 # =========================================================
@@ -202,15 +244,19 @@ def draw_header(canvas_obj, doc) :
 	canvas_obj.setFont(FONT_BOLD, 10)
 	canvas_obj.drawString(text_x, text_top_y, "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
 	
-	canvas_obj.setFont(FONT, 8)
+	canvas_obj.setFont(FONT, 10)
 	canvas_obj.drawString(text_x, text_top_y - 0.65 * cm, "Laboratório de Análises Clínicas")
 	
-	canvas_obj.setFont(FONT, 7)
+	canvas_obj.setFont(FONT, 10)
 	canvas_obj.drawString(text_x, text_top_y - 1.10 * cm, "Pemba - Cabo Delgado, Moçambique")
 	
 	canvas_obj.drawString(text_x, text_top_y - 1.45 * cm, "Tel: +258 84 777 8476 | Email: abdultrato@anabiolink.mz", )
+
+	# linha inferior (limite do header)
+	y_line = logo_y - 0.15 * cm
 	
 	# QR Code topo direito
+	qr_x = None
 	if hasattr(doc, "qr_url") and doc.qr_url :
 		qr = gerar_qr_code(doc.qr_url)
 		if qr :
@@ -218,9 +264,19 @@ def draw_header(canvas_obj, doc) :
 			qr_x = page_w - right_margin - qr_size
 			qr_y = logo_y + 0.2 * cm
 			canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size)
+
+	# Código de barras (Code128) com dados essenciais do paciente/documento
+	if hasattr(doc, "barcode_value") and doc.barcode_value:
+		right_limit = (qr_x - 0.2 * cm) if qr_x is not None else (page_w - right_margin)
+		max_w = max(1 * cm, right_limit - text_x)
+		draw_barcode(
+			canvas_obj,
+			doc,
+			x=text_x,
+			y=(y_line + 0.15 * cm),
+			max_width=max_w,
+		)
 	
-	# linha inferior
-	y_line = logo_y - 0.15 * cm
 	canvas_obj.setStrokeColor(colors.darkblue)
 	canvas_obj.setLineWidth(1)
 	canvas_obj.line(left_margin, y_line, page_w - right_margin, y_line)
@@ -256,7 +312,7 @@ def draw_signatures(canvas_obj, doc, usuario = None) :
 	
 	nome = identidade_usuario_institucional(usuario)
 	
-	canvas_obj.setFont(FONT, 8)
+	canvas_obj.setFont(FONT, 10)
 	canvas_obj.drawCentredString(x1 + width_line / 2, y - 10, f"Assinatura de {nome}")
 	canvas_obj.drawCentredString(x2 + width_line / 2, y - 10, "Assinatura do Paciente/Responsável")
 	
@@ -290,8 +346,8 @@ def draw_line_full_width(canvas_obj, doc) :
 # UTILIDADES PARA TABELAS
 # =========================================================
 
-bold_style = ParagraphStyle("Bold", fontName = FONT_BOLD, fontSize = 8, alignment = TA_LEFT)
-cell_style = ParagraphStyle("Cell", fontName = FONT, fontSize = 8, alignment = TA_LEFT)
+bold_style = ParagraphStyle("Bold", fontName = FONT_BOLD, fontSize = 10, alignment = TA_LEFT)
+cell_style = ParagraphStyle("Cell", fontName = FONT, fontSize = 10, alignment = TA_LEFT)
 
 
 def cell_paragraph(text, is_bold = False) :
@@ -348,19 +404,19 @@ def identidade_usuario_institucional(usuario) :
 
 
 def estilo_titulo_documento(name = "HeadingDoc") :
-	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 11, leading = 14, textColor = colors.darkblue, )
+	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 12, leading = 14, textColor = colors.darkblue, )
 
 
 def estilo_secao_documento(name = "SectionDoc") :
-	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 9, textColor = colors.darkblue, )
+	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 11, textColor = colors.darkblue, )
 
 
 def estilo_info_esquerda(name = "InfoLeftDoc") :
-	return ParagraphStyle(name, fontName = FONT, fontSize = 8, leading = 10, textColor = colors.HexColor("#333333"), )
+	return ParagraphStyle(name, fontName = FONT, fontSize = 10, leading = 12, textColor = colors.HexColor("#333333"), )
 
 
 def estilo_info_direita(name = "InfoRightDoc") :
-	return ParagraphStyle(name, fontName = FONT, fontSize = 8, leading = 10, textColor = colors.HexColor("#333333"), alignment = TA_RIGHT, )
+	return ParagraphStyle(name, fontName = FONT, fontSize = 10, leading = 12, textColor = colors.HexColor("#333333"), alignment = TA_RIGHT, )
 
 
 def montar_bloco_identificacao(usable_width, left_lines, right_lines) :

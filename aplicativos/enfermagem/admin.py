@@ -106,6 +106,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         "id_custom",
         "nome",
         "preco_padrao",
+        "iva_percentual",
         "criado_em",
     )
     search_fields = (
@@ -128,12 +129,13 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         (
             "Procedimento do Catálogo",
             {
-                "fields": (
-                    "id_custom",
-                    "nome",
-                    "descricao",
-                    "preco_padrao",
-                )
+                    "fields": (
+                        "id_custom",
+                        "nome",
+                        "descricao",
+                        "preco_padrao",
+                        "iva_percentual",
+                    )
             },
         ),
         (

@@ -1,13 +1,15 @@
 export type Entidade = {
   id: number
+  id_custom?: string
   nome: string
-  nif?: string
-  slogan?: string
   endereco_sede?: string
+  contactos?: string
   telefone1?: string
   telefone2?: string
   email?: string
   nuit?: string
+  nib?: string
+  observacoes?: string
   ativo?: boolean
 }
 

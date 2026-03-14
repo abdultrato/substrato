@@ -9,7 +9,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ContabilidadePage() {
@@ -32,12 +32,10 @@ export default function ContabilidadePage() {
           apiFetch<any>("/contabilidade/lancamento/"),
         ])
 
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
         if (!mounted) return
-        setFaturas(Array.isArray(list(fats)) ? list(fats).length : 0)
-        setRecibos(Array.isArray(list(recs)) ? list(recs).length : 0)
-        setLancamentos(Array.isArray(list(lancs)) ? list(lancs).length : 0)
+        setFaturas(extractTotalCount(fats))
+        setRecibos(extractTotalCount(recs))
+        setLancamentos(extractTotalCount(lancs))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace de contabilidade.")

@@ -30,6 +30,7 @@ GROUPS = {
     "FARMACIA": "Técnico de Farmácia",
     "MEDICINA_OCUPACIONAL": "Medicina Ocupacional",
     "CONTABILIDADE": "Contabilidade",
+    "RECURSOS_HUMANOS": "Gestor de RH",
 }
 
 
@@ -63,6 +64,10 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Consultas
             "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
             "consultas-medicos": SAFE_METHODS,
+            "consultas-especialidade": SAFE_METHODS,
+            "consultas-feriado": SAFE_METHODS,
+            # Entidades externas (empresas para medicina ocupacional / terceirizações)
+            "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
         },
         g["LABORATORIO"]: {
             # Laboratorio só: requisicoes + resultados (sem catálogo de exames)
@@ -91,6 +96,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-procedimentoitemvalor": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentomaterial": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentomaterialvalor": SAFE_METHODS | WRITE_METHODS,
+            # Prontuário / Maternidade / Cirurgia (read-only no MVP)
+            "prontuario-registro": SAFE_METHODS,
+            "prontuario-prescricaoitem": SAFE_METHODS,
+            "maternidade-gestacao": SAFE_METHODS,
+            "cirurgia-cirurgia": SAFE_METHODS,
         },
         g["MEDICINA"]: {
             # Jornada clinica (anamnese/diagnostico ainda no admin/api futura)
@@ -104,6 +114,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Consultas
             "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
             "consultas-medicos": SAFE_METHODS,
+            "consultas-especialidade": SAFE_METHODS,
+            "consultas-feriado": SAFE_METHODS,
+            # Prontuário / Maternidade / Cirurgia (MVP)
+            "prontuario-registro": SAFE_METHODS | WRITE_METHODS,
+            "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
+            "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
+            "cirurgia-cirurgia": SAFE_METHODS | WRITE_METHODS,
         },
         g["MEDICINA_OCUPACIONAL"]: {
             "clinico-paciente": SAFE_METHODS | WRITE_METHODS,
@@ -112,12 +129,21 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-exame": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
+            # Empresas/entidades externas
+            "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
             # Pode abrir catálogo de procedimentos para requisitar/consultar
             "enfermagem-procedimentocatalogo": SAFE_METHODS,
             "enfermagem-procedimento": SAFE_METHODS | frozenset({"POST"}),
             # Consultas
             "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
             "consultas-medicos": SAFE_METHODS,
+            "consultas-especialidade": SAFE_METHODS,
+            "consultas-feriado": SAFE_METHODS,
+            # Prontuário / Maternidade / Cirurgia (MVP)
+            "prontuario-registro": SAFE_METHODS | WRITE_METHODS,
+            "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
+            "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
+            "cirurgia-cirurgia": SAFE_METHODS | WRITE_METHODS,
         },
         g["FARMACIA"]: {
             # Almoxarifado / estoque
@@ -147,8 +173,24 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Consultas (somente leitura)
             "consultas-consulta": SAFE_METHODS,
             "consultas-medicos": SAFE_METHODS,
+            "consultas-especialidade": SAFE_METHODS,
+            "consultas-feriado": SAFE_METHODS,
             # Estatísticas
             "dashboard-analytics": SAFE_METHODS,
+        },
+        g["RECURSOS_HUMANOS"]: {
+            # RH (CRUD interno)
+            "recursos_humanos-cargo": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-funcionario": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-agregadofamiliar": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-horario": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-falta": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-ferias": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-dispensa": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-horaextra": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-folhapagamento": SAFE_METHODS | WRITE_METHODS,
+            # Precisa listar usuários para vincular a funcionários.
+            "identidade-usuario": SAFE_METHODS,
         },
     }
 

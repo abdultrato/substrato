@@ -23,7 +23,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 class FaturaItemInline(admin.TabularInline):
     model = FaturaItem
-    extra = 0
+    extra = 1
     autocomplete_fields = (
         "exame",
         "exame_medico",
@@ -41,16 +41,31 @@ class FaturaItemInline(admin.TabularInline):
         "descricao",
         "quantidade",
         "preco_unitario",
+        "iva_percentual",
+        "iva_linha",
         "total_linha",
     )
-    readonly_fields = ("total_linha",)
+    readonly_fields = ("iva_linha", "total_linha",)
+
+    def iva_linha(self, obj):
+        if not obj.pk:
+            return "-"
+        try:
+            return f"{obj.iva_valor:.2f}"
+        except Exception:
+            return "-"
+
+    iva_linha.short_description = "IVA"
 
     def total_linha(self, obj):
         if not obj.pk:
             return "-"
-        return f"{obj.total:.2f}"
+        try:
+            return f"{obj.total_com_iva:.2f}"
+        except Exception:
+            return f"{obj.total:.2f}"
 
-    total_linha.short_description = "Total"
+    total_linha.short_description = "Total (com IVA)"
 
 
 # =====================================================
@@ -78,14 +93,19 @@ class FaturaAdmin(CoreAdmin):
         "venda__id_custom",
         "procedimento__id_custom",
         "procedimento__paciente__nome",
+        "procedimentos__id_custom",
+        "procedimentos__paciente__nome",
+        "consulta__id_custom",
+        "consulta__paciente__nome",
     )
 
     list_filter = ("origem", "estado", "deletado", "criado_em")
 
-    autocomplete_fields = ("paciente", "requisicao", "venda", "procedimento")
+    autocomplete_fields = ("requisicao", "venda", "procedimento", "procedimentos", "consulta")
 
     readonly_fields = (
         "id_custom",
+        "paciente",
         "subtotal",
         "iva_valor",
         "total",
@@ -104,6 +124,8 @@ class FaturaAdmin(CoreAdmin):
                     "requisicao",
                     "venda",
                     "procedimento",
+                    "procedimentos",
+                    "consulta",
                     "paciente",
                     "valor_seguro",
                     "subtotal",
@@ -128,6 +150,7 @@ class FaturaAdmin(CoreAdmin):
 
     inlines = [FaturaItemInline]
     actions = ("sincronizar_itens_origem",)
+    filter_horizontal = ("procedimentos",)
 
     def referencia_origem(self, obj):
         referencia = obj.referencia_origem

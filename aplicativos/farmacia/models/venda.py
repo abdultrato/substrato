@@ -10,9 +10,20 @@ from nucleo.modelos.base import NoNameCoreModel
 class Venda(NoNameCoreModel):
     prefixo = "VEND"
 
-    numero = models.CharField(max_length=40, db_index=True)
+    numero = models.CharField(verbose_name="Número", max_length=40, db_index=True)
+
+    paciente = models.ForeignKey(
+        "clinico.Paciente",
+        verbose_name="Paciente",
+        on_delete=models.PROTECT,
+        related_name="vendas_farmacia",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
 
     total = models.DecimalField(
+        verbose_name="Total",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -25,6 +36,7 @@ class Venda(NoNameCoreModel):
         ordering = ["-criado_em"]
         indexes = [
             models.Index(fields=["inquilino", "numero"]),
+            models.Index(fields=["inquilino", "paciente"]),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -41,4 +53,3 @@ class Venda(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.numero or self.id_custom or f"Venda {self.pk}"
-

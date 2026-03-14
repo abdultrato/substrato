@@ -6,7 +6,8 @@ import Link from "next/link";
 import {apiFetch} from "@/lib/api";
 import {Entidade} from "@/lib/types";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import {logout} from "@/lib/auth";
+import AppLayout from "@/components/layout/AppLayout";
+import { GROUPS } from "@/lib/rbac";
 
 export default function VerEntidadePage() {
     useAuthGuard(); // 🔐 proteção automática
@@ -27,41 +28,53 @@ export default function VerEntidadePage() {
         if (id) carregar();
     }, [id]);
 
-    if (!entidade) return <p>Carregando...</p>;
+    if (!entidade) {
+        return (
+            <AppLayout
+                requiredGroups={[
+                    GROUPS.ADMIN,
+                    GROUPS.RECEPCAO,
+                    GROUPS.MEDICINA_OCUPACIONAL,
+                ]}
+            >
+                <p>Carregando...</p>
+            </AppLayout>
+        )
+    }
 
     return (
-        <div className="container fade-in">
+        <AppLayout
+            requiredGroups={[
+                GROUPS.ADMIN,
+                GROUPS.RECEPCAO,
+                GROUPS.MEDICINA_OCUPACIONAL,
+            ]}
+        >
+            <div className="page-box fade-in">
+                <h1 className="page-title">{entidade.nome}</h1>
 
-            {/* topo */}
-            <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                <h1>{entidade.nome}</h1>
-                <button className="btn-secondary" onClick={logout}>
-                    Terminar sessão
-                </button>
-            </div>
+                <div className="info-grid">
+                    <div><strong>Código:</strong> {entidade.id_custom || entidade.id}</div>
+                    <div><strong>Local / Sede:</strong> {entidade.endereco_sede || "-"}</div>
+                    <div><strong>Contactos:</strong> {entidade.contactos || "-"}</div>
+                    <div><strong>Telefone:</strong> {entidade.telefone1 || "-"}</div>
+                    <div><strong>Telefone (alt):</strong> {entidade.telefone2 || "-"}</div>
+                    <div><strong>E-mail:</strong> {entidade.email || "-"}</div>
+                    <div><strong>NUIT:</strong> {entidade.nuit || "-"}</div>
+                    <div><strong>NIB:</strong> {entidade.nib || "-"}</div>
+                    <div><strong>Observações:</strong> {entidade.observacoes || "-"}</div>
+                    <div><strong>Status:</strong> {entidade.ativo ? "Ativo" : "Inativo"}</div>
+                </div>
 
-            <div className="page-box">
-
-                <p><strong>Slogan:</strong> {entidade.slogan || "-"}</p>
-                <p><strong>Endereço:</strong> {entidade.endereco_sede || "-"}</p>
-                <p><strong>Telefone:</strong> {entidade.telefone1 || "-"}</p>
-                <p><strong>Email:</strong> {entidade.email || "-"}</p>
-                <p><strong>NUIT:</strong> {entidade.nuit || "-"}</p>
-                <p>
-                    <strong>Status:</strong>{" "}
-                    {entidade.ativo ? "Ativo" : "Inativo"}
-                </p>
-
-                <div style={{marginTop: "20px"}}>
-                    <Link
-                        href={`/entidades/${entidade.id}/editar`}
-                        className="btn-primary"
-                    >
+                <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
+                    <Link href="/entidades" className="btn-secondary">
+                        ← Voltar
+                    </Link>
+                    <Link href={`/entidades/${entidade.id}/editar`} className="btn-primary">
                         Editar
                     </Link>
                 </div>
-
             </div>
-        </div>
+        </AppLayout>
     );
 }

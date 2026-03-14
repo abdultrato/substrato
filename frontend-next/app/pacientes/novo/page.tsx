@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PacienteCreateDTO } from "@/lib/types";
+import { Entidade, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
@@ -23,16 +23,34 @@ export default function NovoPacientePage () {
         email: "",
         proveniencia: "",
         morada: "",
+        empresa_origem: null,
     } );
 
+    const [empresas, setEmpresas] = useState<Entidade[]>( [] );
     const [loading, setLoading] = useState( false );
     const [error, setError] = useState<string | null>( null );
+
+    useEffect( () => {
+        async function carregarEmpresas () {
+            try {
+                const data: Entidade[] = await apiFetch( "/entidades/" );
+                setEmpresas( data || [] );
+            } catch {
+                setEmpresas( [] );
+            }
+        }
+
+        carregarEmpresas();
+    }, [] );
 
     function handleChange (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) {
         const { name, value } = e.target;
-        setForm( ( prev ) => ( { ...prev, [name]: value } ) );
+        setForm( ( prev ) => ( {
+            ...prev,
+            [name]: name === "empresa_origem" ? ( value ? Number( value ) : null ) : value,
+        } ) );
     }
 
     async function handleSubmit ( e: React.FormEvent ) {
@@ -40,6 +58,14 @@ export default function NovoPacientePage () {
 
         if ( !form.nome.trim() ) {
             setError( "Nome é obrigatório" );
+            return;
+        }
+
+        if (
+            form.proveniencia === "Medicina Ocupacional" &&
+            !form.empresa_origem
+        ) {
+            setError( "Selecione a empresa de origem para Medicina Ocupacional." );
             return;
         }
 
@@ -164,6 +190,19 @@ export default function NovoPacientePage () {
                     <option>Dentária</option>
                     <option>Oftalmologia</option>
                     <option>Outro</option>
+                </select>
+
+                <select
+                    name="empresa_origem"
+                    value={form.empresa_origem ? String( form.empresa_origem ) : ""}
+                    onChange={handleChange}
+                >
+                    <option value="">Empresa de origem (opcional)</option>
+                    {empresas.map( ( e ) => (
+                        <option key={e.id} value={e.id}>
+                            {e.nome}
+                        </option>
+                    ) )}
                 </select>
 
                 <input

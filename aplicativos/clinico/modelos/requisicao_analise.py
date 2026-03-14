@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
 from dominio.clinico.estado_resultado import EstadoResultado
-from dominio.clinico.state_machine_requisicao import RequisicaoStateMachine
+from dominio.clinico.state_machine_resultado import ResultadoStateMachine
 from nucleo.constantes.laboratorio.status_clinico import StatusClinico
 from nucleo.modelos.base import NoNameCoreModel
 from .exame import Exame
@@ -23,6 +23,26 @@ class RequisicaoAnalise(NoNameCoreModel):
         Paciente,
         on_delete=models.CASCADE,
         related_name="requisicoes",
+    )
+
+    empresa_solicitante = models.ForeignKey(
+        "entidades.Empresa",
+        verbose_name="Empresa solicitante",
+        help_text="Empresa que subcontrata os serviços (ex.: medicina ocupacional).",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisicoes_solicitadas",
+    )
+
+    empresa_executora_externa = models.ForeignKey(
+        "entidades.Empresa",
+        verbose_name="Empresa executora externa",
+        help_text="Quando a clínica terceiriza a execução para outra empresa.",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requisicoes_terceirizadas",
     )
 
     tipo = models.CharField(
@@ -83,7 +103,7 @@ class RequisicaoAnalise(NoNameCoreModel):
 
         original = self.__class__.all_objects.filter(pk=self.pk).only("estado").first()
 
-        if original and original.estado in EstadoResultado.VALIDADO:
+        if original and original.estado in EstadoResultado.TERMINAIS:
             raise ValidationError("Requisição finalizada é imutável.")
 
     # =====================================================
@@ -171,7 +191,7 @@ class RequisicaoAnalise(NoNameCoreModel):
                 pk=self.pk
             )
 
-            RequisicaoStateMachine.validar_transicao(
+            ResultadoStateMachine.validar_transicao(
                 requisicao.estado,
                 novo_estado,
             )
@@ -222,82 +242,91 @@ class RequisicaoAnalise(NoNameCoreModel):
     # =====================================================
 
     def atualizar_status_clinico(self):
-        if not hasattr(self, "resultado"):
-            self.status_clinico = StatusClinico.NAO_URGENTE
-            self.possui_resultado_critico = False
+        # Não recalcula nem altera requisição já finalizada (imutável).
+        if self.estado in EstadoResultado.TERMINAIS:
+            try:
+                if hasattr(self, "resultado") and not self.resultado.finalizado:
+                    self.resultado.finalizado = True
+                    self.resultado.save(update_fields=["finalizado"])
+            except Exception:
+                pass
+            return
 
-        else:
-            itens = self.resultado.itens.only(
-                "alerta_critico",
-                "status_clinico",
-                "estado",
+        novo_status = StatusClinico.NAO_URGENTE
+        possui_critico = False
+        novo_estado = EstadoResultado.PENDENTE
+        resultado_finalizado = False
+
+        if hasattr(self, "resultado"):
+            resultado = self.resultado
+            itens = resultado.itens.all()
+
+            stats = itens.aggregate(
+                total=models.Count("id"),
+                criticos=models.Count("id", filter=models.Q(alerta_critico=True)),
+                urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.URGENTE)),
+                muito_urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.MUITO_URGENTE)),
+                pendentes=models.Count("id", filter=models.Q(estado=EstadoResultado.PENDENTE)),
+                aguardando=models.Count("id", filter=models.Q(estado=EstadoResultado.AGUARDANDO_VALIDACAO)),
+                validados=models.Count("id", filter=models.Q(estado=EstadoResultado.VALIDADO)),
             )
 
-            if not itens.exists():
-                self.status_clinico = StatusClinico.NAO_URGENTE
-                self.possui_resultado_critico = False
+            total = int(stats.get("total") or 0)
+            criticos = int(stats.get("criticos") or 0)
+            urgentes = int(stats.get("urgentes") or 0)
+            muito_urgentes = int(stats.get("muito_urgentes") or 0)
 
+            possui_critico = criticos > 0
+
+            if total == 0:
+                novo_status = StatusClinico.NAO_URGENTE
+                novo_estado = EstadoResultado.PENDENTE
             else:
-                possui_critico = itens.filter(alerta_critico=True).exists()
-
-                self.possui_resultado_critico = possui_critico
-
                 if possui_critico:
-                    self.status_clinico = StatusClinico.URGENTISSIMO
-
+                    novo_status = StatusClinico.URGENTISSIMO
+                elif muito_urgentes > 0:
+                    novo_status = StatusClinico.MUITO_URGENTE
+                elif urgentes > 0:
+                    novo_status = StatusClinico.URGENTE
                 else:
-                    possui_alto = itens.filter(
-                        status_clinico=StatusClinico.URGENTE
-                    ).exists()
+                    novo_status = StatusClinico.NAO_URGENTE
 
-                    possui_baixo = itens.filter(
-                        status_clinico=StatusClinico.MUITO_URGENTE
-                    ).exists()
+                pendentes = int(stats.get("pendentes") or 0)
+                aguardando = int(stats.get("aguardando") or 0)
+                validados = int(stats.get("validados") or 0)
 
-                    if possui_alto:
-                        self.status_clinico = StatusClinico.MUITO_URGENTE
+                # Sincroniza o estado geral da requisição com o fluxo dos itens:
+                # PENDENTE -> EM_ANALISE -> AGUARDANDO_VALIDACAO -> VALIDADO
+                if validados == total:
+                    novo_estado = EstadoResultado.VALIDADO
+                elif (validados + aguardando) == total:
+                    novo_estado = EstadoResultado.AGUARDANDO_VALIDACAO
+                elif pendentes == total:
+                    novo_estado = EstadoResultado.PENDENTE
+                else:
+                    novo_estado = EstadoResultado.EM_ANALISE
 
-                    elif possui_baixo:
-                        self.status_clinico = StatusClinico.URGENTE
+            resultado_finalizado = novo_estado == EstadoResultado.VALIDADO
 
-                    else:
-                        self.status_clinico = StatusClinico.NAO_URGENTE
+            if resultado.finalizado != resultado_finalizado:
+                resultado.finalizado = resultado_finalizado
+                resultado.save(update_fields=["finalizado"])
 
-        self.save(
-            update_fields=[
-                "status_clinico",
-                "possui_resultado_critico",
-            ]
-        )
+        update_fields = []
+        if self.status_clinico != novo_status:
+            self.status_clinico = novo_status
+            update_fields.append("status_clinico")
 
-        self._auto_validar_se_necessario()
+        if self.possui_resultado_critico != possui_critico:
+            self.possui_resultado_critico = possui_critico
+            update_fields.append("possui_resultado_critico")
 
-    # =====================================================
-    # AUTO TRANSIÇÃO PARA VALIDADA
-    # =====================================================
+        if self.estado != novo_estado:
+            self.estado = novo_estado
+            update_fields.append("estado")
 
-    def _auto_validar_se_necessario(self):
-        if self.estado != EstadoResultado.TERMINAIS:
-            return
-
-        if not hasattr(self, "resultado"):
-            return
-
-        itens = self.resultado.itens.all()
-
-        total = itens.count()
-
-        if total == 0:
-            return
-
-        validados = itens.filter(estado="VALIDADO").count()
-
-        if validados == total:
-            from dominio.clinico.estado_requisicao import EstadoRequisicao
-
-            self.transicionar(EstadoRequisicao.VALIDADA)
-
-    # =====================================================
+        if update_fields:
+            self.save(update_fields=update_fields)
 
     @property
     def inquilino_do_paciente(self):

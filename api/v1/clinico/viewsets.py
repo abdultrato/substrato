@@ -8,11 +8,16 @@ from drf_spectacular.openapi import (
 	OpenApiParameter,
 	OpenApiTypes,
 	)
+from decimal import Decimal, InvalidOperation
 from django.http import HttpResponse
+from django.db import transaction
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+
+from dominio.clinico.estado_resultado import EstadoResultado
 
 from .filters import *
 from .serializers import *
@@ -295,12 +300,77 @@ class RequisicaoAnaliseViewSet(ModelViewSet):
 		if requisicao.tipo != requisicao.Tipo.LABORATORIO:
 			raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
+		# Não gerar PDF se nenhum resultado estiver validado.
+		resultado = getattr(requisicao, "resultado", None)
+		if not resultado or not resultado.itens.filter(estado=EstadoResultado.VALIDADO).exists():
+			raise ValidationError("Não é possível emitir PDF sem nenhum resultado validado.")
+
 		from tarefas.gerar_pdf.pdf_generator_resultado import gerar_pdf_resultados
 
 		pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados=True)
 		resp = HttpResponse(pdf_bytes, content_type="application/pdf")
 		resp["Content-Disposition"] = f'inline; filename="{filename}"'
 		return resp
+
+	@action(detail=True, methods=["get"])
+	def resultado_itens(self, request, pk=None):
+		"""
+		Retorna os itens de resultados de uma requisição LAB com campos derivados
+		para suportar o lançamento/validação inline no frontend.
+		"""
+		requisicao = self.get_object()
+
+		if requisicao.tipo != requisicao.Tipo.LABORATORIO:
+			raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
+
+		from aplicativos.clinico.modelos.resultado import Resultado
+
+		resultado, _ = Resultado.objects.get_or_create(
+			requisicao=requisicao,
+			defaults={"inquilino": requisicao.inquilino},
+		)
+
+		qs = (
+			resultado.itens.select_related(
+				"exame_campo",
+				"exame_campo__exame",
+				"resultado",
+				"resultado__requisicao",
+				"resultado__requisicao__paciente",
+			)
+			.order_by(
+				"exame_campo__exame__nome",
+				"exame_campo__nome",
+				"id",
+			)
+		)
+
+		itens = ResultadoItemLaboratorioSerializer(qs, many=True).data
+
+		resumo = {
+			"total": qs.count(),
+			"pendente": qs.filter(estado=EstadoResultado.PENDENTE).count(),
+			"em_analise": qs.filter(estado=EstadoResultado.EM_ANALISE).count(),
+			"aguardando_validacao": qs.filter(estado=EstadoResultado.AGUARDANDO_VALIDACAO).count(),
+			"validado": qs.filter(estado=EstadoResultado.VALIDADO).count(),
+			"rejeitado": qs.filter(estado=EstadoResultado.REJEITADO).count(),
+		}
+
+		return Response(
+			{
+				"requisicao": {
+					"id": requisicao.id,
+					"id_custom": requisicao.id_custom,
+					"paciente": requisicao.paciente_id,
+					"paciente_nome": requisicao.paciente.nome,
+					"estado": requisicao.estado,
+					"status_clinico": requisicao.status_clinico,
+					"possui_resultado_critico": requisicao.possui_resultado_critico,
+				},
+				"resumo": resumo,
+				"itens": itens,
+			}
+		)
 
 
 @extend_schema(
@@ -347,6 +417,109 @@ class ResultadoItemViewSet(ModelViewSet):
 		if inquilino is not None:
 			queryset = queryset.filter(inquilino=inquilino)
 		return queryset
+
+	def _is_admin_user(self, user) -> bool:
+		if not user or not getattr(user, "is_authenticated", False):
+			return False
+		if getattr(user, "is_superuser", False):
+			return True
+		try:
+			from seguranca.permissoes.rbac import GROUPS as RBAC_GROUPS, _normalize
+			raw_groups = list(user.groups.values_list("name", flat=True))
+			user_groups = {_normalize(g) for g in raw_groups if g}
+			return _normalize(RBAC_GROUPS["ADMIN"]) in user_groups
+		except Exception:
+			return False
+
+	# -----------------------------------------------------------------
+	# Restrição: alterações diretas no ResultadoItem (PUT/PATCH) podem
+	# burlar a máquina de estados. Para perfis não-admin, obrigamos o uso
+	# das ações `lancar`, `gravar` e `validar`.
+	# -----------------------------------------------------------------
+
+	def update(self, request, *args, **kwargs):
+		if not self._is_admin_user(getattr(request, "user", None)):
+			raise PermissionDenied("Use as ações: lancar, gravar e validar.")
+		return super().update(request, *args, **kwargs)
+
+	def partial_update(self, request, *args, **kwargs):
+		if not self._is_admin_user(getattr(request, "user", None)):
+			raise PermissionDenied("Use as ações: lancar, gravar e validar.")
+		return super().partial_update(request, *args, **kwargs)
+
+	@action(detail=True, methods=["post"])
+	def lancar(self, request, pk=None):
+		"""Transiciona o item de resultado para EM_ANALISE (passo 1: lançar)."""
+		item = self.get_object()
+		if item.estado == EstadoResultado.EM_ANALISE:
+			return Response(ResultadoItemLaboratorioSerializer(item).data)
+
+		try:
+			item.transicionar(EstadoResultado.EM_ANALISE, usuario=getattr(request, "user", None))
+		except Exception as e:
+			raise ValidationError(str(e))
+
+		item.refresh_from_db()
+		return Response(ResultadoItemLaboratorioSerializer(item).data)
+
+	@action(detail=True, methods=["post"])
+	def gravar(self, request, pk=None):
+		"""
+		Salva o valor do resultado e transiciona para AGUARDANDO_VALIDACAO
+		(passo 2: gravar).
+		"""
+		item = self.get_object()
+
+		raw = (request.data or {}).get("resultado_valor", None)
+		if raw is None:
+			raw = (request.data or {}).get("valor", None)
+
+		if raw is None or (isinstance(raw, str) and not raw.strip()):
+			raise ValidationError({"resultado_valor": "Informe um valor antes de gravar."})
+
+		try:
+			valor = Decimal(str(raw).replace(",", "."))
+		except (InvalidOperation, TypeError, ValueError):
+			raise ValidationError({"resultado_valor": "Valor inválido."})
+
+		from dominio.clinico.state_machine_resultado import ResultadoStateMachine, TransicaoInvalidaError
+
+		with transaction.atomic():
+			locked = (
+				ResultadoItem.all_objects.select_for_update()
+				.select_related("resultado", "resultado__requisicao", "resultado__requisicao__paciente", "exame_campo", "exame_campo__exame")
+				.get(pk=item.pk)
+			)
+
+			try:
+				ResultadoStateMachine.validar_transicao(
+					locked.estado,
+					EstadoResultado.AGUARDANDO_VALIDACAO,
+				)
+			except TransicaoInvalidaError as e:
+				raise ValidationError(str(e))
+
+			locked.resultado_valor = valor
+			locked.estado = EstadoResultado.AGUARDANDO_VALIDACAO
+			locked.save()
+
+		locked.refresh_from_db()
+		return Response(ResultadoItemLaboratorioSerializer(locked).data)
+
+	@action(detail=True, methods=["post"])
+	def validar(self, request, pk=None):
+		"""Transiciona o item de resultado para VALIDADO (passo 3: validar)."""
+		item = self.get_object()
+		if item.estado == EstadoResultado.VALIDADO:
+			return Response(ResultadoItemLaboratorioSerializer(item).data)
+
+		try:
+			item.transicionar(EstadoResultado.VALIDADO, usuario=getattr(request, "user", None))
+		except Exception as e:
+			raise ValidationError(str(e))
+
+		item.refresh_from_db()
+		return Response(ResultadoItemLaboratorioSerializer(item).data)
 
 
 VIEWSET_MAP = {

@@ -11,8 +11,10 @@ export type Paciente = {
   email?: string
   proveniencia?: string
   morada?: string
+  empresa_origem?: number | null
+  empresa_origem_nome?: string | null
   criado_em?: string
 }
 
-export type PacienteCreateDTO = Omit<Paciente, 'id' | 'id_custom'>
+export type PacienteCreateDTO = Omit<Paciente, 'id' | 'id_custom' | 'empresa_origem_nome'>
 export type PacienteUpdateDTO = Partial<PacienteCreateDTO>

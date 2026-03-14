@@ -57,15 +57,32 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         bottomMargin=2 * cm,
     )
 
+    # Código de barras no header (repete em todas páginas)
+    try:
+        paciente = requisicao.paciente
+        doc.barcode_value = f"PAC:{getattr(paciente, 'id_custom', '')}|REQ:{getattr(requisicao, 'id_custom', '')}"
+    except Exception:
+        doc.barcode_value = None
+
     story = []
 
     style_title = estilo_titulo_documento("HeadingReq")
 
     story.append(Spacer(1, 0.6 * cm))
-    story.append(Paragraph("REQUISIÇÃO DE EXAMES", style_title))
+    paciente = requisicao.paciente
+    eh_externa = bool(
+        getattr(requisicao, "empresa_solicitante_id", None)
+        or getattr(requisicao, "empresa_executora_externa_id", None)
+        or getattr(paciente, "empresa_origem_id", None)
+    )
+    story.append(
+        Paragraph(
+            "REQUISIÇÃO EXTERNA DE SERVIÇOS" if eh_externa else "REQUISIÇÃO DE EXAMES",
+            style_title,
+        )
+    )
     story.append(Spacer(1, 0.3 * cm))
 
-    paciente = requisicao.paciente
     idade = getattr(paciente, "idade", lambda: "—")()
     usuario_documento = _resolver_usuario_documento(requisicao)
 
@@ -76,6 +93,16 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         f"{bold('Proveniência')}: {getattr(paciente, 'proveniencia', '—')}",
         f"{bold('Contacto e Whatsapp')}: {paciente.contacto or '—'}",
     ]
+
+    empresa_origem = getattr(paciente, "empresa_origem", None)
+    empresa_solicitante = getattr(requisicao, "empresa_solicitante", None)
+    empresa_executora = getattr(requisicao, "empresa_executora_externa", None)
+    if empresa_solicitante:
+        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(empresa_solicitante, 'nome', '—')}")
+    elif empresa_origem:
+        left_lines.append(f"{bold('Empresa')}: {getattr(empresa_origem, 'nome', '—')}")
+    if empresa_executora:
+        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'nome', '—')}")
 
     tecnico_texto = identidade_usuario_institucional(usuario_documento)
 

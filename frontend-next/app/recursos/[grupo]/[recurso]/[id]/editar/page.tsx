@@ -19,6 +19,10 @@ export default function EditarRecursoPage({
   const { loading } = useAuthGuard()
   const router = useRouter()
   const found = findModuleResource(params.grupo, params.recurso)
+  const requiredGroups =
+    params.grupo === "recursos_humanos"
+      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
+      : [GROUPS.ADMIN]
   const [initial, setInitial] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -49,7 +53,7 @@ export default function EditarRecursoPage({
 
   if (!found) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+      <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
@@ -69,7 +73,7 @@ export default function EditarRecursoPage({
   const basePath = `/recursos/${params.grupo}/${params.recurso}`
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
           title={`Editar ${found.resource.label} — ${params.id}`}
@@ -77,7 +81,7 @@ export default function EditarRecursoPage({
           actions={
             <Link
               href={`${basePath}/${params.id}`}
-              className="text-sm text-gray-700 underline"
+              className="text-sm text-[var(--gray-700)] underline"
             >
               Voltar
             </Link>
@@ -91,7 +95,7 @@ export default function EditarRecursoPage({
         )}
 
         {loadingData ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
+          <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
           <AutoForm
             endpoint={`${found.resource.endpoint.replace(/\/$/, "")}/${params.id}/`}
