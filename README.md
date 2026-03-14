@@ -105,6 +105,20 @@ Variáveis (.env local):
 ## 6) Operação: Docker / Produção
 
 ### Compose (desenvolvimento)
+
+**Linux/Kali:**
+```bash
+./docker-up.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+./docker-up.ps1
+```
+
+Esses scripts automatizam o processo de build e inicialização, incluindo verificação de dependências e criação do arquivo .env.
+
+Alternativamente, você pode executar manualmente:
 ```bash
 cp .env.docker .env
 docker compose up --build
