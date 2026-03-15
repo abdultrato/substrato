@@ -13,6 +13,7 @@ PDF Base Engine — Clinical Enterprise Grade
 import io
 import logging
 import os
+import secrets
 import unicodedata
 from datetime import datetime
 from functools import lru_cache
@@ -23,6 +24,7 @@ from PIL import Image
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A5
+from reportlab.lib.pdfencrypt import StandardEncryption
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
@@ -56,6 +58,34 @@ except Exception :
 	FONT = "Helvetica"
 	FONT_BOLD = "Helvetica-Bold"
 	logger.warning("Times New Roman não disponível — usando Helvetica.")
+
+
+# =========================================================
+# SEGURANÇA DO PDF (PERMISSÕES)
+# =========================================================
+
+
+def pdf_encryption() -> StandardEncryption:
+	"""
+	Torna o PDF "não editável" na prática (a maioria dos leitores respeita).
+
+	Nota:
+	- Isto aplica permissões do PDF (encrypt + flags), não é uma garantia
+	  criptográfica contra adulteração por ferramentas avançadas.
+	- O userPassword é vazio para o documento abrir sem pedir senha.
+	- Um ownerPassword aleatório impede alteração fácil das permissões.
+	"""
+
+	owner = secrets.token_urlsafe(32)
+	return StandardEncryption(
+		userPassword="",
+		ownerPassword=owner,
+		canPrint=1,
+		canModify=0,
+		canCopy=0,
+		canAnnotate=0,
+		strength=128,
+	)
 
 
 # =========================================================
@@ -250,7 +280,7 @@ def draw_header(canvas_obj, doc) :
 	canvas_obj.setFont(FONT, 9)
 	canvas_obj.drawString(text_x, text_top_y - 1.10 * cm, "Pemba - Cabo Delgado, Moçambique")
 	
-	canvas_obj.drawString(text_x, text_top_y - 1.45 * cm, "Tel: +258 84 777 8476 | Email: abdultrato@anabiolink.mz", )
+	canvas_obj.drawString(text_x, text_top_y - 1.45 * cm, "Tel/WhatsApp: +258 84 777 8476 | Email: substratosys@gmail.com", )
 
 	# linha inferior (limite do header)
 	y_line = logo_y - 0.15 * cm

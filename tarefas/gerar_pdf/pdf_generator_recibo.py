@@ -19,6 +19,7 @@ from .pdf_base import (
     identidade_usuario_institucional,
     montar_bloco_identificacao,
     on_page,
+    pdf_encryption,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ def gerar_pdf_recibo(recibo, request=None) -> tuple[bytes, str]:
         rightMargin=right_margin,
         topMargin=top_margin,
         bottomMargin=bottom_margin,
+        encrypt=pdf_encryption(),
     )
 
     story: list = []
@@ -299,4 +301,3 @@ def gerar_pdf_recibo(recibo, request=None) -> tuple[bytes, str]:
     filename = f"{getattr(recibo, 'numero', 'recibo')}_{nome_paciente}.pdf"
 
     return pdf_bytes, filename
-

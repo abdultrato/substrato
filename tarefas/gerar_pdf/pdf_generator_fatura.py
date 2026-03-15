@@ -27,6 +27,7 @@ from .pdf_base import (
     estilo_titulo_documento,
     montar_bloco_identificacao,
     on_page,
+    pdf_encryption,
 )
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
         rightMargin=right_margin,
         topMargin=top_margin,
         bottomMargin=bottom_margin,
+        encrypt=pdf_encryption(),
     )
 
     story = []

@@ -6,7 +6,20 @@ from reportlab.lib.units import cm
 from reportlab.platypus import (HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, )
 
 from dominio.clinico.estado_resultado import EstadoResultado
-from .pdf_base import (append_fim, bold, cell_paragraph, draw_line_full_width, estilo_secao_documento, estilo_titulo_documento, FONT_BOLD, identidade_usuario_institucional, montar_bloco_identificacao, NumberedCanvas, on_page)
+from .pdf_base import (
+	append_fim,
+	bold,
+	cell_paragraph,
+	draw_line_full_width,
+	estilo_secao_documento,
+	estilo_titulo_documento,
+	FONT_BOLD,
+	identidade_usuario_institucional,
+	montar_bloco_identificacao,
+	NumberedCanvas,
+	on_page,
+	pdf_encryption,
+)
 
 
 def _formatar_data_resultados(requisicao) :
@@ -32,7 +45,15 @@ def gerar_pdf_resultados(requisicao, apenas_validados = True) -> tuple[bytes, st
 	margin = 1 * cm
 	usable_width = page_width - (margin * 2)
 	
-	doc = SimpleDocTemplate(buffer, pagesize = A5, leftMargin = margin, rightMargin = margin, topMargin = 3.8 * cm, bottomMargin = 2.0 * cm, )
+	doc = SimpleDocTemplate(
+		buffer,
+		pagesize = A5,
+		leftMargin = margin,
+		rightMargin = margin,
+		topMargin = 3.8 * cm,
+		bottomMargin = 2.0 * cm,
+		encrypt = pdf_encryption(),
+	)
 	
 	elements = []
 	

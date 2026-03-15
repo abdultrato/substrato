@@ -24,6 +24,7 @@ from .pdf_base import (
     estilo_titulo_documento,
     montar_bloco_identificacao,
     on_page,
+    pdf_encryption,
 )
 
 
@@ -55,6 +56,7 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         rightMargin=min_margin,
         topMargin=3.8 * cm,
         bottomMargin=2 * cm,
+        encrypt=pdf_encryption(),
     )
 
     # Código de barras no header (repete em todas páginas)

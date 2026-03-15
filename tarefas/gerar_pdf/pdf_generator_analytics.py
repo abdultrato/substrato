@@ -17,6 +17,7 @@ from .pdf_base import (
     identidade_usuario_institucional,
     montar_bloco_identificacao,
     on_page,
+    pdf_encryption,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ def gerar_pdf_analytics(payload: dict, request=None) -> tuple[bytes, str]:
         rightMargin=right_margin,
         topMargin=top_margin,
         bottomMargin=bottom_margin,
+        encrypt=pdf_encryption(),
     )
 
     story: list = []
@@ -216,4 +218,3 @@ def gerar_pdf_analytics(payload: dict, request=None) -> tuple[bytes, str]:
     pdf_bytes = buffer.getvalue()
     buffer.close()
     return pdf_bytes, filename
-

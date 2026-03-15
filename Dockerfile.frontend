@@ -8,6 +8,15 @@ FROM node:20-bookworm-slim as builder
 
 WORKDIR /app
 
+# NPM em ambientes com rede instável pode falhar com timeouts.
+# Aumentamos retries/timeouts e desativamos audit/fund para reduzir chamadas.
+ENV NPM_CONFIG_FETCH_RETRIES=5 \
+    NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000 \
+    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
+    NPM_CONFIG_FETCH_TIMEOUT=300000 \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_FUND=false
+
 # Importante: `rewrites()` do Next.js é calculado no build. Se o backend ficar
 # como 127.0.0.1 aqui, o container do frontend não consegue falar com o backend
 # no docker network. Em compose, passamos BACKEND_URL=http://backend:8000.
@@ -18,7 +27,9 @@ ENV BACKEND_URL=$BACKEND_URL
 COPY frontend-next/package.json frontend-next/package-lock.json* frontend-next/yarn.lock* ./
 
 # Instalar dependências
-RUN npm ci || npm install
+RUN --mount=type=cache,target=/root/.npm \
+    (npm ci --no-audit --no-fund || npm install --no-audit --no-fund) \
+    && test -x node_modules/.bin/next
 
 # Copiar código
 COPY frontend-next .
