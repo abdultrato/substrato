@@ -8,7 +8,9 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, OpenApiTypes, extend_schema
 from rest_framework import status
+from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -55,6 +57,87 @@ def _auth_credencial(request) -> tuple[IntegracaoCredencial | None, Response | N
     return cred, None
 
 
+class IntegracaoDetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class WorklistEquipamentoSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    codigo = serializers.CharField()
+    nome = serializers.CharField()
+    modalidade = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    protocolo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class WorklistPacienteSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    codigo = serializers.CharField()
+    nome = serializers.CharField()
+    data_nascimento = serializers.DateField(required=False, allow_null=True)
+    genero = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    numero_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class WorklistExameItemSerializer(serializers.Serializer):
+    requisicao_item_id = serializers.IntegerField()
+    tipo = serializers.CharField()
+    exame_id = serializers.IntegerField()
+    exame_codigo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    exame_nome = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    setor = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class WorklistOrdemSerializer(serializers.Serializer):
+    accession = serializers.CharField()
+    ordem_id = serializers.IntegerField()
+    estado = serializers.CharField()
+    requisicao_id = serializers.IntegerField()
+    requisicao_codigo = serializers.CharField()
+    paciente = WorklistPacienteSerializer()
+    itens = WorklistExameItemSerializer(many=True)
+    criado_em = serializers.DateTimeField(required=False, allow_null=True)
+
+
+class WorklistResponseSerializer(serializers.Serializer):
+    equipamento = WorklistEquipamentoSerializer()
+    count = serializers.IntegerField()
+    results = WorklistOrdemSerializer(many=True)
+
+
+class ResultadosInboxResultadoSerializer(serializers.Serializer):
+    codigo = serializers.CharField()
+    valor = serializers.JSONField(required=False, allow_null=True)
+
+
+class ResultadosInboxDocumentoSerializer(serializers.Serializer):
+    filename = serializers.CharField(required=False, allow_blank=True)
+    content_type = serializers.CharField(required=False, allow_blank=True)
+    base64 = serializers.CharField(required=False, allow_blank=True)
+    requisicao_item_id = serializers.IntegerField(required=False, allow_null=True)
+
+
+class ResultadosInboxRequestSerializer(serializers.Serializer):
+    message_id = serializers.CharField(required=False, allow_blank=True)
+    accession = serializers.CharField()
+    results = ResultadosInboxResultadoSerializer(many=True, required=False)
+    documentos = ResultadosInboxDocumentoSerializer(many=True, required=False)
+
+
+class ResultadosInboxAplicadoSerializer(serializers.Serializer):
+    codigo = serializers.CharField()
+    exame_campo_id = serializers.IntegerField()
+    exame_campo = serializers.CharField()
+    valor = serializers.CharField()
+
+
+class ResultadosInboxResponseSerializer(serializers.Serializer):
+    mensagem = serializers.CharField()
+    ordem = serializers.CharField()
+    ordem_estado = serializers.CharField()
+    aplicados = ResultadosInboxAplicadoSerializer(many=True)
+    erros = serializers.ListField(child=serializers.CharField())
+
+
 class EquipamentoWorklistView(APIView):
     """
     Worklist para equipamentos (HTTP JSON).
@@ -65,6 +148,32 @@ class EquipamentoWorklistView(APIView):
     permission_classes = [AllowAny]
     authentication_classes: list = []
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "X-Integration-Key",
+                OpenApiTypes.STR,
+                OpenApiParameter.HEADER,
+                description="Chave de integração",
+                required=True,
+            ),
+            OpenApiParameter("limit", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Limite (1-200)"),
+            OpenApiParameter(
+                "estado",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                description="Filtrar por estado (pode repetir ?estado=...)",
+                many=True,
+                required=False,
+            ),
+        ],
+        responses={
+            200: WorklistResponseSerializer,
+            401: IntegracaoDetailSerializer,
+            403: IntegracaoDetailSerializer,
+            404: IntegracaoDetailSerializer,
+        },
+    )
     def get(self, request, equipamento_id_custom: str):
         cred, resp = _auth_credencial(request)
         if resp is not None:
@@ -203,6 +312,25 @@ class EquipamentoResultadosInboxView(APIView):
     authentication_classes: list = []
 
     @transaction.atomic
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "X-Integration-Key",
+                OpenApiTypes.STR,
+                OpenApiParameter.HEADER,
+                description="Chave de integração",
+                required=True,
+            ),
+        ],
+        request=ResultadosInboxRequestSerializer,
+        responses={
+            200: ResultadosInboxResponseSerializer,
+            400: ResultadosInboxResponseSerializer,
+            401: IntegracaoDetailSerializer,
+            403: IntegracaoDetailSerializer,
+            404: IntegracaoDetailSerializer,
+        },
+    )
     def post(self, request, equipamento_id_custom: str):
         cred, resp = _auth_credencial(request)
         if resp is not None:
@@ -458,4 +586,3 @@ class EquipamentoResultadosInboxView(APIView):
             },
             status=status.HTTP_200_OK if not erros else status.HTTP_400_BAD_REQUEST,
         )
-

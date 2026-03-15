@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 
 from aplicativos.identidade.modelos.password_reset import PasswordResetToken
 from aplicativos.notificacoes.modelos.notificacao import Notificacao
@@ -63,6 +64,22 @@ class PasswordChangeSerializer(serializers.Serializer):
 	new_password = serializers.CharField(trim_whitespace=False)
 
 
+class DetailSerializer(serializers.Serializer):
+	detail = serializers.CharField()
+
+
+class UserMeSerializer(serializers.Serializer):
+	id = serializers.IntegerField()
+	username = serializers.CharField(required=False, allow_null=True)
+	email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
+	telefone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+	first_name = serializers.CharField(required=False, allow_blank=True)
+	last_name = serializers.CharField(required=False, allow_blank=True)
+	foto_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+	full_name = serializers.CharField()
+	groups = serializers.ListField(child=serializers.CharField(), required=False)
+
+
 class UserPatchSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = User
@@ -91,6 +108,10 @@ class RefreshView(TokenRefreshView):
 class LogoutView(APIView):
 	permission_classes = [IsAuthenticated]
 
+	@extend_schema(
+		request=None,
+		responses={204: OpenApiResponse(description="Logout stateless (JWT).")},
+	)
 	def post(self, request):
 		# Stateless JWT logout: client removes token.
 		return Response(status=status.HTTP_204_NO_CONTENT)
@@ -100,6 +121,7 @@ class UserView(APIView):
 	permission_classes = [IsAuthenticated]
 	parser_classes = [JSONParser, FormParser, MultiPartParser]
 
+	@extend_schema(responses={200: UserMeSerializer})
 	def get(self, request):
 		user = request.user
 
@@ -133,6 +155,7 @@ class UserView(APIView):
 			}
 		)
 
+	@extend_schema(request=UserPatchSerializer, responses={200: UserMeSerializer})
 	def patch(self, request):
 		user = request.user
 		serializer = UserPatchSerializer(instance=user, data=request.data, partial=True)
@@ -144,6 +167,7 @@ class UserView(APIView):
 class PasswordResetRequestView(APIView):
 	permission_classes = [AllowAny]
 
+	@extend_schema(request=PasswordResetRequestSerializer, responses={200: DetailSerializer})
 	def post(self, request):
 		ser = PasswordResetRequestSerializer(data=request.data)
 		ser.is_valid(raise_exception=True)
@@ -214,6 +238,13 @@ class PasswordResetRequestView(APIView):
 class PasswordResetConfirmView(APIView):
 	permission_classes = [AllowAny]
 
+	@extend_schema(
+		request=PasswordResetConfirmSerializer,
+		responses={
+			204: OpenApiResponse(description="Senha alterada com sucesso."),
+			400: DetailSerializer,
+		},
+	)
 	def post(self, request):
 		ser = PasswordResetConfirmSerializer(data=request.data)
 		ser.is_valid(raise_exception=True)
@@ -255,6 +286,13 @@ class PasswordResetConfirmView(APIView):
 class PasswordChangeView(APIView):
 	permission_classes = [IsAuthenticated]
 
+	@extend_schema(
+		request=PasswordChangeSerializer,
+		responses={
+			204: OpenApiResponse(description="Senha alterada com sucesso."),
+			400: DetailSerializer,
+		},
+	)
 	def post(self, request):
 		ser = PasswordChangeSerializer(data=request.data)
 		ser.is_valid(raise_exception=True)

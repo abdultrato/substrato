@@ -542,8 +542,159 @@
           }
         ],
         "responses": {
+          "204": {
+            "description": "Logout stateless (JWT)."
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password-reset/confirm/": {
+      "post": {
+        "operationId": "v1_auth_password_reset_confirm_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          },
+          {}
+        ],
+        "responses": {
+          "204": {
+            "description": "Senha alterada com sucesso."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password-reset/request/": {
+      "post": {
+        "operationId": "v1_auth_password_reset_request_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequestRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          },
+          {}
+        ],
+        "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/auth/password/change/": {
+      "post": {
+        "operationId": "v1_auth_password_change_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Senha alterada com sucesso."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -611,7 +762,59 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMe"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "operationId": "v1_auth_user_partial_update",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUserPatchRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUserPatchRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedUserPatchRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMe"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -3342,7 +3545,7 @@
     },
     "/api/v1/clinico/paciente/{id}/historia_clinica/": {
       "get": {
-        "operationId": "v1_clinico_paciente_historia_clinica_retrieve_2",
+        "operationId": "v1_clinico_paciente_historia_clinica_por_id",
         "description": "Gerenciamento de pacientes",
         "parameters": [
           {
@@ -3382,7 +3585,7 @@
     },
     "/api/v1/clinico/paciente/historia_clinica/": {
       "get": {
-        "operationId": "v1_clinico_paciente_historia_clinica_retrieve",
+        "operationId": "v1_clinico_paciente_historia_clinica_por_documento",
         "description": "Gerenciamento de pacientes",
         "tags": [
           "Cl\u00ednico - Pacientes"
@@ -7554,8 +7757,62 @@
     },
     "/api/v1/dashboard/analytics/": {
       "get": {
-        "operationId": "v1_dashboard_analytics_retrieve",
+        "operationId": "v1_dashboard_analytics_list",
         "description": "Painel de estat\u00edsticas (Top N) para o Administrador/Contabilidade.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dias",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Janela em dias (fallback)"
+          },
+          {
+            "in": "query",
+            "name": "fim",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Data/hora final"
+          },
+          {
+            "in": "query",
+            "name": "inicio",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Data/hora inicial"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Limite (1-50)"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "tags": [
           "v1"
         ],
@@ -7569,7 +7826,17 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnalyticsResponse"
+                  }
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -7577,7 +7844,7 @@
     "/api/v1/dashboard/analytics/export/": {
       "get": {
         "operationId": "v1_dashboard_analytics_export_retrieve",
-        "description": "Exporta o relat\u00f3rio do endpoint /dashboard/analytics/ em:\n- PDF (format=pdf)\n- CSV (format=csv)\n- Word (format=word)",
+        "description": "Exporta o relat\u00f3rio do endpoint /dashboard/analytics/ em:\n- PDF (tipo=pdf)\n- CSV (tipo=csv)\n- Word (tipo=word)\n\nNota: evitamos o query-param `format` porque o DRF usa esse nome\npara content negotiation e pode responder 404 quando n\u00e3o existe\nrenderer para o formato solicitado.",
         "tags": [
           "v1"
         ],
@@ -7591,7 +7858,14 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsResponse"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -7612,7 +7886,14 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStats"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -8286,7 +8567,7 @@
     },
     "/api/v1/enfermagem/enfermariadashboard/": {
       "get": {
-        "operationId": "v1_enfermagem_enfermariadashboard_retrieve",
+        "operationId": "v1_enfermagem_enfermariadashboard_list",
         "description": "Dashboard operacional da Enfermaria (ocupa\u00e7\u00e3o + pr\u00f3ximas medica\u00e7\u00f5es).",
         "tags": [
           "v1"
@@ -8301,7 +8582,17 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnfermariaDashboardResponse"
+                  }
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -18804,6 +19095,15 @@
         "description": "Inbox de resultados para equipamentos (HTTP JSON).\n\nAutentica\u00e7\u00e3o: header `X-Integration-Key`.\n\nPayload (exemplo):\n{\n  \"message_id\": \"uuid-externo-opcional\",\n  \"accession\": \"ORD-....\",\n  \"results\": [{\"codigo\": \"HB\", \"valor\": \"13.2\"}, ...],\n  \"documentos\": [{\"filename\":\"ecg.pdf\",\"content_type\":\"application/pdf\",\"base64\":\"...\",\"requisicao_item_id\": 123}]\n}",
         "parameters": [
           {
+            "in": "header",
+            "name": "X-Integration-Key",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chave de integra\u00e7\u00e3o",
+            "required": true
+          },
+          {
             "in": "path",
             "name": "equipamento_id_custom",
             "schema": {
@@ -18816,6 +19116,26 @@
         "tags": [
           "v1"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadosInboxRequestRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadosInboxRequestRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadosInboxRequestRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "security": [
           {
             "Bearer": []
@@ -18824,7 +19144,54 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadosInboxResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadosInboxResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -18835,6 +19202,15 @@
         "description": "Worklist para equipamentos (HTTP JSON).\n\nAutentica\u00e7\u00e3o: header `X-Integration-Key`.",
         "parameters": [
           {
+            "in": "header",
+            "name": "X-Integration-Key",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chave de integra\u00e7\u00e3o",
+            "required": true
+          },
+          {
             "in": "path",
             "name": "equipamento_id_custom",
             "schema": {
@@ -18842,6 +19218,25 @@
               "pattern": "^[^/]+$"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "estado",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Filtrar por estado (pode repetir ?estado=...)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Limite (1-200)"
           }
         ],
         "tags": [
@@ -18855,7 +19250,44 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorklistResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegracaoDetail"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -22002,6 +22434,25 @@
         "tags": [
           "v1"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FluxoAtendimentoCreateRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/FluxoAtendimentoCreateRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/FluxoAtendimentoCreateRequest"
+              }
+            }
+          }
+        },
         "security": [
           {
             "jwtAuth": []
@@ -22012,7 +22463,15 @@
         ],
         "responses": {
           "201": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -22025,8 +22484,9 @@
             "in": "path",
             "name": "id",
             "schema": {
-              "type": "string"
+              "type": "integer"
             },
+            "description": "ID do check-in",
             "required": true
           }
         ],
@@ -22043,7 +22503,15 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -22950,7 +23418,15 @@
         ],
         "responses": {
           "200": {
-            "description": "No response body"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -27045,6 +27521,142 @@
           "nome"
         ]
       },
+      "AnalyticsRange": {
+        "type": "object",
+        "properties": {
+          "inicio": {
+            "type": "string",
+            "nullable": true
+          },
+          "fim": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AnalyticsResponse": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "$ref": "#/components/schemas/AnalyticsRange"
+          },
+          "kpis": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "top_exames": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsTopExame"
+            }
+          },
+          "top_procedimentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsTopProcedimento"
+            }
+          },
+          "top_medicamentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsTopMedicamento"
+            }
+          },
+          "top_consultas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalyticsTopConsulta"
+            }
+          }
+        },
+        "required": [
+          "kpis",
+          "range",
+          "top_consultas",
+          "top_exames",
+          "top_medicamentos",
+          "top_procedimentos"
+        ]
+      },
+      "AnalyticsTopConsulta": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total"
+        ]
+      },
+      "AnalyticsTopExame": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nome",
+          "tipo",
+          "total"
+        ]
+      },
+      "AnalyticsTopMedicamento": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "produto__nome": {
+            "type": "string"
+          },
+          "total_quantidade": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+          },
+          "total_pedidos": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_pedidos",
+          "total_quantidade"
+        ]
+      },
+      "AnalyticsTopProcedimento": {
+        "type": "object",
+        "properties": {
+          "catalogo_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "catalogo__nome": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total"
+        ]
+      },
       "AtividadeUsuario": {
         "type": "object",
         "properties": {
@@ -27422,15 +28034,6 @@
           "numero"
         ]
       },
-      "CanalEnum": {
-        "enum": [
-          "email",
-          "sms",
-          "whatsapp"
-        ],
-        "type": "string",
-        "description": "* `email` - E-mail\n* `sms` - SMS\n* `whatsapp` - WhatsApp"
-      },
       "Cargo": {
         "type": "object",
         "properties": {
@@ -27528,6 +28131,25 @@
           "nome"
         ]
       },
+      "CheckinFluxoRequest": {
+        "type": "object",
+        "properties": {
+          "prioridade": {
+            "$ref": "#/components/schemas/Prioridade063Enum"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "observacoes": {
+            "type": "string"
+          },
+          "iniciar_atendimento": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
       "CheckinRecepcao": {
         "type": "object",
         "properties": {
@@ -27595,7 +28217,7 @@
             "title": "Vers\u00e3o"
           },
           "prioridade": {
-            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
+            "$ref": "#/components/schemas/Prioridade063Enum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -27674,20 +28296,11 @@
         "type": "string",
         "description": "* `AGUARD` - Aguardando\n* `ATEND` - Em atendimento\n* `REQ` - Requisi\u00e7\u00e3o criada\n* `FAT` - Fatura vinculada\n* `CONC` - Conclu\u00eddo\n* `CANC` - Cancelado"
       },
-      "CheckinRecepcaoPrioridadeEnum": {
-        "enum": [
-          "URG",
-          "PREF",
-          "NOR"
-        ],
-        "type": "string",
-        "description": "* `URG` - Urgente\n* `PREF` - Preferencial\n* `NOR` - Normal"
-      },
       "CheckinRecepcaoRequest": {
         "type": "object",
         "properties": {
           "prioridade": {
-            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
+            "$ref": "#/components/schemas/Prioridade063Enum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -27750,7 +28363,10 @@
             "readOnly": true
           },
           "procedimentos_nomes": {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "readOnly": true
           },
           "criado_em": {
@@ -28224,7 +28840,8 @@
             "readOnly": true
           },
           "fatura_id": {
-            "type": "string",
+            "type": "integer",
+            "nullable": true,
             "readOnly": true
           },
           "fatura_codigo": {
@@ -28490,6 +29107,68 @@
         ],
         "type": "string",
         "description": "* `ATI` - Ativo\n* `PAS` - Passivo\n* `REC` - Receita\n* `DES` - Despesa\n* `PAT` - Patrim\u00f4nio"
+      },
+      "CriarFaturaRecepcaoRequest": {
+        "type": "object",
+        "properties": {
+          "emitir": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "CriarRequisicaoRecepcaoRequest": {
+        "type": "object",
+        "properties": {
+          "exames_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "status_clinico": {
+            "$ref": "#/components/schemas/StatusClinicoEnum"
+          }
+        },
+        "required": [
+          "exames_ids"
+        ]
+      },
+      "DashboardStats": {
+        "type": "object",
+        "properties": {
+          "pacientes": {
+            "type": "integer"
+          },
+          "requisicoes_pendentes": {
+            "type": "integer"
+          },
+          "exames_hoje": {
+            "type": "integer"
+          },
+          "faturamento_hoje": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "exames_hoje",
+          "faturamento_hoje",
+          "pacientes",
+          "requisicoes_pendentes"
+        ]
+      },
+      "Detail": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ]
       },
       "DiaSemanaEnum": {
         "enum": [
@@ -28873,6 +29552,104 @@
           "nome"
         ]
       },
+      "EnfermariaDashboardCama": {
+        "type": "object",
+        "properties": {
+          "internamento_id": {
+            "type": "integer"
+          },
+          "internamento_codigo": {
+            "type": "string"
+          },
+          "enfermaria": {
+            "type": "string"
+          },
+          "cama_id": {
+            "type": "integer"
+          },
+          "cama_numero": {
+            "type": "string"
+          },
+          "paciente_id": {
+            "type": "integer"
+          },
+          "paciente_nome": {
+            "type": "string"
+          },
+          "data_internamento": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "data_prevista_alta": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "tempo_estimado_observacao_horas": {
+            "type": "integer",
+            "nullable": true
+          },
+          "proxima_medicacao_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "proxima_medicacao_descricao": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cama_id",
+          "cama_numero",
+          "enfermaria",
+          "internamento_codigo",
+          "internamento_id",
+          "paciente_id",
+          "paciente_nome"
+        ]
+      },
+      "EnfermariaDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "resumo": {
+            "$ref": "#/components/schemas/EnfermariaDashboardResumo"
+          },
+          "camas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnfermariaDashboardCama"
+            }
+          }
+        },
+        "required": [
+          "camas",
+          "resumo"
+        ]
+      },
+      "EnfermariaDashboardResumo": {
+        "type": "object",
+        "properties": {
+          "pacientes": {
+            "type": "integer"
+          },
+          "camas_total": {
+            "type": "integer"
+          },
+          "camas_ocupadas": {
+            "type": "integer"
+          },
+          "camas_livres": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "camas_livres",
+          "camas_ocupadas",
+          "camas_total",
+          "pacientes"
+        ]
+      },
       "EnfermariaRequest": {
         "type": "object",
         "properties": {
@@ -29165,7 +29942,7 @@
           "nome"
         ]
       },
-      "Estado7bfEnum": {
+      "EstadoResultadoEnum": {
         "enum": [
           "pendente",
           "em_analise",
@@ -29374,7 +30151,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame",
@@ -29466,7 +30243,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -29567,7 +30344,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -29709,7 +30486,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame"
@@ -29798,7 +30575,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -29898,7 +30675,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -30005,7 +30782,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame"
@@ -30065,7 +30842,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame",
@@ -30980,6 +31757,34 @@
         "required": [
           "funcionario"
         ]
+      },
+      "FluxoAtendimentoCreateRequest": {
+        "type": "object",
+        "properties": {
+          "paciente_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "paciente": {
+            "$ref": "#/components/schemas/PacienteFluxoRequest"
+          },
+          "checkin": {
+            "$ref": "#/components/schemas/CheckinFluxoRequest"
+          },
+          "requisicao": {
+            "$ref": "#/components/schemas/CriarRequisicaoRecepcaoRequest"
+          },
+          "faturamento": {
+            "$ref": "#/components/schemas/CriarFaturaRecepcaoRequest"
+          },
+          "pagamento": {
+            "$ref": "#/components/schemas/RegistrarPagamentoRecepcaoRequest"
+          },
+          "concluir_checkin": {
+            "type": "boolean",
+            "default": false
+          }
+        }
       },
       "FolhaPagamento": {
         "type": "object",
@@ -32041,6 +32846,17 @@
           "nome"
         ]
       },
+      "IntegracaoDetail": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ]
+      },
       "InternamentoEnfermaria": {
         "type": "object",
         "properties": {
@@ -32718,12 +33534,12 @@
           },
           "first_name": {
             "type": "string",
-            "title": "Primeiro nome",
+            "title": "Nome",
             "maxLength": 150
           },
           "last_name": {
             "type": "string",
-            "title": "\u00daltimo nome",
+            "title": "Apelido",
             "maxLength": 150
           },
           "nome": {
@@ -32735,7 +33551,20 @@
           "username"
         ]
       },
-      "MetodoE1dEnum": {
+      "Metodo412Enum": {
+        "enum": [
+          "DIN",
+          "CAR",
+          "TRF",
+          "MOB",
+          "POS",
+          "CHQ",
+          "OUT"
+        ],
+        "type": "string",
+        "description": "* `DIN` - Dinheiro\n* `CAR` - Cart\u00e3o\n* `TRF` - Transfer\u00eancia\n* `MOB` - Mobile Money\n* `POS` - POS\n* `CHQ` - Cheque\n* `OUT` - Outro"
+      },
+      "MetodoLaboratorioEnum": {
         "enum": [
           "Enzimatico",
           "Colorimetrico",
@@ -33080,7 +33909,7 @@
             "maxLength": 255
           },
           "canal": {
-            "$ref": "#/components/schemas/CanalEnum"
+            "$ref": "#/components/schemas/NotificacaoCanalEnum"
           },
           "assunto": {
             "type": "string",
@@ -33128,6 +33957,15 @@
           "mensagem"
         ]
       },
+      "NotificacaoCanalEnum": {
+        "enum": [
+          "email",
+          "sms",
+          "whatsapp"
+        ],
+        "type": "string",
+        "description": "* `email` - E-mail\n* `sms` - SMS\n* `whatsapp` - WhatsApp"
+      },
       "NotificacaoRequest": {
         "type": "object",
         "properties": {
@@ -33137,7 +33975,7 @@
             "maxLength": 255
           },
           "canal": {
-            "$ref": "#/components/schemas/CanalEnum"
+            "$ref": "#/components/schemas/NotificacaoCanalEnum"
           },
           "assunto": {
             "type": "string",
@@ -33347,6 +34185,65 @@
           "nome"
         ]
       },
+      "PacienteFluxoRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "morada": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "genero": {
+            "$ref": "#/components/schemas/GeneroEnum"
+          },
+          "raca_origem": {
+            "$ref": "#/components/schemas/RacaOrigemEnum"
+          },
+          "tipo_documento": {
+            "$ref": "#/components/schemas/TipoDocumentoEnum"
+          },
+          "numero_id": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 50
+          },
+          "contacto": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "proveniencia": {
+            "$ref": "#/components/schemas/ProvenienciaEnum"
+          },
+          "gestante": {
+            "type": "boolean"
+          },
+          "idade_gestacional_semanas": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "morada",
+          "nome"
+        ]
+      },
       "PacienteRequest": {
         "type": "object",
         "description": "Serializer para a entidade Paciente com valida\u00e7\u00e3o robusta.\nInclui campos de paciente para leitura/escrita com valida\u00e7\u00e3o de dom\u00ednio.",
@@ -33496,7 +34393,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/PagamentoMetodoEnum"
+                "$ref": "#/components/schemas/Metodo412Enum"
               }
             ],
             "title": "M\u00e9todo"
@@ -33542,19 +34439,6 @@
           "valor"
         ]
       },
-      "PagamentoMetodoEnum": {
-        "enum": [
-          "DIN",
-          "CAR",
-          "TRF",
-          "MOB",
-          "POS",
-          "CHQ",
-          "OUT"
-        ],
-        "type": "string",
-        "description": "* `DIN` - Dinheiro\n* `CAR` - Cart\u00e3o\n* `TRF` - Transfer\u00eancia\n* `MOB` - Mobile Money\n* `POS` - POS\n* `CHQ` - Cheque\n* `OUT` - Outro"
-      },
       "PagamentoRequest": {
         "type": "object",
         "properties": {
@@ -33583,7 +34467,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/PagamentoMetodoEnum"
+                "$ref": "#/components/schemas/Metodo412Enum"
               }
             ],
             "title": "M\u00e9todo"
@@ -33650,6 +34534,74 @@
         ],
         "type": "string",
         "description": "* `CONJUGE` - C\u00f4njuge\n* `FILHO` - Filho(a)\n* `PAI` - Pai/M\u00e3e\n* `IRMAO` - Irm\u00e3o(\u00e3)\n* `OUTRO` - Outro"
+      },
+      "PasswordChangeRequest": {
+        "type": "object",
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "minLength": 1
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ]
+      },
+      "PasswordResetConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "new_password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "new_password",
+          "token"
+        ]
+      },
+      "PasswordResetRequestCanalEnum": {
+        "enum": [
+          "email",
+          "whatsapp"
+        ],
+        "type": "string",
+        "description": "* `email` - email\n* `whatsapp` - whatsapp"
+      },
+      "PasswordResetRequestRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "telefone": {
+            "type": "string"
+          },
+          "canal": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PasswordResetRequestCanalEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          }
+        }
       },
       "PasswordResetToken": {
         "type": "object",
@@ -33880,7 +34832,7 @@
         "type": "object",
         "properties": {
           "prioridade": {
-            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
+            "$ref": "#/components/schemas/Prioridade063Enum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -34382,7 +35334,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -34476,7 +35428,7 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Tipo261Enum"
+                "$ref": "#/components/schemas/TipoResultadoEnum"
               }
             ],
             "title": "Tipo de par\u00e2metro"
@@ -34577,7 +35529,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame"
@@ -34633,7 +35585,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoE1dEnum"
+                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
               }
             ],
             "title": "M\u00e9todo do exame",
@@ -35627,7 +36579,7 @@
             "maxLength": 255
           },
           "canal": {
-            "$ref": "#/components/schemas/CanalEnum"
+            "$ref": "#/components/schemas/NotificacaoCanalEnum"
           },
           "assunto": {
             "type": "string",
@@ -35792,7 +36744,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/PagamentoMetodoEnum"
+                "$ref": "#/components/schemas/Metodo412Enum"
               }
             ],
             "title": "M\u00e9todo"
@@ -36720,7 +37672,7 @@
             "description": "Tipo/setor da requisi\u00e7\u00e3o (LAB ou MED).\n\n* `LAB` - Laborat\u00f3rio\n* `MED` - Exame m\u00e9dico"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "status_clinico": {
             "$ref": "#/components/schemas/StatusClinicoEnum"
@@ -36827,7 +37779,7 @@
             "type": "boolean"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "data_validacao": {
             "type": "string",
@@ -37025,6 +37977,39 @@
           }
         }
       },
+      "PatchedUserPatchRequest": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "title": "Nome",
+            "maxLength": 150
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Apelido",
+            "maxLength": 150
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "title": "E-mail",
+            "maxLength": 254
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "foto": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "title": "Foto de perfil"
+          }
+        }
+      },
       "PatchedUsoTenantRequest": {
         "type": "object",
         "properties": {
@@ -37091,16 +38076,6 @@
             "pattern": "^[\\w.@+-]+$",
             "maxLength": 150
           },
-          "first_name": {
-            "type": "string",
-            "title": "Primeiro nome",
-            "maxLength": 150
-          },
-          "last_name": {
-            "type": "string",
-            "title": "\u00daltimo nome",
-            "maxLength": 150
-          },
           "is_staff": {
             "type": "boolean",
             "title": "Membro da equipe",
@@ -37121,16 +38096,33 @@
             "minLength": 1,
             "maxLength": 120
           },
+          "first_name": {
+            "type": "string",
+            "title": "Nome",
+            "maxLength": 150
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Apelido",
+            "maxLength": 150
+          },
           "email": {
             "type": "string",
             "format": "email",
             "minLength": 1,
+            "title": "E-mail",
             "maxLength": 254
           },
           "telefone": {
             "type": "string",
             "nullable": true,
             "maxLength": 20
+          },
+          "foto": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "title": "Foto de perfil"
           },
           "groups": {
             "type": "array",
@@ -37896,6 +38888,15 @@
           "medicacao",
           "registro"
         ]
+      },
+      "Prioridade063Enum": {
+        "enum": [
+          "URG",
+          "PREF",
+          "NOR"
+        ],
+        "type": "string",
+        "description": "* `URG` - Urgente\n* `PREF` - Preferencial\n* `NOR` - Normal"
       },
       "Procedimento": {
         "type": "object",
@@ -39282,6 +40283,32 @@
           "transacao"
         ]
       },
+      "RegistrarPagamentoRecepcaoRequest": {
+        "type": "object",
+        "properties": {
+          "valor": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$"
+          },
+          "metodo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Metodo412Enum"
+              }
+            ],
+            "default": "DIN"
+          },
+          "referencia_externa": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "confirmar": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
       "RegistroEnfermagem": {
         "type": "object",
         "properties": {
@@ -39438,7 +40465,10 @@
             "readOnly": true
           },
           "consultas_codigos": {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "readOnly": true
           },
           "itens_prescricao": {
@@ -39692,7 +40722,7 @@
             "description": "Tipo/setor da requisi\u00e7\u00e3o (LAB ou MED).\n\n* `LAB` - Laborat\u00f3rio\n* `MED` - Exame m\u00e9dico"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "status_clinico": {
             "$ref": "#/components/schemas/StatusClinicoEnum"
@@ -39770,7 +40800,7 @@
             "description": "Tipo/setor da requisi\u00e7\u00e3o (LAB ou MED).\n\n* `LAB` - Laborat\u00f3rio\n* `MED` - Exame m\u00e9dico"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "status_clinico": {
             "$ref": "#/components/schemas/StatusClinicoEnum"
@@ -40026,7 +41056,7 @@
             "type": "boolean"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "data_validacao": {
             "type": "string",
@@ -40102,7 +41132,7 @@
             "type": "boolean"
           },
           "estado": {
-            "$ref": "#/components/schemas/Estado7bfEnum"
+            "$ref": "#/components/schemas/EstadoResultadoEnum"
           },
           "data_validacao": {
             "type": "string",
@@ -40141,6 +41171,122 @@
           "exame_campo",
           "inquilino",
           "resultado"
+        ]
+      },
+      "ResultadosInboxAplicado": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "exame_campo_id": {
+            "type": "integer"
+          },
+          "exame_campo": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "exame_campo",
+          "exame_campo_id",
+          "valor"
+        ]
+      },
+      "ResultadosInboxDocumentoRequest": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string"
+          },
+          "content_type": {
+            "type": "string"
+          },
+          "base64": {
+            "type": "string"
+          },
+          "requisicao_item_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "ResultadosInboxRequestRequest": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "accession": {
+            "type": "string",
+            "minLength": 1
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultadosInboxResultadoRequest"
+            }
+          },
+          "documentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultadosInboxDocumentoRequest"
+            }
+          }
+        },
+        "required": [
+          "accession"
+        ]
+      },
+      "ResultadosInboxResponse": {
+        "type": "object",
+        "properties": {
+          "mensagem": {
+            "type": "string"
+          },
+          "ordem": {
+            "type": "string"
+          },
+          "ordem_estado": {
+            "type": "string"
+          },
+          "aplicados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResultadosInboxAplicado"
+            }
+          },
+          "erros": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "aplicados",
+          "erros",
+          "mensagem",
+          "ordem",
+          "ordem_estado"
+        ]
+      },
+      "ResultadosInboxResultadoRequest": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "minLength": 1
+          },
+          "valor": {
+            "nullable": true
+          }
+        },
+        "required": [
+          "codigo"
         ]
       },
       "Seguradora": {
@@ -40532,16 +41678,6 @@
         "type": "string",
         "description": "* `TRIAL` - Trial\n* `ATIVO` - Ativo\n* `SUSPENSO` - Suspenso"
       },
-      "Tipo261Enum": {
-        "enum": [
-          "NUMERICO",
-          "QUALITATIVO",
-          "SEMIQUANTITATIVO",
-          "TEXTO"
-        ],
-        "type": "string",
-        "description": "* `NUMERICO` - Num\u00e9rico\n* `QUALITATIVO` - Qualitativo\n* `SEMIQUANTITATIVO` - Semi-quantitativo\n* `TEXTO` - Texto Livre"
-      },
       "TipoDocumentoEnum": {
         "enum": [
           "BI",
@@ -40559,12 +41695,13 @@
       "TipoEventoEnum": {
         "enum": [
           "GERAL",
+          "RESET_SENHA",
           "RESULTADO",
           "FATURA",
           "RECIBO"
         ],
         "type": "string",
-        "description": "* `GERAL` - Geral\n* `RESULTADO` - Resultado dispon\u00edvel\n* `FATURA` - Fatura emitida\n* `RECIBO` - Recibo gerado"
+        "description": "* `GERAL` - Geral\n* `RESET_SENHA` - Reposi\u00e7\u00e3o de palavra-passe\n* `RESULTADO` - Resultado dispon\u00edvel\n* `FATURA` - Fatura emitida\n* `RECIBO` - Recibo gerado"
       },
       "TipoItemEnum": {
         "enum": [
@@ -40577,6 +41714,16 @@
         ],
         "type": "string",
         "description": "* `EXA` - Exame\n* `EXM` - Exame m\u00e9dico\n* `FAR` - Item de farm\u00e1cia\n* `PRC` - Servi\u00e7o de enfermagem\n* `MAT` - Material de enfermagem\n* `AJU` - Ajuste manual"
+      },
+      "TipoResultadoEnum": {
+        "enum": [
+          "NUMERICO",
+          "QUALITATIVO",
+          "SEMIQUANTITATIVO",
+          "TEXTO"
+        ],
+        "type": "string",
+        "description": "* `NUMERICO` - Num\u00e9rico\n* `QUALITATIVO` - Qualitativo\n* `SEMIQUANTITATIVO` - Semi-quantitativo\n* `TEXTO` - Texto Livre"
       },
       "TokenObtainPair": {
         "type": "object",
@@ -40712,6 +41859,50 @@
         "type": "string",
         "description": "* `g/dl` - g/dl\n* `mg/dl` - mg/dl\n* `mmol/l` - mmol/l\n* `\u00b5mol/l` - \u00b5mol/l\n* `cel/mm3` - cel/mm3\n* `x10\u00b3/\u00b5l` - x10\u00b3/\u00b5l\n* `\u00d710\u2076/\u00b5L` - \u00d710\u2076/\u00b5L\n* `%` - %\n* `u/l` - u/l\n* `p/\u00b5L` - p/\u00b5L\n* `ph` - ph\n* `fl` - fl"
       },
+      "UserMe": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "foto_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "full_name",
+          "id"
+        ]
+      },
       "UsoTenant": {
         "type": "object",
         "properties": {
@@ -40841,16 +42032,6 @@
             "pattern": "^[\\w.@+-]+$",
             "maxLength": 150
           },
-          "first_name": {
-            "type": "string",
-            "title": "Primeiro nome",
-            "maxLength": 150
-          },
-          "last_name": {
-            "type": "string",
-            "title": "\u00daltimo nome",
-            "maxLength": 150
-          },
           "is_staff": {
             "type": "boolean",
             "title": "Membro da equipe",
@@ -40901,15 +42082,32 @@
             "type": "string",
             "maxLength": 120
           },
+          "first_name": {
+            "type": "string",
+            "title": "Nome",
+            "maxLength": 150
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Apelido",
+            "maxLength": 150
+          },
           "email": {
             "type": "string",
             "format": "email",
+            "title": "E-mail",
             "maxLength": 254
           },
           "telefone": {
             "type": "string",
             "nullable": true,
             "maxLength": 20
+          },
+          "foto": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "title": "Foto de perfil"
           },
           "criado_por": {
             "type": "integer",
@@ -40972,12 +42170,12 @@
           },
           "first_name": {
             "type": "string",
-            "title": "Primeiro nome",
+            "title": "Nome",
             "maxLength": 150
           },
           "last_name": {
             "type": "string",
-            "title": "\u00daltimo nome",
+            "title": "Apelido",
             "maxLength": 150
           },
           "nome": {
@@ -40985,7 +42183,10 @@
             "readOnly": true
           },
           "grupos": {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "readOnly": true
           },
           "total_atividades": {
@@ -41029,16 +42230,6 @@
             "pattern": "^[\\w.@+-]+$",
             "maxLength": 150
           },
-          "first_name": {
-            "type": "string",
-            "title": "Primeiro nome",
-            "maxLength": 150
-          },
-          "last_name": {
-            "type": "string",
-            "title": "\u00daltimo nome",
-            "maxLength": 150
-          },
           "is_staff": {
             "type": "boolean",
             "title": "Membro da equipe",
@@ -41059,16 +42250,33 @@
             "minLength": 1,
             "maxLength": 120
           },
+          "first_name": {
+            "type": "string",
+            "title": "Nome",
+            "maxLength": 150
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Apelido",
+            "maxLength": 150
+          },
           "email": {
             "type": "string",
             "format": "email",
             "minLength": 1,
+            "title": "E-mail",
             "maxLength": 254
           },
           "telefone": {
             "type": "string",
             "nullable": true,
             "maxLength": 20
+          },
+          "foto": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "title": "Foto de perfil"
           },
           "groups": {
             "type": "array",
@@ -41218,6 +42426,161 @@
         "required": [
           "inquilino",
           "numero"
+        ]
+      },
+      "WorklistEquipamento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "modalidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "protocolo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "codigo",
+          "id",
+          "nome"
+        ]
+      },
+      "WorklistExameItem": {
+        "type": "object",
+        "properties": {
+          "requisicao_item_id": {
+            "type": "integer"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "exame_id": {
+            "type": "integer"
+          },
+          "exame_codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "exame_nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "setor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "exame_id",
+          "requisicao_item_id",
+          "tipo"
+        ]
+      },
+      "WorklistOrdem": {
+        "type": "object",
+        "properties": {
+          "accession": {
+            "type": "string"
+          },
+          "ordem_id": {
+            "type": "integer"
+          },
+          "estado": {
+            "type": "string"
+          },
+          "requisicao_id": {
+            "type": "integer"
+          },
+          "requisicao_codigo": {
+            "type": "string"
+          },
+          "paciente": {
+            "$ref": "#/components/schemas/WorklistPaciente"
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorklistExameItem"
+            }
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "accession",
+          "estado",
+          "itens",
+          "ordem_id",
+          "paciente",
+          "requisicao_codigo",
+          "requisicao_id"
+        ]
+      },
+      "WorklistPaciente": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "data_nascimento": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "genero": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero_id": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "codigo",
+          "id",
+          "nome"
+        ]
+      },
+      "WorklistResponse": {
+        "type": "object",
+        "properties": {
+          "equipamento": {
+            "$ref": "#/components/schemas/WorklistEquipamento"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorklistOrdem"
+            }
+          }
+        },
+        "required": [
+          "count",
+          "equipamento",
+          "results"
         ]
       }
     },

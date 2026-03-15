@@ -704,6 +704,10 @@ SECURE_BROWSER_XSS_FILTER = True
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 
+# Celery 6+ mudança: broker_connection_retry não controla mais retries no startup.
+# Definimos explicitamente para remover warning e manter comportamento previsível.
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -824,6 +828,33 @@ SPECTACULAR_SETTINGS = {
 		
 		"SCHEMA_COERCE_DECIMAL_STRINGS": False,
 		"MULTI_USE_SERIALIZER_CLASSES": True,
+		
+		# Evita warnings de colisao de enums (mesmo nome de campo com choice-sets distintos).
+		"ENUM_NAME_OVERRIDES": {
+				"EstadoResultadoEnum": [
+						("pendente", "Pendente"),
+						("em_analise", "Em Análise"),
+						("aguardando_validacao", "Aguardando Validação"),
+						("validado", "Validado"),
+						("rejeitado", "Rejeitado"),
+						],
+				"TipoResultadoEnum": "nucleo.constantes.laboratorio.tipo_resultado.TipoResultado",
+				"MetodoLaboratorioEnum": "nucleo.constantes.laboratorio.metodo.Metodo",
+				"MetodoPagamentoEnum": [
+						("DIN", "Dinheiro"),
+						("CAR", "Cartão"),
+						("TRF", "Transferência"),
+						("MOB", "Mobile Money"),
+						("POS", "POS"),
+						("CHQ", "Cheque"),
+						("OUT", "Outro"),
+						],
+				"CheckinRecepcaoPrioridadeEnum": [
+						("URG", "Urgente"),
+						("PREF", "Preferencial"),
+						("NOR", "Normal"),
+						],
+				},
 		
 		"SERVERS": [
 				{

@@ -11,10 +11,17 @@ from django.db.models import DecimalField, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
+from drf_spectacular.utils import (
+    OpenApiResponse,
+    OpenApiTypes,
+    OpenApiParameter,
+    extend_schema,
+)
+from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import GenericViewSet
 
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.paciente import Paciente
@@ -62,11 +69,52 @@ def _parse_dt_end(value: str | None):
     return None
 
 
-class AnalyticsViewSet(ViewSet):
+class AnalyticsRangeSerializer(serializers.Serializer):
+    inicio = serializers.CharField(required=False, allow_null=True)
+    fim = serializers.CharField(required=False, allow_null=True)
+
+
+class AnalyticsTopExameSerializer(serializers.Serializer):
+    tipo = serializers.CharField()
+    id = serializers.IntegerField(required=False, allow_null=True)
+    nome = serializers.CharField()
+    total = serializers.IntegerField()
+
+
+class AnalyticsTopProcedimentoSerializer(serializers.Serializer):
+    catalogo_id = serializers.IntegerField(required=False, allow_null=True)
+    catalogo__nome = serializers.CharField(required=False, allow_blank=True)
+    total = serializers.IntegerField()
+
+
+class AnalyticsTopMedicamentoSerializer(serializers.Serializer):
+    produto_id = serializers.IntegerField(required=False, allow_null=True)
+    produto__nome = serializers.CharField(required=False, allow_blank=True)
+    total_quantidade = serializers.DecimalField(max_digits=14, decimal_places=2)
+    total_pedidos = serializers.IntegerField()
+
+
+class AnalyticsTopConsultaSerializer(serializers.Serializer):
+    tipo = serializers.CharField(required=False, allow_blank=True)
+    total = serializers.IntegerField()
+
+
+class AnalyticsResponseSerializer(serializers.Serializer):
+    range = AnalyticsRangeSerializer()
+    kpis = serializers.DictField(child=serializers.JSONField())
+    top_exames = AnalyticsTopExameSerializer(many=True)
+    top_procedimentos = AnalyticsTopProcedimentoSerializer(many=True)
+    top_medicamentos = AnalyticsTopMedicamentoSerializer(many=True)
+    top_consultas = AnalyticsTopConsultaSerializer(many=True)
+
+
+class AnalyticsViewSet(GenericViewSet):
     """
     Painel de estatísticas (Top N) para o Administrador/Contabilidade.
     """
 
+    queryset = RequisicaoAnalise.objects.none()
+    serializer_class = AnalyticsResponseSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
 
@@ -286,10 +334,32 @@ class AnalyticsViewSet(ViewSet):
             "top_consultas": top_consultas,
         }
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("limit", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Limite (1-50)"),
+            OpenApiParameter("dias", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Janela em dias (fallback)"),
+            OpenApiParameter("inicio", OpenApiTypes.DATETIME, OpenApiParameter.QUERY, description="Data/hora inicial"),
+            OpenApiParameter("fim", OpenApiTypes.DATETIME, OpenApiParameter.QUERY, description="Data/hora final"),
+        ],
+        responses={200: AnalyticsResponseSerializer},
+    )
     def list(self, request):
         return Response(self._compute(request))
 
     @action(detail=False, methods=["get"], url_path="export")
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "tipo",
+                OpenApiTypes.STR,
+                OpenApiParameter.QUERY,
+                description="Formato de exportação: pdf|csv|word",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(response=OpenApiTypes.BINARY, description="Arquivo exportado (PDF/CSV/Word)."),
+        },
+    )
     def export(self, request):
         """
         Exporta o relatório do endpoint /dashboard/analytics/ em:

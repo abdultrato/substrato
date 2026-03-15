@@ -1,3 +1,5 @@
+from drf_spectacular.utils import extend_schema
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -51,6 +53,33 @@ from .serializers import (
     CamaEnfermariaSerializer,
     InternamentoEnfermariaSerializer,
 )
+
+
+class EnfermariaDashboardResumoSerializer(serializers.Serializer):
+    pacientes = serializers.IntegerField()
+    camas_total = serializers.IntegerField()
+    camas_ocupadas = serializers.IntegerField()
+    camas_livres = serializers.IntegerField()
+
+
+class EnfermariaDashboardCamaSerializer(serializers.Serializer):
+    internamento_id = serializers.IntegerField()
+    internamento_codigo = serializers.CharField(allow_blank=True)
+    enfermaria = serializers.CharField(allow_blank=True)
+    cama_id = serializers.IntegerField()
+    cama_numero = serializers.CharField(allow_blank=True)
+    paciente_id = serializers.IntegerField()
+    paciente_nome = serializers.CharField(allow_blank=True)
+    data_internamento = serializers.DateTimeField(required=False, allow_null=True)
+    data_prevista_alta = serializers.DateTimeField(required=False, allow_null=True)
+    tempo_estimado_observacao_horas = serializers.IntegerField(required=False, allow_null=True)
+    proxima_medicacao_em = serializers.DateTimeField(required=False, allow_null=True)
+    proxima_medicacao_descricao = serializers.CharField(required=False, allow_blank=True)
+
+
+class EnfermariaDashboardResponseSerializer(serializers.Serializer):
+    resumo = EnfermariaDashboardResumoSerializer()
+    camas = EnfermariaDashboardCamaSerializer(many=True)
 
 
 class RegistroEnfermagemViewSet(ModelViewSet):
@@ -516,6 +545,7 @@ class EnfermariaDashboardViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
 
+    @extend_schema(responses={200: EnfermariaDashboardResponseSerializer})
     def list(self, request):
         inquilino = getattr(request, "inquilino", None)
 

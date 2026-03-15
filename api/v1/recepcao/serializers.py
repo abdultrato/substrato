@@ -46,7 +46,7 @@ class CheckinRecepcaoSerializer(serializers.ModelSerializer):
             "atendente_nome",
         )
 
-    def get_atendente_nome(self, obj):
+    def get_atendente_nome(self, obj: CheckinRecepcao) -> str:
         if not obj.atendente_id:
             return ""
 

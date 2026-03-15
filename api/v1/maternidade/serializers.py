@@ -30,7 +30,7 @@ class GestacaoSerializer(serializers.ModelSerializer):
             "medico_nome",
         )
 
-    def get_medico_nome(self, obj):
+    def get_medico_nome(self, obj: Gestacao) -> str:
         u = getattr(obj, "medico_responsavel", None)
         if not u:
             return ""

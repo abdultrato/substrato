@@ -25,13 +25,13 @@ class UsuarioAuditoriaSerializer(serializers.ModelSerializer):
             "ultima_atividade_em",
         ]
 
-    def get_nome(self, obj):
+    def get_nome(self, obj: Usuario) -> str:
         try:
             return (obj.get_full_name() or "").strip() or obj.username
         except Exception:
             return obj.username
 
-    def get_grupos(self, obj):
+    def get_grupos(self, obj: Usuario) -> list[str]:
         try:
             return list(obj.groups.values_list("name", flat=True))
         except Exception:
@@ -62,7 +62,7 @@ class AtividadeUsuarioSerializer(serializers.ModelSerializer):
             "metadata",
         ]
 
-    def get_usuario_nome(self, obj):
+    def get_usuario_nome(self, obj: AtividadeUsuario) -> str:
         u = getattr(obj, "usuario", None)
         if not u:
             return ""
@@ -76,4 +76,3 @@ SERIALIZER_MAP = {
     "usuarios": UsuarioAuditoriaSerializer,
     "atividade": AtividadeUsuarioSerializer,
 }
-

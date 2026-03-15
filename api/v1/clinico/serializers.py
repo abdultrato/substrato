@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from rest_framework import serializers
+from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 
 from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.clinico.modelos.exame_campo import ExameCampo
@@ -26,6 +27,7 @@ CORE_READ_ONLY_FIELDS = [
 ]
 
 
+@extend_schema_field(OpenApiTypes.STR)
 class MoradaField(serializers.Field):
 	"""
 	Compat layer:

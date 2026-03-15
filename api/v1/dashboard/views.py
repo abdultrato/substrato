@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
+from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,9 +14,17 @@ from dominio.clinico.estado_resultado import EstadoResultado
 from seguranca.permissoes.grupos import IsAdminOrContabilidade
 
 
+class DashboardStatsSerializer(serializers.Serializer):
+	pacientes = serializers.IntegerField()
+	requisicoes_pendentes = serializers.IntegerField()
+	exames_hoje = serializers.IntegerField()
+	faturamento_hoje = serializers.FloatField()
+
+
 class DashboardStatsView(APIView):
 	permission_classes = [IsAdminOrContabilidade]
 
+	@extend_schema(responses={200: DashboardStatsSerializer})
 	def get(self, request):
 		inquilino = getattr(request, "inquilino", None)
 

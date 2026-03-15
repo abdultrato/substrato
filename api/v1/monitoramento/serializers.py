@@ -26,7 +26,7 @@ class ErroSistemaSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS + ("usuario_nome",)
 
-    def get_usuario_nome(self, obj):
+    def get_usuario_nome(self, obj: ErroSistema) -> str:
         u = getattr(obj, "usuario", None)
         if not u:
             return ""

@@ -33,7 +33,7 @@ class CirurgiaSerializer(serializers.ModelSerializer):
             "procedimentos_nomes",
         )
 
-    def get_cirurgiao_nome(self, obj):
+    def get_cirurgiao_nome(self, obj: Cirurgia) -> str:
         u = getattr(obj, "cirurgiao", None)
         if not u:
             return ""
@@ -42,7 +42,7 @@ class CirurgiaSerializer(serializers.ModelSerializer):
         except Exception:
             return getattr(u, "username", "")
 
-    def get_procedimentos_nomes(self, obj):
+    def get_procedimentos_nomes(self, obj: Cirurgia) -> list[str]:
         try:
             return list(obj.procedimentos.values_list("nome", flat=True))
         except Exception:

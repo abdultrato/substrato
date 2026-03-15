@@ -23,6 +23,23 @@ export default function DashboardPage () {
     const { loading } = useAuthGuard()
     const [stats, setStats] = useState<DashboardStats | null>( null )
     const [error, setError] = useState( false )
+    const [hideMoney, setHideMoney] = useState( false )
+
+    useEffect( () => {
+        try {
+            setHideMoney( window.localStorage.getItem( "substrato_hide_money" ) === "1" )
+        } catch {
+            // ignore
+        }
+    }, [] )
+
+    useEffect( () => {
+        try {
+            window.localStorage.setItem( "substrato_hide_money", hideMoney ? "1" : "0" )
+        } catch {
+            // ignore
+        }
+    }, [hideMoney] )
 
     useEffect( () => {
         async function load () {
@@ -81,6 +98,9 @@ export default function DashboardPage () {
                             title="Faturamento Hoje"
                             value={`${stats.faturamento_hoje} MZN`}
                             icon={Receipt}
+                            isMoney
+                            hideMoney={hideMoney}
+                            onToggleMoney={() => setHideMoney( ( v ) => !v )}
                         />
                     </div>
                 )}
@@ -93,17 +113,34 @@ function StatCard ( {
     title,
     value,
     icon: Icon,
+    isMoney,
+    hideMoney,
+    onToggleMoney,
 }: {
     title: string
     value: number | string
     icon: any
+    isMoney?: boolean
+    hideMoney?: boolean
+    onToggleMoney?: () => void
 } ) {
+    const displayValue =
+        isMoney && hideMoney
+            ? typeof value === "string"
+                ? value.replace( /[0-9]/g, "*" )
+                : "********"
+            : value
+
     return (
         <div className="bg-white border rounded-xl p-5 flex items-center justify-between shadow-sm">
             <div>
                 <p className="text-sm text-gray-500">{title}</p>
-                <p className="text-xl font-semibold text-gray-800 mt-1">
-                    {value}
+                <p
+                    className={ `text-xl font-semibold text-gray-800 mt-1 ${isMoney ? "select-none cursor-pointer" : ""}` }
+                    onDoubleClick={ isMoney ? onToggleMoney : undefined }
+                    title={ isMoney ? "Duplo clique para ocultar/mostrar valores monetários" : undefined }
+                >
+                    {displayValue}
                 </p>
             </div>
 

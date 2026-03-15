@@ -46,18 +46,82 @@ ADD_FIM_PAGE = True
 HEADER_VERTICAL_INSET = 0.5 * cm
 
 # =========================================================
-# FONTES (fallback seguro)
+# FONTES
 # =========================================================
 
-try :
-	pdfmetrics.registerFont(TTFont("TimesNewRoman", "times.ttf"))
-	pdfmetrics.registerFont(TTFont("TimesNewRoman-Bold", "timesbd.ttf"))
-	FONT = "TimesNewRoman"
-	FONT_BOLD = "TimesNewRoman-Bold"
-except Exception :
-	FONT = "Helvetica"
-	FONT_BOLD = "Helvetica-Bold"
-	logger.warning("Times New Roman não disponível — usando Helvetica.")
+
+def _first_existing(paths: list[str]) -> str | None:
+	for p in paths:
+		if p and os.path.exists(p):
+			return p
+	return None
+
+
+def _configure_fonts() -> tuple[str, str]:
+	"""
+	Define as fontes padrão para TODOS os PDFs.
+
+	Ordem:
+	1) Tinos (fonts-croscore, livre e muito próximo de Times)
+	2) Liberation Serif (fallback serif, livre)
+	3) Helvetica (fallback final)
+	"""
+
+	base_dir = getattr(settings, "BASE_DIR", os.getcwd())
+
+	# 1) Tinos (preferido)
+	tinos_regular = _first_existing(
+		[
+			# Projeto (se você fornecer manualmente)
+			os.path.join(base_dir, "static", "fonts", "Tinos-Regular.ttf"),
+			# Debian (fonts-croscore)
+			"/usr/share/fonts/truetype/croscore/Tinos-Regular.ttf",
+		]
+	)
+	tinos_bold = _first_existing(
+		[
+			os.path.join(base_dir, "static", "fonts", "Tinos-Bold.ttf"),
+			"/usr/share/fonts/truetype/croscore/Tinos-Bold.ttf",
+		]
+	)
+
+	if tinos_regular and tinos_bold:
+		try:
+			pdfmetrics.registerFont(TTFont("Tinos", tinos_regular))
+			pdfmetrics.registerFont(TTFont("Tinos-Bold", tinos_bold))
+			logger.info("PDF fontes: Tinos ativado (%s, %s).", tinos_regular, tinos_bold)
+			return "Tinos", "Tinos-Bold"
+		except Exception as err:
+			logger.warning("Falha ao registar Tinos. A usar fallback.", exc_info=err)
+
+	# 2) Liberation Serif (fallback serif livre)
+	lib_regular = _first_existing(
+		[
+			"/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf",
+			"/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+		]
+	)
+	lib_bold = _first_existing(
+		[
+			"/usr/share/fonts/truetype/liberation2/LiberationSerif-Bold.ttf",
+			"/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+		]
+	)
+	if lib_regular and lib_bold:
+		try:
+			pdfmetrics.registerFont(TTFont("LiberationSerif", lib_regular))
+			pdfmetrics.registerFont(TTFont("LiberationSerif-Bold", lib_bold))
+			logger.warning("Tinos não disponível — usando Liberation Serif.")
+			return "LiberationSerif", "LiberationSerif-Bold"
+		except Exception as err:
+			logger.warning("Falha ao registar Liberation Serif. A usar Helvetica.", exc_info=err)
+
+	# 3) Fallback final
+	logger.warning("Tinos/Liberation Serif não disponíveis — usando Helvetica.")
+	return "Helvetica", "Helvetica-Bold"
+
+
+FONT, FONT_BOLD = _configure_fonts()
 
 
 # =========================================================

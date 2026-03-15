@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework import status
@@ -54,6 +55,7 @@ class TenantAwareMixin:
 class WorkspaceRecepcaoViewSet(TenantAwareMixin, ViewSet):
     http_method_names = ["get"]
 
+    @extend_schema(responses={200: OpenApiTypes.OBJECT})
     def list(self, request):
         return Response(obter_area_trabalho(self.get_inquilino()))
 
@@ -202,6 +204,7 @@ class AtendimentoRecepcaoViewSet(TenantAwareMixin, ViewSet):
     http_method_names = ["get", "post"]
 
     @transaction.atomic
+    @extend_schema(request=FluxoAtendimentoCreateSerializer, responses={201: OpenApiTypes.OBJECT})
     def create(self, request):
         payload = FluxoAtendimentoCreateSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -214,6 +217,10 @@ class AtendimentoRecepcaoViewSet(TenantAwareMixin, ViewSet):
         )
         return Response(resumo, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        parameters=[OpenApiParameter("id", OpenApiTypes.INT, OpenApiParameter.PATH, description="ID do check-in")],
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def retrieve(self, request, pk=None):
         checkin = get_object_or_404(
             CheckinRecepcao.objects.filter(inquilino=self.get_inquilino()),

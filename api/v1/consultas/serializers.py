@@ -29,7 +29,7 @@ class MedicoSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ["id", "username", "first_name", "last_name", "nome"]
 
-    def get_nome(self, obj):
+    def get_nome(self, obj: Usuario) -> str:
         try:
             return (obj.get_full_name() or "").strip() or obj.username
         except Exception:
@@ -56,7 +56,7 @@ class ConsultaMedicaSerializer(serializers.ModelSerializer):
             "fatura_estado",
         )
 
-    def get_medico_nome(self, obj):
+    def get_medico_nome(self, obj: ConsultaMedica) -> str:
         u = getattr(obj, "medico", None)
         if not u:
             return ""
@@ -65,21 +65,21 @@ class ConsultaMedicaSerializer(serializers.ModelSerializer):
         except Exception:
             return getattr(u, "username", "")
 
-    def _get_fatura(self, obj):
+    def _get_fatura(self, obj: ConsultaMedica) -> Fatura | None:
         try:
             return getattr(obj, "fatura", None)
         except Exception:
             return None
 
-    def get_fatura_id(self, obj):
+    def get_fatura_id(self, obj: ConsultaMedica) -> int | None:
         f = self._get_fatura(obj)
         return getattr(f, "id", None) if f else None
 
-    def get_fatura_codigo(self, obj):
+    def get_fatura_codigo(self, obj: ConsultaMedica) -> str:
         f = self._get_fatura(obj)
         return getattr(f, "id_custom", "") if f else ""
 
-    def get_fatura_estado(self, obj):
+    def get_fatura_estado(self, obj: ConsultaMedica) -> str:
         f = self._get_fatura(obj)
         return getattr(f, "estado", "") if f else ""
 

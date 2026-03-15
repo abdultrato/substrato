@@ -132,6 +132,21 @@ if not User.objects.filter(username="admin").exists():
     print("✅ Superuser 'admin' criado")
 else:
     user = User.objects.get(username="admin")
+    # Se o usuário já existia (ex.: por resets anteriores) e agora está na allowlist,
+    # garantimos que volta a ser superuser em DEV.
+    try:
+        from django.conf import settings
+
+        allowlist = set(getattr(settings, "SUPERUSER_ALLOWLIST", []) or [])
+    except Exception:
+        allowlist = set()
+
+    if ("admin" in allowlist) and (not getattr(user, "is_superuser", False)):
+        user.is_superuser = True
+        user.is_staff = True
+        user.save(update_fields=["is_superuser", "is_staff"])
+        print("ℹ️  Superuser 'admin' restaurado (allowlist)")
+
     if not getattr(user, "inquilino_id", None):
         user.inquilino = tenant
         user.save(update_fields=["inquilino"])

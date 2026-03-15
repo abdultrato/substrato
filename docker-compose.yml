@@ -61,6 +61,8 @@ services:
 
       DJANGO_SECRET_KEY: dev-insecure-key-change-in-production
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,0.0.0.0
+      # Dev: permitir que o usuário "admin" permaneça superuser (ver política em settings/base.py)
+      SUBSTRATO_SUPERUSER_ALLOWLIST: admin
 
       DB_ENGINE: postgres
       DB_NAME: substrato
@@ -148,6 +150,7 @@ services:
       DB_PORT: "5432"
 
       REDIS_URL: redis://redis:6379/1
+      SUBSTRATO_SUPERUSER_ALLOWLIST: admin
       TZ: Africa/Maputo
 
     volumes:
@@ -188,6 +191,7 @@ services:
       DB_PORT: "5432"
 
       REDIS_URL: redis://redis:6379/1
+      SUBSTRATO_SUPERUSER_ALLOWLIST: admin
       TZ: Africa/Maputo
 
     volumes:
