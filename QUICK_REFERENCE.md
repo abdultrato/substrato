@@ -387,7 +387,7 @@ Solution: Check if error is retryable (not all are)
 
 ## More Documentation
 
-- **Full examples:** [EJEMPLOS_USO.md](./frontend-next/EJEMPLOS_USO.md)
+- **Full examples:** [EXEMPLOS_USO.md](./frontend-next/EXEMPLOS_USO.md)
 - **API client guide:** [FASE4_API_CLIENT.md](./frontend-next/FASE4_API_CLIENT.md)
 - **Error handling:** [FASE3_ERROR_HANDLING.md](./frontend-next/FASE3_ERROR_HANDLING.md)
 - **Validation:** [FASE2_VALIDAÇÃO.md](./frontend-next/FASE2_VALIDAÇÃO.md)

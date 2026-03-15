@@ -7,17 +7,36 @@ from aplicativos.inquilinos.modelos.inquilino import Inquilino
 
 
 class Usuario(AbstractUser, CoreModel):
+	# AbstractUser já traz `first_name` e `last_name`, mas definimos verbose_name
+	# em PT para UI/admin e consistência do projeto.
+	first_name = models.CharField(
+			"Nome",
+			max_length=150,
+			blank=True,
+			)
+	last_name = models.CharField(
+			"Apelido",
+			max_length=150,
+			blank=True,
+			)
 	
 	email = models.EmailField(
 			unique=True,
-			verbose_name="email"
+			verbose_name="E-mail"
 			)
 	
 	telefone = models.CharField(
 			max_length=20,
 			blank=True,
 			null=True,
-			verbose_name="telefone"
+			verbose_name="Telefone"
+			)
+
+	foto = models.ImageField(
+			upload_to="usuarios/fotos/",
+			blank=True,
+			null=True,
+			verbose_name="Foto de perfil",
 			)
 	USERNAME_FIELD = "username"
 	REQUIRED_FIELDS = ["email"]

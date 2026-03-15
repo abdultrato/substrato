@@ -15,6 +15,9 @@ import {
     Microscope,
     HeartPulse,
     Stethoscope,
+    ScrollText,
+    Baby,
+    Scissors,
     Pill,
     Calculator,
     Shield,
@@ -22,6 +25,9 @@ import {
     Activity,
     BarChart3,
     CalendarClock,
+    CreditCard,
+    Bell,
+    Bug,
     Moon,
     Sun,
 } from "lucide-react"
@@ -73,6 +79,24 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA],
     },
     {
+        href: "/prontuario",
+        label: "Prontuário",
+        icon: ScrollText,
+        groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
+    },
+    {
+        href: "/maternidade",
+        label: "Maternidade",
+        icon: Baby,
+        groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
+    },
+    {
+        href: "/cirurgia",
+        label: "Cirurgia",
+        icon: Scissors,
+        groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
+    },
+    {
         href: "/medicina-ocupacional",
         label: "Med. Ocupacional",
         icon: BriefcaseIcon,
@@ -83,6 +107,12 @@ const NAV_ITEMS: NavItem[] = [
         label: "Farmácia",
         icon: Pill,
         groups: [GROUPS.ADMIN, GROUPS.FARMACIA],
+    },
+    {
+        href: "/pagamentos",
+        label: "Pagamentos",
+        icon: CreditCard,
+        groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
         href: "/contabilidade",
@@ -118,6 +148,18 @@ const NAV_ITEMS: NavItem[] = [
         href: "/auditoria",
         label: "Auditoria",
         icon: Activity,
+        groups: [GROUPS.ADMIN],
+    },
+    {
+        href: "/notificacoes",
+        label: "Notificações",
+        icon: Bell,
+        groups: [GROUPS.ADMIN],
+    },
+    {
+        href: "/monitoramento",
+        label: "Monitoramento",
+        icon: Bug,
         groups: [GROUPS.ADMIN],
     },
     {
@@ -202,11 +244,11 @@ export default function Sidebar ( { user }: Props ) {
 
     return (
         <aside className="w-64 bg-[var(--card)] border-r border-[var(--border)] hidden md:flex flex-col">
-            <div className="p-6 font-bold text-[var(--text)] tracking-wide">
+            <div className="px-3 py-3 font-bold text-[var(--text)] tracking-wide">
                 SUBSTRATO
             </div>
 
-            <nav className="flex flex-col gap-1 px-3">
+            <nav className="flex flex-col gap-1 px-2.5">
                 {NAV_ITEMS.filter( hasAccess ).map( ( item ) => {
                     const Icon = item.icon
                     const active = pathname === item.href
@@ -216,25 +258,25 @@ export default function Sidebar ( { user }: Props ) {
                             key={item.href}
                             href={item.href}
                             className={`
-                flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+                flex items-center gap-2 px-2.5 py-1 rounded-lg text-sm transition
                 ${active
                                     ? "bg-[var(--primary-600)] text-white"
-                                    : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+                                    : "text-[var(--gray-700)] hover:bg-[var(--gray-100)] hover:text-[var(--hover-accent)]"
                                 }
               `}
                         >
-                            <Icon size={18} />
+                            <Icon size={16} />
                             {item.label}
                         </Link>
                     )
                 } )}
             </nav>
 
-            <div className="mt-auto p-4">
+            <div className="mt-auto p-2.5">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-semibold text-[var(--text)] transition hover:bg-[var(--gray-100)]"
+                    className="flex w-full items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-xs font-semibold text-[var(--text)] transition hover:bg-[var(--gray-100)]"
                     aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
                     title={isDark ? "Modo claro" : "Modo escuro"}
                 >
@@ -247,7 +289,7 @@ export default function Sidebar ( { user }: Props ) {
                     </span>
                 </button>
 
-                <div className="mt-3 text-xs text-[var(--gray-500)]">
+                <div className="mt-2 text-xs text-[var(--gray-500)]">
                     Substrato Platform
                 </div>
             </div>

@@ -9,6 +9,7 @@ class Notificacao(models.Model):
 
     class TipoEvento(models.TextChoices):
         GENERICA = "GERAL", "Geral"
+        PASSWORD_RESET = "RESET_SENHA", "Reposição de palavra-passe"
         RESULTADO_DISPONIVEL = "RESULTADO", "Resultado disponível"
         FATURA_EMITIDA = "FATURA", "Fatura emitida"
         RECIBO_GERADO = "RECIBO", "Recibo gerado"

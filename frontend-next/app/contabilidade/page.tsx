@@ -10,9 +10,13 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function ContabilidadePage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [faturas, setFaturas] = useState<number>(0)
@@ -61,12 +65,14 @@ export default function ContabilidadePage() {
           title="Contabilidade"
           subtitle="Gestão financeira: contas, lançamentos, movimentos e conciliações."
           actions={
-            <Link
-              href="/admin/contabilidade/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/contabilidade/"
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 
@@ -131,8 +137,8 @@ export default function ContabilidadePage() {
           />
           <ActionTile
             title="Pagamentos"
-            description="Transações e reconciliações (admin)."
-            href="/admin/pagamentos/"
+            description="Lançar e auditar pagamentos (sem redirecionar ao admin)."
+            href="/recursos/pagamentos/pagamento"
             icon={ClipboardList}
           />
         </div>

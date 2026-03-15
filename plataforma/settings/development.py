@@ -9,7 +9,12 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Em dev, permitir configurar SMTP via variáveis (ex.: docker/.env). Se não
+# estiver definido, cai para console backend.
+EMAIL_BACKEND = os.getenv(
+		"EMAIL_BACKEND",
+		"django.core.mail.backends.console.EmailBackend",
+		)
 
 
 CORS_ALLOW_ALL_ORIGINS = True

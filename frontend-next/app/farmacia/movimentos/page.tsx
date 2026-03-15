@@ -8,7 +8,8 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type MovimentoRow = Record<string, any>
 
@@ -20,6 +21,9 @@ function fmtDate(value: any): string {
 }
 
 export default function FarmaciaMovimentosPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<MovimentoRow[]>([])
@@ -62,7 +66,17 @@ export default function FarmaciaMovimentosPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (m: MovimentoRow) => m.id_custom || m.id || "-" },
+      {
+        header: "Código",
+        render: (m: MovimentoRow) => (
+          <Link
+            href={`/recursos/farmacia/movimentoestoque/${m.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {m.id_custom || m.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Produto", render: (m: MovimentoRow) => m.produto || "-" },
       { header: "Lote", render: (m: MovimentoRow) => m.lote || "-" },
       { header: "Tipo", render: (m: MovimentoRow) => m.tipo || m.natureza || "-" },
@@ -79,12 +93,28 @@ export default function FarmaciaMovimentosPage() {
           title="Movimentos de estoque"
           subtitle="Auditoria de entradas/saídas/ajustes."
           actions={
-            <Link
-              href="/admin/farmacia/movimentoestoque/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/recursos/farmacia/movimentoestoque/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/farmacia/movimentoestoque"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                CRUD
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/farmacia/movimentoestoque/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

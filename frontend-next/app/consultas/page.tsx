@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -91,7 +91,7 @@ export default function ConsultasPage() {
   const [salvando, setSalvando] = useState(false)
   const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     const [cons, pacs, meds, especs] = await Promise.all([
       apiFetch<any>("/consultas/"),
       apiFetch<any>("/pacientes/"),
@@ -107,7 +107,7 @@ export default function ConsultasPage() {
     const especItems = Array.isArray(list(especs)) ? (list(especs) as Especialidade[]) : []
     setEspecialidades(especItems)
     setEspecialidadeId((prev) => prev || (especItems[0]?.id ? String(especItems[0].id) : ""))
-  }
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -128,7 +128,7 @@ export default function ConsultasPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [carregar])
 
   async function criarConsulta(e: any) {
     e.preventDefault()
@@ -176,7 +176,7 @@ export default function ConsultasPage() {
     }
   }
 
-  async function criarFatura(consultaId: number) {
+  const criarFatura = useCallback(async (consultaId: number) => {
     if (!canWrite) return
     try {
       await apiFetch(`/consultas/${consultaId}/criar_fatura/`, {
@@ -187,9 +187,9 @@ export default function ConsultasPage() {
     } catch (e: any) {
       alert(e?.message || "Falha ao criar fatura.")
     }
-  }
+  }, [canWrite, carregar])
 
-  async function cancelarConsulta(consultaId: number) {
+  const cancelarConsulta = useCallback(async (consultaId: number) => {
     if (!canWrite) return
     if (!confirm("Cancelar esta consulta?")) return
     try {
@@ -201,9 +201,9 @@ export default function ConsultasPage() {
     } catch (e: any) {
       alert(e?.message || "Falha ao cancelar consulta.")
     }
-  }
+  }, [canWrite, carregar])
 
-  async function concluirConsulta(consultaId: number) {
+  const concluirConsulta = useCallback(async (consultaId: number) => {
     if (!canWrite) return
     if (!confirm("Marcar esta consulta como concluída?")) return
     try {
@@ -215,9 +215,9 @@ export default function ConsultasPage() {
     } catch (e: any) {
       alert(e?.message || "Falha ao concluir consulta.")
     }
-  }
+  }, [canWrite, carregar])
 
-  async function remarcarConsulta(row: ConsultaRow) {
+  const remarcarConsulta = useCallback(async (row: ConsultaRow) => {
     if (!canWrite) return
     const current = row.agendada_para ? new Date(row.agendada_para) : null
     const defaultValue = current && !Number.isNaN(current.getTime())
@@ -242,7 +242,7 @@ export default function ConsultasPage() {
     } catch (e: any) {
       alert(e?.message || "Falha ao remarcar consulta.")
     }
-  }
+  }, [canWrite, carregar])
 
   const columns = useMemo(
     () => [
@@ -314,7 +314,7 @@ export default function ConsultasPage() {
         ),
       },
     ],
-    [canWrite]
+    [canWrite, cancelarConsulta, concluirConsulta, criarFatura, remarcarConsulta]
   )
 
   useEffect(() => {

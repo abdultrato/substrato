@@ -184,6 +184,8 @@ staticfiles/
 *.sqlite3
 test_db*
 db_*
+# Backups locais
+backups/
 # Build artifacts
 
 # lockfiles

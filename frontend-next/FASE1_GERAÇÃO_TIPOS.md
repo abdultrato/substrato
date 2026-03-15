@@ -146,14 +146,16 @@ console.log(novoP.id)  // ✅ TypeScript sabe que é number
 Quando o backend receber novos endpoints/modelos:
 
 ```bash
-# 1. Exportar schema do backend (local ou remoto)
-python manage.py spectacular --file ../frontend-next/schema.json
+# 1. Gerar schema OpenAPI do backend
+cd ..
+python generate_schema.py
+cd frontend-next
 
 # 2. Regenerar tipos no frontend
 npm run generate:api
 
 # 3. Commit das mudanças
-git add frontend-next/lib/api-client schema.json
+git add lib/api-client schema.json
 git commit -m "chore: regenerate API types from backend schema"
 ```
 
@@ -283,4 +285,3 @@ const novoPaciente = await PacientesService.clinicoPacientesCreate({
 - [x] Atualizar .gitignore para aceitar api-client/
 - [x] Documentação FASE 1
 - [ ] **Próximo:** FASE 2 - Validação
-

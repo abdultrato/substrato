@@ -7,12 +7,16 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import Pagination from "@/components/ui/Pagination"
 
 type ExameMedicoRow = Record<string, any>
 
 export default function ExamesMedicosPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ExameMedicoRow[]>([])
@@ -70,12 +74,14 @@ export default function ExamesMedicosPage() {
           title="Exames médicos"
           subtitle="Catálogo de exames médicos (imagem/diagnóstico), conforme backend."
           actions={
-            <Link
-              href="/admin/clinico/examemedico/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/clinico/examemedico/"
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 

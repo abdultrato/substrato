@@ -12,6 +12,9 @@ from aplicativos.enfermagem.modelos import (
     ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
+    Enfermaria,
+    CamaEnfermaria,
+    InternamentoEnfermaria,
 )
 
 
@@ -94,6 +97,29 @@ class EvolucaoEnfermagemSerializer(serializers.ModelSerializer):
         model = EvolucaoEnfermagem
         fields = "__all__"
 
+class EnfermariaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Enfermaria
+        fields = "__all__"
+
+
+class CamaEnfermariaSerializer(serializers.ModelSerializer):
+    enfermaria_nome = serializers.CharField(source="enfermaria.nome", read_only=True)
+
+    class Meta:
+        model = CamaEnfermaria
+        fields = "__all__"
+
+
+class InternamentoEnfermariaSerializer(serializers.ModelSerializer):
+    paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
+    cama_numero = serializers.CharField(source="cama.numero", read_only=True)
+    enfermaria_nome = serializers.CharField(source="cama.enfermaria.nome", read_only=True)
+
+    class Meta:
+        model = InternamentoEnfermaria
+        fields = "__all__"
+
 
 SERIALIZER_MAP = {
     "evolucaoenfermagem": EvolucaoEnfermagemSerializer,
@@ -107,4 +133,7 @@ SERIALIZER_MAP = {
     "prescricaoenfermagem": PrescricaoEnfermagemSerializer,
     "registroenfermagem": RegistroEnfermagemSerializer,
     "sinalvitalenfermagem": SinalVitalEnfermagemSerializer,
+    "enfermaria": EnfermariaSerializer,
+    "camaenfermaria": CamaEnfermariaSerializer,
+    "internamentoenfermaria": InternamentoEnfermariaSerializer,
 }

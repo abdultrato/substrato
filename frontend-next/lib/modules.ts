@@ -88,6 +88,9 @@ export const MODULES: ModuleGroup[] = [
       { key: "prescricaoenfermagem", label: "Prescrições", endpoint: "/enfermagem/prescricaoenfermagem/", adminListHref: "/admin/enfermagem/prescricaoenfermagem/" },
       { key: "registroenfermagem", label: "Registros", endpoint: "/enfermagem/registroenfermagem/", adminListHref: "/admin/enfermagem/registroenfermagem/" },
       { key: "sinalvitalenfermagem", label: "Sinais Vitais", endpoint: "/enfermagem/sinalvitalenfermagem/", adminListHref: "/admin/enfermagem/sinalvitalenfermagem/" },
+      { key: "enfermaria", label: "Enfermarias", endpoint: "/enfermagem/enfermaria/" },
+      { key: "camaenfermaria", label: "Camas (Enfermaria)", endpoint: "/enfermagem/camaenfermaria/" },
+      { key: "internamentoenfermaria", label: "Internamentos (Enfermaria)", endpoint: "/enfermagem/internamentoenfermaria/" },
     ],
   },
   {

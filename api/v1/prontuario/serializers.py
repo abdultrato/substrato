@@ -20,10 +20,12 @@ CORE_READ_ONLY_FIELDS = (
 
 
 class PrescricaoItemSerializer(serializers.ModelSerializer):
+    medicacao_nome = serializers.CharField(source="medicacao.nome", read_only=True)
+
     class Meta:
         model = PrescricaoItem
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = CORE_READ_ONLY_FIELDS + ("medicacao_nome",)
 
 
 class RegistroProntuarioSerializer(serializers.ModelSerializer):

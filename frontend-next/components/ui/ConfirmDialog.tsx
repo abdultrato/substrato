@@ -81,17 +81,17 @@ export default function ConfirmDialog ( {
                 >
                     <div
                         ref={modalRef}
-                        className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl w-full max-w-sm p-6 animate-scaleIn"
+                        className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl w-full max-w-sm p-4 animate-scaleIn"
                     >
                         <h3 className="text-lg font-semibold text-[var(--text)]">{title}</h3>
 
-                        <p className="text-sm text-[var(--gray-700)] mt-2">{message}</p>
+                        <p className="text-sm text-[var(--gray-700)] mt-1.5">{message}</p>
 
-                        <div className="flex justify-end gap-3 mt-6">
+                        <div className="flex justify-end gap-2 mt-4">
                             <button
                                 onClick={() => setOpen( false )}
                                 disabled={loading}
-                                className="px-4 py-2 text-sm rounded border border-[var(--border)] text-[var(--gray-700)] hover:bg-[var(--gray-100)] transition disabled:opacity-50"
+                                className="px-3 py-1.5 text-sm rounded border border-[var(--border)] text-[var(--gray-700)] hover:bg-[var(--gray-100)] transition disabled:opacity-50"
                             >
                                 {cancelText}
                             </button>
@@ -99,7 +99,7 @@ export default function ConfirmDialog ( {
                             <button
                                 onClick={handleConfirm}
                                 disabled={loading}
-                                className={`px-4 py-2 text-sm rounded text-white transition disabled:opacity-50 ${danger
+                                className={`px-3 py-1.5 text-sm rounded text-white transition disabled:opacity-50 ${danger
                                     ? "bg-red-600 hover:bg-red-700"
                                     : "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]"
                                     }`}

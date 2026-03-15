@@ -8,11 +8,15 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ContaRow = Record<string, any>
 
 export default function ContabilidadeContasPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ContaRow[]>([])
@@ -55,7 +59,17 @@ export default function ContabilidadeContasPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (c: ContaRow) => c.id_custom || c.id || "-" },
+      {
+        header: "Código",
+        render: (c: ContaRow) => (
+          <Link
+            href={`/recursos/contabilidade/conta/${c.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {c.id_custom || c.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Nome", render: (c: ContaRow) => c.nome || c.descricao || "-" },
       { header: "Tipo", render: (c: ContaRow) => c.tipo || c.natureza || "-" },
       { header: "Ativo", render: (c: ContaRow) => (c.ativo === false ? "Não" : "Sim") },
@@ -75,12 +89,28 @@ export default function ContabilidadeContasPage() {
           title="Contas"
           subtitle="Plano de contas e cadastros contábeis."
           actions={
-            <Link
-              href="/admin/contabilidade/conta/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/recursos/contabilidade/conta/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/contabilidade/conta"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                CRUD
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/contabilidade/conta/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

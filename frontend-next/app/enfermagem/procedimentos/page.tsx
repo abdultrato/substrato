@@ -7,7 +7,8 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ProcedimentoRow = Record<string, any>
 
@@ -19,6 +20,9 @@ function fmtDate(value: any): string {
 }
 
 export default function EnfermagemProcedimentosPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ProcedimentoRow[]>([])
@@ -63,12 +67,14 @@ export default function EnfermagemProcedimentosPage() {
           title="Procedimentos"
           subtitle="Registos de procedimentos de enfermagem."
           actions={
-            <Link
-              href="/admin/enfermagem/procedimento/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/enfermagem/procedimento/"
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 
@@ -91,4 +97,3 @@ export default function EnfermagemProcedimentosPage() {
     </AppLayout>
   )
 }
-

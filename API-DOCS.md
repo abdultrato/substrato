@@ -55,7 +55,7 @@ http://localhost:8000/api/schema/
 
 1. Fazer login via:
 ```bash
-curl -X POST http://localhost:8000/api/v1/identidade/token/ \
+curl -X POST http://localhost:8000/api/v1/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{
     "username": "seu_usuario",
@@ -80,6 +80,26 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 3. Clique em **"Authorize"**
 4. Agora todos endpoints autenticados funcionam
+
+### Endpoints de Auth (JWT)
+- `POST /api/v1/auth/login/` → retorna `access` e `refresh`
+- `POST /api/v1/auth/refresh/` → renova `access`
+- `POST /api/v1/auth/logout/` → logout stateless (cliente remove token)
+- `GET /api/v1/auth/user/` → dados do usuário logado (groups + foto_url)
+- `PATCH /api/v1/auth/user/` → atualizar perfil (nome/apelido/e-mail/telefone/foto; aceita `multipart/form-data`)
+- `POST /api/v1/auth/password/change/` → alterar palavra-passe (logado)
+- `POST /api/v1/auth/password-reset/request/` → solicitar código de reposição (e-mail/WhatsApp)
+- `POST /api/v1/auth/password-reset/confirm/` → confirmar reposição com código + nova palavra-passe
+
+### Endpoints úteis (PDF/Relatórios)
+- Resultados (LAB): `GET /api/v1/clinico/requisicaoanalise/<id>/pdf_resultados/`
+- Fatura (PDF): `GET /api/v1/faturamento/fatura/<id>/pdf/`
+- Recibo (PDF): `GET /api/v1/pagamentos/recibo/<id>/pdf/`
+- Estatísticas export: `GET /api/v1/dashboard/analytics/export/?tipo=pdf|csv|word&dias=30`
+- História clínica (paciente): `GET /api/v1/clinico/paciente/<id>/historia_clinica/`
+
+Nota:
+- No export de estatísticas, use `tipo=pdf|csv|word` (não use `format=...`, porque o DRF reserva `format` para content negotiation).
 
 ---
 
@@ -188,7 +208,8 @@ Adicione ao `.github/workflows/`:
 ```yaml
 - name: 📄 Export OpenAPI Schema
   run: |
-    python manage.py spectacular --file schema.json
+    python generate_schema.py
+    cp frontend-next/schema.json schema.json
     
 - name: 📤 Upload to Postman
   uses: kevinsullivan/postman-collection-update@v1

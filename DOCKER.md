@@ -78,9 +78,21 @@ substrato_nginx       Up
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
 | **Backend (API)** | http://localhost:8000 | - |
-| **Admin Django** | http://localhost:8000/admin | admin/admin123 |
+| **Admin Django** | http://localhost:8000/admin | admin/admin123 (somente `admin` tem acesso ao /admin) |
 | **Frontend** | http://localhost:3000 | - |
 | **Nginx** | http://localhost | Proxy reverso |
+
+### 6️⃣ Usuários de demo (RBAC)
+
+Cria 1 usuário por grupo e redefine a senha (dev/demo):
+```bash
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py bootstrap_role_users --reset-password --password admin123
+```
+
+Usuários (senha `admin123`):
+- `admin` (Administrador; único com acesso ao Django Admin)
+- `recepcao`, `laboratorio`, `enfermagem`, `medico`, `ocupacional`, `farmacia`, `contabilidade`, `rh`
 
 ---
 
@@ -153,7 +165,7 @@ docker compose down -v --rmi all
 
 ## 📝 Variáveis de Ambiente
 
-As variáveis estão em `.env.docker`. Principais:
+Em **dev**, a stack (ports + env vars) está definida em `docker-compose.yml`. O `docker-up.sh` cria um `.env` a partir de `.env.docker`, mas o compose atual **não depende** desse `.env` (ele é só um helper).
 
 ```bash
 # Django
@@ -169,13 +181,33 @@ POSTGRES_PASSWORD=dev_password # Mudar em produção!
 # Redis
 REDIS_URL=redis://redis:6379/0
 
+# Notificações (opcional)
+DEFAULT_FROM_EMAIL=no-reply@substrato.local
+NOTIFICACOES_EMAIL_ATIVAS=True
+NOTIFICACOES_WHATSAPP_ATIVAS=False
+WHATSAPP_API_URL=
+WHATSAPP_API_KEY=
+
+# E-mail (SMTP) (opcional)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=localhost
+EMAIL_PORT=25
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_USE_TLS=False
+EMAIL_USE_SSL=False
+
+# Reposição de palavra-passe (opcional)
+PASSWORD_RESET_TOKEN_TTL_MINUTES=30
+
 # Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+BACKEND_URL=http://backend:8000
+# (opcional) NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ### Mudar variáveis
 
-Edite `.env` e reinicie:
+Se você mudar variáveis/URLs do frontend, lembre-se que o proxy do Next (`rewrites()`) é calculado no **build**. Rebuild o serviço `frontend`.
 
 ```bash
 docker compose down
@@ -271,13 +303,38 @@ http://localhost:8000/metrics
 ### Porta já em uso
 
 ```bash
-# Mudar porta no .env
-BACKEND_PORT=8001
-FRONTEND_PORT=3001
+# Altere o mapeamento em `docker-compose.yml` (ou crie um `docker-compose.override.yml`)
+# Exemplo (override):
+#
+# services:
+#   backend:
+#     ports:
+#       - "8001:8000"
+#   frontend:
+#     ports:
+#       - "3001:3000"
+#   nginx:
+#     ports:
+#       - "8080:80"
 
 # Ou liberar porta
 lsof -i :8000
 kill -9 <PID>
+```
+
+### Erro "ModuleNotFoundError" (ex.: django_celery_beat)
+
+Isso acontece quando você roda `python manage.py ...` num `venv` que não tem as dependências do projeto.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Ou, em Docker:
+```bash
+docker compose exec backend python manage.py <comando>
 ```
 
 ### Container não inicia
@@ -453,4 +510,4 @@ R: Use Kubernetes. Docker Compose é apenas para desenvolvimento.
 
 **Criado em**: 11/03/2026
 **Versão**: 1.0
-**Mantido por**: Copilot
+**Mantido por**: Substrato

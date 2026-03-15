@@ -1,19 +1,33 @@
 from __future__ import annotations
 
+import csv
 import datetime as dt
+import io
+from decimal import Decimal
 
+from django.http import HttpResponse
 from django.db.models import Count, Sum
+from django.db.models import DecimalField, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
+from aplicativos.clinico.modelos.paciente import Paciente
+from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
 from aplicativos.enfermagem.modelos.procedimento_item import ProcedimentoItem
+from aplicativos.enfermagem.modelos.enfermaria import InternamentoEnfermaria
 from aplicativos.farmacia.models.item_venda import ItemVenda
 from aplicativos.farmacia.models.produto import Produto
+from aplicativos.faturamento.modelos.fatura import Fatura
+from aplicativos.pagamentos.modelos.pagamentos import Pagamento
+
+from dominio.clinico.estado_resultado import EstadoResultado
 
 
 def _aware_or_none(value):
@@ -56,7 +70,7 @@ class AnalyticsViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
 
-    def list(self, request):
+    def _compute(self, request) -> dict:
         inquilino = getattr(request, "inquilino", None)
 
         limit = int(request.query_params.get("limit") or 10)
@@ -83,6 +97,75 @@ class AnalyticsViewSet(ViewSet):
 
         if inicio > fim:
             inicio, fim = fim, inicio
+
+        # =========================
+        # KPIs (agregados principais)
+        # =========================
+        qs_pacientes = Paciente.objects.filter(deletado=False)
+        qs_requisicoes = RequisicaoAnalise.objects.filter(deletado=False)
+        qs_faturas = Fatura.objects.filter(deletado=False)
+        qs_consultas = ConsultaMedica.objects.filter(deletado=False)
+        qs_internamentos = InternamentoEnfermaria.objects.filter(deletado=False)
+        qs_pagamentos = Pagamento.objects.all()
+
+        if inquilino is not None:
+            qs_pacientes = qs_pacientes.filter(inquilino=inquilino)
+            qs_requisicoes = qs_requisicoes.filter(inquilino=inquilino)
+            qs_faturas = qs_faturas.filter(inquilino=inquilino)
+            qs_consultas = qs_consultas.filter(inquilino=inquilino)
+            qs_internamentos = qs_internamentos.filter(inquilino=inquilino)
+            # Pagamento não tem inquilino direto; scopa pela fatura
+            qs_pagamentos = qs_pagamentos.filter(fatura__inquilino=inquilino)
+
+        pacientes_total = qs_pacientes.count()
+        pacientes_novos = qs_pacientes.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+
+        requisicoes_total = qs_requisicoes.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        requisicoes_validadas = qs_requisicoes.filter(
+            criado_em__gte=inicio,
+            criado_em__lte=fim,
+            estado=EstadoResultado.VALIDADO,
+        ).count()
+
+        consultas_total = qs_consultas.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+
+        faturas_total = qs_faturas.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        faturas_pagas = qs_faturas.filter(
+            criado_em__gte=inicio,
+            criado_em__lte=fim,
+            estado=Fatura.Estado.PAGA,
+        ).count()
+
+        valor_faturado = qs_faturas.filter(
+            criado_em__gte=inicio,
+            criado_em__lte=fim,
+        ).exclude(estado=Fatura.Estado.CANCELADA).aggregate(
+            total=Coalesce(
+                Sum(
+                    "total",
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Value(Decimal("0.00")),
+            )
+        )["total"]
+
+        valor_pago_confirmado = qs_pagamentos.filter(
+            status=Pagamento.Status.CONFIRMADO,
+            pago_em__isnull=False,
+            pago_em__gte=inicio,
+            pago_em__lte=fim,
+        ).aggregate(
+            total=Coalesce(
+                Sum(
+                    "valor",
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Value(Decimal("0.00")),
+            )
+        )["total"]
+
+        internamentos_ativos = qs_internamentos.filter(ativo=True).count()
+        camas_ocupadas = qs_internamentos.filter(ativo=True).values("cama_id").distinct().count()
 
         # =========================
         # EXAMES MAIS SOLICITADOS
@@ -179,18 +262,166 @@ class AnalyticsViewSet(ViewSet):
             base_cons.values("tipo").annotate(total=Count("id")).order_by("-total")[:limit]
         )
 
-        return Response(
-            {
-                "range": {
-                    "inicio": inicio.isoformat() if inicio else None,
-                    "fim": fim.isoformat() if fim else None,
-                },
-                "top_exames": top_exames,
-                "top_procedimentos": top_procedimentos,
-                "top_medicamentos": top_medicamentos,
-                "top_consultas": top_consultas,
-            }
+        return {
+            "range": {
+                "inicio": inicio.isoformat() if inicio else None,
+                "fim": fim.isoformat() if fim else None,
+            },
+            "kpis": {
+                "Pacientes (total)": pacientes_total,
+                "Pacientes (novos no período)": pacientes_novos,
+                "Requisições (no período)": requisicoes_total,
+                "Requisições validadas (no período)": requisicoes_validadas,
+                "Consultas (no período)": consultas_total,
+                "Faturas (no período)": faturas_total,
+                "Faturas pagas (no período)": faturas_pagas,
+                "Valor faturado (no período)": valor_faturado,
+                "Valor pago confirmado (no período)": valor_pago_confirmado,
+                "Internamentos ativos (agora)": internamentos_ativos,
+                "Camas ocupadas (agora)": camas_ocupadas,
+            },
+            "top_exames": top_exames,
+            "top_procedimentos": top_procedimentos,
+            "top_medicamentos": top_medicamentos,
+            "top_consultas": top_consultas,
+        }
+
+    def list(self, request):
+        return Response(self._compute(request))
+
+    @action(detail=False, methods=["get"], url_path="export")
+    def export(self, request):
+        """
+        Exporta o relatório do endpoint /dashboard/analytics/ em:
+        - PDF (tipo=pdf)
+        - CSV (tipo=csv)
+        - Word (tipo=word)
+
+        Nota: evitamos o query-param `format` porque o DRF usa esse nome
+        para content negotiation e pode responder 404 quando não existe
+        renderer para o formato solicitado.
+        """
+        fmt = (
+            request.query_params.get("tipo")
+            or request.query_params.get("saida")
+            or request.query_params.get("export")
+            or "pdf"
         )
+        fmt = str(fmt).strip().lower()
+        payload = self._compute(request)
+
+        if fmt == "csv":
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            rng = payload.get("range") or {}
+            writer.writerow(["Relatório", "Estatísticas (Dashboard)"])
+            writer.writerow(["Início", rng.get("inicio") or ""])
+            writer.writerow(["Fim", rng.get("fim") or ""])
+            writer.writerow([])
+
+            writer.writerow(["Indicador", "Valor"])
+            for k, v in (payload.get("kpis") or {}).items():
+                writer.writerow([k, v])
+
+            writer.writerow([])
+            writer.writerow(["Top Exames (Tipo)", "Exame", "Total"])
+            for r in payload.get("top_exames") or []:
+                writer.writerow([r.get("tipo"), r.get("nome"), r.get("total")])
+
+            writer.writerow([])
+            writer.writerow(["Top Procedimentos", "Total"])
+            for r in payload.get("top_procedimentos") or []:
+                writer.writerow([r.get("catalogo__nome"), r.get("total")])
+
+            writer.writerow([])
+            writer.writerow(["Top Medicamentos", "Quantidade", "Pedidos"])
+            for r in payload.get("top_medicamentos") or []:
+                writer.writerow([r.get("produto__nome"), r.get("total_quantidade"), r.get("total_pedidos")])
+
+            writer.writerow([])
+            writer.writerow(["Top Consultas", "Total"])
+            for r in payload.get("top_consultas") or []:
+                writer.writerow([r.get("tipo"), r.get("total")])
+
+            csv_bytes = output.getvalue().encode("utf-8")
+            resp = HttpResponse(csv_bytes, content_type="text/csv; charset=utf-8")
+            resp["Content-Disposition"] = "attachment; filename=relatorio_estatisticas.csv"
+            return resp
+
+        if fmt in {"word", "doc", "msword"}:
+            rng = payload.get("range") or {}
+            kpis = payload.get("kpis") or {}
+
+            def _table_rows(rows: list[list[str]]) -> str:
+                return "\n".join(
+                    "<tr>" + "".join(f"<td>{(c if c is not None else '')}</td>" for c in r) + "</tr>"
+                    for r in rows
+                )
+
+            html = f"""<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Relatório de Estatísticas</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; font-size: 11pt; color: #111; }}
+    h1 {{ font-size: 14pt; }}
+    h2 {{ font-size: 12pt; margin-top: 18px; }}
+    table {{ width: 100%; border-collapse: collapse; }}
+    th, td {{ border: 1px solid #ddd; padding: 6px; vertical-align: top; }}
+    th {{ background: #f2f2f2; text-align: left; }}
+    .meta {{ margin: 8px 0 14px 0; color: #444; }}
+  </style>
+</head>
+<body>
+  <h1>Relatório de Estatísticas</h1>
+  <div class="meta"><b>Período:</b> {rng.get("inicio") or ""} até {rng.get("fim") or ""}</div>
+
+  <h2>Indicadores</h2>
+  <table>
+    <tr><th>Indicador</th><th>Valor</th></tr>
+    {_table_rows([[k, str(v)] for k, v in kpis.items()])}
+  </table>
+
+  <h2>Exames Mais Solicitados</h2>
+  <table>
+    <tr><th>Tipo</th><th>Exame</th><th>Total</th></tr>
+    {_table_rows([[r.get("tipo",""), r.get("nome",""), str(r.get("total",0))] for r in (payload.get("top_exames") or [])])}
+  </table>
+
+  <h2>Procedimentos Mais Solicitados</h2>
+  <table>
+    <tr><th>Procedimento</th><th>Total</th></tr>
+    {_table_rows([[r.get("catalogo__nome",""), str(r.get("total",0))] for r in (payload.get("top_procedimentos") or [])])}
+  </table>
+
+  <h2>Medicamentos Mais Requisitados</h2>
+  <table>
+    <tr><th>Medicamento</th><th>Quantidade</th><th>Pedidos</th></tr>
+    {_table_rows([[r.get("produto__nome",""), str(r.get("total_quantidade",0)), str(r.get("total_pedidos",0))] for r in (payload.get("top_medicamentos") or [])])}
+  </table>
+
+  <h2>Consultas Mais Marcadas</h2>
+  <table>
+    <tr><th>Consulta</th><th>Total</th></tr>
+    {_table_rows([[r.get("tipo",""), str(r.get("total",0))] for r in (payload.get("top_consultas") or [])])}
+  </table>
+</body>
+</html>
+"""
+
+            resp = HttpResponse(html.encode("utf-8"), content_type="application/msword")
+            resp["Content-Disposition"] = "attachment; filename=relatorio_estatisticas.doc"
+            return resp
+
+        # PDF (default)
+        from tarefas.gerar_pdf.pdf_generator_analytics import gerar_pdf_analytics
+
+        pdf_bytes, filename = gerar_pdf_analytics(payload, request=request)
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return resp
 
 
 VIEWSET_MAP = {
@@ -201,4 +432,3 @@ __all__ = [
     "AnalyticsViewSet",
     "VIEWSET_MAP",
 ]
-

@@ -1,16 +1,26 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ReciboRow = Record<string, any>
+
+async function abrirPdfRecibo(reciboId: number) {
+  const blob = await apiFetch<Blob>(`/pagamentos/recibo/${reciboId}/pdf/`, {
+    responseType: "blob",
+  })
+  const url = window.URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener,noreferrer")
+  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+}
 
 function money(v: any): string {
   if (v === null || v === undefined || v === "") return "-"
@@ -28,9 +38,24 @@ function fmtDate(value: any): string {
 
 export default function RecibosPage() {
   const { loading } = useAuthGuard()
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [recibos, setRecibos] = useState<ReciboRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
+  const [acaoId, setAcaoId] = useState<number | null>(null)
+
+  const onPdf = useCallback(async (id: number) => {
+    try {
+      setAcaoId(id)
+      await abrirPdfRecibo(id)
+    } catch (e: any) {
+      setErro(e?.message || "Falha ao gerar PDF do recibo.")
+    } finally {
+      setAcaoId(null)
+    }
+  }, [])
 
   async function carregar() {
     try {
@@ -53,11 +78,25 @@ export default function RecibosPage() {
   const columns = useMemo(
     () => [
       { header: "Número", render: (r: ReciboRow) => r.numero || r.id_custom || r.id || "-" },
-      { header: "Fatura", render: (r: ReciboRow) => r.fatura || "-" },
+      { header: "Paciente", render: (r: ReciboRow) => r.paciente_nome || "-" },
+      { header: "Fatura", render: (r: ReciboRow) => r.fatura_codigo || r.fatura || "-" },
       { header: "Valor", render: (r: ReciboRow) => `${money(r.valor)} MZN` },
       { header: "Criado em", render: (r: ReciboRow) => fmtDate(r.criado_em) },
+      {
+        header: "PDF",
+        render: (r: ReciboRow) => (
+          <button
+            type="button"
+            onClick={() => onPdf(Number(r.id))}
+            disabled={acaoId === r.id}
+            className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+          >
+            PDF
+          </button>
+        ),
+      },
     ],
-    []
+    [acaoId, onPdf]
   )
 
   if (loading) return null
@@ -75,12 +114,14 @@ export default function RecibosPage() {
           title="Recibos"
           subtitle="Consultas e auditoria de pagamentos."
           actions={
-            <Link
-              href="/admin/pagamentos/recibo/"
-              className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/pagamentos/recibo/"
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 

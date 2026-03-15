@@ -33,9 +33,20 @@ docker compose up --build
 
 ```
 Backend:  http://localhost:8000
-Admin:    http://localhost:8000/admin (admin/admin123)
+Admin:    http://localhost:8000/admin (admin/admin123; somente `admin` tem acesso)
 Frontend: http://localhost:3000
 ```
+
+### 3.1 Usuários de demo (RBAC)
+
+```bash
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py bootstrap_role_users --reset-password --password admin123
+```
+
+Usuários criados (senha padrão `admin123`):
+- `admin` (Administrador; único usuário com acesso ao Django Admin)
+- `recepcao`, `laboratorio`, `enfermagem`, `medico`, `ocupacional`, `farmacia`, `contabilidade`, `rh`
 
 ---
 

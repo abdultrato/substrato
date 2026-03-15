@@ -38,31 +38,31 @@ export default function Pagination ( {
         return pages
     }
 
-    const pages = createPages()
+  const pages = createPages()
 
-    return (
-        <div className="flex justify-center mt-6 gap-1">
+  return (
+        <div className="flex justify-center mt-3 gap-1">
             <button
                 onClick={() => onChange( page - 1 )}
                 disabled={page === 1}
-                className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50"
+                className="px-2.5 py-0.5 border rounded-lg disabled:opacity-40 hover:bg-[var(--gray-100)]"
             >
                 ‹
             </button>
 
             {pages.map( ( p, idx ) =>
                 p === "..." ? (
-                    <span key={idx} className="px-2 py-1 text-gray-400">
+                    <span key={idx} className="px-1.5 py-0.5 text-gray-400">
                         ...
                     </span>
                 ) : (
                     <button
                         key={idx}
                         onClick={() => onChange( Number( p ) )}
-                        className={`px-3 py-1 border rounded transition
+                        className={`px-2.5 py-0.5 border rounded-lg transition
               ${p === page
-                                ? "bg-gray-900 text-white border-gray-900"
-                                : "hover:bg-gray-100"
+                                ? "bg-[var(--primary-600)] text-white border-[var(--primary-600)]"
+                                : "hover:bg-[var(--gray-100)]"
                             }`}
                     >
                         {p}
@@ -73,7 +73,7 @@ export default function Pagination ( {
             <button
                 onClick={() => onChange( page + 1 )}
                 disabled={page === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50"
+                className="px-2.5 py-0.5 border rounded-lg disabled:opacity-40 hover:bg-[var(--gray-100)]"
             >
                 ›
             </button>

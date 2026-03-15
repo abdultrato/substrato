@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Paciente } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
@@ -34,7 +34,8 @@ export default function PacienteDetalhePage () {
     useAuthGuard();
     const { user } = useAuth();
 
-    const { id } = useParams();
+    const { id } = useParams() as { id?: string | string[] };
+    const idStr = Array.isArray( id ) ? id[0] : id;
     const router = useRouter();
 
     const podeEditar = userHasAnyGroup( user, [
@@ -43,24 +44,34 @@ export default function PacienteDetalhePage () {
         GROUPS.MEDICINA_OCUPACIONAL,
     ] );
 
+    const podeVerHistoriaClinica = userHasAnyGroup( user, [
+        GROUPS.ADMIN,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+    ] );
+
     const [paciente, setPaciente] = useState<Paciente | null>( null );
     const [loading, setLoading] = useState( true );
     const [error, setError] = useState<string | null>( null );
 
-    useEffect( () => {
-        carregar();
-    }, [id] );
-
-    async function carregar () {
+    const carregar = useCallback( async () => {
+        if ( !idStr ) return
         try {
-            const data = await apiFetch( `/pacientes/${id}/` );
+            setLoading( true );
+            setError( null );
+            setPaciente( null );
+            const data = await apiFetch( `/pacientes/${idStr}/` );
             setPaciente( data );
         } catch ( err: any ) {
             setError( err.message || "Erro ao carregar paciente" );
         } finally {
             setLoading( false );
         }
-    }
+    }, [idStr] );
+
+    useEffect( () => {
+        carregar();
+    }, [carregar] );
 
     if ( loading ) {
         return (
@@ -144,10 +155,19 @@ export default function PacienteDetalhePage () {
                         ← Voltar
                     </button>
 
+                    {podeVerHistoriaClinica ? (
+                        <button
+                            className="btn-secondary"
+                            onClick={() => router.push( `/pacientes/${idStr}/historia-clinica` )}
+                        >
+                            História clínica
+                        </button>
+                    ) : null}
+
                     {podeEditar ? (
                         <button
                             className="btn-primary"
-                            onClick={() => router.push( `/pacientes/${id}/editar` )}
+                            onClick={() => router.push( `/pacientes/${idStr}/editar` )}
                         >
                             Editar
                         </button>

@@ -7,8 +7,9 @@ import { Shield, FileDown, FlaskConical } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
 
@@ -30,6 +31,9 @@ const ESTADOS = [
 ]
 
 export default function LaboratorioRequisicoesPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [estado, setEstado] = useState<string>("pendente")
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -78,7 +82,7 @@ export default function LaboratorioRequisicoesPage() {
         header: "Ações",
         render: (r: RequisicaoRow) => (
           <div className="flex flex-wrap gap-2">
-            {r.id ? (
+            {r.id && String(r.estado || "").toLowerCase() !== "validado" ? (
               <Link
                 href={`/laboratorio/requisicoes/${r.id}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
@@ -86,17 +90,27 @@ export default function LaboratorioRequisicoesPage() {
                 <FlaskConical size={14} />
                 Lançar
               </Link>
+            ) : r.id ? (
+              <Link
+                href={`/laboratorio/requisicoes/${r.id}`}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                <FlaskConical size={14} />
+                Ver
+              </Link>
             ) : null}
 
-            <Link
-              href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              <Shield size={14} />
-              Admin
-            </Link>
+            {podeVerAdmin ? (
+              <Link
+                href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                <Shield size={14} />
+                Admin
+              </Link>
+            ) : null}
 
             {r.id_custom ? (
               <button
@@ -112,7 +126,7 @@ export default function LaboratorioRequisicoesPage() {
         ),
       },
     ],
-    [onPdf]
+    [onPdf, podeVerAdmin]
   )
 
   return (

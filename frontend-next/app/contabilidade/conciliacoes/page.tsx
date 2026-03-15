@@ -7,7 +7,8 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ConciliacaoRow = Record<string, any>
 
@@ -19,6 +20,9 @@ function fmtDate(value: any): string {
 }
 
 export default function ContabilidadeConciliacoesPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ConciliacaoRow[]>([])
@@ -48,7 +52,17 @@ export default function ContabilidadeConciliacoesPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (c: ConciliacaoRow) => c.id_custom || c.id || "-" },
+      {
+        header: "Código",
+        render: (c: ConciliacaoRow) => (
+          <Link
+            href={`/recursos/contabilidade/conciliacaofinanceira/${c.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {c.id_custom || c.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Estado", render: (c: ConciliacaoRow) => c.estado || c.status || "-" },
       { header: "Data", render: (c: ConciliacaoRow) => fmtDate(c.criado_em || c.data) },
       { header: "Descrição", render: (c: ConciliacaoRow) => c.descricao || c.observacao || "-" },
@@ -68,12 +82,28 @@ export default function ContabilidadeConciliacoesPage() {
           title="Conciliações"
           subtitle="Conciliação financeira e auditoria."
           actions={
-            <Link
-              href="/admin/contabilidade/conciliacaofinanceira/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/recursos/contabilidade/conciliacaofinanceira/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/contabilidade/conciliacaofinanceira"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                CRUD
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/contabilidade/conciliacaofinanceira/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

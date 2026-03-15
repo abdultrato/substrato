@@ -96,6 +96,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-procedimentoitemvalor": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentomaterial": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentomaterialvalor": SAFE_METHODS | WRITE_METHODS,
+            # Enfermaria (camas/internamentos) + dashboard
+            "enfermagem-enfermaria": SAFE_METHODS | WRITE_METHODS,
+            "enfermagem-camaenfermaria": SAFE_METHODS | WRITE_METHODS,
+            "enfermagem-internamentoenfermaria": SAFE_METHODS | WRITE_METHODS,
+            "enfermagem-enfermariadashboard": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
             "prontuario-registro": SAFE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS,
@@ -164,7 +169,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "faturamento-fatura": SAFE_METHODS,
             "faturamento-historicofatura": SAFE_METHODS,
             "pagamentos-recibo": SAFE_METHODS,
-            "pagamentos-pagamento": SAFE_METHODS,
+            # Contabilidade faz controle e pode lançar/ajustar pagamentos.
+            "pagamentos-pagamento": SAFE_METHODS | WRITE_METHODS,
             "pagamentos-transacao": SAFE_METHODS,
             "pagamentos-reconciliacao": SAFE_METHODS,
             "recepcao-checkin": SAFE_METHODS,

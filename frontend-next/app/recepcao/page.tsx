@@ -17,8 +17,9 @@ import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 interface WorkspaceResumo {
     checkins_hoje: number
@@ -109,6 +110,9 @@ const atalhos = [
 
 export default function RecepcaoPage() {
     const { loading } = useAuthGuard()
+    const { user } = useAuth()
+    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
     const [workspace, setWorkspace] = useState<WorkspaceRecepcao>(EMPTY_WORKSPACE)
     const [erro, setErro] = useState<string | null>(null)
     const [carregando, setCarregando] = useState(true)
@@ -141,12 +145,14 @@ export default function RecepcaoPage() {
                     title="Recepção"
                     subtitle="Área de trabalho do balcão para entrada, triagem administrativa e encaminhamento financeiro."
                     actions={
-                        <Link
-                            href="/admin/recepcao/checkinrecepcao/"
-                            className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                        >
-                            Abrir check-ins no admin
-                        </Link>
+                        podeVerAdmin ? (
+                            <Link
+                                href="/admin/recepcao/checkinrecepcao/"
+                                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                            >
+                                Abrir check-ins no admin
+                            </Link>
+                        ) : null
                     }
                 />
 
@@ -179,26 +185,26 @@ export default function RecepcaoPage() {
                                 <table className="min-w-full text-sm">
                                     <thead>
                                         <tr className="border-b text-left text-gray-500">
-                                            <th className="pb-3 pr-4 font-medium">Paciente</th>
-                                            <th className="pb-3 pr-4 font-medium">Prioridade</th>
-                                            <th className="pb-3 pr-4 font-medium">Estado</th>
-                                            <th className="pb-3 pr-4 font-medium">Requisição</th>
-                                            <th className="pb-3 font-medium">Fatura</th>
+                                            <th className="pb-2 pr-4 font-medium">Paciente</th>
+                                            <th className="pb-2 pr-4 font-medium">Prioridade</th>
+                                            <th className="pb-2 pr-4 font-medium">Estado</th>
+                                            <th className="pb-2 pr-4 font-medium">Requisição</th>
+                                            <th className="pb-2 font-medium">Fatura</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {workspace.fila.map((item) => (
                                             <tr key={item.id} className="border-b last:border-b-0">
-                                                <td className="py-3 pr-4">
+                                                <td className="py-2 pr-4">
                                                     <div className="font-medium text-gray-900">{item.paciente_nome}</div>
                                                     <div className="text-xs text-gray-500">{item.paciente_codigo}</div>
                                                 </td>
-                                                <td className="py-3 pr-4 text-gray-700">{item.prioridade}</td>
-                                                <td className="py-3 pr-4 text-gray-700">{item.estado}</td>
-                                                <td className="py-3 pr-4 text-gray-700">
+                                                <td className="py-2 pr-4 text-gray-700">{item.prioridade}</td>
+                                                <td className="py-2 pr-4 text-gray-700">{item.estado}</td>
+                                                <td className="py-2 pr-4 text-gray-700">
                                                     {item.requisicao_codigo || "Pendente"}
                                                 </td>
-                                                <td className="py-3 text-gray-700">
+                                                <td className="py-2 text-gray-700">
                                                     {item.fatura_codigo || "Pendente"}
                                                 </td>
                                             </tr>
@@ -234,7 +240,7 @@ export default function RecepcaoPage() {
                                         <Link
                                             key={atalho.href}
                                             href={atalho.href}
-                                            className="flex items-start gap-3 rounded-xl border border-gray-200 px-4 py-3 transition hover:border-gray-300 hover:bg-gray-50"
+                                            className="flex items-start gap-3 rounded-xl border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50"
                                         >
                                             <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
                                                 <Icon size={18} />
@@ -270,14 +276,14 @@ function ResumoCard({
     icon: typeof Users
 }) {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between">
                 <div>
                     <div className="text-sm text-gray-500">{title}</div>
                     <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
                 </div>
 
-                <div className="rounded-xl bg-gray-100 p-3 text-gray-700">
+                <div className="rounded-xl bg-gray-100 p-2 text-gray-700">
                     <Icon size={20} />
                 </div>
             </div>
@@ -293,7 +299,7 @@ function IndicadorLinha({
     value: number | string
 }) {
     return (
-        <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+        <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-1.5">
             <span className="text-gray-600">{label}</span>
             <span className="font-medium text-gray-900">{value}</span>
         </div>

@@ -58,7 +58,7 @@ curl -X POST http://localhost:8000/api/v1/pacientes/ \
 **Comando:**
 ```bash
 cd /home/australopithecus/Músicas/substrato
-python manage.py spectacular --file frontend-next/schema.json
+python generate_schema.py
 ```
 
 **Resultado esperado:**
@@ -186,7 +186,7 @@ Total: 85+ tests passing
    └─ REST_FRAMEWORK['EXCEPTION_HANDLER']
 
 2. Regenerate schema
-   └─ python manage.py spectacular --file frontend-next/schema.json
+   └─ python generate_schema.py
 
 3. Regenerate types
    └─ npm run generate-types
@@ -276,7 +276,7 @@ python manage.py migrate
    - Verify: curl test should return RFC 7807 format
 
 2. **OpenAPI schema outdated**
-   - Solution: python manage.py spectacular --file frontend-next/schema.json
+   - Solution: python generate_schema.py
    - Verify: schema.json updated with all serializer constraints
 
 3. **Types not regenerated**

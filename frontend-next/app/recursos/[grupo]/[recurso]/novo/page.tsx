@@ -7,7 +7,7 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 export default function NovoRecursoPage({
   params,
@@ -16,10 +16,7 @@ export default function NovoRecursoPage({
 }) {
   const { loading } = useAuthGuard()
   const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups =
-    params.grupo === "recursos_humanos"
-      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-      : [GROUPS.ADMIN]
+  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
 
   if (loading) return null
 

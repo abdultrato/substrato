@@ -125,7 +125,7 @@ def append_fim(elements) :
 	if not ADD_FIM_PAGE or not isinstance(elements, list) :
 		return
 	
-	style = ParagraphStyle("fim", fontName = FONT, fontSize = 10, alignment = TA_CENTER, textColor = colors.HexColor("#333333"), )
+	style = ParagraphStyle("fim", fontName = FONT, fontSize = 9, leading = 10, alignment = TA_CENTER, textColor = colors.HexColor("#333333"), )
 	
 	elements.append(Spacer(1, 0.35 * cm))
 	elements.append(Paragraph("Fim", style))
@@ -164,9 +164,9 @@ class NumberedCanvas(rl_canvas.Canvas) :
 		page_w, _ = self._pagesize
 		
 		try :
-			self.setFont(FONT, 10)
+			self.setFont(FONT, 9)
 		except Exception :
-			self.setFont("Helvetica", 10)
+			self.setFont("Helvetica", 9)
 		
 		footer = f"Gerado em {now_str} | Página {self._pageNumber}/{total_pages}"
 		self.drawRightString(page_w - 1 * cm, 0.7 * cm, footer, )
@@ -244,10 +244,10 @@ def draw_header(canvas_obj, doc) :
 	canvas_obj.setFont(FONT_BOLD, 10)
 	canvas_obj.drawString(text_x, text_top_y, "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
 	
-	canvas_obj.setFont(FONT, 10)
+	canvas_obj.setFont(FONT, 9)
 	canvas_obj.drawString(text_x, text_top_y - 0.65 * cm, "Laboratório de Análises Clínicas")
 	
-	canvas_obj.setFont(FONT, 10)
+	canvas_obj.setFont(FONT, 9)
 	canvas_obj.drawString(text_x, text_top_y - 1.10 * cm, "Pemba - Cabo Delgado, Moçambique")
 	
 	canvas_obj.drawString(text_x, text_top_y - 1.45 * cm, "Tel: +258 84 777 8476 | Email: abdultrato@anabiolink.mz", )
@@ -312,9 +312,9 @@ def draw_signatures(canvas_obj, doc, usuario = None) :
 	
 	nome = identidade_usuario_institucional(usuario)
 	
-	canvas_obj.setFont(FONT, 10)
-	canvas_obj.drawCentredString(x1 + width_line / 2, y - 10, f"Assinatura de {nome}")
-	canvas_obj.drawCentredString(x2 + width_line / 2, y - 10, "Assinatura do Paciente/Responsável")
+	canvas_obj.setFont(FONT, 9)
+	canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {nome}")
+	canvas_obj.drawCentredString(x2 + width_line / 2, y - 9, "Assinatura do Paciente/Responsável")
 	
 	canvas_obj.restoreState()
 
@@ -346,8 +346,8 @@ def draw_line_full_width(canvas_obj, doc) :
 # UTILIDADES PARA TABELAS
 # =========================================================
 
-bold_style = ParagraphStyle("Bold", fontName = FONT_BOLD, fontSize = 10, alignment = TA_LEFT)
-cell_style = ParagraphStyle("Cell", fontName = FONT, fontSize = 10, alignment = TA_LEFT)
+bold_style = ParagraphStyle("Bold", fontName = FONT_BOLD, fontSize = 9, leading = 10, alignment = TA_LEFT)
+cell_style = ParagraphStyle("Cell", fontName = FONT, fontSize = 9, leading = 10, alignment = TA_LEFT)
 
 
 def cell_paragraph(text, is_bold = False) :
@@ -404,19 +404,19 @@ def identidade_usuario_institucional(usuario) :
 
 
 def estilo_titulo_documento(name = "HeadingDoc") :
-	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 12, leading = 14, textColor = colors.darkblue, )
+	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 10, leading = 12, textColor = colors.darkblue, )
 
 
 def estilo_secao_documento(name = "SectionDoc") :
-	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 11, textColor = colors.darkblue, )
+	return ParagraphStyle(name, fontName = FONT_BOLD, fontSize = 10, leading = 11, textColor = colors.darkblue, )
 
 
 def estilo_info_esquerda(name = "InfoLeftDoc") :
-	return ParagraphStyle(name, fontName = FONT, fontSize = 10, leading = 12, textColor = colors.HexColor("#333333"), )
+	return ParagraphStyle(name, fontName = FONT, fontSize = 9, leading = 11, textColor = colors.HexColor("#333333"), )
 
 
 def estilo_info_direita(name = "InfoRightDoc") :
-	return ParagraphStyle(name, fontName = FONT, fontSize = 10, leading = 12, textColor = colors.HexColor("#333333"), alignment = TA_RIGHT, )
+	return ParagraphStyle(name, fontName = FONT, fontSize = 9, leading = 11, textColor = colors.HexColor("#333333"), alignment = TA_RIGHT, )
 
 
 def montar_bloco_identificacao(usable_width, left_lines, right_lines) :

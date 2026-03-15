@@ -8,17 +8,16 @@ export default function MetricCard({
   hint?: string
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
         {label}
       </div>
-      <div className="mt-1 font-display text-2xl font-semibold text-slate-900">
+      <div className="mt-1 font-display text-2xl font-semibold text-[var(--text)]">
         {value}
       </div>
       {hint ? (
-        <div className="mt-1 text-xs text-slate-500">{hint}</div>
+        <div className="mt-1 text-xs text-[var(--gray-500)]">{hint}</div>
       ) : null}
     </div>
   )
 }
-

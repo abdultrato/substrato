@@ -90,7 +90,7 @@ export default function ResourceListPage({
           return (
             <Link
               href={rowHref(row)}
-              className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+              className="font-medium text-[var(--text)] hover:text-[var(--hover-accent)]"
             >
               {label}
             </Link>
@@ -111,14 +111,14 @@ export default function ResourceListPage({
         render: (row: Row) => fmtDate(row.criado_em),
       },
     ],
-    []
+    [rowHref]
   )
 
   if (loading) return null
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="space-y-6">
+      <div className="space-y-3">
         <PageHeader
           title={title}
           subtitle={endpoint}
@@ -127,7 +127,7 @@ export default function ResourceListPage({
               {createHref ? (
                 <Link
                   href={createHref}
-                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
+                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)]"
                 >
                   Novo
                 </Link>
@@ -136,7 +136,7 @@ export default function ResourceListPage({
               {adminListHref ? (
                 <Link
                   href={adminListHref}
-                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                 >
                   Abrir no admin
                 </Link>
@@ -146,7 +146,7 @@ export default function ResourceListPage({
         />
 
         {error && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {error}
           </div>
         )}

@@ -52,11 +52,11 @@ Test Files  3 passed (3)
 
 ```bash
 # Count documentation files
-ls -1 FASE*.md EJEMPLOS_USO.md RESUMO_FINAL.md PROXIMOS_PASSOS.md | wc -l
+ls -1 FASE*.md EXEMPLOS_USO.md RESUMO_FINAL.md PROXIMOS_PASSOS.md | wc -l
 # Expected: 9 files
 
 # Check sizes
-du -h FASE*.md EJEMPLOS_USO.md RESUMO_FINAL.md PROXIMOS_PASSOS.md | tail -1
+du -h FASE*.md EXEMPLOS_USO.md RESUMO_FINAL.md PROXIMOS_PASSOS.md | tail -1
 # Expected: ~70KB total
 ```
 
@@ -270,7 +270,7 @@ kill $DJANGO_PID
 
 ```bash
 # Regenerate OpenAPI schema
-python manage.py spectacular --file frontend-next/schema.json
+python generate_schema.py
 
 # Verify schema updated
 grep "PacienteSerializer\|minLength\|maxLength" frontend-next/schema.json | head -5
@@ -388,11 +388,10 @@ For any validation issues:
 3. **Error handling:** Check FASE3_ERROR_HANDLING.md
 4. **API client:** Check FASE4_API_CLIENT.md
 5. **Serializers:** Check FASE5_SERIALIZERS.md
-6. **Examples:** Check EJEMPLOS_USO.md
+6. **Examples:** Check EXEMPLOS_USO.md
 
 ---
 
 **Status:** Ready for validation
 **Estimated Time:** 1 hour for complete validation
 **Next:** Run validation checklist and mark 95/100 complete
-

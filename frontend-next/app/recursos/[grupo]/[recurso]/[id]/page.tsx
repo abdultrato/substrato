@@ -9,7 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 function ensureTrailingSlash(url: string) {
   return url.endsWith("/") ? url : `${url}/`
@@ -23,10 +23,7 @@ export default function RecursoDetalhePage({
   const { loading } = useAuthGuard()
   const router = useRouter()
   const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups =
-    params.grupo === "recursos_humanos"
-      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-      : [GROUPS.ADMIN]
+  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
   const [data, setData] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -102,20 +99,20 @@ export default function RecursoDetalhePage({
             <div className="flex gap-3">
               <Link
                 href={`${basePath}/${params.id}/editar`}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
                 Editar
               </Link>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="inline-flex items-center rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
               >
                 {deleting ? "Apagando..." : "Apagar"}
               </button>
               <Link
                 href={basePath}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
                 Voltar
               </Link>

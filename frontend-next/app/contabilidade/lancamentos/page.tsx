@@ -8,7 +8,8 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type LancamentoRow = Record<string, any>
 
@@ -20,6 +21,9 @@ function fmtDate(value: any): string {
 }
 
 export default function ContabilidadeLancamentosPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<LancamentoRow[]>([])
@@ -62,7 +66,17 @@ export default function ContabilidadeLancamentosPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (l: LancamentoRow) => l.id_custom || l.id || "-" },
+      {
+        header: "Código",
+        render: (l: LancamentoRow) => (
+          <Link
+            href={`/recursos/contabilidade/lancamento/${l.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {l.id_custom || l.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Conta", render: (l: LancamentoRow) => l.conta || "-" },
       { header: "Valor", render: (l: LancamentoRow) => l.valor ?? l.montante ?? "-" },
       { header: "Data", render: (l: LancamentoRow) => fmtDate(l.data || l.criado_em) },
@@ -83,12 +97,28 @@ export default function ContabilidadeLancamentosPage() {
           title="Lançamentos"
           subtitle="Lançamentos contabilísticos e histórico."
           actions={
-            <Link
-              href="/admin/contabilidade/lancamento/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/recursos/contabilidade/lancamento/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/contabilidade/lancamento"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                CRUD
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/contabilidade/lancamento/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -23,6 +23,7 @@ function money(v: any): string {
 export default function FaturasPage() {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const [faturas, setFaturas] = useState<FaturaRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -30,7 +31,7 @@ export default function FaturasPage() {
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       setCarregando(true)
       setErro(null)
@@ -42,13 +43,13 @@ export default function FaturasPage() {
     } finally {
       setCarregando(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     carregar()
-  }, [])
+  }, [carregar])
 
-  async function emitir(id: number) {
+  const emitir = useCallback(async (id: number) => {
     if (!podeAlterar) {
       setErro("Sem permissão para emitir fatura.")
       return
@@ -62,9 +63,9 @@ export default function FaturasPage() {
     } finally {
       setAcaoId(null)
     }
-  }
+  }, [carregar, podeAlterar])
 
-  async function anular(id: number) {
+  const anular = useCallback(async (id: number) => {
     if (!podeAlterar) {
       setErro("Sem permissão para anular fatura.")
       return
@@ -79,9 +80,9 @@ export default function FaturasPage() {
     } finally {
       setAcaoId(null)
     }
-  }
+  }, [carregar, podeAlterar])
 
-  async function baixarPdf(id: number) {
+  const baixarPdf = useCallback(async (id: number) => {
     try {
       setAcaoId(id)
       const blob = await apiFetch<Blob>(`/faturas/${id}/pdf/`, {
@@ -99,7 +100,7 @@ export default function FaturasPage() {
     } finally {
       setAcaoId(null)
     }
-  }
+  }, [])
 
   const columns = useMemo(
     () => [
@@ -140,7 +141,7 @@ export default function FaturasPage() {
         ),
       },
     ],
-    [acaoId, podeAlterar]
+    [acaoId, anular, baixarPdf, emitir, podeAlterar]
   )
 
   if (loading) return null
@@ -158,12 +159,14 @@ export default function FaturasPage() {
           title="Faturas"
           subtitle="Emissão, anulação e PDF via API (admin permanece como backoffice completo)."
           actions={
-            <Link
-              href="/admin/faturamento/fatura/"
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/faturamento/fatura/"
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 

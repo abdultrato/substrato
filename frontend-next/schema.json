@@ -232,6 +232,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "status_code",
             "schema": {
@@ -364,6 +382,24 @@
           {
             "in": "query",
             "name": "last_name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -622,10 +658,28 @@
             "description": "* `AGENDADA` - Agendada\n* `EM_ANDAMENTO` - Em andamento\n* `CONCLUIDA` - Conclu\u00edda\n* `CANCELADA` - Cancelada"
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -907,6 +961,24 @@
           {
             "in": "query",
             "name": "nome",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -1677,6 +1749,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "tipo",
             "schema": {
@@ -2093,10 +2183,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -2464,6 +2572,24 @@
           {
             "in": "query",
             "name": "nome",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -2876,6 +3002,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "proveniencia",
             "schema": {
@@ -3205,6 +3340,75 @@
         }
       }
     },
+    "/api/v1/clinico/paciente/{id}/historia_clinica/": {
+      "get": {
+        "operationId": "v1_clinico_paciente_historia_clinica_retrieve_2",
+        "description": "Gerenciamento de pacientes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Pacientes"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/clinico/paciente/historia_clinica/": {
+      "get": {
+        "operationId": "v1_clinico_paciente_historia_clinica_retrieve",
+        "description": "Gerenciamento de pacientes",
+        "tags": [
+          "Cl\u00ednico - Pacientes"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paciente"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v1/clinico/requisicaoanalise/": {
       "get": {
         "operationId": "v1_clinico_requisicaoanalise_list",
@@ -3277,6 +3481,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
@@ -3288,6 +3501,15 @@
             "name": "possui_resultado_critico",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -3727,10 +3949,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "requisicao",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -4089,10 +4329,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "resultado",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -4592,10 +4850,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -5175,10 +5451,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_base",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -5455,6 +5749,24 @@
             "schema": {
               "type": "string",
               "format": "date"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -5740,6 +6052,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "username",
             "schema": {
@@ -5838,6 +6168,24 @@
             "name": "fatura",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -6163,6 +6511,24 @@
           {
             "in": "query",
             "name": "nome",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -6532,8 +6898,26 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "referencia_externa",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -6892,6 +7276,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -7172,9 +7574,720 @@
         }
       }
     },
+    "/api/v1/dashboard/analytics/export/": {
+      "get": {
+        "operationId": "v1_dashboard_analytics_export_retrieve",
+        "description": "Exporta o relat\u00f3rio do endpoint /dashboard/analytics/ em:\n- PDF (format=pdf)\n- CSV (format=csv)\n- Word (format=word)",
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
     "/api/v1/dashboard/stats/": {
       "get": {
         "operationId": "v1_dashboard_stats_retrieve",
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/camaenfermaria/": {
+      "get": {
+        "operationId": "v1_enfermagem_camaenfermaria_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ativa",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "atualizado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deletado",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "enfermaria",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id_custom",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inquilino",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "numero",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CamaEnfermaria"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1_enfermagem_camaenfermaria_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CamaEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/camaenfermaria/{id}/": {
+      "get": {
+        "operationId": "v1_enfermagem_camaenfermaria_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Cama.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CamaEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "v1_enfermagem_camaenfermaria_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Cama.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CamaEnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CamaEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "operationId": "v1_enfermagem_camaenfermaria_partial_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Cama.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedCamaEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedCamaEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedCamaEnfermariaRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CamaEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1_enfermagem_camaenfermaria_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Cama.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/enfermaria/": {
+      "get": {
+        "operationId": "v1_enfermagem_enfermaria_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ativa",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "atualizado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deletado",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id_custom",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inquilino",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "nome",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Enfermaria"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1_enfermagem_enfermaria_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Enfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/enfermaria/{id}/": {
+      "get": {
+        "operationId": "v1_enfermagem_enfermaria_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Enfermaria.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Enfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "v1_enfermagem_enfermaria_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Enfermaria.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Enfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "operationId": "v1_enfermagem_enfermaria_partial_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Enfermaria.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedEnfermariaRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Enfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1_enfermagem_enfermaria_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Enfermaria.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/enfermariadashboard/": {
+      "get": {
+        "operationId": "v1_enfermagem_enfermariadashboard_retrieve",
+        "description": "Dashboard operacional da Enfermaria (ocupa\u00e7\u00e3o + pr\u00f3ximas medica\u00e7\u00f5es).",
         "tags": [
           "v1"
         ],
@@ -7250,10 +8363,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -7513,6 +8644,375 @@
         }
       }
     },
+    "/api/v1/enfermagem/internamentoenfermaria/": {
+      "get": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "alta_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ativo",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "atualizado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cama",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_internamento",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "data_prevista_alta",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deletado",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id_custom",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inquilino",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "paciente",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "proxima_medicacao_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InternamentoEnfermaria"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_create",
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternamentoEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/enfermagem/internamentoenfermaria/{id}/": {
+      "get": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Internamento (Enfermaria).",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternamentoEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Internamento (Enfermaria).",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/InternamentoEnfermariaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternamentoEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_partial_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Internamento (Enfermaria).",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedInternamentoEnfermariaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedInternamentoEnfermariaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedInternamentoEnfermariaRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternamentoEnfermaria"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1_enfermagem_internamentoenfermaria_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Internamento (Enfermaria).",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        }
+      }
+    },
     "/api/v1/enfermagem/prescricaoenfermagem/": {
       "get": {
         "operationId": "v1_enfermagem_prescricaoenfermagem_list",
@@ -7577,10 +9077,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -7890,6 +9408,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
@@ -7901,6 +9428,15 @@
             "name": "profissional",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -8209,10 +9745,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_padrao",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -8528,6 +10082,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "produto",
             "schema": {
@@ -8539,6 +10102,15 @@
             "name": "quantidade_padrao",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -8854,6 +10426,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "procedimento",
             "schema": {
@@ -8872,6 +10453,15 @@
             "name": "realizado",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -9180,10 +10770,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_unitario",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -9499,6 +11107,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "procedimento",
             "schema": {
@@ -9524,6 +11141,15 @@
             "name": "quantidade",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -9836,6 +11462,24 @@
             "name": "material",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -10152,6 +11796,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
@@ -10170,6 +11823,15 @@
               ]
             },
             "description": "* `URG` - Urgente\n* `NOR` - Normal\n* `BAI` - Baixa"
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -10499,6 +12161,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "registro",
             "schema": {
@@ -10510,6 +12181,15 @@
             "name": "saturacao_oxigenio",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -10867,6 +12547,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "telefone1",
             "schema": {
@@ -11208,6 +12906,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_unitario",
             "schema": {
@@ -11226,6 +12933,15 @@
             "name": "quantidade",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -11570,6 +13286,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "produto",
             "schema": {
@@ -11581,6 +13306,15 @@
             "name": "quantidade_inicial",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -11933,6 +13667,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "origem",
             "schema": {
@@ -11950,6 +13693,15 @@
             "name": "quantidade",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -12293,10 +14045,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_venda",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -12635,6 +14405,24 @@
           {
             "in": "query",
             "name": "numero",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -12988,6 +14776,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
@@ -12999,6 +14796,15 @@
             "name": "requisicao",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -13528,6 +15334,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "preco_unitario",
             "schema": {
@@ -13539,6 +15354,15 @@
             "name": "quantidade",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -13825,6 +15649,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "tipo_evento",
             "schema": {
@@ -14098,6 +15940,24 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14420,8 +16280,26 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "registro_profissional",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -14753,8 +16631,26 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "password",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -15115,10 +17011,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "permite_multi_unidade",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -15453,6 +17367,24 @@
             "name": "inquilino",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -15800,6 +17732,24 @@
           {
             "in": "query",
             "name": "nome",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -16181,6 +18131,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "permite_multi_unidade",
             "schema": {
@@ -16199,6 +18158,15 @@
             "name": "preco_mensal",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -16542,10 +18510,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "requisicoes_mes_atual",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -16916,10 +18902,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -17206,6 +19210,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "status_code",
             "schema": {
@@ -17321,8 +19343,26 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "resposta",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -17633,6 +19673,24 @@
           {
             "in": "query",
             "name": "mensagem",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -17990,6 +20048,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "pago_em",
             "schema": {
@@ -18000,6 +20067,15 @@
           {
             "in": "query",
             "name": "referencia_externa",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -18310,10 +20386,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "pagamento",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -18580,6 +20674,45 @@
         }
       }
     },
+    "/api/v1/pagamentos/recibo/{id}/pdf/": {
+      "get": {
+        "operationId": "v1_pagamentos_recibo_pdf_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Recibo.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "security": [
+          {
+            "jwtAuth": []
+          },
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recibo"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/v1/pagamentos/reconciliacao/": {
       "get": {
         "operationId": "v1_pagamentos_reconciliacao_list",
@@ -18605,6 +20738,24 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -18891,8 +21042,26 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "referencia_externa",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -19204,10 +21373,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "registro",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -19528,10 +21715,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -19917,6 +22122,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "paciente",
             "schema": {
@@ -19941,6 +22155,15 @@
             "name": "requisicao",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -20752,6 +22975,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "parentesco",
             "schema": {
@@ -20766,6 +22998,15 @@
               ]
             },
             "description": "* `CONJUGE` - C\u00f4njuge\n* `FILHO` - Filho(a)\n* `PAI` - Pai/M\u00e3e\n* `IRMAO` - Irm\u00e3o(\u00e3)\n* `OUTRO` - Outro"
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "in": "query",
@@ -21049,6 +23290,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -21324,6 +23583,24 @@
             "name": "funcionario",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -21622,6 +23899,24 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -21912,6 +24207,24 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -22200,6 +24513,24 @@
             "name": "mes",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -22497,6 +24828,24 @@
               ]
             },
             "description": "* `ATIVO` - Ativo\n* `INATIVO` - Inativo"
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": [
@@ -22772,6 +25121,24 @@
             "name": "funcionario",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -23064,6 +25431,24 @@
             "name": "funcionario",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -23430,6 +25815,15 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "plano",
             "schema": {
@@ -23439,6 +25833,15 @@
           {
             "in": "query",
             "name": "requisicao_id",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -23812,10 +26215,28 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "percentual_cobertura",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -24195,6 +26616,24 @@
             }
           },
           {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "in": "query",
             "name": "telefone",
             "schema": {
@@ -24496,8 +26935,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -24565,8 +27002,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -24644,14 +27079,10 @@
           },
           "status_code": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "nullable": true
           },
           "duracao_ms": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true
           },
           "ip": {
@@ -24718,8 +27149,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -24728,9 +27157,7 @@
             "title": "Descri\u00e7\u00e3o"
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicao_id": {
             "type": "string",
@@ -24796,8 +27223,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -24806,9 +27231,7 @@
             "title": "Descri\u00e7\u00e3o"
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicao_id": {
             "type": "string",
@@ -24876,6 +27299,129 @@
           ""
         ]
       },
+      "CamaEnfermaria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "enfermaria_nome": {
+            "type": "string",
+            "readOnly": true
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id_custom": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "title": "C\u00f3digo"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "numero": {
+            "type": "string",
+            "title": "N\u00famero da cama",
+            "maxLength": 20
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "enfermaria": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enfermaria",
+          "inquilino",
+          "numero"
+        ]
+      },
+      "CamaEnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "numero": {
+            "type": "string",
+            "minLength": 1,
+            "title": "N\u00famero da cama",
+            "maxLength": 20
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "enfermaria": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enfermaria",
+          "inquilino",
+          "numero"
+        ]
+      },
       "CanalEnum": {
         "enum": [
           "email",
@@ -24920,8 +27466,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -24965,8 +27509,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -25406,8 +27948,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -25477,8 +28017,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -25559,8 +28097,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "fuso_horario": {
@@ -25579,9 +28115,7 @@
             "type": "boolean"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "acrescimo_percentual_consulta_feriado": {
             "type": "string",
@@ -25622,8 +28156,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "fuso_horario": {
@@ -25645,9 +28177,7 @@
             "type": "boolean"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "acrescimo_percentual_consulta_feriado": {
             "type": "string",
@@ -25893,8 +28423,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -25933,8 +28461,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -26013,8 +28539,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -26060,8 +28584,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -26283,6 +28805,123 @@
           "nome"
         ]
       },
+      "Enfermaria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id_custom": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "title": "C\u00f3digo"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o"
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "inquilino",
+          "nome"
+        ]
+      },
+      "EnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o"
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "inquilino",
+          "nome"
+        ]
+      },
       "ErroSistema": {
         "type": "object",
         "properties": {
@@ -26338,14 +28977,10 @@
             "type": "string"
           },
           "status_code": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "duracao_ms": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true
           },
           "ip": {
@@ -26574,8 +29209,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -26632,8 +29265,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -26825,8 +29456,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -26927,8 +29556,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -27062,8 +29689,6 @@
           },
           "trl_horas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Tempo de resposta (em horas)",
             "description": "Tempo de resposta em horas."
           },
@@ -27164,8 +29789,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -27265,8 +29888,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -27364,8 +29985,6 @@
           },
           "trl_horas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Tempo de resposta (em horas)",
             "description": "Tempo de resposta em horas."
           },
@@ -27509,8 +30128,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -27557,8 +30174,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -27613,8 +30228,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "origem": {
@@ -27750,8 +30363,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "tipo_item": {
@@ -27849,8 +30460,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "tipo_item": {
@@ -27957,8 +30566,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "origem": {
@@ -28083,8 +30690,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "chave": {
@@ -28129,8 +30734,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "chave": {
@@ -28293,8 +30896,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_inicio": {
@@ -28355,8 +30956,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_inicio": {
@@ -28417,19 +31016,13 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "ano": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "salario_nominal": {
             "type": "string",
@@ -28437,9 +31030,7 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$"
           },
           "horas_base_mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "multiplicador_hora_extra": {
             "type": "string",
@@ -28508,19 +31099,13 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "ano": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "salario_nominal": {
             "type": "string",
@@ -28528,9 +31113,7 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$"
           },
           "horas_base_mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "multiplicador_hora_extra": {
             "type": "string",
@@ -28585,8 +31168,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -28639,8 +31220,6 @@
           },
           "horas_base_mes": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "Horas base (m\u00eas)",
             "description": "Horas contratuais base por m\u00eas (ex.: 176)."
           },
@@ -28686,8 +31265,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -28741,8 +31318,6 @@
           },
           "horas_base_mes": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "Horas base (m\u00eas)",
             "description": "Horas contratuais base por m\u00eas (ex.: 176)."
           },
@@ -28807,12 +31382,38 @@
           "data_ultima_menstruacao": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data da \u00faltima menstrua\u00e7\u00e3o"
           },
           "data_prevista_parto": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data prevista do parto"
+          },
+          "bercario": {
+            "type": "string",
+            "title": "Ber\u00e7\u00e1rio",
+            "description": "Identifica\u00e7\u00e3o do ber\u00e7\u00e1rio/ala/sala (quando aplic\u00e1vel).",
+            "maxLength": 80
+          },
+          "cama_maternidade": {
+            "type": "string",
+            "title": "Cama na maternidade",
+            "description": "N\u00famero/identifica\u00e7\u00e3o da cama (quando aplic\u00e1vel).",
+            "maxLength": 40
+          },
+          "partos_totais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos j\u00e1 realizados."
+          },
+          "partos_normais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos vaginais."
+          },
+          "cesarianas": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos por cesariana."
           },
           "estado": {
             "$ref": "#/components/schemas/GestacaoEstadoEnum"
@@ -28851,7 +31452,8 @@
           },
           "medico_responsavel": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico/Ginecologista respons\u00e1vel"
           }
         },
         "required": [
@@ -28874,12 +31476,38 @@
           "data_ultima_menstruacao": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data da \u00faltima menstrua\u00e7\u00e3o"
           },
           "data_prevista_parto": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data prevista do parto"
+          },
+          "bercario": {
+            "type": "string",
+            "title": "Ber\u00e7\u00e1rio",
+            "description": "Identifica\u00e7\u00e3o do ber\u00e7\u00e1rio/ala/sala (quando aplic\u00e1vel).",
+            "maxLength": 80
+          },
+          "cama_maternidade": {
+            "type": "string",
+            "title": "Cama na maternidade",
+            "description": "N\u00famero/identifica\u00e7\u00e3o da cama (quando aplic\u00e1vel).",
+            "maxLength": 40
+          },
+          "partos_totais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos j\u00e1 realizados."
+          },
+          "partos_normais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos vaginais."
+          },
+          "cesarianas": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos por cesariana."
           },
           "estado": {
             "$ref": "#/components/schemas/GestacaoEstadoEnum"
@@ -28893,7 +31521,8 @@
           },
           "medico_responsavel": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico/Ginecologista respons\u00e1vel"
           }
         },
         "required": [
@@ -28933,8 +31562,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -28990,8 +31617,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29071,8 +31696,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -29127,8 +31750,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -29193,18 +31814,10 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "dia_semana": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DiaSemanaEnum"
-              }
-            ],
-            "minimum": -2147483648,
-            "maximum": 2147483647
+            "$ref": "#/components/schemas/DiaSemanaEnum"
           },
           "hora_inicio": {
             "type": "string",
@@ -29253,18 +31866,10 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "dia_semana": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DiaSemanaEnum"
-              }
-            ],
-            "minimum": -2147483648,
-            "maximum": 2147483647
+            "$ref": "#/components/schemas/DiaSemanaEnum"
           },
           "hora_inicio": {
             "type": "string",
@@ -29321,8 +31926,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29386,8 +31989,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29440,6 +32041,210 @@
           "nome"
         ]
       },
+      "InternamentoEnfermaria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "paciente_nome": {
+            "type": "string",
+            "readOnly": true
+          },
+          "cama_numero": {
+            "type": "string",
+            "readOnly": true
+          },
+          "enfermaria_nome": {
+            "type": "string",
+            "readOnly": true
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id_custom": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "title": "C\u00f3digo"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tempo_estimado_observacao_horas": {
+            "type": "integer",
+            "nullable": true,
+            "title": "Tempo estimado de observa\u00e7\u00e3o (horas)",
+            "description": "Tempo estimado de observa\u00e7\u00e3o em horas (quando aplic\u00e1vel)."
+          },
+          "data_internamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data de internamento"
+          },
+          "data_prevista_alta": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data prevista para alta"
+          },
+          "alta_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data de alta"
+          },
+          "proxima_medicacao_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Hor\u00e1rio da pr\u00f3xima medica\u00e7\u00e3o"
+          },
+          "proxima_medicacao_descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o da pr\u00f3xima medica\u00e7\u00e3o",
+            "maxLength": 160
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Internamento ativo"
+          },
+          "observacoes": {
+            "type": "string",
+            "title": "Observa\u00e7\u00f5es"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cama": {
+            "type": "integer"
+          },
+          "paciente": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cama",
+          "inquilino",
+          "paciente"
+        ]
+      },
+      "InternamentoEnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tempo_estimado_observacao_horas": {
+            "type": "integer",
+            "nullable": true,
+            "title": "Tempo estimado de observa\u00e7\u00e3o (horas)",
+            "description": "Tempo estimado de observa\u00e7\u00e3o em horas (quando aplic\u00e1vel)."
+          },
+          "data_internamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data de internamento"
+          },
+          "data_prevista_alta": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data prevista para alta"
+          },
+          "alta_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data de alta"
+          },
+          "proxima_medicacao_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Hor\u00e1rio da pr\u00f3xima medica\u00e7\u00e3o"
+          },
+          "proxima_medicacao_descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o da pr\u00f3xima medica\u00e7\u00e3o",
+            "maxLength": 160
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Internamento ativo"
+          },
+          "observacoes": {
+            "type": "string",
+            "title": "Observa\u00e7\u00f5es"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cama": {
+            "type": "integer"
+          },
+          "paciente": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cama",
+          "inquilino",
+          "paciente"
+        ]
+      },
       "ItemVenda": {
         "type": "object",
         "properties": {
@@ -29474,8 +32279,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29484,7 +32287,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "preco_unitario": {
@@ -29538,8 +32340,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29549,7 +32349,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "preco_unitario": {
@@ -29624,8 +32423,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29676,8 +32473,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29791,8 +32586,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29810,7 +32603,6 @@
           },
           "quantidade_inicial": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1,
             "title": "Qtd. inicial",
             "description": "Quantidade inicial do lote."
@@ -29858,8 +32650,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -29879,7 +32669,6 @@
           },
           "quantidade_inicial": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1,
             "title": "Qtd. inicial",
             "description": "Quantidade inicial do lote."
@@ -30029,8 +32818,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30112,8 +32899,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30128,7 +32913,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "criado_por": {
@@ -30186,8 +32970,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30203,7 +32985,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "criado_por": {
@@ -30253,8 +33034,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30465,8 +33244,6 @@
           },
           "idade_gestacional_semanas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Idade gestacional (semanas)",
             "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
@@ -30589,8 +33366,6 @@
           },
           "idade_gestacional_semanas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Idade gestacional (semanas)",
             "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
@@ -30707,8 +33482,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30795,8 +33568,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30930,8 +33701,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -30984,8 +33753,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -30994,9 +33761,7 @@
             "title": "Descri\u00e7\u00e3o"
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicao_id": {
             "type": "string",
@@ -31045,13 +33810,56 @@
           }
         }
       },
+      "PatchedCamaEnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "numero": {
+            "type": "string",
+            "minLength": 1,
+            "title": "N\u00famero da cama",
+            "maxLength": 20
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "enfermaria": {
+            "type": "integer"
+          }
+        }
+      },
       "PatchedCargoRequest": {
         "type": "object",
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31178,8 +33986,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31235,8 +34041,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "fuso_horario": {
@@ -31258,9 +34062,7 @@
             "type": "boolean"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "acrescimo_percentual_consulta_feriado": {
             "type": "string",
@@ -31336,8 +34138,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31359,8 +34159,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -31438,6 +34236,51 @@
           }
         }
       },
+      "PatchedEnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o"
+          },
+          "ativa": {
+            "type": "boolean"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
       "PatchedEspecialidadeConsultaRequest": {
         "type": "object",
         "properties": {
@@ -31481,8 +34324,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31530,8 +34371,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31627,8 +34466,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -31720,8 +34557,6 @@
           },
           "trl_horas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Tempo de resposta (em horas)",
             "description": "Tempo de resposta em horas."
           },
@@ -31827,8 +34662,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -31861,8 +34694,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "tipo_item": {
@@ -31955,8 +34786,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "origem": {
@@ -32058,8 +34887,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "chave": {
@@ -32110,8 +34937,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_inicio": {
@@ -32139,19 +34964,13 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "ano": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "salario_nominal": {
             "type": "string",
@@ -32159,9 +34978,7 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$"
           },
           "horas_base_mes": {
-            "type": "integer",
-            "maximum": 32767,
-            "minimum": 0
+            "type": "integer"
           },
           "multiplicador_hora_extra": {
             "type": "string",
@@ -32181,8 +34998,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32236,8 +35051,6 @@
           },
           "horas_base_mes": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "Horas base (m\u00eas)",
             "description": "Horas contratuais base por m\u00eas (ex.: 176)."
           },
@@ -32253,12 +35066,38 @@
           "data_ultima_menstruacao": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data da \u00faltima menstrua\u00e7\u00e3o"
           },
           "data_prevista_parto": {
             "type": "string",
             "format": "date",
-            "nullable": true
+            "nullable": true,
+            "title": "Data prevista do parto"
+          },
+          "bercario": {
+            "type": "string",
+            "title": "Ber\u00e7\u00e1rio",
+            "description": "Identifica\u00e7\u00e3o do ber\u00e7\u00e1rio/ala/sala (quando aplic\u00e1vel).",
+            "maxLength": 80
+          },
+          "cama_maternidade": {
+            "type": "string",
+            "title": "Cama na maternidade",
+            "description": "N\u00famero/identifica\u00e7\u00e3o da cama (quando aplic\u00e1vel).",
+            "maxLength": 40
+          },
+          "partos_totais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos j\u00e1 realizados."
+          },
+          "partos_normais": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos vaginais."
+          },
+          "cesarianas": {
+            "type": "integer",
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos por cesariana."
           },
           "estado": {
             "$ref": "#/components/schemas/GestacaoEstadoEnum"
@@ -32272,7 +35111,8 @@
           },
           "medico_responsavel": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico/Ginecologista respons\u00e1vel"
           }
         }
       },
@@ -32289,8 +35129,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32334,8 +35172,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data": {
@@ -32367,18 +35203,10 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "dia_semana": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DiaSemanaEnum"
-              }
-            ],
-            "minimum": -2147483648,
-            "maximum": 2147483647
+            "$ref": "#/components/schemas/DiaSemanaEnum"
           },
           "hora_inicio": {
             "type": "string",
@@ -32409,8 +35237,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32459,6 +35285,87 @@
           }
         }
       },
+      "PatchedInternamentoEnfermariaRequest": {
+        "type": "object",
+        "properties": {
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tempo_estimado_observacao_horas": {
+            "type": "integer",
+            "nullable": true,
+            "title": "Tempo estimado de observa\u00e7\u00e3o (horas)",
+            "description": "Tempo estimado de observa\u00e7\u00e3o em horas (quando aplic\u00e1vel)."
+          },
+          "data_internamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data de internamento"
+          },
+          "data_prevista_alta": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data prevista para alta"
+          },
+          "alta_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Data de alta"
+          },
+          "proxima_medicacao_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Hor\u00e1rio da pr\u00f3xima medica\u00e7\u00e3o"
+          },
+          "proxima_medicacao_descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o da pr\u00f3xima medica\u00e7\u00e3o",
+            "maxLength": 160
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Internamento ativo"
+          },
+          "observacoes": {
+            "type": "string",
+            "title": "Observa\u00e7\u00f5es"
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cama": {
+            "type": "integer"
+          },
+          "paciente": {
+            "type": "integer"
+          }
+        }
+      },
       "PatchedItemVendaRequest": {
         "type": "object",
         "properties": {
@@ -32473,8 +35380,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32484,7 +35389,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "preco_unitario": {
@@ -32522,8 +35426,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32582,8 +35484,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32603,7 +35503,6 @@
           },
           "quantidade_inicial": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1,
             "title": "Qtd. inicial",
             "description": "Quantidade inicial do lote."
@@ -32642,8 +35541,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32659,7 +35556,6 @@
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "criado_por": {
@@ -32693,8 +35589,6 @@
         "properties": {
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32791,8 +35685,6 @@
           },
           "idade_gestacional_semanas": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Idade gestacional (semanas)",
             "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
@@ -32885,8 +35777,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -32998,8 +35888,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -33013,22 +35901,16 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "tipo": {
             "$ref": "#/components/schemas/PlanoAssinaturaTipoEnum"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "limite_requisicoes_mes": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "preco_mensal": {
             "type": "string",
@@ -33078,8 +35960,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -33093,9 +35973,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "percentual_cobertura": {
             "type": "string",
@@ -33143,8 +36021,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -33202,16 +36078,12 @@
           },
           "intervalo_horas": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "nullable": true,
             "title": "Intervalo (horas)",
             "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose."
           },
           "numero_doses": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "N\u00famero de doses",
             "description": "Quantidade total de doses. Para dose \u00fanica, informe 1."
           },
@@ -33243,8 +36115,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade_padrao": {
@@ -33301,8 +36171,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -33375,8 +36243,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -33385,9 +36251,7 @@
             "maxLength": 255
           },
           "quantidade": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "realizado": {
             "type": "boolean"
@@ -33435,8 +36299,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "preco_unitario": {
@@ -33482,13 +36344,10 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "observacao": {
@@ -33546,8 +36405,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "custo_unitario": {
@@ -33593,8 +36450,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_realizacao": {
@@ -33660,8 +36515,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -33758,8 +36611,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -33909,8 +36760,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "criado_por": {
@@ -33957,8 +36806,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "resultado_valor": {
@@ -34029,8 +36876,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -34044,9 +36889,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "codigo_externo": {
             "type": "string",
@@ -34101,8 +36944,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -34123,22 +36964,16 @@
           },
           "frequencia_cardiaca": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia card\u00edaca"
           },
           "frequencia_respiratoria": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia respirat\u00f3ria"
           },
           "saturacao_oxigenio": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Satura\u00e7\u00e3o de O\u2082 (%)"
           },
@@ -34203,19 +37038,13 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "usuarios_ativos": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicoes_mes_atual": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "criado_por": {
             "type": "integer",
@@ -34337,8 +37166,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "numero": {
@@ -34485,8 +37312,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -34499,22 +37324,16 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "tipo": {
             "$ref": "#/components/schemas/PlanoAssinaturaTipoEnum"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "limite_requisicoes_mes": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "preco_mensal": {
             "type": "string",
@@ -34567,8 +37386,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -34582,22 +37399,16 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "tipo": {
             "$ref": "#/components/schemas/PlanoAssinaturaTipoEnum"
           },
           "limite_usuarios": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "limite_requisicoes_mes": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "preco_mensal": {
             "type": "string",
@@ -34679,8 +37490,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -34693,9 +37502,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "percentual_cobertura": {
             "type": "string",
@@ -34748,8 +37555,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -34763,9 +37568,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "percentual_cobertura": {
             "type": "string",
@@ -34838,8 +37641,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -34900,8 +37701,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -34952,6 +37751,10 @@
             "type": "integer",
             "readOnly": true
           },
+          "medicacao_nome": {
+            "type": "string",
+            "readOnly": true
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -35000,16 +37803,12 @@
           },
           "intervalo_horas": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "nullable": true,
             "title": "Intervalo (horas)",
             "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose."
           },
           "numero_doses": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "N\u00famero de doses",
             "description": "Quantidade total de doses. Para dose \u00fanica, informe 1."
           },
@@ -35071,16 +37870,12 @@
           },
           "intervalo_horas": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "nullable": true,
             "title": "Intervalo (horas)",
             "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose."
           },
           "numero_doses": {
             "type": "integer",
-            "maximum": 32767,
-            "minimum": 0,
             "title": "N\u00famero de doses",
             "description": "Quantidade total de doses. Para dose \u00fanica, informe 1."
           },
@@ -35135,8 +37930,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_realizacao": {
@@ -35226,8 +38019,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -35307,8 +38098,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade_padrao": {
@@ -35371,8 +38160,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade_padrao": {
@@ -35434,8 +38221,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -35615,8 +38400,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -35625,9 +38408,7 @@
             "maxLength": 255
           },
           "quantidade": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "realizado": {
             "type": "boolean"
@@ -35679,8 +38460,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -35689,9 +38468,7 @@
             "maxLength": 255
           },
           "quantidade": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "realizado": {
             "type": "boolean"
@@ -35763,8 +38540,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "preco_unitario": {
@@ -35814,8 +38589,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "preco_unitario": {
@@ -35891,13 +38664,10 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "observacao": {
@@ -35961,13 +38731,10 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "quantidade": {
             "type": "integer",
-            "maximum": 2147483647,
             "minimum": 1
           },
           "observacao": {
@@ -36051,8 +38818,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "custo_unitario": {
@@ -36102,8 +38867,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "custo_unitario": {
@@ -36153,8 +38916,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "data_realizacao": {
@@ -36244,8 +39005,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -36307,8 +39066,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -36403,6 +39160,22 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "fatura_codigo": {
+            "type": "string",
+            "readOnly": true
+          },
+          "paciente_nome": {
+            "type": "string",
+            "readOnly": true
+          },
+          "pagamento_metodo": {
+            "type": "string",
+            "readOnly": true
+          },
+          "pagamento_status": {
+            "type": "string",
             "readOnly": true
           },
           "numero": {
@@ -36542,8 +39315,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -36611,8 +39382,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -37072,8 +39841,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "criado_por": {
@@ -37124,8 +39891,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "criado_por": {
@@ -37240,8 +40005,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "resultado_valor": {
@@ -37318,8 +40081,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "resultado_valor": {
@@ -37415,8 +40176,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -37429,9 +40188,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "codigo_externo": {
             "type": "string",
@@ -37490,8 +40247,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "descricao": {
@@ -37505,9 +40260,7 @@
             "maxLength": 120
           },
           "ordem": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "codigo_externo": {
             "type": "string",
@@ -37617,8 +40370,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -37638,22 +40389,16 @@
           },
           "frequencia_cardiaca": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia card\u00edaca"
           },
           "frequencia_respiratoria": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia respirat\u00f3ria"
           },
           "saturacao_oxigenio": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Satura\u00e7\u00e3o de O\u2082 (%)"
           },
@@ -37700,8 +40445,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "nome": {
@@ -37722,22 +40465,16 @@
           },
           "frequencia_cardiaca": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia card\u00edaca"
           },
           "frequencia_respiratoria": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Frequ\u00eancia respirat\u00f3ria"
           },
           "saturacao_oxigenio": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "nullable": true,
             "title": "Satura\u00e7\u00e3o de O\u2082 (%)"
           },
@@ -38008,19 +40745,13 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "usuarios_ativos": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicoes_mes_atual": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "criado_por": {
             "type": "integer",
@@ -38056,19 +40787,13 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "usuarios_ativos": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "requisicoes_mes_atual": {
-            "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0
+            "type": "integer"
           },
           "criado_por": {
             "type": "integer",
@@ -38404,8 +41129,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "numero": {
@@ -38458,8 +41181,6 @@
           },
           "versao": {
             "type": "integer",
-            "maximum": 2147483647,
-            "minimum": 0,
             "title": "Vers\u00e3o"
           },
           "numero": {

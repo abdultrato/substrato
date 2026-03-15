@@ -12,6 +12,9 @@ from aplicativos.enfermagem.modelos import (
     ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
+    Enfermaria,
+    CamaEnfermaria,
+    InternamentoEnfermaria,
 )
 
 
@@ -188,6 +191,53 @@ class EvolucaoEnfermagemFilter(SafeFilterSet):
             "deletado",
         ]
 
+class EnfermariaFilter(SafeFilterSet):
+    class Meta:
+        model = Enfermaria
+        fields = [
+            "inquilino",
+            "id_custom",
+            "nome",
+            "ativa",
+            "criado_em",
+            "atualizado_em",
+            "deletado",
+        ]
+
+
+class CamaEnfermariaFilter(SafeFilterSet):
+    class Meta:
+        model = CamaEnfermaria
+        fields = [
+            "inquilino",
+            "id_custom",
+            "enfermaria",
+            "numero",
+            "ativa",
+            "criado_em",
+            "atualizado_em",
+            "deletado",
+        ]
+
+
+class InternamentoEnfermariaFilter(SafeFilterSet):
+    class Meta:
+        model = InternamentoEnfermaria
+        fields = [
+            "inquilino",
+            "id_custom",
+            "cama",
+            "paciente",
+            "ativo",
+            "data_internamento",
+            "data_prevista_alta",
+            "alta_em",
+            "proxima_medicacao_em",
+            "criado_em",
+            "atualizado_em",
+            "deletado",
+        ]
+
 
 FILTER_MAP = {
     "evolucaoenfermagem": EvolucaoEnfermagemFilter,
@@ -201,4 +251,7 @@ FILTER_MAP = {
     "prescricaoenfermagem": PrescricaoEnfermagemFilter,
     "registroenfermagem": RegistroEnfermagemFilter,
     "sinalvitalenfermagem": SinalVitalEnfermagemFilter,
+    "enfermaria": EnfermariaFilter,
+    "camaenfermaria": CamaEnfermariaFilter,
+    "internamentoenfermaria": InternamentoEnfermariaFilter,
 }

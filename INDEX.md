@@ -3,7 +3,7 @@
 ## 🎯 Quick Start (5 minutos)
 
 1. **Quer entender o projeto?** → Leia [RESUMO_FINAL.md](./RESUMO_FINAL.md)
-2. **Quer implementar no seu código?** → Leia [EJEMPLOS_USO.md](./frontend-next/EJEMPLOS_USO.md)
+2. **Quer implementar no seu código?** → Leia [EXEMPLOS_USO.md](./frontend-next/EXEMPLOS_USO.md)
 3. **Quer validar tudo?** → Siga [CHECKLIST_VALIDACAO.md](./CHECKLIST_VALIDACAO.md)
 4. **Quer chegar a 95/100?** → Siga [PROXIMOS_PASSOS.md](./PROXIMOS_PASSOS.md)
 
@@ -25,7 +25,7 @@
 - **[MIGRAÇÃO_PARA_API_CLIENT.md](./frontend-next/MIGRAÇÃO_PARA_API_CLIENT.md)** - Migration path from old patterns
 
 ### 💻 Usage Examples
-- **[EJEMPLOS_USO.md](./frontend-next/EJEMPLOS_USO.md)** - 6 complete working examples
+- **[EXEMPLOS_USO.md](./frontend-next/EXEMPLOS_USO.md)** - 6 complete working examples
   1. List pacientes com filters
   2. Create paciente com validação
   3. Edit paciente
@@ -77,7 +77,7 @@ substrato/
     ├── FASE4_API_CLIENT.md            ← API client pattern
     ├── FASE5_SERIALIZERS.md           ← Enhanced serializers
     ├── MIGRAÇÃO_PARA_API_CLIENT.md   ← Migration guide
-    └── EJEMPLOS_USO.md                ← Usage examples
+    └── EXEMPLOS_USO.md                ← Usage examples
 ```
 
 ---
@@ -85,7 +85,7 @@ substrato/
 ## 🎓 Reading Paths
 
 ### For Frontend Developers
-1. Start: [EJEMPLOS_USO.md](./frontend-next/EJEMPLOS_USO.md) - See working examples
+1. Start: [EXEMPLOS_USO.md](./frontend-next/EXEMPLOS_USO.md) - See working examples
 2. Learn: [FASE4_API_CLIENT.md](./frontend-next/FASE4_API_CLIENT.md) - Understand API client
 3. Reference: [FASE2_VALIDAÇÃO.md](./frontend-next/FASE2_VALIDAÇÃO.md) - How validation works
 4. Deep dive: [FASE3_ERROR_HANDLING.md](./frontend-next/FASE3_ERROR_HANDLING.md) - Error patterns
@@ -269,7 +269,7 @@ new PacientesQueryBuilder()
 ### Common Questions
 
 **Q: Where do I start?**
-A: Read [EJEMPLOS_USO.md](./frontend-next/EJEMPLOS_USO.md) for practical examples.
+A: Read [EXEMPLOS_USO.md](./frontend-next/EXEMPLOS_USO.md) for practical examples.
 
 **Q: How do I migrate existing code?**
 A: Follow [MIGRAÇÃO_PARA_API_CLIENT.md](./frontend-next/MIGRAÇÃO_PARA_API_CLIENT.md).
@@ -293,7 +293,7 @@ For specific questions, check:
 - **Error handling:** See FASE3_ERROR_HANDLING.md
 - **API client:** See FASE4_API_CLIENT.md
 - **Serializers:** See FASE5_SERIALIZERS.md
-- **Examples:** See EJEMPLOS_USO.md
+- **Examples:** See EXEMPLOS_USO.md
 
 ---
 

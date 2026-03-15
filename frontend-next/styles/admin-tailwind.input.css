@@ -1,0 +1,342 @@
+/*
+  Tailwind-driven CSS for Django Admin.
+
+  Why: Django Admin does not use Tailwind utility classes in its HTML, so we
+  style it by targeting admin selectors and using `@apply`.
+
+  Build:
+    cd frontend-next
+    npm run build:admin-css
+
+  Output:
+    aplicativos/clinico/static/admin/css/substrato-admin-tailwind.css
+
+  Note (important):
+    Our Tailwind admin config intentionally does not scan Django admin HTML for
+    class names (content: []), so Tailwind's "purge" can remove class-only
+    selectors declared inside @layer.
+
+    To ensure the admin rules are kept, we define them as plain CSS selectors
+    outside @layer (but we still use @apply to leverage Tailwind tokens).
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------
+   Global: remove underlines
+-------------------------------- */
+a,
+a:link,
+a:visited,
+a:hover,
+a:active,
+a:focus {
+  text-decoration: none !important;
+}
+
+/* ------------------------------
+   Base layout
+-------------------------------- */
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.content-wrapper {
+  @apply bg-slate-50;
+}
+
+/* Make admin denser (requested): less padding/gap */
+#content {
+  @apply px-3 py-4;
+}
+
+/* ------------------------------
+   Navbar / sidebar (Jazzmin/AdminLTE)
+-------------------------------- */
+#jazzy-navbar,
+.main-header.navbar {
+  @apply bg-slate-900 text-slate-50 shadow-sm;
+}
+
+#jazzy-navbar .nav-link,
+.main-header.navbar .nav-link {
+  @apply text-slate-50;
+}
+
+#jazzy-navbar .nav-link:hover,
+.main-header.navbar .nav-link:hover {
+  @apply text-rose-200;
+}
+
+#jazzy-sidebar,
+.main-sidebar {
+  @apply bg-slate-950;
+}
+
+#jazzy-sidebar .brand-link,
+.main-sidebar .brand-link {
+  @apply border-slate-800 bg-slate-950 text-slate-100;
+}
+
+#jazzy-sidebar .nav-sidebar .nav-link,
+.main-sidebar .nav-sidebar .nav-link {
+  @apply text-slate-200 py-1 px-2 text-sm leading-tight;
+}
+
+#jazzy-sidebar .nav-sidebar .nav-link:hover,
+.main-sidebar .nav-sidebar .nav-link:hover {
+  @apply bg-slate-900 text-rose-200;
+}
+
+#jazzy-sidebar .nav-sidebar .nav-link.active,
+.main-sidebar .nav-sidebar .nav-link.active {
+  @apply bg-slate-900 text-white;
+}
+
+#jazzy-sidebar .nav-sidebar .nav-link p,
+.main-sidebar .nav-sidebar .nav-link p {
+  @apply my-0;
+}
+
+/* ------------------------------
+   Header (Django legacy header on some pages)
+-------------------------------- */
+#header {
+  @apply bg-slate-900 text-slate-50 shadow-sm;
+}
+
+#header a:link,
+#header a:visited {
+  @apply text-slate-50;
+}
+
+#header a:hover {
+  @apply text-rose-200;
+}
+
+/* ------------------------------
+   Modules / cards / tables / messages
+-------------------------------- */
+.module,
+.inline-group,
+.inline-related,
+.dashboard #content-main,
+.dashboard #content-related {
+  @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  @apply rounded-t-xl bg-slate-100 text-slate-800;
+}
+
+/* Jazzmin cards */
+.card {
+  @apply rounded-xl border border-slate-200 shadow-sm;
+}
+
+.card-header {
+  @apply rounded-t-xl border-b border-slate-200 bg-slate-100 text-slate-800;
+}
+
+/* Inputs */
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='number'],
+input[type='url'],
+input[type='search'],
+input[type='tel'],
+input[type='date'],
+input[type='datetime-local'],
+textarea,
+select {
+  @apply rounded-lg border-slate-300 bg-white text-slate-900 shadow-sm;
+  @apply focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200;
+}
+
+/* Buttons (Django + Jazzmin) */
+.button,
+input[type='submit'],
+input[type='button'],
+.submit-row input,
+a.button,
+.btn {
+  /* requested: smaller vertical padding */
+  @apply rounded-lg px-2.5 py-1 text-sm font-medium leading-tight;
+}
+
+.button.default,
+input[type='submit'].default,
+.submit-row input.default,
+.btn-primary {
+  @apply bg-slate-900 text-white hover:bg-slate-800;
+}
+
+.btn-danger,
+.deletelink,
+.deletelink-box a {
+  @apply bg-rose-600 text-white hover:bg-rose-700;
+}
+
+/* Tables */
+#result_list thead th {
+  @apply bg-slate-100 text-slate-700;
+}
+
+#result_list tbody tr:hover {
+  @apply bg-slate-50;
+}
+
+/* Compact table paddings (Bootstrap tables used by Jazzmin) */
+.table th,
+.table td {
+  @apply px-2 py-1 align-middle text-sm;
+}
+
+.table .btn {
+  @apply px-2 py-1;
+}
+
+.table thead th {
+  @apply bg-slate-100 text-slate-700;
+}
+
+.table tbody tr:hover {
+  @apply bg-slate-50;
+}
+
+/* Messages */
+.messagelist .success {
+  @apply rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-900;
+}
+
+.messagelist .warning {
+  @apply rounded-lg border border-amber-200 bg-amber-50 text-amber-900;
+}
+
+.messagelist .error {
+  @apply rounded-lg border border-rose-200 bg-rose-50 text-rose-900;
+}
+
+/* ------------------------------
+   Dark mode (Jazzmin/AdminLTE adds `dark-mode` to <body>)
+-------------------------------- */
+body.dark-mode {
+  color-scheme: dark;
+  @apply bg-slate-950 text-slate-100;
+}
+
+body.dark-mode .content-wrapper {
+  @apply bg-slate-950;
+}
+
+body.dark-mode #jazzy-navbar,
+body.dark-mode .main-header.navbar {
+  @apply bg-black text-slate-100;
+}
+
+body.dark-mode #jazzy-navbar .nav-link,
+body.dark-mode .main-header.navbar .nav-link {
+  @apply text-slate-100;
+}
+
+body.dark-mode #jazzy-navbar .nav-link:hover,
+body.dark-mode .main-header.navbar .nav-link:hover {
+  @apply text-rose-300;
+}
+
+body.dark-mode #jazzy-sidebar,
+body.dark-mode .main-sidebar {
+  @apply bg-black;
+}
+
+body.dark-mode #jazzy-sidebar .brand-link,
+body.dark-mode .main-sidebar .brand-link {
+  @apply border-slate-900 bg-black text-slate-100;
+}
+
+body.dark-mode #jazzy-sidebar .nav-sidebar .nav-link,
+body.dark-mode .main-sidebar .nav-sidebar .nav-link {
+  @apply text-slate-200;
+}
+
+body.dark-mode #jazzy-sidebar .nav-sidebar .nav-link:hover,
+body.dark-mode .main-sidebar .nav-sidebar .nav-link:hover {
+  @apply bg-slate-950 text-rose-300;
+}
+
+body.dark-mode #jazzy-sidebar .nav-sidebar .nav-link.active,
+body.dark-mode .main-sidebar .nav-sidebar .nav-link.active {
+  @apply bg-slate-950 text-white;
+}
+
+body.dark-mode #header {
+  @apply bg-black text-slate-100;
+}
+
+body.dark-mode .module,
+body.dark-mode .inline-group,
+body.dark-mode .inline-related,
+body.dark-mode .dashboard #content-main,
+body.dark-mode .dashboard #content-related {
+  @apply border-slate-800 bg-slate-900;
+}
+
+body.dark-mode .module h2,
+body.dark-mode .module caption,
+body.dark-mode .inline-group h2 {
+  @apply bg-slate-800 text-slate-100;
+}
+
+body.dark-mode input[type='text'],
+body.dark-mode input[type='password'],
+body.dark-mode input[type='email'],
+body.dark-mode input[type='number'],
+body.dark-mode input[type='url'],
+body.dark-mode input[type='search'],
+body.dark-mode input[type='tel'],
+body.dark-mode input[type='date'],
+body.dark-mode input[type='datetime-local'],
+body.dark-mode textarea,
+body.dark-mode select {
+  @apply border-slate-700 bg-slate-950 text-slate-100;
+  @apply focus:border-rose-300 focus:ring-2 focus:ring-rose-950/40;
+}
+
+body.dark-mode #result_list thead th {
+  @apply bg-slate-800 text-slate-100;
+}
+
+body.dark-mode #result_list tbody tr:hover {
+  @apply bg-slate-900;
+}
+
+body.dark-mode .card {
+  @apply border-slate-800 bg-slate-900;
+}
+
+body.dark-mode .card-header {
+  @apply border-slate-800 bg-slate-800 text-slate-100;
+}
+
+body.dark-mode .table thead th {
+  @apply bg-slate-800 text-slate-100;
+}
+
+body.dark-mode .table tbody tr:hover {
+  @apply bg-slate-900;
+}
+
+body.dark-mode .table th,
+body.dark-mode .table td {
+  @apply px-2 py-1;
+}
+

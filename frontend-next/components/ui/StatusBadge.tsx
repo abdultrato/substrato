@@ -27,7 +27,7 @@ export default function StatusBadge ( { status, label }: Props ) {
   const style = styles[key] ?? "bg-gray-100 text-gray-700"
 
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${style}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>
       {label ?? status}
     </span>
   )

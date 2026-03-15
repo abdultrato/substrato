@@ -9,7 +9,7 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 export default function EditarRecursoPage({
   params,
@@ -19,10 +19,7 @@ export default function EditarRecursoPage({
   const { loading } = useAuthGuard()
   const router = useRouter()
   const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups =
-    params.grupo === "recursos_humanos"
-      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-      : [GROUPS.ADMIN]
+  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
   const [initial, setInitial] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)

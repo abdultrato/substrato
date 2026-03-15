@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { FilePlus2, HeartPulse, Pill, Users } from "lucide-react"
+import { FilePlus2, HeartPulse, ScrollText, Pill, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -10,9 +10,13 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function MedicinaOcupacionalPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [pacientes, setPacientes] = useState<number>(0)
@@ -54,12 +58,14 @@ export default function MedicinaOcupacionalPage() {
           title="Medicina Ocupacional"
           subtitle="Registo e jornada ocupacional: pacientes, exames e encaminhamentos."
           actions={
-            <Link
-              href="/admin/clinico/paciente/?proveniencia__exact=Medicina+Ocupacional"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/clinico/paciente/?proveniencia__exact=Medicina+Ocupacional"
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 
@@ -88,6 +94,12 @@ export default function MedicinaOcupacionalPage() {
             description="Solicitar análises laboratoriais."
             href="/requisicoes/nova"
             icon={FilePlus2}
+          />
+          <ActionTile
+            title="Prontuário (Cardex)"
+            description="Ver/registar cardex e prescrição."
+            href="/prontuario"
+            icon={ScrollText}
           />
           <ActionTile
             title="Procedimentos (Enfermagem)"

@@ -10,9 +10,13 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function FarmaciaPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [produtos, setProdutos] = useState<number>(0)
@@ -56,13 +60,15 @@ export default function FarmaciaPage() {
           title="Farmácia"
           subtitle="Almoxarifado: produtos, lotes e movimentos de estoque."
           actions={
-            <Link
-              href="/admin/farmacia/"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              <ShieldCheck size={16} />
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/farmacia/"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                <ShieldCheck size={16} />
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 

@@ -15,8 +15,9 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import DataTable from "@/components/ui/DataTable"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch, extractResults, extractTotalCount } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
 
@@ -30,6 +31,9 @@ async function abrirPdfResultados(requisicaoId: number) {
 }
 
 export default function LaboratorioPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -96,14 +100,16 @@ export default function LaboratorioPage() {
         header: "Ações",
         render: (r: RequisicaoRow) => (
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              Admin
-            </Link>
+            {podeVerAdmin ? (
+              <Link
+                href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                Admin
+              </Link>
+            ) : null}
 
             {r.id ? (
               <button
@@ -118,7 +124,7 @@ export default function LaboratorioPage() {
         ),
       },
     ],
-    [onPdf]
+    [onPdf, podeVerAdmin]
   )
 
   return (
@@ -128,13 +134,15 @@ export default function LaboratorioPage() {
           title="Laboratório"
           subtitle="Entrada de resultados, validação e emissão de documentos."
           actions={
-            <Link
-              href="/admin/clinico/requisicaoanalise/"
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              <Shield size={16} />
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/clinico/requisicaoanalise/"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                <Shield size={16} />
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 
@@ -164,12 +172,14 @@ export default function LaboratorioPage() {
             href="/laboratorio/resultados"
             icon={ListChecks}
           />
-          <ActionTile
-            title="Resultados (admin)"
-            description="Lançar e validar resultados com rastreabilidade (Django admin)."
-            href="/admin/clinico/resultado/"
-            icon={Shield}
-          />
+          {podeVerAdmin ? (
+            <ActionTile
+              title="Resultados (admin)"
+              description="Lançar e validar resultados com rastreabilidade (Django admin)."
+              href="/admin/clinico/resultado/"
+              icon={Shield}
+            />
+          ) : null}
           <ActionTile
             title="PDF de resultados"
             description="Emita o PDF institucional (somente resultados validados)."

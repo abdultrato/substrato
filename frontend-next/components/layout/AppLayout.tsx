@@ -36,7 +36,7 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
                 <div className="flex flex-col flex-1">
                     <Header user={user} />
 
-                    <main className="flex-1 p-6">
+                    <main className="flex-1 p-2">
                         <AccessDenied requiredGroups={requiredGroups} user={user} />
                     </main>
                 </div>
@@ -51,7 +51,7 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
             <div className="flex flex-col flex-1">
                 <Header user={user} />
 
-                <main className="flex-1 p-6">{children}</main>
+                <main className="flex-1 p-2">{children}</main>
             </div>
         </div>
     )

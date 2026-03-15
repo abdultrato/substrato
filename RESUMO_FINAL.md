@@ -195,7 +195,7 @@ Frontend Zod re-validation ← Response validation
 3. **FASE3_ERROR_HANDLING.md** - RFC 7807 + retry logic
 4. **FASE4_API_CLIENT.md** - Generic client + query builders
 5. **FASE5_SERIALIZERS.md** - Enhanced serializers + validation
-6. **EJEMPLOS_USO.md** - Complete usage examples
+6. **EXEMPLOS_USO.md** - Complete usage examples
 
 ### Coverage Includes
 - Architecture diagrams
@@ -215,7 +215,7 @@ Frontend Zod re-validation ← Response validation
 2. Read FASE2: Learn Zod validation
 3. Read FASE3: Understand error handling
 4. Read FASE4: Learn API client pattern
-5. Read EJEMPLOS_USO.md: Practical examples
+5. Read EXEMPLOS_USO.md: Practical examples
 
 ### For Backend Developers
 1. Review FASE5: Enhanced serializers

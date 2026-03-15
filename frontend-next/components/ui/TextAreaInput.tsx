@@ -14,7 +14,7 @@ const TextAreaInput = forwardRef<HTMLTextAreaElement, Props>(
                 rows={rows}
                 {...props}
                 className={`
-          w-full rounded-lg border px-3 py-2 text-sm outline-none transition resize-none
+          w-full rounded-lg border px-2.5 py-1 text-sm leading-tight outline-none transition resize-none
           bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--gray-500)]
           ${error ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-[var(--border)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-red-500/10"}
           ${className}

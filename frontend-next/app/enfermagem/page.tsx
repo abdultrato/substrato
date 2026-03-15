@@ -7,6 +7,7 @@ import {
   Droplets,
   HeartPulse,
   PackageSearch,
+  BedDouble,
   Stethoscope,
 } from "lucide-react"
 
@@ -16,9 +17,13 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function EnfermagemPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
   const [requisicoesPendentes, setRequisicoesPendentes] = useState<number>(0)
@@ -59,12 +64,14 @@ export default function EnfermagemPage() {
           title="Enfermagem"
           subtitle="Execução: colheitas, procedimentos e registos."
           actions={
-            <Link
-              href="/admin/enfermagem/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            podeVerAdmin ? (
+              <Link
+                href="/admin/enfermagem/"
+                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Abrir no admin
+              </Link>
+            ) : null
           }
         />
 
@@ -99,6 +106,12 @@ export default function EnfermagemPage() {
             description="Registos e execução de procedimentos de enfermagem."
             href="/enfermagem/procedimentos"
             icon={HeartPulse}
+          />
+          <ActionTile
+            title="Enfermaria"
+            description="Dashboard de camas e internamentos."
+            href="/enfermagem/enfermaria"
+            icon={BedDouble}
           />
           <ActionTile
             title="Materiais e medicação"

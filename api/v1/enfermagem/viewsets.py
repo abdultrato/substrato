@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from aplicativos.enfermagem.modelos import (
     EvolucaoEnfermagem,
@@ -15,6 +15,9 @@ from aplicativos.enfermagem.modelos import (
     ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
+    Enfermaria,
+    CamaEnfermaria,
+    InternamentoEnfermaria,
 )
 from .filters import (
     EvolucaoEnfermagemFilter,
@@ -28,6 +31,9 @@ from .filters import (
     ProcedimentoMaterialValorFilter,
     RegistroEnfermagemFilter,
     SinalVitalEnfermagemFilter,
+    EnfermariaFilter,
+    CamaEnfermariaFilter,
+    InternamentoEnfermariaFilter,
 )
 from .serializers import (
     EvolucaoEnfermagemSerializer,
@@ -41,6 +47,9 @@ from .serializers import (
     ProcedimentoSerializer,
     RegistroEnfermagemSerializer,
     SinalVitalEnfermagemSerializer,
+    EnfermariaSerializer,
+    CamaEnfermariaSerializer,
+    InternamentoEnfermariaSerializer,
 )
 
 
@@ -431,6 +440,131 @@ class EvolucaoEnfermagemViewSet(ModelViewSet):
         return queryset
 
 
+class EnfermariaViewSet(ModelViewSet):
+    queryset = Enfermaria.objects.all()
+    serializer_class = EnfermariaSerializer
+    filterset_class = EnfermariaFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = ["id_custom", "nome", "descricao"]
+    ordering_fields = ["nome", "criado_em", "atualizado_em"]
+    ordering = ["nome"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class CamaEnfermariaViewSet(ModelViewSet):
+    queryset = CamaEnfermaria.objects.select_related("enfermaria").all()
+    serializer_class = CamaEnfermariaSerializer
+    filterset_class = CamaEnfermariaFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = ["id_custom", "numero", "enfermaria__nome"]
+    ordering_fields = ["enfermaria", "numero", "criado_em", "atualizado_em"]
+    ordering = ["enfermaria", "numero", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class InternamentoEnfermariaViewSet(ModelViewSet):
+    queryset = InternamentoEnfermaria.objects.select_related(
+        "cama",
+        "cama__enfermaria",
+        "paciente",
+    ).all()
+    serializer_class = InternamentoEnfermariaSerializer
+    filterset_class = InternamentoEnfermariaFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "id_custom",
+        "paciente__nome",
+        "cama__numero",
+        "cama__enfermaria__nome",
+        "proxima_medicacao_descricao",
+        "observacoes",
+    ]
+    ordering_fields = [
+        "data_internamento",
+        "data_prevista_alta",
+        "alta_em",
+        "proxima_medicacao_em",
+        "criado_em",
+    ]
+    ordering = ["-data_internamento", "-criado_em"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            queryset = queryset.filter(inquilino=inquilino)
+        return queryset
+
+
+class EnfermariaDashboardViewSet(ViewSet):
+    """
+    Dashboard operacional da Enfermaria (ocupação + próximas medicações).
+    """
+
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "head", "options"]
+
+    def list(self, request):
+        inquilino = getattr(request, "inquilino", None)
+
+        camas_qs = CamaEnfermaria.objects.filter(deletado=False, ativa=True)
+        if inquilino is not None:
+            camas_qs = camas_qs.filter(inquilino=inquilino)
+
+        intern_qs = InternamentoEnfermaria.objects.filter(deletado=False, ativo=True).select_related(
+            "cama", "cama__enfermaria", "paciente"
+        )
+        if inquilino is not None:
+            intern_qs = intern_qs.filter(inquilino=inquilino)
+
+        total_camas = camas_qs.count()
+        camas_ocupadas = intern_qs.values("cama_id").distinct().count()
+        pacientes = intern_qs.values("paciente_id").distinct().count()
+
+        camas = []
+        for it in intern_qs.order_by("cama__enfermaria__nome", "cama__numero", "proxima_medicacao_em"):
+            camas.append(
+                {
+                    "internamento_id": it.id,
+                    "internamento_codigo": getattr(it, "id_custom", "") or "",
+                    "enfermaria": getattr(getattr(it.cama, "enfermaria", None), "nome", "") or "",
+                    "cama_id": it.cama_id,
+                    "cama_numero": getattr(it.cama, "numero", "") or "",
+                    "paciente_id": it.paciente_id,
+                    "paciente_nome": getattr(it.paciente, "nome", "") or "",
+                    "data_internamento": getattr(it, "data_internamento", None),
+                    "data_prevista_alta": getattr(it, "data_prevista_alta", None),
+                    "tempo_estimado_observacao_horas": getattr(it, "tempo_estimado_observacao_horas", None),
+                    "proxima_medicacao_em": getattr(it, "proxima_medicacao_em", None),
+                    "proxima_medicacao_descricao": getattr(it, "proxima_medicacao_descricao", "") or "",
+                }
+            )
+
+        return Response(
+            {
+                "resumo": {
+                    "pacientes": pacientes,
+                    "camas_total": total_camas,
+                    "camas_ocupadas": camas_ocupadas,
+                    "camas_livres": max(0, total_camas - camas_ocupadas),
+                },
+                "camas": camas,
+            }
+        )
+
+
 VIEWSET_MAP = {
     "evolucaoenfermagem": EvolucaoEnfermagemViewSet,
     "procedimentocatalogo": ProcedimentoCatalogoViewSet,
@@ -443,6 +577,10 @@ VIEWSET_MAP = {
     "prescricaoenfermagem": PrescricaoEnfermagemViewSet,
     "registroenfermagem": RegistroEnfermagemViewSet,
     "sinalvitalenfermagem": SinalVitalEnfermagemViewSet,
+    "enfermaria": EnfermariaViewSet,
+    "camaenfermaria": CamaEnfermariaViewSet,
+    "internamentoenfermaria": InternamentoEnfermariaViewSet,
+    "enfermariadashboard": EnfermariaDashboardViewSet,
 }
 
 
@@ -458,5 +596,9 @@ __all__ = [
     "ProcedimentoMaterialValorViewSet",
     "RegistroEnfermagemViewSet",
     "SinalVitalEnfermagemViewSet",
+    "EnfermariaViewSet",
+    "CamaEnfermariaViewSet",
+    "InternamentoEnfermariaViewSet",
+    "EnfermariaDashboardViewSet",
     "VIEWSET_MAP",
 ]

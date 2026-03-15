@@ -12,6 +12,7 @@ import {
     isAuthenticated,
     logout,
     SessionUser,
+    setSessionUser,
 } from "@/lib/session"
 import { fetchCurrentUser } from "@/lib/auth"
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const data = await fetchCurrentUser()
             setUser(data)
+            setSessionUser(data)
         } catch {
             logout()
             setUser(null)
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // O login persiste no localStorage; aqui sincronizamos o estado em memória
         // para evitar loop de redirecionamento em páginas protegidas.
         setUser(u)
+        setSessionUser(u)
     }, [])
 
     useEffect(() => {

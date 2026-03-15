@@ -16,7 +16,7 @@ export default function Card ( {
     return (
         <div className="bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-sm">
             {( title || actions ) && (
-                <div className="flex items-start justify-between px-5 pt-4 pb-2">
+                <div className="flex items-start justify-between px-3 pt-2.5 pb-1.5">
                     <div>
                         {title && (
                             <h3 className="text-sm font-semibold text-[var(--text)]">
@@ -34,7 +34,7 @@ export default function Card ( {
                 </div>
             )}
 
-            <div className="px-5 pb-5 pt-2">{children}</div>
+            <div className="px-3 pb-3 pt-2">{children}</div>
         </div>
     )
 }

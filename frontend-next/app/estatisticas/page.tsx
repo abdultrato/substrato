@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
+import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
@@ -20,6 +21,7 @@ import {
 
 type AnalyticsResponse = {
   range?: { inicio?: string | null; fim?: string | null }
+  kpis?: Record<string, any>
   top_exames?: Array<any>
   top_procedimentos?: Array<any>
   top_medicamentos?: Array<any>
@@ -42,6 +44,13 @@ function truncateLabel(value: string, max = 26): string {
   const v = String(value || "")
   if (v.length <= max) return v
   return `${v.slice(0, Math.max(0, max - 3))}...`
+}
+
+function money(v: any): string {
+  if (v === null || v === undefined || v === "") return "-"
+  const n = Number(v)
+  if (Number.isNaN(n)) return String(v)
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function BasicHorizontalBarChart({
@@ -93,6 +102,7 @@ export default function EstatisticasPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<AnalyticsResponse | null>(null)
+  const [exportando, setExportando] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -118,10 +128,38 @@ export default function EstatisticasPage() {
     }
   }, [dias])
 
-  const topExames = (data?.top_exames || []) as any[]
-  const topProcs = (data?.top_procedimentos || []) as any[]
-  const topMeds = (data?.top_medicamentos || []) as any[]
-  const topCons = (data?.top_consultas || []) as any[]
+  const topExames = useMemo(() => (data?.top_exames ?? []) as any[], [data?.top_exames])
+  const topProcs = useMemo(() => (data?.top_procedimentos ?? []) as any[], [data?.top_procedimentos])
+  const topMeds = useMemo(() => (data?.top_medicamentos ?? []) as any[], [data?.top_medicamentos])
+  const topCons = useMemo(() => (data?.top_consultas ?? []) as any[], [data?.top_consultas])
+  const kpis = useMemo(() => (data?.kpis ?? {}) as Record<string, any>, [data?.kpis])
+
+  async function exportar(formato: "pdf" | "csv" | "word") {
+    try {
+      setExportando(formato)
+      setErro(null)
+
+      const blob = await apiFetch<Blob>(
+        `/dashboard/analytics/export/?dias=${encodeURIComponent(String(dias))}&tipo=${encodeURIComponent(formato)}`,
+        { responseType: "blob" }
+      )
+
+      const ext = formato === "word" ? "doc" : formato
+      const filename = `relatorio_estatisticas_${dias}dias.${ext}`
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+    } catch (e: any) {
+      setErro(e?.message || "Falha ao exportar relatório.")
+    } finally {
+      setExportando(null)
+    }
+  }
 
   const examesCols = useMemo(
     () => [
@@ -198,20 +236,49 @@ export default function EstatisticasPage() {
       <div className="space-y-6">
         <PageHeader
           title="Estatísticas"
-          subtitle="Top pedidos do sistema (exames, procedimentos, medicamentos e consultas)."
+          subtitle="Indicadores e Top pedidos do sistema (exames, procedimentos, medicamentos e consultas)."
           actions={
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-700">Período</label>
-              <select
-                value={dias}
-                onChange={(e) => setDias(Number(e.target.value))}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-              >
-                <option value={7}>Últimos 7 dias</option>
-                <option value={30}>Últimos 30 dias</option>
-                <option value={90}>Últimos 90 dias</option>
-                <option value={365}>Últimos 12 meses</option>
-              </select>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-[var(--gray-700)]">Período</label>
+                <select
+                  value={dias}
+                  onChange={(e) => setDias(Number(e.target.value))}
+                  className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] shadow-sm"
+                >
+                  <option value={7}>Últimos 7 dias</option>
+                  <option value={30}>Últimos 30 dias</option>
+                  <option value={90}>Últimos 90 dias</option>
+                  <option value={365}>Últimos 12 meses</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => exportar("pdf")}
+                  disabled={!!exportando}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {exportando === "pdf" ? "PDF..." : "PDF"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportar("csv")}
+                  disabled={!!exportando}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {exportando === "csv" ? "CSV..." : "CSV"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportar("word")}
+                  disabled={!!exportando}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {exportando === "word" ? "Word..." : "Word"}
+                </button>
+              </div>
             </div>
           }
         />
@@ -231,7 +298,22 @@ export default function EstatisticasPage() {
         {loading ? (
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-2">
+          <>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <MetricCard label="Pacientes (total)" value={kpis["Pacientes (total)"] ?? "—"} />
+              <MetricCard label="Requisições" value={kpis["Requisições (no período)"] ?? "—"} />
+              <MetricCard label="Faturas pagas" value={kpis["Faturas pagas (no período)"] ?? "—"} />
+              <MetricCard
+                label="Valor pago confirmado"
+                value={
+                  kpis["Valor pago confirmado (no período)"] !== undefined
+                    ? `${money(kpis["Valor pago confirmado (no período)"])} MZN`
+                    : "—"
+                }
+              />
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
             <Card title="Exames Mais Solicitados" subtitle="Laboratoriais e médicos">
               <div className="space-y-4">
                 <BasicHorizontalBarChart data={examesChart} barColor="#0f172a" />
@@ -259,7 +341,8 @@ export default function EstatisticasPage() {
                 <DataTable columns={consCols as any} data={topCons} emptyMessage="Sem dados." />
               </div>
             </Card>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </AppLayout>

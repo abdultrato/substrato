@@ -19,7 +19,8 @@
     --gray-100: #f7f7f7;
     --radius-md: 10px;
     --shadow-md: 0 4px 14px rgba(0, 0, 0, .12);
-    --bg: #f7f7f7;
+    --hover-accent: #7a1b1b;
+    --bg: #eef0f2;
     --card: #ffffff;
     --text: #1f1f1f;
     --border: #e6e6e6;
@@ -43,6 +44,7 @@
     --gray-100: #0b1220;
 
     --shadow-md: 0 12px 34px rgba(0, 0, 0, .55);
+    --hover-accent: #b91c1c;
     --bg: #0b1220;
     --card: #0f172a;
     --text: #e5e7eb;
@@ -67,29 +69,27 @@ html, body {
 
 body {
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-    background:
-        radial-gradient(1200px 800px at 10% -10%, rgba(168, 35, 35, 0.18), transparent 60%),
-        radial-gradient(900px 700px at 110% 0%, rgba(2, 132, 199, 0.10), transparent 55%),
-        radial-gradient(900px 700px at 50% 120%, rgba(168, 35, 35, 0.08), transparent 55%),
-        var(--bg);
+    background: radial-gradient(1200px 800px at 10% -10%, rgba(168, 35, 35, 0.18), transparent 60%),
+    radial-gradient(900px 700px at 110% 0%, rgba(2, 132, 199, 0.10), transparent 55%),
+    radial-gradient(900px 700px at 50% 120%, rgba(168, 35, 35, 0.08), transparent 55%),
+    var(--bg);
     color: var(--text);
     transition: background .5s ease, color .5s ease;
 }
 
 .dark body {
-    background:
-        radial-gradient(1200px 800px at 10% -10%, rgba(239, 68, 68, 0.18), transparent 60%),
-        radial-gradient(900px 700px at 110% 0%, rgba(56, 189, 248, 0.10), transparent 55%),
-        radial-gradient(900px 700px at 50% 120%, rgba(239, 68, 68, 0.10), transparent 55%),
-        var(--bg);
+    background: radial-gradient(1200px 800px at 10% -10%, rgba(239, 68, 68, 0.18), transparent 60%),
+    radial-gradient(900px 700px at 110% 0%, rgba(56, 189, 248, 0.10), transparent 55%),
+    radial-gradient(900px 700px at 50% 120%, rgba(239, 68, 68, 0.10), transparent 55%),
+    var(--bg);
 }
 
 /* ==============================
    CONTAINER PADRÃO
 ================================ */
 .page-box {
-    margin: 20px auto;
-    padding: 20px;
+    margin: 12px auto;
+    padding: 12px;
     background: var(--card);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
@@ -102,12 +102,12 @@ body {
 .page-box .page-title {
     text-align: center;
     color: var(--primary-700);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .page-box h2 {
     color: var(--primary-600);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 /* ==============================
@@ -116,23 +116,30 @@ body {
 form.grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+    gap: 10px;
 }
 
 .page-box input,
 .page-box select,
 .page-box textarea {
     width: 100%;
-    padding: 8px 10px;
+    padding: 6px 8px;
     border: 1px solid var(--gray-300);
     border-radius: 6px;
+    background: var(--card);
+    color: var(--text);
+}
+
+.page-box input::placeholder,
+.page-box textarea::placeholder {
+    color: var(--gray-500);
 }
 
 /* ==============================
    BOTÕES
 ================================ */
 .page-box button {
-    padding: 8px 14px;
+    padding: 4px 12px; /* compact */
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -149,7 +156,7 @@ form.grid {
 }
 
 .btn-secondary {
-    background: #fff;
+    background: var(--card);
     color: var(--primary-500);
     border: 1px solid var(--primary-500);
 }
@@ -168,7 +175,7 @@ form.grid {
    TABELAS
 ================================ */
 .table-container {
-    margin-top: 20px;
+    margin-top: 12px;
     overflow-x: auto;
     border-radius: var(--radius-md);
 }
@@ -184,12 +191,12 @@ form.grid {
 .table-container th {
     background: var(--gray-200);
     color: var(--text);
-    padding: 10px;
+    padding: 5px 6px; /* compact */
 }
 
 .page-box td,
 .table-container td {
-    padding: 6px;
+    padding: 3px 5px; /* compact */
     font-size: .85em;
 }
 
@@ -226,21 +233,21 @@ form.grid {
 ================================ */
 .home-hero {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 18px;
 }
 
 .home-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px;
     justify-content: center;
 }
 
 .home-content {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 20px;
-    margin-bottom: 30px;
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
 .home-main,
@@ -248,7 +255,7 @@ form.grid {
 .home-status {
     background: var(--card);
     border-radius: var(--radius-md);
-    padding: 18px;
+    padding: 12px;
     box-shadow: var(--shadow-md);
 }
 
@@ -316,7 +323,7 @@ form.grid {
 
 .skeleton-row {
     height: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 /* ==============================
@@ -325,7 +332,7 @@ form.grid {
 
 .badge {
     display: inline-block;
-    padding: 4px 8px;
+    padding: 3px 6px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -400,13 +407,13 @@ form.grid {
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-    margin-top: 15px;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .info-grid div {
     background: var(--card);
-    padding: 10px;
+    padding: 8px;
     border-radius: 6px;
     border: 1px solid var(--border);
 }
@@ -493,7 +500,7 @@ form.grid {
 }
 
 .login-form button {
-    padding: 13px;
+    padding: 9px 12px; /* compact */
     border-radius: var(--radius-md);
     border: none;
     background: var(--primary-500);
@@ -559,36 +566,62 @@ form.grid {
 Evita editar centenas de classes utilitárias: remapeia as cores mais usadas
 quando `html.dark` estiver ativo.
 */
-.dark .bg-white { background-color: var(--card); }
-.dark .bg-gray-50 { background-color: var(--gray-100); }
-.dark .bg-slate-50 { background-color: var(--gray-100); }
-.dark .bg-gray-100 { background-color: var(--gray-200); }
+.dark .bg-white {
+    background-color: var(--card);
+}
+
+.dark .bg-gray-50 {
+    background-color: var(--gray-100);
+}
+
+.dark .bg-slate-50 {
+    background-color: var(--gray-100);
+}
+
+.dark .bg-gray-100 {
+    background-color: var(--gray-200);
+}
 
 .dark .text-gray-900,
 .dark .text-slate-900,
 .dark .text-gray-800,
-.dark .text-slate-800 { color: var(--text); }
+.dark .text-slate-800 {
+    color: var(--text);
+}
 
 .dark .text-gray-700,
 .dark .text-slate-700,
 .dark .text-gray-600,
-.dark .text-slate-600 { color: var(--gray-700); }
+.dark .text-slate-600 {
+    color: var(--gray-700);
+}
 
 .dark .text-gray-500,
 .dark .text-slate-500,
 .dark .text-gray-400,
-.dark .text-slate-400 { color: var(--gray-500); }
+.dark .text-slate-400 {
+    color: var(--gray-500);
+}
 
 .dark .border-gray-200,
 .dark .border-slate-200,
 .dark .border-gray-300,
-.dark .border-slate-300 { border-color: var(--border); }
+.dark .border-slate-300 {
+    border-color: var(--border);
+}
 
 .dark .hover\\:bg-gray-50:hover,
-.dark .hover\\:bg-slate-50:hover { background-color: var(--gray-100); }
+.dark .hover\\:bg-slate-50:hover {
+    background-color: var(--gray-100);
+}
 
-.dark .hover\\:bg-gray-100:hover { background-color: var(--gray-200); }
-.dark .hover\\:bg-gray-200:hover { background-color: var(--gray-300); }
+.dark .hover\\:bg-gray-100:hover {
+    background-color: var(--gray-200);
+}
+
+.dark .hover\\:bg-gray-200:hover {
+    background-color: var(--gray-300);
+}
 
 /* ==============================
    FORMULÁRIO
@@ -665,7 +698,7 @@ quando `html.dark` estiver ativo.
 }
 
 .homepage-container-fade-in {
-margin-top: -20px;
+    margin-top: -20px;
 }
 
 .btn-secondary {
@@ -683,14 +716,14 @@ margin-top: -20px;
 
 .btn-secondary, .btn-primary {
     text-decoration: none;
-    padding: 10px;
+    padding: 4px 10px; /* compact: smaller vertical padding */
 }
 
 .btn-primary {
     border-radius: 8px;
     background-color: var(--primary-700);
     font-weight: 1000;
-    padding-top: 8px;
+    padding-top: 4px; /* compact */
 }
 
 .login-title {
@@ -704,7 +737,7 @@ margin-top: -20px;
     margin-top: -150px;
 }
 
-#itens-center{
+#itens-center {
     display: flex;
 }
 
@@ -722,4 +755,8 @@ margin-top: -20px;
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+a {
+    text-decoration: none !important;
 }

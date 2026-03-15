@@ -191,8 +191,14 @@ class Fatura(NoNameCoreModel):
         )["total"]
 
     def _numero_recibo_padrao(self, pagamento):
-        referencia = pagamento.id_custom or pagamento.pk
-        return f"REC-{referencia}"
+        # Um recibo é gerado quando a fatura fica totalmente paga. O número
+        # precisa ser estável e rastreável pela fatura (não pelo pagamento
+        # parcial), mas mantemos referência do pagamento que fechou a fatura.
+        fat_ref = self.id_custom or self.pk
+        pag_ref = getattr(pagamento, "id_custom", None) or getattr(pagamento, "pk", None)
+        if pag_ref:
+            return f"REC-{fat_ref}-{pag_ref}"
+        return f"REC-{fat_ref}"
 
     def gerar_recibo_automatico(self, pagamento):
         if not pagamento or pagamento.status != pagamento.Status.CONFIRMADO:
@@ -200,16 +206,31 @@ class Fatura(NoNameCoreModel):
 
         from aplicativos.pagamentos.modelos.recibo import Recibo
 
-        recibo = Recibo.objects.filter(pagamento=pagamento).order_by("id").first()
+        # Garante 1 recibo por fatura (mesmo que existam pagamentos parciais).
+        # Se já existir, apenas sincroniza o pagamento de referência + valor.
+        recibo = (
+            Recibo.objects.filter(fatura=self).order_by("-criado_em", "-id").first()
+            or Recibo.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
+        )
 
         if recibo:
             campos_atualizar = []
             if recibo.fatura_id != self.pk:
                 recibo.fatura = self
                 campos_atualizar.append("fatura")
-            if recibo.valor != pagamento.valor:
-                recibo.valor = pagamento.valor
+            if recibo.valor != self.total:
+                # O recibo representa o pagamento total da fatura (não apenas
+                # o último pagamento).
+                recibo.valor = self.total
                 campos_atualizar.append("valor")
+            if recibo.pagamento_id != pagamento.pk:
+                recibo.pagamento = pagamento
+                campos_atualizar.append("pagamento")
+
+            numero = self._numero_recibo_padrao(pagamento)
+            if recibo.numero != numero:
+                recibo.numero = numero
+                campos_atualizar.append("numero")
 
             if campos_atualizar:
                 recibo.save(update_fields=campos_atualizar)
@@ -220,7 +241,7 @@ class Fatura(NoNameCoreModel):
             fatura=self,
             pagamento=pagamento,
             numero=self._numero_recibo_padrao(pagamento),
-            valor=pagamento.valor,
+            valor=self.total,
         )
 
     def atualizar_estado_pagamento(self, pagamento=None):

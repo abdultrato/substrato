@@ -250,6 +250,7 @@ class Command(BaseCommand):
 
         for spec in role_users:
             group = Group.objects.get(name=spec.group_name)
+            is_admin_user = spec.group_name == RBAC_GROUPS["ADMIN"]
 
             user = User.objects.filter(username=spec.username).first()
             if not user:
@@ -259,7 +260,8 @@ class Command(BaseCommand):
                     password=password,
                     nome=spec.nome,
                     is_active=True,
-                    is_staff=not no_staff,
+                    # Apenas Administrador deve ter acesso ao Django Admin.
+                    is_staff=(is_admin_user and not no_staff),
                     inquilino=tenant,
                 )
                 created += 1
@@ -278,15 +280,19 @@ class Command(BaseCommand):
                 if not getattr(user, "inquilino_id", None):
                     user.inquilino = tenant
                     fields_to_update.append("inquilino")
-                if not no_staff and not getattr(user, "is_staff", False):
-                    user.is_staff = True
+                # Apenas Administrador deve permanecer staff (acesso /admin).
+                desired_staff = is_admin_user and not no_staff
+                if getattr(user, "is_staff", False) != desired_staff:
+                    user.is_staff = desired_staff
                     fields_to_update.append("is_staff")
                 if getattr(user, "is_active", True) is False:
                     user.is_active = True
                     fields_to_update.append("is_active")
                 # Evita superuser em contas operacionais/gestores de setor.
-                if getattr(user, "is_superuser", False):
-                    user.is_superuser = False
+                # Administrador mantém (ou vira) superuser para administração completa.
+                desired_superuser = is_admin_user
+                if getattr(user, "is_superuser", False) != desired_superuser:
+                    user.is_superuser = desired_superuser
                     fields_to_update.append("is_superuser")
 
                 if reset_password:
@@ -302,7 +308,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Tenant: {tenant.id} {tenant.identificador} ({tenant.nome})")
         self.stdout.write(f"Usuarios criados: {created}, atualizados: {updated}")
-        self.stdout.write("Credenciais (frontend e /admin):")
+        self.stdout.write("Credenciais (frontend; /admin apenas Administrador):")
         for spec in role_users:
             if spec.username in created_usernames or spec.username in password_reset_usernames:
                 pwd_display = password

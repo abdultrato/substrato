@@ -20,7 +20,7 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 
 ## 1) Visão Geral
 - **Backend:** Django 4.2 + Django REST Framework, Postgres, Redis, Celery.
-- **Frontend:** Next.js (App Router), TypeScript, Tailwind (se aplicável), Vitest/jest-dom/testing-library.
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, tema claro/escuro (tokens CSS) e UI orientada a módulos.
 - **Multi‑tenant:** isolamento lógico por inquilino em toda a camada de dados (mixins + middleware).
 - **Eventos/Integrações:** serviços de mensageria (e‑mail, SMS, WhatsApp), gateway de pagamentos e faturamento integrado.
 - **Observabilidade:** health checks /health/live e /health/ready; logs estruturados; métricas previstas.
@@ -31,14 +31,19 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 - **Identidade** (`aplicativos/identidade`): usuários com vínculo obrigatório a inquilino; permissões e auditoria.
 - **Inquilinos** (`aplicativos/inquilinos`): planos, assinaturas, flags de feature e métricas de uso.
 - **Clínico** (`aplicativos/clinico`): pacientes, exames, requisições, resultados.
+- **Prontuário (Cardex)** (`aplicativos/prontuario`): registros clínicos, sintomas/diagnóstico e prescrição estruturada (itens).
+- **Maternidade** (`aplicativos/maternidade`): acompanhamento de gestação (MVP) com campos adicionais (berçário, cama, partos, cesarianas).
 - **Enfermagem** (`aplicativos/enfermagem`): procedimentos, materiais, sinais vitais e evolução; integração com faturamento.
+- **Enfermaria** (`aplicativos/enfermagem`): gestão de enfermaria/camas/internamentos + dashboard (ocupação e próximas medicações).
 - **Farmácia** (`aplicativos/farmacia`): produtos, lotes, estoque, vendas.
 - **Faturamento** (`aplicativos/faturamento`): faturas multi‑origem, itens (exame, farmácia, enfermagem, ajustes), estados (rascunho, emitida, paga).
-- **Pagamentos** (`aplicativos/pagamentos`): pagamentos, transações, recibos automáticos, reconciliação.
+- **Pagamentos** (`aplicativos/pagamentos`): pagamentos, transações, recibos automáticos (1 por fatura) e PDF do recibo.
 - **Contabilidade** (`aplicativos/contabilidade`): contas, lançamentos, movimentos (débito/crédito), conciliação.
 - **Recepção** (`aplicativos/recepcao`): fluxo check‑in → requisição → fatura → pagamento (testado end‑to‑end).
 - **Seguradora** (`aplicativos/seguradora`): seguradoras, planos, autorizações de procedimento.
 - **Notificações** (`aplicativos/notificacoes`): templates, log de envio, canais (e‑mail/SMS/WhatsApp) com idempotência por referência.
+- **Entidades externas** (`aplicativos/entidades`): empresas para medicina ocupacional e requisições/terceirizações.
+- **Dashboard/Estatísticas** (`api/v1/dashboard` + frontend): KPIs, gráficos e exportação de relatórios (PDF/CSV/Word).
 
 ---
 
@@ -67,14 +72,15 @@ Serviço HTTP: gunicorn + nginx/traefik (prod)
 - Restrições de unicidade condicionais por `inquilino`.
 
 ### Documentação & API
-- OpenAPI gerada via DRF Spectacular (`/schema/`).
-- Script `scripts/convert_schema_json.py` converte para `frontend-next/schema.generated.json` para formularios tipados.
+- OpenAPI gerada via DRF Spectacular (`/api/schema/`, `/api/docs/`, `/api/redoc/`).
+- Script `generate_schema.py` gera/atualiza `frontend-next/schema.json` (usado pelo `AutoForm` no frontend).
 
 ---
 
 ## 4) Frontend (Next.js)
 - App Router em `frontend-next/app`.
 - CRUD “Recursos” como exemplo de form auto‑gerado: usa `components/form/AutoForm.tsx` + schema OpenAPI para tipar campos.
+- Tema claro/escuro como atalho rápido (Header/Sidebar) e tokens no `app/globals.css`.
 - Testes com Vitest / Testing Library.
 
 Comandos úteis:
@@ -83,6 +89,8 @@ cd frontend-next
 npm install
 npm test          # vitest
 npm run dev
+npm run build
+npm run build:admin-css   # gera CSS Tailwind compacto para o Django Admin (Jazzmin)
 ```
 
 ---
@@ -99,6 +107,25 @@ Variáveis (.env local):
 - `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=True`, `DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost`
 - `DB_*` para Postgres ou use SQLite default.
 - `REDIS_URL` se usar Celery/Redis local.
+- Notificações (e-mail/WhatsApp):
+- `DEFAULT_FROM_EMAIL`
+- `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`
+- `NOTIFICACOES_EMAIL_ATIVAS=True|False`
+- `NOTIFICACOES_WHATSAPP_ATIVAS=True|False`, `WHATSAPP_API_URL`, `WHATSAPP_API_KEY`
+- Reposição de palavra-passe:
+- `PASSWORD_RESET_TOKEN_TTL_MINUTES` (default: 30)
+
+Nota:
+- Se você executar `manage.py` com um venv que não tem as dependências, erros como `ModuleNotFoundError: django_celery_beat` são esperados.
+- Em modo Docker, prefira rodar comandos Django via `docker compose exec backend ...`.
+
+### Backups e Reset (DEV)
+Scripts prontos (ignorados pelo git via `backups/`):
+```bash
+./scripts/backup_automatico.sh --dest backups --keep 14
+./scripts/reset_banco_e_migracoes.sh
+./scripts/reset_banco_e_migracoes.sh --docker-db
+```
 
 ---
 
@@ -123,6 +150,17 @@ Alternativamente, você pode executar manualmente:
 cp .env.docker .env
 docker compose up --build
 ```
+
+### Usuários de demo (RBAC)
+Após subir os containers, rode:
+```bash
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py bootstrap_role_users --reset-password --password admin123
+```
+
+Credenciais (senha padrão `admin123`):
+- `admin` (Administrador; único usuário com acesso ao `/admin`)
+- `recepcao`, `laboratorio`, `enfermagem`, `medico`, `ocupacional`, `farmacia`, `contabilidade`, `rh`
 
 ### Build das imagens
 ```bash
@@ -190,10 +228,17 @@ npm test
 ---
 
 ## 10) Referências Rápidas
-- **Apps principais:** `aplicativos/` (clinico, enfermagem, farmacia, faturamento, pagamentos, contabilidade, recepcao, seguradora, notificacoes, inquilinos, identidade).
-- **OpenAPI:** `python manage.py spectacular --file schema.yml` ou `make schema`.
-- **Scripts úteis:** `scripts/convert_schema_json.py` (backend → frontend forms).
+- **Apps principais:** `aplicativos/` (clinico, prontuario, maternidade, enfermagem, farmacia, faturamento, pagamentos, contabilidade, consultas, recepcao, entidades, seguradora, notificacoes, inquilinos, identidade).
+- **OpenAPI UI:** `http://localhost:8000/api/docs/` e `http://localhost:8000/api/redoc/`.
+- **Schema para o frontend:** `python generate_schema.py` (gera `frontend-next/schema.json`).
 - **Documentos:** `API-DOCS.md`, `DOCKER-QUICK-START.md`, `CI-CD.md`, `MONITORING.md`, `PROXIMOS_PASSOS.md`.
+
+### Endpoints úteis (PDF/Relatórios)
+- Resultados (LAB): `GET /api/v1/clinico/requisicaoanalise/<id>/pdf_resultados/`
+- Fatura (PDF): `GET /api/v1/faturamento/fatura/<id>/pdf/`
+- Recibo (PDF): `GET /api/v1/pagamentos/recibo/<id>/pdf/`
+- Estatísticas export: `GET /api/v1/dashboard/analytics/export/?tipo=pdf|csv|word`
+- História clínica (paciente): `GET /api/v1/clinico/paciente/<id>/historia_clinica/`
 
 ---
 

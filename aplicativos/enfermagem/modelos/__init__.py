@@ -9,6 +9,7 @@ from .procedimento_material import ProcedimentoMaterial
 from .procedimento_material_valor import ProcedimentoMaterialValor
 from .registro_enfermagem import RegistroEnfermagem
 from .sinal_vital import SinalVitalEnfermagem
+from .enfermaria import Enfermaria, CamaEnfermaria, InternamentoEnfermaria
 
 __all__ = [
     "ProcedimentoCatalogo",
@@ -22,4 +23,7 @@ __all__ = [
     "SinalVitalEnfermagem",
     "EvolucaoEnfermagem",
     "PrescricaoEnfermagem",
+    "Enfermaria",
+    "CamaEnfermaria",
+    "InternamentoEnfermaria",
 ]

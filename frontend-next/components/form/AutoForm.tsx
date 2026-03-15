@@ -55,7 +55,7 @@ function renderInput(
   opts?: { readOnly?: boolean }
 ) {
   const common =
-    "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10"
+    "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm leading-tight text-[var(--text)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10"
   const disabled = !!opts?.readOnly
 
   switch (field.type) {
@@ -212,29 +212,23 @@ export default function AutoForm({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {message && (
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-4 py-2 text-sm text-[var(--text)]">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-1.5 text-sm text-[var(--text)]">
           {message}
         </div>
       )}
 
-      {formSpec.fields.some((f) => f.readOnly && values[f.name] !== undefined && values[f.name] !== null && values[f.name] !== "") ? (
-        <details className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+      {formSpec.fields.some((f) => f.readOnly) ? (
+        <details className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
           <summary className="cursor-pointer select-none text-sm font-semibold text-[var(--text)]">
             Campos somente leitura
           </summary>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
             {formSpec.fields
-              .filter(
-                (f) =>
-                  f.readOnly &&
-                  values[f.name] !== undefined &&
-                  values[f.name] !== null &&
-                  values[f.name] !== ""
-              )
+              .filter((f) => f.readOnly)
               .map((field) => (
-                <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
+                <label key={field.name} className="space-y-0.5 text-sm text-[var(--gray-700)]">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{field.label}</span>
                   </div>
@@ -253,9 +247,9 @@ export default function AutoForm({
         </details>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {formSpec.fields.filter((f) => !f.readOnly).map((field) => (
-          <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
+          <label key={field.name} className="space-y-0.5 text-sm text-[var(--gray-700)]">
             <div className="flex items-center justify-between">
               <span className="font-medium">
                 {field.label}
@@ -278,7 +272,7 @@ export default function AutoForm({
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+          className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
         >
           {submitting ? "Salvando..." : submitLabel}
         </button>

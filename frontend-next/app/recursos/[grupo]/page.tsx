@@ -6,7 +6,9 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleGroup } from "@/lib/modules"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function RecursosGrupoPage({
   params,
@@ -14,11 +16,11 @@ export default function RecursosGrupoPage({
   params: { grupo: string }
 }) {
   const { loading } = useAuthGuard()
+  const { user } = useAuth()
   const group = findModuleGroup(params.grupo)
-  const requiredGroups =
-    params.grupo === "recursos_humanos"
-      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-      : [GROUPS.ADMIN]
+  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
+  const podeVerIndice = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const hrefVoltar = podeVerIndice ? "/recursos" : "/"
 
   if (loading) return null
 
@@ -30,8 +32,8 @@ export default function RecursosGrupoPage({
           <div className="text-sm text-gray-600">
             O módulo solicitado não existe na lista atual.
           </div>
-          <Link href="/recursos" className="text-sm text-gray-700 underline">
-            Voltar para recursos
+          <Link href={hrefVoltar} className="text-sm text-gray-700 underline">
+            Voltar
           </Link>
         </div>
       </AppLayout>
@@ -59,7 +61,7 @@ export default function RecursosGrupoPage({
         </div>
 
         <div className="pt-2">
-          <Link href="/recursos" className="text-sm text-[var(--gray-700)] underline">
+          <Link href={hrefVoltar} className="text-sm text-[var(--gray-700)] underline">
             Voltar
           </Link>
         </div>

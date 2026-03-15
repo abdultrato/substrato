@@ -27,7 +27,7 @@ export default function SearchInput ( {
             value={value}
             placeholder={placeholder}
             onChange={( e ) => setValue( e.target.value )}
-            className="w-full md:w-64 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full md:w-64 px-2.5 py-1 border border-[var(--border)] rounded-lg text-sm bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--gray-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-[var(--primary-500)]"
         />
     )
 }

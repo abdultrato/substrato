@@ -113,7 +113,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     # CABEÇALHO DO DOCUMENTO
     # ==========================
     story.append(Spacer(1, 0.35 * cm))
-    story.append(Paragraph("FATURA / RECIBO", style_title))
+    story.append(Paragraph("FATURA", style_title))
     story.append(Spacer(1, 0.2 * cm))
 
     # ==========================

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useRouter } from "next/navigation";
@@ -13,13 +13,13 @@ export default function EditarExamePage ( { params }: any ) {
 
     const [form, setForm] = useState<any>( null );
 
+    const carregar = useCallback( async () => {
+        setForm( await apiFetch( `/exames/${params.id}/` ) );
+    }, [params.id] );
+
     useEffect( () => {
         carregar();
-    }, [] );
-
-    async function carregar () {
-        setForm( await apiFetch( `/exames/${params.id}/` ) );
-    }
+    }, [carregar] );
 
     async function salvar ( e: any ) {
         e.preventDefault();

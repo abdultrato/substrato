@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
@@ -32,6 +34,24 @@ class ReciboViewSet(ModelViewSet):
     search_fields = ['numero']
     ordering_fields = ['fatura', 'pagamento', 'numero', 'valor', 'criado_em']
     ordering = ['-criado_em']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        inquilino = getattr(self.request, "inquilino", None)
+        if inquilino is not None:
+            # Recibo não tem campo inquilino próprio; filtra pelo inquilino da fatura.
+            queryset = queryset.filter(fatura__inquilino=inquilino)
+        return queryset
+
+    @action(detail=True, methods=["get"])
+    def pdf(self, request, pk=None):
+        recibo = self.get_object()
+        from tarefas.gerar_pdf.pdf_generator_recibo import gerar_pdf_recibo
+
+        pdf_bytes, filename = gerar_pdf_recibo(recibo, request=request)
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename=\"{filename}\"'
+        return resp
 
 class ReconciliacaoViewSet(ModelViewSet):
     queryset = Reconciliacao.objects.all()

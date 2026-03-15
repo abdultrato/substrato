@@ -8,11 +8,15 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
-import { GROUPS } from "@/lib/rbac"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ProdutoRow = Record<string, any>
 
 export default function FarmaciaProdutosPage() {
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<ProdutoRow[]>([])
@@ -55,7 +59,17 @@ export default function FarmaciaProdutosPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (p: ProdutoRow) => p.id_custom || p.id || "-" },
+      {
+        header: "Código",
+        render: (p: ProdutoRow) => (
+          <Link
+            href={`/recursos/farmacia/produto/${p.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {p.id_custom || p.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Nome", render: (p: ProdutoRow) => p.nome || p.descricao || "-" },
       { header: "Tipo", render: (p: ProdutoRow) => p.tipo || p.categoria || "-" },
       { header: "Ativo", render: (p: ProdutoRow) => (p.ativo === false ? "Não" : "Sim") },
@@ -70,12 +84,28 @@ export default function FarmaciaProdutosPage() {
           title="Produtos"
           subtitle="Catálogo de itens de farmácia/almoxarifado."
           actions={
-            <Link
-              href="/admin/farmacia/produto/"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Abrir no admin
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/recursos/farmacia/produto/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/farmacia/produto"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                CRUD
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/farmacia/produto/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

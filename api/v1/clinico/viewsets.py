@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from django.http import HttpResponse
 from django.db import transaction
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -241,6 +241,196 @@ class PacienteViewSet(ModelViewSet):
 	)
 	def partial_update(self, request, *args, **kwargs):
 		return super().partial_update(request, *args, **kwargs)
+
+	def _user_pode_ver_historia_clinica(self, user) -> bool:
+		"""
+		História clínica contém dados sensíveis. Limitamos explicitamente a:
+		- Administrador
+		- Médico
+		- Medicina Ocupacional
+		"""
+		if not user or not getattr(user, "is_authenticated", False):
+			return False
+		if getattr(user, "is_superuser", False):
+			return True
+		try:
+			from seguranca.permissoes.rbac import GROUPS as RBAC_GROUPS, _normalize
+
+			raw_groups = list(user.groups.values_list("name", flat=True))
+			user_groups = {_normalize(g) for g in raw_groups if g}
+			permitidos = {
+				_normalize(RBAC_GROUPS["ADMIN"]),
+				_normalize(RBAC_GROUPS["MEDICINA"]),
+				_normalize(RBAC_GROUPS["MEDICINA_OCUPACIONAL"]),
+			}
+			return bool(user_groups & permitidos)
+		except Exception:
+			return False
+
+	def _montar_historia_clinica(self, request, paciente: Paciente) -> dict:
+		inquilino = getattr(request, "inquilino", None) or getattr(paciente, "inquilino", None)
+
+		try:
+			limit = int(request.query_params.get("limit") or 200)
+		except Exception:
+			limit = 200
+		limit = max(1, min(limit, 1000))
+
+		# Vincular por número do documento: se houver, incluir eventuais registros
+		# associados ao mesmo documento no mesmo inquilino.
+		paciente_ids = [paciente.id]
+		numero_id = (getattr(paciente, "numero_id", None) or "").strip()
+		if numero_id:
+			qs_pacs = Paciente.objects.filter(deletado=False, numero_id=numero_id)
+			if inquilino is not None:
+				qs_pacs = qs_pacs.filter(inquilino=inquilino)
+			paciente_ids = list(qs_pacs.values_list("id", flat=True))
+
+		# Prontuário (Cardex)
+		from aplicativos.prontuario.modelos.registro_prontuario import RegistroProntuario
+		from api.v1.prontuario.serializers import RegistroProntuarioSerializer
+
+		qs_prontuario = (
+			RegistroProntuario.objects.filter(
+				deletado=False,
+				paciente_id__in=paciente_ids,
+			)
+			.select_related("paciente", "medico")
+			.prefetch_related("consultas", "itens_prescricao", "itens_prescricao__medicacao")
+			.order_by("-inicio_atendimento", "-criado_em")
+		)
+		if inquilino is not None:
+			qs_prontuario = qs_prontuario.filter(inquilino=inquilino)
+
+		# Requisições (exames)
+		qs_requisicoes = (
+			RequisicaoAnalise.objects.filter(
+				deletado=False,
+				paciente_id__in=paciente_ids,
+			)
+			.select_related("paciente", "empresa_solicitante", "empresa_executora_externa")
+			.prefetch_related("itens", "itens__exame", "itens__exame_medico")
+			.order_by("-criado_em")
+		)
+		if inquilino is not None:
+			qs_requisicoes = qs_requisicoes.filter(inquilino=inquilino)
+
+		# Consultas
+		from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
+		from api.v1.consultas.serializers import ConsultaMedicaSerializer
+
+		qs_consultas = ConsultaMedica.objects.filter(
+			deletado=False,
+			paciente_id__in=paciente_ids,
+		).select_related("paciente", "medico", "especialidade").order_by("-agendada_para", "-criado_em")
+		if inquilino is not None:
+			qs_consultas = qs_consultas.filter(inquilino=inquilino)
+
+		# Enfermagem: procedimentos + internamentos
+		from aplicativos.enfermagem.modelos.procedimento import Procedimento
+		from aplicativos.enfermagem.modelos.enfermaria import InternamentoEnfermaria
+		from api.v1.enfermagem.serializers import (
+			InternamentoEnfermariaSerializer,
+			ProcedimentoSerializer,
+		)
+
+		qs_procedimentos = Procedimento.objects.filter(
+			deletado=False,
+			paciente_id__in=paciente_ids,
+		).select_related("paciente", "profissional").order_by("-data_realizacao", "-criado_em")
+		if inquilino is not None:
+			qs_procedimentos = qs_procedimentos.filter(inquilino=inquilino)
+
+		qs_internamentos = InternamentoEnfermaria.objects.filter(
+			deletado=False,
+			paciente_id__in=paciente_ids,
+		).select_related("paciente", "cama", "cama__enfermaria").order_by("-data_internamento", "-criado_em")
+		if inquilino is not None:
+			qs_internamentos = qs_internamentos.filter(inquilino=inquilino)
+
+		# Farmácia: vendas
+		from aplicativos.farmacia.models.venda import Venda
+		from api.v1.farmacia.serializers import VendaSerializer
+
+		qs_vendas = Venda.objects.filter(
+			deletado=False,
+			paciente_id__in=paciente_ids,
+		).select_related("paciente").order_by("-criado_em")
+		if inquilino is not None:
+			qs_vendas = qs_vendas.filter(inquilino=inquilino)
+
+		# Financeiro: faturas e recibos
+		from aplicativos.faturamento.modelos.fatura import Fatura
+		from api.v1.faturamento.serializers import FaturaSerializer
+
+		qs_faturas = Fatura.objects.filter(
+			deletado=False,
+			paciente_id__in=paciente_ids,
+		).order_by("-criado_em")
+		if inquilino is not None:
+			qs_faturas = qs_faturas.filter(inquilino=inquilino)
+
+		from aplicativos.pagamentos.modelos.recibo import Recibo
+		from api.v1.pagamentos.serializers import ReciboSerializer
+
+		qs_recibos = Recibo.objects.filter(
+			fatura__deletado=False,
+			fatura__paciente_id__in=paciente_ids,
+		).select_related("fatura", "fatura__paciente", "pagamento").order_by("-criado_em")
+		if inquilino is not None:
+			qs_recibos = qs_recibos.filter(fatura__inquilino=inquilino)
+
+		return {
+			"paciente": PacienteSerializer(paciente).data,
+			"referencia": {
+				"numero_documento": numero_id or None,
+				"pacientes_vinculados": len(set(paciente_ids)),
+			},
+			"cardex": RegistroProntuarioSerializer(qs_prontuario[:limit], many=True).data,
+			"consultas": ConsultaMedicaSerializer(qs_consultas[:limit], many=True).data,
+			"requisicoes": RequisicaoAnaliseSerializer(qs_requisicoes[:limit], many=True, context={"request": request}).data,
+			"procedimentos_enfermagem": ProcedimentoSerializer(qs_procedimentos[:limit], many=True).data,
+			"internamentos_enfermaria": InternamentoEnfermariaSerializer(qs_internamentos[:limit], many=True).data,
+			"vendas_farmacia": VendaSerializer(qs_vendas[:limit], many=True).data,
+			"faturas": FaturaSerializer(qs_faturas[:limit], many=True).data,
+			"recibos": ReciboSerializer(qs_recibos[:limit], many=True).data,
+		}
+
+	@action(detail=True, methods=["get"])
+	def historia_clinica(self, request, pk=None):
+		if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+			raise PermissionDenied(
+				"Apenas Médico/Medicina Ocupacional/Administrador pode ver a história clínica."
+			)
+
+		paciente = self.get_object()
+		return Response(self._montar_historia_clinica(request, paciente))
+
+	@action(detail=False, methods=["get"], url_path="historia_clinica")
+	def historia_clinica_busca(self, request):
+		"""
+		Busca História Clínica por número de documento.
+		Ex.: /api/v1/clinico/paciente/historia_clinica/?numero_id=...
+		"""
+		if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+			raise PermissionDenied(
+				"Apenas Médico/Medicina Ocupacional/Administrador pode ver a história clínica."
+			)
+
+		numero_id = (request.query_params.get("numero_id") or "").strip()
+		if not numero_id:
+			raise ValidationError({"numero_id": "Informe o número do documento."})
+
+		inquilino = getattr(request, "inquilino", None)
+		qs = Paciente.objects.filter(deletado=False, numero_id=numero_id)
+		if inquilino is not None:
+			qs = qs.filter(inquilino=inquilino)
+
+		paciente = qs.first()
+		if not paciente:
+			raise NotFound("Paciente não encontrado para este número de documento.")
+
+		return Response(self._montar_historia_clinica(request, paciente))
 
 
 @extend_schema(

@@ -46,7 +46,7 @@ export default function Modal ( {
                 className={`relative bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-lg w-full ${widths[width]} mx-4`}
             >
                 {( title || onClose ) && (
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
                         {title && (
                             <h3 className="text-sm font-semibold text-[var(--text)]">
                                 {title}
@@ -62,7 +62,7 @@ export default function Modal ( {
                     </div>
                 )}
 
-                <div className="p-5">{children}</div>
+                <div className="p-4">{children}</div>
             </div>
         </div>
     )

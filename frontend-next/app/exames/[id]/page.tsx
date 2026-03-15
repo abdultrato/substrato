@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Exame, ExameCampo } from "@/lib/types";
@@ -13,18 +13,18 @@ export default function ExameDetailPage ( { params }: any ) {
     const [exame, setExame] = useState<Exame | null>( null );
     const [campos, setCampos] = useState<ExameCampo[]>( [] );
 
-    useEffect( () => {
-        carregar();
-    }, [] );
-
-    async function carregar () {
+    const carregar = useCallback( async () => {
         const ex = await apiFetch<Exame>( `/exames/${params.id}/` );
         setExame( ex );
 
         const r = await apiFetch<any>( `/clinico/examecampo/?exame=${params.id}` );
         const data = r && (r as any).results ? (r as any).results : (r as any);
         setCampos( Array.isArray( data ) ? data : [] );
-    }
+    }, [params.id] );
+
+    useEffect( () => {
+        carregar();
+    }, [carregar] );
 
     if ( !exame ) {
         return (

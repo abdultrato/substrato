@@ -7,7 +7,7 @@ import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 export default function RecursosRecursoPage({
   params,
@@ -16,16 +16,13 @@ export default function RecursosRecursoPage({
 }) {
   const { loading } = useAuthGuard()
   const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups =
-    params.grupo === "recursos_humanos"
-      ? [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-      : [GROUPS.ADMIN]
+  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
 
   if (loading) return null
 
   if (!found) {
     return (
-      <AppLayout>
+      <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"

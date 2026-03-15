@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Requisicao } from "@/lib/types";
 import Link from "next/link";
@@ -19,12 +19,10 @@ export default function RequisicaoDetail ( {
     const [loading, setLoading] = useState( true );
     const [error, setError] = useState<string | null>( null );
 
-    useEffect( () => {
-        carregar();
-    }, [] );
-
-    async function carregar () {
+    const carregar = useCallback( async () => {
         try {
+            setLoading( true );
+            setError( null );
             const data = await apiFetch( `/requisicoes/${params.id}/` );
             setReq( data );
         } catch {
@@ -32,7 +30,11 @@ export default function RequisicaoDetail ( {
         } finally {
             setLoading( false );
         }
-    }
+    }, [params.id] );
+
+    useEffect( () => {
+        carregar();
+    }, [carregar] );
 
     const requiredGroups = [
         GROUPS.ADMIN,

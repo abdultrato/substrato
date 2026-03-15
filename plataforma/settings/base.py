@@ -12,7 +12,10 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-load_dotenv(BASE_DIR / ".env.staging")
+# Carrega variáveis do ambiente.
+# Preferência: `.env` (local/docker) e depois `.env.staging` (fallback).
+load_dotenv(BASE_DIR / ".env", override=False)
+load_dotenv(BASE_DIR / ".env.staging", override=False)
 
 ROOT_URLCONF = "plataforma.urls"
 WSGI_APPLICATION = "plataforma.wsgi.application"
@@ -111,7 +114,330 @@ JAZZMIN_SETTINGS = {
 		"site_brand": "Substrato",
 		"welcome_sign": "Bem-vindo ao Substrato",
 		"copyright": "Substrato",
-		}
+		
+		# CSS customizado (gerado via Tailwind; ver `frontend-next/styles/admin-tailwind.input.css`)
+		"custom_css": "admin/css/substrato-admin-tailwind.css",
+		
+		# Ícones por app/model (Font Awesome 5 Free; chaves são lower-case).
+		"icons": {
+				# Django built-ins
+				"admin": "fas fa-clipboard-list",
+				"admin.logentry": "fas fa-clipboard-check",
+				"auth": "fas fa-users-cog",
+				"auth.group": "fas fa-users",
+				"auth.permission": "fas fa-key",
+				"contenttypes": "fas fa-database",
+				"contenttypes.contenttype": "fas fa-database",
+				"sessions": "fas fa-clock",
+				"sessions.session": "fas fa-clock",
+				
+				# Celery beat
+				"django_celery_beat": "fas fa-stopwatch",
+				"django_celery_beat.periodictask": "fas fa-tasks",
+				"django_celery_beat.periodictasks": "fas fa-layer-group",
+				"django_celery_beat.intervalschedule": "fas fa-clock",
+				"django_celery_beat.crontabschedule": "fas fa-calendar-alt",
+				"django_celery_beat.solarschedule": "fas fa-sun",
+				"django_celery_beat.clockedschedule": "fas fa-calendar-check",
+				
+				# Substrato apps
+				"identidade": "fas fa-user-shield",
+				"identidade.usuario": "fas fa-user",
+				"identidade.perfilprofissional": "fas fa-id-badge",
+				"identidade.passwordresettoken": "fas fa-key",
+				
+				"inquilinos": "fas fa-city",
+				"inquilinos.inquilino": "fas fa-city",
+				"inquilinos.planoassinatura": "fas fa-clipboard-list",
+				"inquilinos.assinaturatenant": "fas fa-file-signature",
+				"inquilinos.featureflagtenant": "fas fa-toggle-on",
+				"inquilinos.configuracaoinquilino": "fas fa-cogs",
+				"inquilinos.usotenant": "fas fa-chart-bar",
+				
+				"clinico": "fas fa-hospital-user",
+				"clinico.paciente": "fas fa-user-injured",
+				"clinico.exame": "fas fa-vial",
+				"clinico.examecampo": "fas fa-sliders-h",
+				"clinico.examemedico": "fas fa-stethoscope",
+				"clinico.examemedicocampo": "fas fa-clipboard-list",
+				"clinico.requisicaoanalise": "fas fa-file-medical-alt",
+				"clinico.requisicaoitem": "fas fa-file-medical",
+				"clinico.resultado": "fas fa-notes-medical",
+				"clinico.resultadoitem": "fas fa-clipboard-check",
+				"clinico.historicoclinico": "fas fa-book-medical",
+				"clinico.referenciaclinica": "fas fa-hand-holding-medical",
+				"clinico.eventoclinico": "fas fa-bell",
+				
+				"prontuario": "fas fa-notes-medical",
+				"prontuario.registroprontuario": "fas fa-book-medical",
+				"prontuario.prescricaoitem": "fas fa-pills",
+				
+				"consultas": "fas fa-stethoscope",
+				"consultas.consultamedica": "fas fa-calendar-check",
+				"consultas.especialidadeconsulta": "fas fa-sitemap",
+				"consultas.feriado": "fas fa-calendar-day",
+				
+				"maternidade": "fas fa-baby",
+				"maternidade.gestacao": "fas fa-baby",
+				
+				"enfermagem": "fas fa-user-nurse",
+				"enfermagem.enfermaria": "fas fa-bed",
+				"enfermagem.camaenfermaria": "fas fa-bed",
+				"enfermagem.internamentoenfermaria": "fas fa-hospital",
+				"enfermagem.registroenfermagem": "fas fa-notes-medical",
+				"enfermagem.sinalvitalenfermagem": "fas fa-heartbeat",
+				"enfermagem.evolucaoenfermagem": "fas fa-chart-line",
+				"enfermagem.prescricaoenfermagem": "fas fa-prescription-bottle-alt",
+				"enfermagem.procedimento": "fas fa-syringe",
+				"enfermagem.procedimentocatalogo": "fas fa-th-list",
+				"enfermagem.procedimentocatalogomaterial": "fas fa-boxes",
+				"enfermagem.procedimentoitem": "fas fa-list",
+				"enfermagem.procedimentoitemvalor": "fas fa-tag",
+				"enfermagem.procedimentomaterial": "fas fa-box",
+				"enfermagem.procedimentomaterialvalor": "fas fa-tag",
+				
+				"farmacia": "fas fa-prescription-bottle-alt",
+				"farmacia.categoriaproduto": "fas fa-tags",
+				"farmacia.produto": "fas fa-pills",
+				"farmacia.lote": "fas fa-barcode",
+				"farmacia.movimentoestoque": "fas fa-exchange-alt",
+				"farmacia.venda": "fas fa-cash-register",
+				"farmacia.itemvenda": "fas fa-receipt",
+				
+				"faturamento": "fas fa-file-invoice-dollar",
+				"faturamento.fatura": "fas fa-file-invoice-dollar",
+				"faturamento.faturaitem": "fas fa-list-ul",
+				"faturamento.historicofatura": "fas fa-history",
+				
+				"pagamentos": "fas fa-money-check-alt",
+				"pagamentos.pagamento": "fas fa-money-bill-wave",
+				"pagamentos.transacao": "fas fa-exchange-alt",
+				"pagamentos.recibo": "fas fa-receipt",
+				"pagamentos.reconciliacao": "fas fa-balance-scale",
+				"pagamentos.historicopagamento": "fas fa-history",
+				
+				"contabilidade": "fas fa-calculator",
+				"contabilidade.conta": "fas fa-wallet",
+				"contabilidade.lancamento": "fas fa-pen-fancy",
+				"contabilidade.movimento": "fas fa-arrows-alt-h",
+				"contabilidade.conciliacaofinanceira": "fas fa-balance-scale",
+				"contabilidade.ledgerentry": "fas fa-book",
+				"contabilidade.ledgerline": "fas fa-stream",
+				"contabilidade.saldoconta": "fas fa-chart-pie",
+				
+				"recepcao": "fas fa-concierge-bell",
+				"recepcao.checkinrecepcao": "fas fa-clipboard-check",
+				
+				"entidades": "fas fa-building",
+				"entidades.empresa": "fas fa-industry",
+				
+				"seguradora": "fas fa-shield-alt",
+				"seguradora.seguradora": "fas fa-shield-alt",
+				"seguradora.planocobertura": "fas fa-clipboard-list",
+				"seguradora.autorizacaoprocedimento": "fas fa-stamp",
+				"seguradora.tenantplanocobertura": "fas fa-link",
+				
+				"notificacoes": "fas fa-bell",
+				"notificacoes.notificacao": "fas fa-paper-plane",
+				"notificacoes.templatenotificacao": "fas fa-file-alt",
+				"notificacoes.logenvio": "fas fa-clipboard-check",
+				
+				"auditoria_atividades": "fas fa-clipboard-list",
+				"auditoria_atividades.atividadeusuario": "fas fa-user-clock",
+				
+				"cirurgia": "fas fa-procedures",
+				"cirurgia.cirurgia": "fas fa-procedures",
+				"cirurgia.procedimentocirurgico": "fas fa-syringe",
+				
+				"integracoes_equipamentos": "fas fa-microchip",
+				"integracoes_equipamentos.integracaoequipamento": "fas fa-microscope",
+				"integracoes_equipamentos.integracaocredencial": "fas fa-key",
+				"integracoes_equipamentos.integracaodocumento": "fas fa-file-alt",
+				"integracoes_equipamentos.integracaomapeamentoanalito": "fas fa-project-diagram",
+				"integracoes_equipamentos.integracaomensagem": "fas fa-envelope-open-text",
+				"integracoes_equipamentos.integracaoordem": "fas fa-tasks",
+				"integracoes_equipamentos.integracaoordemitem": "fas fa-list-ol",
+				"integracoes_equipamentos.integracaoroteamento": "fas fa-route",
+				
+				"recursos_humanos": "fas fa-users",
+				"recursos_humanos.funcionario": "fas fa-user-tie",
+				"recursos_humanos.cargo": "fas fa-briefcase",
+				"recursos_humanos.agregadofamiliar": "fas fa-user-friends",
+				"recursos_humanos.falta": "fas fa-user-times",
+				"recursos_humanos.ferias": "fas fa-umbrella-beach",
+				"recursos_humanos.folhapagamento": "fas fa-file-invoice",
+				"recursos_humanos.dispensa": "fas fa-user-slash",
+				"recursos_humanos.horaextra": "fas fa-clock",
+				"recursos_humanos.horariotrabalho": "fas fa-calendar-alt",
+				
+					"monitoramento": "fas fa-heartbeat",
+					"monitoramento.errosistema": "fas fa-bug",
+					},
+			
+			# Ordena apps e modelos no menu lateral do Admin (Jazzmin).
+			# Prioriza fluxo operacional: Recepção -> Laboratório -> Enfermagem -> Farmácia.
+			"order_with_respect_to": [
+					# Fluxo principal
+					"recepcao",
+					"recepcao.checkinrecepcao",
+					
+					"clinico",
+					"clinico.paciente",
+					"clinico.requisicaoanalise",
+					"clinico.requisicaoitem",
+					"clinico.resultado",
+					"clinico.resultadoitem",
+					"clinico.exame",
+					"clinico.examecampo",
+					"clinico.referenciaclinica",
+					"clinico.historicoclinico",
+					"clinico.eventoclinico",
+					"clinico.examemedico",
+					"clinico.examemedicocampo",
+					
+					"enfermagem",
+					"enfermagem.enfermaria",
+					"enfermagem.camaenfermaria",
+					"enfermagem.internamentoenfermaria",
+					"enfermagem.registroenfermagem",
+					"enfermagem.sinalvitalenfermagem",
+					"enfermagem.evolucaoenfermagem",
+					"enfermagem.prescricaoenfermagem",
+					"enfermagem.procedimento",
+					"enfermagem.procedimentoitem",
+					"enfermagem.procedimentomaterial",
+					"enfermagem.procedimentocatalogo",
+					"enfermagem.procedimentocatalogomaterial",
+					"enfermagem.procedimentoitemvalor",
+					"enfermagem.procedimentomaterialvalor",
+					
+					"farmacia",
+					"farmacia.categoriaproduto",
+					"farmacia.produto",
+					"farmacia.lote",
+					"farmacia.movimentoestoque",
+					"farmacia.venda",
+					"farmacia.itemvenda",
+					
+					# Financeiro
+					"faturamento",
+					"faturamento.fatura",
+					"faturamento.faturaitem",
+					"faturamento.historicofatura",
+					
+					"pagamentos",
+					"pagamentos.pagamento",
+					"pagamentos.recibo",
+					"pagamentos.transacao",
+					"pagamentos.reconciliacao",
+					"pagamentos.historicopagamento",
+					
+					"contabilidade",
+					"contabilidade.conta",
+					"contabilidade.lancamento",
+					"contabilidade.movimento",
+					"contabilidade.conciliacaofinanceira",
+					"contabilidade.ledgerentry",
+					"contabilidade.ledgerline",
+					"contabilidade.saldoconta",
+					
+					# Clínica
+					"consultas",
+					"consultas.consultamedica",
+					"consultas.especialidadeconsulta",
+					"consultas.feriado",
+					
+					"prontuario",
+					"prontuario.registroprontuario",
+					"prontuario.prescricaoitem",
+					
+					"maternidade",
+					"maternidade.gestacao",
+					
+					"cirurgia",
+					"cirurgia.procedimentocirurgico",
+					"cirurgia.cirurgia",
+					
+					# Operação/Config
+					"entidades",
+					"entidades.empresa",
+					
+					"seguradora",
+					"seguradora.seguradora",
+					"seguradora.planocobertura",
+					"seguradora.tenantplanocobertura",
+					"seguradora.autorizacaoprocedimento",
+					
+					"notificacoes",
+					"notificacoes.templatenotificacao",
+					"notificacoes.notificacao",
+					"notificacoes.logenvio",
+					
+					"auditoria_atividades",
+					"auditoria_atividades.atividadeusuario",
+					
+					"integracoes_equipamentos",
+					"integracoes_equipamentos.integracaoequipamento",
+					"integracoes_equipamentos.integracaodocumento",
+					"integracoes_equipamentos.integracaocredencial",
+					"integracoes_equipamentos.integracaomapeamentoanalito",
+					"integracoes_equipamentos.integracaomensagem",
+					"integracoes_equipamentos.integracaoordem",
+					"integracoes_equipamentos.integracaoordemitem",
+					"integracoes_equipamentos.integracaoroteamento",
+					
+					"recursos_humanos",
+					"recursos_humanos.funcionario",
+					"recursos_humanos.cargo",
+					"recursos_humanos.agregadofamiliar",
+					"recursos_humanos.horariotrabalho",
+					"recursos_humanos.ferias",
+					"recursos_humanos.falta",
+					"recursos_humanos.dispensa",
+					"recursos_humanos.folhapagamento",
+					"recursos_humanos.horaextra",
+					
+					"monitoramento",
+					"monitoramento.errosistema",
+					
+					"inquilinos",
+					"inquilinos.inquilino",
+					"inquilinos.planoassinatura",
+					"inquilinos.assinaturatenant",
+					"inquilinos.featureflagtenant",
+					"inquilinos.configuracaoinquilino",
+					"inquilinos.usotenant",
+					
+					"identidade",
+					"identidade.usuario",
+					"identidade.perfilprofissional",
+					"identidade.passwordresettoken",
+					
+					# Tech/Admin (no fim)
+					"django_celery_beat",
+					"django_celery_beat.periodictask",
+					"django_celery_beat.periodictasks",
+					"django_celery_beat.intervalschedule",
+					"django_celery_beat.crontabschedule",
+					"django_celery_beat.solarschedule",
+					"django_celery_beat.clockedschedule",
+					
+					"auth",
+					"auth.group",
+					"auth.permission",
+					
+					"admin",
+					"admin.logentry",
+					
+					"contenttypes",
+					"contenttypes.contenttype",
+					"sessions",
+					"sessions.session",
+					],
+			
+			"default_icon_parents": "fas fa-layer-group",
+			"default_icon_children": "far fa-dot-circle",
+			}
 
 # =========================================================
 # MIDDLEWARE
@@ -310,6 +636,8 @@ REST_FRAMEWORK = {
 		
 		"DEFAULT_FILTER_BACKENDS": [
 				"django_filters.rest_framework.DjangoFilterBackend",
+				"rest_framework.filters.SearchFilter",
+				"rest_framework.filters.OrderingFilter",
 				],
 		
 		"DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -383,6 +711,24 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 # =========================================================
+# E-MAIL
+# =========================================================
+
+EMAIL_BACKEND = get_env(
+		"EMAIL_BACKEND",
+		"django.core.mail.backends.console.EmailBackend"
+		if DEBUG
+		else "django.core.mail.backends.smtp.EmailBackend",
+		)
+EMAIL_HOST = get_env("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(get_env("EMAIL_PORT", "25"))
+EMAIL_HOST_USER = get_env("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = get_env("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = get_env("EMAIL_USE_TLS", "False").lower() == "true"
+EMAIL_USE_SSL = get_env("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_TIMEOUT = int(get_env("EMAIL_TIMEOUT", "10"))
+
+# =========================================================
 # NOTIFICAÇÕES
 # =========================================================
 
@@ -411,6 +757,13 @@ SMS_API_KEY = get_env("SMS_API_KEY", "")
 
 WHATSAPP_API_URL = get_env("WHATSAPP_API_URL", "")
 WHATSAPP_API_KEY = get_env("WHATSAPP_API_KEY", "")
+
+# =========================================================
+# PASSWORD RESET
+# =========================================================
+#
+# TTL em minutos para tokens de reposição de palavra-passe (API /auth/password-reset/*).
+PASSWORD_RESET_TOKEN_TTL_MINUTES = int(get_env("PASSWORD_RESET_TOKEN_TTL_MINUTES", "30"))
 
 # =========================================================
 # DEFAULT PRIMARY KEY

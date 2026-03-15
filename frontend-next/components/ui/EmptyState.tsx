@@ -15,7 +15,7 @@ export default function EmptyState ( {
     icon,
 }: Props ) {
     return (
-        <div className="flex flex-col items-center justify-center text-center py-16 px-4">
+        <div className="flex flex-col items-center justify-center text-center py-10 px-3">
             <div className="mb-4 text-gray-300">
                 {icon ?? <Inbox size={42} />}
             </div>

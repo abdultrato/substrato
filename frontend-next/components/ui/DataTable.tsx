@@ -22,7 +22,7 @@ export default function DataTable<T> ( {
 }: Props<T> ) {
     if ( !data.length ) {
         return (
-            <div className="text-center py-10 text-sm text-[var(--gray-500)]">
+            <div className="text-center py-6 text-sm text-[var(--gray-500)]">
                 {emptyMessage}
             </div>
         )
@@ -36,7 +36,7 @@ export default function DataTable<T> ( {
                         {columns.map( ( col, idx ) => (
                             <th
                                 key={idx}
-                                className="text-left font-medium px-4 py-3"
+                                className="text-left font-medium px-2 py-1.5"
                             >
                                 {col.header}
                             </th>
@@ -50,7 +50,7 @@ export default function DataTable<T> ( {
                             {columns.map( ( col, idx ) => (
                                 <td
                                     key={idx}
-                                    className={`px-4 py-3 ${col.className ?? ""}`}
+                                    className={`px-2 py-1.5 ${col.className ?? ""}`}
                                 >
                                     {col.render
                                         ? col.render( row )

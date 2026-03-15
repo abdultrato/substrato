@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Entidade, Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
@@ -12,8 +12,9 @@ export default function EditarPacientePage () {
     useAuthGuard();
 
     const router = useRouter();
-    const { id } = useParams();
-    const pacienteId = Number( id );
+    const { id } = useParams() as { id?: string | string[] };
+    const idStr = Array.isArray( id ) ? id[0] : id;
+    const pacienteId = Number( idStr );
 
     const [form, setForm] = useState<PacienteCreateDTO>( {
         nome: "",
@@ -34,12 +35,13 @@ export default function EditarPacientePage () {
     const [saving, setSaving] = useState( false );
     const [error, setError] = useState<string | null>( null );
 
-    useEffect( () => {
-        carregar();
-    }, [pacienteId] );
-
-    async function carregar () {
+    const carregar = useCallback( async () => {
         try {
+            setLoading( true );
+            setError( null );
+            if ( !Number.isFinite( pacienteId ) || !pacienteId ) {
+                throw new Error( "ID de paciente inválido." )
+            }
             const [data, emps] = await Promise.all( [
                 apiFetch<Paciente>( `/pacientes/${pacienteId}/` ),
                 apiFetch<Entidade[]>( "/entidades/" ),
@@ -66,7 +68,11 @@ export default function EditarPacientePage () {
         } finally {
             setLoading( false );
         }
-    }
+    }, [pacienteId] );
+
+    useEffect( () => {
+        carregar();
+    }, [carregar] );
 
     function handleChange (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

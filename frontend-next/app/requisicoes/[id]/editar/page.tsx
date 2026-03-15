@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Paciente, Exame, ExameMedico, Requisicao } from "@/lib/types";
@@ -27,12 +27,10 @@ export default function EditarRequisicaoPage ( {
     const [tipo, setTipo] = useState<"LAB" | "MED">( "LAB" );
     const [selecionados, setSelecionados] = useState<number[]>( [] );
 
-    useEffect( () => {
-        carregar();
-    }, [] );
-
-    async function carregar () {
+    const carregar = useCallback( async () => {
         try {
+            setLoading( true );
+            setError( null );
             const req = await apiFetch<Requisicao>( `/requisicoes/${params.id}/` );
             const tipoReq = (req?.tipo as any) || "LAB";
 
@@ -52,7 +50,11 @@ export default function EditarRequisicaoPage ( {
         } finally {
             setLoading( false );
         }
-    }
+    }, [params.id] );
+
+    useEffect( () => {
+        carregar();
+    }, [carregar] );
 
     function toggleExame ( id: number ) {
         setSelecionados( prev =>
