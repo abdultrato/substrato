@@ -50,9 +50,7 @@ class Ferias(NoNameCoreModel):
         super().clean()
 
         if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"funcionario": "Funcionário e férias devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"funcionario": "Funcionário e férias devem pertencer ao mesmo inquilino."})
 
         if self.data_inicio and self.data_fim and self.data_inicio > self.data_fim:
             raise ValidationError({"data_fim": "Data fim deve ser maior ou igual a data início."})
@@ -62,4 +60,3 @@ class Ferias(NoNameCoreModel):
             self.inquilino_id = self.funcionario.inquilino_id
         self.full_clean()
         return super().save(*args, **kwargs)
-

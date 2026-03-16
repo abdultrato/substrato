@@ -24,4 +24,3 @@ class LogEnvio(models.Model):
 
     def __str__(self) -> str:
         return f"{self.status} - {self.notificacao_id}"
-

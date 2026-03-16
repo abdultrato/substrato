@@ -1,12 +1,11 @@
 from decimal import Decimal
 
 import pytest
-from django.contrib.auth import get_user_model
 
 from aplicacao.recepcao.fluxo_atendimento import (
     abrir_checkin,
-    criar_requisicao_para_checkin,
     criar_fatura_para_checkin,
+    criar_requisicao_para_checkin,
     registrar_pagamento_para_checkin,
 )
 from aplicativos.clinico.modelos.exame import Exame

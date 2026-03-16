@@ -1,5 +1,4 @@
 from django.db import transaction
-
 from frontend.billing.models.resultado_analise import ResultadoItem
 
 from ..base import BaseService
@@ -19,9 +18,7 @@ class ResultadoService(BaseService):
             resultado.validado = False
             resultado.validado_por = None
 
-        resultado.save(
-            update_fields=["resultado", "validado", "validado_por", "atualizado_em"]
-        )
+        resultado.save(update_fields=["resultado", "validado", "validado_por", "atualizado_em"])
 
         return cls.ok(resultado)
 

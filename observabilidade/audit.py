@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now, timedelta
 from rest_framework.permissions import IsAdminUser
@@ -16,7 +18,7 @@ class ActiveUsersView(APIView):
         users = User.objects.filter(last_login__gte=last_day).values("id", "username", "last_login")
 
         return Response({"active_users_last_24h": list(users)})
-import logging
+
 
 logger = logging.getLogger("tenant_audit")
 
@@ -36,5 +38,5 @@ def registrar_evento(
             "endpoint": caminho,
             "metodo": metodo,
             "status": status_code,
-        }
+        },
     )

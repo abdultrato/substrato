@@ -165,7 +165,9 @@ cython_debug/
 # Added by copilot: ignore generated and local files
 **/node_modules/
 **/.next/
+**/.next-dev/
 frontend-next/.next/
+frontend-next/.next-dev/
 frontend-next/node_modules/
 frontend-next/package-lock.json
 frontend-next/yarn.lock
@@ -186,6 +188,9 @@ test_db*
 db_*
 # Backups locais
 backups/
+
+# Next.js cache backups (kept out of the frontend mount to avoid slow dev builds)
+artefatos/next-cache-backups/
 # Build artifacts
 
 # lockfiles

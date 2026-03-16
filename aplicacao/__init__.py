@@ -1,9 +1,25 @@
-from . import (seguradora, inquilinos, identidade, notificacoes, faturamento,
-               contabilidade, farmacia, clinico, pagamentos, relatorios)
-
+from . import (
+    clinico,
+    contabilidade,
+    farmacia,
+    faturamento,
+    identidade,
+    inquilinos,
+    notificacoes,
+    pagamentos,
+    relatorios,
+    seguradora,
+)
 
 __all__ = [
-		"relatorios", "faturamento","contabilidade", "identidade",
-		"seguradora", "inquilinos", "notificacoes", "clinico", "pagamentos",
-		"farmacia",
-		]
+    "clinico",
+    "contabilidade",
+    "farmacia",
+    "faturamento",
+    "identidade",
+    "inquilinos",
+    "notificacoes",
+    "pagamentos",
+    "relatorios",
+    "seguradora",
+]

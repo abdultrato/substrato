@@ -1,5 +1,5 @@
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 
 
 class EnderecoField(models.JSONField):
@@ -48,7 +48,7 @@ class EnderecoField(models.JSONField):
 
         campos_validos = set(self.estrutura_padrao.keys())
 
-        for chave in value.keys():
+        for chave in value:
             if chave not in campos_validos:
                 raise ValidationError(f"Campo de endereço inválido: {chave}")
 

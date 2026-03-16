@@ -14,9 +14,9 @@ const CheckboxInput = forwardRef<HTMLInputElement, Props>(
                     ref={ref}
                     type="checkbox"
                     {...props}
-                    className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${className}`}
+                    className={`h-4 w-4 rounded border-border bg-background accent-primary shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 ${className}`}
                 />
-                {label && <span className="text-sm text-gray-700">{label}</span>}
+                {label && <span className="text-sm text-foreground-2">{label}</span>}
             </label>
         )
     }

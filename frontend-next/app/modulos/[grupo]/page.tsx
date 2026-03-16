@@ -1,20 +1,20 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleGroup } from "@/lib/modules"
+import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
-export default function ModuloGrupoPage({
-  params,
-}: {
-  params: { grupo: string }
-}) {
+export default function ModuloGrupoPage() {
+  const params = useParams()
+  const grupo = routeParamToString((params as any)?.grupo)
   const { loading } = useAuthGuard()
-  const group = findModuleGroup(params.grupo)
+  const group = findModuleGroup(grupo)
 
   if (loading) return null
 
@@ -22,7 +22,7 @@ export default function ModuloGrupoPage({
     return (
       <AppLayout requiredGroups={[GROUPS.ADMIN]}>
         <div className="space-y-6">
-          <PageHeader title="Módulo não encontrado" subtitle={params.grupo} />
+          <PageHeader title="Módulo não encontrado" subtitle={grupo} />
           <div className="text-sm text-gray-600">
             O módulo solicitado não existe na lista atual.
           </div>

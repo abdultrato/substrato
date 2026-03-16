@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-import pytest
 from django.db import IntegrityError
 from django.utils import timezone
+import pytest
 
 from aplicativos.inquilinos.modelos.assinatura import AssinaturaTenant
 from aplicativos.inquilinos.modelos.configuracao import ConfiguracaoInquilino

@@ -1,15 +1,9 @@
-def registrar_rotas(router):
-	from api.v1.clinico.viewsets import PacienteViewSet
-	from api.v1.faturamento.viewsets import FaturaViewSet
-	
-	router.register("pacientes", PacienteViewSet)
-	router.register("faturas", FaturaViewSet)
+"""
+Compat layer.
 
+The canonical route registration lives in `api.v1.roteamento.rotas`.
+"""
 
-from .clinico.routes import register as register_clinico
-from .faturamento.routes import register as register_faturamento
+from .rotas import registrar_rotas
 
-
-def registrar_rotas(router):
-	register_clinico(router)
-	register_faturamento(router)
+__all__ = ["registrar_rotas"]

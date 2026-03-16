@@ -119,4 +119,3 @@ class IntegracaoOrdemItem(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.ordem_id} - item {self.requisicao_item_id}"
-

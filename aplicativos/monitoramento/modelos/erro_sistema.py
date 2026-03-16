@@ -55,4 +55,3 @@ class ErroSistema(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.exception_class or 'Erro'}: {self.caminho} [{self.status_code}]"
-

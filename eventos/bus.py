@@ -1,84 +1,85 @@
 # LOCAL: eventos/bus.py
 
-import logging
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Type
+from collections.abc import Callable
+import logging
+from typing import Any
 
 from django.db import transaction
 
 logger = logging.getLogger("eventos")
 
 
-class EventBus :
-	"""
-	EventBus tipado, seguro e transacional.
+class EventBus:
+    """
+    EventBus tipado, seguro e transacional.
 
-	✔ Registro por classe de evento
-	✔ Execução isolada de handlers
-	✔ Proteção contra duplicidade
-	✔ Publicação imediata
-	✔ Publicação após commit
-	✔ Preparado para expansão async
-	"""
-	
-	def __init__(self) -> None :
-		self._subscribers: Dict[Type, List[Callable[[Any], None]]] = defaultdict(list)
-	
-	# =====================================================
-	# REGISTRO
-	# =====================================================
-	
-	def register(self, event_type: Type, handler: Callable[[Any], None], ) -> None :
-		"""
-		Registra um handler para um tipo de evento.
-		"""
-		
-		if handler in self._subscribers[event_type] :
-			logger.debug(f"Handler {handler.__name__} já registrado "
-			             f"para {event_type.__name__}")
-			return
-		
-		self._subscribers[event_type].append(handler)
-		
-		logger.info(f"Handler {handler.__name__} "
-		            f"registrado para {event_type.__name__}")
-	
-	# =====================================================
-	# PUBLICAÇÃO IMEDIATA
-	# =====================================================
-	
-	def publish(self, event: Any) -> None :
-		"""
-		Publica evento imediatamente.
-		"""
-		
-		event_type = type(event)
-		handlers = self._subscribers.get(event_type, [])
-		
-		if not handlers :
-			logger.debug(f"Nenhum handler para {event_type.__name__}")
-			return
-		
-		logger.debug(f"Publicando {event_type.__name__} "
-		             f"para {len(handlers)} handler(s)")
-		
-		for handler in handlers :
-			try :
-				handler(event)
-			except Exception :
-				logger.exception(f"Erro no handler {handler.__name__} "
-				                 f"para {event_type.__name__}")
-	
-	# =====================================================
-	# PUBLICAÇÃO APÓS COMMIT
-	# =====================================================
-	
-	def publish_after_commit(self, event: Any) -> None :
-		"""
-		Garante execução somente após commit do banco.
-		"""
-		
-		transaction.on_commit(lambda : self.publish(event))
+    ✔ Registro por classe de evento
+    ✔ Execução isolada de handlers
+    ✔ Proteção contra duplicidade
+    ✔ Publicação imediata
+    ✔ Publicação após commit
+    ✔ Preparado para expansão async
+    """
+
+    def __init__(self) -> None:
+        self._subscribers: dict[type, list[Callable[[Any], None]]] = defaultdict(list)
+
+    # =====================================================
+    # REGISTRO
+    # =====================================================
+
+    def register(
+        self,
+        event_type: type,
+        handler: Callable[[Any], None],
+    ) -> None:
+        """
+        Registra um handler para um tipo de evento.
+        """
+
+        if handler in self._subscribers[event_type]:
+            logger.debug(f"Handler {handler.__name__} já registrado para {event_type.__name__}")
+            return
+
+        self._subscribers[event_type].append(handler)
+
+        logger.info(f"Handler {handler.__name__} registrado para {event_type.__name__}")
+
+    # =====================================================
+    # PUBLICAÇÃO IMEDIATA
+    # =====================================================
+
+    def publish(self, event: Any) -> None:
+        """
+        Publica evento imediatamente.
+        """
+
+        event_type = type(event)
+        handlers = self._subscribers.get(event_type, [])
+
+        if not handlers:
+            logger.debug(f"Nenhum handler para {event_type.__name__}")
+            return
+
+        logger.debug(f"Publicando {event_type.__name__} para {len(handlers)} handler(s)")
+
+        for handler in handlers:
+            try:
+                handler(event)
+            except Exception:
+                logger.exception(f"Erro no handler {handler.__name__} para {event_type.__name__}")
+
+    # =====================================================
+    # PUBLICAÇÃO APÓS COMMIT
+    # =====================================================
+
+    def publish_after_commit(self, event: Any) -> None:
+        """
+        Garante execução somente após commit do banco.
+        """
+
+        transaction.on_commit(lambda: self.publish(event))
 
 
 # =====================================================

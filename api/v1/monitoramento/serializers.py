@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from aplicativos.monitoramento.modelos.erro_sistema import ErroSistema
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "id_custom",
@@ -24,7 +23,7 @@ class ErroSistemaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ErroSistema
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ("usuario_nome",)
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "usuario_nome")
 
     def get_usuario_nome(self, obj: ErroSistema) -> str:
         u = getattr(obj, "usuario", None)

@@ -1,10 +1,7 @@
-from aplicativos.seguradora.modelos.tenant_plano import (
-    TenantPlanoCobertura
-)
+from aplicativos.seguradora.modelos.tenant_plano import TenantPlanoCobertura
 
 
 class ServicoResolucaoPlano:
-
     @staticmethod
     def obter_plano_efetivo(inquilino, plano_global):
 

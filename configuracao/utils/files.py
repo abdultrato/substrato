@@ -110,6 +110,7 @@ class StorageUsageView(APIView):
         except Exception:
             return 0
 
+
 USE_S3 = True
 AWS_STORAGE_BUCKET_NAME = "meu-bucket"
 S3_STORAGE_LIMIT_BYTES = 100 * 1024 * 1024 * 1024  # 100GB

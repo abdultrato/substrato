@@ -16,9 +16,7 @@ def gerar_numero_fatura(fatura):
 
     sequencial = fatura.id_custom[-6:]  # usa parte final do id custom
 
-    numero = f"FAT-{ano}{mes}-{sequencial}"
-
-    return numero
+    return f"FAT-{ano}{mes}-{sequencial}"
 
 
 def gerar_numero_recibo(recibo):

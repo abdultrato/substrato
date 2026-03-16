@@ -5,4 +5,4 @@ from .identificador_custom import IdentificadorMixin
 from .nome import NomeMixin
 from .ordem import OrdemMixin
 
-__all__ = ["OrdemMixin", "NomeMixin", "DescricaoMixin", "CodigoMixin", "TimeStampMixin", "IdentificadorMixin", ]
+__all__ = ["CodigoMixin", "DescricaoMixin", "IdentificadorMixin", "NomeMixin", "OrdemMixin", "TimeStampMixin"]

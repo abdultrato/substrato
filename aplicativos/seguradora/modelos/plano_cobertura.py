@@ -46,4 +46,3 @@ class PlanoCobertura(DescricaoMixin, OrdemMixin, CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Plano {self.pk}"
-

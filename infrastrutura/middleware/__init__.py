@@ -1,12 +1,15 @@
-from .inquilino import InquilinoMiddleware
-from .request_user import RequestUserMiddleware
-from .performance import APILoggingMiddleware
-from .limits import TenantLimitMiddleware
 from .audit import TenantAuditMiddleware
-from .tenant import TenantMiddleware, TenantLimitMiddleware
+from .inquilino import InquilinoMiddleware
+from .limits import TenantLimitMiddleware
+from .performance import APILoggingMiddleware
+from .request_user import RequestUserMiddleware
+from .tenant import TenantMiddleware
 
 __all__ = [
-		"TenantMiddleware", "TenantLimitMiddleware", "TenantAuditMiddleware",
-		"InquilinoMiddleware", "RequestUserMiddleware", "RequestUserMiddleware",
-		"APILoggingMiddleware",
-		]
+    "APILoggingMiddleware",
+    "InquilinoMiddleware",
+    "RequestUserMiddleware",
+    "TenantAuditMiddleware",
+    "TenantLimitMiddleware",
+    "TenantMiddleware",
+]

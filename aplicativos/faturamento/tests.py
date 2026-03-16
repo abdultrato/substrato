@@ -1,8 +1,9 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-import pytest
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+import pytest
 
 from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.clinico.modelos.exames_medicos import ExameMedico
@@ -219,7 +220,7 @@ def test_fatura_enfermagem_bloqueia_emissao_quando_material_sem_estoque_e_libera
         inquilino=tenant,
         produto=produto,
         numero_lote="L999",
-        validade=date.today() + timedelta(days=60),
+        validade=timezone.localdate() + timedelta(days=60),
         quantidade_inicial=10,
     )
 

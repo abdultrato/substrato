@@ -21,4 +21,3 @@ class FeatureFlagTenant(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.inquilino_id}:{self.chave}"
-

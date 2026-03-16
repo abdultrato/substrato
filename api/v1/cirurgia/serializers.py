@@ -3,7 +3,6 @@ from rest_framework import serializers
 from aplicativos.cirurgia.modelos.cirurgia import Cirurgia
 from aplicativos.cirurgia.modelos.procedimento_cirurgico import ProcedimentoCirurgico
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "id_custom",
@@ -27,11 +26,7 @@ class CirurgiaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cirurgia
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + (
-            "paciente_nome",
-            "cirurgiao_nome",
-            "procedimentos_nomes",
-        )
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "paciente_nome", "cirurgiao_nome", "procedimentos_nomes")
 
     def get_cirurgiao_nome(self, obj: Cirurgia) -> str:
         u = getattr(obj, "cirurgiao", None)

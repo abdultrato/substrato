@@ -1,9 +1,10 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-import pytest
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+import pytest
 
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.enfermagem.modelos import (
@@ -20,11 +21,9 @@ from aplicativos.enfermagem.modelos import (
     SinalVitalEnfermagem,
 )
 from aplicativos.farmacia.models.categoria_produto import CategoriaProduto
-from aplicativos.farmacia.models.produto import Produto
 from aplicativos.farmacia.models.lote import Lote
+from aplicativos.farmacia.models.produto import Produto
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
-from nucleo.constantes.laboratorio.metodo import Metodo
-from nucleo.constantes.laboratorio.setor import Setor
 
 
 def _tenant():
@@ -67,7 +66,7 @@ def _lote(produto):
         inquilino=produto.inquilino,
         produto=produto,
         numero_lote="L123",
-        validade=date.today() + timedelta(days=90),
+        validade=timezone.localdate() + timedelta(days=90),
         quantidade_inicial=10,
     )
 

@@ -97,19 +97,13 @@ class RegistroProntuario(NoNameCoreModel):
         super().clean()
 
         if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"paciente": "Paciente e prontuário devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"paciente": "Paciente e prontuário devem pertencer ao mesmo inquilino."})
 
         if self.medico_id and self.inquilino_id and self.medico.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"medico": "Médico e prontuário devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"medico": "Médico e prontuário devem pertencer ao mesmo inquilino."})
 
         if self.fim_atendimento and self.inicio_atendimento and self.fim_atendimento < self.inicio_atendimento:
-            raise ValidationError(
-                {"fim_atendimento": "Fim do atendimento não pode ser anterior ao início."}
-            )
+            raise ValidationError({"fim_atendimento": "Fim do atendimento não pode ser anterior ao início."})
 
     def save(self, *args, **kwargs):
         if not self.inquilino_id and self.paciente_id:

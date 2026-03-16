@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -9,21 +9,22 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
+import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 function ensureTrailingSlash(url: string) {
   return url.endsWith("/") ? url : `${url}/`
 }
 
-export default function RecursoDetalhePage({
-  params,
-}: {
-  params: { grupo: string; recurso: string; id: string }
-}) {
+export default function RecursoDetalhePage() {
+  const params = useParams()
+  const grupo = routeParamToString((params as any)?.grupo)
+  const recurso = routeParamToString((params as any)?.recurso)
+  const id = routeParamToString((params as any)?.id)
   const { loading } = useAuthGuard()
   const router = useRouter()
-  const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
+  const found = findModuleResource(grupo, recurso)
+  const requiredGroups = requiredGroupsForResourceGroup(grupo)
   const [data, setData] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -36,7 +37,7 @@ export default function RecursoDetalhePage({
       try {
         setLoadingData(true)
         setError(null)
-        const endpoint = ensureTrailingSlash(found.resource.endpoint) + `${params.id}/`
+        const endpoint = ensureTrailingSlash(found.resource.endpoint) + `${id}/`
         const res = await apiFetch<any>(endpoint)
         if (mounted) setData(res)
       } catch (e: any) {
@@ -49,7 +50,7 @@ export default function RecursoDetalhePage({
     return () => {
       mounted = false
     }
-  }, [found, params.id])
+  }, [found, id])
 
   if (loading) return null
 
@@ -59,10 +60,10 @@ export default function RecursoDetalhePage({
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
-            subtitle={`${params.grupo}/${params.recurso}`}
+            subtitle={`${grupo}/${recurso}`}
           />
           <Link
-            href={`/recursos/${params.grupo}`}
+            href={`/recursos/${grupo}`}
             className="text-sm text-[var(--gray-700)] underline"
           >
             Voltar
@@ -77,9 +78,9 @@ export default function RecursoDetalhePage({
     setDeleting(true)
     setError(null)
     try {
-      const endpoint = ensureTrailingSlash(found.resource.endpoint) + `${params.id}/`
+      const endpoint = ensureTrailingSlash(found.resource.endpoint) + `${id}/`
       await apiFetch(endpoint, { method: "DELETE" })
-      router.push(`/recursos/${params.grupo}/${params.recurso}`)
+      router.push(`/recursos/${grupo}/${recurso}`)
     } catch (e: any) {
       setError(e?.message || "Erro ao apagar.")
     } finally {
@@ -87,18 +88,18 @@ export default function RecursoDetalhePage({
     }
   }
 
-  const basePath = `/recursos/${params.grupo}/${params.recurso}`
+  const basePath = `/recursos/${grupo}/${recurso}`
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
-          title={`${found.resource.label} — ${params.id}`}
+          title={`${found.resource.label} — ${id}`}
           subtitle={found.resource.endpoint}
           actions={
             <div className="flex gap-3">
               <Link
-                href={`${basePath}/${params.id}/editar`}
+                href={`${basePath}/${id}/editar`}
                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
                 Editar

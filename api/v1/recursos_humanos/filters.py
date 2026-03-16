@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.recursos_humanos.modelos.agregado_familiar import AgregadoFamiliar
 from aplicativos.recursos_humanos.modelos.cargo import Cargo
 from aplicativos.recursos_humanos.modelos.dispensa import Dispensa

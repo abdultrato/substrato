@@ -1,6 +1,6 @@
-from .modelos import RegistroProntuario, PrescricaoItem
+from .modelos import PrescricaoItem, RegistroProntuario
 
 __all__ = [
-    "RegistroProntuario",
     "PrescricaoItem",
+    "RegistroProntuario",
 ]

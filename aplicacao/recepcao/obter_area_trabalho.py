@@ -4,13 +4,13 @@ from django.db.models import Case, IntegerField, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from dominio.clinico.estado_resultado import EstadoResultado
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.pagamentos.modelos.recibo import Recibo
 from aplicativos.recepcao.modelos.checkin_recepcao import CheckinRecepcao
+from dominio.clinico.estado_resultado import EstadoResultado
 
 
 def executar(inquilino):

@@ -4,4 +4,4 @@ from .identificador import IdentificadorMixin
 from .soft_delete import SoftDeleteMixin
 from .versionamento import VersionamentoMixin
 
-__all__ = ["IdentificadorMixin", "VersionamentoMixin", "InquilinoMixin", "AuditoriaMixin", "SoftDeleteMixin", ]
+__all__ = ["AuditoriaMixin", "IdentificadorMixin", "InquilinoMixin", "SoftDeleteMixin", "VersionamentoMixin"]

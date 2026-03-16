@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 
-class EmailService():
+class EmailService:
     name = "email"
 
     def send(self, destination, message, subject="Notificação", **kwargs):

@@ -1,24 +1,24 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleGroup } from "@/lib/modules"
+import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-export default function RecursosGrupoPage({
-  params,
-}: {
-  params: { grupo: string }
-}) {
+export default function RecursosGrupoPage() {
+  const params = useParams()
+  const grupo = routeParamToString((params as any)?.grupo)
   const { loading } = useAuthGuard()
   const { user } = useAuth()
-  const group = findModuleGroup(params.grupo)
-  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
+  const group = findModuleGroup(grupo)
+  const requiredGroups = requiredGroupsForResourceGroup(grupo)
   const podeVerIndice = userHasAnyGroup(user, [GROUPS.ADMIN])
   const hrefVoltar = podeVerIndice ? "/recursos" : "/"
 
@@ -28,7 +28,7 @@ export default function RecursosGrupoPage({
     return (
       <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
-          <PageHeader title="Módulo não encontrado" subtitle={params.grupo} />
+          <PageHeader title="Módulo não encontrado" subtitle={grupo} />
           <div className="text-sm text-gray-600">
             O módulo solicitado não existe na lista atual.
           </div>

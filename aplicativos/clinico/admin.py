@@ -1,8 +1,9 @@
+import unicodedata
+
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-import unicodedata
 
 from .forms_admin import ResultadoItemInlineFormSet
 from .modelos.exame import Exame
@@ -59,7 +60,6 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-
     list_display = (
         "id_custom",
         "nome",
@@ -172,7 +172,6 @@ class PacienteAdmin(admin.ModelAdmin):
 
 @admin.register(ExameCampo)
 class ExameCampoAdmin(CoreAdmin):
-
     list_display = (
         "id_custom",
         "nome",
@@ -275,7 +274,7 @@ class ExameCampoAdmin(CoreAdmin):
         max_ref = obj.referencia_max
 
         if min_ref is not None and max_ref is not None:
-            return f"{min_ref} – {max_ref}"
+            return f"{min_ref} - {max_ref}"
 
         if min_ref is not None:
             return f"≥ {min_ref}"
@@ -294,7 +293,6 @@ class ExameCampoAdmin(CoreAdmin):
 
 
 class ExameCampoInline(admin.TabularInline):
-
     model = ExameCampo
 
     extra = 0
@@ -326,7 +324,6 @@ class ExameCampoInline(admin.TabularInline):
 
 @admin.register(Exame)
 class ExameAdmin(CoreAdmin):
-
     list_display = (
         "id_custom",
         "nome",
@@ -436,7 +433,6 @@ class ExameMedicoCampoInline(admin.TabularInline):
 
 @admin.register(ExameMedico)
 class ExameMedicoAdmin(CoreAdmin):
-
     list_display = (
         "id_custom",
         "nome",
@@ -525,7 +521,6 @@ class ExameMedicoAdmin(CoreAdmin):
 
 
 class RequisicaoItemLabInline(admin.TabularInline):
-
     model = RequisicaoItem
     extra = 1
 
@@ -538,7 +533,6 @@ class RequisicaoItemLabInline(admin.TabularInline):
 
 
 class RequisicaoItemMedInline(admin.TabularInline):
-
     model = RequisicaoItem
     extra = 1
 
@@ -557,7 +551,6 @@ class RequisicaoItemMedInline(admin.TabularInline):
 
 @admin.register(RequisicaoAnalise)
 class RequisicaoAnaliseAdmin(CoreAdmin):
-
     list_display = (
         "id_custom",
         "paciente",
@@ -690,9 +683,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             else:
                 inline_classes = [RequisicaoItemLabInline]
 
-        return [
-            inline_class(self.model, self.admin_site) for inline_class in inline_classes
-        ]
+        return [inline_class(self.model, self.admin_site) for inline_class in inline_classes]
 
     # -----------------------------------------------------
     # LANÇAR RESULTADO
@@ -765,7 +756,6 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
 
 
 class ResultadoItemInline(admin.TabularInline):
-
     model = ResultadoItem
     formset = ResultadoItemInlineFormSet
 
@@ -890,7 +880,6 @@ class ResultadoItemInline(admin.TabularInline):
 
 @admin.register(Resultado)
 class ResultadoAdmin(CoreAdmin):
-
     list_display = (
         "id_custom",
         "requisicao",

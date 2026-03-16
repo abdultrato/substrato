@@ -63,4 +63,3 @@ class IntegracaoEquipamento(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Equipamento {self.pk}"
-

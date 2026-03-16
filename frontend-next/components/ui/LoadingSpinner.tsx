@@ -15,10 +15,10 @@ export default function LoadingSpinner ( {
         <div className="flex flex-col items-center gap-3">
             <div
                 style={{ width: size, height: size }}
-                className="border-4 border-[var(--border)] border-t-[var(--primary-600)] rounded-full animate-spin"
+                className="animate-spin rounded-full border-4 border-border border-t-primary"
             />
             {label && (
-                <span className="text-sm text-[var(--gray-500)]">
+                <span className="text-sm text-muted-foreground">
                     {label}
                 </span>
             )}
@@ -27,7 +27,7 @@ export default function LoadingSpinner ( {
 
     if ( fullScreen ) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 dark:bg-black/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-sm">
                 {spinner}
             </div>
         )

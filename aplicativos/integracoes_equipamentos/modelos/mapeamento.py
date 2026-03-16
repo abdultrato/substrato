@@ -49,9 +49,12 @@ class IntegracaoMapeamentoAnalito(CoreModel):
 
     def clean(self):
         super().clean()
-        if self.equipamento_id and self.exame_campo_id and self.equipamento.inquilino_id != self.exame_campo.inquilino_id:
+        if (
+            self.equipamento_id
+            and self.exame_campo_id
+            and self.equipamento.inquilino_id != self.exame_campo.inquilino_id
+        ):
             raise ValidationError("Equipamento e ExameCampo devem pertencer ao mesmo inquilino.")
 
     def __str__(self) -> str:
         return f"{self.equipamento} :: {self.codigo} -> {self.exame_campo}"
-

@@ -27,16 +27,16 @@ export default function ToastContainer () {
         return unsubscribe
     }, [] )
 
-    function bg ( type: ToastType ) {
+    function accent ( type: ToastType ) {
         switch ( type ) {
             case "success":
-                return "bg-green-600"
+                return "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-200"
             case "error":
-                return "bg-red-600"
+                return "border-rose-500/30 bg-rose-500/10 text-rose-950 dark:text-rose-200"
             case "warning":
-                return "bg-yellow-500"
+                return "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-200"
             default:
-                return "bg-gray-800"
+                return "border-border bg-card/90 text-foreground"
         }
     }
 
@@ -45,9 +45,10 @@ export default function ToastContainer () {
             {toasts.map( ( t ) => (
                 <div
                     key={t.id}
-                    className={`${bg( t.type )} text-white px-4 py-2 rounded shadow-lg text-sm animate-fade-in`}
+                    className={`flex items-start gap-2 rounded-2xl border px-3 py-2 shadow-lg backdrop-blur-[2px] text-sm animate-fade-in ${accent( t.type )}`}
                 >
-                    {t.message}
+                    <span className="mt-0.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-current opacity-70" />
+                    <span className="leading-snug">{t.message}</span>
                 </div>
             ) )}
         </div>

@@ -92,7 +92,7 @@ class ExameCampo(PropagarInquilinoMixin, CoreModel):
         """
         Retorna o intervalo de referência formatado.
         Exemplo:
-        4.0 – 10.0
+        4.0 - 10.0
         >= 4.0
         <= 10.0
         """
@@ -100,7 +100,7 @@ class ExameCampo(PropagarInquilinoMixin, CoreModel):
             return None
 
         if self.referencia_min is not None and self.referencia_max is not None:
-            return f"{self.referencia_min} – {self.referencia_max}"
+            return f"{self.referencia_min} - {self.referencia_max}"
 
         if self.referencia_min is not None:
             return f">= {self.referencia_min}"

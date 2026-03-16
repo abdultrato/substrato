@@ -4,7 +4,6 @@ from django.apps import apps
 from django.db import models
 from django.db.models.signals import class_prepared
 
-
 _SINAL_CONECTADO = False
 
 

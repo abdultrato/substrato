@@ -13,7 +13,7 @@ const TextInput = forwardRef<HTMLInputElement, Props>(
         return (
             <div className="relative w-full">
                 {leftIcon && (
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         {leftIcon}
                     </span>
                 )}
@@ -22,19 +22,19 @@ const TextInput = forwardRef<HTMLInputElement, Props>(
                     ref={ref}
                     {...props}
                     className={`
-            w-full rounded-lg border px-2.5 py-1 text-sm leading-tight outline-none transition bg-[var(--card)] text-[var(--text)] placeholder:text-[var(--gray-500)]
+            w-full rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors
             ${leftIcon ? "pl-10" : ""}
             ${rightIcon ? "pr-10" : ""}
             ${error
-                            ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
-                            : "border-[var(--border)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-red-500/10"
+                            ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-500/20"
+                            : "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
                         }
             ${className}
           `}
                 />
 
                 {rightIcon && (
-                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         {rightIcon}
                     </span>
                 )}

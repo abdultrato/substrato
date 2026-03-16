@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.db import models
 from django.utils import timezone
 
@@ -60,11 +58,7 @@ class Inquilino(
         return self.trial_ate >= hoje
 
     def obter_assinatura_ativa(self):
-        return (
-            self.assinaturas.filter(status="ATIVA")
-            .order_by("-data_inicio")
-            .first()
-        )
+        return self.assinaturas.filter(status="ATIVA").order_by("-data_inicio").first()
 
     @property
     def plano(self):
@@ -73,4 +67,3 @@ class Inquilino(
 
     def __str__(self) -> str:
         return self.nome or self.identificador
-

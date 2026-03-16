@@ -10,9 +10,11 @@ export default function SectionHeader ( { title, subtitle, action }: Props ) {
     return (
         <div className="flex items-center justify-between mb-6">
             <div>
-                <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+                <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">
+                    {title}
+                </h2>
                 {subtitle && (
-                    <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
                 )}
             </div>
 

@@ -1,6 +1,7 @@
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 import pytest
 
 from aplicativos.clinico.modelos.exame import Exame
@@ -90,5 +91,5 @@ def test_exame_validacao_preco_zero():
         setor=Setor.HEMATOLOGIA,
         trl_horas=1,
     )
-    with pytest.raises(Exception):
+    with pytest.raises(DjangoValidationError):
         exame.full_clean()

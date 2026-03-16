@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.monitoramento.modelos.erro_sistema import ErroSistema
 
 
@@ -20,4 +19,3 @@ class ErroSistemaFilter(SafeFilterSet):
 FILTER_MAP = {
     "erro": ErroSistemaFilter,
 }
-

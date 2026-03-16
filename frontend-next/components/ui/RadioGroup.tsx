@@ -31,9 +31,9 @@ export default function RadioGroup ( {
                         value={opt.value}
                         checked={String( value ) === String( opt.value )}
                         onChange={() => onChange?.( String( opt.value ) )}
-                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                        className="h-4 w-4 border-border bg-background accent-primary shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     />
-                    <span className="text-sm text-gray-700">{opt.label}</span>
+                    <span className="text-sm text-foreground-2">{opt.label}</span>
                 </label>
             ) )}
         </div>

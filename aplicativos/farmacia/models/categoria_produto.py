@@ -6,7 +6,6 @@ from nucleo.modelos.base import CoreModel
 
 
 class CategoriaProduto(CoreModel):
-
     prefixo = "CATP"
     CATEGORIAS_PAI_REFERENCIA = (
         "Medicamentos",
@@ -33,7 +32,6 @@ class CategoriaProduto(CoreModel):
     )
 
     class Meta:
-
         ordering = ["nome"]
 
         indexes = [
@@ -58,9 +56,7 @@ class CategoriaProduto(CoreModel):
         super().clean()
 
         if self.categoria_pai and self.categoria_pai_id == self.id:
-            raise ValidationError(
-                {"categoria_pai": "Categoria não pode ser pai de si mesma."}
-            )
+            raise ValidationError({"categoria_pai": "Categoria não pode ser pai de si mesma."})
 
     # ======================================
     # PROPRIEDADES

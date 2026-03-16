@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { SetStateAction, useEffect, useMemo, useState } from "react"
 
 import useLocalStorage from "@/hooks/useLocalStorage"
 
@@ -20,6 +20,18 @@ export default function useTheme() {
     "system"
   )
   const [systemDark, setSystemDark] = useState(false)
+
+  function enableThemeTransition() {
+    if (typeof document === "undefined") return
+    const root = document.documentElement
+    root.classList.add("theme-transition")
+    window.setTimeout(() => root.classList.remove("theme-transition"), 260)
+  }
+
+  function setPreferenceWithTransition(next: SetStateAction<ThemePreference>) {
+    enableThemeTransition()
+    setPreference(next)
+  }
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return
@@ -55,14 +67,14 @@ export default function useTheme() {
   const effectiveTheme = useMemo(() => (isDark ? "dark" : "light"), [isDark])
 
   function toggle() {
-    setPreference((prev) => {
+    setPreferenceWithTransition((prev) => {
       const prevIsDark = prev === "dark" || (prev === "system" && systemDark)
       return prevIsDark ? "light" : "dark"
     })
   }
 
   function setSystem() {
-    setPreference("system")
+    setPreferenceWithTransition("system")
   }
 
   return {
@@ -70,7 +82,7 @@ export default function useTheme() {
     effectiveTheme,
     isDark,
     toggle,
-    setPreference,
+    setPreference: setPreferenceWithTransition,
     setSystem,
   }
 }

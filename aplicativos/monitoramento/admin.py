@@ -22,4 +22,3 @@ class ErroSistemaAdmin(CoreAdmin):
     list_filter = ("status_code", "exception_class")
     search_fields = ("caminho", "mensagem", "exception_class", "usuario__username")
     ordering = ("-criado_em", "-id")
-

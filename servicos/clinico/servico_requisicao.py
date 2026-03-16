@@ -1,10 +1,10 @@
 from django.db import transaction
+
 from aplicativos.clinico.modelos import RequisicaoAnalise
 from servicos.financeiro.servico_faturamento import ServicoFaturamento
 
 
 class ServicoRequisicao:
-
     @staticmethod
     @transaction.atomic
     def criar_requisicao(paciente, exames):

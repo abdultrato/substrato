@@ -1,12 +1,13 @@
+import logging
+
 from django.conf import settings
-from django.core.mail import send_mail, BadHeaderError
-from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.core.mail import BadHeaderError, send_mail
+from django.core.validators import validate_email
+from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-import logging
 
 logger = logging.getLogger(__name__)
 

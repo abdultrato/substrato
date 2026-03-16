@@ -10,4 +10,3 @@ from tarefas.autorizacao_worker import processar_autorizacao_task
 __all__ = [
     "processar_autorizacao_task",
 ]
-

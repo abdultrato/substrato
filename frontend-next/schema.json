@@ -28135,7 +28135,7 @@
         "type": "object",
         "properties": {
           "prioridade": {
-            "$ref": "#/components/schemas/Prioridade063Enum"
+            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
           },
           "motivo": {
             "type": "string",
@@ -28217,7 +28217,7 @@
             "title": "Vers\u00e3o"
           },
           "prioridade": {
-            "$ref": "#/components/schemas/Prioridade063Enum"
+            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -28296,11 +28296,20 @@
         "type": "string",
         "description": "* `AGUARD` - Aguardando\n* `ATEND` - Em atendimento\n* `REQ` - Requisi\u00e7\u00e3o criada\n* `FAT` - Fatura vinculada\n* `CONC` - Conclu\u00eddo\n* `CANC` - Cancelado"
       },
+      "CheckinRecepcaoPrioridadeEnum": {
+        "enum": [
+          "URG",
+          "PREF",
+          "NOR"
+        ],
+        "type": "string",
+        "description": "* `URG` - Urgente\n* `PREF` - Preferencial\n* `NOR` - Normal"
+      },
       "CheckinRecepcaoRequest": {
         "type": "object",
         "properties": {
           "prioridade": {
-            "$ref": "#/components/schemas/Prioridade063Enum"
+            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -33551,19 +33560,6 @@
           "username"
         ]
       },
-      "Metodo412Enum": {
-        "enum": [
-          "DIN",
-          "CAR",
-          "TRF",
-          "MOB",
-          "POS",
-          "CHQ",
-          "OUT"
-        ],
-        "type": "string",
-        "description": "* `DIN` - Dinheiro\n* `CAR` - Cart\u00e3o\n* `TRF` - Transfer\u00eancia\n* `MOB` - Mobile Money\n* `POS` - POS\n* `CHQ` - Cheque\n* `OUT` - Outro"
-      },
       "MetodoLaboratorioEnum": {
         "enum": [
           "Enzimatico",
@@ -33611,6 +33607,19 @@
         ],
         "type": "string",
         "description": "* `Enzimatico` - Enzim\u00e1tico\n* `Colorimetrico` - Colorim\u00e9trico\n* `Espectrofotometrico` - Espectrofotom\u00e9trico\n* `Turbidimetrico` - Turbidim\u00e9trico\n* `Nefelometrico` - Nefelom\u00e9trico\n* `Potenciometrico` - Potenciom\u00e9trico\n* `Eletroquimico` - Eletroqu\u00edmico\n* `ELISA` - ELISA\n* `Quimioluminescencia` - Quimioluminesc\u00eancia\n* `Eletroquimioluminescencia` - Eletroquimioluminesc\u00eancia\n* `Imunofluorescencia` - Imunofluoresc\u00eancia\n* `Imunoturbidimetria` - Imunoturbidimetria\n* `Aglutinacao` - Aglutina\u00e7\u00e3o\n* `Cultura` - Cultura\n* `Antibiograma` - Antibiograma\n* `Microscopico` - Microsc\u00f3pico\n* `ColoracaoGram` - Colora\u00e7\u00e3o de Gram\n* `ColoracaoZiehl` - Ziehl-Neelsen\n* `IsolamentoMicrobiano` - Isolamento Microbiano\n* `CitometriaFluxo` - Citometria de Fluxo\n* `HematologiaAutomatizada` - Hematologia Automatizada\n* `MicroscopiaOptica` - Microscopia \u00d3ptica\n* `PCR` - PCR\n* `RT_PCR` - RT-PCR\n* `PCRTempoReal` - PCR em Tempo Real\n* `Sequenciamento` - Sequenciamento Gen\u00e9tico\n* `HibridizacaoMolecular` - Hibridiza\u00e7\u00e3o Molecular\n* `Genotipagem` - Genotipagem\n* `Cromatografia` - Cromatografia\n* `CromatografiaGasosa` - Cromatografia Gasosa\n* `CromatografiaLiquida` - Cromatografia L\u00edquida\n* `HPLC` - Cromatografia L\u00edquida de Alta Efici\u00eancia\n* `Eletroforese` - Eletroforese\n* `Isoeletrofoque` - Isoeletrofocaliza\u00e7\u00e3o\n* `Sedimentacao` - Sedimenta\u00e7\u00e3o\n* `Flutuacao` - Flutua\u00e7\u00e3o\n* `KatoKatz` - Kato-Katz\n* `TiraReagente` - Tira Reagente\n* `AnaliseMicroscopica` - An\u00e1lise Microsc\u00f3pica\n* `EspectrometriaMassa` - Espectrometria de Massa\n* `MALDI_TOF` - MALDI-TOF\n* `RessonanciaMagneticaNuclear` - Resson\u00e2ncia Magn\u00e9tica Nuclear"
+      },
+      "MetodoPagamentoEnum": {
+        "enum": [
+          "DIN",
+          "CAR",
+          "TRF",
+          "MOB",
+          "POS",
+          "CHQ",
+          "OUT"
+        ],
+        "type": "string",
+        "description": "* `DIN` - Dinheiro\n* `CAR` - Cart\u00e3o\n* `TRF` - Transfer\u00eancia\n* `MOB` - Mobile Money\n* `POS` - POS\n* `CHQ` - Cheque\n* `OUT` - Outro"
       },
       "Movimento": {
         "type": "object",
@@ -34393,7 +34402,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Metodo412Enum"
+                "$ref": "#/components/schemas/MetodoPagamentoEnum"
               }
             ],
             "title": "M\u00e9todo"
@@ -34467,7 +34476,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Metodo412Enum"
+                "$ref": "#/components/schemas/MetodoPagamentoEnum"
               }
             ],
             "title": "M\u00e9todo"
@@ -34832,7 +34841,7 @@
         "type": "object",
         "properties": {
           "prioridade": {
-            "$ref": "#/components/schemas/Prioridade063Enum"
+            "$ref": "#/components/schemas/CheckinRecepcaoPrioridadeEnum"
           },
           "estado": {
             "$ref": "#/components/schemas/CheckinRecepcaoEstadoEnum"
@@ -36744,7 +36753,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Metodo412Enum"
+                "$ref": "#/components/schemas/MetodoPagamentoEnum"
               }
             ],
             "title": "M\u00e9todo"
@@ -38889,15 +38898,6 @@
           "registro"
         ]
       },
-      "Prioridade063Enum": {
-        "enum": [
-          "URG",
-          "PREF",
-          "NOR"
-        ],
-        "type": "string",
-        "description": "* `URG` - Urgente\n* `PREF` - Preferencial\n* `NOR` - Normal"
-      },
       "Procedimento": {
         "type": "object",
         "properties": {
@@ -40294,7 +40294,7 @@
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/Metodo412Enum"
+                "$ref": "#/components/schemas/MetodoPagamentoEnum"
               }
             ],
             "default": "DIN"

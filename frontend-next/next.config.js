@@ -1,9 +1,16 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const { PHASE_DEVELOPMENT_SERVER } = require("next/constants")
+
+/** @type {(phase: string) => import('next').NextConfig} */
+module.exports = (phase) => ({
   // Django endpoints (admin/docs/schema) depend on trailing slashes.
   // Without this, Next.js canonicalizes `/foo/` -> `/foo` and Django redirects
   // back to `/foo/`, creating an infinite redirect loop through the proxy.
   trailingSlash: true,
+
+  // Keep dev and production build artifacts separate so running `next build`
+  // doesn't break an active `next dev` (common when using Docker bind mounts).
+  distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next",
+
   async rewrites() {
     const backend =
       process.env.BACKEND_URL ||
@@ -32,6 +39,4 @@ const nextConfig = {
       { source: "/media/:path*", destination: `${backend}/media/:path*` },
     ]
   },
-}
-
-module.exports = nextConfig
+})

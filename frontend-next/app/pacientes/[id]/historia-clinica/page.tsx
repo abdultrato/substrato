@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -10,6 +11,7 @@ import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
+import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
 type HistoriaClinicaPayload = {
@@ -46,7 +48,9 @@ function money(v: any): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function HistoriaClinicaPage({ params }: { params: { id: string } }) {
+export default function HistoriaClinicaPage() {
+  const routeParams = useParams()
+  const id = routeParamToString((routeParams as any)?.id)
   const { loading } = useAuthGuard()
   const [payload, setPayload] = useState<HistoriaClinicaPayload | null>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -59,7 +63,7 @@ export default function HistoriaClinicaPage({ params }: { params: { id: string }
         setCarregando(true)
         setErro(null)
         const res = await apiFetch<HistoriaClinicaPayload>(
-          `/pacientes/${params.id}/historia_clinica/?limit=200`
+          `/pacientes/${id}/historia_clinica/?limit=200`
         )
         if (!mounted) return
         setPayload(res || null)
@@ -74,7 +78,7 @@ export default function HistoriaClinicaPage({ params }: { params: { id: string }
     return () => {
       mounted = false
     }
-  }, [params.id])
+  }, [id])
 
   const paciente = payload?.paciente || {}
   const cardex = (payload?.cardex || []) as any[]
@@ -240,10 +244,10 @@ export default function HistoriaClinicaPage({ params }: { params: { id: string }
       <div className="space-y-6">
         <PageHeader
           title="História clínica"
-          subtitle={`${paciente?.nome || "Paciente"} · ${paciente?.id_custom || params.id}`}
+          subtitle={`${paciente?.nome || "Paciente"} · ${paciente?.id_custom || id}`}
           actions={
             <Link
-              href={`/pacientes/${params.id}`}
+              href={`/pacientes/${id}`}
               className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
             >
               Voltar ao paciente

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .modelos.registro_prontuario import RegistroProntuario
 from .modelos.prescricao_item import PrescricaoItem
+from .modelos.registro_prontuario import RegistroProntuario
 
 
 class CoreAdmin(admin.ModelAdmin):

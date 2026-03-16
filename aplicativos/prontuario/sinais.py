@@ -8,9 +8,7 @@ from .modelos.registro_prontuario import RegistroProntuario
 
 
 def _resolver_medico_unico(consultas_qs):
-    medicos = set(
-        consultas_qs.exclude(medico__isnull=True).values_list("medico_id", flat=True)
-    )
+    medicos = set(consultas_qs.exclude(medico__isnull=True).values_list("medico_id", flat=True))
     if len(medicos) == 1:
         return next(iter(medicos))
     if len(medicos) == 0:
@@ -37,19 +35,13 @@ def sincronizar_cardex_consultas(sender, instance, action, pk_set=None, **kwargs
         qs = instance.consultas.model.objects.filter(pk__in=list(pk_set))
         for c in qs:
             if instance.inquilino_id and c.inquilino_id != instance.inquilino_id:
-                raise ValidationError(
-                    {"consultas": "Consulta e Cardex devem pertencer ao mesmo inquilino."}
-                )
+                raise ValidationError({"consultas": "Consulta e Cardex devem pertencer ao mesmo inquilino."})
             if instance.paciente_id and c.paciente_id != instance.paciente_id:
-                raise ValidationError(
-                    {"consultas": "Consulta e Cardex devem ser do mesmo paciente."}
-                )
+                raise ValidationError({"consultas": "Consulta e Cardex devem ser do mesmo paciente."})
 
         # valida médico único considerando existentes + novos
         atuais = instance.consultas.all()
-        medicos = set(
-            atuais.exclude(medico__isnull=True).values_list("medico_id", flat=True)
-        )
+        medicos = set(atuais.exclude(medico__isnull=True).values_list("medico_id", flat=True))
         medicos |= set(qs.exclude(medico__isnull=True).values_list("medico_id", flat=True))
         if len(medicos) > 1:
             raise ValidationError(
@@ -61,9 +53,8 @@ def sincronizar_cardex_consultas(sender, instance, action, pk_set=None, **kwargs
         try:
             medico_id = _resolver_medico_unico(instance.consultas.all())
         except ValidationError as exc:
-            raise ValidationError({"consultas": str(exc)})
+            raise ValidationError({"consultas": str(exc)}) from exc
 
         if instance.medico_id != medico_id:
             instance.medico_id = medico_id
             instance.save(update_fields=["medico"])
-

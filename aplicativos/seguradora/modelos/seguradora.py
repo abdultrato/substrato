@@ -1,8 +1,8 @@
 from django.db import models
 
-from nucleo.modelos import CoreModel
 from nucleo.mixins.modelo.descricao import DescricaoMixin
 from nucleo.mixins.modelo.ordem import OrdemMixin
+from nucleo.modelos import CoreModel
 
 
 class Seguradora(DescricaoMixin, OrdemMixin, CoreModel):
@@ -33,4 +33,3 @@ class Seguradora(DescricaoMixin, OrdemMixin, CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Seguradora {self.pk}"
-

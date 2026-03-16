@@ -13,7 +13,7 @@ export default function ModulosPage() {
   if (loading) return null
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+            <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
           title="Módulos"
@@ -25,10 +25,10 @@ export default function ModulosPage() {
             <Link
               key={m.key}
               href={`/modulos/${m.key}`}
-              className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/40"
             >
-              <div className="text-sm font-semibold text-gray-900">{m.label}</div>
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="text-sm font-semibold text-foreground">{m.label}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
                 {m.resources.length} recursos
               </div>
             </Link>

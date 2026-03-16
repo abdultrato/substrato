@@ -1,17 +1,18 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-import pytest
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+import pytest
 
+from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.farmacia.models.categoria_produto import CategoriaProduto
 from aplicativos.farmacia.models.item_venda import ItemVenda
 from aplicativos.farmacia.models.lote import Lote
-from aplicativos.farmacia.models.movimento import MovimentoEstoque, TipoMovimento, OrigemMovimento
+from aplicativos.farmacia.models.movimento import MovimentoEstoque, OrigemMovimento, TipoMovimento
 from aplicativos.farmacia.models.produto import Produto
 from aplicativos.farmacia.models.venda import Venda
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
-from aplicativos.clinico.modelos.paciente import Paciente
 
 
 def _tenant():
@@ -34,7 +35,7 @@ def _lote(produto, validade_days=30, quantidade=10):
         inquilino=produto.inquilino,
         produto=produto,
         numero_lote="L001",
-        validade=date.today() + timedelta(days=validade_days),
+        validade=timezone.localdate() + timedelta(days=validade_days),
         quantidade_inicial=quantidade,
     )
 
@@ -87,7 +88,7 @@ def test_movimento_estoque_saida_reduz_lote():
 @pytest.mark.django_db
 def test_venda_itens_e_total():
     tenant = _tenant()
-    paciente = Paciente.objects.create(inquilino=tenant, nome="Cliente", genero="Masculino", morada={"rua": "Rua Z"})
+    Paciente.objects.create(inquilino=tenant, nome="Cliente", genero="Masculino", morada={"rua": "Rua Z"})
     prod = _produto(tenant)
     _lote(prod, quantidade=10)
 

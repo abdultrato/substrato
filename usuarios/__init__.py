@@ -4,5 +4,8 @@ from .perfil import UserProfileView
 from .usuarios import UserViewSet
 
 __all__ = [
-		"UserViewSet", "GroupViewSet", "UserProfileView", "NotificationsView",
-		]
+    "GroupViewSet",
+    "NotificationsView",
+    "UserProfileView",
+    "UserViewSet",
+]

@@ -20,8 +20,8 @@ const SelectInput = forwardRef<HTMLSelectElement, Props>(
                 ref={ref}
                 {...props}
                 className={`
-          w-full rounded-lg border px-2.5 py-1 text-sm leading-tight outline-none transition bg-[var(--card)] text-[var(--text)]
-          ${error ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-[var(--border)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-red-500/10"}
+          w-full rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground shadow-sm outline-none transition-colors
+          ${error ? "border-red-500 focus-visible:ring-2 focus-visible:ring-red-500/20" : "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"}
           ${className}
         `}
             >

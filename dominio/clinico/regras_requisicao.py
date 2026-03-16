@@ -1,12 +1,10 @@
 class CalculadoraRequisicao:
-
     @staticmethod
     def calcular_total(requisicao):
         return sum(item.total for item in requisicao.itens.all())
 
 
 class FluxoRequisicao:
-
     @staticmethod
     def determinar_status(requisicao):
 

@@ -39,8 +39,8 @@ export default function Header ( { user }: Props ) {
     }, [open] )
 
     return (
-        <header className="sticky top-0 z-40 h-12 border-b border-[var(--border)] bg-[var(--card)] flex items-center justify-between px-3">
-            <h1 className="font-semibold text-[var(--text)]">
+        <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-card/85 px-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/70">
+            <h1 className="font-display text-sm font-semibold tracking-wide text-foreground">
                 Substrato
             </h1>
 
@@ -48,7 +48,7 @@ export default function Header ( { user }: Props ) {
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text)] transition hover:bg-[var(--gray-100)]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card/70 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
                     title={isDark ? "Modo claro" : "Modo escuro"}
                 >
@@ -58,7 +58,7 @@ export default function Header ( { user }: Props ) {
                 <div className="relative" ref={menuRef}>
                     <button
                         onClick={toggle}
-                        className="flex items-center gap-2 text-sm text-[var(--gray-700)] hover:text-[var(--text)]"
+                        className="flex items-center gap-2 text-sm text-foreground-2 transition-colors hover:text-foreground"
                     >
                         {fotoUrl ? (
                             <>
@@ -66,11 +66,11 @@ export default function Header ( { user }: Props ) {
                                 <img
                                     src={fotoUrl}
                                     alt={name}
-                                    className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
+                                    className="h-8 w-8 rounded-full border border-border object-cover shadow-sm"
                                 />
                             </>
                         ) : (
-                            <div className="w-8 h-8 rounded-full bg-[var(--primary-600)] text-white flex items-center justify-center text-xs font-semibold">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm text-xs font-semibold">
                                 {name.charAt( 0 ).toUpperCase()}
                             </div>
                         )}
@@ -81,11 +81,11 @@ export default function Header ( { user }: Props ) {
                     </button>
 
                     {open && (
-                        <div className="absolute right-0 mt-1.5 w-52 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg py-1 z-50">
+                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-2xl border border-border bg-card p-1 shadow-lg">
                             <Link
                                 href="/perfil"
                                 onClick={() => setOpen(false)}
-                                className="flex items-center gap-2 w-full px-2.5 py-1 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-100)] hover:text-[var(--hover-accent)]"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-primary"
                             >
                                 <User size={16} />
                                 Perfil
@@ -94,17 +94,17 @@ export default function Header ( { user }: Props ) {
                             <Link
                                 href="/definicoes"
                                 onClick={() => setOpen(false)}
-                                className="flex items-center gap-2 w-full px-2.5 py-1 text-sm text-[var(--gray-700)] hover:bg-[var(--gray-100)] hover:text-[var(--hover-accent)]"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-primary"
                             >
                                 <Settings size={16} />
                                 Definições
                             </Link>
 
-                            <div className="border-t border-[var(--border)] my-1" />
+                            <div className="my-1 border-t border-border" />
 
                             <button
                                 onClick={signOut}
-                                className="flex items-center gap-2 w-full px-2.5 py-1 text-sm text-red-600 hover:bg-red-500/10"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-500/10 dark:text-rose-300"
                             >
                                 <LogOut size={16} />
                                 Terminar sessão

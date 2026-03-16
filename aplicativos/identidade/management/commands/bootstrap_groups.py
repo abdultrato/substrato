@@ -6,7 +6,6 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-
 CANONICAL_GROUPS: list[str] = [
     # Admin
     "Administrador",
@@ -43,8 +42,7 @@ def _normalize(value: str) -> str:
     if not value:
         return ""
     value = unicodedata.normalize("NFD", value)
-    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
-    return value
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
 
 
 class Command(BaseCommand):
@@ -96,9 +94,7 @@ class Command(BaseCommand):
                 canonical = existing[0]
                 if canonical.name != canonical_name:
                     if dry_run:
-                        self.stdout.write(
-                            f"[dry-run] Grupo seria renomeado: {canonical.name} -> {canonical_name}"
-                        )
+                        self.stdout.write(f"[dry-run] Grupo seria renomeado: {canonical.name} -> {canonical_name}")
                     else:
                         old = canonical.name
                         canonical.name = canonical_name
@@ -113,9 +109,7 @@ class Command(BaseCommand):
                     continue
 
                 if dry_run:
-                    self.stdout.write(
-                        f"[dry-run] Grupo seria mesclado: {other.name} -> {canonical_name}"
-                    )
+                    self.stdout.write(f"[dry-run] Grupo seria mesclado: {other.name} -> {canonical_name}")
                     continue
 
                 # Merge perms/users, then drop the alias group.
@@ -139,13 +133,7 @@ class Command(BaseCommand):
                 current = 0 if dry_run or not getattr(group, "id", None) else group.permissions.count()
 
                 if dry_run:
-                    self.stdout.write(
-                        f"[dry-run] Administrador: {current}/{total} permissoes (nao alterado)."
-                    )
+                    self.stdout.write(f"[dry-run] Administrador: {current}/{total} permissoes (nao alterado).")
                 else:
                     group.permissions.set(Permission.objects.all())
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f"Administrador atualizado: {current} -> {total} permissoes."
-                        )
-                    )
+                    self.stdout.write(self.style.SUCCESS(f"Administrador atualizado: {current} -> {total} permissoes."))

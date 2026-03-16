@@ -25,7 +25,17 @@ if ! command -v docker >/dev/null 2>&1; then
   echo "Erro: docker não encontrado." >&2
   exit 2
 fi
-if ! docker compose config -q >/dev/null 2>&1; then
+
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE="docker compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE="docker-compose"
+else
+  echo "Erro: Docker Compose não encontrado." >&2
+  exit 2
+fi
+
+if ! $COMPOSE config -q >/dev/null 2>&1; then
   echo "Erro: docker compose indisponível neste diretório." >&2
   exit 2
 fi
@@ -33,10 +43,10 @@ fi
 echo "Reparar histórico de migrations (docker/postgres) - DEV"
 echo
 
-docker compose up -d db redis >/dev/null
+$COMPOSE up -d db redis >/dev/null
 
-DB_NAME="$(docker compose exec -T db sh -lc 'printf "%s" "${POSTGRES_DB:-substrato}"' 2>/dev/null || true)"
-DB_USER="$(docker compose exec -T db sh -lc 'printf "%s" "${POSTGRES_USER:-substrato_user}"' 2>/dev/null || true)"
+DB_NAME="$($COMPOSE exec -T db sh -lc 'printf "%s" "${POSTGRES_DB:-substrato}"' 2>/dev/null || true)"
+DB_USER="$($COMPOSE exec -T db sh -lc 'printf "%s" "${POSTGRES_USER:-substrato_user}"' 2>/dev/null || true)"
 
 if [[ -z "${DB_NAME:-}" || -z "${DB_USER:-}" ]]; then
   echo "Erro: não foi possível ler POSTGRES_DB/POSTGRES_USER do container db." >&2
@@ -57,16 +67,15 @@ for f in "${MIGS[@]}"; do
   # f = aplicativos/<app>/migrations/0002_initial.py
   app="$(echo "$f" | awk -F/ '{print $2}')"
   echo "  - ${app}.0002_initial"
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" -c \
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" -c \
     "INSERT INTO django_migrations (app,name,applied) VALUES ('${app}','0002_initial', NOW()) ON CONFLICT DO NOTHING;" \
     >/dev/null
 done
 
 echo
 echo "Validando com migrate..."
-docker compose run --rm -T --entrypoint python backend manage.py migrate --noinput
+$COMPOSE run --rm -T --entrypoint python backend manage.py migrate --noinput
 
 echo
 echo "OK: histórico ajustado. Se o backend estava em loop, rode:"
-echo "  docker compose up -d backend"
-
+echo "  $COMPOSE up -d backend"

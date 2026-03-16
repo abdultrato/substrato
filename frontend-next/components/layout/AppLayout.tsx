@@ -19,7 +19,7 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
 
     if ( loading ) {
         return (
-            <div className="flex items-center justify-center min-h-screen text-sm text-gray-500">
+            <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
                 Carregando...
             </div>
         )
@@ -36,7 +36,7 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
                 <div className="flex flex-col flex-1">
                     <Header user={user} />
 
-                    <main className="flex-1 p-2">
+                    <main className="flex-1 p-3 md:p-4">
                         <AccessDenied requiredGroups={requiredGroups} user={user} />
                     </main>
                 </div>
@@ -51,7 +51,7 @@ export default function AppLayout ( { children, requiredGroups }: Props ) {
             <div className="flex flex-col flex-1">
                 <Header user={user} />
 
-                <main className="flex-1 p-2">{children}</main>
+                <main className="flex-1 p-3 md:p-4">{children}</main>
             </div>
         </div>
     )

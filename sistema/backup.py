@@ -1,9 +1,9 @@
 import os
 import subprocess
-from datetime import datetime
 
 from django.conf import settings
 from django.http import FileResponse, Http404
+from django.utils import timezone
 from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView
 
@@ -18,7 +18,7 @@ class BackupDatabaseView(APIView):
         if db["ENGINE"] != "django.db.backends.postgresql":
             raise Http404("Backup automático suportado apenas para PostgreSQL.")
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         filename = f"backup_{timestamp}.sql"
         backup_path = os.path.join(settings.BASE_DIR, filename)
 

@@ -9,7 +9,6 @@ from nucleo.modelos.base import CoreModel
 
 
 class Lote(CoreModel):
-
     prefixo = "LOTE"
 
     produto = models.ForeignKey(
@@ -34,7 +33,6 @@ class Lote(CoreModel):
     )
 
     class Meta:
-
         ordering = ["validade"]
 
         constraints = [
@@ -59,7 +57,6 @@ class Lote(CoreModel):
             self.nome = f"Lote {self.numero_lote} - {self.produto.nome}"
 
         if self.pk:
-
             original = Lote.all_objects.get(pk=self.pk)
 
             if original.quantidade_inicial != self.quantidade_inicial:

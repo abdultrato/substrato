@@ -1,11 +1,13 @@
 from django.db import connection
 
+
 def verificar_banco():
     try:
         connection.cursor()
         return True
-    except:
+    except Exception:
         return False
+
 
 def verificar_sistema():
     return {

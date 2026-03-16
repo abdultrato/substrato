@@ -86,36 +86,20 @@ class ProcedimentoMaterial(NoNameCoreModel):
         super().clean()
 
         if self.lote_id and self.produto_id and self.lote.produto_id != self.produto_id:
-            raise ValidationError(
-                {"lote": "O lote selecionado não pertence ao produto informado."}
-            )
+            raise ValidationError({"lote": "O lote selecionado não pertence ao produto informado."})
 
         if (
             self.procedimento_id
             and self.procedimento_item_id
             and self.procedimento_item.procedimento_id != self.procedimento_id
         ):
-            raise ValidationError(
-                {"procedimento_item": "Item não pertence ao procedimento informado."}
-            )
+            raise ValidationError({"procedimento_item": "Item não pertence ao procedimento informado."})
 
-        if (
-            self.procedimento_id
-            and self.produto_id
-            and self.procedimento.inquilino_id != self.produto.inquilino_id
-        ):
-            raise ValidationError(
-                {"produto": "Produto e procedimento devem pertencer ao mesmo inquilino."}
-            )
+        if self.procedimento_id and self.produto_id and self.procedimento.inquilino_id != self.produto.inquilino_id:
+            raise ValidationError({"produto": "Produto e procedimento devem pertencer ao mesmo inquilino."})
 
-        if (
-            self.procedimento_id
-            and self.lote_id
-            and self.procedimento.inquilino_id != self.lote.inquilino_id
-        ):
-            raise ValidationError(
-                {"lote": "Lote e procedimento devem pertencer ao mesmo inquilino."}
-            )
+        if self.procedimento_id and self.lote_id and self.procedimento.inquilino_id != self.lote.inquilino_id:
+            raise ValidationError({"lote": "Lote e procedimento devem pertencer ao mesmo inquilino."})
 
         # Permitimos manter históricos de consumo mesmo após a validade ter passado,
         # mas não permitimos "baixar" estoque de lote já vencido.
@@ -133,13 +117,9 @@ class ProcedimentoMaterial(NoNameCoreModel):
                     "quantidade",
                     "procedimento_item_id",
                 )
-                if any(
-                    getattr(original, campo) != getattr(self, campo)
-                    for campo in campos_immutaveis
-                ):
+                if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
                     raise ValidationError(
-                        "Material já lançado no estoque é imutável. "
-                        "Faça estorno e inclua um novo lançamento."
+                        "Material já lançado no estoque é imutável. Faça estorno e inclua um novo lançamento."
                     )
             else:
                 # Enquanto estiver pendente (sem movimento_estoque), permitimos
@@ -151,13 +131,8 @@ class ProcedimentoMaterial(NoNameCoreModel):
                     "quantidade",
                     "procedimento_item_id",
                 )
-                if any(
-                    getattr(original, campo) != getattr(self, campo)
-                    for campo in campos_immutaveis
-                ):
-                    raise ValidationError(
-                        "Material pendente é imutável (exceto lote/baixa de estoque)."
-                    )
+                if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
+                    raise ValidationError("Material pendente é imutável (exceto lote/baixa de estoque).")
 
     def _resolver_custo_unitario(self):
         if self.custo_unitario and self.custo_unitario > 0:
@@ -185,13 +160,7 @@ class ProcedimentoMaterial(NoNameCoreModel):
 
         lote = lotes_disponiveis.filter(saldo__gte=quantidade).first()
         if lote is None:
-            raise ValidationError(
-                {
-                    "produto": (
-                        "Sem lote válido com saldo suficiente para este material."
-                    )
-                }
-            )
+            raise ValidationError({"produto": ("Sem lote válido com saldo suficiente para este material.")})
 
         self.lote = lote
 
@@ -210,9 +179,7 @@ class ProcedimentoMaterial(NoNameCoreModel):
             },
         )
 
-        if not created and (
-            valor.inquilino_id != self.inquilino_id or valor.custo_unitario != custo
-        ):
+        if not created and (valor.inquilino_id != self.inquilino_id or valor.custo_unitario != custo):
             valor.inquilino_id = self.inquilino_id
             valor.custo_unitario = custo
             valor.save(update_fields=["inquilino", "custo_unitario", "atualizado_em"])
@@ -224,7 +191,6 @@ class ProcedimentoMaterial(NoNameCoreModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         alocar_estoque = bool(kwargs.pop("alocar_estoque", True))
-        criando = self.pk is None
 
         if not self.inquilino_id and self.procedimento_id:
             self.inquilino_id = self.procedimento.inquilino_id
@@ -236,21 +202,14 @@ class ProcedimentoMaterial(NoNameCoreModel):
 
         if alocar_estoque and self.movimento_estoque_id is None:
             if not self.lote_id:
-                raise ValidationError(
-                    {"lote": "Lote é obrigatório para baixar estoque do material."}
-                )
+                raise ValidationError({"lote": "Lote é obrigatório para baixar estoque do material."})
 
             lote = Lote.objects.select_for_update().get(pk=self.lote_id)
             if self.quantidade > lote.saldo():
-                raise ValidationError(
-                    {"quantidade": "Estoque insuficiente no lote selecionado."}
-                )
+                raise ValidationError({"quantidade": "Estoque insuficiente no lote selecionado."})
 
             movimento = MovimentoEstoque.objects.create(
-                nome=(
-                    f"Consumo {self.procedimento.id_custom or self.procedimento_id} "
-                    f"- {self.produto.nome}"
-                ),
+                nome=(f"Consumo {self.procedimento.id_custom or self.procedimento_id} - {self.produto.nome}"),
                 lote=lote,
                 tipo=TipoMovimento.SAIDA,
                 origem=OrigemMovimento.PROCEDIMENTO,
@@ -272,10 +231,7 @@ class ProcedimentoMaterial(NoNameCoreModel):
 
         if self.movimento_estoque_id:
             MovimentoEstoque.objects.create(
-                nome=(
-                    f"Estorno {self.procedimento.id_custom or self.procedimento_id} "
-                    f"- {self.produto.nome}"
-                ),
+                nome=(f"Estorno {self.procedimento.id_custom or self.procedimento_id} - {self.produto.nome}"),
                 lote=self.lote,
                 tipo=TipoMovimento.ENTRADA,
                 origem=OrigemMovimento.PROCEDIMENTO,

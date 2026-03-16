@@ -130,4 +130,3 @@ class CheckinRecepcao(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.id_custom or f"Checkin {self.pk}"
-

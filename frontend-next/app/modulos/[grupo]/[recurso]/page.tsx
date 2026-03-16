@@ -1,21 +1,22 @@
 "use client"
 
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
-export default function ModuloRecursoPage({
-  params,
-}: {
-  params: { grupo: string; recurso: string }
-}) {
+export default function ModuloRecursoPage() {
+  const params = useParams()
+  const grupo = routeParamToString((params as any)?.grupo)
+  const recurso = routeParamToString((params as any)?.recurso)
   const { loading } = useAuthGuard()
-  const found = findModuleResource(params.grupo, params.recurso)
+  const found = findModuleResource(grupo, recurso)
 
   if (loading) return null
 
@@ -25,12 +26,12 @@ export default function ModuloRecursoPage({
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
-            subtitle={`${params.grupo}/${params.recurso}`}
+            subtitle={`${grupo}/${recurso}`}
           />
           <div className="text-sm text-gray-600">
             O recurso solicitado não existe na lista atual.
           </div>
-          <Link href={`/modulos/${params.grupo}`} className="text-sm text-gray-700 underline">
+          <Link href={`/modulos/${grupo}`} className="text-sm text-gray-700 underline">
             Voltar
           </Link>
         </div>

@@ -243,8 +243,8 @@ export default function Sidebar ( { user }: Props ) {
     }
 
     return (
-        <aside className="w-64 bg-[var(--card)] border-r border-[var(--border)] hidden md:flex flex-col">
-            <div className="px-3 py-3 font-bold text-[var(--text)] tracking-wide">
+        <aside className="hidden w-64 flex-col border-r border-border bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/75 md:flex">
+            <div className="px-3 py-3 font-display text-xs font-semibold tracking-[0.32em] text-foreground/80">
                 SUBSTRATO
             </div>
 
@@ -258,10 +258,10 @@ export default function Sidebar ( { user }: Props ) {
                             key={item.href}
                             href={item.href}
                             className={`
-                flex items-center gap-2 px-2.5 py-1 rounded-lg text-sm transition
+                flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background
                 ${active
-                                    ? "bg-[var(--primary-600)] text-white"
-                                    : "text-[var(--gray-700)] hover:bg-[var(--gray-100)] hover:text-[var(--hover-accent)]"
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-foreground-2 hover:bg-muted hover:text-foreground"
                                 }
               `}
                         >
@@ -276,7 +276,7 @@ export default function Sidebar ( { user }: Props ) {
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-xs font-semibold text-[var(--text)] transition hover:bg-[var(--gray-100)]"
+                    className="flex w-full items-center justify-between rounded-xl border border-border bg-card/70 px-2.5 py-2 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
                     title={isDark ? "Modo claro" : "Modo escuro"}
                 >
@@ -284,12 +284,12 @@ export default function Sidebar ( { user }: Props ) {
                         {isDark ? <Sun size={16} /> : <Moon size={16} />}
                         Tema
                     </span>
-                    <span className="text-[11px] font-medium text-[var(--gray-500)]">
+                    <span className="text-[11px] font-medium text-muted-foreground">
                         {isDark ? "Claro" : "Escuro"}
                     </span>
                 </button>
 
-                <div className="mt-2 text-xs text-[var(--gray-500)]">
+                <div className="mt-2 text-xs text-muted-foreground">
                     Substrato Platform
                 </div>
             </div>

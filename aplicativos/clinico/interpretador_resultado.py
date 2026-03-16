@@ -1,5 +1,4 @@
 class InterpretadorResultado:
-
     @staticmethod
     def interpretar(resultado_item):
         """

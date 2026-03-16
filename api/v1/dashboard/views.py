@@ -15,48 +15,43 @@ from seguranca.permissoes.grupos import IsAdminOrContabilidade
 
 
 class DashboardStatsSerializer(serializers.Serializer):
-	pacientes = serializers.IntegerField()
-	requisicoes_pendentes = serializers.IntegerField()
-	exames_hoje = serializers.IntegerField()
-	faturamento_hoje = serializers.FloatField()
+    pacientes = serializers.IntegerField()
+    requisicoes_pendentes = serializers.IntegerField()
+    exames_hoje = serializers.IntegerField()
+    faturamento_hoje = serializers.FloatField()
 
 
 class DashboardStatsView(APIView):
-	permission_classes = [IsAdminOrContabilidade]
+    permission_classes = [IsAdminOrContabilidade]
 
-	@extend_schema(responses={200: DashboardStatsSerializer})
-	def get(self, request):
-		inquilino = getattr(request, "inquilino", None)
+    @extend_schema(responses={200: DashboardStatsSerializer})
+    def get(self, request):
+        inquilino = getattr(request, "inquilino", None)
 
-		pacientes_qs = Paciente.objects.all()
-		requisicoes_qs = RequisicaoAnalise.objects.all()
-		faturas_qs = Fatura.objects.all()
+        pacientes_qs = Paciente.objects.all()
+        requisicoes_qs = RequisicaoAnalise.objects.all()
+        faturas_qs = Fatura.objects.all()
 
-		if inquilino is not None:
-			pacientes_qs = pacientes_qs.filter(inquilino=inquilino)
-			requisicoes_qs = requisicoes_qs.filter(inquilino=inquilino)
-			faturas_qs = faturas_qs.filter(inquilino=inquilino)
+        if inquilino is not None:
+            pacientes_qs = pacientes_qs.filter(inquilino=inquilino)
+            requisicoes_qs = requisicoes_qs.filter(inquilino=inquilino)
+            faturas_qs = faturas_qs.filter(inquilino=inquilino)
 
-		hoje = timezone.localdate()
+        hoje = timezone.localdate()
 
-		pacientes = pacientes_qs.count()
-		requisicoes_pendentes = requisicoes_qs.filter(
-			estado=EstadoResultado.PENDENTE
-		).count()
-		exames_hoje = requisicoes_qs.filter(criado_em__date=hoje).count()
+        pacientes = pacientes_qs.count()
+        requisicoes_pendentes = requisicoes_qs.filter(estado=EstadoResultado.PENDENTE).count()
+        exames_hoje = requisicoes_qs.filter(criado_em__date=hoje).count()
 
-		faturamento_hoje = (
-			faturas_qs.filter(criado_em__date=hoje).aggregate(total=Sum("total"))[
-				"total"
-			]
-			or Decimal("0.00")
-		)
+        faturamento_hoje = faturas_qs.filter(criado_em__date=hoje).aggregate(total=Sum("total"))["total"] or Decimal(
+            "0.00"
+        )
 
-		return Response(
-			{
-				"pacientes": pacientes,
-				"requisicoes_pendentes": requisicoes_pendentes,
-				"exames_hoje": exames_hoje,
-				"faturamento_hoje": float(faturamento_hoje),
-			}
-		)
+        return Response(
+            {
+                "pacientes": pacientes,
+                "requisicoes_pendentes": requisicoes_pendentes,
+                "exames_hoje": exames_hoje,
+                "faturamento_hoje": float(faturamento_hoje),
+            }
+        )

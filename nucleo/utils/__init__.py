@@ -1,9 +1,9 @@
-from . import datas
-from . import conversoes
-from . import normalizacao
-from . import strings
-from . import validadores
+from . import conversoes, datas, normalizacao, strings, validadores
 
 __all__ = [
-		"validadores", "datas", "strings", "conversoes", "normalizacao",
-		]
+    "conversoes",
+    "datas",
+    "normalizacao",
+    "strings",
+    "validadores",
+]

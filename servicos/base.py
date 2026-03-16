@@ -1,7 +1,8 @@
 # servicos/base.py
 
-from django.db import transaction
 from functools import wraps
+
+from django.db import transaction
 
 
 class ServiceResult:
@@ -12,7 +13,6 @@ class ServiceResult:
 
 
 class BaseService:
-
     @classmethod
     def ok(cls, data=None):
         return ServiceResult(True, data=data)

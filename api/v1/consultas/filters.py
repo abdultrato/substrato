@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
 from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
 from aplicativos.consultas.modelos.feriado import Feriado

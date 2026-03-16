@@ -1,5 +1,4 @@
 class ValidarRequisicao:
-
     @staticmethod
     def executar(requisicao, usuario):
 

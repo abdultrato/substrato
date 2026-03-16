@@ -46,9 +46,7 @@ class HorarioTrabalho(NoNameCoreModel):
         super().clean()
 
         if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"funcionario": "Funcionário e horário devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"funcionario": "Funcionário e horário devem pertencer ao mesmo inquilino."})
 
         if self.hora_inicio and self.hora_fim and self.hora_inicio >= self.hora_fim:
             raise ValidationError({"hora_fim": "Hora fim deve ser maior que hora início."})
@@ -58,4 +56,3 @@ class HorarioTrabalho(NoNameCoreModel):
             self.inquilino_id = self.funcionario.inquilino_id
         self.full_clean()
         return super().save(*args, **kwargs)
-

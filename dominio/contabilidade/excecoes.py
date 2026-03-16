@@ -1,11 +1,11 @@
 class DominioContabilidadeErro(
-		Exception,
-		):
-	"""
-	Classe base para todas as exceções de domínio contábil.
-	"""
-	
-	pass
+    Exception,
+):
+    """
+    Classe base para todas as exceções de domínio contábil.
+    """
+
+    pass
 
 
 # =========================================================
@@ -14,43 +14,43 @@ class DominioContabilidadeErro(
 
 
 class LedgerImutavelErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Tentativa de alterar ou remover LedgerEntry.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Tentativa de alterar ou remover LedgerEntry.
+    """
+
+    pass
 
 
 class LedgerJaRevertidoErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	LedgerEntry já foi revertido anteriormente.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    LedgerEntry já foi revertido anteriormente.
+    """
+
+    pass
 
 
 class ReversaoInvalidaErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Tentativa de reverter algo que não pode ser revertido.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Tentativa de reverter algo que não pode ser revertido.
+    """
+
+    pass
 
 
 class PeriodoContabilFechadoErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Operação bloqueada por período fechado.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Operação bloqueada por período fechado.
+    """
+
+    pass
 
 
 # =========================================================
@@ -59,23 +59,23 @@ class PeriodoContabilFechadoErro(
 
 
 class PartidasDesbalanceadasErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Débito diferente de crédito.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Débito diferente de crédito.
+    """
+
+    pass
 
 
 class LancamentoSemLinhasSuficientesErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Lançamento com menos de duas linhas.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Lançamento com menos de duas linhas.
+    """
+
+    pass
 
 
 # =========================================================
@@ -84,33 +84,33 @@ class LancamentoSemLinhasSuficientesErro(
 
 
 class AlteracaoTipoContaNaoPermitidaErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Conta com histórico não pode alterar tipo.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Conta com histórico não pode alterar tipo.
+    """
+
+    pass
 
 
 class ContaComSaldoNaoPodeSerDesativadaErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Conta com saldo ≠ 0 não pode ser desativada.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Conta com saldo ≠ 0 não pode ser desativada.
+    """
+
+    pass
 
 
 class ContaInativaErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Tentativa de lançar em conta inativa.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Tentativa de lançar em conta inativa.
+    """
+
+    pass
 
 
 # =========================================================
@@ -119,10 +119,10 @@ class ContaInativaErro(
 
 
 class ViolacaoInquilinoErro(
-		DominioContabilidadeErro,
-		):
-	"""
-	Operação fora do escopo do inquilino.
-	"""
-	
-	pass
+    DominioContabilidadeErro,
+):
+    """
+    Operação fora do escopo do inquilino.
+    """
+
+    pass

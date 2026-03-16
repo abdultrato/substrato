@@ -1,9 +1,9 @@
 from .modelos import (
     EvolucaoEnfermagem,
     PrescricaoEnfermagem,
+    Procedimento,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
-    Procedimento,
     ProcedimentoItem,
     ProcedimentoItemValor,
     ProcedimentoMaterial,
@@ -13,15 +13,15 @@ from .modelos import (
 )
 
 __all__ = [
+    "EvolucaoEnfermagem",
+    "PrescricaoEnfermagem",
+    "Procedimento",
     "ProcedimentoCatalogo",
     "ProcedimentoCatalogoMaterial",
-    "Procedimento",
     "ProcedimentoItem",
     "ProcedimentoItemValor",
     "ProcedimentoMaterial",
     "ProcedimentoMaterialValor",
     "RegistroEnfermagem",
     "SinalVitalEnfermagem",
-    "EvolucaoEnfermagem",
-    "PrescricaoEnfermagem",
 ]

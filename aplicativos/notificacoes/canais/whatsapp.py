@@ -1,5 +1,6 @@
-from .base import CanalBase
 from integracoes.mensageria.whatsapp import WhatsAppService
+
+from .base import CanalBase
 
 
 class CanalWhatsApp(CanalBase):

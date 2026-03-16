@@ -43,9 +43,11 @@ export function ToastProvider ( { children }: { children: ReactNode } ) {
     }
 
     const styles = {
-        success: "bg-green-600",
-        error: "bg-red-600",
-        info: "bg-gray-800",
+        success:
+            "border-emerald-500/30 bg-emerald-500/10 text-emerald-950 dark:text-emerald-200",
+        error:
+            "border-rose-500/30 bg-rose-500/10 text-rose-950 dark:text-rose-200",
+        info: "border-border bg-card/90 text-foreground",
     }
 
     return (
@@ -56,11 +58,14 @@ export function ToastProvider ( { children }: { children: ReactNode } ) {
                 {toasts.map( toast => (
                     <div
                         key={toast.id}
-                        className={`flex items-center gap-3 text-white px-4 py-3 rounded-lg shadow-lg ${styles[toast.type]}`}
+                        className={`flex items-center gap-3 rounded-2xl border px-3 py-2 shadow-lg backdrop-blur-[2px] ${styles[toast.type]}`}
                     >
                         {icons[toast.type]}
                         <span className="text-sm">{toast.message}</span>
-                        <button onClick={() => remove( toast.id )}>
+                        <button
+                            onClick={() => remove( toast.id )}
+                            className="ml-1 rounded-lg p-1 opacity-80 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
                             <X size={16} />
                         </button>
                     </div>

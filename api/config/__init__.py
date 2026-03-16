@@ -3,5 +3,7 @@ from .version import APIVersionView
 from .versioning import APIVersioning
 
 __all__ = [
-		"APIVersioning", "APIVersionView", "FeatureFlagsView",
-		]
+    "APIVersionView",
+    "APIVersioning",
+    "FeatureFlagsView",
+]

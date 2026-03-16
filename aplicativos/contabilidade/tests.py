@@ -2,12 +2,12 @@ from decimal import Decimal
 
 import pytest
 
+from aplicativos.contabilidade.modelos.conciliacao import ConciliacaoFinanceira
 from aplicativos.contabilidade.modelos.contas import Conta
 from aplicativos.contabilidade.modelos.lancamento import Lancamento
 from aplicativos.contabilidade.modelos.movimento import Movimento
-from aplicativos.contabilidade.modelos.conciliacao import ConciliacaoFinanceira
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from aplicativos.faturamento.modelos.fatura import Fatura
+from aplicativos.inquilinos.modelos.inquilino import Inquilino
 
 
 def _tenant():

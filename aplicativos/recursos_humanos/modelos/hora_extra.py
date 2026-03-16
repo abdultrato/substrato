@@ -40,9 +40,7 @@ class HoraExtra(NoNameCoreModel):
         super().clean()
 
         if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"funcionario": "Funcionário e hora extra devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"funcionario": "Funcionário e hora extra devem pertencer ao mesmo inquilino."})
 
         if self.horas is not None and self.horas < Decimal("0.00"):
             raise ValidationError({"horas": "Horas inválidas."})
@@ -55,4 +53,3 @@ class HoraExtra(NoNameCoreModel):
             self.inquilino_id = self.funcionario.inquilino_id
         self.full_clean()
         return super().save(*args, **kwargs)
-

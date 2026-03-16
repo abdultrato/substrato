@@ -3,13 +3,14 @@
 Converte frontend-next/schema.json (YAML) para frontend-next/schema.generated.json (JSON).
 Evita dependências externas; use após gerar o schema com spectacular.
 """
+
 import json
-import sys
 from pathlib import Path
+import sys
 
 try:
     import yaml
-except ImportError as exc:
+except ImportError:
     sys.stderr.write("PyYAML necessário. Instale com `pip install pyyaml`.\n")
     raise
 
@@ -22,7 +23,6 @@ DEST = ROOT / "frontend-next" / "schema.generated.json"
 def main():
     data = yaml.safe_load(SRC.read_text())
     DEST.write_text(json.dumps(data))
-    print(f"[schema] {SRC} -> {DEST}")
 
 
 if __name__ == "__main__":

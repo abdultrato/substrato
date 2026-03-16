@@ -16,7 +16,6 @@ logger = logging.getLogger("webhooks")
 
 
 class WebhookViewSet(ViewSet):
-
     permission_classes = [AllowAny]
     authentication_classes = []
 

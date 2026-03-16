@@ -85,4 +85,3 @@ def criar_ordem_integracao_para_item(sender, instance: RequisicaoItem, created: 
         requisicao_item=instance,
         defaults={"estado": IntegracaoOrdemItem.Estado.PENDENTE},
     )
-

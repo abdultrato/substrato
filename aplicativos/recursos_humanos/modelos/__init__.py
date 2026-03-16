@@ -1,21 +1,21 @@
-from .cargo import Cargo
 from .agregado_familiar import AgregadoFamiliar
-from .funcionario import Funcionario
-from .horario_trabalho import HorarioTrabalho
+from .cargo import Cargo
+from .dispensa import Dispensa
 from .falta import Falta
 from .ferias import Ferias
-from .dispensa import Dispensa
-from .hora_extra import HoraExtra
 from .folha_pagamento import FolhaPagamento
+from .funcionario import Funcionario
+from .hora_extra import HoraExtra
+from .horario_trabalho import HorarioTrabalho
 
 __all__ = [
-    "Cargo",
     "AgregadoFamiliar",
-    "Funcionario",
-    "HorarioTrabalho",
+    "Cargo",
+    "Dispensa",
     "Falta",
     "Ferias",
-    "Dispensa",
-    "HoraExtra",
     "FolhaPagamento",
+    "Funcionario",
+    "HoraExtra",
+    "HorarioTrabalho",
 ]

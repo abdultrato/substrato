@@ -58,4 +58,3 @@ class AtividadeUsuario(NoNameCoreModel):
     def __str__(self) -> str:
         u = getattr(self.usuario, "username", None) or "—"
         return f"{u}: {self.metodo} {self.caminho} [{self.status_code}]"
-

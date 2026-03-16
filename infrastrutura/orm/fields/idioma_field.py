@@ -1,4 +1,5 @@
 from django.db import models
+
 from nucleo.internacionalizacao.idioma_service import listar_idiomas_iso
 
 

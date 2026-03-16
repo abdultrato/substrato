@@ -1,9 +1,10 @@
-from .tipos import ResultadoLiberado, PagamentoConfirmado
-from .assinantes import registrar
-from servicos.servico_notificacao import ServicoComunicacao
-from servicos.servico_contabil import ServicoFinanceiro
 from aplicativos.clinico.modelos.resultado import Resultado
 from aplicativos.pagamentos.modelos.pagamento import Pagamento
+from servicos.servico_contabil import ServicoFinanceiro
+from servicos.servico_notificacao import ServicoComunicacao
+
+from .assinantes import registrar
+from .tipos import PagamentoConfirmado, ResultadoLiberado
 
 
 def notificar_resultado(evento):

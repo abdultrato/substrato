@@ -18,7 +18,6 @@ class CoreAdmin(admin.ModelAdmin):
     ordering = ("-criado_em",)
 
 
-
 class AgregadoFamiliarInline(admin.TabularInline):
     model = AgregadoFamiliar
     extra = 0

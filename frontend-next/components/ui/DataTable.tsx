@@ -22,21 +22,21 @@ export default function DataTable<T> ( {
 }: Props<T> ) {
     if ( !data.length ) {
         return (
-            <div className="text-center py-6 text-sm text-[var(--gray-500)]">
+            <div className="py-6 text-center text-sm text-muted-foreground">
                 {emptyMessage}
             </div>
         )
     }
 
     return (
-        <div className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--card)]">
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
             <table className="min-w-full text-sm">
-                <thead className="bg-[var(--gray-100)] text-[var(--gray-700)]">
+                <thead className="bg-muted text-muted-foreground">
                     <tr>
                         {columns.map( ( col, idx ) => (
                             <th
                                 key={idx}
-                                className="text-left font-medium px-2 py-1.5"
+                                className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide"
                             >
                                 {col.header}
                             </th>
@@ -44,13 +44,13 @@ export default function DataTable<T> ( {
                     </tr>
                 </thead>
 
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-border">
                     {data.map( ( row, i ) => (
-                        <tr key={i} className="hover:bg-[var(--gray-100)]">
+                        <tr key={i} className="transition-colors hover:bg-muted/60">
                             {columns.map( ( col, idx ) => (
                                 <td
                                     key={idx}
-                                    className={`px-2 py-1.5 ${col.className ?? ""}`}
+                                    className={`px-3 py-2 align-top ${col.className ?? ""}`}
                                 >
                                     {col.render
                                         ? col.render( row )

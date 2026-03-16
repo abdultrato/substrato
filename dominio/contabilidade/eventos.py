@@ -2,21 +2,20 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-
 # =========================================================
 # EVENTO BASE
 # =========================================================
 
 
 @dataclass(
-		frozen = True,
-		)
+    frozen=True,
+)
 class EventoContabil:
-	"""
-	Evento base do domínio contábil.
-	"""
-	
-	ocorrido_em: datetime
+    """
+    Evento base do domínio contábil.
+    """
+
+    ocorrido_em: datetime
 
 
 # =========================================================
@@ -25,20 +24,19 @@ class EventoContabil:
 
 
 @dataclass(
-		frozen = True,
-		)
+    frozen=True,
+)
 class LedgerEntryCriado(
-		EventoContabil,
-		):
-	
-	entry_id: int
-	inquilino_id: int
-	data_contabil: str
-	descricao: str
-	referencia_externa: str
-	
-	total_debito: Decimal
-	total_credito: Decimal
+    EventoContabil,
+):
+    entry_id: int
+    inquilino_id: int
+    data_contabil: str
+    descricao: str
+    referencia_externa: str
+
+    total_debito: Decimal
+    total_credito: Decimal
 
 
 # =========================================================
@@ -47,16 +45,15 @@ class LedgerEntryCriado(
 
 
 @dataclass(
-		frozen = True,
-		)
+    frozen=True,
+)
 class LedgerEntryRevertido(
-		EventoContabil,
-		):
-	
-	entry_original_id: int
-	entry_reverso_id: int
-	inquilino_id: int
-	motivo: str
+    EventoContabil,
+):
+    entry_original_id: int
+    entry_reverso_id: int
+    inquilino_id: int
+    motivo: str
 
 
 # =========================================================
@@ -65,14 +62,13 @@ class LedgerEntryRevertido(
 
 
 @dataclass(
-		frozen = True,
-		)
+    frozen=True,
+)
 class ContaDesativada(
-		EventoContabil,
-		):
-	
-	conta_id: int
-	inquilino_id: int
+    EventoContabil,
+):
+    conta_id: int
+    inquilino_id: int
 
 
 # =========================================================
@@ -81,15 +77,14 @@ class ContaDesativada(
 
 
 @dataclass(
-		frozen = True,
-		)
+    frozen=True,
+)
 class ConciliacaoExecutada(
-		EventoContabil,
-		):
-	
-	fatura_id: int
-	inquilino_id: int
-	valor_contabil: Decimal
-	valor_recebido: Decimal
-	divergencia: Decimal
-	conciliado: bool
+    EventoContabil,
+):
+    fatura_id: int
+    inquilino_id: int
+    valor_contabil: Decimal
+    valor_recebido: Decimal
+    divergencia: Decimal
+    conciliado: bool

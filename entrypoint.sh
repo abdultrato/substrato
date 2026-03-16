@@ -159,6 +159,14 @@ fi
 
 
 # ============================================================================
+# Sincronizar acesso admin (RBAC)
+# ============================================================================
+
+log "🔐 Sincronizando acesso admin (grupo Administrador -> staff/superuser)..."
+python manage.py sync_admin_access || echo "[substrato] ⚠️  sync_admin_access falhou, prosseguindo."
+
+
+# ============================================================================
 # Static files
 # ============================================================================
 

@@ -69,12 +69,30 @@ fi
 
 mkdir -p "$DEST_DIR"
 
+detect_compose() {
+  # Prefer modern plugin (`docker compose`), but fall back to legacy `docker-compose`.
+  if docker compose version >/dev/null 2>&1; then
+    echo "docker compose"
+    return 0
+  fi
+  if command -v docker-compose >/dev/null 2>&1; then
+    echo "docker-compose"
+    return 0
+  fi
+  return 1
+}
+
+COMPOSE=""
+if command -v docker >/dev/null 2>&1; then
+  COMPOSE="$(detect_compose 2>/dev/null || true)"
+fi
+
 read_docker_db_env() {
-  docker compose exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}" "${POSTGRES_PASSWORD:-}"' 2>/dev/null
+  $COMPOSE exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}" "${POSTGRES_PASSWORD:-}"' 2>/dev/null
 }
 
 if [[ "$FORCE_DOCKER_DB" == "1" ]]; then
-  if ! command -v docker >/dev/null 2>&1 || ! docker compose ps >/dev/null 2>&1; then
+  if ! command -v docker >/dev/null 2>&1 || [[ -z "${COMPOSE:-}" ]] || ! $COMPOSE ps >/dev/null 2>&1; then
     echo "--docker-db requer docker + docker compose." >&2
     exit 2
   fi
@@ -191,17 +209,17 @@ try_pg_dump_docker() {
   if ! command -v docker >/dev/null 2>&1; then
     return 1
   fi
-  if ! docker compose ps >/dev/null 2>&1; then
+  if [[ -z "${COMPOSE:-}" ]] || ! $COMPOSE ps >/dev/null 2>&1; then
     return 1
   fi
-  if ! docker compose ps db >/dev/null 2>&1; then
+  if ! $COMPOSE ps db >/dev/null 2>&1; then
     return 1
   fi
   if [[ -z "$DB_NAME" || -z "$DB_USER" ]]; then
     return 1
   fi
   # Dump gerado dentro do container db, stream para o host.
-  docker compose exec -T db pg_dump -U "$DB_USER" --format=custom --no-owner --no-privileges "$DB_NAME" >"$out" 2>/dev/null
+  $COMPOSE exec -T db pg_dump -U "$DB_USER" --format=custom --no-owner --no-privileges "$DB_NAME" >"$out" 2>/dev/null
 }
 
 backup_postgres() {
@@ -224,13 +242,13 @@ backup_postgres_docker_env() {
   mkdir -p "$WORK_DIR/db"
   local out="$WORK_DIR/db/postgres.dump"
 
-  if ! command -v docker >/dev/null 2>&1 || ! docker compose ps >/dev/null 2>&1; then
+  if ! command -v docker >/dev/null 2>&1 || [[ -z "${COMPOSE:-}" ]] || ! $COMPOSE ps >/dev/null 2>&1; then
     echo "--docker-db requer docker + docker compose." >&2
     exit 2
   fi
 
   # Dump via variáveis do próprio container db
-  docker compose exec -T db sh -lc 'pg_dump -U "$POSTGRES_USER" --format=custom --no-owner --no-privileges "$POSTGRES_DB"' >"$out" 2>/dev/null
+  $COMPOSE exec -T db sh -lc 'pg_dump -U "$POSTGRES_USER" --format=custom --no-owner --no-privileges "$POSTGRES_DB"' >"$out" 2>/dev/null
 }
 
 if [[ "$FORCE_DOCKER_DB" == "1" ]]; then
@@ -248,12 +266,12 @@ try_media_from_docker() {
   # Copia /app/media do serviço backend para o WORK_DIR (mantém a estrutura media/).
   # 1) Preferir exec se o backend já está em execução
   # 2) Fallback: docker compose run com entrypoint tar (não dispara entrypoint.sh)
-  if docker compose exec -T backend true >/dev/null 2>&1; then
-    docker compose exec -T backend tar -C /app -cf - media 2>/dev/null | tar -C "$WORK_DIR" -xf - 2>/dev/null
+  if $COMPOSE exec -T backend true >/dev/null 2>&1; then
+    $COMPOSE exec -T backend tar -C /app -cf - media 2>/dev/null | tar -C "$WORK_DIR" -xf - 2>/dev/null
     return $?
   fi
 
-  docker compose run --rm -T --entrypoint tar backend -C /app -cf - media 2>/dev/null | tar -C "$WORK_DIR" -xf - 2>/dev/null
+  $COMPOSE run --rm -T --entrypoint tar backend -C /app -cf - media 2>/dev/null | tar -C "$WORK_DIR" -xf - 2>/dev/null
 }
 
 if [[ "$INCLUDE_MEDIA" == "1" ]]; then

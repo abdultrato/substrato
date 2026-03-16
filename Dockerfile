@@ -15,7 +15,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
 COPY requirements.txt .
 
-RUN pip install --upgrade pip setuptools wheel
+RUN pip install --root-user-action=ignore --upgrade pip setuptools wheel
 
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip wheel \
@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /wheels /wheels
 
-RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* \
+RUN pip install --root-user-action=ignore --no-cache-dir --no-index --find-links=/wheels /wheels/* \
     && rm -rf /wheels
 
 # criar usuário antes de copiar arquivos

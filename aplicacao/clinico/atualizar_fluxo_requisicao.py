@@ -2,7 +2,6 @@ from dominio.clinico.regras_requisicao import FluxoRequisicao
 
 
 class AtualizarFluxoRequisicao:
-
     @staticmethod
     def executar(requisicao):
 

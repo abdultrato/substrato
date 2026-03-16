@@ -95,6 +95,16 @@ done
 log "✓ Status dos containers:"
 $COMPOSE ps
 
+# Smoke tests (HTTP)
+if command -v curl >/dev/null 2>&1; then
+  log "✓ Verificando endpoints HTTP..."
+  curl -sS -m 6 -o /dev/null -w "   → Backend:  %{http_code} (%{time_total}s)\n" http://localhost:8000/health/live || true
+  curl -sS -m 10 -o /dev/null -w "   → Frontend: %{http_code} (%{time_total}s)\n" http://localhost:3000/ || true
+  curl -sS -m 10 -o /dev/null -w "   → Nginx:    %{http_code} (%{time_total}s)\n" http://localhost/ || true
+else
+  log "ℹ️  curl não encontrado; pulando smoke tests."
+fi
+
 echo ""
 echo -e "${GREEN}=================================================="
 echo "✅ Substrato iniciado!"
@@ -110,6 +120,7 @@ echo ""
 
 echo -e "${GREEN}Comandos úteis:${NC}"
 echo "  Logs:           ${YELLOW}$COMPOSE logs -f${NC}"
+echo "  Diagnóstico:    ${YELLOW}./scripts/stack_doctor.sh --fix${NC}"
 echo "  Shell Django:   ${YELLOW}$COMPOSE exec backend python manage.py shell${NC}"
 echo "  Superuser:      ${YELLOW}$COMPOSE exec backend python manage.py createsuperuser${NC}"
 echo "  Parar stack:    ${YELLOW}$COMPOSE down${NC}"

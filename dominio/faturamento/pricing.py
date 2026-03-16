@@ -38,9 +38,7 @@ def calcular_preco_item(preco_base, quantidade=1, desconto_percentual=0, acresci
     preco = (Decimal(preco_base) * quantidade).quantize(Decimal("0.01"))
 
     preco = aplicar_desconto_percentual(preco, desconto_percentual)
-    preco = aplicar_acrescimo_percentual(preco, acrescimo_percentual)
-
-    return preco
+    return aplicar_acrescimo_percentual(preco, acrescimo_percentual)
 
 
 def aplicar_preco_contratual(preco_base, preco_contrato=None):

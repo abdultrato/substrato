@@ -1,25 +1,24 @@
 from api.v1.auditoria.viewsets import VIEWSET_MAP as AUDITORIA_VIEWSET_MAP
-from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
+from api.v1.cirurgia.viewsets import VIEWSET_MAP as CIRURGIA_VIEWSET_MAP
 from api.v1.clinico.viewsets import VIEWSET_MAP as CLINICO_VIEWSET_MAP
 from api.v1.consultas.viewsets import VIEWSET_MAP as CONSULTAS_VIEWSET_MAP
 from api.v1.contabilidade.viewsets import VIEWSET_MAP as CONTABILIDADE_VIEWSET_MAP
+from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
 from api.v1.enfermagem.viewsets import VIEWSET_MAP as ENFERMAGEM_VIEWSET_MAP
 from api.v1.entidades.viewsets import VIEWSET_MAP as ENTIDADES_VIEWSET_MAP
 from api.v1.farmacia.viewsets import VIEWSET_MAP as FARMACIA_VIEWSET_MAP
 from api.v1.faturamento.viewsets import VIEWSET_MAP as FATURAMENTO_VIEWSET_MAP
 from api.v1.identidade.viewsets import VIEWSET_MAP as IDENTIDADE_VIEWSET_MAP
 from api.v1.inquilinos.viewsets import VIEWSET_MAP as INQUILINOS_VIEWSET_MAP
+from api.v1.maternidade.viewsets import VIEWSET_MAP as MATERNIDADE_VIEWSET_MAP
+from api.v1.monitoramento.viewsets import VIEWSET_MAP as MONITORAMENTO_VIEWSET_MAP
 from api.v1.notificacoes.viewsets import VIEWSET_MAP as NOTIFICACOES_VIEWSET_MAP
 from api.v1.pagamentos.viewsets import VIEWSET_MAP as PAGAMENTOS_VIEWSET_MAP
-from api.v1.recepcao.viewsets import VIEWSET_MAP as RECEPCAO_VIEWSET_MAP
-from api.v1.seguradora.viewsets import VIEWSET_MAP as SEGURADORA_VIEWSET_MAP
 from api.v1.prontuario.viewsets import VIEWSET_MAP as PRONTUARIO_VIEWSET_MAP
-from api.v1.maternidade.viewsets import VIEWSET_MAP as MATERNIDADE_VIEWSET_MAP
-from api.v1.cirurgia.viewsets import VIEWSET_MAP as CIRURGIA_VIEWSET_MAP
+from api.v1.recepcao.viewsets import VIEWSET_MAP as RECEPCAO_VIEWSET_MAP
 from api.v1.recursos_humanos.viewsets import VIEWSET_MAP as RECURSOS_HUMANOS_VIEWSET_MAP
-from api.v1.monitoramento.viewsets import VIEWSET_MAP as MONITORAMENTO_VIEWSET_MAP
+from api.v1.seguradora.viewsets import VIEWSET_MAP as SEGURADORA_VIEWSET_MAP
 from seguranca.permissoes.rbac import RBACPermission
-
 
 VIEWSET_GROUPS = {
     "auditoria": AUDITORIA_VIEWSET_MAP,

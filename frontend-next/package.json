@@ -4,12 +4,12 @@
   "description": "Substrato Healthcare Platform - Frontend",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "build:admin-css": "tailwindcss -c tailwind.admin.config.js -i styles/admin-tailwind.input.css -o ../aplicativos/clinico/static/admin/css/substrato-admin-tailwind.css --minify",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental false",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "generate:api": "openapi-typescript-codegen --input http://localhost:8000/api/schema/ --output ./lib/api-client --useUnionTypes"
@@ -19,7 +19,7 @@
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
     "lucide-react": "^0.263.0",
-    "next": "^14.0.0",
+    "next": "^15.5.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.15.4",
@@ -34,17 +34,21 @@
     "@types/react-dom": "^18.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@vitest/ui": "^1.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.0.0",
-    "eslint-config-next": "^14.0.0",
+    "eslint-config-next": "^15.5.12",
     "openapi-typescript-codegen": "^0.30.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "vitest": "^1.0.0"
+    "vitest": "^4.1.0"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
+  },
+  "overrides": {
+    "minimatch": "^9.0.9"
   }
 }

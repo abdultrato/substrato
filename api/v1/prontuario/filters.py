@@ -1,7 +1,6 @@
 from api.core.filters import SafeFilterSet
-
-from aplicativos.prontuario.modelos.registro_prontuario import RegistroProntuario
 from aplicativos.prontuario.modelos.prescricao_item import PrescricaoItem
+from aplicativos.prontuario.modelos.registro_prontuario import RegistroProntuario
 
 
 class RegistroProntuarioFilter(SafeFilterSet):

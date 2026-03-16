@@ -36,6 +36,7 @@ select = [
 
 ignore = [
     "E501",   # line length (formatter controla)
+    "RUF012", # muitos frameworks (Django/DRF) usam atributos de classe mutáveis como constantes
 ]
 
 # --------------------------------------------------

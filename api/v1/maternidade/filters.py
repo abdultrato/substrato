@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.maternidade.modelos.gestacao import Gestacao
 
 
@@ -18,4 +17,3 @@ class GestacaoFilter(SafeFilterSet):
 FILTER_MAP = {
     "gestacao": GestacaoFilter,
 }
-

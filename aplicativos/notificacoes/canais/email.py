@@ -1,5 +1,6 @@
-from .base import CanalBase
 from integracoes.mensageria.email import EmailService
+
+from .base import CanalBase
 
 
 class CanalEmail(CanalBase):

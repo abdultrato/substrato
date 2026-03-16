@@ -1,7 +1,32 @@
 import logging
+
 from rest_framework import permissions
 
 logger = logging.getLogger("seguranca.permissoes")
+
+
+def tenant_matches_request(request, user) -> bool:
+    """
+    Defesa multi-tenant:
+    - Se o middleware definiu `request.inquilino`, o usuário autenticado deve pertencer ao mesmo tenant.
+    - Superusers fazem bypass (controle feito no caller).
+    - Se não for possível determinar tenant (ex.: request sem tenant), não bloqueia.
+    """
+
+    req_tenant = getattr(request, "inquilino", None)
+    req_tenant_id = getattr(req_tenant, "id", None)
+    if req_tenant_id is None:
+        return True
+
+    user_tenant_id = getattr(user, "inquilino_id", None)
+    if user_tenant_id is None:
+        user_tenant = getattr(user, "inquilino", None)
+        user_tenant_id = getattr(user_tenant, "id", None)
+
+    if user_tenant_id is None:
+        return True
+
+    return req_tenant_id == user_tenant_id
 
 
 class BaseRolePermission(permissions.BasePermission):
@@ -35,6 +60,18 @@ class BaseRolePermission(permissions.BasePermission):
             # Autenticação obrigatória
             if not user.is_authenticated:
                 logger.info("usuario_nao_autenticado")
+                return False
+
+            # Tenant isolation: token de um tenant não deve operar noutro tenant via Host header.
+            if not tenant_matches_request(request, user):
+                logger.info(
+                    "tenant_mismatch",
+                    extra={
+                        "user_id": getattr(user, "id", None),
+                        "user_tenant_id": getattr(user, "inquilino_id", None),
+                        "request_tenant_id": getattr(getattr(request, "inquilino", None), "id", None),
+                    },
+                )
                 return False
 
             # Verificação de grupo

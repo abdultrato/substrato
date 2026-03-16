@@ -11,16 +11,15 @@ Saída:
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, datetime
+import itertools
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_CONNECTOR
-from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,7 +73,9 @@ def add_header(slide, prs: Presentation, title: str):
 
 
 def add_footer(slide, prs: Presentation, text: str):
-    box = slide.shapes.add_textbox(Inches(0.45), prs.slide_height - Inches(0.45), prs.slide_width - Inches(0.9), Inches(0.3))
+    box = slide.shapes.add_textbox(
+        Inches(0.45), prs.slide_height - Inches(0.45), prs.slide_width - Inches(0.9), Inches(0.3)
+    )
     tf = box.text_frame
     tf.clear()
     p = tf.paragraphs[0]
@@ -213,13 +214,13 @@ def build_deck() -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "SUBSTRATO_PitchDeck.pptx"
 
-    today = date.today().strftime("%Y-%m-%d")
+    today = datetime.now(tz=UTC).date().strftime("%Y-%m-%d")
 
     # Slide 1: Capa
     s1 = prs.slides.add_slide(blank)
     set_bg(s1, prs, COLORS["white"])
 
-    # Left panel with an abstract "network" pattern (avoid embedding third‑party branding).
+    # Left panel with an abstract "network" pattern (avoid embedding third-party branding).
     left_w = Inches(8.0)
     left_panel = s1.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, left_w, prs.slide_height)
     left_panel.fill.solid()
@@ -242,7 +243,7 @@ def build_deck() -> Path:
     ]
 
     # Connect nodes
-    for (x1, y1, r1), (x2, y2, r2) in zip(nodes, nodes[1:]):
+    for (x1, y1, r1), (x2, y2, r2) in itertools.pairwise(nodes):
         conn = s1.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x1 + r1, y1 + r1, x2 + r2, y2 + r2)
         conn.line.color.rgb = rgb("#B91C1C")
         conn.line.width = Pt(2)
@@ -324,7 +325,9 @@ def build_deck() -> Path:
     p.font.size = Pt(16)
     p.font.color.rgb = rgb("#FFE4E6")  # very light
 
-    tagline = s1.shapes.add_textbox(panel_x + Inches(0.55), prs.slide_height - Inches(1.05), panel_w - Inches(1.1), Inches(0.7))
+    tagline = s1.shapes.add_textbox(
+        panel_x + Inches(0.55), prs.slide_height - Inches(1.05), panel_w - Inches(1.1), Inches(0.7)
+    )
     tf = tagline.text_frame
     tf.clear()
     p = tf.paragraphs[0]
@@ -443,7 +446,7 @@ def build_deck() -> Path:
         Inches(3.85),
         Inches(2.55),
         "Escala",
-        "Multi‑clínica (multi‑tenant) e pronto para cloud/on‑prem.\nCresce sem recomeçar.",
+        "Multi-clínica (multi-tenant) e pronto para cloud/on-prem.\nCresce sem recomeçar.",
         COLORS["red_dark"],
     )
 
@@ -455,12 +458,12 @@ def build_deck() -> Path:
     add_header(s4, prs, "Módulos prontos, integrados e por sector")
 
     cards = [
-        ("Recepção", "Check‑in, pacientes, requisições, faturas e recibos.", COLORS["red"]),
+        ("Recepção", "Check-in, pacientes, requisições, faturas e recibos.", COLORS["red"]),
         ("Laboratório", "Lançar, gravar e validar resultados com rastreio.", COLORS["blue"]),
         ("Medicina", "Consultas, requisições médicas e prontuário (Cardex).", COLORS["red_dark"]),
         ("Enfermagem/Enfermaria", "Sinais vitais, procedimentos, camas e internamentos.", COLORS["red"]),
         ("Farmácia", "Produtos, lotes, estoque (FEFO) e vendas.", COLORS["blue"]),
-        ("Faturamento", "Faturas multi‑origem, itens e IVA por item.", COLORS["red_dark"]),
+        ("Faturamento", "Faturas multi-origem, itens e IVA por item.", COLORS["red_dark"]),
         ("Pagamentos", "Pagamentos, conciliação e recibo automático ao liquidar.", COLORS["red"]),
         ("Contabilidade + RH", "Contas, lançamentos, funcionários e escalas.", COLORS["blue"]),
         ("Monitoramento", "Logs, auditoria e métricas para operação previsível.", COLORS["red_dark"]),
@@ -485,10 +488,10 @@ def build_deck() -> Path:
     # Slide 5: Fluxo
     s5 = prs.slides.add_slide(blank)
     set_bg(s5, prs, COLORS["white"])
-    add_header(s5, prs, "Fluxo ponta‑a‑ponta: sem buracos na operação")
+    add_header(s5, prs, "Fluxo ponta-a-ponta: sem buracos na operação")
 
     steps = [
-        ("1", "Check‑in", "Recepção"),
+        ("1", "Check-in", "Recepção"),
         ("2", "Requisição", "Exames/Consulta"),
         ("3", "Execução", "Lab/Enfermagem/Farmácia"),
         ("4", "Resultado", "Lançar → Gravar → Validar"),
@@ -605,7 +608,7 @@ def build_deck() -> Path:
     bullets = [
         "RBAC por sector: Recepção, Laboratório, Enfermagem, Farmácia, Contabilidade, RH, Medicina.",
         "Admin apenas para Administrador (controle total de acesso).",
-        "Autenticação JWT (acesso/refresh) e isolamento por inquilino (multi‑tenant).",
+        "Autenticação JWT (acesso/refresh) e isolamento por inquilino (multi-tenant).",
         "Auditoria de atividades e captura de erros para rastreabilidade operacional.",
         "Backups automatizados + health checks (live/ready) + métricas (Prometheus).",
     ]
@@ -636,7 +639,7 @@ def build_deck() -> Path:
         "Conectividade que vende",
         [
             "Integração com equipamentos: worklist e inbox de resultados (HTTP JSON, chave por equipamento).",
-            "Notificações com templates e logs (e‑mail/WhatsApp/SMS) com idempotência por referência.",
+            "Notificações com templates e logs (e-mail/WhatsApp/SMS) com idempotência por referência.",
             "API documentada (OpenAPI) para parceiros, ERPs e integrações futuras.",
             "Processamento assíncrono com Celery: tarefas pesadas sem travar o atendimento.",
         ],
@@ -681,7 +684,7 @@ def build_deck() -> Path:
     values = [0.55, 0.75, 0.62, 0.88]
     bar_w = Inches(0.85)
     base_y = chart_y + chart_h - Inches(0.65)
-    for i, (lab, v) in enumerate(zip(labels, values)):
+    for i, (lab, v) in enumerate(zip(labels, values, strict=False)):
         x = chart_x + Inches(0.55) + i * Inches(1.2)
         h = Inches(3.0) * v
         y = base_y - h
@@ -715,7 +718,7 @@ def build_deck() -> Path:
         Inches(5.8),
         "Pronto para produção",
         [
-            "On‑premise ou cloud.",
+            "On-premise ou cloud.",
             "Docker Compose para arranque rápido; Kubernetes para escala.",
             "Postgres + Redis + Celery: robustez de nível empresarial.",
             "Arquitetura modular (Django/DRF + Next.js): fácil de manter e evoluir.",
@@ -752,12 +755,19 @@ def build_deck() -> Path:
 
     fx = ax + Inches(0.55)
     fy = ay + Inches(0.65)
-    frontend_b = arch_box(fx, fy, Inches(1.7), Inches(0.75), "Frontend\n(Next.js)", COLORS["blue"])
-    api_b = arch_box(fx + Inches(2.05), fy, Inches(1.7), Inches(0.75), "API\n(Django/DRF)", COLORS["red_dark"])
-    db_b = arch_box(fx + Inches(0.2), fy + Inches(1.35), Inches(1.7), Inches(0.75), "Postgres", COLORS["red"])
-    redis_b = arch_box(fx + Inches(2.25), fy + Inches(1.35), Inches(1.7), Inches(0.75), "Redis", COLORS["blue"])
-    celery_b = arch_box(fx + Inches(1.2), fy + Inches(2.25), Inches(2.0), Inches(0.75), "Celery\n(Tarefas)", COLORS["red_dark"])
-    integ_b = arch_box(fx + Inches(0.2), fy + Inches(3.2), Inches(3.75), Inches(0.75), "Integrações\n(E-mail/WhatsApp/Equipamentos)", COLORS["red"])
+    arch_box(fx, fy, Inches(1.7), Inches(0.75), "Frontend\n(Next.js)", COLORS["blue"])
+    arch_box(fx + Inches(2.05), fy, Inches(1.7), Inches(0.75), "API\n(Django/DRF)", COLORS["red_dark"])
+    arch_box(fx + Inches(0.2), fy + Inches(1.35), Inches(1.7), Inches(0.75), "Postgres", COLORS["red"])
+    arch_box(fx + Inches(2.25), fy + Inches(1.35), Inches(1.7), Inches(0.75), "Redis", COLORS["blue"])
+    arch_box(fx + Inches(1.2), fy + Inches(2.25), Inches(2.0), Inches(0.75), "Celery\n(Tarefas)", COLORS["red_dark"])
+    arch_box(
+        fx + Inches(0.2),
+        fy + Inches(3.2),
+        Inches(3.75),
+        Inches(0.75),
+        "Integrações\n(E-mail/WhatsApp/Equipamentos)",
+        COLORS["red"],
+    )
 
     add_footer(s10, prs, "SUBSTRATO • Deploy e escala")
 
@@ -830,8 +840,8 @@ def build_deck() -> Path:
     p0.font.bold = True
     p0.font.color.rgb = COLORS["white"]
     for line in [
-        "2) Piloto (7–14 dias) com dados reais e validação de processos",
-        "3) Go‑live + treinamento + suporte contínuo",
+        "2) Piloto (7-14 dias) com dados reais e validação de processos",
+        "3) Go-live + treinamento + suporte contínuo",
     ]:
         p = tf.add_paragraph()
         p.text = line
@@ -855,4 +865,3 @@ def build_deck() -> Path:
 
 if __name__ == "__main__":
     path = build_deck()
-    print(f"OK: gerado {path}")

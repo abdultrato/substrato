@@ -17,8 +17,7 @@ def _normalize(value: str) -> str:
     if not value:
         return ""
     value = unicodedata.normalize("NFD", value)
-    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
-    return value
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
 
 
 def _ensure_tenant() -> Inquilino:
@@ -222,7 +221,5 @@ class Command(BaseCommand):
         self.stdout.write(f"- Grupo: {group.name}")
         self.stdout.write(f"- Staff (/admin): {'SIM' if getattr(user, 'is_staff', False) else 'NÃO'}")
         self.stdout.write(
-            f"- Superuser: {'SIM' if getattr(user, 'is_superuser', False) else 'NÃO'} "
-            "(pode ser forçado por allowlist)"
+            f"- Superuser: {'SIM' if getattr(user, 'is_superuser', False) else 'NÃO'} (pode ser forçado por allowlist)"
         )
-

@@ -15,22 +15,14 @@ class RecentActivityView(APIView):
         since = now() - timedelta(days=1)
 
         requisicoes = (
-            Requisicao.objects.filter(criado_em__gte=since)
-            .select_related("paciente")
-            .order_by("-criado_em")[:5]
+            Requisicao.objects.filter(criado_em__gte=since).select_related("paciente").order_by("-criado_em")[:5]
         )
 
         resultados = (
-            Resultado.objects.filter(atualizado_em__gte=since)
-            .select_related("exame")
-            .order_by("-atualizado_em")[:5]
+            Resultado.objects.filter(atualizado_em__gte=since).select_related("exame").order_by("-atualizado_em")[:5]
         )
 
-        faturas = (
-            Fatura.objects.filter(criado_em__gte=since)
-            .select_related("requisicao")
-            .order_by("-criado_em")[:5]
-        )
+        faturas = Fatura.objects.filter(criado_em__gte=since).select_related("requisicao").order_by("-criado_em")[:5]
 
         return Response(
             {

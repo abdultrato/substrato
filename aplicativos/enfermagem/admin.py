@@ -7,9 +7,9 @@ from aplicativos.farmacia.models.lote import Lote
 from aplicativos.farmacia.models.produto import Produto
 
 from .modelos import (
+    Procedimento,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
-    Procedimento,
     ProcedimentoItem,
     ProcedimentoItemValor,
     ProcedimentoMaterial,
@@ -129,13 +129,13 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         (
             "Procedimento do Catálogo",
             {
-                    "fields": (
-                        "id_custom",
-                        "nome",
-                        "descricao",
-                        "preco_padrao",
-                        "iva_percentual",
-                    )
+                "fields": (
+                    "id_custom",
+                    "nome",
+                    "descricao",
+                    "preco_padrao",
+                    "iva_percentual",
+                )
             },
         ),
         (

@@ -1,6 +1,7 @@
-from django.db import models
-from django.core.exceptions import ValidationError
 import re
+
+from django.core.exceptions import ValidationError
+from django.db import models
 
 
 class CodigoField(models.CharField):

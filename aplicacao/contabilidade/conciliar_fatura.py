@@ -1,6 +1,6 @@
 from decimal import (
-    Decimal,
     ROUND_HALF_UP,
+    Decimal,
 )
 
 from django.db import transaction

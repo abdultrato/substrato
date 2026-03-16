@@ -2,7 +2,6 @@ from dominio.seguradora.motor_cobertura import resolver_regra
 
 
 class ServicoCobertura:
-
     @staticmethod
     def resolver(plano, codigo_exame=None, cid=None):
 
@@ -17,7 +16,6 @@ class ServicoCobertura:
             }
 
         return {
-            "percentual": regra.percentual_cobertura
-            or plano.percentual_cobertura,
+            "percentual": regra.percentual_cobertura or plano.percentual_cobertura,
             "exige_autorizacao": regra.exige_autorizacao,
         }

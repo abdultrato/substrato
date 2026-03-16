@@ -117,7 +117,7 @@ export default function LoginPage () {
 
                     {error && <div className="login-error">{error}</div>}
                     {resetInfo && (
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 mb-3">
+                        <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
                             {resetInfo}
                         </div>
                     )}

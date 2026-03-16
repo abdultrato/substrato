@@ -22,4 +22,3 @@ class UsoTenant(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"Uso {self.inquilino_id}"
-

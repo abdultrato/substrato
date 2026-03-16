@@ -1,10 +1,12 @@
 """
 Configuração global do pytest
 """
+
 import os
+
 import django
-import pytest
 from django.contrib.auth import get_user_model
+import pytest
 
 # Setup Django (pytest-django will manage DB lifecycle)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings.development")
@@ -15,6 +17,7 @@ django.setup()
 def api_client():
     """Django REST API client"""
     from rest_framework.test import APIClient
+
     return APIClient()
 
 

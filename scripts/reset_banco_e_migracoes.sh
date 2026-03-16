@@ -18,6 +18,24 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+detect_compose() {
+  # Prefer modern plugin (`docker compose`), but fall back to legacy `docker-compose`.
+  if docker compose version >/dev/null 2>&1; then
+    echo "docker compose"
+    return 0
+  fi
+  if command -v docker-compose >/dev/null 2>&1; then
+    echo "docker-compose"
+    return 0
+  fi
+  return 1
+}
+
+COMPOSE=""
+if command -v docker >/dev/null 2>&1; then
+  COMPOSE="$(detect_compose 2>/dev/null || true)"
+fi
+
 NO_BACKUP="0"
 FORCE_DOCKER_DB="0"
 FORCE="0"
@@ -79,7 +97,7 @@ require_docker() {
     echo "docker não encontrado. Instale docker para usar --docker-db." >&2
     exit 2
   fi
-  if ! docker compose ps >/dev/null 2>&1; then
+  if [[ -z "${COMPOSE:-}" ]] || ! $COMPOSE ps >/dev/null 2>&1; then
     echo "docker compose indisponível neste diretório. Execute a partir da raiz do projeto." >&2
     exit 2
   fi
@@ -88,7 +106,7 @@ require_docker() {
 docker_running() {
   local svc="$1"
   local cid
-  cid="$(docker compose ps -q "$svc" 2>/dev/null || true)"
+  cid="$($COMPOSE ps -q "$svc" 2>/dev/null || true)"
   if [[ -z "$cid" ]]; then
     return 1
   fi
@@ -101,22 +119,22 @@ docker_backend_manage() {
   # `run --entrypoint python` para não disparar o entrypoint.sh (mais rápido
   # e evita side-effects como collectstatic automático).
   if docker_running backend; then
-    docker compose exec -T backend python manage.py "$@"
+    $COMPOSE exec -T backend python manage.py "$@"
   else
-    docker compose run --rm -T --entrypoint python backend manage.py "$@"
+    $COMPOSE run --rm -T --entrypoint python backend manage.py "$@"
   fi
 }
 
 read_docker_db_env() {
-  docker compose exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}" "${POSTGRES_PASSWORD:-}"' 2>/dev/null
+  $COMPOSE exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}" "${POSTGRES_PASSWORD:-}"' 2>/dev/null
 }
 
 docker_drop_create() {
   local user="$1"
   local dbname="$2"
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${dbname}' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "DROP DATABASE IF EXISTS \"${dbname}\";" >/dev/null
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "CREATE DATABASE \"${dbname}\" ENCODING 'UTF8';" >/dev/null
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${dbname}' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "DROP DATABASE IF EXISTS \"${dbname}\";" >/dev/null
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c "CREATE DATABASE \"${dbname}\" ENCODING 'UTF8';" >/dev/null
 }
 
 if [[ "$FORCE_DOCKER_DB" == "1" ]]; then
@@ -284,7 +302,7 @@ reset_postgres() {
   fi
 
   # Fallback: docker compose (caso você esteja a usar docker, mas o host não alcança o DB)
-  if command -v docker >/dev/null 2>&1 && docker compose ps >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && [[ -n "${COMPOSE:-}" ]] && $COMPOSE ps >/dev/null 2>&1; then
     docker_drop_create "$DB_USER" "$DB_NAME" && return 0
   fi
 

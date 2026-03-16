@@ -22,4 +22,3 @@ class GestacaoAdmin(CoreAdmin):
     list_filter = ("estado",)
     search_fields = ("paciente__nome", "medico_responsavel__username")
     ordering = ("-criado_em", "-id")
-

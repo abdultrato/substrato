@@ -1,8 +1,8 @@
 from django.db import transaction
 from django.utils import timezone
 
-from aplicativos.inquilinos.modelos.plano_assinatura import PlanoAssinatura
 from aplicativos.inquilinos.modelos.assinatura import AssinaturaTenant
+from aplicativos.inquilinos.modelos.plano_assinatura import PlanoAssinatura
 
 
 class UpgradePlanoUseCase:
@@ -42,7 +42,7 @@ class UpgradePlanoUseCase:
             # Cancela imediatamente
             assinatura_atual.cancelar(data_fim=hoje)
 
-            nova_assinatura = AssinaturaTenant.objects.create(
+            return AssinaturaTenant.objects.create(
                 inquilino=inquilino,
                 plano=novo_plano,
                 data_inicio=hoje,
@@ -50,19 +50,15 @@ class UpgradePlanoUseCase:
                 ciclo=assinatura_atual.ciclo,
             )
 
-            return nova_assinatura
-
         # Upgrade programado no fim do ciclo
         data_fim_atual = assinatura_atual.data_fim or hoje
 
         assinatura_atual.cancelar(data_fim=data_fim_atual)
 
-        nova_assinatura = AssinaturaTenant.objects.create(
+        return AssinaturaTenant.objects.create(
             inquilino=inquilino,
             plano=novo_plano,
             data_inicio=data_fim_atual,
             status=AssinaturaTenant.Status.ATIVA,
             ciclo=assinatura_atual.ciclo,
         )
-
-        return nova_assinatura

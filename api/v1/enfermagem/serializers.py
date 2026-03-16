@@ -1,20 +1,20 @@
 from rest_framework import serializers
 
 from aplicativos.enfermagem.modelos import (
+    CamaEnfermaria,
+    Enfermaria,
     EvolucaoEnfermagem,
+    InternamentoEnfermaria,
     PrescricaoEnfermagem,
+    Procedimento,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
-    Procedimento,
     ProcedimentoItem,
     ProcedimentoItemValor,
     ProcedimentoMaterial,
     ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
-    Enfermaria,
-    CamaEnfermaria,
-    InternamentoEnfermaria,
 )
 
 
@@ -96,6 +96,7 @@ class EvolucaoEnfermagemSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvolucaoEnfermagem
         fields = "__all__"
+
 
 class EnfermariaSerializer(serializers.ModelSerializer):
     class Meta:

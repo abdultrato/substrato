@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.db import connection
+
 from infrastrutura.contexto.inquilino import get_inquilino
 
 
@@ -63,13 +65,6 @@ class TenantDatabaseRouter:
             return "default"
 
         return shard_name
-
-
-# =========================================================
-# DEBUG UTIL
-# =========================================================
-
-from django.db import connection
 
 
 def consultas_ativas():

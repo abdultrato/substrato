@@ -37,13 +37,10 @@ class Falta(NoNameCoreModel):
     def clean(self):
         super().clean()
         if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"funcionario": "Funcionário e falta devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"funcionario": "Funcionário e falta devem pertencer ao mesmo inquilino."})
 
     def save(self, *args, **kwargs):
         if not self.inquilino_id and self.funcionario_id:
             self.inquilino_id = self.funcionario.inquilino_id
         self.full_clean()
         return super().save(*args, **kwargs)
-

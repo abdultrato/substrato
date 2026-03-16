@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.cirurgia.modelos.cirurgia import Cirurgia
 from aplicativos.cirurgia.modelos.procedimento_cirurgico import ProcedimentoCirurgico
 

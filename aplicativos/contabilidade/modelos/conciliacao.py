@@ -46,12 +46,9 @@ class ConciliacaoFinanceira(CoreModel):
 
     def save(self, *args, **kwargs):
         # Mantém divergência consistente.
-        self.divergencia = (self.valor_contabil or Decimal("0.00")) - (
-            self.valor_recebido or Decimal("0.00")
-        )
+        self.divergencia = (self.valor_contabil or Decimal("0.00")) - (self.valor_recebido or Decimal("0.00"))
         self.conciliado = self.divergencia == Decimal("0.00")
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.id_custom or f"Conciliação {self.pk}"
-

@@ -76,22 +76,24 @@ export default function ConfirmDialog ( {
 
             {open && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] animate-fade-in"
                     onMouseDown={handleBackdropClick}
                 >
                     <div
                         ref={modalRef}
-                        className="bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-xl w-full max-w-sm p-4 animate-scaleIn"
+                        className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 shadow-lg animate-scale-in"
                     >
-                        <h3 className="text-lg font-semibold text-[var(--text)]">{title}</h3>
+                        <h3 className="font-display text-lg font-semibold tracking-tight text-foreground">
+                            {title}
+                        </h3>
 
-                        <p className="text-sm text-[var(--gray-700)] mt-1.5">{message}</p>
+                        <p className="mt-1.5 text-sm text-muted-foreground">{message}</p>
 
                         <div className="flex justify-end gap-2 mt-4">
                             <button
                                 onClick={() => setOpen( false )}
                                 disabled={loading}
-                                className="px-3 py-1.5 text-sm rounded border border-[var(--border)] text-[var(--gray-700)] hover:bg-[var(--gray-100)] transition disabled:opacity-50"
+                                className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                             >
                                 {cancelText}
                             </button>
@@ -99,9 +101,9 @@ export default function ConfirmDialog ( {
                             <button
                                 onClick={handleConfirm}
                                 disabled={loading}
-                                className={`px-3 py-1.5 text-sm rounded text-white transition disabled:opacity-50 ${danger
+                                className={`rounded-lg px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${danger
                                     ? "bg-red-600 hover:bg-red-700"
-                                    : "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]"
+                                    : "bg-primary hover:bg-primary-hover"
                                     }`}
                             >
                                 {loading ? "Processando..." : confirmText}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from zoneinfo import ZoneInfo
 
 from django.conf import settings
@@ -97,9 +97,7 @@ class ConsultaMedica(NoNameCoreModel):
             raise ValidationError({"medico": "Médico e consulta devem pertencer ao mesmo inquilino."})
 
         if self.especialidade_id and self.inquilino_id and self.especialidade.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"especialidade": "Especialidade e consulta devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"especialidade": "Especialidade e consulta devem pertencer ao mesmo inquilino."})
 
     def _tenant_timezone(self):
         """
@@ -121,7 +119,11 @@ class ConsultaMedica(NoNameCoreModel):
 
         tz = self._tenant_timezone()
         if timezone.is_aware(self.agendada_para):
-            local_date = timezone.localtime(self.agendada_para, tz).date() if tz else timezone.localtime(self.agendada_para).date()
+            local_date = (
+                timezone.localtime(self.agendada_para, tz).date()
+                if tz
+                else timezone.localtime(self.agendada_para).date()
+            )
         else:
             local_date = self.agendada_para.date()
 

@@ -72,7 +72,7 @@ class ErrorCaptureMiddleware:
                 duracao_ms_int = None
                 if duracao_ms is not None:
                     try:
-                        duracao_ms_int = int(round(float(duracao_ms)))
+                        duracao_ms_int = round(float(duracao_ms))
                     except Exception:
                         duracao_ms_int = None
 
@@ -102,4 +102,3 @@ class ErrorCaptureMiddleware:
                 # Se falhar o registro do erro, segue propagando o erro original.
                 pass
             raise
-

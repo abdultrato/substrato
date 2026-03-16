@@ -7,6 +7,7 @@ from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.pagamentos.modelos.recibo import Recibo
 from dominio.clinico.estado_resultado import EstadoResultado
+
 from .modelos.notificacao import Notificacao
 from .servicos import ServicoNotificacao
 
@@ -48,10 +49,7 @@ def notificar_resultado(sender, instance, created, **kwargs):
     codigo_requisicao = instance.resultado.requisicao.id_custom or instance.resultado.requisicao_id
     codigo_resultado = instance.resultado.id_custom or instance.resultado_id
     assunto = "Resultado disponível"
-    mensagem = (
-        f"Seu resultado {codigo_resultado} da requisição {codigo_requisicao} "
-        "já está disponível para consulta."
-    )
+    mensagem = f"Seu resultado {codigo_resultado} da requisição {codigo_requisicao} já está disponível para consulta."
 
     ServicoNotificacao().enviar_para_paciente(
         paciente=paciente,
@@ -78,10 +76,7 @@ def notificar_fatura_emitida(sender, instance, created, **kwargs):
     codigo_fatura = instance.id_custom or instance.pk
     valor_total = instance.total or Decimal("0.00")
     assunto = "Fatura emitida"
-    mensagem = (
-        f"A sua fatura {codigo_fatura} foi emitida. "
-        f"Valor total: {valor_total:.2f}."
-    )
+    mensagem = f"A sua fatura {codigo_fatura} foi emitida. Valor total: {valor_total:.2f}."
 
     ServicoNotificacao().enviar_para_paciente(
         paciente=paciente,
@@ -108,8 +103,7 @@ def notificar_recibo_gerado(sender, instance, created, **kwargs):
     codigo_fatura = instance.fatura.id_custom or instance.fatura_id
     assunto = "Recibo disponível"
     mensagem = (
-        f"Seu recibo {instance.numero} foi gerado para a fatura {codigo_fatura}. "
-        f"Valor recebido: {instance.valor:.2f}."
+        f"Seu recibo {instance.numero} foi gerado para a fatura {codigo_fatura}. Valor recebido: {instance.valor:.2f}."
     )
 
     ServicoNotificacao().enviar_para_paciente(

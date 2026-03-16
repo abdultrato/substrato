@@ -129,7 +129,7 @@ coverage-frontend:
 	cd frontend-next && npm test -- --coverage
 
 test:
-	$(COMPOSE) exec backend python manage.py test
+	$(COMPOSE) exec backend pytest
 
 lint:
 	$(COMPOSE) exec backend ruff check .

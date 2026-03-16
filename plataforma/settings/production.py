@@ -1,8 +1,9 @@
+# ruff: noqa: F403,F405
+
 import os
 
 from .base import *
 from .logging import LOGGING
-
 
 # =========================================================
 # CORE
@@ -10,14 +11,10 @@ from .logging import LOGGING
 
 DEBUG = False
 
-ALLOWED_HOSTS = [
-		host.strip()
-		for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
-		if host.strip()
-		]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host.strip()]
 
 if not ALLOWED_HOSTS:
-	raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set in production")
+    raise RuntimeError("DJANGO_ALLOWED_HOSTS must be set in production")
 
 
 # =========================================================
@@ -47,11 +44,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CORS_ALLOW_ALL_ORIGINS = False
 
-CORS_ALLOWED_ORIGINS = [
-		origin.strip()
-		for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
-		if origin.strip()
-		]
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
 
 
 # =========================================================
@@ -60,9 +53,11 @@ CORS_ALLOWED_ORIGINS = [
 
 DATABASES["default"]["CONN_MAX_AGE"] = 600
 
-DATABASES["default"]["OPTIONS"].update({
-		"connect_timeout": 10,
-		})
+DATABASES["default"]["OPTIONS"].update(
+    {
+        "connect_timeout": 10,
+    }
+)
 
 
 # =========================================================
@@ -92,8 +87,8 @@ CSRF_COOKIE_HTTPONLY = True
 # =========================================================
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
-		"rest_framework.renderers.JSONRenderer",
-		]
+    "rest_framework.renderers.JSONRenderer",
+]
 
 
 # =========================================================

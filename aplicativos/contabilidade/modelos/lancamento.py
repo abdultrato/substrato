@@ -26,4 +26,3 @@ class Lancamento(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or self.referencia_externa or f"Lancamento {self.pk}"
-

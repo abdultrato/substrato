@@ -1,5 +1,5 @@
-import logging
 from collections.abc import Callable
+import logging
 
 from frontend.core.events.bus import event_bus
 from frontend.core.events.events import (

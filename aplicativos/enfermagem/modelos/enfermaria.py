@@ -177,7 +177,9 @@ class InternamentoEnfermaria(NoNameCoreModel):
             raise ValidationError({"paciente": "Paciente e internamento devem pertencer ao mesmo inquilino."})
 
         if self.data_prevista_alta and self.data_internamento and self.data_prevista_alta < self.data_internamento:
-            raise ValidationError({"data_prevista_alta": "Data prevista para alta não pode ser anterior ao internamento."})
+            raise ValidationError(
+                {"data_prevista_alta": "Data prevista para alta não pode ser anterior ao internamento."}
+            )
 
         if self.alta_em and self.data_internamento and self.alta_em < self.data_internamento:
             raise ValidationError({"alta_em": "Data de alta não pode ser anterior ao internamento."})
@@ -204,4 +206,3 @@ class InternamentoEnfermaria(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.id_custom or self.pk} - {self.paciente} ({self.cama})"
-

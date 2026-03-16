@@ -1,6 +1,6 @@
 from rest_framework import permissions
-from .base import BaseRolePermission
 
+from .base import BaseRolePermission, tenant_matches_request
 
 # ============================================
 # ADMINISTRADOR
@@ -121,9 +121,10 @@ class IsAdministrativeStaff(permissions.BasePermission):
         if user.is_superuser:
             return True
 
-        return user.groups.filter(
-            name__in=["Administrador", "Técnico Administrativo"]
-        ).exists()
+        if not tenant_matches_request(request, user):
+            return False
+
+        return user.groups.filter(name__in=["Administrador", "Técnico Administrativo"]).exists()
 
 
 class IsAdminOrContabilidade(permissions.BasePermission):
@@ -141,5 +142,8 @@ class IsAdminOrContabilidade(permissions.BasePermission):
 
         if user.is_superuser:
             return True
+
+        if not tenant_matches_request(request, user):
+            return False
 
         return user.groups.filter(name__in=["Administrador", "Contabilidade"]).exists()

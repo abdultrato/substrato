@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.db import transaction
 
 from aplicativos.faturamento.modelos.fatura import Fatura

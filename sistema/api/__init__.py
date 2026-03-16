@@ -1,5 +1,5 @@
 from .maintenance import MaintenanceModeView
 
-__all__ =[
-		"MaintenanceModeView",
-		]
+__all__ = [
+    "MaintenanceModeView",
+]

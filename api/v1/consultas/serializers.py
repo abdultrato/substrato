@@ -6,7 +6,6 @@ from aplicativos.consultas.modelos.feriado import Feriado
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.identidade.modelos.usuario import Usuario
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "id_custom",
@@ -48,7 +47,8 @@ class ConsultaMedicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsultaMedica
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + (
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
             "paciente_nome",
             "medico_nome",
             "fatura_id",

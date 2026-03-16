@@ -13,17 +13,6 @@ from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado import Resultado
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
-from aplicativos.enfermagem.modelos import (
-    ProcedimentoCatalogo,
-    ProcedimentoCatalogoMaterial,
-    Procedimento,
-    ProcedimentoItem,
-    ProcedimentoItemValor,
-    ProcedimentoMaterial,
-    ProcedimentoMaterialValor,
-    RegistroEnfermagem,
-    SinalVitalEnfermagem,
-)
 from aplicativos.contabilidade.modelos.conciliacao import ConciliacaoFinanceira
 from aplicativos.contabilidade.modelos.contas import Conta
 from aplicativos.contabilidade.modelos.lancamento import Lancamento
@@ -31,6 +20,17 @@ from aplicativos.contabilidade.modelos.ledger_entry import LedgerEntry
 from aplicativos.contabilidade.modelos.ledger_line import LedgerLine
 from aplicativos.contabilidade.modelos.movimento import Movimento
 from aplicativos.contabilidade.modelos.saldo_conta import SaldoConta
+from aplicativos.enfermagem.modelos import (
+    Procedimento,
+    ProcedimentoCatalogo,
+    ProcedimentoCatalogoMaterial,
+    ProcedimentoItem,
+    ProcedimentoItemValor,
+    ProcedimentoMaterial,
+    ProcedimentoMaterialValor,
+    RegistroEnfermagem,
+    SinalVitalEnfermagem,
+)
 from aplicativos.farmacia.models.categoria_produto import CategoriaProduto
 from aplicativos.farmacia.models.item_venda import ItemVenda
 from aplicativos.farmacia.models.lote import Lote
@@ -50,13 +50,12 @@ from aplicativos.notificacoes.modelos.log_envio import LogEnvio
 from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from aplicativos.notificacoes.modelos.template import TemplateNotificacao
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
-from aplicativos.pagamentos.modelos.reconciliacao import Reconciliacao
 from aplicativos.pagamentos.modelos.recibo import Recibo
+from aplicativos.pagamentos.modelos.reconciliacao import Reconciliacao
 from aplicativos.pagamentos.modelos.transacao import Transacao
 from aplicativos.seguradora.modelos.autorizacao import AutorizacaoProcedimento
 from aplicativos.seguradora.modelos.plano_cobertura import PlanoCobertura
 from aplicativos.seguradora.modelos.seguradora import Seguradora
-
 
 MIN_REGISTROS = 3
 
@@ -329,9 +328,7 @@ def ensure_enfermagem(users):
                 candidato
                 for candidato in produtos
                 if candidato.inquilino_id == catalogo.inquilino_id
-                and not ProcedimentoCatalogoMaterial.objects.filter(
-                    catalogo=catalogo, produto=candidato
-                ).exists()
+                and not ProcedimentoCatalogoMaterial.objects.filter(catalogo=catalogo, produto=candidato).exists()
             ),
             None,
         )
@@ -352,11 +349,7 @@ def ensure_enfermagem(users):
         idx = total(ProcedimentoItem) + 1
         procedimento = procedimentos[(idx - 1) % len(procedimentos)]
         catalogo = next(
-            (
-                c
-                for c in catalogos
-                if c.inquilino_id == procedimento.inquilino_id
-            ),
+            (c for c in catalogos if c.inquilino_id == procedimento.inquilino_id),
             None,
         )
         ProcedimentoItem.objects.create(
@@ -379,8 +372,7 @@ def ensure_enfermagem(users):
             (
                 candidato
                 for candidato in lotes
-                if candidato.inquilino_id == procedimento.inquilino_id
-                and candidato.saldo() > 0
+                if candidato.inquilino_id == procedimento.inquilino_id and candidato.saldo() > 0
             ),
             None,
         )
@@ -402,9 +394,7 @@ def ensure_enfermagem(users):
             item.save()
 
     for material in ProcedimentoMaterial.objects.filter(deletado=False):
-        if not ProcedimentoMaterialValor.objects.filter(
-            material=material, deletado=False
-        ).exists():
+        if not ProcedimentoMaterialValor.objects.filter(material=material, deletado=False).exists():
             material.save()
 
 
@@ -596,14 +586,14 @@ def ensure_contabilidade(tenants):
             nome=f"Ledger Entry Seed {idx}",
             referencia_externa=f"LED-REF-{idx:04d}",
             idempotency_key=f"LED-IDEMP-{idx:04d}",
-            data_contabil=date.today(),
+            data_contabil=timezone.localdate(),
             descricao=f"Entry de seed {idx}",
         )
 
     entries = list(LedgerEntry.objects.order_by("id")[:MIN_REGISTROS])
 
     for idx, entry in enumerate(entries, start=1):
-        conta_debito = [c for c in contas if c.inquilino_id == entry.inquilino_id][0]
+        conta_debito = next(c for c in contas if c.inquilino_id == entry.inquilino_id)
         conta_credito = [c for c in contas if c.inquilino_id == entry.inquilino_id][-1]
 
         if not LedgerLine.objects.filter(entry=entry, natureza="D").exists():
@@ -669,7 +659,7 @@ def ensure_farmacia(tenants):
             nome=f"Lote Seed {idx}",
             produto=produto,
             numero_lote=f"SEED-LOT-{idx:04d}",
-            validade=date.today() + timedelta(days=365 + idx),
+            validade=timezone.localdate() + timedelta(days=365 + idx),
             quantidade_inicial=100,
         )
 
@@ -776,7 +766,6 @@ def ensure_notificacoes():
 
 
 def report():
-    print("=== CONTAGEM FINAL ===")
     faltando = []
     app_configs = sorted(
         [cfg for cfg in apps.get_app_configs() if cfg.name.startswith("aplicativos.")],
@@ -787,16 +776,14 @@ def report():
             if model._meta.abstract or model._meta.proxy:
                 continue
             qtd = total(model)
-            print(f"{cfg.label}.{model.__name__}: {qtd}")
             if qtd < MIN_REGISTROS:
                 faltando.append(f"{cfg.label}.{model.__name__} ({qtd})")
 
     if faltando:
-        print("=== MODELOS ABAIXO DO MÍNIMO ===")
-        for item in faltando:
-            print(item)
+        for _item in faltando:
+            pass
     else:
-        print("OK: todos os modelos possuem pelo menos 3 registros.")
+        pass
 
 
 def main():

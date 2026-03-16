@@ -1,5 +1,4 @@
 class BaseSeguradoraAdapter:
-
     def consultar_autorizacao(self, dados):
         raise NotImplementedError
 

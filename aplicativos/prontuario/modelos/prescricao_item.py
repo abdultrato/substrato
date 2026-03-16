@@ -90,14 +90,10 @@ class PrescricaoItem(NoNameCoreModel):
         super().clean()
 
         if self.registro_id and self.inquilino_id and self.registro.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"registro": "Cardex e item de prescrição devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"registro": "Cardex e item de prescrição devem pertencer ao mesmo inquilino."})
 
         if self.medicacao_id and self.inquilino_id and self.medicacao.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"medicacao": "Medicação e item de prescrição devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"medicacao": "Medicação e item de prescrição devem pertencer ao mesmo inquilino."})
 
         # Garantir que o produto selecionado é de tipo "Medicamento".
         if self.medicacao_id:
@@ -105,9 +101,7 @@ class PrescricaoItem(NoNameCoreModel):
                 from aplicativos.farmacia.models.produto import Produto
 
                 if self.medicacao.tipo != Produto.TipoProduto.MEDICAMENTO:
-                    raise ValidationError(
-                        {"medicacao": "Selecione um produto do tipo Medicamento."}
-                    )
+                    raise ValidationError({"medicacao": "Selecione um produto do tipo Medicamento."})
             except Exception:
                 # Fallback: se não houver tipo/enum, não bloqueia.
                 pass
@@ -117,14 +111,10 @@ class PrescricaoItem(NoNameCoreModel):
 
         if self.numero_doses == 1:
             if self.intervalo_horas is not None:
-                raise ValidationError(
-                    {"intervalo_horas": "Intervalo não é permitido para dose única."}
-                )
+                raise ValidationError({"intervalo_horas": "Intervalo não é permitido para dose única."})
         else:
             if self.intervalo_horas is None or self.intervalo_horas <= 0:
-                raise ValidationError(
-                    {"intervalo_horas": "Intervalo é obrigatório quando houver múltiplas doses."}
-                )
+                raise ValidationError({"intervalo_horas": "Intervalo é obrigatório quando houver múltiplas doses."})
 
         if self.dosagem_valor is None or self.dosagem_valor <= Decimal("0.00"):
             raise ValidationError({"dosagem_valor": "Dosagem deve ser maior que zero."})
@@ -138,4 +128,3 @@ class PrescricaoItem(NoNameCoreModel):
     def __str__(self) -> str:
         med = getattr(self.medicacao, "nome", None) or "Medicação"
         return f"{med} - {self.dosagem_valor}{self.dosagem_unidade}"
-

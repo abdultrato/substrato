@@ -1,15 +1,15 @@
 # servicos/servico_contabilidade.py
 
 from decimal import Decimal
-from django.db import transaction
+
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from aplicativos.contabilidade.modelos.lancamento import Lancamento
 from aplicativos.contabilidade.modelos.movimento import Movimento
 
 
 class ServicoContabilidade:
-
     @staticmethod
     @transaction.atomic
     def criar_lancamento(

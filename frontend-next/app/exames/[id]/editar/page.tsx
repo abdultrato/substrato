@@ -3,19 +3,22 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
+import { routeParamToString } from "@/lib/routeParams";
 
-export default function EditarExamePage ( { params }: any ) {
+export default function EditarExamePage () {
+    const params = useParams();
+    const id = routeParamToString( (params as any)?.id );
     useAuthGuard();
     const router = useRouter();
 
     const [form, setForm] = useState<any>( null );
 
     const carregar = useCallback( async () => {
-        setForm( await apiFetch( `/exames/${params.id}/` ) );
-    }, [params.id] );
+        setForm( await apiFetch( `/exames/${id}/` ) );
+    }, [id] );
 
     useEffect( () => {
         carregar();
@@ -24,7 +27,7 @@ export default function EditarExamePage ( { params }: any ) {
     async function salvar ( e: any ) {
         e.preventDefault();
 
-        await apiFetch( `/exames/${params.id}/`, {
+        await apiFetch( `/exames/${id}/`, {
             method: "PUT",
             body: JSON.stringify( form ),
         } );

@@ -1,7 +1,7 @@
 import os
+
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
-
 
 CHAVE = os.getenv("FERNET_KEY")
 

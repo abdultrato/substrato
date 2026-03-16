@@ -86,4 +86,3 @@ class AgregadoFamiliar(CoreModel):
 
     def __str__(self) -> str:
         return f"{self.nome} ({self.parentesco})".strip()
-

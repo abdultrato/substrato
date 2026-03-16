@@ -67,4 +67,3 @@ class IntegracaoMapeamentoAnalitoAdmin(admin.ModelAdmin):
     list_display = ("id", "id_custom", "equipamento", "codigo", "exame_campo", "ativo", "inquilino")
     list_filter = ("equipamento", "ativo", "inquilino")
     search_fields = ("id_custom", "codigo", "exame_campo__nome", "equipamento__nome")
-

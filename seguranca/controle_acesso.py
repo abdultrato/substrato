@@ -6,6 +6,4 @@ def usuario_pode_acessar(usuario, recurso):
     if usuario.is_superuser:
         return True
 
-    return getattr(recurso, "inquilino_id", None) == getattr(
-        usuario, "inquilino_id", None
-    )
+    return getattr(recurso, "inquilino_id", None) == getattr(usuario, "inquilino_id", None)

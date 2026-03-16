@@ -5,6 +5,8 @@ import unicodedata
 
 from rest_framework import permissions
 
+from seguranca.permissoes.base import tenant_matches_request
+
 logger = logging.getLogger("seguranca.permissoes.rbac")
 
 
@@ -13,8 +15,7 @@ def _normalize(value: str) -> str:
     if not value:
         return ""
     value = unicodedata.normalize("NFD", value)
-    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
-    return value
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
 
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
@@ -232,6 +233,21 @@ class RBACPermission(permissions.BasePermission):
 
         if _normalize(GROUPS["ADMIN"]) in user_groups:
             return True
+
+        # Tenant isolation: evita que um token de um tenant opere em outro tenant
+        # apenas mudando o Host header/domínio.
+        if not tenant_matches_request(request, user):
+            logger.info(
+                "tenant_mismatch_denied",
+                extra={
+                    "user_id": getattr(user, "id", None),
+                    "user_tenant_id": getattr(user, "inquilino_id", None),
+                    "request_tenant_id": getattr(getattr(request, "inquilino", None), "id", None),
+                    "method": getattr(request, "method", None),
+                    "path": getattr(request, "path", None),
+                },
+            )
+            return False
 
         basename = getattr(view, "basename", None)
         if not basename:

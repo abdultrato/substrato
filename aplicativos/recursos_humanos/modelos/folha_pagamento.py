@@ -35,13 +35,9 @@ class FolhaPagamento(NoNameCoreModel):
 
     salario_nominal = DinheiroField(default=Decimal("0.00"))
     horas_base_mes = models.PositiveSmallIntegerField(default=176)
-    multiplicador_hora_extra = models.DecimalField(
-        max_digits=4, decimal_places=2, default=Decimal("1.50")
-    )
+    multiplicador_hora_extra = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("1.50"))
 
-    horas_extras_apuradas = models.DecimalField(
-        max_digits=8, decimal_places=2, default=Decimal("0.00")
-    )
+    horas_extras_apuradas = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0.00"))
     valor_hora = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal("0.0000"))
     valor_horas_extras = DinheiroField(default=Decimal("0.00"))
     salario_total = DinheiroField(default=Decimal("0.00"))
@@ -67,9 +63,7 @@ class FolhaPagamento(NoNameCoreModel):
         super().clean()
 
         if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"funcionario": "Funcionário e folha devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"funcionario": "Funcionário e folha devem pertencer ao mesmo inquilino."})
 
         if not (1 <= int(self.mes or 0) <= 12):
             raise ValidationError({"mes": "Mês inválido (1-12)."})
@@ -81,9 +75,7 @@ class FolhaPagamento(NoNameCoreModel):
             raise ValidationError({"horas_base_mes": "Horas base do mês deve ser > 0."})
 
         if self.multiplicador_hora_extra <= Decimal("0.00"):
-            raise ValidationError(
-                {"multiplicador_hora_extra": "Multiplicador de hora extra inválido."}
-            )
+            raise ValidationError({"multiplicador_hora_extra": "Multiplicador de hora extra inválido."})
 
     def _apuracao_horas_extras(self) -> Decimal:
         from .hora_extra import HoraExtra
@@ -113,14 +105,10 @@ class FolhaPagamento(NoNameCoreModel):
 
         valor_hora = Decimal("0.0000")
         if self.horas_base_mes and self.salario_nominal is not None:
-            valor_hora = (Decimal(self.salario_nominal) / Decimal(self.horas_base_mes)).quantize(
-                Decimal("0.0000")
-            )
+            valor_hora = (Decimal(self.salario_nominal) / Decimal(self.horas_base_mes)).quantize(Decimal("0.0000"))
         self.valor_hora = valor_hora
 
-        valor_extra = (horas_extras * valor_hora * Decimal(self.multiplicador_hora_extra)).quantize(
-            Decimal("0.01")
-        )
+        valor_extra = (horas_extras * valor_hora * Decimal(self.multiplicador_hora_extra)).quantize(Decimal("0.01"))
         self.valor_horas_extras = valor_extra
 
         total = (Decimal(self.salario_nominal) + valor_extra).quantize(Decimal("0.01"))

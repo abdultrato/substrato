@@ -1,4 +1,4 @@
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -59,7 +59,7 @@ def abrir_checkin(
     observacoes="",
     atendente=None,
 ):
-    checkin = CheckinRecepcao.objects.create(
+    return CheckinRecepcao.objects.create(
         inquilino=inquilino,
         paciente=paciente,
         prioridade=prioridade or CheckinRecepcao.Prioridade.NORMAL,
@@ -67,7 +67,6 @@ def abrir_checkin(
         observacoes=observacoes or "",
         atendente=atendente,
     )
-    return checkin
 
 
 @transaction.atomic
@@ -187,11 +186,7 @@ def registrar_pagamento_para_checkin(
     if confirmar:
         pagamento.confirmar()
 
-    recibo = (
-        Recibo.objects.filter(pagamento=pagamento)
-        .order_by("-criado_em", "-id")
-        .first()
-    )
+    recibo = Recibo.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
     return pagamento, recibo
 
 
@@ -231,9 +226,7 @@ def obter_resumo_atendimento(checkin):
             "chamado_em": checkin.chamado_em.isoformat() if checkin.chamado_em else None,
             "concluido_em": checkin.concluido_em.isoformat() if checkin.concluido_em else None,
             "atendente": (
-                checkin.atendente.get_full_name() or checkin.atendente.username
-                if checkin.atendente_id
-                else ""
+                checkin.atendente.get_full_name() or checkin.atendente.username if checkin.atendente_id else ""
             ),
         },
         "paciente": {
@@ -358,13 +351,12 @@ def executar_fluxo_completo(
             status_clinico=dados_requisicao.get("status_clinico"),
         )
 
-    fatura_obj = None
     if faturamento or pagamento:
         if not checkin_obj.requisicao_id and not requisicao_obj:
             raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
 
         dados_faturamento = dict(faturamento or {})
-        fatura_obj = criar_fatura_para_checkin(
+        criar_fatura_para_checkin(
             checkin=checkin_obj,
             emitir=True if pagamento else dados_faturamento.get("emitir", True),
         )

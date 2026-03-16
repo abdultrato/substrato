@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
-from aplicativos.prontuario.modelos.registro_prontuario import RegistroProntuario
 from aplicativos.prontuario.modelos.prescricao_item import PrescricaoItem
-
+from aplicativos.prontuario.modelos.registro_prontuario import RegistroProntuario
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -25,7 +24,7 @@ class PrescricaoItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrescricaoItem
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ("medicacao_nome",)
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "medicacao_nome")
 
 
 class RegistroProntuarioSerializer(serializers.ModelSerializer):
@@ -38,7 +37,8 @@ class RegistroProntuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistroProntuario
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + (
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
             "paciente_nome",
             "medico_nome",
             "consultas_codigos",

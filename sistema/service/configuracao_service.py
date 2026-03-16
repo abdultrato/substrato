@@ -2,7 +2,6 @@ from sistema.modelos.configuracao import ConfiguracaoSistema
 
 
 class ConfiguracaoSistemaService:
-
     @staticmethod
     def esta_em_manutencao() -> bool:
         return ConfiguracaoSistema.obter().maintenance_mode

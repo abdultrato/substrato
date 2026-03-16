@@ -1,13 +1,13 @@
 from django.core.cache import cache
 from django_redis import get_redis_connection
 
-
 DEFAULT_TIMEOUT = 600  # 10 minutos
 
 
 # =========================================================
 # GENERIC CACHE UTILS
 # =========================================================
+
 
 class CacheService:
     """
@@ -44,6 +44,7 @@ class CacheService:
 # =========================================================
 # TENANT CACHE
 # =========================================================
+
 
 class TenantCache:
     """

@@ -1,8 +1,9 @@
 import csv
+
 from django.http import HttpResponse
 from django.utils.timezone import now
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from aplicativos.clinico.modelos.paciente import Paciente
 

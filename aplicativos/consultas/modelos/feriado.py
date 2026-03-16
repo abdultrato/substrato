@@ -36,4 +36,3 @@ class Feriado(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.data} {self.descricao}".strip()
-

@@ -86,4 +86,3 @@ class Empresa(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Empresa {self.pk}"
-

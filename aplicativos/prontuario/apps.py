@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from django.apps import AppConfig
 
 
@@ -8,8 +10,5 @@ class ProntuarioConfig(AppConfig):
 
     def ready(self):
         # Registrar sinais do app (ex.: sincronização Cardex <-> Consultas).
-        try:
+        with suppress(Exception):
             from . import sinais  # noqa: F401
-        except Exception:
-            # Não bloquear boot do Django por falha de import.
-            pass

@@ -1,24 +1,18 @@
 # farmacia/services/estoque_service.py
 
-from django.db import transaction, models
-from django.db.models import Sum
 from django.core.exceptions import ValidationError
-
-from farmacia.models import MovimentoEstoque, TipoMovimento, Lote
+from django.db import models, transaction
+from django.db.models import Sum
+from farmacia.models import Lote, MovimentoEstoque, TipoMovimento
 
 
 class EstoqueService:
-
     @staticmethod
     def saldo_lote(lote):
-        resultado = MovimentoEstoque.objects.filter(
-            lote=lote,
-            deletado=False
-        ).aggregate(
+        resultado = MovimentoEstoque.objects.filter(lote=lote, deletado=False).aggregate(
             total=Sum(
                 models.Case(
-                    models.When(tipo=TipoMovimento.SAIDA,
-                                then=-models.F("quantidade")),
+                    models.When(tipo=TipoMovimento.SAIDA, then=-models.F("quantidade")),
                     default=models.F("quantidade"),
                     output_field=models.IntegerField(),
                 )

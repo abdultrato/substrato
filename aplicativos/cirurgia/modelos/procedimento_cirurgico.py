@@ -37,4 +37,3 @@ class ProcedimentoCirurgico(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Procedimento Cirúrgico {self.pk}"
-

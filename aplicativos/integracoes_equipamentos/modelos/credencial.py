@@ -1,7 +1,7 @@
 import base64
+from collections.abc import Iterable
 import hashlib
 import os
-from typing import Iterable
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -59,7 +59,9 @@ class IntegracaoCredencial(NoNameCoreModel):
         ]
 
     @classmethod
-    def gerar(cls, *, equipamento, label: str = "", scopes: Iterable[str] | None = None) -> tuple["IntegracaoCredencial", str]:
+    def gerar(
+        cls, *, equipamento, label: str = "", scopes: Iterable[str] | None = None
+    ) -> tuple["IntegracaoCredencial", str]:
         """
         Cria credencial e retorna a chave em texto plano (somente uma vez).
         """
@@ -106,4 +108,3 @@ class IntegracaoCredencial(NoNameCoreModel):
             return None
         h = _hash_key(raw_key)
         return cls.objects.filter(key_hash=h, ativo=True, deletado=False).select_related("equipamento").first()
-

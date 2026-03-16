@@ -2,21 +2,21 @@ import os
 
 
 def env_bool(name, default=False):
-	"""
-	Converte variável de ambiente para boolean de forma segura.
-	"""
-	value = os.getenv(name, str(default))
-	return value.lower() in ("true", "1", "yes", "on")
+    """
+    Converte variável de ambiente para boolean de forma segura.
+    """
+    value = os.getenv(name, str(default))
+    return value.lower() in ("true", "1", "yes", "on")
 
 
 def env_int(name, default):
-	"""
-	Converte variável de ambiente para inteiro.
-	"""
-	try:
-		return int(os.getenv(name, default))
-	except (TypeError, ValueError):
-		return default
+    """
+    Converte variável de ambiente para inteiro.
+    """
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return default
 
 
 # =========================================================
@@ -52,10 +52,6 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 31536000)
 
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
-		"SECURE_HSTS_INCLUDE_SUBDOMAINS", True
-		)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", True)
 
-SECURE_HSTS_PRELOAD = env_bool(
-		"SECURE_HSTS_PRELOAD", True
-		)
+SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", True)

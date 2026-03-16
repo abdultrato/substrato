@@ -1,5 +1,6 @@
-from .pagination import StandardPagination, PageNumberPagination
+from .pagination import PageNumberPagination, StandardPagination
 
 __all__ = [
-		"PageNumberPagination", "StandardPagination",
+    "PageNumberPagination",
+    "StandardPagination",
 ]

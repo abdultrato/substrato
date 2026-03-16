@@ -1,5 +1,6 @@
-from .base import CanalBase
 from integracoes.mensageria.sms import SMSService
+
+from .base import CanalBase
 
 
 class CanalSMS(CanalBase):

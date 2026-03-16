@@ -1,6 +1,5 @@
-from observabilidade.audit import registrar_evento
-
 from aplicativos.auditoria_atividades.modelos.atividade_usuario import AtividadeUsuario
+from observabilidade.audit import registrar_evento
 
 
 def _client_ip(request) -> str | None:
@@ -33,9 +32,7 @@ def _resolver_info(request) -> tuple[str, str, str]:
         view_action = str(getattr(rm, "url_name", None) or getattr(rm, "view_name", None) or "")
 
         kwargs = getattr(rm, "kwargs", {}) or {}
-        objeto_id = str(
-            kwargs.get("pk") or kwargs.get("id") or kwargs.get("id_custom") or ""
-        )
+        objeto_id = str(kwargs.get("pk") or kwargs.get("id") or kwargs.get("id_custom") or "")
     except Exception:
         pass
 
@@ -85,7 +82,7 @@ class TenantAuditMiddleware:
             duracao_ms_int = None
             if duracao_ms is not None:
                 try:
-                    duracao_ms_int = int(round(float(duracao_ms)))
+                    duracao_ms_int = round(float(duracao_ms))
                 except Exception:
                     duracao_ms_int = None
 

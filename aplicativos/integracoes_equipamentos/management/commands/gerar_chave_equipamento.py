@@ -29,4 +29,3 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.stdout.write("CHAVE (guarde em local seguro; não será mostrada novamente):")
         self.stdout.write(chave)
-

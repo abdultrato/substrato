@@ -6,13 +6,12 @@ from .ordem import IntegracaoOrdem, IntegracaoOrdemItem
 from .roteamento import IntegracaoRoteamento
 
 __all__ = [
-    "IntegracaoEquipamento",
     "IntegracaoCredencial",
-    "IntegracaoRoteamento",
+    "IntegracaoDocumento",
+    "IntegracaoEquipamento",
+    "IntegracaoMapeamentoAnalito",
+    "IntegracaoMensagem",
     "IntegracaoOrdem",
     "IntegracaoOrdemItem",
-    "IntegracaoMensagem",
-    "IntegracaoDocumento",
-    "IntegracaoMapeamentoAnalito",
+    "IntegracaoRoteamento",
 ]
-

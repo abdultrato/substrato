@@ -1,5 +1,4 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.entidades.modelos.empresa import Empresa
 
 
@@ -27,4 +26,3 @@ class EmpresaFilter(SafeFilterSet):
 FILTER_MAP = {
     "empresa": EmpresaFilter,
 }
-

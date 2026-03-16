@@ -56,4 +56,3 @@ class TenantPlanoCobertura(DescricaoMixin, OrdemMixin, CoreModel):
 
     def __str__(self) -> str:
         return f"{self.inquilino_id} - {self.plano_global_id}"
-

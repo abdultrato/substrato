@@ -1,6 +1,5 @@
-from datetime import date
-
 from django.db import models
+from django.utils import timezone
 
 from infrastrutura.orm.fields.email_field import NormalizedEmailField
 from infrastrutura.orm.fields.endereco_field import EnderecoField
@@ -67,9 +66,7 @@ class Paciente(CoreModel):
         null=True,
     )
 
-    morada = EnderecoField(
-        verbose_name="Morada", help_text="Endereço estruturado do paciente"
-    )
+    morada = EnderecoField(verbose_name="Morada", help_text="Endereço estruturado do paciente")
 
     contacto = TelefoneField(
         verbose_name="Contacto",
@@ -133,7 +130,7 @@ class Paciente(CoreModel):
         if not self.data_nascimento:
             return "—"
 
-        hoje = date.today()
+        hoje = timezone.localdate()
         dias = (hoje - self.data_nascimento).days
 
         if dias < 0:
@@ -161,7 +158,7 @@ class Paciente(CoreModel):
         if not self.data_nascimento:
             return None
 
-        dias = (date.today() - self.data_nascimento).days
+        dias = (timezone.localdate() - self.data_nascimento).days
 
         return dias if dias >= 0 else None
 

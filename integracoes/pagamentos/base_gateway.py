@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class GatewayPagamento(ABC):
-
     name: str
 
     @abstractmethod

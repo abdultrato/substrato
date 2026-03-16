@@ -1,7 +1,6 @@
 import django_filters
 
 from api.core.filters import SafeFilterSet
-
 from aplicativos.auditoria_atividades.modelos.atividade_usuario import AtividadeUsuario
 from aplicativos.identidade.modelos.usuario import Usuario
 
@@ -41,4 +40,3 @@ FILTER_MAP = {
     "usuarios": UsuarioAuditoriaFilter,
     "atividade": AtividadeUsuarioFilter,
 }
-

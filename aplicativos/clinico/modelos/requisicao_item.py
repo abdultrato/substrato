@@ -3,6 +3,7 @@ from django.db import models
 
 from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import NoNameCoreModel
+
 from .exame import Exame
 from .exames_medicos import ExameMedico
 from .resultado import Resultado
@@ -51,24 +52,15 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
         if self.requisicao_id:
             tipo = getattr(self.requisicao, "tipo", None)
             if tipo == self.requisicao.Tipo.LABORATORIO and self.exame_medico_id:
-                raise ValidationError(
-                    "Esta requisição é laboratorial e não aceita exames médicos."
-                )
+                raise ValidationError("Esta requisição é laboratorial e não aceita exames médicos.")
             if tipo == self.requisicao.Tipo.EXAME_MEDICO and self.exame_id:
-                raise ValidationError(
-                    "Esta requisição é de exames médicos e não aceita exames laboratoriais."
-                )
+                raise ValidationError("Esta requisição é de exames médicos e não aceita exames laboratoriais.")
 
             # defesa: evita cross-tenant por ID
             if self.exame_id and self.exame.inquilino_id != self.requisicao.inquilino_id:
                 raise ValidationError("Exame não pertence ao mesmo inquilino da requisição.")
-            if (
-                self.exame_medico_id
-                and self.exame_medico.inquilino_id != self.requisicao.inquilino_id
-            ):
-                raise ValidationError(
-                    "Exame médico não pertence ao mesmo inquilino da requisição."
-                )
+            if self.exame_medico_id and self.exame_medico.inquilino_id != self.requisicao.inquilino_id:
+                raise ValidationError("Exame médico não pertence ao mesmo inquilino da requisição.")
 
         # evita duplicidade manualmente (já que removemos unique_together)
         qs = self.__class__.all_objects.filter(requisicao=self.requisicao)

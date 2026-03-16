@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
+from contextlib import suppress
 from decimal import Decimal, InvalidOperation
+import hashlib
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, OpenApiTypes, extend_schema
-from rest_framework import status
-from rest_framework import serializers
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -434,11 +434,8 @@ class EquipamentoResultadosInboxView(APIView):
 
             # Garante que os itens de resultado existam para cada item do pedido.
             for oi in ordem.itens.select_related("requisicao_item").all():
-                try:
+                with suppress(Exception):
                     oi.requisicao_item._criar_resultados()
-                except Exception:
-                    # Não falha a integração por isso; apenas registra.
-                    pass
 
             # Aplica resultados numéricos via mapeamento de analitos.
             for r in results if isinstance(results, list) else []:
@@ -472,9 +469,7 @@ class EquipamentoResultadosInboxView(APIView):
                 ).first()
 
                 if item is None:
-                    erros.append(
-                        f"Campo '{exame_campo.nome}' não pertence à requisição desta ordem."
-                    )
+                    erros.append(f"Campo '{exame_campo.nome}' não pertence à requisição desta ordem.")
                     continue
 
                 try:

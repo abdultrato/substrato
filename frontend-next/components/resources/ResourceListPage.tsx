@@ -7,7 +7,9 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Row = Record<string, any>
 
@@ -55,6 +57,8 @@ export default function ResourceListPage({
   requiredGroups?: string[]
 }) {
   const { loading } = useAuthGuard()
+  const { user } = useAuth()
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const [data, setData] = useState<Row[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -133,7 +137,7 @@ export default function ResourceListPage({
                 </Link>
               ) : null}
 
-              {adminListHref ? (
+              {adminListHref && podeVerAdmin ? (
                 <Link
                   href={adminListHref}
                   className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"

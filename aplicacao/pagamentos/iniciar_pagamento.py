@@ -1,6 +1,5 @@
 from aplicativos.pagamentos.modelos.transacao import Transacao
 from integracoes.pagamentos.mpesa import MpesaGateway
-
 from integracoes.pagamentos.registry import get_gateway
 
 

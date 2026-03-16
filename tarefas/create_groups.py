@@ -2,7 +2,6 @@
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
-
 from frontend.models import Fatura, Paciente, RequisicaoAnalise, ResultadoItem
 
 
@@ -20,7 +19,7 @@ class Command(BaseCommand):
         ]
 
         for g in grupos:
-            group, created = Group.objects.get_or_create(name=g)
+            _group, created = Group.objects.get_or_create(name=g)
             if created:
                 self.stdout.write(f"Grupo criado: {g}")
 

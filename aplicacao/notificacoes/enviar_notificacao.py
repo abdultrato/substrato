@@ -1,13 +1,11 @@
 from django.db import transaction
 
-from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from aplicativos.notificacoes.modelos.log_envio import LogEnvio
+from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from dominio.notificacoes.excecoes import FalhaEnvio
-
 from integracoes.mensageria.email import EmailService
 from integracoes.mensageria.sms import SMSService
 from integracoes.mensageria.whatsapp import WhatsAppService
-
 
 CANAIS = {
     "email": EmailService(),
@@ -41,13 +39,12 @@ def enviar_notificacao(destino: str, mensagem: str, canal: str):
         notificacao.save(update_fields=["enviada"])
 
     except Exception as erro:
-
         LogEnvio.objects.create(
             notificacao=notificacao,
             status="erro",
             resposta=str(erro),
         )
 
-        raise FalhaEnvio(str(erro))
+        raise FalhaEnvio(str(erro)) from erro
 
     return notificacao

@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from aplicativos.maternidade.modelos.gestacao import Gestacao
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "id_custom",
@@ -25,10 +24,7 @@ class GestacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gestacao
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + (
-            "paciente_nome",
-            "medico_nome",
-        )
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "paciente_nome", "medico_nome")
 
     def get_medico_nome(self, obj: Gestacao) -> str:
         u = getattr(obj, "medico_responsavel", None)

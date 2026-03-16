@@ -16,15 +16,15 @@ export default function EmptyState ( {
 }: Props ) {
     return (
         <div className="flex flex-col items-center justify-center text-center py-10 px-3">
-            <div className="mb-4 text-gray-300">
+            <div className="mb-4 text-muted-foreground/50">
                 {icon ?? <Inbox size={42} />}
             </div>
 
-            <h3 className="text-base font-semibold text-gray-700">
+            <h3 className="font-display text-base font-semibold tracking-tight text-foreground">
                 {title}
             </h3>
 
-            <p className="text-sm text-gray-500 mt-1 max-w-sm">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
                 {description}
             </p>
 

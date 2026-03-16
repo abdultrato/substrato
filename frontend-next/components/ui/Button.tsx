@@ -19,15 +19,15 @@ export default function Button ( {
     ...props
 }: Props ) {
     const base =
-        "inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-medium leading-tight transition"
+        "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold leading-tight shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
     const variants = {
-        primary: "bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)]",
+        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
         secondary:
-            "bg-[var(--gray-100)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--gray-200)]",
+            "bg-card text-foreground border border-border hover:bg-muted",
         danger: "bg-red-600 text-white hover:bg-red-700",
         ghost:
-            "text-[var(--gray-700)] hover:bg-[var(--gray-100)] hover:text-[var(--hover-accent)]",
+            "bg-transparent text-foreground-2 shadow-none hover:bg-muted hover:text-foreground",
     }
 
     return (

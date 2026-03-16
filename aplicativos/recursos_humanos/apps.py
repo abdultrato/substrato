@@ -5,4 +5,3 @@ class RecursosHumanosConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "aplicativos.recursos_humanos"
     verbose_name = "Recursos Humanos"
-

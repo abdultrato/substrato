@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from aplicativos.entidades.modelos.empresa import Empresa
 
-
 CORE_READ_ONLY_FIELDS = [
     "id",
     "id_custom",
@@ -31,4 +30,3 @@ class EmpresaSerializer(serializers.ModelSerializer):
 SERIALIZER_MAP = {
     "empresa": EmpresaSerializer,
 }
-

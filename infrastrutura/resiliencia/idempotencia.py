@@ -1,9 +1,10 @@
 # infraestrutura/resiliencia/idempotencia.py
 
-from django.core.cache import cache
 from functools import wraps
 from hashlib import sha256
 import json
+
+from django.core.cache import cache
 
 
 class IdempotencyError(Exception):

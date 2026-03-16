@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime
+
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +14,11 @@ class TaskBase:
 
     @classmethod
     def log_inicio(cls):
-        logger.info(f"[{cls.name}] iniciado em {datetime.now()}")
+        logger.info("[%s] iniciado em %s", cls.name, timezone.now())
 
     @classmethod
     def log_fim(cls):
-        logger.info(f"[{cls.name}] finalizado em {datetime.now()}")
+        logger.info("[%s] finalizado em %s", cls.name, timezone.now())
 
     @classmethod
     def executar(cls, func, *args, **kwargs):

@@ -5,5 +5,8 @@ from eventos.bus import event_bus
 from eventos.handlers import ResultadoValidadoHandler
 
 
-def registrar_handlers() :
-	event_bus.register(ResultadoValidadoEvent, ResultadoValidadoHandler.handle, )
+def registrar_handlers():
+    event_bus.register(
+        ResultadoValidadoEvent,
+        ResultadoValidadoHandler.handle,
+    )

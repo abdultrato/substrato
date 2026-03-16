@@ -9,4 +9,3 @@ class NotificacoesConfig(AppConfig):
     def ready(self) -> None:
         # Registra signals do app.
         from . import sinais  # noqa: F401
-

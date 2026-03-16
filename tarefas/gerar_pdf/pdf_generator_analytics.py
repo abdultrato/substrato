@@ -1,7 +1,8 @@
+from datetime import datetime
 import io
 import logging
-from datetime import datetime
 
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
 from reportlab.lib.units import cm
@@ -87,7 +88,9 @@ def gerar_pdf_analytics(payload: dict, request=None) -> tuple[bytes, str]:
     except Exception:
         doc.barcode_value = None
 
-    usuario_documento = getattr(getattr(request, "user", None), "is_authenticated", False) and getattr(request, "user", None) or None
+    usuario_documento = (
+        getattr(getattr(request, "user", None), "is_authenticated", False) and getattr(request, "user", None)
+    ) or None
 
     style_title = estilo_titulo_documento("HeadingAnalytics")
     style_section = estilo_secao_documento("SectionAnalytics")
@@ -170,10 +173,7 @@ def gerar_pdf_analytics(payload: dict, request=None) -> tuple[bytes, str]:
     add_top_section(
         "EXAMES MAIS SOLICITADOS",
         ["Tipo", "Exame", "Total"],
-        [
-            [str(r.get("tipo") or "—"), str(r.get("nome") or "—"), str(r.get("total") or 0)]
-            for r in top_exames
-        ],
+        [[str(r.get("tipo") or "—"), str(r.get("nome") or "—"), str(r.get("total") or 0)] for r in top_exames],
     )
 
     top_procs = (payload or {}).get("top_procedimentos") or []
@@ -206,7 +206,7 @@ def gerar_pdf_analytics(payload: dict, request=None) -> tuple[bytes, str]:
 
     append_fim(story)
 
-    filename = f"relatorio_estatisticas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    filename = f"relatorio_estatisticas_{timezone.localtime().strftime('%Y%m%d_%H%M%S')}.pdf"
 
     doc.build(
         story,

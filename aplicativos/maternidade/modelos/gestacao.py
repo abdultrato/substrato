@@ -108,18 +108,14 @@ class Gestacao(NoNameCoreModel):
         super().clean()
 
         if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"paciente": "Paciente e gestação devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"paciente": "Paciente e gestação devem pertencer ao mesmo inquilino."})
 
         if (
             self.medico_responsavel_id
             and self.inquilino_id
             and self.medico_responsavel.inquilino_id != self.inquilino_id
         ):
-            raise ValidationError(
-                {"medico_responsavel": "Médico e gestação devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"medico_responsavel": "Médico e gestação devem pertencer ao mesmo inquilino."})
 
         if self.partos_normais > self.partos_totais:
             raise ValidationError({"partos_normais": "Partos normais não pode ser maior que partos totais."})

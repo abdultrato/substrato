@@ -1,8 +1,9 @@
 import time
+
 from .metricas import registrar_requisicao
 
-class RastreamentoTempo:
 
+class RastreamentoTempo:
     def __enter__(self):
         self.inicio = time.time()
 

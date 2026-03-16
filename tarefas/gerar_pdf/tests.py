@@ -11,4 +11,4 @@ def test_pdf_requisicao_404(db):
         # Expect Http404
         assert exc.__class__.__name__ == "Http404"
     else:
-        assert False, "Expected Http404 for missing requisicao"
+        raise AssertionError("Expected Http404 for missing requisicao")

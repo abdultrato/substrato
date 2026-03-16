@@ -1,20 +1,19 @@
 from api.core.filters import SafeFilterSet
-
 from aplicativos.enfermagem.modelos import (
+    CamaEnfermaria,
+    Enfermaria,
     EvolucaoEnfermagem,
+    InternamentoEnfermaria,
     PrescricaoEnfermagem,
+    Procedimento,
     ProcedimentoCatalogo,
     ProcedimentoCatalogoMaterial,
-    Procedimento,
     ProcedimentoItem,
     ProcedimentoItemValor,
     ProcedimentoMaterial,
     ProcedimentoMaterialValor,
     RegistroEnfermagem,
     SinalVitalEnfermagem,
-    Enfermaria,
-    CamaEnfermaria,
-    InternamentoEnfermaria,
 )
 
 
@@ -190,6 +189,7 @@ class EvolucaoEnfermagemFilter(SafeFilterSet):
             "atualizado_em",
             "deletado",
         ]
+
 
 class EnfermariaFilter(SafeFilterSet):
     class Meta:

@@ -6,6 +6,7 @@ from dominio.clinico.estado_resultado import EstadoResultado
 from dominio.clinico.state_machine_resultado import ResultadoStateMachine
 from nucleo.constantes.laboratorio.status_clinico import StatusClinico
 from nucleo.modelos.base import NoNameCoreModel
+
 from .exame import Exame
 from .paciente import Paciente
 
@@ -116,11 +117,7 @@ class RequisicaoAnalise(NoNameCoreModel):
             self.inquilino_id = self.paciente.inquilino_id
 
         if self.pk:
-            original = (
-                self.__class__.all_objects.filter(pk=self.pk)
-                .only("paciente", "tipo")
-                .first()
-            )
+            original = self.__class__.all_objects.filter(pk=self.pk).only("paciente", "tipo").first()
 
             if original and original.paciente_id != self.paciente_id:
                 raise ValidationError("Paciente da requisição é imutável.")
@@ -138,14 +135,10 @@ class RequisicaoAnalise(NoNameCoreModel):
 
     def adicionar_exame(self, exame: Exame):
         if self.tipo != self.Tipo.LABORATORIO:
-            raise ValidationError(
-                "Esta requisição é de exames médicos e não aceita exames laboratoriais."
-            )
+            raise ValidationError("Esta requisição é de exames médicos e não aceita exames laboratoriais.")
 
         if not self._esta_editavel():
-            raise ValidationError(
-                "Não é possível adicionar exames após início do processamento."
-            )
+            raise ValidationError("Não é possível adicionar exames após início do processamento.")
 
         from .requisicao_item import RequisicaoItem
 
@@ -156,19 +149,15 @@ class RequisicaoAnalise(NoNameCoreModel):
                     exame=exame,
                 )
 
-            except IntegrityError:
-                raise ValidationError("Exame já adicionado à requisição.")
+            except IntegrityError as err:
+                raise ValidationError("Exame já adicionado à requisição.") from err
 
     def adicionar_exame_medico(self, exame_medico):
         if self.tipo != self.Tipo.EXAME_MEDICO:
-            raise ValidationError(
-                "Esta requisição é laboratorial e não aceita exames médicos."
-            )
+            raise ValidationError("Esta requisição é laboratorial e não aceita exames médicos.")
 
         if not self._esta_editavel():
-            raise ValidationError(
-                "Não é possível adicionar exames após início do processamento."
-            )
+            raise ValidationError("Não é possível adicionar exames após início do processamento.")
 
         from .requisicao_item import RequisicaoItem
 
@@ -178,8 +167,8 @@ class RequisicaoAnalise(NoNameCoreModel):
                     requisicao=self,
                     exame_medico=exame_medico,
                 )
-            except IntegrityError:
-                raise ValidationError("Exame médico já adicionado à requisição.")
+            except IntegrityError as err:
+                raise ValidationError("Exame médico já adicionado à requisição.") from err
 
     # =====================================================
     # TRANSIÇÃO DE ESTADO
@@ -187,9 +176,7 @@ class RequisicaoAnalise(NoNameCoreModel):
 
     def transicionar(self, novo_estado):
         with transaction.atomic():
-            requisicao = RequisicaoAnalise.all_objects.select_for_update().get(
-                pk=self.pk
-            )
+            requisicao = RequisicaoAnalise.all_objects.select_for_update().get(pk=self.pk)
 
             ResultadoStateMachine.validar_transicao(
                 requisicao.estado,
@@ -232,10 +219,7 @@ class RequisicaoAnalise(NoNameCoreModel):
         """
         from .exames_medicos import ExameMedico
 
-        return (
-            ExameMedico.objects.filter(requisicoes__requisicao=self, requisicoes__deletado=False)
-            .distinct()
-        )
+        return ExameMedico.objects.filter(requisicoes__requisicao=self, requisicoes__deletado=False).distinct()
 
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA

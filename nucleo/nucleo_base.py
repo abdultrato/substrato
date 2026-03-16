@@ -2,6 +2,7 @@ from hashlib import md5
 
 from django.core.cache import cache
 from django_redis import get_redis_connection as grc
+
 DEFAULT_TIMEOUT = 60 * 10
 CACHE_PREFIX = "app"
 

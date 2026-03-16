@@ -36,26 +36,26 @@ export default function Modal ( {
     if ( !open ) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-black/40"
+                className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-fade-in"
                 onClick={onClose}
             />
 
             <div
-                className={`relative bg-[var(--card)] rounded-xl border border-[var(--border)] shadow-lg w-full ${widths[width]} mx-4`}
+                className={`relative w-full ${widths[width]} rounded-2xl border border-border bg-card shadow-lg animate-scale-in`}
             >
                 {( title || onClose ) && (
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)]">
+                    <div className="flex items-center justify-between border-b border-border px-4 py-2">
                         {title && (
-                            <h3 className="text-sm font-semibold text-[var(--text)]">
+                            <h3 className="text-sm font-semibold text-foreground">
                                 {title}
                             </h3>
                         )}
 
                         <button
                             onClick={onClose}
-                            className="p-1 rounded hover:bg-[var(--gray-100)] text-[var(--text)]"
+                            className="rounded-lg p-1 text-foreground-2 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
                             <X size={18} />
                         </button>

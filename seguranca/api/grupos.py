@@ -17,9 +17,7 @@ class GroupsPermissionsView(APIView):
             data.append(
                 {
                     "grupo": group.name,
-                    "permissoes": list(
-                        group.permissions.values_list("codename", flat=True)
-                    ),
+                    "permissoes": list(group.permissions.values_list("codename", flat=True)),
                 }
             )
 

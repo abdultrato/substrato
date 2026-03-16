@@ -1,10 +1,9 @@
-import pytest
 from types import SimpleNamespace
 
-from django.utils import timezone
+import pytest
 
-from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from aplicativos.notificacoes.modelos.log_envio import LogEnvio
+from aplicativos.notificacoes.modelos.notificacao import Notificacao
 from aplicativos.notificacoes.modelos.template import TemplateNotificacao
 from aplicativos.notificacoes.servicos import ServicoNotificacao
 

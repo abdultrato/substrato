@@ -1,19 +1,19 @@
 from decimal import Decimal
 
-import pytest
 from django.core.exceptions import ValidationError
+import pytest
 
+from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
-from aplicativos.clinico.modelos.exame import Exame
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.pagamentos.modelos.recibo import Recibo
-from aplicativos.pagamentos.modelos.transacao import Transacao
 from aplicativos.pagamentos.modelos.reconciliacao import Reconciliacao
+from aplicativos.pagamentos.modelos.transacao import Transacao
 from nucleo.constantes.laboratorio.metodo import Metodo
 from nucleo.constantes.laboratorio.setor import Setor
 

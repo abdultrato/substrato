@@ -20,13 +20,8 @@ class DashboardView(APIView):
             "pacientes_total": Paciente.objects.count(),
             "requisicoes_hoje": Requisicao.objects.filter(criado_em__date=hoje).count(),
             "resultados_pendentes": Resultado.objects.filter(status_clinico="").count(),
-            "faturamento_total": Fatura.objects.aggregate(total=Sum("total"))["total"]
-            or 0,
-            "requisicoes_por_status": list(
-                Requisicao.objects.values("status")
-                .annotate(total=Count("id"))
-                .order_by()
-            ),
+            "faturamento_total": Fatura.objects.aggregate(total=Sum("total"))["total"] or 0,
+            "requisicoes_por_status": list(Requisicao.objects.values("status").annotate(total=Count("id")).order_by()),
         }
 
         return Response(data)

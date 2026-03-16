@@ -1,14 +1,13 @@
-from django.contrib import admin
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
 from .modelos.fatura import Fatura
 from .modelos.fatura_itens import FaturaItem
 
-
 # =====================================================
 # BASE ADMIN
 # =====================================================
+
 
 class CoreAdmin(admin.ModelAdmin):
     list_filter = ("deletado",)
@@ -20,6 +19,7 @@ class CoreAdmin(admin.ModelAdmin):
 # =====================================================
 # FATURA ITEM INLINE
 # =====================================================
+
 
 class FaturaItemInline(admin.TabularInline):
     model = FaturaItem
@@ -45,7 +45,10 @@ class FaturaItemInline(admin.TabularInline):
         "iva_linha",
         "total_linha",
     )
-    readonly_fields = ("iva_linha", "total_linha",)
+    readonly_fields = (
+        "iva_linha",
+        "total_linha",
+    )
 
     def iva_linha(self, obj):
         if not obj.pk:
@@ -71,6 +74,7 @@ class FaturaItemInline(admin.TabularInline):
 # =====================================================
 # FATURA
 # =====================================================
+
 
 @admin.register(Fatura)
 class FaturaAdmin(CoreAdmin):

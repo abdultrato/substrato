@@ -28,4 +28,3 @@ class SaldoConta(models.Model):
 
     def __str__(self) -> str:
         return f"{self.conta_id}: {self.saldo_atual}"
-

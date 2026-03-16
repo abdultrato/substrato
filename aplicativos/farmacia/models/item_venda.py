@@ -10,7 +10,6 @@ from nucleo.modelos.base import CoreModel
 
 
 class ItemVenda(CoreModel):
-
     prefixo = "IVEND"
 
     venda = models.ForeignKey(
@@ -36,7 +35,6 @@ class ItemVenda(CoreModel):
     )
 
     class Meta:
-
         verbose_name = "Item da Venda"
         verbose_name_plural = "Itens da Venda"
 
@@ -117,7 +115,6 @@ class ItemVenda(CoreModel):
         restante = self.quantidade
 
         for lote in Lote.disponiveis(self.produto):
-
             if restante <= 0:
                 break
 

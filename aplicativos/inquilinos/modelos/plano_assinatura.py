@@ -68,4 +68,3 @@ class PlanoAssinatura(
 
     def __str__(self) -> str:
         return self.nome or self.tipo
-

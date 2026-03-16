@@ -3,9 +3,10 @@
 Script para gerar schema OpenAPI JSON a partir da estrutura Django
 Uso: python generate_schema.py
 """
+
 import json
-import sys
 import os
+import sys
 
 # Adiciona o diretório do projeto ao path
 sys.path.insert(0, os.path.dirname(__file__))
@@ -15,26 +16,26 @@ sys.path.insert(0, os.path.dirname(__file__))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
 
 import django
+
 django.setup()
 
-from drf_spectacular.generators import SchemaGenerator
 
 def generate_schema():
     """Gera o schema OpenAPI"""
-    generator = SchemaGenerator(title='Substrato API', version='1.0.0')
-    schema = generator.get_schema(public=True, request=None)
-    return schema
+    from drf_spectacular.generators import SchemaGenerator
 
-if __name__ == '__main__':
+    generator = SchemaGenerator(title="Substrato API", version="1.0.0")
+    return generator.get_schema(public=True, request=None)
+
+
+if __name__ == "__main__":
     try:
         schema = generate_schema()
-        
+
         # Salva o schema em JSON
-        with open('frontend-next/schema.json', 'w') as f:
+        with open("frontend-next/schema.json", "w") as f:
             json.dump(schema, f, indent=2)
-        
-        print("✓ Schema gerado com sucesso em frontend-next/schema.json")
+
         sys.exit(0)
-    except Exception as e:
-        print(f"✗ Erro ao gerar schema: {e}")
+    except Exception:
         sys.exit(1)

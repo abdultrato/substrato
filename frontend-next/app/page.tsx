@@ -58,18 +58,18 @@ export default function DashboardPage () {
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
             <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
                     Dashboard
                 </h2>
 
                 {error && (
-                    <div className="text-sm text-red-600">
+                    <div className="text-sm text-rose-600 dark:text-rose-300">
                         Não foi possível carregar os dados.
                     </div>
                 )}
 
                 {!stats && !error && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                         Carregando métricas...
                     </div>
                 )}
@@ -132,11 +132,11 @@ function StatCard ( {
             : value
 
     return (
-        <div className="bg-white border rounded-xl p-5 flex items-center justify-between shadow-sm">
+        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40">
             <div>
-                <p className="text-sm text-gray-500">{title}</p>
+                <p className="text-sm text-muted-foreground">{title}</p>
                 <p
-                    className={ `text-xl font-semibold text-gray-800 mt-1 ${isMoney ? "select-none cursor-pointer" : ""}` }
+                    className={ `mt-1 font-display text-2xl font-semibold text-foreground ${isMoney ? "select-none cursor-pointer" : ""}` }
                     onDoubleClick={ isMoney ? onToggleMoney : undefined }
                     title={ isMoney ? "Duplo clique para ocultar/mostrar valores monetários" : undefined }
                 >
@@ -144,7 +144,7 @@ function StatCard ( {
                 </p>
             </div>
 
-            <div className="bg-gray-100 p-3 rounded-lg">
+            <div className="rounded-xl border border-border bg-muted p-3 text-foreground-2 shadow-sm">
                 <Icon size={22} />
             </div>
         </div>

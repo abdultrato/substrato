@@ -14,6 +14,24 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+detect_compose() {
+  # Prefer modern plugin (`docker compose`), but fall back to legacy `docker-compose`.
+  if docker compose version >/dev/null 2>&1; then
+    echo "docker compose"
+    return 0
+  fi
+  if command -v docker-compose >/dev/null 2>&1; then
+    echo "docker-compose"
+    return 0
+  fi
+  return 1
+}
+
+COMPOSE=""
+if command -v docker >/dev/null 2>&1; then
+  COMPOSE="$(detect_compose 2>/dev/null || true)"
+fi
+
 detect_runner() {
   # Default strategy:
   # - Prefer Docker (creates user in the same Postgres used by the stack).
@@ -26,7 +44,7 @@ detect_runner() {
   fi
 
   if command -v docker >/dev/null 2>&1; then
-    if docker compose config -q >/dev/null 2>&1; then
+    if [[ -n "${COMPOSE:-}" ]] && $COMPOSE config -q >/dev/null 2>&1; then
       echo "docker"
       return
     fi
@@ -83,7 +101,7 @@ run_manage() {
     docker)
       # Use `run --entrypoint python` to avoid depending on backend container being up
       # and to skip entrypoint.sh side-effects (migrate/collectstatic).
-      docker compose run --rm -T --entrypoint python backend manage.py "$@"
+      $COMPOSE run --rm -T --entrypoint python backend manage.py "$@"
       ;;
     venv)
       "$ROOT_DIR/.venv/bin/python" manage.py "$@"

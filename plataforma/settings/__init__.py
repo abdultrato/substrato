@@ -1,7 +1,11 @@
+# ruff: noqa: F403
+#
 # default settings
 import os
+
 from django.apps import AppConfig
-from . import security, base
+
+from . import base, security
 
 ambiente = os.getenv("DJANGO_ENV", "development")
 

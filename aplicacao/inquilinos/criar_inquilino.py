@@ -3,9 +3,9 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from aplicativos.inquilinos.modelos.assinatura import AssinaturaTenant
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from aplicativos.inquilinos.modelos.plano_assinatura import PlanoAssinatura
-from aplicativos.inquilinos.modelos.assinatura import AssinaturaTenant
 
 
 class CriarInquilinoUseCase:
@@ -26,9 +26,7 @@ class CriarInquilinoUseCase:
     def executar(nome: str, identificador: str, dominio: str | None = None):
 
         # Evita duplicação
-        existente = Inquilino.objects.filter(
-            identificador=identificador
-        ).first()
+        existente = Inquilino.objects.filter(identificador=identificador).first()
 
         if existente:
             return existente

@@ -14,13 +14,13 @@ Saidas (por default):
 from __future__ import annotations
 
 import argparse
+import contextlib
+from dataclasses import dataclass
 import json
 import os
-import sys
-from dataclasses import dataclass
 from pathlib import Path
+import sys
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parent.parent
 # Rodando como "python scripts/..." faz o sys.path[0] apontar para /scripts.
@@ -64,16 +64,16 @@ def _normalize_choices(choices: Any) -> dict[str, Any]:
     groups: list[dict[str, Any]] = []
 
     try:
-        for v, l in list(choices):
-            if _is_optgroup(v, l):
+        for v, label in list(choices):
+            if _is_optgroup(v, label):
                 group_items: list[dict[str, Any]] = []
-                for vv, ll in list(l):
+                for vv, ll in list(label):
                     item = {"value": vv, "label": _safe_str(ll)}
                     flat.append(item)
                     group_items.append(item)
                 groups.append({"group": v, "choices": group_items})
             else:
-                item = {"value": v, "label": _safe_str(l)}
+                item = {"value": v, "label": _safe_str(label)}
                 flat.append(item)
     except Exception:
         # Worst case: just stringify and move on.
@@ -126,13 +126,11 @@ def _field_info(field: Any) -> dict[str, Any]:
     # Common per-field attrs (only when present)
     for k in ("max_length", "max_digits", "decimal_places"):
         if hasattr(field, k):
-            try:
+            with contextlib.suppress(Exception):
                 info[k] = getattr(field, k)
-            except Exception:
-                pass
 
     if hasattr(field, "choices"):
-        choices_meta = _normalize_choices(getattr(field, "choices"))
+        choices_meta = _normalize_choices(field.choices)
         info.update(choices_meta)
 
     # Relations
@@ -283,8 +281,8 @@ def _write_md(catalog: dict[str, Any], out: Outputs) -> None:
                     parts: list[str] = []
                     for item in ch:
                         v = _safe_str(item.get("value"))
-                        l = _safe_str(item.get("label"))
-                        parts.append(f"`{v}`={l}")
+                        label = _safe_str(item.get("label"))
+                        parts.append(f"`{v}`={label}")
                     lines.append(f"- {fname} ({len(ch)}): " + "; ".join(parts))
                 lines.append("")
 
@@ -362,9 +360,6 @@ def main() -> int:
     json_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=True), encoding="utf-8")
     _write_md(catalog, out)
 
-    print(f"[model_catalog] JSON: {json_path}")
-    print(f"[model_catalog] MD:  {md_path}")
-    print(f"[model_catalog] models={totals['models']} fields={totals['fields']}")
     return 0
 
 

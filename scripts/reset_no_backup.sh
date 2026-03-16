@@ -27,7 +27,17 @@ if ! command -v docker >/dev/null 2>&1; then
   echo "Erro: docker não encontrado." >&2
   exit 2
 fi
-if ! docker compose config -q >/dev/null 2>&1; then
+
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE="docker compose"
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE="docker-compose"
+else
+  echo "Erro: Docker Compose não encontrado." >&2
+  exit 2
+fi
+
+if ! $COMPOSE config -q >/dev/null 2>&1; then
   echo "Erro: docker compose indisponível neste diretório." >&2
   exit 2
 fi
@@ -43,7 +53,7 @@ delete_local_migrations() {
 docker_running() {
   local svc="$1"
   local cid
-  cid="$(docker compose ps -q "$svc" 2>/dev/null || true)"
+  cid="$($COMPOSE ps -q "$svc" 2>/dev/null || true)"
   if [[ -z "$cid" ]]; then
     return 1
   fi
@@ -52,29 +62,29 @@ docker_running() {
 
 docker_backend_manage() {
   if docker_running backend; then
-    docker compose exec -T backend python manage.py "$@"
+    $COMPOSE exec -T backend python manage.py "$@"
   else
-    docker compose run --rm -T --entrypoint python backend manage.py "$@"
+    $COMPOSE run --rm -T --entrypoint python backend manage.py "$@"
   fi
 }
 
 read_docker_db_env() {
-  docker compose exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}"' 2>/dev/null
+  $COMPOSE exec -T db sh -lc 'printf "%s\n" "${POSTGRES_DB:-}" "${POSTGRES_USER:-}"' 2>/dev/null
 }
 
 docker_drop_create() {
   local user="$1"
   local dbname="$2"
 
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
     "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${dbname}' AND pid <> pg_backend_pid();" \
     >/dev/null 2>&1 || true
 
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
     "DROP DATABASE IF EXISTS \"${dbname}\";" \
     >/dev/null
 
-  docker compose exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
+  $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$user" -d postgres -c \
     "CREATE DATABASE \"${dbname}\" ENCODING 'UTF8';" \
     >/dev/null
 }
@@ -92,7 +102,7 @@ if [[ "$CONFIRM" != "RESET-SEM-BACKUP" ]]; then
   exit 0
 fi
 
-docker compose up -d db redis >/dev/null
+$COMPOSE up -d db redis >/dev/null
 
 if ! docker_running db; then
   echo "Erro: serviço docker 'db' não está em execução." >&2
@@ -121,4 +131,3 @@ echo "Aplicando migrações..."
 docker_backend_manage migrate --noinput
 
 echo "OK: banco limpo e migrações recriadas (sem backup)."
-

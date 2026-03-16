@@ -22,7 +22,7 @@ export default function FormField ( {
             {label && (
                 <label
                     htmlFor={htmlFor}
-                    className="text-sm font-medium text-gray-700"
+                    className="text-sm font-semibold text-foreground-2"
                 >
                     {label}
                     {required && (
@@ -34,11 +34,11 @@ export default function FormField ( {
             {children}
 
             {hint && !error && (
-                <p className="text-xs text-gray-500">{hint}</p>
+                <p className="text-xs text-muted-foreground">{hint}</p>
             )}
 
             {error && (
-                <p className="text-xs text-red-600 mt-1">
+                <p className="mt-1 text-xs text-rose-600 dark:text-rose-300">
                     {error}
                 </p>
             )}

@@ -1,13 +1,12 @@
-from datetime import date
 from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
 from django_redis import get_redis_connection
 
-from servicos.inquilinos.tenant_usage_service import TenantUsageService
 from aplicacao.pagamentos.iniciar_pagamento import iniciar_pagamento
 from infrastrutura.cache import TenantCache
+from servicos.inquilinos.tenant_usage_service import TenantUsageService
 
 
 class BillingService:
@@ -30,10 +29,10 @@ class BillingService:
         """
 
         if not inquilino or not inquilino.ativo:
-            return
+            return None
 
         if not inquilino.plano or not inquilino.plano.ativo:
-            return
+            return None
 
         periodo = BillingService._periodo_atual()
         lock_key = f"billing:{inquilino.id}:{periodo}"
@@ -42,7 +41,7 @@ class BillingService:
 
         # Lock distribuído (evita cobrança duplicada)
         if not redis.set(lock_key, "1", nx=True, ex=BillingService.LOCK_TIMEOUT):
-            return
+            return None
 
         try:
             return BillingService._processar(inquilino, periodo)
@@ -59,7 +58,7 @@ class BillingService:
 
         # Idempotência via cache
         if TenantCache.get(inquilino.id, f"billing_done:{periodo}"):
-            return
+            return None
 
         uso = TenantUsageService.obter_requisicoes(inquilino) or 0
         limite = inquilino.plano.limite_requisicoes_mes or 0
@@ -71,7 +70,7 @@ class BillingService:
                 True,
                 timeout=60 * 60 * 24 * 40,  # 40 dias
             )
-            return
+            return None
 
         excedente = uso - limite
         valor_extra = BillingService._calcular_valor_excedente(excedente)

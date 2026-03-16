@@ -5,7 +5,6 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
 from aplicativos.farmacia.models.lote import Lote
-
 from nucleo.modelos.base import NoNameCoreModel
 
 
@@ -52,44 +51,27 @@ class ProcedimentoItem(NoNameCoreModel):
         if self.quantidade <= 0:
             raise ValidationError({"quantidade": "Quantidade deve ser maior que zero."})
         if self.preco_unitario is not None and self.preco_unitario < Decimal("0.00"):
-            raise ValidationError(
-                {"preco_unitario": "Preço unitário não pode ser negativo."}
-            )
+            raise ValidationError({"preco_unitario": "Preço unitário não pode ser negativo."})
 
         descricao_informada = bool((self.descricao or "").strip())
         if not self.catalogo_id and not descricao_informada:
-            raise ValidationError(
-                {"descricao": "Informe a descrição ou selecione um procedimento do catálogo."}
-            )
+            raise ValidationError({"descricao": "Informe a descrição ou selecione um procedimento do catálogo."})
 
-        if (
-            self.procedimento_id
-            and self.catalogo_id
-            and self.procedimento.inquilino_id != self.catalogo.inquilino_id
-        ):
-            raise ValidationError(
-                {"catalogo": "Catálogo e procedimento devem pertencer ao mesmo inquilino."}
-            )
+        if self.procedimento_id and self.catalogo_id and self.procedimento.inquilino_id != self.catalogo.inquilino_id:
+            raise ValidationError({"catalogo": "Catálogo e procedimento devem pertencer ao mesmo inquilino."})
 
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
 
             if original.catalogo_id != self.catalogo_id:
-                raise ValidationError(
-                    {"catalogo": "Catálogo do item não pode ser alterado após criação."}
-                )
+                raise ValidationError({"catalogo": "Catálogo do item não pode ser alterado após criação."})
 
             if original.procedimento_id != self.procedimento_id:
-                raise ValidationError(
-                    {"procedimento": "Procedimento do item não pode ser alterado."}
-                )
+                raise ValidationError({"procedimento": "Procedimento do item não pode ser alterado."})
 
             if original.quantidade != self.quantidade and self.materiais_gerados.exists():
                 raise ValidationError(
-                    {
-                        "quantidade": "Quantidade não pode ser alterada após gerar materiais. "
-                        "Remova e recrie o item."
-                    }
+                    {"quantidade": "Quantidade não pode ser alterada após gerar materiais. Remova e recrie o item."}
                 )
 
     @property
@@ -135,9 +117,7 @@ class ProcedimentoItem(NoNameCoreModel):
             },
         )
 
-        if not created and (
-            valor.inquilino_id != self.inquilino_id or valor.preco_unitario != preco
-        ):
+        if not created and (valor.inquilino_id != self.inquilino_id or valor.preco_unitario != preco):
             valor.inquilino_id = self.inquilino_id
             valor.preco_unitario = preco
             valor.save(update_fields=["inquilino", "preco_unitario", "atualizado_em"])
@@ -156,9 +136,7 @@ class ProcedimentoItem(NoNameCoreModel):
 
         materiais = self.catalogo.materiais_padrao.select_related("produto").all()
         for material_padrao in materiais:
-            quantidade_material = material_padrao.quantidade_padrao * Decimal(
-                self.quantidade or 0
-            )
+            quantidade_material = material_padrao.quantidade_padrao * Decimal(self.quantidade or 0)
             if quantidade_material <= 0:
                 continue
 

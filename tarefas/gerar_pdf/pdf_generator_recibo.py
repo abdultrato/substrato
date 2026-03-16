@@ -1,6 +1,6 @@
+from decimal import Decimal
 import io
 import logging
-from decimal import Decimal
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
@@ -263,7 +263,10 @@ def gerar_pdf_recibo(recibo, request=None) -> tuple[bytes, str]:
         [
             [cell_paragraph("Total sem IVA", is_bold=True), cell_paragraph(_as_money(total_sem_iva))],
             [cell_paragraph("Total de IVA", is_bold=True), cell_paragraph(_as_money(total_iva))],
-            [cell_paragraph("Total pago", is_bold=True), cell_paragraph(_as_money(getattr(recibo, "valor", total_com_iva)))],
+            [
+                cell_paragraph("Total pago", is_bold=True),
+                cell_paragraph(_as_money(getattr(recibo, "valor", total_com_iva))),
+            ],
         ],
         colWidths=[usable_width * 0.55, usable_width * 0.45],
     )

@@ -1,8 +1,7 @@
-import stripe
 from django.conf import settings
+import stripe
 
 from .base import PaymentGateway
-
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 

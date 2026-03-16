@@ -4,15 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Paciente, Exame, ExameMedico, Requisicao } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
+import { routeParamToString } from "@/lib/routeParams";
 
-export default function EditarRequisicaoPage ( {
-    params,
-}: {
-    params: { id: string };
-} ) {
+export default function EditarRequisicaoPage () {
+    const params = useParams();
+    const id = routeParamToString( (params as any)?.id );
     useAuthGuard();
     const router = useRouter();
 
@@ -31,7 +30,7 @@ export default function EditarRequisicaoPage ( {
         try {
             setLoading( true );
             setError( null );
-            const req = await apiFetch<Requisicao>( `/requisicoes/${params.id}/` );
+            const req = await apiFetch<Requisicao>( `/requisicoes/${id}/` );
             const tipoReq = (req?.tipo as any) || "LAB";
 
             const [pacs, exs] = await Promise.all( [
@@ -50,7 +49,7 @@ export default function EditarRequisicaoPage ( {
         } finally {
             setLoading( false );
         }
-    }, [params.id] );
+    }, [id] );
 
     useEffect( () => {
         carregar();
@@ -85,12 +84,12 @@ export default function EditarRequisicaoPage ( {
             if ( tipo === "MED" ) payload.exames_medicos = selecionados
             else payload.exames = selecionados
 
-            await apiFetch( `/requisicoes/${params.id}/`, {
+            await apiFetch( `/requisicoes/${id}/`, {
                 method: "PATCH",
                 body: JSON.stringify( payload ),
             } );
 
-            router.push( `/requisicoes/${params.id}` );
+            router.push( `/requisicoes/${id}` );
         } catch ( err: any ) {
             setError( err.message || "Erro ao salvar" );
         } finally {

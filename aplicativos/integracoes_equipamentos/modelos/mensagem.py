@@ -150,4 +150,3 @@ class IntegracaoDocumento(NoNameCoreModel):
                 pass
 
         super().save(*args, **kwargs)
-

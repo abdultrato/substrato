@@ -57,9 +57,7 @@ class Command(BaseCommand):
 
         if hard:
             if not yes:
-                self.stdout.write(
-                    f"Vai APAGAR permanentemente: username={user.username!r} id={user.pk}"
-                )
+                self.stdout.write(f"Vai APAGAR permanentemente: username={user.username!r} id={user.pk}")
                 confirm = input("Digite APAGAR para confirmar: ").strip()
                 if confirm != "APAGAR":
                     self.stdout.write("Cancelado.")
@@ -72,8 +70,7 @@ class Command(BaseCommand):
 
         if not yes:
             self.stdout.write(
-                f"Vai DESATIVAR: username={user.username!r} id={user.pk} "
-                "(mantém o registo para auditoria/histórico)."
+                f"Vai DESATIVAR: username={user.username!r} id={user.pk} (mantém o registo para auditoria/histórico)."
             )
             confirm = input("Digite DESATIVAR para confirmar: ").strip()
             if confirm != "DESATIVAR":
@@ -108,4 +105,3 @@ class Command(BaseCommand):
             user.save(update_fields=update_fields)
 
         self.stdout.write(self.style.SUCCESS(f"Usuário desativado: {user.username}"))
-

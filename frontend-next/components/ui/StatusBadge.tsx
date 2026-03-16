@@ -5,29 +5,29 @@ interface Props {
 
 const styles: Record<string, string> = {
   // requisicao
-  PEND: "bg-yellow-100 text-yellow-800",
-  VAL: "bg-green-100 text-green-800",
-  CANC: "bg-red-100 text-red-800",
+  PEND: "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200",
+  VAL: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
+  CANC: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
 
   // fatura
-  RASC: "bg-gray-100 text-gray-700",
-  EMIT: "bg-blue-100 text-blue-800",
-  PAGA: "bg-green-100 text-green-800",
-  ANUL: "bg-red-100 text-red-800",
+  RASC: "border-border bg-muted text-foreground-2",
+  EMIT: "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200",
+  PAGA: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
+  ANUL: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200",
 
   // ativo/inativo
-  ATIVO: "bg-green-100 text-green-800",
-  INATIVO: "bg-gray-100 text-gray-700",
+  ATIVO: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200",
+  INATIVO: "border-border bg-muted text-foreground-2",
 }
 
 export default function StatusBadge ( { status, label }: Props ) {
   if ( !status && !label ) return null
 
   const key = ( status ?? label ?? "" ).toUpperCase()
-  const style = styles[key] ?? "bg-gray-100 text-gray-700"
+  const style = styles[key] ?? "border-border bg-muted text-foreground-2"
 
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${style}`}>
       {label ?? status}
     </span>
   )

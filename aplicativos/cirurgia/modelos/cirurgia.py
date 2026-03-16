@@ -91,14 +91,10 @@ class Cirurgia(NoNameCoreModel):
             )
 
         if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"paciente": "Paciente e cirurgia devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"paciente": "Paciente e cirurgia devem pertencer ao mesmo inquilino."})
 
         if self.cirurgiao_id and self.inquilino_id and self.cirurgiao.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"cirurgiao": "Cirurgião e cirurgia devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"cirurgiao": "Cirurgião e cirurgia devem pertencer ao mesmo inquilino."})
 
     def save(self, *args, **kwargs):
         if not self.inquilino_id and self.paciente_id:

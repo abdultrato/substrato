@@ -3,11 +3,10 @@ from rest_framework import serializers
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.recepcao.modelos.checkin_recepcao import CheckinRecepcao
 from nucleo.constantes.genero import Genero
+from nucleo.constantes.laboratorio.status_clinico import StatusClinico
 from nucleo.constantes.proveniencia import Proveniencia
 from nucleo.constantes.raca_origem import RacaOrigem
 from nucleo.constantes.tipos_documento import TipoDocumento
-from nucleo.constantes.laboratorio.status_clinico import StatusClinico
-
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -36,7 +35,8 @@ class CheckinRecepcaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = CheckinRecepcao
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + (
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
             "paciente_nome",
             "paciente_codigo",
             "requisicao_codigo",

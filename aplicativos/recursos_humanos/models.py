@@ -11,13 +11,13 @@ from .modelos import (
 )
 
 __all__ = [
-    "Cargo",
     "AgregadoFamiliar",
-    "Funcionario",
-    "HorarioTrabalho",
+    "Cargo",
+    "Dispensa",
     "Falta",
     "Ferias",
-    "Dispensa",
-    "HoraExtra",
     "FolhaPagamento",
+    "Funcionario",
+    "HoraExtra",
+    "HorarioTrabalho",
 ]

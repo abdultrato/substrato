@@ -1,5 +1,4 @@
 class FluxoRequisicao:
-
     @staticmethod
     def atualizar(requisicao):
 

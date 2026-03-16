@@ -7,7 +7,6 @@ User = get_user_model()
 
 
 class PasswordResetConfirmView(APIView):
-
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")

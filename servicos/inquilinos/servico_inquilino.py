@@ -1,9 +1,9 @@
 from django.db import transaction
 
 from aplicativos.inquilinos.modelos import (
+    ConfiguracaoInquilino,
     Inquilino,
     PlanoAssinatura,
-    ConfiguracaoInquilino,
     UsoTenant,
 )
 

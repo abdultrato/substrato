@@ -26,9 +26,7 @@ class ServicoNotificacao:
             if not ativo:
                 return (False, "Canal de SMS desativado por configuração.")
 
-            if not getattr(settings, "SMS_API_URL", "") or not getattr(
-                settings, "SMS_API_KEY", ""
-            ):
+            if not getattr(settings, "SMS_API_URL", "") or not getattr(settings, "SMS_API_KEY", ""):
                 return (False, "Credenciais de SMS não configuradas.")
 
             return (True, "")
@@ -38,9 +36,7 @@ class ServicoNotificacao:
             if not ativo:
                 return (False, "Canal de WhatsApp desativado por configuração.")
 
-            if not getattr(settings, "WHATSAPP_API_URL", "") or not getattr(
-                settings, "WHATSAPP_API_KEY", ""
-            ):
+            if not getattr(settings, "WHATSAPP_API_URL", "") or not getattr(settings, "WHATSAPP_API_KEY", ""):
                 return (False, "Credenciais de WhatsApp não configuradas.")
 
             return (True, "")

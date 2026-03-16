@@ -1,11 +1,10 @@
 from django.conf import settings
 
-from .mpesa import MpesaGateway
 from .emola import EmolaGateway
 from .mkesh import MKeshGateway
-from .stripe import StripeGateway
+from .mpesa import MpesaGateway
 from .paypal import PaypalGateway
-
+from .stripe import StripeGateway
 
 _GATEWAYS = {
     "mpesa": MpesaGateway,

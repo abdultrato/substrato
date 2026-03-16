@@ -20,7 +20,6 @@ class OrigemMovimento(models.TextChoices):
 
 
 class MovimentoEstoque(CoreModel):
-
     prefixo = "MVESQ"
 
     lote = models.ForeignKey(
@@ -104,11 +103,7 @@ class MovimentoEstoque(CoreModel):
         if self.inquilino_id and self.lote.inquilino_id != self.inquilino_id:
             raise ValidationError("Inquilino do movimento difere do lote.")
 
-        if (
-            self.item_venda_id
-            and self.inquilino_id
-            and self.item_venda.inquilino_id != self.inquilino_id
-        ):
+        if self.item_venda_id and self.inquilino_id and self.item_venda.inquilino_id != self.inquilino_id:
             raise ValidationError("Inquilino do movimento difere do item de venda.")
 
         # coerência origem / tipo / vínculo de venda
@@ -116,23 +111,16 @@ class MovimentoEstoque(CoreModel):
             raise ValidationError("Movimento com origem em venda deve ser de saída.")
 
         if self.tipo == TipoMovimento.SAIDA and self.origem == OrigemMovimento.VENDA and not self.item_venda:
-            raise ValidationError(
-                "Movimentos de saída devem estar ligados a um ItemVenda."
-            )
+            raise ValidationError("Movimentos de saída devem estar ligados a um ItemVenda.")
 
         if self.tipo == TipoMovimento.SAIDA and self.origem != OrigemMovimento.VENDA and self.item_venda:
-            raise ValidationError(
-                "Saídas que não são de venda não devem estar ligadas a ItemVenda."
-            )
+            raise ValidationError("Saídas que não são de venda não devem estar ligadas a ItemVenda.")
 
         if self.tipo == TipoMovimento.ENTRADA and self.item_venda:
-            raise ValidationError(
-                "Entradas de estoque não devem estar ligadas a vendas."
-            )
+            raise ValidationError("Entradas de estoque não devem estar ligadas a vendas.")
 
         # valida saldo
         if self.tipo == TipoMovimento.SAIDA:
-
             saldo = self.saldo_lote()
 
             if self.quantidade > saldo:

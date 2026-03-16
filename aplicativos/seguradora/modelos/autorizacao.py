@@ -58,4 +58,3 @@ class AutorizacaoProcedimento(DescricaoMixin, OrdemMixin, CoreModel):
 
     def __str__(self) -> str:
         return self.id_custom or f"Autorizacao {self.pk}"
-

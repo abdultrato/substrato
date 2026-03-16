@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 
 
 class PingView(APIView):
-
     permission_classes = [AllowAny]
 
     def get(self, request):

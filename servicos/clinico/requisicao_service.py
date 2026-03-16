@@ -1,5 +1,4 @@
 from django.db import transaction
-
 from frontend.billing.models import Exame, RequisicaoAnalise
 
 from ..base import BaseService

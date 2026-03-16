@@ -1,6 +1,6 @@
 from abc import ABC
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from uuid import uuid4
 
 
@@ -12,8 +12,8 @@ class Evento(ABC):
 
     nome: str
     payload: dict
-    ocorrido_em: datetime = datetime.utcnow()
-    identificador: str = None
+    ocorrido_em: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
+    identificador: str | None = None
 
     def __post_init__(self):
         if not self.identificador:

@@ -7,12 +7,12 @@ import Link from "next/link";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
+import { useParams } from "next/navigation";
+import { routeParamToString } from "@/lib/routeParams";
 
-export default function RequisicaoDetail ( {
-    params,
-}: {
-    params: { id: string };
-} ) {
+export default function RequisicaoDetail () {
+    const params = useParams();
+    const id = routeParamToString( (params as any)?.id );
     useAuthGuard();
 
     const [req, setReq] = useState<Requisicao | null>( null );
@@ -23,14 +23,14 @@ export default function RequisicaoDetail ( {
         try {
             setLoading( true );
             setError( null );
-            const data = await apiFetch( `/requisicoes/${params.id}/` );
+            const data = await apiFetch( `/requisicoes/${id}/` );
             setReq( data );
         } catch {
             setError( "Erro ao carregar requisição" );
         } finally {
             setLoading( false );
         }
-    }, [params.id] );
+    }, [id] );
 
     useEffect( () => {
         carregar();

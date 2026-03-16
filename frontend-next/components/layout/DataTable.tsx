@@ -25,14 +25,14 @@ export default function DataTable<T> ( {
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
             <table className="w-full border-collapse text-sm">
                 <thead>
-                    <tr className="bg-gray-50 text-left">
+                    <tr className="bg-muted text-left text-muted-foreground">
                         {columns.map( ( col, idx ) => (
                             <th
                                 key={idx}
-                                className={`px-3 py-2 font-medium text-gray-600 ${col.className || ""}`}
+                                className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide ${col.className || ""}`}
                             >
                                 {col.header}
                             </th>
@@ -45,7 +45,7 @@ export default function DataTable<T> ( {
                         <tr>
                             <td
                                 colSpan={columns.length}
-                                className="text-center py-6 text-gray-400"
+                                className="py-6 text-center text-muted-foreground"
                             >
                                 {emptyMessage}
                             </td>
@@ -54,7 +54,7 @@ export default function DataTable<T> ( {
                         data.map( ( row, i ) => (
                             <tr
                                 key={i}
-                                className="border-t hover:bg-gray-50 transition"
+                                className="border-t border-border transition-colors hover:bg-muted/60"
                             >
                                 {columns.map( ( col, j ) => (
                                     <td key={j} className="px-3 py-2">

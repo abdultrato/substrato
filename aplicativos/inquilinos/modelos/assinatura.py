@@ -59,4 +59,3 @@ class AssinaturaTenant(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.inquilino_id} -> {self.plano_id} ({self.status})"
-

@@ -1,7 +1,6 @@
 from decimal import Decimal
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
@@ -131,9 +130,7 @@ class FaturaItem(NoNameCoreModel):
 
     @property
     def total(self):
-        return (self.preco_unitario or Decimal("0.00")) * (
-            self.quantidade or Decimal("0.00")
-        )
+        return (self.preco_unitario or Decimal("0.00")) * (self.quantidade or Decimal("0.00"))
 
     @property
     def total_sem_iva(self) -> Decimal:
@@ -187,10 +184,7 @@ class FaturaItem(NoNameCoreModel):
                 return getattr(catalogo, "iva_percentual", None) or Decimal("0.00")
             return Decimal("16.00")
 
-        if (
-            self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL
-            and self.procedimento_material_id
-        ):
+        if self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedimento_material_id:
             produto = getattr(self.procedimento_material, "produto", None)
             return getattr(produto, "iva_percentual", None) or Decimal("0.00")
 
@@ -238,10 +232,7 @@ class FaturaItem(NoNameCoreModel):
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
-        if (
-            self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL
-            and self.procedimento_material_id
-        ):
+        if self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedimento_material_id:
             if not self.descricao.strip():
                 self.descricao = self.procedimento_material.produto.nome
             self.quantidade = Decimal(self.procedimento_material.quantidade)
@@ -253,9 +244,8 @@ class FaturaItem(NoNameCoreModel):
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
             return
 
-        if self.tipo_item == self.TipoItem.AJUSTE:
-            if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
+        if self.tipo_item == self.TipoItem.AJUSTE and self.iva_percentual is None:
+            self.iva_percentual = self._resolver_iva_percentual_referencia()
 
     def clean(self):
         super().clean()
@@ -279,72 +269,51 @@ class FaturaItem(NoNameCoreModel):
         if self.quantidade <= 0:
             raise ValidationError({"quantidade": "Quantidade deve ser maior que zero."})
         if self.preco_unitario < Decimal("0.00"):
-            raise ValidationError(
-                {"preco_unitario": "Preço unitário não pode ser negativo."}
-            )
+            raise ValidationError({"preco_unitario": "Preço unitário não pode ser negativo."})
 
         campo_esperado = tipo_para_campo[self.tipo_item]
 
         if self.tipo_item == self.TipoItem.AJUSTE:
             if any(referencias.values()):
-                raise ValidationError(
-                    "Item de ajuste manual não pode possuir referência externa."
-                )
+                raise ValidationError("Item de ajuste manual não pode possuir referência externa.")
             if not self.descricao.strip():
-                raise ValidationError(
-                    {"descricao": "Descrição é obrigatória para ajuste manual."}
-                )
+                raise ValidationError({"descricao": "Descrição é obrigatória para ajuste manual."})
         else:
             if not referencias[campo_esperado]:
-                raise ValidationError(
-                    {campo_esperado: "Informe a referência do tipo selecionado."}
-                )
+                raise ValidationError({campo_esperado: "Informe a referência do tipo selecionado."})
             for campo, informado in referencias.items():
                 if campo != campo_esperado and informado:
-                    raise ValidationError(
-                        {campo: "Remova esta referência, ela não corresponde ao tipo."}
-                    )
+                    raise ValidationError({campo: "Remova esta referência, ela não corresponde ao tipo."})
 
         origem_esperada = self._origem_esperada()
         if origem_esperada and self.fatura.origem != origem_esperada:
-            raise ValidationError(
-                "Tipo de item incompatível com a origem selecionada na fatura."
-            )
+            raise ValidationError("Tipo de item incompatível com a origem selecionada na fatura.")
 
         if self.inquilino_id and self.fatura_id and self.inquilino_id != self.fatura.inquilino_id:
             raise ValidationError("Item e fatura devem pertencer ao mesmo inquilino.")
 
         if self.exame_id and self.fatura.requisicao_id:
-            existe_no_contexto = self.fatura.requisicao.itens.filter(
-                exame_id=self.exame_id
-            ).exists()
+            existe_no_contexto = self.fatura.requisicao.itens.filter(exame_id=self.exame_id).exists()
             if not existe_no_contexto:
-                raise ValidationError(
-                    {"exame": "Exame não pertence à requisição da fatura."}
-                )
+                raise ValidationError({"exame": "Exame não pertence à requisição da fatura."})
 
         if self.exame_medico_id and self.fatura.requisicao_id:
-            existe_no_contexto = self.fatura.requisicao.itens.filter(
-                exame_medico_id=self.exame_medico_id
-            ).exists()
+            existe_no_contexto = self.fatura.requisicao.itens.filter(exame_medico_id=self.exame_medico_id).exists()
             if not existe_no_contexto:
-                raise ValidationError(
-                    {"exame_medico": "Exame médico não pertence à requisição da fatura."}
-                )
+                raise ValidationError({"exame_medico": "Exame médico não pertence à requisição da fatura."})
 
-        if self.item_venda_id and self.fatura.venda_id:
-            if self.item_venda.venda_id != self.fatura.venda_id:
-                raise ValidationError(
-                    {"item_venda": "Item de venda não pertence à venda da fatura."}
-                )
+        if self.item_venda_id and self.fatura.venda_id and self.item_venda.venda_id != self.fatura.venda_id:
+            raise ValidationError({"item_venda": "Item de venda não pertence à venda da fatura."})
 
         if self.procedimento_item_id and self.fatura.origem == self.fatura.Origem.ENFERMAGEM:
             permitido = False
             if self.fatura.procedimento_id and self.procedimento_item.procedimento_id == self.fatura.procedimento_id:
                 permitido = True
-            if not permitido and self.fatura_id and self.fatura.procedimentos.filter(
-                pk=self.procedimento_item.procedimento_id
-            ).exists():
+            if (
+                not permitido
+                and self.fatura_id
+                and self.fatura.procedimentos.filter(pk=self.procedimento_item.procedimento_id).exists()
+            ):
                 permitido = True
             if not permitido:
                 raise ValidationError(
@@ -358,14 +327,14 @@ class FaturaItem(NoNameCoreModel):
                 and self.procedimento_material.procedimento_id == self.fatura.procedimento_id
             ):
                 permitido = True
-            if not permitido and self.fatura_id and self.fatura.procedimentos.filter(
-                pk=self.procedimento_material.procedimento_id
-            ).exists():
+            if (
+                not permitido
+                and self.fatura_id
+                and self.fatura.procedimentos.filter(pk=self.procedimento_material.procedimento_id).exists()
+            ):
                 permitido = True
             if not permitido:
-                raise ValidationError(
-                    {"procedimento_material": "Material não pertence aos procedimentos da fatura."}
-                )
+                raise ValidationError({"procedimento_material": "Material não pertence aos procedimentos da fatura."})
 
     def save(self, *args, **kwargs):
         if self.fatura.estado != self.fatura.Estado.RASCUNHO:

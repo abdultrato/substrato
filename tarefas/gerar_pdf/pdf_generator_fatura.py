@@ -1,6 +1,6 @@
+from decimal import Decimal
 import io
 import logging
-from decimal import Decimal
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
@@ -22,9 +22,9 @@ from .pdf_base import (
     bold,
     cell_paragraph,
     draw_line_full_width,
-    identidade_usuario_institucional,
     estilo_secao_documento,
     estilo_titulo_documento,
+    identidade_usuario_institucional,
     montar_bloco_identificacao,
     on_page,
     pdf_encryption,
@@ -71,7 +71,7 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     # ==========================
     # A5 HARD GUARANTEE
     # ==========================
-    page_width, page_height = A5
+    page_width, _page_height = A5
 
     left_margin = 1.0 * cm
     right_margin = 1.0 * cm

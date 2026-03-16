@@ -17,7 +17,6 @@ from .models.venda import Venda
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-
     list_display = (
         "id_custom",
         "nome",
@@ -102,9 +101,7 @@ class ProdutoAdmin(admin.ModelAdmin):
             proximo_vencimento=Min("lotes__validade"),
         )
 
-        return qs.annotate(
-            estoque_total_calc=F("quantidade_lotes") + F("movimentos_total")
-        )
+        return qs.annotate(estoque_total_calc=F("quantidade_lotes") + F("movimentos_total"))
 
     # =========================
     # ESTOQUE
@@ -145,7 +142,6 @@ class ProdutoAdmin(admin.ModelAdmin):
 
 @admin.register(Lote)
 class LoteAdmin(admin.ModelAdmin):
-
     list_display = (
         "produto",
         "numero_lote",
@@ -244,9 +240,7 @@ class LoteAdmin(admin.ModelAdmin):
         saldo = obj.saldo_calc
 
         if saldo <= 5:
-            return format_html(
-                "<span style='color:red;font-weight:bold'>{}</span>", saldo
-            )
+            return format_html("<span style='color:red;font-weight:bold'>{}</span>", saldo)
 
         return saldo
 
@@ -282,7 +276,6 @@ class LoteAdmin(admin.ModelAdmin):
 
 @admin.register(MovimentoEstoque)
 class MovimentoEstoqueAdmin(admin.ModelAdmin):
-
     list_display = (
         "lote",
         "tipo",
@@ -368,7 +361,6 @@ class MovimentoEstoqueAdmin(admin.ModelAdmin):
 
 
 class ItemVendaInline(admin.TabularInline):
-
     model = ItemVenda
     extra = 0
 
@@ -400,7 +392,6 @@ class ItemVendaInline(admin.TabularInline):
 
 @admin.register(Venda)
 class VendaAdmin(admin.ModelAdmin):
-
     list_display = (
         "numero",
         "paciente",
@@ -466,7 +457,6 @@ class VendaAdmin(admin.ModelAdmin):
 
 @admin.register(CategoriaProduto)
 class CategoriaProdutoAdmin(admin.ModelAdmin):
-
     list_display = (
         "nome",
         "categoria_pai",
@@ -543,10 +533,7 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
         itens = format_html_join(
             "",
             "<li>{}</li>",
-            (
-                (categoria,)
-                for categoria in CategoriaProduto.categorias_pai_referencia()
-            ),
+            ((categoria,) for categoria in CategoriaProduto.categorias_pai_referencia()),
         )
         return format_html("<ul>{}</ul>", itens)
 

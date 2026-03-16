@@ -10,10 +10,7 @@ class TenantScopedThrottleMixin:
     """
 
     def get_cache_key(self, request, view):
-        if request.user and request.user.is_authenticated:
-            ident = request.user.pk
-        else:
-            ident = self.get_ident(request)
+        ident = request.user.pk if request.user and request.user.is_authenticated else self.get_ident(request)
 
         inquilino = getattr(request, "inquilino", None)
         tenant_id = getattr(inquilino, "id", "global")
@@ -25,10 +22,12 @@ class TenantScopedThrottleMixin:
 # USER THROTTLES
 # =========================================================
 
+
 class BurstRateThrottle(TenantScopedThrottleMixin, UserRateThrottle):
     """
     Limite agressivo contra picos.
     """
+
     scope = "burst"
 
 
@@ -36,6 +35,7 @@ class SustainedRateThrottle(TenantScopedThrottleMixin, UserRateThrottle):
     """
     Controle de uso contínuo.
     """
+
     scope = "sustained"
 
 
@@ -43,10 +43,12 @@ class SustainedRateThrottle(TenantScopedThrottleMixin, UserRateThrottle):
 # ANON THROTTLES
 # =========================================================
 
+
 class AnonBurstRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
     """
     Proteção para usuários não autenticados.
     """
+
     scope = "anon_burst"
 
 
@@ -54,4 +56,5 @@ class LoginRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
     """
     Proteção específica para login.
     """
+
     scope = "login"

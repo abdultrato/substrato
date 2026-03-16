@@ -119,7 +119,10 @@ class Fatura(NoNameCoreModel):
 
         parts: list[str] = [titulo]
         if linhas:
-            parts.extend([str(l) for l in linhas if str(l).strip()])
+            for linha in linhas:
+                texto = str(linha).strip()
+                if texto:
+                    parts.append(texto)
 
         HistoricoFatura.objects.create(
             inquilino=self.inquilino,
@@ -141,11 +144,7 @@ class Fatura(NoNameCoreModel):
             )
         )["total"]
 
-        iva_expr = (
-            linha_expr
-            * Coalesce(F("iva_percentual"), Value(Decimal("0.00")))
-            / Value(Decimal("100.00"))
-        )
+        iva_expr = linha_expr * Coalesce(F("iva_percentual"), Value(Decimal("0.00"))) / Value(Decimal("100.00"))
         iva = self.itens.aggregate(
             total=Coalesce(
                 Sum(
@@ -251,9 +250,7 @@ class Fatura(NoNameCoreModel):
         total_pago = self.valor_pago_confirmado() or Decimal("0.00")
         total_fatura = self.total or Decimal("0.00")
         novo_estado = (
-            self.Estado.PAGA
-            if total_pago >= total_fatura and total_fatura > Decimal("0.00")
-            else self.Estado.EMITIDA
+            self.Estado.PAGA if total_pago >= total_fatura and total_fatura > Decimal("0.00") else self.Estado.EMITIDA
         )
 
         if novo_estado == self.Estado.PAGA and pagamento is not None:
@@ -295,11 +292,7 @@ class Fatura(NoNameCoreModel):
             # Enfermagem: pode usar legado (procedimento) OU múltiplos (procedimentos).
             if self.procedimento_id and self.pk and self.procedimentos.exists():
                 raise ValidationError(
-                    {
-                        "procedimentos": (
-                            "Use apenas um: 'procedimento (legado)' OU 'procedimentos (múltiplos)'."
-                        )
-                    }
+                    {"procedimentos": ("Use apenas um: 'procedimento (legado)' OU 'procedimentos (múltiplos)'.")}
                 )
 
             if self.requisicao_id:
@@ -312,9 +305,7 @@ class Fatura(NoNameCoreModel):
             if self.procedimento_id:
                 self.paciente = self.procedimento.paciente
                 if self.inquilino_id and self.procedimento.inquilino_id != self.inquilino_id:
-                    raise ValidationError(
-                        {"procedimento": "Procedimento e fatura devem pertencer ao mesmo inquilino."}
-                    )
+                    raise ValidationError({"procedimento": "Procedimento e fatura devem pertencer ao mesmo inquilino."})
             elif self.pk:
                 procs = list(self.procedimentos.select_related("paciente").all())
                 if not procs:
@@ -327,9 +318,7 @@ class Fatura(NoNameCoreModel):
                             {"procedimentos": "Todos os procedimentos devem pertencer ao mesmo inquilino."}
                         )
                     if p.paciente_id != paciente_id:
-                        raise ValidationError(
-                            {"procedimentos": "Todos os procedimentos devem ser do mesmo paciente."}
-                        )
+                        raise ValidationError({"procedimentos": "Todos os procedimentos devem ser do mesmo paciente."})
                 if self.inquilino_id and inquilino_id != self.inquilino_id:
                     raise ValidationError(
                         {"procedimentos": "Procedimentos e fatura devem pertencer ao mesmo inquilino."}
@@ -370,29 +359,21 @@ class Fatura(NoNameCoreModel):
             if self.origem == self.Origem.CLINICO and self.requisicao_id:
                 self.paciente = self.requisicao.paciente
                 if self.requisicao.inquilino_id != self.inquilino_id:
-                    raise ValidationError(
-                        {"requisicao": "Requisição e fatura devem pertencer ao mesmo inquilino."}
-                    )
+                    raise ValidationError({"requisicao": "Requisição e fatura devem pertencer ao mesmo inquilino."})
 
             if self.origem == self.Origem.FARMACIA and self.venda_id:
                 if getattr(self.venda, "paciente_id", None):
                     self.paciente = self.venda.paciente
                 if self.venda.inquilino_id != self.inquilino_id:
-                    raise ValidationError(
-                        {"venda": "Venda e fatura devem pertencer ao mesmo inquilino."}
-                    )
+                    raise ValidationError({"venda": "Venda e fatura devem pertencer ao mesmo inquilino."})
 
             if self.origem == self.Origem.CONSULTA and self.consulta_id:
                 self.paciente = self.consulta.paciente
                 if self.consulta.inquilino_id != self.inquilino_id:
-                    raise ValidationError(
-                        {"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."}
-                    )
+                    raise ValidationError({"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."})
 
         if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError(
-                {"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."}
-            )
+            raise ValidationError({"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."})
 
     def sincronizar_itens_da_origem(self):
         if self.estado != self.Estado.RASCUNHO:
@@ -517,11 +498,7 @@ class Fatura(NoNameCoreModel):
             pendentes = []
             for proc in procedimentos:
                 pendentes.extend(
-                    list(
-                        proc.materiais.filter(movimento_estoque__isnull=True)
-                        .select_related("produto")
-                        .all()
-                    )
+                    list(proc.materiais.filter(movimento_estoque__isnull=True).select_related("produto").all())
                 )
 
             faltas = []
@@ -537,10 +514,8 @@ class Fatura(NoNameCoreModel):
 
                 if disponivel < necessario:
                     faltas.append(
-                        (
-                            f"{material.produto.nome} (produto_id={material.produto_id}): "
-                            f"necessario {necessario}, disponivel {disponivel}"
-                        )
+                        f"{material.produto.nome} (produto_id={material.produto_id}): "
+                        f"necessario {necessario}, disponivel {disponivel}"
                     )
 
             if faltas:

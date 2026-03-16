@@ -42,7 +42,7 @@ class Movimento(CoreModel):
 
     def __init__(self, *args, **kwargs):
         valor = kwargs.pop("valor", None)
-        direcao = kwargs.get("debito", None)
+        direcao = kwargs.get("debito")
 
         if valor is not None and isinstance(direcao, bool):
             valor_decimal = Decimal(valor)

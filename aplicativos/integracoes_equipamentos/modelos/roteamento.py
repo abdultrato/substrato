@@ -53,4 +53,3 @@ class IntegracaoRoteamento(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.equipamento} - {self.tipo_exame} - {self.setor}"
-

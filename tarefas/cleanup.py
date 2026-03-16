@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.utils import timezone
-
 from frontend.models import RequisicaoAnalise, ResultadoItem
 
 from .base import TaskBase

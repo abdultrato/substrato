@@ -1,10 +1,9 @@
 from rest_framework import serializers
 
-from aplicativos.contabilidade.modelos.contas import Conta
 from aplicativos.contabilidade.modelos.conciliacao import ConciliacaoFinanceira
+from aplicativos.contabilidade.modelos.contas import Conta
 from aplicativos.contabilidade.modelos.lancamento import Lancamento
 from aplicativos.contabilidade.modelos.movimento import Movimento
-
 
 CORE_READ_ONLY_FIELDS = (
     "id_custom",
@@ -24,11 +23,13 @@ class ContaSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
+
 class LancamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lancamento
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+
 
 class MovimentoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,9 +49,10 @@ class ConciliacaoFinanceiraSerializer(serializers.ModelSerializer):
             "conciliado",
         )
 
+
 SERIALIZER_MAP = {
-    'conta': ContaSerializer,
-    'conciliacaofinanceira': ConciliacaoFinanceiraSerializer,
-    'lancamento': LancamentoSerializer,
-    'movimento': MovimentoSerializer,
+    "conta": ContaSerializer,
+    "conciliacaofinanceira": ConciliacaoFinanceiraSerializer,
+    "lancamento": LancamentoSerializer,
+    "movimento": MovimentoSerializer,
 }

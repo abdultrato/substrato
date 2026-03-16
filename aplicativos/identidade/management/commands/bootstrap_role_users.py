@@ -6,8 +6,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from aplicativos.inquilinos.modelos.inquilino import Inquilino

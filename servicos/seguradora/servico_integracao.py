@@ -1,5 +1,4 @@
 class ServicoIntegracaoSeguradora:
-
     ADAPTERS = {
         "UNIMED": "integracoes.seguradoras.unimed_adapter.UnimedAdapter",
     }
@@ -7,9 +6,7 @@ class ServicoIntegracaoSeguradora:
     @staticmethod
     def obter_adapter(seguradora):
 
-        path = ServicoIntegracaoSeguradora.ADAPTERS.get(
-            seguradora.identificador
-        )
+        path = ServicoIntegracaoSeguradora.ADAPTERS.get(seguradora.identificador)
 
         if not path:
             raise Exception("Adapter não configurado")

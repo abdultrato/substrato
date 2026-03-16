@@ -6,21 +6,25 @@ import useAuthGuard from "@/hooks/useAuthGuard";
 import { Exame, ExameCampo } from "@/lib/types";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
+import { useParams } from "next/navigation";
+import { routeParamToString } from "@/lib/routeParams";
 
-export default function ExameDetailPage ( { params }: any ) {
+export default function ExameDetailPage () {
+    const params = useParams();
+    const id = routeParamToString( (params as any)?.id );
     useAuthGuard();
 
     const [exame, setExame] = useState<Exame | null>( null );
     const [campos, setCampos] = useState<ExameCampo[]>( [] );
 
     const carregar = useCallback( async () => {
-        const ex = await apiFetch<Exame>( `/exames/${params.id}/` );
+        const ex = await apiFetch<Exame>( `/exames/${id}/` );
         setExame( ex );
 
-        const r = await apiFetch<any>( `/clinico/examecampo/?exame=${params.id}` );
+        const r = await apiFetch<any>( `/clinico/examecampo/?exame=${id}` );
         const data = r && (r as any).results ? (r as any).results : (r as any);
         setCampos( Array.isArray( data ) ? data : [] );
-    }, [params.id] );
+    }, [id] );
 
     useEffect( () => {
         carregar();

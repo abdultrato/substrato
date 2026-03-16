@@ -1,12 +1,11 @@
 from django.db.models import Count, Sum
 from django.utils.timezone import now
-from rest_framework.permissions import IsAuthenticated as ia
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from frontend.billing.models.exame import Exame as e
 from frontend.billing.models.fatura import Fatura as f
 from frontend.billing.models.requisicao_analise import RequisicaoAnalise as ra
+from rest_framework.permissions import IsAuthenticated as ia
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class StatsView(APIView):

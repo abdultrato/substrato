@@ -13,9 +13,7 @@ class SecurityCheckView(APIView):
             {
                 "debug": settings.DEBUG,
                 "secure_ssl_redirect": getattr(settings, "SECURE_SSL_REDIRECT", False),
-                "session_cookie_secure": getattr(
-                    settings, "SESSION_COOKIE_SECURE", False
-                ),
+                "session_cookie_secure": getattr(settings, "SESSION_COOKIE_SECURE", False),
                 "csrf_cookie_secure": getattr(settings, "CSRF_COOKIE_SECURE", False),
                 "x_frame_options": getattr(settings, "X_FRAME_OPTIONS", "DENY"),
             }

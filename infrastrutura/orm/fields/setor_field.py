@@ -1,4 +1,5 @@
 from django.db import models
+
 from nucleo.constantes.laboratorio.setor import Setor
 
 

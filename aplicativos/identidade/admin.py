@@ -7,4 +7,3 @@ from .models import Usuario
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     pass
-

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -9,17 +9,18 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { findModuleResource } from "@/lib/modules"
+import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
-export default function EditarRecursoPage({
-  params,
-}: {
-  params: { grupo: string; recurso: string; id: string }
-}) {
+export default function EditarRecursoPage() {
+  const params = useParams()
+  const grupo = routeParamToString((params as any)?.grupo)
+  const recurso = routeParamToString((params as any)?.recurso)
+  const id = routeParamToString((params as any)?.id)
   const { loading } = useAuthGuard()
   const router = useRouter()
-  const found = findModuleResource(params.grupo, params.recurso)
-  const requiredGroups = requiredGroupsForResourceGroup(params.grupo)
+  const found = findModuleResource(grupo, recurso)
+  const requiredGroups = requiredGroupsForResourceGroup(grupo)
   const [initial, setInitial] = useState<Record<string, any> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
@@ -31,7 +32,7 @@ export default function EditarRecursoPage({
       try {
         setLoadingData(true)
         setError(null)
-        const endpoint = `${found.resource.endpoint.replace(/\/$/, "")}/${params.id}/`
+        const endpoint = `${found.resource.endpoint.replace(/\/$/, "")}/${id}/`
         const res = await (await import("@/lib/api")).apiFetch<any>(endpoint)
         if (mounted) setInitial(res ?? {})
       } catch (e: any) {
@@ -44,7 +45,7 @@ export default function EditarRecursoPage({
     return () => {
       mounted = false
     }
-  }, [found, params.id])
+  }, [found, id])
 
   if (loading) return null
 
@@ -54,10 +55,10 @@ export default function EditarRecursoPage({
         <div className="space-y-6">
           <PageHeader
             title="Recurso não encontrado"
-            subtitle={`${params.grupo}/${params.recurso}`}
+            subtitle={`${grupo}/${recurso}`}
           />
           <Link
-            href={`/recursos/${params.grupo}`}
+            href={`/recursos/${grupo}`}
             className="text-sm text-gray-700 underline"
           >
             Voltar
@@ -67,17 +68,17 @@ export default function EditarRecursoPage({
     )
   }
 
-  const basePath = `/recursos/${params.grupo}/${params.recurso}`
+  const basePath = `/recursos/${grupo}/${recurso}`
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
-          title={`Editar ${found.resource.label} — ${params.id}`}
+          title={`Editar ${found.resource.label} — ${id}`}
           subtitle={found.resource.endpoint}
           actions={
             <Link
-              href={`${basePath}/${params.id}`}
+              href={`${basePath}/${id}`}
               className="text-sm text-[var(--gray-700)] underline"
             >
               Voltar
@@ -95,13 +96,11 @@ export default function EditarRecursoPage({
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
           <AutoForm
-            endpoint={`${found.resource.endpoint.replace(/\/$/, "")}/${params.id}/`}
+            endpoint={`${found.resource.endpoint.replace(/\/$/, "")}/${id}/`}
             method="put"
             initialValues={initial || {}}
             submitLabel="Salvar"
-            onSuccess={() =>
-              router.push(`/recursos/${params.grupo}/${params.recurso}/${params.id}`)
-            }
+            onSuccess={() => router.push(`/recursos/${grupo}/${recurso}/${id}`)}
           />
         )}
       </div>

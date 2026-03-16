@@ -3,8 +3,8 @@ from dominio.seguradora.regras_autorizacao import deve_solicitar_autorizacao
 from eventos.publicador import publicar_evento
 from eventos.tipos import AUTORIZACAO_SOLICITADA
 
-class ServicoAutorizacao:
 
+class ServicoAutorizacao:
     @staticmethod
     def solicitar(requisicao_id, plano):
 
@@ -20,7 +20,7 @@ class ServicoAutorizacao:
             AUTORIZACAO_SOLICITADA,
             {
                 "autorizacao_id": autorizacao.id,
-            }
+            },
         )
 
         return autorizacao
