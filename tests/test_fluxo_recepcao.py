@@ -24,7 +24,8 @@ def test_fluxo_recepcao_faturamento_pagamento():
         inquilino=tenant,
         nome="Paciente Flow",
         genero="Masculino",
-        morada={"rua": "Rua A", "cidade": "Maputo"},
+        endereco_rua="Rua A",
+        endereco_cidade="Maputo",
     )
 
     exame = Exame.objects.create(

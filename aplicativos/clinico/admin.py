@@ -131,6 +131,14 @@ class PacienteAdmin(admin.ModelAdmin):
                 "fields": (
                     "contacto",
                     "email",
+                    "endereco_rua",
+                    "endereco_numero",
+                    "endereco_bairro",
+                    "endereco_cidade",
+                    "endereco_provincia",
+                    "endereco_codigo_postal",
+                    "endereco_pais",
+                    "endereco_complemento",
                     "morada",
                 )
             },

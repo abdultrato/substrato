@@ -100,7 +100,8 @@ class PacienteFactory(factory.django.DjangoModelFactory):
     data_nascimento = factory.Faker("date_of_birth")
     contacto = factory.LazyFunction(lambda: fake.phone_number())
     genero = factory.Faker("word", word_list=["Masculino", "Femenino"])
-    morada = factory.LazyFunction(lambda: {"rua": fake.street_name(), "cidade": fake.city()})
+    endereco_rua = factory.LazyFunction(lambda: fake.street_name())
+    endereco_cidade = factory.LazyFunction(lambda: fake.city())
     ativo = True
 
     @classmethod

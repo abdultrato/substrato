@@ -1,4 +1,3 @@
-from drf_spectacular.utils import OpenApiTypes, extend_schema_field
 from rest_framework import serializers
 
 from aplicativos.clinico.modelos.exame import Exame
@@ -25,46 +24,12 @@ CORE_READ_ONLY_FIELDS = [
 ]
 
 
-@extend_schema_field(OpenApiTypes.STR)
-class MoradaField(serializers.Field):
-    """
-    Compat layer:
-    - Frontend envia `morada` como string
-    - Modelo usa JSONField (EnderecoField)
-    """
-
-    def to_representation(self, value):
-        if value is None:
-            return ""
-        if isinstance(value, str):
-            return value
-        if isinstance(value, dict):
-            parts = []
-            for k in ("rua", "numero", "bairro", "cidade", "provincia"):
-                v = value.get(k)
-                if v:
-                    parts.append(str(v).strip())
-            return ", ".join([p for p in parts if p]) or ""
-        return str(value)
-
-    def to_internal_value(self, data):
-        if data is None:
-            return {}
-        if isinstance(data, dict):
-            return data
-        if isinstance(data, str):
-            txt = data.strip()
-            return {"rua": txt} if txt else {}
-        raise serializers.ValidationError("Morada deve ser texto ou objeto JSON.")
-
-
 class PacienteSerializer(serializers.ModelSerializer):
     """
     Serializer para a entidade Paciente com validação robusta.
     Inclui campos de paciente para leitura/escrita com validação de domínio.
     """
 
-    morada = MoradaField()
     empresa_origem_nome = serializers.CharField(source="empresa_origem.nome", read_only=True)
 
     class Meta:
@@ -139,6 +104,57 @@ class PacienteSerializer(serializers.ModelSerializer):
                 "help_text": "Semanas de gestação (preencher apenas se gestante)",
             },
         }
+
+    def to_internal_value(self, data):
+        """
+        Compat:
+        - Antes, `morada` era JSON (rua/numero/bairro/cidade/provincia/...).
+        - Agora, o modelo usa campos reais `endereco_*` + `morada` (texto).
+
+        Aceitamos `morada` como objeto e mapeamos para `endereco_*` para não
+        quebrar clientes legados.
+        """
+        if isinstance(data, dict) and isinstance(data.get("morada"), dict):
+            morada_obj = data.get("morada") or {}
+            # QueryDict (request.data) pode ser imutável; usar cópia.
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            data.pop("morada", None)
+
+            mapping = {
+                "rua": "endereco_rua",
+                "numero": "endereco_numero",
+                "bairro": "endereco_bairro",
+                "cidade": "endereco_cidade",
+                "provincia": "endereco_provincia",
+                "codigo_postal": "endereco_codigo_postal",
+                "pais": "endereco_pais",
+                "complemento": "endereco_complemento",
+            }
+            for src_key, dst_field in mapping.items():
+                if dst_field in data:
+                    continue
+                v = morada_obj.get(src_key)
+                if v is None:
+                    continue
+                data[dst_field] = v
+
+            if "morada" not in data:
+                parts = []
+                for k in (
+                    "rua",
+                    "numero",
+                    "bairro",
+                    "cidade",
+                    "provincia",
+                    "codigo_postal",
+                    "complemento",
+                ):
+                    v = morada_obj.get(k)
+                    if v:
+                        parts.append(str(v).strip())
+                data["morada"] = ", ".join([p for p in parts if p]).strip()
+
+        return super().to_internal_value(data)
 
     def validate_email(self, value):
         """Validação adicional de email."""

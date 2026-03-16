@@ -51,9 +51,7 @@ export default function useTheme() {
       mqlAny.addEventListener("change", update)
       return () => mqlAny.removeEventListener!("change", update)
     }
-    // eslint-disable-next-line deprecation/deprecation
     mqlAny.addListener?.(update)
-    // eslint-disable-next-line deprecation/deprecation
     return () => mqlAny.removeListener?.(update)
   }, [])
 

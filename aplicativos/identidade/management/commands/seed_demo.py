@@ -497,28 +497,26 @@ def ensure_pacientes(n: int, tenants: list[Inquilino], faker: Faker) -> list[Pac
             Paciente.objects.create(
                 inquilino=tenant,
                 nome=nome,
-                morada={
-                    "rua": faker.street_name(),
-                    "numero": str(faker.building_number()),
-                    "bairro": faker.city_suffix(),
-                    "cidade": faker.city(),
-                    # `pt_PT` não expõe `state()`. Usamos uma lista simples para ficar realista (MZ).
-                    "provincia": random.choice(
-                        [
-                            "Maputo",
-                            "Gaza",
-                            "Inhambane",
-                            "Sofala",
-                            "Manica",
-                            "Tete",
-                            "Zambézia",
-                            "Nampula",
-                            "Cabo Delgado",
-                            "Niassa",
-                        ]
-                    ),
-                    "pais": "Moçambique",
-                },
+                endereco_rua=faker.street_name(),
+                endereco_numero=str(faker.building_number()),
+                endereco_bairro=faker.city_suffix(),
+                endereco_cidade=faker.city(),
+                # `pt_PT` não expõe `state()`. Usamos uma lista simples para ficar realista (MZ).
+                endereco_provincia=random.choice(
+                    [
+                        "Maputo",
+                        "Gaza",
+                        "Inhambane",
+                        "Sofala",
+                        "Manica",
+                        "Tete",
+                        "Zambézia",
+                        "Nampula",
+                        "Cabo Delgado",
+                        "Niassa",
+                    ]
+                ),
+                endereco_pais="Moçambique",
                 genero=genero,
                 raca_origem=raca,
                 tipo_documento=tipo_documento,

@@ -8,7 +8,7 @@
     "build": "next build",
     "build:admin-css": "tailwindcss -c tailwind.admin.config.js -i styles/admin-tailwind.input.css -o ../aplicativos/clinico/static/admin/css/substrato-admin-tailwind.css --minify",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "type-check": "tsc --noEmit --incremental false",
     "test": "vitest",
     "test:ui": "vitest --ui",

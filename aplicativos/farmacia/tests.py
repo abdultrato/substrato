@@ -88,7 +88,7 @@ def test_movimento_estoque_saida_reduz_lote():
 @pytest.mark.django_db
 def test_venda_itens_e_total():
     tenant = _tenant()
-    Paciente.objects.create(inquilino=tenant, nome="Cliente", genero="Masculino", morada={"rua": "Rua Z"})
+    Paciente.objects.create(inquilino=tenant, nome="Cliente", genero="Masculino", endereco_rua="Rua Z")
     prod = _produto(tenant)
     _lote(prod, quantidade=10)
 

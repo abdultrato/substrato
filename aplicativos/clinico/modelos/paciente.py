@@ -2,7 +2,6 @@ from django.db import models
 from django.utils import timezone
 
 from infrastrutura.orm.fields.email_field import NormalizedEmailField
-from infrastrutura.orm.fields.endereco_field import EnderecoField
 from infrastrutura.orm.fields.telefone_field import TelefoneField
 from nucleo.constantes.genero import Genero
 from nucleo.constantes.proveniencia import Proveniencia
@@ -66,7 +65,67 @@ class Paciente(CoreModel):
         null=True,
     )
 
-    morada = EnderecoField(verbose_name="Morada", help_text="Endereço estruturado do paciente")
+    # Endereço (campos reais) para evitar JSON no admin/frontend e permitir
+    # preenchimento estruturado.
+    endereco_rua = models.CharField(
+        verbose_name="Rua",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    endereco_numero = models.CharField(
+        verbose_name="Número",
+        max_length=30,
+        blank=True,
+        default="",
+    )
+    endereco_bairro = models.CharField(
+        verbose_name="Bairro",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    endereco_cidade = models.CharField(
+        verbose_name="Cidade",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    endereco_provincia = models.CharField(
+        verbose_name="Província",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    endereco_codigo_postal = models.CharField(
+        verbose_name="Código postal",
+        max_length=30,
+        blank=True,
+        default="",
+    )
+    endereco_pais = models.CharField(
+        verbose_name="País",
+        max_length=120,
+        blank=True,
+        default="Moçambique",
+    )
+    endereco_complemento = models.CharField(
+        verbose_name="Complemento",
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    # Compat: mantém o campo "morada" como texto único para consumo/legado.
+    # Quando os campos de endereço acima são preenchidos, este campo é
+    # atualizado automaticamente.
+    morada = models.CharField(
+        verbose_name="Morada",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Texto livre ou resumo (auto) da morada.",
+    )
 
     contacto = TelefoneField(
         verbose_name="Contacto",
@@ -148,6 +207,48 @@ class Paciente(CoreModel):
         return f"{dias // 365} anos"
 
     idade.short_description = "Idade"
+
+    # =========================================================
+    # MORADA (TEXTO RESUMO)
+    # =========================================================
+
+    def morada_formatada(self) -> str:
+        parts = []
+        for v in (
+            self.endereco_rua,
+            self.endereco_numero,
+            self.endereco_bairro,
+            self.endereco_cidade,
+            self.endereco_provincia,
+            self.endereco_codigo_postal,
+            self.endereco_complemento,
+        ):
+            txt = (v or "").strip()
+            if txt:
+                parts.append(txt)
+        return ", ".join(parts)
+
+    def save(self, *args, **kwargs):
+        # Se o endereço estruturado for usado, o "morada" vira um resumo
+        # consistente. Se não houver dados estruturados, preserva texto livre.
+        endereco_estruturado_usado = any(
+            (v or "").strip()
+            for v in (
+                self.endereco_rua,
+                self.endereco_numero,
+                self.endereco_bairro,
+                self.endereco_cidade,
+                self.endereco_provincia,
+                self.endereco_codigo_postal,
+                self.endereco_complemento,
+            )
+        )
+        if endereco_estruturado_usado:
+            self.morada = self.morada_formatada()
+        else:
+            self.morada = (self.morada or "").strip()
+
+        super().save(*args, **kwargs)
 
     # =========================================================
     # IDADE PARA MOTOR CLÍNICO (PRECISÃO ABSOLUTA)

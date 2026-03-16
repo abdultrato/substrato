@@ -8,7 +8,7 @@ def test_paciente_salva_com_inquilino(db):
         inquilino=tenant,
         nome="Paciente Inline",
         genero="Masculino",
-        morada={"rua": "Rua B"},
+        endereco_rua="Rua B",
     )
     assert pac.pk
     assert pac.inquilino == tenant

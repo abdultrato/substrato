@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
     listarResultados,
     atualizarResultado,
@@ -11,7 +11,7 @@ export function useResultados ( requisicaoId?: number ) {
     const [loading, setLoading] = useState( true )
     const [error, setError] = useState<string | null>( null )
 
-    async function carregar () {
+    const carregar = useCallback( async () => {
         try {
             setLoading( true )
             const data = await listarResultados(
@@ -23,7 +23,7 @@ export function useResultados ( requisicaoId?: number ) {
         } finally {
             setLoading( false )
         }
-    }
+    }, [requisicaoId] )
 
     async function atualizar ( id: number, valor: string ) {
         const atualizado = await atualizarResultado( id, valor )
@@ -43,7 +43,7 @@ export function useResultados ( requisicaoId?: number ) {
 
     useEffect( () => {
         carregar()
-    }, [requisicaoId] )
+    }, [carregar] )
 
     return {
         resultados,

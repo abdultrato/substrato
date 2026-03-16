@@ -8,7 +8,6 @@ from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
-from infrastrutura.orm.fields.endereco_field import EnderecoField
 
 # =====================================================
 # EXAME
@@ -98,6 +97,8 @@ class ExameMedicoCampoFilter(SafeFilterSet):
 
 
 class PacienteFilter(SafeFilterSet):
+    morada = django_filters.CharFilter(field_name="morada", lookup_expr="icontains")
+
     class Meta:
         model = Paciente
 
@@ -120,13 +121,6 @@ class PacienteFilter(SafeFilterSet):
             "email",
             "proveniencia",
         ]
-
-        filter_overrides = {
-            EnderecoField: {
-                "filter_class": django_filters.CharFilter,
-                "extra": lambda f: {"lookup_expr": "icontains"},
-            },
-        }
 
 
 # =====================================================

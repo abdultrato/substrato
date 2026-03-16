@@ -33,7 +33,7 @@ def _paciente(tenant):
         inquilino=tenant,
         nome="Paciente Int",
         genero="Masculino",
-        morada={"rua": "Rua Z"},
+        endereco_rua="Rua Z",
     )
 
 
