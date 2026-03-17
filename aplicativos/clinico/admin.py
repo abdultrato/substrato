@@ -340,6 +340,7 @@ class ExameAdmin(CoreAdmin):
         "trl_horas",
         "preco",
         "iva_percentual",
+        "aplica_iva_por_padrao",
     )
 
     search_fields = (
@@ -391,6 +392,7 @@ class ExameAdmin(CoreAdmin):
                     "trl_horas",
                     "preco",
                     "iva_percentual",
+                    "aplica_iva_por_padrao",
                 )
             },
         ),
@@ -449,6 +451,7 @@ class ExameMedicoAdmin(CoreAdmin):
         "trl_horas",
         "preco",
         "iva_percentual",
+        "aplica_iva_por_padrao",
     )
 
     search_fields = (
@@ -500,6 +503,7 @@ class ExameMedicoAdmin(CoreAdmin):
                     "trl_horas",
                     "preco",
                     "iva_percentual",
+                    "aplica_iva_por_padrao",
                 )
             },
         ),

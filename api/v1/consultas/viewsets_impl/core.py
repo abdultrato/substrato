@@ -92,11 +92,13 @@ class ConsultaMedicaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     @action(detail=False, methods=["get"], url_path="preco")
     def preco(self, request):
         """
-        Preview de preço (normal vs feriado) para uma especialidade + data/hora.
+        Preview de preço (horário, fim de semana, fora de expediente, feriado manual)
+        para uma especialidade + data/hora.
 
         Query params:
         - especialidade: id (obrigatório)
         - agendada_para: datetime ISO (opcional; default: now)
+        - feriado_manual: bool (opcional; default: False)
         """
         inquilino = getattr(request, "inquilino", None)
         if inquilino is None:
@@ -122,18 +124,20 @@ class ConsultaMedicaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         if not dt:
             dt = timezone.now()
 
+        feriado_manual = (request.query_params.get("feriado_manual") or "").lower() in {"1", "true", "t", "sim"}
+
         consulta = ConsultaMedica(
             inquilino=inquilino,
             especialidade=especialidade,
             agendada_para=dt,
             tipo="tmp",
             preco=Decimal("0.00"),
+            feriado_manual=feriado_manual,
         )
 
         # Reusa a mesma regra do model (feriado + acrescimo percentual).
         consulta._sincronizar_especialidade_e_preco(None)
 
-        percentual = str(consulta._acrescimo_percentual_feriado())
         try:
             moeda = getattr(getattr(inquilino, "configuracao", None), "moeda", "MZN")
         except Exception:
@@ -144,8 +148,10 @@ class ConsultaMedicaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
                 "especialidade": especialidade.id,
                 "especialidade_nome": especialidade.nome,
                 "preco_base": str(especialidade.preco_base or Decimal("0.00")),
+                "feriado_manual": bool(feriado_manual),
                 "eh_feriado": bool(consulta._is_feriado()),
-                "percentual_feriado": percentual,
+                "tipo_horario": consulta.tipo_horario,
+                "multiplicador_preco": str(consulta.multiplicador_preco or Decimal("1.00")),
                 "preco_final": str(consulta.preco or Decimal("0.00")),
                 "moeda": moeda,
             },

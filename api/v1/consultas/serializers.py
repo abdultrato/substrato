@@ -54,6 +54,8 @@ class ConsultaMedicaSerializer(serializers.ModelSerializer):
             "fatura_id",
             "fatura_codigo",
             "fatura_estado",
+            "tipo_horario",
+            "multiplicador_preco",
         )
 
     def get_medico_nome(self, obj: ConsultaMedica) -> str:

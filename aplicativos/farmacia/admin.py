@@ -23,6 +23,7 @@ class ProdutoAdmin(admin.ModelAdmin):
         "categoria",
         "preco_venda",
         "iva_percentual",
+        "aplica_iva_por_padrao",
         "estoque_total",
         "proximo_vencimento",
         "criado_em",
@@ -52,6 +53,7 @@ class ProdutoAdmin(admin.ModelAdmin):
                     "categoria",
                     "preco_venda",
                     "iva_percentual",
+                    "aplica_iva_por_padrao",
                 )
             },
         ),

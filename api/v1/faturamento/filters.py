@@ -24,6 +24,7 @@ class FaturaFilter(SafeFilterSet):
             "criado_por",
             "atualizado_por",
             "requisicao",
+            "cirurgia",
             "paciente",
             "subtotal",
             "iva_valor",

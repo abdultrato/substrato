@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import DecimalField, F, Sum, Value
+from django.db.models import Case, DecimalField, F, Sum, Value, When
 from django.db.models.functions import Coalesce
 
 from aplicativos.clinico.modelos.paciente import Paciente
@@ -24,6 +24,7 @@ class Fatura(NoNameCoreModel):
         FARMACIA = "FAR", "Farmácia"
         ENFERMAGEM = "ENF", "Enfermagem"
         CONSULTA = "CON", "Consulta"
+        CIRURGIA = "CIR", "Cirurgia"
 
     origem = models.CharField(
         verbose_name="Origem",
@@ -68,6 +69,14 @@ class Fatura(NoNameCoreModel):
     consulta = models.OneToOneField(
         "consultas.ConsultaMedica",
         verbose_name="Consulta",
+        on_delete=models.PROTECT,
+        related_name="fatura",
+        null=True,
+        blank=True,
+    )
+    cirurgia = models.OneToOneField(
+        "cirurgia.Cirurgia",
+        verbose_name="Cirurgia",
         on_delete=models.PROTECT,
         related_name="fatura",
         null=True,
@@ -144,13 +153,18 @@ class Fatura(NoNameCoreModel):
             )
         )["total"]
 
-        iva_expr = linha_expr * Coalesce(F("iva_percentual"), Value(Decimal("0.00"))) / Value(Decimal("100.00"))
+        iva_expr = Case(
+            When(
+                aplica_iva=True,
+                then=linha_expr * Coalesce(F("iva_percentual"), Value(Decimal("0.00"))) / Value(Decimal("100.00")),
+            ),
+            default=Value(Decimal("0.00")),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+
         iva = self.itens.aggregate(
             total=Coalesce(
-                Sum(
-                    iva_expr,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
+                Sum(iva_expr, output_field=DecimalField(max_digits=12, decimal_places=2)),
                 Decimal("0.00"),
             )
         )["total"]
@@ -285,6 +299,8 @@ class Fatura(NoNameCoreModel):
             return self.procedimento
         if self.origem == self.Origem.CONSULTA:
             return self.consulta
+        if self.origem == self.Origem.CIRURGIA:
+            return self.cirurgia
         return None
 
     def _validar_origem(self):
@@ -332,6 +348,7 @@ class Fatura(NoNameCoreModel):
                 self.Origem.FARMACIA: "venda",
                 self.Origem.ENFERMAGEM: "procedimento",
                 self.Origem.CONSULTA: "consulta",
+                self.Origem.CIRURGIA: "cirurgia",
             }
             campo_esperado = campos_origem[self.origem]
 
@@ -340,6 +357,7 @@ class Fatura(NoNameCoreModel):
                 "venda": bool(self.venda_id),
                 "procedimento": bool(self.procedimento_id),
                 "consulta": bool(self.consulta_id),
+                "cirurgia": bool(self.cirurgia_id),
             }
             if sum(vinculados.values()) != 1:
                 raise ValidationError("A fatura deve possuir exatamente uma referência de origem.")
@@ -361,16 +379,21 @@ class Fatura(NoNameCoreModel):
                 if self.requisicao.inquilino_id != self.inquilino_id:
                     raise ValidationError({"requisicao": "Requisição e fatura devem pertencer ao mesmo inquilino."})
 
-            if self.origem == self.Origem.FARMACIA and self.venda_id:
-                if getattr(self.venda, "paciente_id", None):
-                    self.paciente = self.venda.paciente
-                if self.venda.inquilino_id != self.inquilino_id:
-                    raise ValidationError({"venda": "Venda e fatura devem pertencer ao mesmo inquilino."})
+        if self.origem == self.Origem.FARMACIA and self.venda_id:
+            if getattr(self.venda, "paciente_id", None):
+                self.paciente = self.venda.paciente
+            if self.venda.inquilino_id != self.inquilino_id:
+                raise ValidationError({"venda": "Venda e fatura devem pertencer ao mesmo inquilino."})
 
-            if self.origem == self.Origem.CONSULTA and self.consulta_id:
-                self.paciente = self.consulta.paciente
-                if self.consulta.inquilino_id != self.inquilino_id:
-                    raise ValidationError({"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."})
+        if self.origem == self.Origem.CONSULTA and self.consulta_id:
+            self.paciente = self.consulta.paciente
+            if self.consulta.inquilino_id != self.inquilino_id:
+                raise ValidationError({"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."})
+
+        if self.origem == self.Origem.CIRURGIA and self.cirurgia_id:
+            self.paciente = self.cirurgia.paciente
+            if self.cirurgia.inquilino_id != self.inquilino_id:
+                raise ValidationError({"cirurgia": "Cirurgia e fatura devem pertencer ao mesmo inquilino."})
 
         if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
             raise ValidationError({"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."})
@@ -451,6 +474,7 @@ class Fatura(NoNameCoreModel):
             descricao = f"Consulta: {getattr(self.consulta, 'tipo', '')}".strip()
             if not descricao:
                 descricao = "Consulta"
+            iva_percentual = getattr(getattr(self.consulta, "especialidade", None), "iva_percentual", None)
             FaturaItem.objects.create(
                 inquilino=self.inquilino,
                 fatura=self,
@@ -458,6 +482,33 @@ class Fatura(NoNameCoreModel):
                 descricao=descricao,
                 quantidade=Decimal("1.00"),
                 preco_unitario=getattr(self.consulta, "preco", Decimal("0.00")) or Decimal("0.00"),
+                iva_percentual=iva_percentual if iva_percentual is not None else Decimal("0.00"),
+            )
+        elif self.origem == self.Origem.CIRURGIA:
+            descricao = "Cirurgia"
+            nomes = []
+            try:
+                nomes = list(self.cirurgia.procedimentos.values_list("nome", flat=True))
+            except Exception:
+                pass
+            if nomes:
+                descricao = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
+            elif getattr(self.cirurgia, "procedimento", "").strip():
+                descricao = f"Cirurgia: {self.cirurgia.procedimento.strip()}"
+
+            preco = getattr(self.cirurgia, "preco_estimado", Decimal("0.00")) or Decimal("0.00")
+            iva_percentual = getattr(self.cirurgia, "iva_percentual", None)
+            aplica_iva = getattr(self.cirurgia, "aplica_iva_por_padrao", True)
+
+            FaturaItem.objects.create(
+                inquilino=self.inquilino,
+                fatura=self,
+                tipo_item=FaturaItem.TipoItem.AJUSTE,
+                descricao=descricao,
+                quantidade=Decimal("1.00"),
+                preco_unitario=preco,
+                iva_percentual=iva_percentual if iva_percentual is not None else Decimal("0.00"),
+                aplica_iva=aplica_iva,
             )
 
         self.persistir_totais()

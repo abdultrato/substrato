@@ -107,6 +107,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         "nome",
         "preco_padrao",
         "iva_percentual",
+        "aplica_iva_por_padrao",
         "criado_em",
     )
     search_fields = (
@@ -135,6 +136,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
                     "descricao",
                     "preco_padrao",
                     "iva_percentual",
+                    "aplica_iva_por_padrao",
                 )
             },
         ),

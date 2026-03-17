@@ -24,8 +24,10 @@ type PrecoPreview = {
   especialidade: number
   especialidade_nome?: string
   preco_base?: string
+  feriado_manual?: boolean
   eh_feriado?: boolean
-  percentual_feriado?: string
+  tipo_horario?: string
+  multiplicador_preco?: string
   preco_final?: string
   moeda?: string
 }
@@ -40,6 +42,9 @@ type ConsultaRow = {
   tipo?: string
   estado?: string
   preco?: string | number
+  tipo_horario?: string
+  multiplicador_preco?: string | number
+  feriado_manual?: boolean
   agendada_para?: string
   fatura_id?: number | null
   fatura_codigo?: string
@@ -51,13 +56,6 @@ function fmtDate(value: any): string {
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return String(value)
   return d.toLocaleString()
-}
-
-function money(v: any): string {
-  if (v === null || v === undefined || v === "") return "-"
-  const n = Number(v)
-  if (Number.isNaN(n)) return String(v)
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 async function abrirPdfFatura(faturaId: number) {
@@ -89,6 +87,7 @@ export default function ConsultasPage() {
   const [medicoId, setMedicoId] = useState("")
   const [especialidadeId, setEspecialidadeId] = useState("")
   const [agendadaPara, setAgendadaPara] = useState("")
+  const [feriado, setFeriado] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
 
@@ -158,6 +157,8 @@ export default function ConsultasPage() {
         payload.agendada_para = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
       }
 
+      if (feriado) payload.feriado_manual = true
+
       await apiFetch("/consultas/", {
         method: "POST",
         body: JSON.stringify(payload),
@@ -167,6 +168,7 @@ export default function ConsultasPage() {
       setMedicoId("")
       setEspecialidadeId("")
       setAgendadaPara("")
+      setFeriado(false)
       setPrecoPreview(null)
 
       await carregar()
@@ -177,18 +179,9 @@ export default function ConsultasPage() {
     }
   }
 
-  const criarFatura = useCallback(async (consultaId: number) => {
-    if (!canWrite) return
-    try {
-      await apiFetch(`/consultas/${consultaId}/criar_fatura/`, {
-        method: "POST",
-        body: JSON.stringify({ emitir: true }),
-      })
-      await carregar()
-    } catch (e: any) {
-      alert(e?.message || "Falha ao criar fatura.")
-    }
-  }, [canWrite, carregar])
+  const criarFatura = useCallback(async (_consultaId: number) => {
+    alert("Criar fatura apenas em Faturamento/Recepção.")
+  }, [])
 
   const cancelarConsulta = useCallback(async (consultaId: number) => {
     if (!canWrite) return
@@ -246,51 +239,61 @@ export default function ConsultasPage() {
   }, [canWrite, carregar])
 
   const columns = useMemo(
-    () => [
-      { header: "Código", render: (r: ConsultaRow) => r.id_custom || r.id },
-      { header: "Paciente", render: (r: ConsultaRow) => r.paciente_nome || "-" },
-      { header: "Médico", render: (r: ConsultaRow) => r.medico_nome || "—" },
-      { header: "Tipo", render: (r: ConsultaRow) => r.tipo || "-" },
-      { header: "Estado", render: (r: ConsultaRow) => r.estado || "-" },
-      { header: "Agendada", render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
-      { header: "Preço", render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
-      {
-        header: "Fatura",
-        render: (r: ConsultaRow) => r.fatura_codigo || "—",
-      },
-      {
-        header: "Ações",
-        render: (r: ConsultaRow) => (
-          <div className="flex flex-wrap gap-2">
-            {canWrite && r.estado === "MARCADA" ? (
-              <button
-                type="button"
-                onClick={() => remarcarConsulta(r)}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Remarcar
-              </button>
-            ) : null}
+    () => {
+      const labelHorario = (value?: string) => {
+        if (!value) return "Normal"
+        if (value === "FIM_SEMANA") return "Fim de semana"
+        if (value === "FORA_EXPEDIENTE") return "Fora de expediente"
+        if (value === "FERIADO_MANUAL") return "Feriado"
+        return "Normal"
+      }
 
-            {canWrite && r.estado === "MARCADA" ? (
-              <button
-                type="button"
-                onClick={() => concluirConsulta(r.id)}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Concluir
-              </button>
-            ) : null}
+      return [
+        { header: "Código", render: (r: ConsultaRow) => r.id_custom || r.id },
+        { header: "Paciente", render: (r: ConsultaRow) => r.paciente_nome || "-" },
+        { header: "Médico", render: (r: ConsultaRow) => r.medico_nome || "—" },
+        { header: "Tipo", render: (r: ConsultaRow) => r.tipo || "-" },
+        { header: "Estado", render: (r: ConsultaRow) => r.estado || "-" },
+        { header: "Horário", render: (r: ConsultaRow) => labelHorario(r.tipo_horario) },
+        { header: "Agendada", render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
+        { header: "Preço", render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
+        {
+          header: "Fatura",
+          render: (r: ConsultaRow) => r.fatura_codigo || "—",
+        },
+        {
+          header: "Ações",
+          render: (r: ConsultaRow) => (
+            <div className="flex flex-wrap gap-2">
+              {canWrite && r.estado === "MARCADA" ? (
+                <button
+                  type="button"
+                  onClick={() => remarcarConsulta(r)}
+                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  Remarcar
+                </button>
+              ) : null}
 
-            {canWrite && r.estado !== "CANCELADA" && r.estado !== "CONCLUIDA" ? (
-              <button
-                type="button"
-                onClick={() => cancelarConsulta(r.id)}
-                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
-              >
-                Cancelar
-              </button>
-            ) : null}
+              {canWrite && r.estado === "MARCADA" ? (
+                <button
+                  type="button"
+                  onClick={() => concluirConsulta(r.id)}
+                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  Concluir
+                </button>
+              ) : null}
+
+              {canWrite && r.estado !== "CANCELADA" && r.estado !== "CONCLUIDA" ? (
+                <button
+                  type="button"
+                  onClick={() => cancelarConsulta(r.id)}
+                  className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                >
+                  Cancelar
+                </button>
+              ) : null}
 
             {r.fatura_id ? (
               <button
@@ -300,23 +303,25 @@ export default function ConsultasPage() {
               >
                 PDF Fatura
               </button>
-            ) : canWrite ? (
-              <button
-                type="button"
-                onClick={() => criarFatura(r.id)}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Criar fatura
-              </button>
             ) : (
               <span className="text-xs text-gray-500">—</span>
             )}
           </div>
         ),
       },
-    ],
-    [canWrite, cancelarConsulta, concluirConsulta, criarFatura, remarcarConsulta]
+      ]
+    },
+    [canWrite, cancelarConsulta, concluirConsulta, remarcarConsulta]
   )
+
+  const tipoHorarioLabel = useMemo(() => {
+    const tipo = precoPreview?.tipo_horario
+    if (!tipo) return "Normal"
+    if (tipo === "FIM_SEMANA") return "Fim de semana"
+    if (tipo === "FORA_EXPEDIENTE") return "Fora de expediente"
+    if (tipo === "FERIADO_MANUAL") return "Feriado"
+    return "Normal"
+  }, [precoPreview?.tipo_horario])
 
   useEffect(() => {
     let mounted = true
@@ -334,6 +339,7 @@ export default function ConsultasPage() {
           const value = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
           params.set("agendada_para", value)
         }
+        if (feriado) params.set("feriado_manual", "true")
         const res = await apiFetch<PrecoPreview>(`/consultas/consulta/preco/?${params.toString()}`)
         if (mounted) setPrecoPreview(res || null)
       } catch {
@@ -345,7 +351,7 @@ export default function ConsultasPage() {
     return () => {
       mounted = false
     }
-  }, [especialidadeId, agendadaPara])
+  }, [especialidadeId, agendadaPara, feriado])
 
   return (
     <AppLayout
@@ -428,18 +434,25 @@ export default function ConsultasPage() {
                 <label className="text-xs text-gray-600">
                   Preço {precoPreview?.moeda ? `(${precoPreview.moeda})` : "(MZN)"}
                 </label>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
                   <input
                     value={precoPreview?.preco_final || ""}
                     readOnly
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
                     placeholder={especialidadeId ? "Calculando..." : "Selecione uma especialidade"}
                   />
-                  {precoPreview?.eh_feriado ? (
-                    <span className="inline-flex items-center rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                      Feriado{precoPreview?.percentual_feriado ? ` +${precoPreview.percentual_feriado}%` : ""}
+
+                  <div className="flex flex-col items-start">
+                    <span className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-gray-700">
+                      {tipoHorarioLabel}
                     </span>
-                  ) : null}
+                    {precoPreview?.multiplicador_preco ? (
+                      <span className="text-[11px] text-gray-500">x{precoPreview.multiplicador_preco}</span>
+                    ) : null}
+                    {precoPreview?.feriado_manual ? (
+                      <span className="text-[11px] text-amber-700">Feriado marcado</span>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -451,6 +464,20 @@ export default function ConsultasPage() {
                   onChange={(e) => setAgendadaPara(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 />
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm">
+                <input
+                  id="feriado-manual"
+                  type="checkbox"
+                  checked={feriado}
+                  onChange={(e) => setFeriado(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
+                />
+                <div className="flex flex-col leading-tight">
+                  <label htmlFor="feriado-manual" className="text-xs font-semibold text-gray-700">Feriado</label>
+                  <span className="text-[11px] text-gray-500">Marca 2x o valor quando não for fim de semana/fora de expediente.</span>
+                </div>
               </div>
 
               <div className="flex items-end">

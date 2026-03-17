@@ -52,6 +52,12 @@ class Produto(CoreModel):
         help_text="Taxa de IVA aplicada ao produto (0 a 100).",
     )
 
+    aplica_iva_por_padrao = models.BooleanField(
+        verbose_name="Aplicar IVA por padrão",
+        default=True,
+        help_text="Desmarque se este produto normalmente não deve ter IVA.",
+    )
+
     class Meta:
         verbose_name = "Produto"
         verbose_name_plural = "Produtos"

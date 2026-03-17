@@ -22,8 +22,10 @@ class ConsultaMedicaAdmin(CoreAdmin):
         "tipo",
         "estado",
         "preco",
+        "tipo_horario",
+        "feriado_manual",
     )
-    list_filter = ("estado", "tipo")
+    list_filter = ("estado", "tipo_horario", "feriado_manual", "tipo")
     search_fields = ("tipo", "paciente__nome", "medico__username")
     ordering = ("-agendada_para", "-criado_em")
 

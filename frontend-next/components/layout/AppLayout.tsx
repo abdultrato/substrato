@@ -78,13 +78,18 @@ export default function AppLayout ( {
     }
 
     return (
-        <div className="flex min-h-screen flex-col md:flex-row">
-            <Sidebar user={user} open={navOpen} onClose={() => setNavOpen( false )} />
+        <div className="flex h-screen min-h-screen overflow-hidden flex-col md:flex-row">
+            <Sidebar
+                user={user}
+                open={navOpen}
+                onClose={() => setNavOpen( false )}
+                className="h-screen overflow-y-auto md:sticky md:top-0"
+            />
 
-            <div className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col h-screen overflow-hidden">
                 <Header user={user} onMenuClick={() => setNavOpen( true )} />
 
-                <main className="flex-1 px-3 py-3 pb-14 md:px-3 md:py-3 md:pb-14">
+                <main className="flex-1 overflow-y-auto px-3 py-3 pb-14 md:px-3 md:py-3 md:pb-14">
                     <div key={pathname} className="page-transition h-full">
                         {children}
                     </div>
@@ -93,7 +98,7 @@ export default function AppLayout ( {
 
             {rightAside ? (
                 <aside
-                    className="hidden flex-col border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex"
+                    className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:sticky md:top-0 md:flex"
                     style={{ width: rightAsideWidth }}
                 >
                     {rightAside}

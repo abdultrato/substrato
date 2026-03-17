@@ -13,6 +13,8 @@ class ConsultaMedicaFilter(SafeFilterSet):
             "medico",
             "tipo",
             "estado",
+            "tipo_horario",
+            "feriado_manual",
             "agendada_para",
             "criado_em",
         ]

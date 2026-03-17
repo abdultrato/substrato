@@ -41,6 +41,7 @@ class FaturaItemInline(admin.TabularInline):
         "descricao",
         "quantidade",
         "preco_unitario",
+        "aplica_iva",
         "iva_percentual",
         "iva_linha",
         "total_linha",
@@ -101,11 +102,13 @@ class FaturaAdmin(CoreAdmin):
         "procedimentos__paciente__nome",
         "consulta__id_custom",
         "consulta__paciente__nome",
+        "cirurgia__id_custom",
+        "cirurgia__paciente__nome",
     )
 
     list_filter = ("origem", "estado", "deletado", "criado_em")
 
-    autocomplete_fields = ("requisicao", "venda", "procedimento", "procedimentos", "consulta")
+    autocomplete_fields = ("requisicao", "venda", "procedimento", "procedimentos", "consulta", "cirurgia")
 
     readonly_fields = (
         "id_custom",

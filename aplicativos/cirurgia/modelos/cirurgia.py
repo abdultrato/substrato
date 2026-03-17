@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+
+from infrastrutura.orm.fields.dinheiro_field import DinheiroField
 
 from nucleo.modelos.base import NoNameCoreModel
 
@@ -59,6 +63,10 @@ class Cirurgia(NoNameCoreModel):
         help_text="Use apenas quando o procedimento não estiver no catálogo.",
     )
     descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
+
+    preco_estimado = DinheiroField(verbose_name="Preço estimado", default=Decimal("0.00"))
+    iva_percentual = models.DecimalField(verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
+    aplica_iva_por_padrao = models.BooleanField(verbose_name="Aplicar IVA por padrão", default=True)
 
     agendada_para = models.DateTimeField(verbose_name="Agendada para", default=timezone.now, db_index=True)
     estado = models.CharField(

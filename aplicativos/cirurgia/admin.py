@@ -18,6 +18,8 @@ class CirurgiaAdmin(CoreAdmin):
         "paciente",
         "cirurgiao",
         "procedimentos_lista",
+        "preco_estimado",
+        "iva_percentual",
         "estado",
     )
     list_filter = ("estado",)
@@ -39,7 +41,7 @@ class CirurgiaAdmin(CoreAdmin):
 
 @admin.register(ProcedimentoCirurgico)
 class ProcedimentoCirurgicoAdmin(CoreAdmin):
-    list_display = ("nome", "ativo", "criado_em")
+    list_display = ("nome", "preco_base", "iva_percentual", "aplica_iva_por_padrao", "ativo", "criado_em")
     list_filter = ("ativo", "deletado")
     search_fields = ("nome", "descricao", "id_custom")
     ordering = ("nome",)

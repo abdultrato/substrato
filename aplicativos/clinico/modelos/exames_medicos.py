@@ -48,6 +48,12 @@ class ExameMedico(PropagarInquilinoMixin, CoreModel):
         help_text="Taxa de IVA aplicada ao exame médico (0 a 100).",
     )
 
+    aplica_iva_por_padrao = models.BooleanField(
+        verbose_name="Aplicar IVA por padrão",
+        default=True,
+        help_text="Desmarque se este exame normalmente não deve ter IVA.",
+    )
+
     metodo = MetodoField(
         verbose_name="Método do exame",
         db_index=True,

@@ -13,6 +13,15 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import MoneyValue from "@/components/ui/MoneyValue"
 
 type FaturaRow = Record<string, any>
+type FaturaItem = {
+  id: number
+  descricao?: string
+  quantidade?: string | number
+  preco_unitario?: string | number
+  aplica_iva?: boolean
+  iva_percentual?: string | number
+  total_com_iva?: string | number
+}
 
 function money(v: any): string {
   if (v === null || v === undefined || v === "") return "-"
@@ -29,6 +38,9 @@ export default function FaturasPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [acaoId, setAcaoId] = useState<number | null>(null)
+  const [itens, setItens] = useState<FaturaItem[]>([])
+  const [itensFaturaId, setItensFaturaId] = useState<number | null>(null)
+  const [carregandoItens, setCarregandoItens] = useState(false)
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
 
@@ -103,6 +115,38 @@ export default function FaturasPage() {
     }
   }, [])
 
+  const carregarItens = useCallback(async (faturaId: number) => {
+    setCarregandoItens(true)
+    try {
+      const res = await apiFetch<any>(`/faturaitem/?fatura=${faturaId}`)
+      const lista = res && res.results ? res.results : res
+      setItens(Array.isArray(lista) ? lista : [])
+      setItensFaturaId(faturaId)
+    } catch (e: any) {
+      setErro(e?.message || "Falha ao carregar itens da fatura.")
+      setItens([])
+      setItensFaturaId(null)
+    } finally {
+      setCarregandoItens(false)
+    }
+  }, [])
+
+  const toggleIva = useCallback(
+    async (item: FaturaItem) => {
+      if (!item?.id) return
+      try {
+        await apiFetch(`/faturaitem/${item.id}/`, {
+          method: "PATCH",
+          body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
+        })
+        if (itensFaturaId) await carregarItens(itensFaturaId)
+      } catch (e: any) {
+        setErro(e?.message || "Falha ao atualizar IVA do item.")
+      }
+    },
+    [carregarItens, itensFaturaId]
+  )
+
   const columns = useMemo(
     () => [
       { header: "Código", render: (f: FaturaRow) => f.id_custom || f.id },
@@ -129,6 +173,13 @@ export default function FaturasPage() {
             >
               PDF
             </button>
+            <button
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              disabled={carregandoItens && itensFaturaId === f.id}
+              onClick={() => carregarItens(f.id)}
+            >
+              Itens/IVA
+            </button>
             {podeAlterar ? (
               <button
                 className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
@@ -142,7 +193,7 @@ export default function FaturasPage() {
         ),
       },
     ],
-    [acaoId, anular, baixarPdf, emitir, podeAlterar]
+    [acaoId, anular, baixarPdf, emitir, podeAlterar, carregarItens, carregandoItens, itensFaturaId]
   )
 
   if (loading) return null
@@ -182,6 +233,40 @@ export default function FaturasPage() {
         ) : (
           <DataTable<FaturaRow> columns={columns as any} data={faturas} />
         )}
+
+        {itensFaturaId ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-2 text-sm font-semibold text-gray-800">Itens da fatura {itensFaturaId}</div>
+            {carregandoItens ? (
+              <div className="text-sm text-gray-500">Carregando itens...</div>
+            ) : itens.length === 0 ? (
+              <div className="text-sm text-gray-500">Sem itens.</div>
+            ) : (
+              <div className="space-y-2">
+                {itens.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">{it.descricao || `Item ${it.id}`}</div>
+                      <div className="text-xs text-gray-500">
+                        Qtd: {it.quantidade || 1} · Preço: {it.preco_unitario}
+                        {it.total_com_iva ? ` · Total c/ IVA: ${it.total_com_iva}` : ""}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={!!it.aplica_iva}
+                        onChange={() => toggleIva(it)}
+                        className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
+                      />
+                      Aplicar IVA ({it.iva_percentual ?? "-"}%)
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </AppLayout>
   )

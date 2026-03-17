@@ -22,11 +22,22 @@ class CirurgiaSerializer(serializers.ModelSerializer):
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
     cirurgiao_nome = serializers.SerializerMethodField()
     procedimentos_nomes = serializers.SerializerMethodField()
+    fatura_id = serializers.SerializerMethodField()
+    fatura_codigo = serializers.SerializerMethodField()
+    fatura_estado = serializers.SerializerMethodField()
 
     class Meta:
         model = Cirurgia
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "paciente_nome", "cirurgiao_nome", "procedimentos_nomes")
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
+            "paciente_nome",
+            "cirurgiao_nome",
+            "procedimentos_nomes",
+            "fatura_id",
+            "fatura_codigo",
+            "fatura_estado",
+        )
 
     def get_cirurgiao_nome(self, obj: Cirurgia) -> str:
         u = getattr(obj, "cirurgiao", None)
@@ -42,6 +53,24 @@ class CirurgiaSerializer(serializers.ModelSerializer):
             return list(obj.procedimentos.values_list("nome", flat=True))
         except Exception:
             return []
+
+    def _get_fatura(self, obj: Cirurgia):
+        try:
+            return getattr(obj, "fatura", None)
+        except Exception:
+            return None
+
+    def get_fatura_id(self, obj: Cirurgia) -> int | None:
+        f = self._get_fatura(obj)
+        return getattr(f, "id", None) if f else None
+
+    def get_fatura_codigo(self, obj: Cirurgia) -> str:
+        f = self._get_fatura(obj)
+        return getattr(f, "id_custom", "") if f else ""
+
+    def get_fatura_estado(self, obj: Cirurgia) -> str:
+        f = self._get_fatura(obj)
+        return getattr(f, "estado", "") if f else ""
 
 
 class ProcedimentoCirurgicoSerializer(serializers.ModelSerializer):

@@ -83,6 +83,12 @@ class FaturaItem(NoNameCoreModel):
         default=Decimal("0.00"),
     )
 
+    aplica_iva = models.BooleanField(
+        verbose_name="Aplicar IVA?",
+        default=True,
+        help_text="Desmarque para não aplicar IVA neste item.",
+    )
+
     iva_percentual = models.DecimalField(
         verbose_name="IVA (%)",
         max_digits=5,
@@ -138,6 +144,8 @@ class FaturaItem(NoNameCoreModel):
 
     @property
     def iva_valor(self) -> Decimal:
+        if not self.aplica_iva:
+            return Decimal("0.00")
         base = self.total_sem_iva or Decimal("0.00")
         perc = self.iva_percentual
         if perc is None or perc == "":
@@ -205,6 +213,32 @@ class FaturaItem(NoNameCoreModel):
 
         return Decimal("0.00")
 
+    def _resolver_aplica_iva_referencia(self) -> bool:
+        if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
+            return getattr(self.exame, "aplica_iva_por_padrao", True)
+
+        if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
+            return getattr(self.exame_medico, "aplica_iva_por_padrao", True)
+
+        if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
+            produto = getattr(self.item_venda, "produto", None)
+            return getattr(produto, "aplica_iva_por_padrao", True)
+
+        if self.tipo_item == self.TipoItem.PROCEDIMENTO_ITEM and self.procedimento_item_id:
+            catalogo = getattr(self.procedimento_item, "catalogo", None)
+            if catalogo is not None:
+                return getattr(catalogo, "aplica_iva_por_padrao", True)
+            return True
+
+        if self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedimento_material_id:
+            produto = getattr(self.procedimento_material, "produto", None)
+            return getattr(produto, "aplica_iva_por_padrao", True)
+
+        if self.tipo_item == self.TipoItem.AJUSTE:
+            return True
+
+        return True
+
     def _preencher_de_referencia(self):
         if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
             if not self.descricao.strip():
@@ -213,6 +247,7 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.exame.preco
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.aplica_iva = self._resolver_aplica_iva_referencia()
             return
 
         if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
@@ -222,6 +257,7 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.exame_medico.preco
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.aplica_iva = self._resolver_aplica_iva_referencia()
             return
 
         if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
@@ -230,6 +266,7 @@ class FaturaItem(NoNameCoreModel):
             self.preco_unitario = self.item_venda.preco_unitario
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.aplica_iva = self._resolver_aplica_iva_referencia()
             return
 
         if self.tipo_item == self.TipoItem.PROCEDIMENTO_ITEM and self.procedimento_item_id:
@@ -242,6 +279,7 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.procedimento_item.preco_unitario
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.aplica_iva = self._resolver_aplica_iva_referencia()
             return
 
         if self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedimento_material_id:
@@ -254,6 +292,7 @@ class FaturaItem(NoNameCoreModel):
                 self.preco_unitario = self.procedimento_material.custo_unitario
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.aplica_iva = self._resolver_aplica_iva_referencia()
             return
 
         if self.tipo_item == self.TipoItem.AJUSTE and self.iva_percentual is None:

@@ -12,6 +12,28 @@ class FaturaSerializer(serializers.ModelSerializer):
 
 
 class FaturaItemSerializer(serializers.ModelSerializer):
+    total_sem_iva = serializers.SerializerMethodField()
+    iva_valor = serializers.SerializerMethodField()
+    total_com_iva = serializers.SerializerMethodField()
+
+    def get_total_sem_iva(self, obj):
+        try:
+            return str(obj.total_sem_iva)
+        except Exception:
+            return None
+
+    def get_iva_valor(self, obj):
+        try:
+            return str(obj.iva_valor)
+        except Exception:
+            return None
+
+    def get_total_com_iva(self, obj):
+        try:
+            return str(obj.total_com_iva)
+        except Exception:
+            return None
+
     class Meta:
         model = FaturaItem
         fields = "__all__"

@@ -37,6 +37,12 @@ class ProcedimentoCatalogo(CoreModel):
         help_text="Taxa de IVA aplicada ao procedimento (0 a 100).",
     )
 
+    aplica_iva_por_padrao = models.BooleanField(
+        verbose_name="Aplicar IVA por padrão",
+        default=True,
+        help_text="Desmarque se este procedimento normalmente não deve ter IVA.",
+    )
+
     class Meta:
         verbose_name = "Procedimento (Catálogo)"
         verbose_name_plural = "Procedimentos (Catálogo)"

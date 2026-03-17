@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -10,6 +10,7 @@ import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { apiFetch } from "@/lib/api"
 
 type CirurgiaRow = Record<string, any>
 
@@ -31,6 +32,7 @@ export default function CirurgiaCirurgiasPage() {
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
+    const [acaoId, setAcaoId] = useState<number | null>(null)
 
     useEffect(() => {
         let mounted = true
@@ -64,6 +66,27 @@ export default function CirurgiaCirurgiasPage() {
         }
     }, [page, pageSize])
 
+    const criarFatura = useCallback(async (_id: number) => {
+        alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
+    }, [])
+
+    const abrirPdf = useCallback(async (faturaId: number) => {
+        try {
+            setAcaoId(faturaId)
+            const blob = await apiFetch<Blob>(`/faturas/${faturaId}/pdf/`, { responseType: "blob" })
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `fatura_${faturaId}.pdf`
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (e: any) {
+            setErro(e?.message || "Falha ao gerar PDF.")
+        } finally {
+            setAcaoId(null)
+        }
+    }, [])
+
     const columns = useMemo(
         () => [
             {
@@ -81,8 +104,36 @@ export default function CirurgiaCirurgiasPage() {
             { header: "Cirurgião", render: (c: CirurgiaRow) => c.cirurgiao_nome || "-" },
             { header: "Estado", render: (c: CirurgiaRow) => c.estado || "-" },
             { header: "Agendada", render: (c: CirurgiaRow) => fmtDateTime(c.agendada_para) },
+            {
+                header: "Fatura",
+                render: (c: CirurgiaRow) => c.fatura_codigo || "—",
+            },
+            {
+                header: "Ações",
+                render: (c: CirurgiaRow) => (
+                    <div className="flex flex-wrap gap-2">
+                        <Link
+                            href={`/recursos/cirurgia/cirurgia/${c.id}`}
+                            className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)]"
+                        >
+                            Abrir
+                        </Link>
+                        {c.fatura_id ? (
+                            <button
+                                type="button"
+                                onClick={() => abrirPdf(c.fatura_id)}
+                                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)]"
+                            >
+                                PDF
+                            </button>
+                        ) : (
+                            <span className="text-xs text-gray-500">—</span>
+                        )}
+                    </div>
+                ),
+            },
         ],
-        []
+        [abrirPdf]
     )
 
     return (

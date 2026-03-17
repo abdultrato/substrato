@@ -30,6 +30,12 @@ class ConsultaMedica(NoNameCoreModel):
         CONCLUIDA = "CONCLUIDA", "Concluída"
         CANCELADA = "CANCELADA", "Cancelada"
 
+    class Horario(models.TextChoices):
+        NORMAL = "NORMAL", "Normal (08h-18h)"
+        FORA_EXPEDIENTE = "FORA_EXPEDIENTE", "Fora de expediente (19h-07h)"
+        FIM_SEMANA = "FIM_SEMANA", "Fim de semana"
+        FERIADO_MANUAL = "FERIADO_MANUAL", "Feriado (marcado)"
+
     paciente = models.ForeignKey(
         "clinico.Paciente",
         verbose_name="Paciente",
@@ -70,6 +76,25 @@ class ConsultaMedica(NoNameCoreModel):
     )
 
     preco = DinheiroField("Preço", default=Decimal("0.00"))
+    multiplicador_preco = models.DecimalField(
+        "Multiplicador de preço",
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("1.00"),
+        help_text="Fator aplicado sobre o preço base conforme horário/feriado.",
+    )
+    tipo_horario = models.CharField(
+        "Tipo de horário",
+        max_length=32,
+        choices=Horario.choices,
+        default=Horario.NORMAL,
+        db_index=True,
+    )
+    feriado_manual = models.BooleanField(
+        "Feriado (manual)",
+        default=False,
+        help_text="Marque se a data for feriado mesmo não sendo fim de semana.",
+    )
 
     concluida_em = models.DateTimeField("Concluída em", null=True, blank=True)
     cancelada_em = models.DateTimeField("Cancelada em", null=True, blank=True)
@@ -93,6 +118,9 @@ class ConsultaMedica(NoNameCoreModel):
 
         if self.preco is None or self.preco < Decimal("0.00"):
             raise ValidationError({"preco": "Preço inválido."})
+
+        if self.multiplicador_preco is None or self.multiplicador_preco <= Decimal("0.00"):
+            raise ValidationError({"multiplicador_preco": "Multiplicador inválido."})
 
         if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
             raise ValidationError({"paciente": "Paciente e consulta devem pertencer ao mesmo inquilino."})
@@ -133,25 +161,49 @@ class ConsultaMedica(NoNameCoreModel):
 
         return Feriado.objects.filter(inquilino_id=self.inquilino_id, data=local_date, ativo=True).exists()
 
-    def _acrescimo_percentual_feriado(self) -> Decimal:
-        try:
-            cfg = getattr(self.inquilino, "configuracao", None)
-            raw = getattr(cfg, "acrescimo_percentual_consulta_feriado", None)
-        except Exception:
-            raw = None
+    def _tenant_local_datetime(self):
+        tz = self._tenant_timezone()
+        if not self.agendada_para:
+            return None
+        if timezone.is_aware(self.agendada_para):
+            return timezone.localtime(self.agendada_para, tz) if tz else timezone.localtime(self.agendada_para)
+        return timezone.make_aware(self.agendada_para, tz) if tz else timezone.make_aware(self.agendada_para)
 
-        if raw is None or raw == "":
-            return Decimal("0.00")
-        try:
-            return Decimal(raw)
-        except Exception:
-            return Decimal("0.00")
+    def _tipo_horario_atual(self) -> str:
+        dt_local = self._tenant_local_datetime()
+        if not dt_local:
+            return self.Horario.NORMAL
+
+        if dt_local.weekday() >= 5:
+            return self.Horario.FIM_SEMANA
+
+        if dt_local.hour >= 19 or dt_local.hour < 8:
+            return self.Horario.FORA_EXPEDIENTE
+
+        if self.feriado_manual:
+            return self.Horario.FERIADO_MANUAL
+
+        return self.Horario.NORMAL
+
+    def _multiplicador_preco_atual(self) -> Decimal:
+        tipo = self._tipo_horario_atual()
+
+        # 200% (2x) para fim de semana, fora de expediente ou feriado manual.
+        if tipo in {self.Horario.FIM_SEMANA, self.Horario.FORA_EXPEDIENTE, self.Horario.FERIADO_MANUAL}:
+            return Decimal("2.00")
+
+        # Mantém compatibilidade: feriado cadastrado em tabela também dobra.
+        if self._is_feriado():
+            return Decimal("2.00")
+
+        return Decimal("1.00")
 
     def _sincronizar_especialidade_e_preco(self, update_fields: set[str] | None = None) -> None:
         """
         Se houver especialidade, sincroniza:
         - tipo = especialidade.nome
-        - preco = preco_base (+ acrescimo feriado)
+        - tipo_horario + multiplicador conforme data/hora/feriado manual
+        - preco = preco_base * multiplicador
         """
         if not self.especialidade_id:
             return
@@ -163,21 +215,19 @@ class ConsultaMedica(NoNameCoreModel):
         self.tipo = (especialidade.nome or "").strip()
 
         base = especialidade.preco_base if especialidade.preco_base is not None else Decimal("0.00")
-        final = base
 
-        if self._is_feriado():
-            perc = self._acrescimo_percentual_feriado()
-            try:
-                multiplier = Decimal("1.00") + (perc / Decimal("100.00"))
-                final = (base * multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            except Exception:
-                final = base
+        self.tipo_horario = self._tipo_horario_atual()
+        self.multiplicador_preco = self._multiplicador_preco_atual()
+
+        try:
+            final = (base * self.multiplicador_preco).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        except Exception:
+            final = base
 
         self.preco = final
 
         if update_fields is not None:
-            update_fields.add("tipo")
-            update_fields.add("preco")
+            update_fields.update({"tipo", "preco", "tipo_horario", "multiplicador_preco"})
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")
