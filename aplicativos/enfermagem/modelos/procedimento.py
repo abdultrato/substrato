@@ -16,30 +16,35 @@ class Procedimento(NoNameCoreModel):
 
     paciente = models.ForeignKey(
         "clinico.Paciente",
+        verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="procedimentos_enfermagem",
         db_index=True,
     )
     profissional = models.ForeignKey(
         User,
+        verbose_name="Profissional",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="procedimentos_realizados",
     )
-    data_realizacao = models.DateTimeField(default=timezone.now, db_index=True)
-    observacoes = models.TextField(blank=True, default="")
+    data_realizacao = models.DateTimeField("Data de realização", default=timezone.now, db_index=True)
+    observacoes = models.TextField("Observações", blank=True, default="")
     subtotal_servicos = models.DecimalField(
+        "Subtotal (serviços)",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     subtotal_materiais = models.DecimalField(
+        "Subtotal (materiais)",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     total = models.DecimalField(
+        "Total",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),

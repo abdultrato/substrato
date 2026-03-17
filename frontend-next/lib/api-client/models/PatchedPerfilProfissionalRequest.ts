@@ -8,5 +8,6 @@ export type PatchedPerfilProfissionalRequest = {
     departamento?: string;
     ativo?: boolean;
     usuario?: number;
+    funcionario?: number | null;
 };
 

@@ -16,24 +16,28 @@ class Movimento(CoreModel):
 
     lancamento = models.ForeignKey(
         "contabilidade.Lancamento",
+        verbose_name="Lançamento",
         on_delete=models.CASCADE,
         related_name="movimentos",
         db_index=True,
     )
     conta = models.ForeignKey(
         "contabilidade.Conta",
+        verbose_name="Conta",
         on_delete=models.PROTECT,
         related_name="movimentos",
         db_index=True,
     )
 
     debito = models.DecimalField(
+        "Débito",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     credito = models.DecimalField(
+        "Crédito",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),

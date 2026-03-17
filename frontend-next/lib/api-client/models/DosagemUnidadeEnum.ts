@@ -3,8 +3,10 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * * `email` - E-mail
- * * `sms` - SMS
- * * `whatsapp` - WhatsApp
+ * * `MG` - mg
+ * * `ML` - ml
+ * * `G` - g
+ * * `L` - L
+ * * `KG` - kg
  */
-export type CanalEnum = 'email' | 'sms' | 'whatsapp';
+export type DosagemUnidadeEnum = 'MG' | 'ML' | 'G' | 'L' | 'KG';

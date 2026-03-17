@@ -43,6 +43,14 @@ ALLOWED_HOSTS = [
 ]
 
 # =========================================================
+# SYSTEM VERSION (UI)
+# =========================================================
+#
+# Exposed in the Django Admin footer and used as a product/version label.
+SYSTEM_VERSION_LABEL = (get_env("SYSTEM_VERSION_LABEL", "beta") or "beta").strip()
+SYSTEM_VERSION_DISPLAY = (get_env("SYSTEM_VERSION_DISPLAY", "") or "").strip() or f"Versão {SYSTEM_VERSION_LABEL}"
+
+# =========================================================
 # REDIS
 # =========================================================
 
@@ -71,6 +79,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "django_prometheus",
     "django_celery_beat",
+    # CountryField + traducoes de paises.
+    "django_countries",
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
@@ -115,7 +125,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "Substrato",
     "site_brand": "Substrato",
     "welcome_sign": "Bem-vindo ao Substrato",
-    "copyright": "Substrato",
+    "copyright": f"Substrato · {SYSTEM_VERSION_DISPLAY}",
     # CSS customizado (gerado via Tailwind; ver `frontend-next/styles/admin-tailwind.input.css`)
     "custom_css": "admin/css/substrato-admin-tailwind.css",
     # Ícones por app/model (Font Awesome 5 Free; chaves são lower-case).
@@ -391,6 +401,11 @@ JAZZMIN_SETTINGS = {
     ],
     "default_icon_parents": "fas fa-layer-group",
     "default_icon_children": "far fa-dot-circle",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    # Keep the footer always visible (requested by product).
+    "footer_fixed": True,
 }
 
 # =========================================================

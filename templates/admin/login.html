@@ -1,0 +1,90 @@
+{% extends "registration/base.html" %}
+
+{% load i18n static jazzmin %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block content %}
+<div class="admin-login-wrap">
+  <div class="admin-login-visual" aria-hidden="true"></div>
+
+  <div class="admin-login-form">
+    <div class="admin-login-heading">
+      <div class="admin-logo-tile" aria-hidden="true"></div>
+      <div class="admin-title-block">
+        <div class="admin-title">{{ jazzmin_settings.site_header }}</div>
+        <p class="admin-subtitle">Infrastrutura de unificada de gestao em saude</p>
+      </div>
+    </div>
+
+    <p class="admin-login-welcome">{{ jazzmin_settings.welcome_sign }}</p>
+
+    {% if user.is_authenticated %}
+      <div class="admin-callout admin-callout-danger">
+        <p>
+          {% blocktrans trimmed %}
+            You are authenticated as {{ username }}, but are not authorized to access this page. Would you like to login to a different account?
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
+
+    {% if form.errors %}
+      {% if form.username.errors %}
+        <div class="admin-callout admin-callout-danger">
+          <p>{{ form.username.label }}: {{ form.username.errors|join:', ' }}</p>
+        </div>
+      {% endif %}
+      {% if form.password.errors %}
+        <div class="admin-callout admin-callout-danger">
+          <p>{{ form.password.label }}: {{ form.password.errors|join:', ' }}</p>
+        </div>
+      {% endif %}
+      {% if form.non_field_errors %}
+        <div class="admin-callout admin-callout-danger">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" class="admin-login-fields">
+      {% csrf_token %}
+      <label class="admin-field">
+        <span class="admin-field-label">{{ form.username.label }}</span>
+        <input
+          type="text"
+          name="username"
+          autocomplete="username"
+          value="{{ form.username.value|default_if_none:'' }}"
+          required
+          placeholder="{{ form.username.label }}"
+        />
+      </label>
+
+      <label class="admin-field">
+        <span class="admin-field-label">{{ form.password.label }}</span>
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          required
+          placeholder="{{ form.password.label }}"
+        />
+      </label>
+
+      {% url 'admin_password_reset' as password_reset_url %}
+      {% if password_reset_url %}
+        <div class="admin-reset-link">
+          <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
+        </div>
+      {% endif %}
+
+      <div class="admin-actions">
+        <button type="submit" class="admin-submit">{% trans "Log in" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

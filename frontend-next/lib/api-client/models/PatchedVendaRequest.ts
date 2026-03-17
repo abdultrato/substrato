@@ -12,5 +12,6 @@ export type PatchedVendaRequest = {
     atualizado_por?: number | null;
     inquilino?: number;
     deletado_por?: number | null;
+    paciente?: number | null;
 };
 

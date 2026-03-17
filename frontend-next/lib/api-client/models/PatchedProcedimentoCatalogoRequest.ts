@@ -9,6 +9,10 @@ export type PatchedProcedimentoCatalogoRequest = {
     nome?: string;
     descricao?: string;
     preco_padrao?: string;
+    /**
+     * Taxa de IVA aplicada ao procedimento (0 a 100).
+     */
+    iva_percentual?: string;
     criado_por?: number | null;
     atualizado_por?: number | null;
     inquilino?: number;

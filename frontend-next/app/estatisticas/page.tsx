@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
+import MoneyValue from "@/components/ui/MoneyValue"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import {
@@ -165,7 +166,7 @@ export default function EstatisticasPage() {
     () => [
       { header: "Tipo", render: (r: any) => r.tipo || "-" },
       { header: "Exame", render: (r: any) => r.nome || "-" },
-      { header: "Total", render: (r: any) => r.total ?? 0, className: "text-right" },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} />, className: "text-right" },
     ],
     []
   )
@@ -173,7 +174,7 @@ export default function EstatisticasPage() {
   const procCols = useMemo(
     () => [
       { header: "Procedimento", render: (r: any) => r.catalogo__nome || "-" },
-      { header: "Total", render: (r: any) => r.total ?? 0, className: "text-right" },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} />, className: "text-right" },
     ],
     []
   )
@@ -190,7 +191,7 @@ export default function EstatisticasPage() {
   const consCols = useMemo(
     () => [
       { header: "Consulta", render: (r: any) => r.tipo || "-" },
-      { header: "Total", render: (r: any) => r.total ?? 0, className: "text-right" },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} />, className: "text-right" },
     ],
     []
   )
@@ -306,9 +307,11 @@ export default function EstatisticasPage() {
               <MetricCard
                 label="Valor pago confirmado"
                 value={
-                  kpis["Valor pago confirmado (no período)"] !== undefined
-                    ? `${money(kpis["Valor pago confirmado (no período)"])} MZN`
-                    : "—"
+                  kpis["Valor pago confirmado (no período)"] !== undefined ? (
+                    <MoneyValue value={kpis["Valor pago confirmado (no período)"]} />
+                  ) : (
+                    "—"
+                  )
                 }
               />
             </div>

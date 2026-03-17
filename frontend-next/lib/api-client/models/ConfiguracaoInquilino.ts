@@ -15,6 +15,7 @@ export type ConfiguracaoInquilino = {
     idioma?: string;
     permite_multi_unidade?: boolean;
     limite_usuarios?: number;
+    acrescimo_percentual_consulta_feriado?: string;
     criado_por?: number | null;
     atualizado_por?: number | null;
     deletado_por?: number | null;

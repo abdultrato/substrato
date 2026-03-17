@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import MoneyValue from "@/components/ui/MoneyValue"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -80,7 +81,7 @@ export default function RecibosPage() {
       { header: "Número", render: (r: ReciboRow) => r.numero || r.id_custom || r.id || "-" },
       { header: "Paciente", render: (r: ReciboRow) => r.paciente_nome || "-" },
       { header: "Fatura", render: (r: ReciboRow) => r.fatura_codigo || r.fatura || "-" },
-      { header: "Valor", render: (r: ReciboRow) => `${money(r.valor)} MZN` },
+      { header: "Valor", render: (r: ReciboRow) => <MoneyValue value={r.valor} /> },
       { header: "Criado em", render: (r: ReciboRow) => fmtDate(r.criado_em) },
       {
         header: "PDF",

@@ -6,6 +6,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import MoneyValue from "@/components/ui/MoneyValue"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -252,7 +253,7 @@ export default function ConsultasPage() {
       { header: "Tipo", render: (r: ConsultaRow) => r.tipo || "-" },
       { header: "Estado", render: (r: ConsultaRow) => r.estado || "-" },
       { header: "Agendada", render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
-      { header: "Preço", render: (r: ConsultaRow) => `${money(r.preco)} MZN`, className: "text-right" },
+      { header: "Preço", render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
       {
         header: "Fatura",
         render: (r: ConsultaRow) => r.fatura_codigo || "—",

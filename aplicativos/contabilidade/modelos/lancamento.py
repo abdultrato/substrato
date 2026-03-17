@@ -11,10 +11,10 @@ class Lancamento(CoreModel):
 
     prefixo = "LAN"
 
-    descricao = models.TextField(blank=True, default="")
-    data = models.DateField(default=timezone.localdate, db_index=True)
-    referencia_externa = models.CharField(max_length=120, blank=True, default="", db_index=True)
-    confirmado = models.BooleanField(default=False, db_index=True)
+    descricao = models.TextField("Descrição", blank=True, default="")
+    data = models.DateField("Data", default=timezone.localdate, db_index=True)
+    referencia_externa = models.CharField("Referência externa", max_length=120, blank=True, default="", db_index=True)
+    confirmado = models.BooleanField("Confirmado", default=False, db_index=True)
 
     class Meta:
         ordering = ["-data", "-criado_em"]

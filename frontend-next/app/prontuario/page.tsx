@@ -101,8 +101,8 @@ export default function ProntuarioPage() {
                         icon={Pill}
                     />
                     <ActionTile
-                        title="CRUD (API)"
-                        description="Acesso direto ao CRUD genérico do prontuário."
+                        title="Gerenciamento (API)"
+                        description="Acesso direto à interface genérica do prontuário."
                         href="/recursos/prontuario"
                         icon={ClipboardList}
                     />

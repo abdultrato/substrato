@@ -8,4 +8,4 @@
  * * `SEMIQUANTITATIVO` - Semi-quantitativo
  * * `TEXTO` - Texto Livre
  */
-export type ExameCampoTipoEnum = 'NUMERICO' | 'QUALITATIVO' | 'SEMIQUANTITATIVO' | 'TEXTO';
+export type TipoResultadoEnum = 'NUMERICO' | 'QUALITATIVO' | 'SEMIQUANTITATIVO' | 'TEXTO';

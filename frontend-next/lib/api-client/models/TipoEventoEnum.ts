@@ -4,8 +4,9 @@
 /* eslint-disable */
 /**
  * * `GERAL` - Geral
+ * * `RESET_SENHA` - Reposição de palavra-passe
  * * `RESULTADO` - Resultado disponível
  * * `FATURA` - Fatura emitida
  * * `RECIBO` - Recibo gerado
  */
-export type TipoEventoEnum = 'GERAL' | 'RESULTADO' | 'FATURA' | 'RECIBO';
+export type TipoEventoEnum = 'GERAL' | 'RESET_SENHA' | 'RESULTADO' | 'FATURA' | 'RECIBO';

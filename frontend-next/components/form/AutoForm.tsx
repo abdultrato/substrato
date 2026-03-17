@@ -219,34 +219,6 @@ export default function AutoForm({
         </div>
       )}
 
-      {formSpec.fields.some((f) => f.readOnly) ? (
-        <details className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3">
-          <summary className="cursor-pointer select-none text-sm font-semibold text-[var(--text)]">
-            Campos somente leitura
-          </summary>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {formSpec.fields
-              .filter((f) => f.readOnly)
-              .map((field) => (
-                <label key={field.name} className="space-y-0.5 text-sm text-[var(--gray-700)]">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{field.label}</span>
-                  </div>
-                  <div className="opacity-80">
-                    {renderInput(
-                      field,
-                      values[field.name],
-                      () => {},
-                      undefined,
-                      { readOnly: true }
-                    )}
-                  </div>
-                </label>
-              ))}
-          </div>
-        </details>
-      ) : null}
-
       <div className="grid gap-3 md:grid-cols-2">
         {formSpec.fields.filter((f) => !f.readOnly).map((field) => (
           <label key={field.name} className="space-y-0.5 text-sm text-[var(--gray-700)]">

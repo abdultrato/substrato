@@ -1,7 +1,7 @@
 from aplicativos.seguradora.modelos.autorizacao import AutorizacaoProcedimento
 from dominio.seguradora.regras_autorizacao import deve_solicitar_autorizacao
-from eventos.publicador import publicar_evento
-from eventos.tipos import AUTORIZACAO_SOLICITADA
+from dominio.seguradora.eventos import AutorizacaoSolicitadaEvent
+from eventos.bus import event_bus
 
 
 class ServicoAutorizacao:
@@ -16,11 +16,8 @@ class ServicoAutorizacao:
             plano=plano,
         )
 
-        publicar_evento(
-            AUTORIZACAO_SOLICITADA,
-            {
-                "autorizacao_id": autorizacao.id,
-            },
+        event_bus.publish_after_commit(
+            AutorizacaoSolicitadaEvent(autorizacao_id=autorizacao.id),
         )
 
         return autorizacao

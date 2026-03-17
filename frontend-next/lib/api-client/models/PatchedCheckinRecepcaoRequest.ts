@@ -5,10 +5,6 @@
 import type { CheckinRecepcaoEstadoEnum } from './CheckinRecepcaoEstadoEnum';
 import type { CheckinRecepcaoPrioridadeEnum } from './CheckinRecepcaoPrioridadeEnum';
 export type PatchedCheckinRecepcaoRequest = {
-    paciente?: number;
-    requisicao?: number | null;
-    fatura?: number | null;
-    atendente?: number | null;
     prioridade?: CheckinRecepcaoPrioridadeEnum;
     estado?: CheckinRecepcaoEstadoEnum;
     motivo?: string;
@@ -16,5 +12,9 @@ export type PatchedCheckinRecepcaoRequest = {
     chegou_em?: string;
     chamado_em?: string | null;
     concluido_em?: string | null;
+    paciente?: number;
+    requisicao?: number | null;
+    fatura?: number | null;
+    atendente?: number | null;
 };
 

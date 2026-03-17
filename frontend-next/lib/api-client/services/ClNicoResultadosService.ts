@@ -26,7 +26,9 @@ export class ClNicoResultadosService {
      * @param exameCampo
      * @param idCustom
      * @param inquilino
+     * @param ordering Qual campo usar ao ordenar os resultados.
      * @param resultado
+     * @param search Um termo de busca.
      * @param statusClinico
      * @param validadoPor
      * @returns ResultadoItem
@@ -40,11 +42,13 @@ export class ClNicoResultadosService {
         criadoEm?: string,
         criadoPor?: number,
         dataValidacao?: string,
-        estado: 'aguardando_validacao' | 'em_analise' | 'pendente' | 'rejeitado' | 'validado' = 'pendente',
+        estado?: 'aguardando_validacao' | 'em_analise' | 'pendente' | 'rejeitado' | 'validado',
         exameCampo?: number,
         idCustom?: string,
         inquilino?: number,
+        ordering?: string,
         resultado?: number,
+        search?: string,
         statusClinico?: string,
         validadoPor?: number,
     ): CancelablePromise<Array<ResultadoItem>> {
@@ -63,7 +67,9 @@ export class ClNicoResultadosService {
                 'exame_campo': exameCampo,
                 'id_custom': idCustom,
                 'inquilino': inquilino,
+                'ordering': ordering,
                 'resultado': resultado,
+                'search': search,
                 'status_clinico': statusClinico,
                 'validado_por': validadoPor,
             },
@@ -87,7 +93,7 @@ export class ClNicoResultadosService {
     }
     /**
      * Gerenciamento de resultados de análises
-     * @param id A unique integer value identifying this resultado item.
+     * @param id Um valor inteiro único que identifica este resultado item.
      * @returns ResultadoItem
      * @throws ApiError
      */
@@ -104,7 +110,7 @@ export class ClNicoResultadosService {
     }
     /**
      * Gerenciamento de resultados de análises
-     * @param id A unique integer value identifying this resultado item.
+     * @param id Um valor inteiro único que identifica este resultado item.
      * @param requestBody
      * @returns ResultadoItem
      * @throws ApiError
@@ -125,7 +131,7 @@ export class ClNicoResultadosService {
     }
     /**
      * Gerenciamento de resultados de análises
-     * @param id A unique integer value identifying this resultado item.
+     * @param id Um valor inteiro único que identifica este resultado item.
      * @param requestBody
      * @returns ResultadoItem
      * @throws ApiError
@@ -146,7 +152,7 @@ export class ClNicoResultadosService {
     }
     /**
      * Gerenciamento de resultados de análises
-     * @param id A unique integer value identifying this resultado item.
+     * @param id Um valor inteiro único que identifica este resultado item.
      * @returns void
      * @throws ApiError
      */
@@ -159,6 +165,69 @@ export class ClNicoResultadosService {
             path: {
                 'id': id,
             },
+        });
+    }
+    /**
+     * Gerenciamento de resultados de análises
+     * @param id Um valor inteiro único que identifica este resultado item.
+     * @param requestBody
+     * @returns ResultadoItem
+     * @throws ApiError
+     */
+    public static v1ClinicoResultadoitemGravarCreate(
+        id: number,
+        requestBody: ResultadoItemRequest,
+    ): CancelablePromise<ResultadoItem> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/clinico/resultadoitem/{id}/gravar/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Gerenciamento de resultados de análises
+     * @param id Um valor inteiro único que identifica este resultado item.
+     * @param requestBody
+     * @returns ResultadoItem
+     * @throws ApiError
+     */
+    public static v1ClinicoResultadoitemLancarCreate(
+        id: number,
+        requestBody: ResultadoItemRequest,
+    ): CancelablePromise<ResultadoItem> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/clinico/resultadoitem/{id}/lancar/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Gerenciamento de resultados de análises
+     * @param id Um valor inteiro único que identifica este resultado item.
+     * @param requestBody
+     * @returns ResultadoItem
+     * @throws ApiError
+     */
+    public static v1ClinicoResultadoitemValidarCreate(
+        id: number,
+        requestBody: ResultadoItemRequest,
+    ): CancelablePromise<ResultadoItem> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/clinico/resultadoitem/{id}/validar/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

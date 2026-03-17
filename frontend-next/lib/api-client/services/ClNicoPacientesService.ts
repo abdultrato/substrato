@@ -25,6 +25,7 @@ export class ClNicoPacientesService {
      * @param morada
      * @param nome
      * @param numeroId
+     * @param ordering Qual campo usar ao ordenar os resultados.
      * @param proveniencia * `Ambulatório` - Ambulatório
      * * `Clínica Externa` - Clínica Externa
      * * `Medicina Ocupacional` - Medicina Ocupacional
@@ -71,10 +72,11 @@ export class ClNicoPacientesService {
         morada?: string,
         nome?: string,
         numeroId?: string,
-        proveniencia: 'Ambulatório' | 'Banco de Socorros' | 'Cirurgia' | 'Clínica Externa' | 'Consulta Externa' | 'Dentária' | 'Ginecologia' | 'Maternidade' | 'Medicina Ocupacional' | 'Oftalmologia' | 'Outro' | 'Pediatria' | 'Urologia' = 'Clínica Externa',
-        racaOrigem: 'Amarela' | 'Branca' | 'Indígena' | 'Negra' | 'Outro' | 'Parda' = 'Negra',
+        ordering?: string,
+        proveniencia?: 'Ambulatório' | 'Banco de Socorros' | 'Cirurgia' | 'Clínica Externa' | 'Consulta Externa' | 'Dentária' | 'Ginecologia' | 'Maternidade' | 'Medicina Ocupacional' | 'Oftalmologia' | 'Outro' | 'Pediatria' | 'Urologia',
+        racaOrigem?: 'Amarela' | 'Branca' | 'Indígena' | 'Negra' | 'Outro' | 'Parda',
         search?: string,
-        tipoDocumento: 'BI' | 'CC' | 'CE' | 'CN' | 'DIRE' | 'NUIT' | 'OUT' | 'PASS' = 'BI',
+        tipoDocumento?: 'BI' | 'CC' | 'CE' | 'CN' | 'DIRE' | 'NUIT' | 'OUT' | 'PASS',
     ): CancelablePromise<Array<Paciente>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -94,6 +96,7 @@ export class ClNicoPacientesService {
                 'morada': morada,
                 'nome': nome,
                 'numero_id': numeroId,
+                'ordering': ordering,
                 'proveniencia': proveniencia,
                 'raca_origem': racaOrigem,
                 'search': search,
@@ -119,7 +122,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Obter detalhes de um paciente
-     * @param id A unique integer value identifying this Paciente.
+     * @param id Um valor inteiro único que identifica este Paciente.
      * @returns Paciente
      * @throws ApiError
      */
@@ -136,7 +139,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Atualizar paciente completamente
-     * @param id A unique integer value identifying this Paciente.
+     * @param id Um valor inteiro único que identifica este Paciente.
      * @param requestBody
      * @returns Paciente
      * @throws ApiError
@@ -157,7 +160,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Atualizar parcialmente um paciente
-     * @param id A unique integer value identifying this Paciente.
+     * @param id Um valor inteiro único que identifica este Paciente.
      * @param requestBody
      * @returns Paciente
      * @throws ApiError
@@ -178,7 +181,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Gerenciamento de pacientes
-     * @param id A unique integer value identifying this Paciente.
+     * @param id Um valor inteiro único que identifica este Paciente.
      * @returns void
      * @throws ApiError
      */
@@ -191,6 +194,34 @@ export class ClNicoPacientesService {
             path: {
                 'id': id,
             },
+        });
+    }
+    /**
+     * Gerenciamento de pacientes
+     * @param id Um valor inteiro único que identifica este Paciente.
+     * @returns Paciente
+     * @throws ApiError
+     */
+    public static v1ClinicoPacienteHistoriaClinicaPorId(
+        id: number,
+    ): CancelablePromise<Paciente> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/clinico/paciente/{id}/historia_clinica/',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Gerenciamento de pacientes
+     * @returns Paciente
+     * @throws ApiError
+     */
+    public static v1ClinicoPacienteHistoriaClinicaPorDocumento(): CancelablePromise<Paciente> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/clinico/paciente/historia_clinica/',
         });
     }
 }

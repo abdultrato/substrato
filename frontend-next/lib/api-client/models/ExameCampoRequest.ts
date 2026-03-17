@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ExameCampoTipoEnum } from './ExameCampoTipoEnum';
+import type { TipoResultadoEnum } from './TipoResultadoEnum';
 import type { UnidadeEnum } from './UnidadeEnum';
 /**
  * Serializer para campos de exame.
@@ -16,7 +16,7 @@ export type ExameCampoRequest = {
      * Nome do parâmetro/campo do exame
      */
     nome: string;
-    tipo: ExameCampoTipoEnum;
+    tipo: TipoResultadoEnum;
     /**
      * Unidade de medida do parâmetro (ex: mg/dL, g/L)
      *
@@ -26,7 +26,7 @@ export type ExameCampoRequest = {
      * * `µmol/l` - µmol/l
      * * `cel/mm3` - cel/mm3
      * * `x10³/µl` - x10³/µl
-     * * `×10⁶/µL` - ×10⁶/µL
+     * * `x10⁶/µL` - x10⁶/µL
      * * `%` - %
      * * `u/l` - u/l
      * * `p/µL` - p/µL

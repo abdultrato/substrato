@@ -5,13 +5,14 @@ import { useState, useRef, useEffect } from "react"
 import { SessionUser } from "@/lib/session"
 import { useAuth } from "@/hooks/useAuth"
 import useTheme from "@/hooks/useTheme"
-import { ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react"
+import { AlignJustify, ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react"
 
 interface Props {
     user: SessionUser | null
+    onMenuClick?: () => void
 }
 
-export default function Header ( { user }: Props ) {
+export default function Header ( { user, onMenuClick }: Props ) {
     const { signOut } = useAuth()
     const { isDark, toggle: toggleTheme } = useTheme()
     const [open, setOpen] = useState( false )
@@ -21,6 +22,12 @@ export default function Header ( { user }: Props ) {
         `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || ""
     const name = ( user?.full_name || composed || user?.username || "Utilizador" ).trim()
     const fotoUrl = user?.foto_url || null
+    const logoStyle = {
+        backgroundImage: "url(/icon.png)",
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+    }
 
     function toggle () {
         setOpen( ( v ) => !v )
@@ -39,16 +46,38 @@ export default function Header ( { user }: Props ) {
     }, [open] )
 
     return (
-        <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-card/85 px-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/70">
-            <h1 className="font-display text-sm font-semibold tracking-wide text-foreground">
-                Substrato
-            </h1>
+        <header className="chrome-surface sticky top-0 z-40 flex h-auto flex-nowrap items-center justify-between gap-3 border-b px-3 py-2 shadow-sm backdrop-blur">
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+                <button
+                    type="button"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 md:hidden"
+                    onClick={onMenuClick}
+                    aria-label="Abrir menu"
+                >
+                    <AlignJustify size={18} />
+                </button>
+                <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                        <div
+                            className="h-8 w-8 shrink-0 rounded-lg bg-muted"
+                            aria-hidden
+                            style={logoStyle}
+                        />
+                        <div className="font-display text-sm font-semibold tracking-wide text-white">
+                            Substrato
+                        </div>
+                    </div>
+                    <p className="text-[11px] leading-tight text-white/80">
+                        Infraestrutura de base unificada de saúde
+                    </p>
+                </div>
+            </div>
 
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card/70 text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                     aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
                     title={isDark ? "Modo claro" : "Modo escuro"}
                 >
@@ -58,7 +87,7 @@ export default function Header ( { user }: Props ) {
                 <div className="relative" ref={menuRef}>
                     <button
                         onClick={toggle}
-                        className="flex items-center gap-2 text-sm text-foreground-2 transition-colors hover:text-foreground"
+                        className="flex items-center gap-2 text-sm text-white/90 transition-colors hover:text-white"
                     >
                         {fotoUrl ? (
                             <>
@@ -66,7 +95,7 @@ export default function Header ( { user }: Props ) {
                                 <img
                                     src={fotoUrl}
                                     alt={name}
-                                    className="h-8 w-8 rounded-full border border-border object-cover shadow-sm"
+                                    className="h-8 w-8 rounded-full border border-white/30 object-cover shadow-sm"
                                 />
                             </>
                         ) : (
@@ -75,17 +104,17 @@ export default function Header ( { user }: Props ) {
                             </div>
                         )}
 
-                        <span className="hidden sm:block">{name}</span>
+                        <span className="hidden sm:block text-white/90">{name}</span>
 
                         <ChevronDown size={16} />
                     </button>
 
                     {open && (
-                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-2xl border border-border bg-card p-1 shadow-lg">
+                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-2xl border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
                             <Link
                                 href="/perfil"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-primary"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <User size={16} />
                                 Perfil
@@ -94,17 +123,17 @@ export default function Header ( { user }: Props ) {
                             <Link
                                 href="/definicoes"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-primary"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <Settings size={16} />
                                 Definições
                             </Link>
 
-                            <div className="my-1 border-t border-border" />
+                            <div className="my-1 border-t border-white/15" />
 
                             <button
                                 onClick={signOut}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-500/10 dark:text-rose-300"
+                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-500/15"
                             >
                                 <LogOut size={16} />
                                 Terminar sessão

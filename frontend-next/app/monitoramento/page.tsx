@@ -76,8 +76,8 @@ export default function MonitoramentoPage() {
                         icon={Bug}
                     />
                     <ActionTile
-                        title="CRUD (API)"
-                        description="Acesso ao CRUD genérico do monitoramento."
+                        title="Gerenciamento (API)"
+                        description="Acesso à interface genérica do monitoramento."
                         href="/recursos/monitoramento"
                         icon={ClipboardList}
                     />
@@ -98,4 +98,3 @@ export default function MonitoramentoPage() {
         </AppLayout>
     )
 }
-

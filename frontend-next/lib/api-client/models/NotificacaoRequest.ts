@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CanalEnum } from './CanalEnum';
+import type { NotificacaoCanalEnum } from './NotificacaoCanalEnum';
 import type { TipoEventoEnum } from './TipoEventoEnum';
 export type NotificacaoRequest = {
     destinatario: string;
-    canal: CanalEnum;
+    canal: NotificacaoCanalEnum;
     assunto?: string;
     tipo_evento?: TipoEventoEnum;
     referencia_externa?: string;

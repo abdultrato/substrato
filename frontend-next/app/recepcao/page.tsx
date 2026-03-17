@@ -16,6 +16,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
+import MoneyValue from "@/components/ui/MoneyValue"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
@@ -166,7 +167,11 @@ export default function RecepcaoPage() {
                     <ResumoCard title="Check-ins hoje" value={workspace.resumo.checkins_hoje} icon={Users} />
                     <ResumoCard title="Na fila" value={workspace.resumo.na_fila} icon={ClipboardList} />
                     <ResumoCard title="Em atendimento" value={workspace.resumo.em_atendimento} icon={UserPlus} />
-                    <ResumoCard title="Recebido hoje" value={`${workspace.resumo.recebido_hoje} MZN`} icon={Receipt} />
+                    <ResumoCard
+                        title="Recebido hoje"
+                        value={<MoneyValue value={workspace.resumo.recebido_hoje} />}
+                        icon={Receipt}
+                    />
                 </div>
 
                 <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
@@ -272,7 +277,7 @@ function ResumoCard({
     icon: Icon,
 }: {
     title: string
-    value: number | string
+    value: number | string | React.ReactNode
     icon: typeof Users
 }) {
     return (

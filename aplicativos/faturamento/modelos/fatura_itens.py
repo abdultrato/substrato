@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 
 from nucleo.modelos.base import NoNameCoreModel
@@ -151,6 +151,18 @@ class FaturaItem(NoNameCoreModel):
     @property
     def total_com_iva(self) -> Decimal:
         return (self.total_sem_iva or Decimal("0.00")) + (self.iva_valor or Decimal("0.00"))
+
+    def _schedule_recalculo(self):
+        try:
+            from tarefas.faturamento.recalculo import recalcular_fatura_task
+        except ImportError:
+            return
+
+        fatura_id = getattr(self, "fatura_id", None)
+        if not fatura_id:
+            return
+
+        transaction.on_commit(lambda: recalcular_fatura_task.delay(fatura_id))
 
     def _origem_esperada(self):
         return {
@@ -347,7 +359,7 @@ class FaturaItem(NoNameCoreModel):
         self.full_clean()
 
         super().save(*args, **kwargs)
-        self.fatura.persistir_totais()
+        self._schedule_recalculo()
 
     def delete(self, *args, **kwargs):
         if self.fatura.estado != self.fatura.Estado.RASCUNHO:
@@ -355,4 +367,5 @@ class FaturaItem(NoNameCoreModel):
 
         fatura = self.fatura
         super().delete(*args, **kwargs)
-        fatura.persistir_totais()
+        fatura.persistir_totais()  # manter estado imediato para gravação local
+        self._schedule_recalculo()

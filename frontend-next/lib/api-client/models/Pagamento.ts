@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { PagamentoMetodoEnum } from './PagamentoMetodoEnum';
+import type { MetodoPagamentoEnum } from './MetodoPagamentoEnum';
 import type { PagamentoStatusEnum } from './PagamentoStatusEnum';
 export type Pagamento = {
     readonly id?: number;
@@ -14,7 +14,7 @@ export type Pagamento = {
     versao?: number;
     nome: string;
     valor: string;
-    metodo: PagamentoMetodoEnum;
+    metodo: MetodoPagamentoEnum;
     status?: PagamentoStatusEnum;
     /**
      * Referência externa (transação, autorização, etc).

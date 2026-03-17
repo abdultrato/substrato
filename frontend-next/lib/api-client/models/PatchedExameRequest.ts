@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { BlankEnum } from './BlankEnum';
-import type { ExameMetodoEnum } from './ExameMetodoEnum';
+import type { MetodoLaboratorioEnum } from './MetodoLaboratorioEnum';
 import type { NullEnum } from './NullEnum';
 import type { SetorEnum } from './SetorEnum';
 /**
@@ -23,6 +23,10 @@ export type PatchedExameRequest = {
      * Preço do exame em unidades monetárias (≥0.01)
      */
     preco?: string;
+    /**
+     * Taxa de IVA aplicada ao exame (0 a 100).
+     */
+    iva_percentual?: string;
     /**
      * Método utilizado para realizar o exame
      *
@@ -69,7 +73,7 @@ export type PatchedExameRequest = {
      * * `MALDI_TOF` - MALDI-TOF
      * * `RessonanciaMagneticaNuclear` - Ressonância Magnética Nuclear
      */
-    metodo?: ExameMetodoEnum;
+    metodo?: MetodoLaboratorioEnum;
     /**
      * Setor do laboratório responsável pelo exame
      *

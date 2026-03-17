@@ -115,7 +115,7 @@ export default function PagamentosPage() {
                     />
                 </div>
 
-                <Card title="CRUD" subtitle="Criação/edição completa via CRUD genérico (API v1).">
+                <Card title="Gerenciamento" subtitle="Criação/edição completa via interface genérica (API v1).">
                     <div className="flex flex-wrap gap-2">
                         <Link
                             href="/recursos/pagamentos"
@@ -135,4 +135,3 @@ export default function PagamentosPage() {
         </AppLayout>
     )
 }
-

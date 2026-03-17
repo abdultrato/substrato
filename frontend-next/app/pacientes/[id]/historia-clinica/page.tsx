@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
+import MoneyValue from "@/components/ui/MoneyValue"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
 import { routeParamToString } from "@/lib/routeParams"
@@ -178,7 +179,7 @@ export default function HistoriaClinicaPage() {
       { header: "Médico", render: (r: any) => r.medico_nome || "-" },
       { header: "Agendada para", render: (r: any) => fmtDate(r.agendada_para) },
       { header: "Estado", render: (r: any) => r.estado || "-" },
-      { header: "Preço", render: (r: any) => `${money(r.preco)} MZN` },
+      { header: "Preço", render: (r: any) => <MoneyValue value={r.preco} /> },
     ],
     []
   )
@@ -188,7 +189,7 @@ export default function HistoriaClinicaPage() {
       { header: "Código", render: (r: any) => r.id_custom || r.id || "-" },
       { header: "Data", render: (r: any) => fmtDate(r.data_realizacao) },
       { header: "Profissional", render: (r: any) => r.profissional || "-" },
-      { header: "Total", render: (r: any) => `${money(r.total)} MZN` },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} /> },
       { header: "Obs.", render: (r: any) => truncate(r.observacoes, 60) },
     ],
     []
@@ -212,7 +213,7 @@ export default function HistoriaClinicaPage() {
       { header: "Código", render: (r: any) => r.id_custom || r.id || "-" },
       { header: "Origem", render: (r: any) => r.origem || "-" },
       { header: "Estado", render: (r: any) => r.estado || "-" },
-      { header: "Total", render: (r: any) => `${money(r.total)} MZN` },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} /> },
       { header: "Criado em", render: (r: any) => fmtDate(r.criado_em) },
     ],
     []
@@ -221,7 +222,7 @@ export default function HistoriaClinicaPage() {
   const vendasCols = useMemo(
     () => [
       { header: "Número", render: (r: any) => r.numero || r.id_custom || r.id || "-" },
-      { header: "Total", render: (r: any) => `${money(r.total)} MZN` },
+      { header: "Total", render: (r: any) => <MoneyValue value={r.total} /> },
       { header: "Criado em", render: (r: any) => fmtDate(r.criado_em) },
     ],
     []
@@ -231,7 +232,7 @@ export default function HistoriaClinicaPage() {
     () => [
       { header: "Número", render: (r: any) => r.numero || r.id || "-" },
       { header: "Fatura", render: (r: any) => r.fatura_codigo || r.fatura || "-" },
-      { header: "Valor", render: (r: any) => `${money(r.valor)} MZN` },
+      { header: "Valor", render: (r: any) => <MoneyValue value={r.valor} /> },
       { header: "Criado em", render: (r: any) => fmtDate(r.criado_em) },
     ],
     []

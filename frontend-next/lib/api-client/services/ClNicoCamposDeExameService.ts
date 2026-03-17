@@ -19,6 +19,8 @@ export class ClNicoCamposDeExameService {
      * @param idCustom
      * @param inquilino
      * @param nome
+     * @param ordering Qual campo usar ao ordenar os resultados.
+     * @param search Um termo de busca.
      * @param tipo * `NUMERICO` - Numérico
      * * `QUALITATIVO` - Qualitativo
      * * `SEMIQUANTITATIVO` - Semi-quantitativo
@@ -29,7 +31,7 @@ export class ClNicoCamposDeExameService {
      * * `µmol/l` - µmol/l
      * * `cel/mm3` - cel/mm3
      * * `x10³/µl` - x10³/µl
-     * * `×10⁶/µL` - ×10⁶/µL
+     * * `x10⁶/µL` - x10⁶/µL
      * * `%` - %
      * * `u/l` - u/l
      * * `p/µL` - p/µL
@@ -47,8 +49,10 @@ export class ClNicoCamposDeExameService {
         idCustom?: string,
         inquilino?: number,
         nome?: string,
+        ordering?: string,
+        search?: string,
         tipo?: 'NUMERICO' | 'QUALITATIVO' | 'SEMIQUANTITATIVO' | 'TEXTO',
-        unidade: '%' | 'cel/mm3' | 'fl' | 'g/dl' | 'mg/dl' | 'mmol/l' | 'p/µL' | 'ph' | 'u/l' | 'x10³/µl' | 'µmol/l' | '×10⁶/µL' = 'p/µL',
+        unidade?: '%' | 'cel/mm3' | 'fl' | 'g/dl' | 'mg/dl' | 'mmol/l' | 'p/µL' | 'ph' | 'u/l' | 'x10³/µl' | 'x10⁶/µL' | 'µmol/l',
     ): CancelablePromise<Array<ExameCampo>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -62,6 +66,8 @@ export class ClNicoCamposDeExameService {
                 'id_custom': idCustom,
                 'inquilino': inquilino,
                 'nome': nome,
+                'ordering': ordering,
+                'search': search,
                 'tipo': tipo,
                 'unidade': unidade,
             },
@@ -85,7 +91,7 @@ export class ClNicoCamposDeExameService {
     }
     /**
      * Gerenciamento de campos de exames
-     * @param id A unique integer value identifying this parâmetro.
+     * @param id Um valor inteiro único que identifica este parâmetro.
      * @returns ExameCampo
      * @throws ApiError
      */
@@ -102,7 +108,7 @@ export class ClNicoCamposDeExameService {
     }
     /**
      * Gerenciamento de campos de exames
-     * @param id A unique integer value identifying this parâmetro.
+     * @param id Um valor inteiro único que identifica este parâmetro.
      * @param requestBody
      * @returns ExameCampo
      * @throws ApiError
@@ -123,7 +129,7 @@ export class ClNicoCamposDeExameService {
     }
     /**
      * Gerenciamento de campos de exames
-     * @param id A unique integer value identifying this parâmetro.
+     * @param id Um valor inteiro único que identifica este parâmetro.
      * @param requestBody
      * @returns ExameCampo
      * @throws ApiError
@@ -144,7 +150,7 @@ export class ClNicoCamposDeExameService {
     }
     /**
      * Gerenciamento de campos de exames
-     * @param id A unique integer value identifying this parâmetro.
+     * @param id Um valor inteiro único que identifica este parâmetro.
      * @returns void
      * @throws ApiError
      */

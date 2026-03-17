@@ -34,18 +34,21 @@ class Pagamento(CoreModel):
 
     fatura = models.ForeignKey(
         "faturamento.Fatura",
+        verbose_name="Fatura",
         on_delete=models.PROTECT,
         related_name="pagamentos",
     )
 
-    valor = DinheiroField()
+    valor = DinheiroField(verbose_name="Valor")
 
     metodo = models.CharField(
+        verbose_name="Método",
         max_length=4,
         choices=Metodo.choices,
     )
 
     status = models.CharField(
+        verbose_name="Estado",
         max_length=3,
         choices=Status.choices,
         default=Status.PENDENTE,
@@ -53,12 +56,14 @@ class Pagamento(CoreModel):
     )
 
     referencia_externa = models.CharField(
+        verbose_name="Referência externa",
         max_length=120,
         blank=True,
         help_text="Referência externa (transação, autorização, etc).",
     )
 
     pago_em = models.DateTimeField(
+        verbose_name="Pago em",
         null=True,
         blank=True,
     )

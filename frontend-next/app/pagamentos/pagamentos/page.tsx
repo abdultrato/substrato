@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
+import MoneyValue from "@/components/ui/MoneyValue"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -87,7 +88,7 @@ export default function PagamentosListaPage() {
             { header: "Fatura", render: (p: PagamentoRow) => p.fatura || "-" },
             { header: "Método", render: (p: PagamentoRow) => p.metodo || "-" },
             { header: "Status", render: (p: PagamentoRow) => p.status || "-" },
-            { header: "Valor", render: (p: PagamentoRow) => `${money(p.valor)} MZN` },
+            { header: "Valor", render: (p: PagamentoRow) => <MoneyValue value={p.valor} /> },
             { header: "Pago em", render: (p: PagamentoRow) => fmtDateTime(p.pago_em) },
         ],
         []
@@ -111,7 +112,7 @@ export default function PagamentosListaPage() {
                                 href="/recursos/pagamentos/pagamento"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
-                                CRUD
+                                Gerenciamento
                             </Link>
                             <Link
                                 href="/pagamentos"
@@ -172,4 +173,3 @@ export default function PagamentosListaPage() {
         </AppLayout>
     )
 }
-

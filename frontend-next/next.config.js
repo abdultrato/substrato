@@ -7,6 +7,9 @@ module.exports = (phase) => ({
   // back to `/foo/`, creating an infinite redirect loop through the proxy.
   trailingSlash: true,
 
+  // Disable the Next.js DevTools indicator ("N" badge) in development.
+  devIndicators: false,
+
   // Keep dev and production build artifacts separate so running `next build`
   // doesn't break an active `next dev` (common when using Docker bind mounts).
   distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next",

@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { BlankEnum } from './BlankEnum';
-import type { ExameMetodoEnum } from './ExameMetodoEnum';
+import type { MetodoLaboratorioEnum } from './MetodoLaboratorioEnum';
 import type { NullEnum } from './NullEnum';
 import type { SetorEnum } from './SetorEnum';
 /**
@@ -12,7 +12,12 @@ import type { SetorEnum } from './SetorEnum';
  */
 export type Exame = {
     readonly id?: number;
+    readonly criado_em?: string;
+    readonly atualizado_em?: string;
     readonly id_custom?: string | null;
+    readonly deletado?: boolean;
+    readonly deletado_em?: string | null;
+    readonly versao?: number;
     /**
      * Nome descritivo do exame (3-100 caracteres)
      */
@@ -25,6 +30,10 @@ export type Exame = {
      * Preço do exame em unidades monetárias (≥0.01)
      */
     preco?: string;
+    /**
+     * Taxa de IVA aplicada ao exame (0 a 100).
+     */
+    iva_percentual?: string;
     /**
      * Método utilizado para realizar o exame
      *
@@ -71,7 +80,7 @@ export type Exame = {
      * * `MALDI_TOF` - MALDI-TOF
      * * `RessonanciaMagneticaNuclear` - Ressonância Magnética Nuclear
      */
-    metodo: ExameMetodoEnum;
+    metodo: MetodoLaboratorioEnum;
     /**
      * Setor do laboratório responsável pelo exame
      *
@@ -101,8 +110,10 @@ export type Exame = {
      * * `Pesquisa` - Pesquisa Laboratorial
      * * `Outro` - Outro
      */
-    setor: (SetorEnum | BlankEnum | NullEnum) | null;
-    readonly criado_em?: string;
-    readonly atualizado_em?: string;
+    setor?: (SetorEnum | BlankEnum | NullEnum) | null;
+    readonly criado_por?: number | null;
+    readonly atualizado_por?: number | null;
+    readonly inquilino?: number;
+    readonly deletado_por?: number | null;
 };
 

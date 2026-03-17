@@ -1,10 +1,12 @@
+import React from "react"
+
 export default function MetricCard({
   label,
   value,
   hint,
 }: {
   label: string
-  value: string | number
+  value: React.ReactNode
   hint?: string
 }) {
   return (

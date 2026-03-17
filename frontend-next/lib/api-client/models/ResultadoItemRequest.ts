@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { EstadoCfbEnum } from './EstadoCfbEnum';
+import type { EstadoResultadoEnum } from './EstadoResultadoEnum';
 /**
  * Serializer para resultados de análises.
  * Contém os valores medidos para cada parâmetro.
@@ -15,7 +15,7 @@ export type ResultadoItemRequest = {
     status_clinico?: string;
     cor_laudo?: string | null;
     alerta_critico?: boolean;
-    estado?: EstadoCfbEnum;
+    estado?: EstadoResultadoEnum;
     data_validacao?: string | null;
     criado_por?: number | null;
     atualizado_por?: number | null;

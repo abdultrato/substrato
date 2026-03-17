@@ -25,7 +25,15 @@ export type Fatura = {
     deletado_por?: number | null;
     requisicao?: number | null;
     venda?: number | null;
+    /**
+     * Legado: prefira usar o campo 'procedimentos' (múltiplos).
+     */
     procedimento?: number | null;
+    consulta?: number | null;
     paciente?: number | null;
+    /**
+     * Pode associar múltiplos procedimentos de enfermagem à mesma fatura.
+     */
+    procedimentos?: Array<number>;
 };
 

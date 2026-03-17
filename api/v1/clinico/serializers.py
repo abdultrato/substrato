@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from functools import lru_cache
+import unicodedata
+
+from django.utils.translation import override
+from django_countries import countries
 from rest_framework import serializers
 
 from aplicativos.clinico.modelos.exame import Exame
@@ -22,6 +29,54 @@ CORE_READ_ONLY_FIELDS = [
     "deletado_por",
     "versao",
 ]
+
+
+def _normalize_country_name(value: str) -> str:
+    value = (value or "").strip().lower()
+    if not value:
+        return ""
+    value = unicodedata.normalize("NFD", value)
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+
+
+@lru_cache(maxsize=1)
+def _country_name_to_code_map() -> dict[str, str]:
+    """
+    Reverse map used for compatibility:
+    some clients stored/sent country names (ex.: "Moçambique") instead of ISO codes.
+    """
+    name_to_code: dict[str, str] = {}
+
+    for lang in ("pt-br", "pt", "en"):
+        try:
+            with override(lang):
+                for code, name in list(countries):
+                    name_to_code[_normalize_country_name(str(name))] = code
+        except Exception:
+            continue
+
+    # Defensive: keep our common default stable even if translations change.
+    name_to_code[_normalize_country_name("Moçambique")] = "MZ"
+    name_to_code[_normalize_country_name("Mozambique")] = "MZ"
+
+    return name_to_code
+
+
+def _coerce_country_to_code(value: str | None) -> str | None:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return raw
+
+    # Already a country code (or alpha3/numeric): normalize to alpha2.
+    code = countries.alpha2(raw)
+    if code:
+        return code
+
+    # Legacy: country name.
+    mapped = _country_name_to_code_map().get(_normalize_country_name(raw))
+    return mapped or raw
 
 
 class PacienteSerializer(serializers.ModelSerializer):
@@ -153,6 +208,12 @@ class PacienteSerializer(serializers.ModelSerializer):
                     if v:
                         parts.append(str(v).strip())
                 data["morada"] = ", ".join([p for p in parts if p]).strip()
+
+        # Compat: aceitar nomes de países (ex.: "Moçambique") e converter para
+        # ISO alpha-2 (ex.: "MZ") para passar na validação do CountryField.
+        if isinstance(data, dict) and "endereco_pais" in data:
+            data = data.copy() if hasattr(data, "copy") else dict(data)
+            data["endereco_pais"] = _coerce_country_to_code(data.get("endereco_pais"))
 
         return super().to_internal_value(data)
 

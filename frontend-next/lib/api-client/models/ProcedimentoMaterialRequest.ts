@@ -15,7 +15,7 @@ export type ProcedimentoMaterialRequest = {
     procedimento: number;
     procedimento_item?: number | null;
     produto: number;
-    lote: number;
+    lote?: number | null;
     movimento_estoque?: number | null;
 };
 

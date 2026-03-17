@@ -101,8 +101,8 @@ export default function CirurgiaPage() {
                         icon={Wrench}
                     />
                     <ActionTile
-                        title="CRUD (API)"
-                        description="Acesso direto ao CRUD genérico do módulo."
+                        title="Gerenciamento (API)"
+                        description="Acesso direto à interface genérica do módulo."
                         href="/recursos/cirurgia"
                         icon={ClipboardList}
                     />
@@ -121,4 +121,3 @@ export default function CirurgiaPage() {
         </AppLayout>
     )
 }
-

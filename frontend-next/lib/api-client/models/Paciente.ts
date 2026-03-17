@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { BlankEnum } from './BlankEnum';
+import type { EnderecoPaisEnum } from './EnderecoPaisEnum';
 import type { GeneroEnum } from './GeneroEnum';
 import type { ProvenienciaEnum } from './ProvenienciaEnum';
 import type { RacaOrigemEnum } from './RacaOrigemEnum';
@@ -13,19 +14,25 @@ import type { TipoDocumentoEnum } from './TipoDocumentoEnum';
  */
 export type Paciente = {
     readonly id?: number;
+    readonly empresa_origem_nome?: string;
+    readonly criado_em?: string;
+    readonly atualizado_em?: string;
     readonly id_custom?: string | null;
+    readonly deletado?: boolean;
+    readonly deletado_em?: string | null;
+    readonly versao?: number;
     /**
      * Nome completo do paciente (2-150 caracteres)
      */
     nome: string;
     /**
-     * Email único do paciente para contato
+     * Indicador se paciente está gestante
      */
-    email?: string | null;
+    gestante?: boolean;
     /**
-     * Número de telefone para contato (incluir indicativo país)
+     * Semanas de gestação (preencher apenas se gestante)
      */
-    contacto?: string | null;
+    idade_gestacional_semanas?: number | null;
     /**
      * Data de nascimento do paciente (formato YYYY-MM-DD)
      */
@@ -65,7 +72,26 @@ export type Paciente = {
      * Número único do documento de identidade
      */
     numero_id?: string | null;
-    morada: string;
+    endereco_rua?: string;
+    endereco_numero?: string;
+    endereco_bairro?: string;
+    endereco_cidade?: string;
+    endereco_provincia?: string;
+    endereco_codigo_postal?: string;
+    endereco_pais?: (EnderecoPaisEnum | BlankEnum);
+    endereco_complemento?: string;
+    /**
+     * Texto livre ou resumo (auto) da morada.
+     */
+    morada?: string;
+    /**
+     * Número de telefone para contato (incluir indicativo país)
+     */
+    contacto?: string | null;
+    /**
+     * Email único do paciente para contato
+     */
+    email?: string | null;
     /**
      * Origem/proveniência do paciente na clínica
      *
@@ -84,15 +110,13 @@ export type Paciente = {
      * * `Outro` - Outro
      */
     proveniencia?: (ProvenienciaEnum | BlankEnum);
+    readonly criado_por?: number | null;
+    readonly atualizado_por?: number | null;
+    readonly inquilino?: number;
+    readonly deletado_por?: number | null;
     /**
-     * Indicador se paciente está gestante
+     * Para medicina ocupacional, indique a empresa de origem do paciente.
      */
-    gestante?: boolean;
-    /**
-     * Semanas de gestação (preencher apenas se gestante)
-     */
-    idade_gestacional_semanas?: number | null;
-    readonly criado_em?: string;
-    readonly atualizado_em?: string;
+    empresa_origem?: number | null;
 };
 

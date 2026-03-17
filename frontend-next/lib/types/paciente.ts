@@ -10,6 +10,16 @@ export type Paciente = {
   contacto?: string
   email?: string
   proveniencia?: string
+
+  endereco_rua?: string
+  endereco_numero?: string
+  endereco_bairro?: string
+  endereco_cidade?: string
+  endereco_provincia?: string
+  endereco_codigo_postal?: string
+  endereco_pais?: string
+  endereco_complemento?: string
+
   morada?: string
   empresa_origem?: number | null
   empresa_origem_nome?: string | null

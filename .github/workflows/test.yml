@@ -79,8 +79,7 @@ jobs:
         REDIS_URL: redis://localhost:6379/0
         DJANGO_SECRET_KEY: test-secret-key
       run: |
-        pytest --cov=. --cov-report=xml --cov-report=term-missing || true
-      continue-on-error: true
+        pytest --cov=. --cov-report=xml --cov-report=term-missing
     
     - name: 📈 Upload coverage reports
       uses: codecov/codecov-action@v3
@@ -119,11 +118,9 @@ jobs:
     
     - name: 🔨 Build Next.js
       run: npm run build
-      continue-on-error: true
     
     - name: 🧪 Run linter
-      run: npm run lint || true
-      continue-on-error: true
+      run: npm run lint
     
     - name: ✅ Frontend Summary
       run: echo "Frontend checks completed."

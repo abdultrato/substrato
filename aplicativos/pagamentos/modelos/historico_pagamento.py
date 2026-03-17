@@ -22,25 +22,30 @@ class HistoricoPagamento(CoreModel):
         "pagamentos.Pagamento",
         on_delete=models.CASCADE,
         related_name="historico",
+        verbose_name="Pagamento",
     )
 
     tipo_evento = models.CharField(
+        verbose_name="Tipo de evento",
         max_length=15,
         choices=TipoEvento.choices,
         db_index=True,
     )
 
     valor = DinheiroField(
+        verbose_name="Valor",
         null=True,
         blank=True,
     )
 
     descricao = models.CharField(
+        verbose_name="Descrição",
         max_length=255,
         blank=True,
     )
 
     referencia_externa = models.CharField(
+        verbose_name="Referência externa",
         max_length=120,
         blank=True,
     )

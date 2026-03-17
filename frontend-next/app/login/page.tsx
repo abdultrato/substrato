@@ -113,7 +113,7 @@ export default function LoginPage () {
 
                 <div className="login-form">
                     <h1 className="login-title">Substrato</h1>
-                    <p className="login-subtitle">Infraestrutura unificada de saúde</p>
+                    <p className="login-subtitle">Infrastrutura de unificada de gestao em saude</p>
 
                     {error && <div className="login-error">{error}</div>}
                     {resetInfo && (

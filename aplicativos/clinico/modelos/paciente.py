@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django_countries.fields import CountryField
 
 from infrastrutura.orm.fields.email_field import NormalizedEmailField
 from infrastrutura.orm.fields.telefone_field import TelefoneField
@@ -103,11 +104,10 @@ class Paciente(CoreModel):
         blank=True,
         default="",
     )
-    endereco_pais = models.CharField(
+    endereco_pais = CountryField(
         verbose_name="País",
-        max_length=120,
         blank=True,
-        default="Moçambique",
+        default="MZ",
     )
     endereco_complemento = models.CharField(
         verbose_name="Complemento",

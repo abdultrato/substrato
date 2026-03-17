@@ -11,5 +11,6 @@ export type PerfilProfissional = {
     readonly criado_em?: string;
     readonly atualizado_em?: string;
     usuario: number;
+    funcionario?: number | null;
 };
 

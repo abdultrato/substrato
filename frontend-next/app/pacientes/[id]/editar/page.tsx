@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Entidade, Paciente, PacienteCreateDTO } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
+import { getCountryOptions } from "@/lib/countries";
 import { GROUPS } from "@/lib/rbac";
 
 export default function EditarPacientePage () {
@@ -26,9 +27,19 @@ export default function EditarPacientePage () {
         contacto: "",
         email: "",
         proveniencia: "",
+        endereco_rua: "",
+        endereco_numero: "",
+        endereco_bairro: "",
+        endereco_cidade: "",
+        endereco_provincia: "",
+        endereco_codigo_postal: "",
+        endereco_pais: "MZ",
+        endereco_complemento: "",
         morada: "",
         empresa_origem: null,
     } );
+
+    const countryOptions = useMemo( () => getCountryOptions( ["pt"] ), [] );
 
     const [empresas, setEmpresas] = useState<Entidade[]>( [] );
     const [loading, setLoading] = useState( true );
@@ -60,6 +71,14 @@ export default function EditarPacientePage () {
                 contacto: data.contacto || "",
                 email: data.email || "",
                 proveniencia: data.proveniencia || "",
+                endereco_rua: (data as any).endereco_rua || "",
+                endereco_numero: (data as any).endereco_numero || "",
+                endereco_bairro: (data as any).endereco_bairro || "",
+                endereco_cidade: (data as any).endereco_cidade || "",
+                endereco_provincia: (data as any).endereco_provincia || "",
+                endereco_codigo_postal: (data as any).endereco_codigo_postal || "",
+                endereco_pais: (data as any).endereco_pais || "MZ",
+                endereco_complemento: (data as any).endereco_complemento || "",
                 morada: data.morada || "",
                 empresa_origem: (data as any).empresa_origem ?? null,
             } );
@@ -249,8 +268,70 @@ export default function EditarPacientePage () {
                 </select>
 
                 <input
+                    name="endereco_rua"
+                    placeholder="Rua"
+                    value={form.endereco_rua || ""}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="endereco_numero"
+                    placeholder="Número"
+                    value={form.endereco_numero || ""}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="endereco_bairro"
+                    placeholder="Bairro"
+                    value={form.endereco_bairro || ""}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="endereco_cidade"
+                    placeholder="Cidade"
+                    value={form.endereco_cidade || ""}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="endereco_provincia"
+                    placeholder="Província"
+                    value={form.endereco_provincia || ""}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="endereco_codigo_postal"
+                    placeholder="Código postal"
+                    value={form.endereco_codigo_postal || ""}
+                    onChange={handleChange}
+                />
+
+                <select
+                    name="endereco_pais"
+                    value={form.endereco_pais || ""}
+                    onChange={handleChange}
+                >
+                    <option value="">Selecione país</option>
+                    {countryOptions.map( ( c ) => (
+                        <option key={c.code} value={c.code}>
+                            {c.label}
+                        </option>
+                    ) )}
+                </select>
+
+                <input
+                    name="endereco_complemento"
+                    placeholder="Complemento"
+                    value={form.endereco_complemento || ""}
+                    onChange={handleChange}
+                />
+
+                <input
                     name="morada"
-                    placeholder="Morada"
+                    placeholder="Morada (texto livre)"
                     value={form.morada}
                     onChange={handleChange}
                 />

@@ -5,15 +5,16 @@ from django.utils import timezone
 class Reconciliacao(models.Model):
     transacao = models.OneToOneField(
         "pagamentos.Transacao",
+        verbose_name="Transação",
         on_delete=models.CASCADE,
         related_name="reconciliacao",
         db_index=True,
     )
 
-    confirmado = models.BooleanField(default=False, db_index=True)
-    data_confirmacao = models.DateTimeField(blank=True, null=True)
+    confirmado = models.BooleanField("Confirmado", default=False, db_index=True)
+    data_confirmacao = models.DateTimeField("Data de confirmação", blank=True, null=True)
 
-    criado_em = models.DateTimeField(auto_now_add=True, db_index=True)
+    criado_em = models.DateTimeField("Criado em", auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["-criado_em"]

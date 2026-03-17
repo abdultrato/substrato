@@ -16,6 +16,7 @@ class Conta(
     Tipo = TipoConta
 
     tipo = models.CharField(
+        "Tipo de conta",
         max_length=3,
         choices=TipoConta.choices,
         default=TipoConta.DESPESA,

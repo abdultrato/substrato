@@ -10,6 +10,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import MoneyValue from "@/components/ui/MoneyValue"
 
 type FaturaRow = Record<string, any>
 
@@ -107,7 +108,7 @@ export default function FaturasPage() {
       { header: "Código", render: (f: FaturaRow) => f.id_custom || f.id },
       { header: "Origem", render: (f: FaturaRow) => f.origem || "-" },
       { header: "Estado", render: (f: FaturaRow) => f.estado || "-" },
-      { header: "Total", render: (f: FaturaRow) => `${money(f.total)} MZN` },
+      { header: "Total", render: (f: FaturaRow) => <MoneyValue value={f.total} /> },
       {
         header: "Ações",
         render: (f: FaturaRow) => (

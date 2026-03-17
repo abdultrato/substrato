@@ -170,7 +170,7 @@ docker build -f Dockerfile.frontend -t substrato_frontend:latest .
 
 ### Compose (produção)
 - Arquivo: `docker-compose.prod.yml`
-- Use um `.env.prod` com: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `API_DOMAIN`, `FRONTEND_DOMAIN`, `REDIS_URL`, `DJANGO_DEBUG=False`.
+- Use um `.env.prod` com: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `API_DOMAIN`, `FRONTEND_DOMAIN`, `REDIS_URL`, `DJANGO_DEBUG=False`, `SLACK_WEBHOOK`.
 - Pipeline sugerido:
 ```bash
 docker compose -f docker-compose.prod.yml run --rm backend python manage.py migrate

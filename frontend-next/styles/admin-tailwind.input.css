@@ -238,6 +238,150 @@ body.dark-mode .content-wrapper {
   @apply bg-slate-950;
 }
 
+/* ------------------------------
+   Login page layout
+-------------------------------- */
+.jazzmin-login-page .login-logo {
+  display: none;
+}
+
+.jazzmin-login-page .login-box {
+  max-width: 980px;
+  width: calc(100% - 32px);
+}
+
+.jazzmin-login-page .card,
+.jazzmin-login-page .card-body {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.admin-login-wrap {
+  @apply grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .admin-login-wrap {
+    grid-template-columns: 1.1fr 1fr;
+  }
+}
+
+.admin-login-visual {
+  @apply flex items-center justify-center border-b border-slate-200 bg-slate-100;
+  background-image: linear-gradient(135deg, rgba(248, 113, 113, 0.12), rgba(14, 165, 233, 0.08)), url('/static/img/logo.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 56%, cover;
+  min-height: 240px;
+}
+
+@media (min-width: 768px) {
+  .admin-login-visual {
+    @apply border-b-0 border-r;
+    min-height: 420px;
+  }
+}
+
+.admin-login-form {
+  @apply bg-white p-6 md:p-8;
+}
+
+.admin-login-heading {
+  @apply mb-4 flex items-start gap-3;
+}
+
+.admin-logo-tile {
+  @apply h-10 w-10 shrink-0 rounded-xl bg-slate-900;
+  background-image: url('/static/img/logo.png');
+  background-size: 75%;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.admin-title-block {
+  @apply flex flex-col gap-1;
+}
+
+.admin-title {
+  @apply font-semibold text-slate-900;
+}
+
+.admin-subtitle {
+  @apply text-xs leading-snug text-slate-600;
+}
+
+.admin-login-welcome {
+  @apply mb-4 text-sm text-slate-600;
+}
+
+.admin-callout {
+  @apply mb-3 rounded-xl border px-3 py-2 text-sm;
+}
+
+.admin-callout-danger {
+  @apply border-rose-200 bg-rose-50 text-rose-900;
+}
+
+.admin-login-fields {
+  @apply flex flex-col gap-3;
+}
+
+.admin-field {
+  @apply flex flex-col gap-1;
+}
+
+.admin-field-label {
+  @apply text-xs font-semibold uppercase tracking-wide text-slate-600;
+}
+
+.admin-field input {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm;
+  @apply focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200;
+}
+
+.admin-reset-link {
+  @apply text-right text-xs font-semibold text-slate-600 underline;
+}
+
+.admin-actions {
+  @apply flex justify-end pt-2;
+}
+
+.admin-submit {
+  @apply inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors;
+}
+
+.admin-submit:hover {
+  @apply bg-slate-800;
+}
+
+/* ------------------------------
+   Mobile-first adjustments
+-------------------------------- */
+@media (max-width: 768px) {
+  #content {
+    @apply px-3 py-3;
+  }
+
+  .module,
+  .inline-group,
+  .card,
+  .card-body {
+    overflow-x: auto;
+  }
+
+  .module table,
+  .card table,
+  .inline-group table,
+  .table {
+    min-width: 520px;
+  }
+}
+
 body.dark-mode #jazzy-navbar,
 body.dark-mode .main-header.navbar {
   @apply bg-black text-slate-100;
@@ -340,3 +484,23 @@ body.dark-mode .table td {
   @apply px-2 py-1;
 }
 
+/* ------------------------------
+   Footer (Jazzmin/AdminLTE)
+-------------------------------- */
+/* Remove Jazzmin version from footer (show only product/system version). */
+.main-footer .float-right {
+  display: none !important;
+}
+
+/* Keep content readable when footer is fixed. */
+body.layout-footer-fixed .content-wrapper {
+  padding-bottom: 3rem;
+}
+
+.main-footer {
+  @apply border-t border-slate-200 bg-white text-slate-600;
+}
+
+body.dark-mode .main-footer {
+  @apply border-slate-800 bg-black text-slate-200;
+}

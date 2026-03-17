@@ -25,24 +25,48 @@ class AtividadeUsuario(NoNameCoreModel):
         null=True,
         blank=True,
         db_index=True,
+        verbose_name="Utilizador",
     )
 
-    metodo = models.CharField(max_length=10, db_index=True)
-    caminho = models.CharField(max_length=255, db_index=True)
-    path_completo = models.TextField(blank=True, default="")
+    metodo = models.CharField(max_length=10, db_index=True, verbose_name="Método HTTP")
+    caminho = models.CharField(max_length=255, db_index=True, verbose_name="Rota curta")
+    path_completo = models.TextField(blank=True, default="", verbose_name="URL completa")
 
-    status_code = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
-    duracao_ms = models.PositiveIntegerField(null=True, blank=True)
+    status_code = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Status HTTP",
+    )
+    duracao_ms = models.PositiveIntegerField(null=True, blank=True, verbose_name="Duração (ms)")
 
-    ip = models.GenericIPAddressField(null=True, blank=True)
-    user_agent = models.CharField(max_length=255, blank=True, default="")
+    ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP de origem")
+    user_agent = models.CharField(max_length=255, blank=True, default="", verbose_name="User-Agent")
 
-    view_basename = models.CharField(max_length=120, blank=True, default="", db_index=True)
-    view_action = models.CharField(max_length=120, blank=True, default="", db_index=True)
+    view_basename = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name="View",
+    )
+    view_action = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name="Ação da view",
+    )
 
-    objeto_id = models.CharField(max_length=80, blank=True, default="", db_index=True)
-    mensagem = models.CharField(max_length=255, blank=True, default="")
-    metadata = models.JSONField(default=dict, blank=True)
+    objeto_id = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        db_index=True,
+        verbose_name="Objeto (ID)",
+    )
+    mensagem = models.CharField(max_length=255, blank=True, default="", verbose_name="Mensagem")
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="Metadados")
 
     class Meta:
         verbose_name = "Actividade do Utilizador"

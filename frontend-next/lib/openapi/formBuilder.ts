@@ -79,6 +79,30 @@ function mapType(prop: any): FormField["type"] {
   return "text"
 }
 
+function extractEnumLabels(prop: any): string[] | undefined {
+  if (!prop) return undefined
+
+  const explicit = prop?.["x-enumNames"] || prop?.["x-choices"]
+  if (Array.isArray(explicit) && explicit.length) return explicit.map(String)
+
+  // drf-spectacular embeds choice labels in `description` like:
+  // "* `CODE` - Label"
+  const desc = typeof prop?.description === "string" ? prop.description : ""
+  const values = Array.isArray(prop?.enum) ? (prop.enum as any[]) : []
+  if (!desc || !values.length) return undefined
+
+  const map = new Map<string, string>()
+  for (const line of desc.split("\n")) {
+    const m = line.match(/^\s*\*\s*`([^`]+)`\s*-\s*(.+?)\s*$/)
+    if (!m) continue
+    map.set(String(m[1]), String(m[2]))
+  }
+
+  if (!map.size) return undefined
+
+  return values.map((v) => map.get(String(v)) || String(v))
+}
+
 function schemaToFields(reqSchema: any, requiredList: string[] = []): FormField[] {
   const s = normalizeSchema(reqSchema)
   if (!s?.properties) return []
@@ -94,7 +118,7 @@ function schemaToFields(reqSchema: any, requiredList: string[] = []): FormField[
       type,
       readOnly: !!prop?.readOnly,
       enumValues: prop?.enum,
-      enumLabels: prop?.["x-enumNames"] || prop?.["x-choices"],
+      enumLabels: extractEnumLabels(prop),
     }
   })
 }

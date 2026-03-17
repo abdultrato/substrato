@@ -32,12 +32,14 @@ class ConsultaMedica(NoNameCoreModel):
 
     paciente = models.ForeignKey(
         "clinico.Paciente",
+        verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="consultas_medicas",
         db_index=True,
     )
     medico = models.ForeignKey(
         User,
+        verbose_name="Médico",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -47,6 +49,7 @@ class ConsultaMedica(NoNameCoreModel):
 
     especialidade = models.ForeignKey(
         "consultas.EspecialidadeConsulta",
+        verbose_name="Especialidade",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -54,21 +57,22 @@ class ConsultaMedica(NoNameCoreModel):
         db_index=True,
     )
 
-    tipo = models.CharField(max_length=120, db_index=True)
-    descricao = models.TextField(blank=True, default="")
+    tipo = models.CharField("Tipo de consulta", max_length=120, db_index=True)
+    descricao = models.TextField("Descrição", blank=True, default="")
 
-    agendada_para = models.DateTimeField(default=timezone.now, db_index=True)
+    agendada_para = models.DateTimeField("Agendada para", default=timezone.now, db_index=True)
     estado = models.CharField(
+        "Estado",
         max_length=20,
         choices=Estado.choices,
         default=Estado.MARCADA,
         db_index=True,
     )
 
-    preco = DinheiroField(default=Decimal("0.00"))
+    preco = DinheiroField("Preço", default=Decimal("0.00"))
 
-    concluida_em = models.DateTimeField(null=True, blank=True)
-    cancelada_em = models.DateTimeField(null=True, blank=True)
+    concluida_em = models.DateTimeField("Concluída em", null=True, blank=True)
+    cancelada_em = models.DateTimeField("Cancelada em", null=True, blank=True)
 
     class Meta:
         verbose_name = "Consulta Médica"

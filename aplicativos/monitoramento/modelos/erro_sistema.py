@@ -17,6 +17,7 @@ class ErroSistema(NoNameCoreModel):
 
     usuario = models.ForeignKey(
         User,
+        verbose_name="Utilizador",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -24,24 +25,36 @@ class ErroSistema(NoNameCoreModel):
         db_index=True,
     )
 
-    metodo = models.CharField(max_length=10, db_index=True)
-    caminho = models.CharField(max_length=255, db_index=True)
-    path_completo = models.TextField(blank=True, default="")
+    metodo = models.CharField("Método HTTP", max_length=10, db_index=True)
+    caminho = models.CharField("Rota curta", max_length=255, db_index=True)
+    path_completo = models.TextField("URL completa", blank=True, default="")
 
-    status_code = models.PositiveSmallIntegerField(default=500, db_index=True)
-    duracao_ms = models.PositiveIntegerField(null=True, blank=True)
+    status_code = models.PositiveSmallIntegerField("Status HTTP", default=500, db_index=True)
+    duracao_ms = models.PositiveIntegerField("Duração (ms)", null=True, blank=True)
 
-    ip = models.GenericIPAddressField(null=True, blank=True)
-    user_agent = models.CharField(max_length=255, blank=True, default="")
+    ip = models.GenericIPAddressField("IP de origem", null=True, blank=True)
+    user_agent = models.CharField("User-Agent", max_length=255, blank=True, default="")
 
-    view_basename = models.CharField(max_length=120, blank=True, default="", db_index=True)
-    view_action = models.CharField(max_length=120, blank=True, default="", db_index=True)
-    objeto_id = models.CharField(max_length=80, blank=True, default="", db_index=True)
+    view_basename = models.CharField(
+        "View",
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+    view_action = models.CharField(
+        "Ação da view",
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+    objeto_id = models.CharField("Objeto (ID)", max_length=80, blank=True, default="", db_index=True)
 
-    exception_class = models.CharField(max_length=120, blank=True, default="", db_index=True)
-    mensagem = models.CharField(max_length=500, blank=True, default="")
-    traceback = models.TextField(blank=True, default="")
-    metadata = models.JSONField(default=dict, blank=True)
+    exception_class = models.CharField("Classe da exceção", max_length=120, blank=True, default="", db_index=True)
+    mensagem = models.CharField("Mensagem", max_length=500, blank=True, default="")
+    traceback = models.TextField("Traceback", blank=True, default="")
+    metadata = models.JSONField("Metadados", default=dict, blank=True)
 
     class Meta:
         verbose_name = "Erro do Sistema"

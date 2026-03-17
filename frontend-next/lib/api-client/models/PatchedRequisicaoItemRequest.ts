@@ -18,9 +18,7 @@ export type PatchedRequisicaoItemRequest = {
      * Requisição pai que contém este item
      */
     requisicao?: number;
-    /**
-     * Exame incluído nesta requisição
-     */
-    exame?: number;
+    exame?: number | null;
+    exame_medico?: number | null;
 };
 

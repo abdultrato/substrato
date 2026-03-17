@@ -2,20 +2,39 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { EstadoCfbEnum } from './EstadoCfbEnum';
+import type { EstadoResultadoEnum } from './EstadoResultadoEnum';
+import type { RequisicaoAnaliseTipoEnum } from './RequisicaoAnaliseTipoEnum';
 import type { StatusClinicoEnum } from './StatusClinicoEnum';
 /**
- * Serializer para requisições de análise laboratorial.
- * Agrupa múltiplos exames para um paciente.
+ * Serializer para requisições (por setor).
+ *
+ * - LAB: aceita `exames` (laboratoriais)
+ * - MED: aceita `exames_medicos`
  */
 export type PatchedRequisicaoAnaliseRequest = {
+    exames?: Array<number>;
+    exames_medicos?: Array<number>;
+    /**
+     * Tipo/setor da requisição (LAB ou MED).
+     *
+     * * `LAB` - Laboratório
+     * * `MED` - Exame médico
+     */
+    tipo?: RequisicaoAnaliseTipoEnum;
+    estado?: EstadoResultadoEnum;
+    status_clinico?: StatusClinicoEnum;
     /**
      * Paciente para o qual a análise foi requisitada
      */
     paciente?: number;
-    exames?: Array<number>;
+    /**
+     * Empresa que subcontrata os serviços (ex.: medicina ocupacional).
+     */
+    empresa_solicitante?: number | null;
+    /**
+     * Quando a clínica terceiriza a execução para outra empresa.
+     */
+    empresa_executora_externa?: number | null;
     analista?: number | null;
-    estado?: EstadoCfbEnum;
-    status_clinico?: StatusClinicoEnum;
 };
 

@@ -26,8 +26,10 @@ export class ClNicoRequisiEsService {
      * * `rejeitado` - Rejeitado
      * @param idCustom
      * @param inquilino
+     * @param ordering Qual campo usar ao ordenar os resultados.
      * @param paciente
      * @param possuiResultadoCritico
+     * @param search Um termo de busca.
      * @param statusClinico * `NAO_URGENTE` - Não urgente
      * * `NORMAL` - Normal
      * * `ROTINA` - Rotina
@@ -37,6 +39,8 @@ export class ClNicoRequisiEsService {
      * * `MUITO_URGENTE` - Muito urgente
      * * `URGENTISSIMO` - Urgentíssimo
      * * `EMERGENCIA` - Emergência
+     * @param tipo * `LAB` - Laboratório
+     * * `MED` - Exame médico
      * @returns RequisicaoAnalise
      * @throws ApiError
      */
@@ -46,12 +50,15 @@ export class ClNicoRequisiEsService {
         atualizadoPor?: number,
         criadoEm?: string,
         criadoPor?: number,
-        estado: 'aguardando_validacao' | 'em_analise' | 'pendente' | 'rejeitado' | 'validado' = 'pendente',
+        estado?: 'aguardando_validacao' | 'em_analise' | 'pendente' | 'rejeitado' | 'validado',
         idCustom?: string,
         inquilino?: number,
+        ordering?: string,
         paciente?: number,
         possuiResultadoCritico?: boolean,
-        statusClinico: 'EMERGENCIA' | 'MUITO_URGENTE' | 'NAO_URGENTE' | 'NORMAL' | 'POUCO_URGENTE' | 'PRIORITARIO' | 'ROTINA' | 'URGENTE' | 'URGENTISSIMO' = 'NAO_URGENTE',
+        search?: string,
+        statusClinico?: 'EMERGENCIA' | 'MUITO_URGENTE' | 'NAO_URGENTE' | 'NORMAL' | 'POUCO_URGENTE' | 'PRIORITARIO' | 'ROTINA' | 'URGENTE' | 'URGENTISSIMO',
+        tipo?: 'LAB' | 'MED',
     ): CancelablePromise<Array<RequisicaoAnalise>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -65,9 +72,12 @@ export class ClNicoRequisiEsService {
                 'estado': estado,
                 'id_custom': idCustom,
                 'inquilino': inquilino,
+                'ordering': ordering,
                 'paciente': paciente,
                 'possui_resultado_critico': possuiResultadoCritico,
+                'search': search,
                 'status_clinico': statusClinico,
+                'tipo': tipo,
             },
         });
     }
@@ -89,7 +99,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de requisições de análise
-     * @param id A unique integer value identifying this Requisição de exame.
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
      * @returns RequisicaoAnalise
      * @throws ApiError
      */
@@ -106,7 +116,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de requisições de análise
-     * @param id A unique integer value identifying this Requisição de exame.
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
      * @param requestBody
      * @returns RequisicaoAnalise
      * @throws ApiError
@@ -127,7 +137,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de requisições de análise
-     * @param id A unique integer value identifying this Requisição de exame.
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
      * @param requestBody
      * @returns RequisicaoAnalise
      * @throws ApiError
@@ -148,7 +158,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de requisições de análise
-     * @param id A unique integer value identifying this Requisição de exame.
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
      * @returns void
      * @throws ApiError
      */
@@ -164,15 +174,52 @@ export class ClNicoRequisiEsService {
         });
     }
     /**
+     * Gerenciamento de requisições de análise
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
+     * @returns RequisicaoAnalise
+     * @throws ApiError
+     */
+    public static v1ClinicoRequisicaoanalisePdfResultadosRetrieve(
+        id: number,
+    ): CancelablePromise<RequisicaoAnalise> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/clinico/requisicaoanalise/{id}/pdf_resultados/',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Gerenciamento de requisições de análise
+     * @param id Um valor inteiro único que identifica este Requisição de exame.
+     * @returns RequisicaoAnalise
+     * @throws ApiError
+     */
+    public static v1ClinicoRequisicaoanaliseResultadoItensRetrieve(
+        id: number,
+    ): CancelablePromise<RequisicaoAnalise> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/clinico/requisicaoanalise/{id}/resultado_itens/',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Gerenciamento de itens de requisição
      * @param atualizadoEm
      * @param atualizadoPor
      * @param criadoEm
      * @param criadoPor
      * @param exame
+     * @param exameMedico
      * @param idCustom
      * @param inquilino
+     * @param ordering Qual campo usar ao ordenar os resultados.
      * @param requisicao
+     * @param search Um termo de busca.
      * @returns RequisicaoItem
      * @throws ApiError
      */
@@ -182,9 +229,12 @@ export class ClNicoRequisiEsService {
         criadoEm?: string,
         criadoPor?: number,
         exame?: number,
+        exameMedico?: number,
         idCustom?: string,
         inquilino?: number,
+        ordering?: string,
         requisicao?: number,
+        search?: string,
     ): CancelablePromise<Array<RequisicaoItem>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -195,9 +245,12 @@ export class ClNicoRequisiEsService {
                 'criado_em': criadoEm,
                 'criado_por': criadoPor,
                 'exame': exame,
+                'exame_medico': exameMedico,
                 'id_custom': idCustom,
                 'inquilino': inquilino,
+                'ordering': ordering,
                 'requisicao': requisicao,
+                'search': search,
             },
         });
     }
@@ -219,7 +272,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de itens de requisição
-     * @param id A unique integer value identifying this requisicao item.
+     * @param id Um valor inteiro único que identifica este requisicao item.
      * @returns RequisicaoItem
      * @throws ApiError
      */
@@ -236,7 +289,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de itens de requisição
-     * @param id A unique integer value identifying this requisicao item.
+     * @param id Um valor inteiro único que identifica este requisicao item.
      * @param requestBody
      * @returns RequisicaoItem
      * @throws ApiError
@@ -257,7 +310,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de itens de requisição
-     * @param id A unique integer value identifying this requisicao item.
+     * @param id Um valor inteiro único que identifica este requisicao item.
      * @param requestBody
      * @returns RequisicaoItem
      * @throws ApiError
@@ -278,7 +331,7 @@ export class ClNicoRequisiEsService {
     }
     /**
      * Gerenciamento de itens de requisição
-     * @param id A unique integer value identifying this requisicao item.
+     * @param id Um valor inteiro único que identifica este requisicao item.
      * @returns void
      * @throws ApiError
      */

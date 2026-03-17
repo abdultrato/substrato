@@ -9,11 +9,11 @@
  * * `µmol/l` - µmol/l
  * * `cel/mm3` - cel/mm3
  * * `x10³/µl` - x10³/µl
- * * `×10⁶/µL` - ×10⁶/µL
+ * * `x10⁶/µL` - x10⁶/µL
  * * `%` - %
  * * `u/l` - u/l
  * * `p/µL` - p/µL
  * * `ph` - ph
  * * `fl` - fl
  */
-export type UnidadeEnum = 'g/dl' | 'mg/dl' | 'mmol/l' | 'µmol/l' | 'cel/mm3' | 'x10³/µl' | '×10⁶/µL' | '%' | 'u/l' | 'p/µL' | 'ph' | 'fl';
+export type UnidadeEnum = 'g/dl' | 'mg/dl' | 'mmol/l' | 'µmol/l' | 'cel/mm3' | 'x10³/µl' | '%' | 'u/l' | 'p/µL' | 'ph' | 'fl';

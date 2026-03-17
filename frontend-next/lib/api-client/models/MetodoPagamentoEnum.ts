@@ -11,4 +11,4 @@
  * * `CHQ` - Cheque
  * * `OUT` - Outro
  */
-export type PagamentoMetodoEnum = 'DIN' | 'CAR' | 'TRF' | 'MOB' | 'POS' | 'CHQ' | 'OUT';
+export type MetodoPagamentoEnum = 'DIN' | 'CAR' | 'TRF' | 'MOB' | 'POS' | 'CHQ' | 'OUT';

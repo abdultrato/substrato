@@ -148,7 +148,7 @@ export class ClNicoExamesService {
     }
     /**
      * Obter detalhes de um exame específico
-     * @param id A unique integer value identifying this Exame.
+     * @param id Um valor inteiro único que identifica este Exame.
      * @returns Exame
      * @throws ApiError
      */
@@ -165,7 +165,7 @@ export class ClNicoExamesService {
     }
     /**
      * Atualizar exame completamente
-     * @param id A unique integer value identifying this Exame.
+     * @param id Um valor inteiro único que identifica este Exame.
      * @param requestBody
      * @returns Exame
      * @throws ApiError
@@ -186,7 +186,7 @@ export class ClNicoExamesService {
     }
     /**
      * Atualizar parcialmente um exame
-     * @param id A unique integer value identifying this Exame.
+     * @param id Um valor inteiro único que identifica este Exame.
      * @param requestBody
      * @returns Exame
      * @throws ApiError
@@ -207,7 +207,7 @@ export class ClNicoExamesService {
     }
     /**
      * Deletar um exame (soft delete)
-     * @param id A unique integer value identifying this Exame.
+     * @param id Um valor inteiro único que identifica este Exame.
      * @returns void
      * @throws ApiError
      */

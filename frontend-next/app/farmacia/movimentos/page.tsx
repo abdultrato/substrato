@@ -104,7 +104,7 @@ export default function FarmaciaMovimentosPage() {
                 href="/recursos/farmacia/movimentoestoque"
                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
               >
-                CRUD
+                Gerenciamento
               </Link>
               {podeVerAdmin ? (
                 <Link

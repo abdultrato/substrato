@@ -516,7 +516,7 @@ def ensure_pacientes(n: int, tenants: list[Inquilino], faker: Faker) -> list[Pac
                         "Niassa",
                     ]
                 ),
-                endereco_pais="Moçambique",
+                endereco_pais="MZ",
                 genero=genero,
                 raca_origem=raca,
                 tipo_documento=tipo_documento,

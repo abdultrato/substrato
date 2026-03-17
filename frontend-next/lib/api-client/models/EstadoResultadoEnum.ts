@@ -9,4 +9,4 @@
  * * `validado` - Validado
  * * `rejeitado` - Rejeitado
  */
-export type EstadoCfbEnum = 'pendente' | 'em_analise' | 'aguardando_validacao' | 'validado' | 'rejeitado';
+export type EstadoResultadoEnum = 'pendente' | 'em_analise' | 'aguardando_validacao' | 'validado' | 'rejeitado';

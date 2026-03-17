@@ -12,5 +12,6 @@ export type VendaRequest = {
     atualizado_por?: number | null;
     inquilino: number;
     deletado_por?: number | null;
+    paciente?: number | null;
 };
 

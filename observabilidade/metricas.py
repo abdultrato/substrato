@@ -1,10 +1,19 @@
 import logging
 
+from prometheus_client import Histogram
+
 _metricas = {
     "requisicoes": 0,
     "erros": 0,
     "tempo_total": 0,
 }
+
+FATURA_RECALCULO_DURATION = Histogram(
+    "substrato_recalculo_fatura_duration_seconds",
+    "Tempo de recalculo de totais por fatura",
+    ["tenant_id"],
+    buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5),
+)
 
 
 def registrar_requisicao(tempo_execucao):

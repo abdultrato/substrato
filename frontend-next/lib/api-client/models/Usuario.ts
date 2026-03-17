@@ -4,7 +4,6 @@
 /* eslint-disable */
 export type Usuario = {
     readonly id?: number;
-    password: string;
     last_login?: string | null;
     /**
      * Indica que este usuário tem todas as permissões sem atribuí-las explicitamente.
@@ -14,8 +13,6 @@ export type Usuario = {
      * Obrigatório. 150 caracteres ou menos. Letras, números e @/./+/-/_ apenas.
      */
     username: string;
-    first_name?: string;
-    last_name?: string;
     /**
      * Indica que usuário consegue acessar este site de administração.
      */
@@ -28,16 +25,19 @@ export type Usuario = {
     readonly criado_em?: string;
     readonly atualizado_em?: string;
     readonly id_custom?: string | null;
-    deletado?: boolean;
-    deletado_em?: string | null;
-    versao?: number;
+    readonly deletado?: boolean;
+    readonly deletado_em?: string | null;
+    readonly versao?: number;
     nome: string;
+    first_name?: string;
+    last_name?: string;
     email: string;
     telefone?: string | null;
-    criado_por?: number | null;
-    atualizado_por?: number | null;
-    inquilino: number;
-    deletado_por?: number | null;
+    foto?: string | null;
+    readonly criado_por?: number | null;
+    readonly atualizado_por?: number | null;
+    readonly inquilino?: number;
+    readonly deletado_por?: number | null;
     /**
      * Os grupos que este usuário pertence. Um usuário terá todas as permissões concedidas a cada um dos seus grupos.
      */

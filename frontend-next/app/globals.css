@@ -5,6 +5,10 @@
 @layer base {
   :root {
     color-scheme: light;
+    scroll-behavior: smooth;
+    --chrome-from: hsl(352 78% 32%);
+    --chrome-mid: hsl(346 72% 28%);
+    --chrome-to: hsl(340 70% 24%);
 
     /* Fonts: keep as CSS variables so Tailwind can reference them.
        We intentionally avoid network fetches in dev by default. */
@@ -26,9 +30,9 @@
 
     --border-hsl: 214 32% 91%;
 
-    --primary-hsl: 0 72% 42%;
-    --primary-hover-hsl: 0 72% 36%;
-    --primary-soft-hsl: 0 85% 96%;
+    --primary-hsl: 346 72% 28%;
+    --primary-hover-hsl: 340 70% 24%;
+    --primary-soft-hsl: 350 80% 94%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --ring-hsl: var(--primary-hsl);
@@ -124,17 +128,17 @@
     opacity: 1;
     background-image: radial-gradient(
         1000px 780px at 12% -10%,
-        hsl(var(--primary-hsl) / 0.1),
+        hsl(352 78% 32% / 0.14),
         transparent 60%
       ),
       radial-gradient(
         900px 700px at 110% 0%,
-        hsl(199 89% 48% / 0.1),
+        hsl(346 72% 28% / 0.12),
         transparent 55%
       ),
       radial-gradient(
         900px 700px at 50% 120%,
-        hsl(var(--primary-hsl) / 0.06),
+        hsl(340 70% 24% / 0.08),
         transparent 60%
       );
   }
@@ -143,17 +147,17 @@
     opacity: 0;
     background-image: radial-gradient(
         1000px 780px at 12% -10%,
-        hsl(var(--primary-hsl) / 0.16),
+        hsl(352 78% 32% / 0.18),
         transparent 62%
       ),
       radial-gradient(
         900px 700px at 110% 0%,
-        hsl(199 89% 48% / 0.1),
+        hsl(346 72% 28% / 0.12),
         transparent 55%
       ),
       radial-gradient(
         900px 700px at 50% 120%,
-        hsl(var(--primary-hsl) / 0.08),
+        hsl(340 70% 24% / 0.1),
         transparent 60%
       );
   }
@@ -379,11 +383,11 @@
 
   .login-card {
     @apply w-full max-w-3xl overflow-hidden rounded-3xl border border-border bg-card shadow-lg;
-    @apply grid md:grid-cols-2;
+    @apply grid grid-cols-1 md:grid-cols-2;
   }
 
   .login-image {
-    @apply hidden md:flex items-center justify-center p-8 border-r border-border;
+    @apply flex items-center justify-center p-8 border-b border-border md:border-b-0 md:border-r;
     background: radial-gradient(
         520px 380px at 20% 10%,
         hsl(var(--primary-hsl) / 0.18),
@@ -395,6 +399,7 @@
         transparent 55%
       ),
       hsl(var(--muted-hsl));
+    min-height: 220px;
   }
 
   .login-image img {
@@ -437,6 +442,73 @@
   .login-form form button {
     @apply mt-1 inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors;
     @apply hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card;
+  }
+
+  /* Page transition */
+  .page-transition {
+    animation: pageFade 220ms ease;
+  }
+
+  @keyframes pageFade {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* --------------------------------
+     Chrome surfaces (header/nav/footer)
+  --------------------------------- */
+  .chrome-surface {
+    background-image: linear-gradient(135deg, var(--chrome-from), var(--chrome-mid), var(--chrome-to));
+    color: #fff;
+    border-color: hsl(0 0% 100% / 0.2);
+  }
+
+  .chrome-surface .chrome-pill {
+    background: hsl(0 0% 100% / 0.12);
+    border-color: hsl(0 0% 100% / 0.24);
+    color: #fff;
+  }
+
+  .dark .chrome-surface {
+    background-image: linear-gradient(135deg, hsl(352 70% 18%), hsl(346 68% 16%), hsl(340 66% 14%));
+    color: #f8fafc;
+    border-color: hsl(0 0% 100% / 0.08);
+  }
+
+  .dark .chrome-surface .chrome-pill {
+    background: hsl(0 0% 100% / 0.08);
+    border-color: hsl(0 0% 100% / 0.16);
+    color: #f8fafc;
+  }
+
+  /* --------------------------------
+     Mobile adjustments (stack-first)
+  --------------------------------- */
+  @media (max-width: 768px) {
+    .page-box {
+      padding: 12px;
+      border-radius: 18px;
+    }
+
+    .table-container,
+    .page-box {
+      overflow-x: auto;
+    }
+
+    .page-box table,
+    .table-container table {
+      min-width: 520px;
+    }
+
+    .login-card {
+      border-radius: 20px;
+    }
   }
 
   /* --------------------------------
