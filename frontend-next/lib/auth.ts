@@ -1,6 +1,5 @@
 import { apiFetch } from "./api/index"
-import { clearTokens, setTokens } from "./tokens"
-import { setSessionUser } from "./session"
+import { getSessionUser, setSessionUser } from "./session"
 
 export async function login(username: string, password: string) {
   const res = await fetch("/api/v1/auth/login/", {
@@ -12,16 +11,10 @@ export async function login(username: string, password: string) {
 
   if (!res.ok) throw new Error("Invalid credentials")
 
-  const tokens = (await res.json()) as any
-  setTokens({ access: tokens?.access, refresh: tokens?.refresh })
-
-  try {
-    const user = await apiFetch("/auth/user/")
-    setSessionUser(user)
-    return user
-  } catch {
-    return null
-  }
+  const user = await apiFetch("/auth/user/")
+  if (!user) throw new Error("Falha ao obter sessão")
+  setSessionUser(user)
+  return user
 }
 
 export async function fetchCurrentUser() {
@@ -29,7 +22,7 @@ export async function fetchCurrentUser() {
 }
 
 export function getUser() {
-  return JSON.parse(typeof localStorage !== 'undefined' ? (localStorage.getItem("sessionUser") || "null") : "null")
+  return getSessionUser()
 }
 
 export function isAuthenticated() {
@@ -42,6 +35,5 @@ export function logout() {
   } catch (e) {
     // ignore
   }
-  clearTokens()
-  if (typeof localStorage !== 'undefined') localStorage.removeItem("sessionUser")
+  if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem("sessionUser")
 }

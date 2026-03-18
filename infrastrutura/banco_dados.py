@@ -7,11 +7,6 @@ from infrastrutura.contexto.inquilino import get_inquilino
 class TenantDatabaseRouter:
     """
     Router para sharding por tenant.
-
-    ✔ Baseado no tenant atual
-    ✔ Compatível com ContextVar
-    ✔ Seguro para migrations
-    ✔ Escalável horizontalmente
     """
 
     SHARD_COUNT = 4  # ajuste conforme necessidade
@@ -46,10 +41,7 @@ class TenantDatabaseRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         """
-        Permite migrations apenas no banco default
-        para apps globais.
-
-        Ajuste conforme sua estratégia.
+        Permite migrations no banco default para apps globais.
         """
         return db == "default"
 

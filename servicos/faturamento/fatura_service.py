@@ -11,14 +11,7 @@ from servicos.base import BaseService
 
 class FaturaService(BaseService):
     """
-    Application Service responsável por:
-
-    ✔ criar faturas
-    ✔ adicionar itens
-    ✔ recalcular totais
-    ✔ emitir
-    ✔ registrar pagamento
-    ✔ anular
+    Application service para operações de fatura.
     """
 
     # =====================================================
@@ -81,7 +74,7 @@ class FaturaService(BaseService):
     @transaction.atomic
     def emitir(cls, fatura: Fatura):
         if fatura.estado != Fatura.Estado.RASCUNHO:
-            return cls.fail("Apenas faturas em rascunho podem ser emitidas.")
+            return cls.fail("Faturas em rascunho podem ser emitidas.")
 
         cls._recalcular_totais(fatura)
 

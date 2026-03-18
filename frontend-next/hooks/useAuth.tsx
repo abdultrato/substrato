@@ -43,13 +43,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data)
             setSessionUser(data)
         } catch {
+            // Evita derrubar a sessão em falhas transitórias (rede/latência).
+            const stored = getSessionUser()
+            if (stored) {
+                setUser(stored)
+                return
+            }
             logout()
             setUser(null)
         }
     }, [])
 
     const signIn = useCallback((u: SessionUser) => {
-        // O login persiste no localStorage; aqui sincronizamos o estado em memória
+        // Persistimos no sessionStorage (expira ao fechar o navegador) e no estado em memória
         // para evitar loop de redirecionamento em páginas protegidas.
         setUser(u)
         setSessionUser(u)

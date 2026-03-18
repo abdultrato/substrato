@@ -11,7 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import serializers, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -41,20 +41,21 @@ def _get_integration_key(request) -> str:
     ).strip()
 
 
-def _auth_credencial(request) -> tuple[IntegracaoCredencial | None, Response | None]:
-    raw_key = _get_integration_key(request)
-    cred = IntegracaoCredencial.validar_chave(raw_key)
-    if cred is None:
-        return None, Response(
-            {"detail": "Credencial de integração inválida."},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
-    if not cred.ativo or cred.revogada_em:
-        return None, Response(
-            {"detail": "Credencial de integração revogada."},
-            status=status.HTTP_401_UNAUTHORIZED,
-        )
-    return cred, None
+class IntegrationKeyPermission(BasePermission):
+    """
+    Permissão para integrações de equipamentos baseada no cabeçalho X-Integration-Key.
+    Armazena a credencial validada em request.integration_cred para reuso na view.
+    """
+
+    message = "Credencial de integração inválida ou revogada."
+
+    def has_permission(self, request, view):
+        raw_key = _get_integration_key(request)
+        cred = IntegracaoCredencial.validar_chave(raw_key)
+        if cred is None or not cred.ativo or cred.revogada_em:
+            return False
+        request.integration_cred = cred
+        return True
 
 
 class IntegracaoDetailSerializer(serializers.Serializer):
@@ -145,7 +146,7 @@ class EquipamentoWorklistView(APIView):
     Autenticação: header `X-Integration-Key`.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IntegrationKeyPermission]
     authentication_classes: list = []
 
     @extend_schema(
@@ -175,9 +176,9 @@ class EquipamentoWorklistView(APIView):
         },
     )
     def get(self, request, equipamento_id_custom: str):
-        cred, resp = _auth_credencial(request)
-        if resp is not None:
-            return resp
+        cred = getattr(request, "integration_cred", None)
+        if cred is None:
+            return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
 
         if not cred.possui_scope(IntegracaoCredencial.Scope.WORKLIST_READ):
             return Response(
@@ -308,7 +309,7 @@ class EquipamentoResultadosInboxView(APIView):
     }
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IntegrationKeyPermission]
     authentication_classes: list = []
 
     @transaction.atomic
@@ -332,9 +333,9 @@ class EquipamentoResultadosInboxView(APIView):
         },
     )
     def post(self, request, equipamento_id_custom: str):
-        cred, resp = _auth_credencial(request)
-        if resp is not None:
-            return resp
+        cred = getattr(request, "integration_cred", None)
+        if cred is None:
+            return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
 
         if not cred.possui_scope(IntegracaoCredencial.Scope.RESULT_WRITE):
             return Response(

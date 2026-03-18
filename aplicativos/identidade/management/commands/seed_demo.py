@@ -361,7 +361,7 @@ def ensure_itens_venda(n: int, vendas: list[Venda], produtos: list[Produto]) -> 
         if not produtos_tenant:
             break
 
-        # Escolhe um produto que ainda não esteja na venda.
+        # Escolhe um produto que não esteja na venda.
         produto = next(
             (
                 p
@@ -794,7 +794,7 @@ def ensure_faturas(
             },
         )
 
-    # Cria faturas de farmacia e enfermagem se ainda faltar para atingir n
+    # Cria faturas de farmacia e enfermagem se faltar para atingir n
     while _count(Fatura) < n and vendas:
         idx = _count(Fatura) + 1
         venda = vendas[(idx - 1) % len(vendas)]

@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 class SaudeAPI(APIView):
     """
     Liveness probe.
-    Apenas confirma que o processo está vivo.
+    Confirma que o processo responde.
     """
 
     authentication_classes = []

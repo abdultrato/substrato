@@ -7,8 +7,7 @@ from django.db.models import Prefetch
 
 def with_related(queryset, *fields):
     """
-    Aplica select_related dinamicamente.
-    Use para ForeignKey e OneToOne.
+    Aplica select_related dinamicamente (ForeignKey/OneToOne).
     """
     if fields:
         return queryset.select_related(*fields)
@@ -22,8 +21,7 @@ def with_related(queryset, *fields):
 
 def with_prefetch(queryset, *fields):
     """
-    Aply prefetch_related dinamicamente.
-    Use para ManyToMany e relacionamentos reversos.
+    Aplica prefetch_related dinamicamente (ManyToMany e reversos).
     """
     if fields:
         return queryset.prefetch_related(*fields)
@@ -49,8 +47,7 @@ def with_custom_prefetch(queryset, relation, custom_queryset):
 
 def only_fields(queryset, *fields):
     """
-    Carrega apenas campos necessários.
-    Reduz uso de memória.
+    Carrega os campos informados.
     """
     if fields:
         return queryset.only(*fields)
@@ -64,7 +61,7 @@ def only_fields(queryset, *fields):
 
 def defer_fields(queryset, *fields):
     """
-    Evita carregar campos grandes (ex: PDF, JSON grande).
+    Evita carregar campos grandes (ex.: PDF, JSON).
     """
     if fields:
         return queryset.defer(*fields)
@@ -78,8 +75,7 @@ def defer_fields(queryset, *fields):
 
 def values_only(queryset, *fields):
     """
-    Retorna dicionários ao invés de objetos.
-    Ideal para endpoints somente leitura.
+    Retorna dicionários com os campos informados.
     """
     return queryset.values(*fields)
 
@@ -91,7 +87,7 @@ def values_only(queryset, *fields):
 
 def safe_count(queryset, limit=10000):
     """
-    Evita contagem pesada em tabelas grandes.
+    Limita o count a um valor máximo.
     """
     count = queryset.count()
     return min(count, limit)
@@ -113,12 +109,7 @@ def optimize_queryset(
     values=None,
 ):
     """
-    Applier centralizado de otimizações.
-
-    ✔ evita N+1 queries
-    ✔ reduz payload
-    ✔ melhora performance
-    ✔ previsível e explícito
+    Aplica select/prefetch/only/defer/values em um único ponto.
     """
 
     if select:

@@ -36,7 +36,7 @@ class MedicoSerializer(serializers.ModelSerializer):
 
 
 class ConsultaMedicaSerializer(serializers.ModelSerializer):
-    # Permite criar consulta apenas com `especialidade`; o model sincroniza tipo/preço.
+    # Permite criar consulta com `especialidade`; o model sincroniza tipo/preço.
     tipo = serializers.CharField(required=False, allow_blank=True)
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
     medico_nome = serializers.SerializerMethodField()

@@ -62,7 +62,7 @@ def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, 
         if getattr(u, "is_superuser", False) is True:
             u.is_superuser = False
             fields.append("is_superuser")
-        # Política do projeto: apenas Administrador acessa /admin.
+        # Política do projeto: Administrador acessa /admin.
         if getattr(u, "is_staff", False) is True:
             u.is_staff = False
             fields.append("is_staff")

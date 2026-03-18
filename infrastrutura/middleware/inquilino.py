@@ -1,6 +1,9 @@
+import os
+
 from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
+from django.db import OperationalError, connection
 
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
 from infrastrutura.contexto.inquilino import (
@@ -18,12 +21,37 @@ class InquilinoMiddleware:
     # =====================================================
 
     def __call__(self, request):
+        # Proteção global: se ocorrer erro de DB não capturado mais abaixo, retorna 503.
+        try:
+            return self._handle(request)
+        except OperationalError:
+            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+
+    # =====================================================
+
+    def _handle(self, request):
+        # Endpoints de health/metrics não precisam de resolução de tenant nem de DB.
+        if request.path.startswith("/health/") or request.path.startswith("/metrics"):
+            token = set_inquilino(None)
+            request.inquilino = None
+            try:
+                return self.get_response(request)
+            finally:
+                reset_inquilino(token)
+
+        # Verifica conexão DB e tenta reestabelecer se necessário (antes de qualquer query).
+        try:
+            connection.close_if_unusable_or_obsolete()
+            connection.ensure_connection()
+        except OperationalError:
+            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+
         # ---------------------------------
         # DESENVOLVIMENTO (DEBUG)
         # ---------------------------------
-        # Em DEBUG, ainda precisamos definir um tenant na thread-local para permitir
+        # Em DEBUG, definimos um tenant na thread-local para permitir
         # criação/validação de modelos que exigem `inquilino` via InquilinoMixin.
-        # Caso não exista nenhum tenant no banco, cria um tenant local (somente DEBUG).
+        # Caso não exista nenhum tenant no banco, cria um tenant local (modo DEBUG).
         if settings.DEBUG:
             host = ""
             try:
@@ -33,25 +61,28 @@ class InquilinoMiddleware:
 
             inquilino = None
 
-            if host:
-                inquilino = Inquilino.objects.filter(dominio=host).order_by("id").first()
+            try:
+                if host:
+                    inquilino = Inquilino.objects.filter(dominio=host).order_by("id").first()
 
-            if not inquilino:
-                inquilino = Inquilino.objects.filter(ativo=True).order_by("id").first()
+                if not inquilino:
+                    inquilino = Inquilino.objects.filter(ativo=True).order_by("id").first()
 
-            if not inquilino:
-                # Tenant mínimo para desenvolvimento local.
-                try:
-                    inquilino = Inquilino.objects.create(
-                        nome="Tenant Local",
-                        identificador="local",
-                        dominio=host or "localhost",
-                        ativo=True,
-                        status_comercial=Inquilino.StatusComercial.TRIAL,
-                    )
-                except Exception:
-                    # Fallback para corrida/conflito de unique.
-                    inquilino = Inquilino.objects.filter(identificador="local").order_by("id").first()
+                if not inquilino:
+                    # Tenant mínimo para desenvolvimento local.
+                    try:
+                        inquilino = Inquilino.objects.create(
+                            nome="Tenant Local",
+                            identificador="local",
+                            dominio=host or "localhost",
+                            ativo=True,
+                            status_comercial=Inquilino.StatusComercial.TRIAL,
+                        )
+                    except Exception:
+                        # Fallback para corrida/conflito de unique.
+                        inquilino = Inquilino.objects.filter(identificador="local").order_by("id").first()
+            except OperationalError:
+                return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
 
             token = set_inquilino(inquilino)
             request.inquilino = inquilino
@@ -66,7 +97,26 @@ class InquilinoMiddleware:
         if not host:
             return JsonResponse({"erro": "Host inválido."}, status=400)
 
+        # Verifica conexão DB e tenta reestabelecer se necessário.
+        try:
+            connection.close_if_unusable_or_obsolete()
+            connection.ensure_connection()
+        except OperationalError:
+            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+
         inquilino = self._resolver_inquilino(host)
+
+        # Fallback opcional em ambientes sem DNS adequado:
+        # define TENANT_FALLBACK_DEFAULT=true para usar o primeiro tenant ativo
+        # quando o host não corresponde a nenhum domínio configurado.
+        if not inquilino and settings.DEBUG is False and os.getenv("TENANT_FALLBACK_DEFAULT", "").lower() in {
+            "1",
+            "true",
+            "yes",
+        }:
+            inquilino = Inquilino.objects.filter(ativo=True).order_by("id").first()
+            if inquilino:
+                cache.set(f"tenant_domain:{host}", inquilino.id, self.CACHE_TIMEOUT)
 
         # Integrações de equipamentos (machine-to-machine) podem autenticar tenant via
         # API key, sem depender do domínio do Host.

@@ -155,6 +155,9 @@ export const getHeaders = async (config: OpenAPIConfig, options: ApiRequestOptio
             [key]: String(value),
         }), {} as Record<string, string>);
 
+    // Quando usamos cookies HttpOnly, o token pode ser indefinido e ainda assim
+    // o browser enviará as credenciais. Mantemos Authorization apenas se foi
+    // configurado explicitamente.
     if (isStringWithValue(token)) {
         headers['Authorization'] = `Bearer ${token}`;
     }
@@ -210,9 +213,8 @@ export const sendRequest = async (
         signal: controller.signal,
     };
 
-    if (config.WITH_CREDENTIALS) {
-        request.credentials = config.CREDENTIALS;
-    }
+    // Sempre enviamos credenciais (cookies) porque a API depende deles.
+    request.credentials = config.WITH_CREDENTIALS ? config.CREDENTIALS : 'include';
 
     onCancel(() => controller.abort());
 

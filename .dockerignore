@@ -50,9 +50,16 @@ node_modules/
 .next/
 frontend-next/node_modules/
 frontend-next/.next/
+.next-dev/
+frontend-next/.next-dev/
 .npm
 npm-debug.log
 yarn-error.log
+pnpm-lock.yaml
+package-lock.json
+coverage/
+.coverage*
+.nyc_output/
 
 # ==========================================================
 # IDE / EDITORS
@@ -121,3 +128,14 @@ staticfiles
 node_modules
 __pycache__
 *.pyc
+
+# ==========================================================
+# PROJECT ARTIFACTS / LOCAL DATA
+# ==========================================================
+logs/
+backups/
+artefatos/
+artefatos/next-cache-backups/
+test_db*
+db_*
+*.sqlite3.bak*

@@ -1,8 +1,12 @@
 from datetime import timedelta
+import uuid
+import os
 
 from django.conf import settings
+from django.contrib.auth import logout as django_logout
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -10,8 +14,12 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from aplicativos.identidade.modelos.password_reset import PasswordResetToken
@@ -20,6 +28,109 @@ from aplicativos.notificacoes.servicos import ServicoNotificacao
 from seguranca.permissoes.rbac import RBACPermission
 
 User = get_user_model()
+
+
+SESSION_IDLE_TIMEOUT_MINUTES = int(getattr(settings, "SESSION_IDLE_TIMEOUT_MINUTES", 30) or 30)
+SESSION_IDLE_TIMEOUT_SECONDS = max(5, SESSION_IDLE_TIMEOUT_MINUTES) * 60
+COOKIE_ACCESS_NAME = "access_token"
+COOKIE_REFRESH_NAME = "refresh_token"
+REFRESH_CACHE_PREFIX = "auth:refresh:"
+
+def _cookie_domain(request):
+    # Prioridade: variáveis de ambiente/configuração.
+    # Importante: não forçar domínio pelo host da requisição em dev,
+    # porque IPs (ex.: 127.0.0.1) podem gerar cookies inválidos em browsers.
+    env_domain = os.getenv("AUTH_COOKIE_DOMAIN") or getattr(settings, "SESSION_COOKIE_DOMAIN", None)
+    if env_domain:
+        return env_domain
+    # Em DEV, preferir a origem real do frontend (Origin) quando disponível.
+    # Isso evita definir domain=localhost quando a requisição chega via proxy
+    # (ex.: Next -> backend), mas o navegador está em outro host/IP.
+    if getattr(settings, "DEBUG", False):
+        origin = request.META.get("HTTP_ORIGIN") or request.headers.get("Origin")
+        if origin:
+            try:
+                origin_host = origin.split("://", 1)[-1].split("/", 1)[0].split(":")[0].strip()
+            except Exception:
+                origin_host = ""
+            if origin_host in {"localhost", "127.0.0.1"}:
+                return "localhost"
+            # Para IPs/domínios diferentes, use cookie host-only.
+            return None
+        host = (request.get_host() or "").split(":")[0].strip()
+        if host in {"localhost", "127.0.0.1"}:
+            return "localhost"
+        return None
+    return None
+
+
+def _set_jwt_cookies(response: Response, request, access: str | None = None, refresh: str | None = None):
+    # Usa o esquema real da requisição para decidir o flag Secure;
+    # em ambientes behind-proxy, configure SECURE_PROXY_SSL_HEADER.
+    secure = request.is_secure()
+    samesite = "Lax"
+    path = "/"
+    domain = _cookie_domain(request)
+
+    if access is not None:
+        response.set_cookie(
+            COOKIE_ACCESS_NAME,
+            access,
+            max_age=SESSION_IDLE_TIMEOUT_SECONDS,
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
+            path=path,
+            domain=domain,
+        )
+    if refresh is not None:
+        response.set_cookie(
+            COOKIE_REFRESH_NAME,
+            refresh,
+            max_age=int(timedelta(days=7).total_seconds()),
+            httponly=True,
+            secure=secure,
+            samesite=samesite,
+            path=path,
+            domain=domain,
+        )
+
+
+def _clear_jwt_cookies(response: Response):
+    for name in (COOKIE_ACCESS_NAME, COOKIE_REFRESH_NAME):
+        response.delete_cookie(name, path="/")
+
+
+def _refresh_cache_key(user_id: int, jti: str) -> str:
+    return f"{REFRESH_CACHE_PREFIX}{user_id}:{jti}"
+
+
+def _allow_refresh(user_id: int, jti: str, lifetime_seconds: int):
+    cache.set(_refresh_cache_key(user_id, jti), True, timeout=lifetime_seconds)
+
+
+def _revoke_refresh(user_id: int, jti: str):
+    cache.delete(_refresh_cache_key(user_id, jti))
+
+
+def _session_cache_key(user_id: int) -> str:
+    return f"auth:sid:{user_id}"
+
+
+def _start_session(user_id: int, session_id: str):
+    cache.set(_session_cache_key(user_id), session_id, timeout=SESSION_IDLE_TIMEOUT_SECONDS)
+
+
+def _touch_session(user_id: int, session_id: str):
+    key = _session_cache_key(user_id)
+    stored = cache.get(key)
+    if stored != session_id:
+        return False
+    try:
+        cache.touch(key, timeout=SESSION_IDLE_TIMEOUT_SECONDS)
+    except Exception:
+        cache.set(key, session_id, timeout=SESSION_IDLE_TIMEOUT_SECONDS)
+    return True
 
 
 def _password_reset_ttl_minutes() -> int:
@@ -67,6 +178,70 @@ class DetailSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 
+class SessionTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        session_id = uuid.uuid4().hex
+
+        refresh = self.get_token(self.user)
+        refresh["sid"] = session_id
+
+        # Single-use refresh: registrar jti no cache com TTL do refresh.
+        refresh_ttl = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
+        _allow_refresh(self.user.id, str(refresh.get("jti")), refresh_ttl)
+
+        data["refresh"] = str(refresh)
+        data["access"] = str(refresh.access_token)
+        data["session_id"] = session_id
+
+        _start_session(self.user.id, session_id)
+
+        return data
+
+
+class SessionTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        refresh_token = attrs.get("refresh")
+        if not refresh_token:
+            raise AuthenticationFailed("Sessão expirada.")
+
+        refresh = RefreshToken(refresh_token)
+
+        session_id = refresh.get("sid")
+        user_id = refresh.get("user_id")
+
+        if not session_id or not user_id:
+            raise AuthenticationFailed("Sessão expirada.")
+
+        if not _touch_session(int(user_id), session_id):
+            raise AuthenticationFailed("Sessão expirada ou revogada.")
+
+        # Enforce single-use refresh: precisa estar no cache.
+        jti = str(refresh.get("jti"))
+        key = _refresh_cache_key(int(user_id), jti)
+        if not cache.get(key):
+            raise AuthenticationFailed("Sessão expirada.")
+
+        # Rotaciona: invalida jti antigo e gera novo refresh com o mesmo sid.
+        _revoke_refresh(int(user_id), jti)
+        user = User.objects.filter(id=int(user_id)).first()
+        if not user:
+            raise AuthenticationFailed("Sessão expirada.")
+        new_refresh = RefreshToken.for_user(user)
+        new_refresh["sid"] = session_id
+        refresh_ttl = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
+        _allow_refresh(int(user_id), str(new_refresh.get("jti")), refresh_ttl)
+
+        data = {
+            "access": str(new_refresh.access_token),
+            "refresh": str(new_refresh),
+            "session_id": session_id,
+        }
+
+        return data
+
+
 class UserMeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField(required=False, allow_null=True)
@@ -98,10 +273,40 @@ class UserPatchSerializer(serializers.ModelSerializer):
 
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
+    serializer_class = SessionTokenObtainPairSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        access = response.data.get("access")
+        refresh = response.data.get("refresh")
+        if access or refresh:
+            _set_jwt_cookies(response, request, access=access, refresh=refresh)
+            # Remover tokens do corpo para evitar exposição ao JS; manter session_id.
+            response.data = {"session_id": response.data.get("session_id")}
+        return response
 
 
 class RefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
+    serializer_class = SessionTokenRefreshSerializer
+
+    def post(self, request, *args, **kwargs):
+        # Se o refresh token não vier no body, tenta cookie HttpOnly.
+        if "refresh" not in request.data:
+            cookie_refresh = request.COOKIES.get(COOKIE_REFRESH_NAME)
+            if cookie_refresh:
+                request._full_data = {"refresh": cookie_refresh}
+
+        response = super().post(request, *args, **kwargs)
+
+        access = response.data.get("access")
+        refresh = response.data.get("refresh")
+        if access or refresh:
+            _set_jwt_cookies(response, request, access=access, refresh=refresh)
+            response.data = {"session_id": response.data.get("session_id")}
+        return response
 
 
 class LogoutView(APIView):
@@ -112,8 +317,22 @@ class LogoutView(APIView):
         responses={204: OpenApiResponse(description="Logout stateless (JWT).")},
     )
     def post(self, request):
-        # Stateless JWT logout: client removes token.
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        # Logout unificado: JWT + sessão Django (admin).
+        try:
+            user_id = request.user.id
+            cache.delete(_session_cache_key(user_id))
+        except Exception:
+            pass
+
+        # Remove sessão Django vinculada ao request, se existir.
+        try:
+            django_logout(request)
+        except Exception:
+            pass
+
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        _clear_jwt_cookies(response)
+        return response
 
 
 class UserView(APIView):
@@ -272,6 +491,9 @@ class PasswordResetConfirmView(APIView):
 
             # Marca o token como usado e invalida tokens antigos do mesmo usuário.
             PasswordResetToken.objects.filter(user=user, usado=False).update(usado=True)
+
+            # Revoga sessões JWT ativas (idle cache) após reset de senha.
+            cache.delete(_session_cache_key(user.id))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

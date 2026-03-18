@@ -16,9 +16,8 @@ class CorporateFilterBackend:
     """
     Backend base corporativo.
 
-    ✔ Multi-tenant obrigatório
-    ✔ Filtros automáticos
-    ✔ Seguro para SaaS
+    - Aplica isolamento por tenant.
+    - Aplica filtros automáticos por query string.
     """
 
     tenant_field = "inquilino"
@@ -145,10 +144,7 @@ class CorporateFullTextSearch(SearchFilter):
 
 class CorporateQueryCacheMixin:
     """
-    Cache seguro por:
-            ✔ tenant
-            ✔ usuário
-            ✔ query string
+    Cache por tenant, usuário e query string.
     """
 
     cache_timeout = getattr(settings, "DEFAULT_QUERY_CACHE_TIMEOUT", 60)
@@ -170,7 +166,7 @@ class CorporateQueryCacheMixin:
 
         response = super().dispatch(request, *args, **kwargs)
 
-        # Armazena apenas dados serializados
+        # Armazena dados serializados
         if hasattr(response, "data"):
             cache.set(cache_key, response, self.cache_timeout)
 

@@ -7,6 +7,7 @@ import useAuthGuard from "@/hooks/useAuthGuard";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
 import useAuth from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage () {
     useAuthGuard( { requireAuth: false } )
@@ -17,12 +18,15 @@ export default function LoginPage () {
     const [user, setUser] = useState( "" );
     const [pass, setPass] = useState( "" );
     const [error, setError] = useState( "" );
+    const [showPass, setShowPass] = useState( false )
 
     const [resetId, setResetId] = useState( "" )
     const [resetToken, setResetToken] = useState( "" )
     const [resetPass, setResetPass] = useState( "" )
     const [resetPass2, setResetPass2] = useState( "" )
     const [resetInfo, setResetInfo] = useState( "" )
+    const [showResetPass, setShowResetPass] = useState( false )
+    const [showResetPass2, setShowResetPass2] = useState( false )
 
     async function handleSubmit ( e: any ) {
         e.preventDefault();
@@ -30,14 +34,18 @@ export default function LoginPage () {
 
         try {
             const sessionUser = await login( user, pass );
-            if ( sessionUser ) signIn( sessionUser )
+            if ( !sessionUser ) {
+                setError( "Falha ao obter sessão. Tente novamente." )
+                return
+            }
+            signIn( sessionUser )
             const next =
                 typeof window !== "undefined"
                     ? new URLSearchParams( window.location.search ).get( "next" )
                     : null
             router.push( next || getDefaultWorkspaceHref( sessionUser ) );
-        } catch {
-            setError( "Usuário ou senha inválidos" );
+        } catch (e) {
+            setError( e instanceof Error ? e.message : "Usuário ou senha inválidos" );
         }
     }
 
@@ -126,17 +134,30 @@ export default function LoginPage () {
                         <>
                             <form onSubmit={handleSubmit}>
                                 <input
+                                    className="login-input"
                                     placeholder="Usuário"
                                     value={user}
                                     onChange={e => setUser( e.target.value )}
                                 />
 
-                                <input
-                                    type="password"
-                                    placeholder="Senha"
-                                    value={pass}
-                                    onChange={e => setPass( e.target.value )}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="login-input flex-1"
+                                        type={showPass ? "text" : "password"}
+                                        placeholder="Senha"
+                                        value={pass}
+                                        onChange={e => setPass( e.target.value )}
+                                        autoComplete="current-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPass( (v) => !v )}
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                        aria-label={showPass ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                    >
+                                        {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    </button>
+                                </div>
 
                                 <button>Entrar</button>
                             </form>
@@ -157,6 +178,7 @@ export default function LoginPage () {
                         <>
                             <form onSubmit={handleResetRequest}>
                                 <input
+                                    className="login-input"
                                     placeholder="E-mail, telefone ou utilizador"
                                     value={resetId}
                                     onChange={e => setResetId( e.target.value )}
@@ -181,24 +203,49 @@ export default function LoginPage () {
                         <>
                             <form onSubmit={handleResetConfirm}>
                                 <input
+                                    className="login-input"
                                     placeholder="Código recebido"
                                     value={resetToken}
                                     onChange={e => setResetToken( e.target.value )}
                                 />
 
-                                <input
-                                    type="password"
-                                    placeholder="Nova palavra-passe"
-                                    value={resetPass}
-                                    onChange={e => setResetPass( e.target.value )}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="login-input flex-1"
+                                        type={showResetPass ? "text" : "password"}
+                                        placeholder="Nova palavra-passe"
+                                        value={resetPass}
+                                        onChange={e => setResetPass( e.target.value )}
+                                        autoComplete="new-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowResetPass( (v) => !v )}
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                        aria-label={showResetPass ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                    >
+                                        {showResetPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    </button>
+                                </div>
 
-                                <input
-                                    type="password"
-                                    placeholder="Confirmar nova palavra-passe"
-                                    value={resetPass2}
-                                    onChange={e => setResetPass2( e.target.value )}
-                                />
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="login-input flex-1"
+                                        type={showResetPass2 ? "text" : "password"}
+                                        placeholder="Confirmar nova palavra-passe"
+                                        value={resetPass2}
+                                        onChange={e => setResetPass2( e.target.value )}
+                                        autoComplete="new-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowResetPass2( (v) => !v )}
+                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                        aria-label={showResetPass2 ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                    >
+                                        {showResetPass2 ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    </button>
+                                </div>
 
                                 <button>Repor palavra-passe</button>
                             </form>

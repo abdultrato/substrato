@@ -26,13 +26,20 @@ class WebhookViewSet(ViewSet):
     permission_classes = [AllowAny]
     authentication_classes = []
 
+    # Restringe provedores para evitar superfície aberta.
+    ALLOWED_PROVIDERS = {"stripe", "mpesa", "emola", "mkesh", "paypal"}
+
     # =====================================================
     # MAIN ENTRYPOINT
     # =====================================================
 
     @action(detail=False, methods=["post"], url_path=r"(?P<provider>[^/.]+)")
     def receive(self, request, provider=None):
-        provider = provider.lower()
+        provider = (provider or "").lower().strip()
+
+        if provider not in self.ALLOWED_PROVIDERS:
+            logger.warning("Webhook provider não permitido: %s", provider)
+            return Response({"detail": "provider not allowed"}, status=404)
 
         try:
             payload = request.data
@@ -44,7 +51,7 @@ class WebhookViewSet(ViewSet):
         # -------------------------------------------------
 
         if not self._verify_signature(provider, request):
-            logger.warning(f"Webhook assinatura inválida: {provider}")
+            logger.warning("Webhook assinatura inválida ou segredo ausente: %s", provider)
             return Response({"detail": "invalid signature"}, status=400)
 
         # -------------------------------------------------
@@ -57,7 +64,7 @@ class WebhookViewSet(ViewSet):
             cache_key = f"webhook:{provider}:{event_id}"
 
             if cache.get(cache_key):
-                logger.info(f"Evento duplicado ignorado: {provider} {event_id}")
+                logger.info("Evento duplicado ignorado: %s %s", provider, event_id)
                 return Response({"status": "duplicate ignored"})
 
             cache.set(cache_key, True, timeout=60 * 60)
@@ -66,7 +73,7 @@ class WebhookViewSet(ViewSet):
         # 3️⃣ DISPATCH EVENT
         # -------------------------------------------------
 
-        logger.info(f"Webhook recebido: {provider}")
+        logger.info("Webhook recebido: %s", provider)
         dispatch_webhook_event(provider, payload)
 
         return Response({"status": "received"})
@@ -83,12 +90,16 @@ class WebhookViewSet(ViewSet):
         secret_map = {
             "stripe": getattr(settings, "STRIPE_WEBHOOK_SECRET", None),
             "mpesa": getattr(settings, "MPESA_WEBHOOK_SECRET", None),
+            "emola": getattr(settings, "MPESA_WEBHOOK_SECRET", None),
+            "mkesh": getattr(settings, "MPESA_WEBHOOK_SECRET", None),
+            "paypal": getattr(settings, "PAYPAL_WEBHOOK_SECRET", None),
         }
 
         secret = secret_map.get(provider)
 
-        if not secret:
-            return True  # provider sem assinatura
+        # Se o provedor exige segredo e não está configurado, rejeita.
+        if secret is None or secret == "":
+            return False
 
         signature = request.headers.get("X-Signature")
 

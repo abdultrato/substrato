@@ -120,7 +120,7 @@ export default function PerfilPage () {
 
     return (
         <AppLayout>
-            <div className="space-y-4">
+            <div className="space-y-4 pb-24 md:pb-4">
                 <PageHeader
                     title="Perfil"
                     subtitle="Atualize o seu nome, contactos e foto de perfil."
@@ -208,7 +208,7 @@ export default function PerfilPage () {
                                     />
                                 </FormField>
 
-                                <div className="flex items-end justify-end sm:col-span-2">
+                                <div className="hidden items-end justify-end sm:col-span-2 md:flex">
                                     <Button
                                         type="button"
                                         onClick={onSave}
@@ -223,7 +223,17 @@ export default function PerfilPage () {
                     )}
                 </Card>
             </div>
+
+            <div className="fixed inset-x-0 bottom-10 z-30 border-t border-border bg-background/95 px-4 py-3 shadow-sm backdrop-blur md:hidden">
+                <Button
+                    type="button"
+                    onClick={onSave}
+                    loading={saving}
+                    className="w-full"
+                >
+                    Guardar alterações
+                </Button>
+            </div>
         </AppLayout>
     )
 }
-

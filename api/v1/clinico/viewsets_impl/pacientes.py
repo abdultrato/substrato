@@ -296,7 +296,7 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     @action(detail=True, methods=["get"])
     def historia_clinica(self, request, pk=None):
         if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
-            raise PermissionDenied("Apenas Médico/Medicina Ocupacional/Administrador pode ver a história clínica.")
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
 
         paciente = self.get_object()
         return Response(self._montar_historia_clinica(request, paciente))
@@ -309,7 +309,7 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
         Ex.: /api/v1/clinico/paciente/historia_clinica/?numero_id=...
         """
         if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
-            raise PermissionDenied("Apenas Médico/Medicina Ocupacional/Administrador pode ver a história clínica.")
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
 
         numero_id = (request.query_params.get("numero_id") or "").strip()
         if not numero_id:

@@ -18,7 +18,20 @@ EMAIL_BACKEND = os.getenv(
 )
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Para cookies HttpOnly funcionarem no frontend (localhost:3000),
+# precisamos permitir credenciais e declarar origens explicitamente.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://0.0.0.0:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://0.0.0.0:3001",
+    "http://100.93.161.102:3000",
+    "http://100.93.161.102:3001",
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # Quando o Django Admin e endpoints HTML são acessados via proxy do Next.js
 # (ex.: http://localhost:3000/admin/), o header Origin vem com porta diferente
@@ -31,14 +44,26 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3001",
     "http://127.0.0.1:3001",
     "http://0.0.0.0:3001",
+    "http://100.93.161.102:3000",
+    "http://100.93.161.102:3001",
 ]
 
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+REDIS_URL = os.getenv("REDIS_URL")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 
 
 SECURE_SSL_REDIRECT = False

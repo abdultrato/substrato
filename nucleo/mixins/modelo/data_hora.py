@@ -4,12 +4,7 @@ from django.utils import timezone
 
 class TimeStampMixin(models.Model):
     """
-    Timestamp corporativo enterprise-ready.
-
-    - Alta precisão
-    - Indexado para auditoria
-    - Compatível com SoftDelete
-    - Seguro para ambientes multi-tenant
+    Mixin de timestamps (criado_em, atualizado_em).
     """
 
     criado_em = models.DateTimeField(
@@ -45,8 +40,7 @@ class TimeStampMixin(models.Model):
 
     def touch(self, update_fields=None):
         """
-        Atualiza somente atualizado_em.
-        Útil para controle de sincronização.
+        Atualiza atualizado_em sem alterar criado_em.
         """
         self.atualizado_em = timezone.now()
 

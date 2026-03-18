@@ -17,7 +17,7 @@ from .managers import ManagerAtivo
 class BaseModel(models.Model):
     """
     Modelo base mínimo.
-    Serve apenas para padronizar herança.
+    Serve para padronizar herança.
     """
 
     class Meta:

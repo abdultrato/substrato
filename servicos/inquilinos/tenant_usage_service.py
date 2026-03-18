@@ -6,13 +6,6 @@ from infrastrutura.cache import TenantCache
 class TenantUsageService:
     """
     Controle de uso mensal por tenant.
-
-    ✔ Isolado por mês
-    ✔ Atomic increment
-    ✔ Timezone-safe
-    ✔ Billing-ready
-    ✔ Histórico consultável
-    ✔ Escalável
     """
 
     KEY_PREFIX = "requests"
@@ -39,7 +32,7 @@ class TenantUsageService:
     @staticmethod
     def incrementar_requisicao(inquilino):
         """
-        Incremento atômico seguro.
+        Incrementa o contador mensal do tenant.
         """
         periodo = TenantUsageService._month_reference()
         key = TenantUsageService._key(periodo)
@@ -58,7 +51,7 @@ class TenantUsageService:
     @staticmethod
     def obter_requisicoes(inquilino, periodo=None):
         """
-        Permite consultar mês atual ou específico.
+        Retorna a contagem do mês atual ou do período informado.
         """
         periodo = periodo or TenantUsageService._month_reference()
         key = TenantUsageService._key(periodo)

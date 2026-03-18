@@ -78,8 +78,8 @@ export default function MedicinaOcupacionalPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Pacientes (ocupacional)" value={loading ? "..." : pacientes} />
           <MetricCard label="Requisições (lab)" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Procedimentos" value="—" hint="Solicitação integrada em evolução" />
-          <MetricCard label="Medicação" value="—" hint="Vínculo com estoque em evolução" />
+          <MetricCard label="Procedimentos" value="—" hint="Indisponível na API v1" />
+          <MetricCard label="Medicação" value="—" hint="Indisponível na API v1" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -116,13 +116,11 @@ export default function MedicinaOcupacionalPage() {
         </div>
 
         <Card
-          title="Visão"
-          subtitle="A página ocupa o papel de cockpit da jornada ocupacional."
+          title="Cobertura da API v1"
+          subtitle="Resumo do que está disponível para medicina ocupacional."
         >
           <div className="text-sm text-slate-700">
-            O módulo de pacientes já suporta a proveniência <strong>Medicina Ocupacional</strong>. A próxima etapa para completar seu fluxo
-            é expor endpoints de requisições clínicas unificadas (exames médicos, procedimentos e medicação) e amarrar execução
-            em enfermagem/farmácia com rastreabilidade.
+            Requisições clínicas unificadas e integração com enfermagem/farmácia não estão disponíveis na API v1.
           </div>
         </Card>
       </div>

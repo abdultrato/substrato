@@ -60,7 +60,7 @@ class Cirurgia(NoNameCoreModel):
         blank=True,
         default="",
         db_index=True,
-        help_text="Use apenas quando o procedimento não estiver no catálogo.",
+        help_text="Use quando o procedimento não estiver no catálogo.",
     )
     descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
 

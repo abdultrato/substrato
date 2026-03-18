@@ -4,10 +4,6 @@ from decimal import Decimal as d
 def aplicar_coberturas(fatura):
     """
     Apura o valor total coberto por seguradoras e o saldo do paciente.
-
-    ✔ suporta múltiplas coberturas
-    ✔ evita cobertura acima do total
-    ✔ mantém consistência financeira
     """
 
     total = fatura.total or d("0.00")

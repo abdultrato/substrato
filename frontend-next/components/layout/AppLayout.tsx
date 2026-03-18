@@ -37,6 +37,14 @@ export default function AppLayout ( {
         return () => window.removeEventListener( "resize", onResize )
     }, [] )
 
+    useEffect( () => {
+        if ( typeof document === "undefined" ) return
+        document.body.style.overflow = navOpen ? "hidden" : ""
+        return () => {
+            document.body.style.overflow = ""
+        }
+    }, [navOpen] )
+
     if ( loading ) {
         return (
             <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -56,8 +64,8 @@ export default function AppLayout ( {
                 <div className="flex flex-1 flex-col">
                     <Header user={user} onMenuClick={() => setNavOpen( true )} />
 
-                    <main className="flex-1 px-3 py-3 pb-14 md:px-3 md:py-3 md:pb-14">
-                        <div key={pathname} className="page-transition h-full">
+                    <main className="flex-1 px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
+                        <div key={pathname} className="page-transition">
                             <AccessDenied requiredGroups={requiredGroups} user={user} />
                         </div>
                     </main>
@@ -89,8 +97,8 @@ export default function AppLayout ( {
             <div className="flex flex-1 flex-col h-screen overflow-hidden">
                 <Header user={user} onMenuClick={() => setNavOpen( true )} />
 
-                <main className="flex-1 overflow-y-auto px-3 py-3 pb-14 md:px-3 md:py-3 md:pb-14">
-                    <div key={pathname} className="page-transition h-full">
+                <main className="flex-1 overflow-y-auto px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
+                    <div key={pathname} className="page-transition">
                         {children}
                     </div>
                 </main>

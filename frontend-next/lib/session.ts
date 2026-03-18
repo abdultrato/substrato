@@ -12,15 +12,35 @@ export type SessionUser = {
 
 import { clearTokens } from "./tokens"
 
+function getStorage(): Storage | null {
+  if (typeof window === "undefined") return null
+  // Prefer localStorage to survive reloads on mobile browsers.
+  if (typeof localStorage !== "undefined") return localStorage
+  if (typeof sessionStorage !== "undefined") return sessionStorage
+  return null
+}
+
 export function getSessionUser(): SessionUser | null {
-  if (typeof localStorage === "undefined") return null
-  const s = localStorage.getItem("sessionUser")
-  return s ? JSON.parse(s) : null
+  const storage = getStorage()
+  if (!storage) return null
+  const s = storage.getItem("sessionUser")
+  if (!s) return null
+  try {
+    return JSON.parse(s)
+  } catch {
+    return null
+  }
 }
 
 export function setSessionUser(u: any) {
-  if (typeof localStorage === "undefined") return
-  localStorage.setItem("sessionUser", JSON.stringify(u))
+  const storage = getStorage()
+  if (!storage) return
+  storage.setItem("sessionUser", JSON.stringify(u))
+}
+
+export function clearSessionUser() {
+  if (typeof localStorage !== "undefined") localStorage.removeItem("sessionUser")
+  if (typeof sessionStorage !== "undefined") sessionStorage.removeItem("sessionUser")
 }
 
 export function getFullName(): string | null {
@@ -40,5 +60,5 @@ export function logout() {
     fetch("/api/v1/auth/logout/", { method: "POST", credentials: "include" })
   } catch {}
   clearTokens()
-  if (typeof localStorage !== 'undefined') localStorage.removeItem("sessionUser")
+  clearSessionUser()
 }

@@ -5,7 +5,7 @@ from seguranca.permissoes.grupos import IsAdmin
 
 class AdminOnlyMixin:
     """
-    Apenas administradores.
+    Permissão: administradores.
     """
 
     permission_classes = [IsAdmin]
@@ -13,7 +13,7 @@ class AdminOnlyMixin:
 
 class AuthenticatedMixin:
     """
-    Apenas usuários autenticados.
+    Permissão: usuários autenticados.
     """
 
     permission_classes = [IsAuthenticated]

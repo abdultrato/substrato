@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if not settings.DEBUG:
-            self.stderr.write("Este comando é destinado apenas para DEBUG.")
+            self.stderr.write("Este comando é destinado ao modo DEBUG.")
             return
 
         username = options["username"]

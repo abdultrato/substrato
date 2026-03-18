@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 def get_page_size(request, default=20, max_size=100):
     """
-    Obtém o page_size da query string com proteção contra abuso.
+    Obtém o page_size da query string com limite máximo.
     """
     try:
         size = int(request.query_params.get("page_size", default))
@@ -27,7 +27,7 @@ def get_page_size(request, default=20, max_size=100):
 
 class StandardPagination(PageNumberPagination):
     """
-    Paginação padrão segura e moderna.
+    Paginação padrão com page_size configurável.
     """
 
     page_size = getattr(settings, "API_PAGE_SIZE", 20)
@@ -58,7 +58,7 @@ class StandardPagination(PageNumberPagination):
 
 class LargeDatasetPagination(PageNumberPagination):
     """
-    Evita COUNT pesado em tabelas gigantes.
+    Paginação sem COUNT total para reduzir custo em tabelas grandes.
     """
 
     page_size = 50
@@ -80,7 +80,7 @@ class LargeDatasetPagination(PageNumberPagination):
 
 class CursorFeedPagination(CursorPagination):
     """
-    Ideal para feeds, logs e grandes volumes.
+    Cursor pagination para feeds e logs com ordenação por id.
     """
 
     page_size = 20
@@ -95,7 +95,7 @@ class CursorFeedPagination(CursorPagination):
 class CachedPagination(StandardPagination):
     """
     Cache automático de páginas para reduzir carga do banco.
-    Use apenas em endpoints de leitura frequente.
+    Indicado para endpoints de leitura frequente.
     """
 
     cache_timeout = 60  # segundos

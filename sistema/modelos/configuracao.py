@@ -4,7 +4,7 @@ from django.db import models
 class ConfiguracaoSistema(models.Model):
     """
     Configuração global da plataforma.
-    Deve existir apenas um registro.
+    Mantém um único registro.
     """
 
     maintenance_mode = models.BooleanField(default=False)
@@ -21,7 +21,7 @@ class ConfiguracaoSistema(models.Model):
     @classmethod
     def obter(cls):
         """
-        Garante que sempre exista uma configuração.
+        Obtém a configuração global, criando se necessário.
         """
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj

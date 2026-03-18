@@ -11,10 +11,6 @@ from aplicativos.inquilinos.modelos import (
 class ServicoInquilino:
     """
     Serviço orquestrador de criação de tenant.
-
-    ✔ Transação atômica
-    ✔ Criação automática de estrutura base
-    ✔ Pronto para onboarding automático
     """
 
     @transaction.atomic

@@ -66,7 +66,7 @@ class TenantAuditMiddleware:
             if not inquilino:
                 return response
 
-            # Evita poluir auditoria com assets; grava apenas rotas relevantes.
+            # Evita poluir auditoria com assets; grava rotas relevantes.
             if not (
                 request.path.startswith("/api/")
                 or request.path.startswith("/admin/")

@@ -4,12 +4,7 @@ from rest_framework.response import Response
 
 class StandardPagination(PageNumberPagination):
     """
-    Paginação padrão corporativa.
-
-    ✔ resposta consistente para frontend e mobile
-    ✔ protege contra page_size abusivo
-    ✔ pronto para dashboards e grandes datasets
-    ✔ contrato estável para APIs públicas
+    Paginação padrão com metadados e links.
     """
 
     page_size = 20

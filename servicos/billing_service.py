@@ -13,10 +13,9 @@ class BillingService:
     """
     Serviço de cobrança multi-tenant.
 
-    ✔ Idempotente
-    ✔ Seguro sob concorrência
-    ✔ Mensal
-    ✔ Preparado para task scheduler
+    - Idempotente.
+    - Usa lock distribuído.
+    - Processamento mensal.
     """
 
     EXCEDENTE_PRECO_UNITARIO = Decimal("2.00")  # MZN por requisição

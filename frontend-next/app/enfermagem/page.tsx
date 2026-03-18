@@ -84,7 +84,7 @@ export default function EnfermagemPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Requisições pendentes" value={loading ? "..." : requisicoesPendentes} />
           <MetricCard label="Procedimentos" value={loading ? "..." : procedimentos} />
-          <MetricCard label="Colheitas" value={loading ? "..." : "—"} hint="Fluxo detalhado em evolução" />
+          <MetricCard label="Colheitas" value={loading ? "..." : "—"} hint="Indisponível na API v1" />
           <MetricCard label="Sinais vitais" value={loading ? "..." : "—"} hint="Entrada via módulo Enfermagem" />
         </div>
 
@@ -122,11 +122,11 @@ export default function EnfermagemPage() {
         </div>
 
         <Card
-          title="Notas de execução"
-          subtitle="No backend atual, a requisição é laboratorial. Para procedimentos/exames médicos/medicação, os módulos existem mas a jornada unificada ainda está sendo amarrada no frontend."
+          title="Cobertura da API v1"
+          subtitle="Resumo do escopo disponível para o módulo de enfermagem."
         >
           <div className="text-sm text-slate-700">
-            Para já, use:
+            Disponível:
             <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
               <li>Requisições laboratoriais em <strong>Requisições</strong> e <strong>Itens de requisição</strong>.</li>
               <li>Execução de procedimentos e registos no módulo <strong>Enfermagem</strong>.</li>

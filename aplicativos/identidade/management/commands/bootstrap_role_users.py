@@ -260,7 +260,7 @@ class Command(BaseCommand):
                     password=password,
                     nome=spec.nome,
                     is_active=True,
-                    # Apenas Administrador deve ter acesso ao Django Admin.
+                    # Administrador controla acesso ao Django Admin.
                     is_staff=(is_admin_user and not no_staff),
                     inquilino=tenant,
                 )
@@ -280,7 +280,7 @@ class Command(BaseCommand):
                 if not getattr(user, "inquilino_id", None):
                     user.inquilino = tenant
                     fields_to_update.append("inquilino")
-                # Apenas Administrador deve permanecer staff (acesso /admin).
+                # Administrador mantém staff para acesso ao /admin.
                 desired_staff = is_admin_user and not no_staff
                 if getattr(user, "is_staff", False) != desired_staff:
                     user.is_staff = desired_staff
@@ -308,7 +308,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Tenant: {tenant.id} {tenant.identificador} ({tenant.nome})")
         self.stdout.write(f"Usuarios criados: {created}, atualizados: {updated}")
-        self.stdout.write("Credenciais (frontend; /admin apenas Administrador):")
+        self.stdout.write("Credenciais (frontend; /admin: Administrador):")
         for spec in role_users:
             if spec.username in created_usernames or spec.username in password_reset_usernames:
                 pwd_display = password

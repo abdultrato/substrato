@@ -30,8 +30,8 @@ class ExameViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mode
     serializer_class = ExameSerializer
     filterset_class = ExameFilter
     permission_classes = [IsAuthenticated]
-    # Nota: o modelo Exame nao possui campo `descricao` (nem `ativo`/`ordem`).
-    # Manter apenas campos reais evita 500 (FieldError) quando o frontend usa `?search=...` ou `?ordering=...`.
+    # O modelo Exame nao possui campo `descricao` (nem `ativo`/`ordem`).
+    # Manter campos reais evita 500 (FieldError) quando o frontend usa `?search=...` ou `?ordering=...`.
     search_fields = ["id_custom", "nome", "metodo", "setor"]
     ordering_fields = [
         "inquilino",

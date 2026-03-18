@@ -669,7 +669,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             "criado_em",
         ]
 
-        # "Lançar resultados" / PDF somente para Administrador e Técnico de Laboratório.
+        # "Lançar resultados" / PDF restrito a Administrador e Técnico de Laboratório.
         if _user_has_any_group(request.user, ["Administrador", "Técnico de Laboratório"]):
             base.insert(5, "lancar_resultado")
             base.insert(6, "ver_pdf_resultado")
@@ -684,7 +684,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
         return tuple(ro)
 
     def get_inline_instances(self, request, obj=None):
-        # Requisição por setor: mostrar apenas os itens relevantes no change form.
+        # Requisição por setor: mostrar os itens relevantes no change form.
         inline_classes = []
         if obj is None:
             # No add form mostramos ambos para permitir escolher o tipo antes de salvar.

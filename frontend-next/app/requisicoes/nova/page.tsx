@@ -274,7 +274,7 @@ export default function NovaRequisicaoPage () {
                     </div>
                 ) : (
                     <div style={{ fontSize: 13, color: "var(--gray-500)", marginBottom: 12 }}>
-                        Nenhum exame adicionado ainda.
+                        Sem exames.
                     </div>
                 )}
 

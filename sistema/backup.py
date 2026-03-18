@@ -16,7 +16,7 @@ class BackupDatabaseView(APIView):
         db = settings.DATABASES["default"]
 
         if db["ENGINE"] != "django.db.backends.postgresql":
-            raise Http404("Backup automático suportado apenas para PostgreSQL.")
+            raise Http404("Backup automático suportado para PostgreSQL.")
 
         timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         filename = f"backup_{timestamp}.sql"

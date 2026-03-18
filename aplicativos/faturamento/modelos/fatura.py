@@ -220,7 +220,7 @@ class Fatura(NoNameCoreModel):
         from aplicativos.pagamentos.modelos.recibo import Recibo
 
         # Garante 1 recibo por fatura (mesmo que existam pagamentos parciais).
-        # Se já existir, apenas sincroniza o pagamento de referência + valor.
+        # Se já existir, sincroniza o pagamento de referência + valor.
         recibo = (
             Recibo.objects.filter(fatura=self).order_by("-criado_em", "-id").first()
             or Recibo.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
@@ -232,8 +232,8 @@ class Fatura(NoNameCoreModel):
                 recibo.fatura = self
                 campos_atualizar.append("fatura")
             if recibo.valor != self.total:
-                # O recibo representa o pagamento total da fatura (não apenas
-                # o último pagamento).
+                # O recibo representa o pagamento total da fatura (não só o
+                # último pagamento).
                 recibo.valor = self.total
                 campos_atualizar.append("valor")
             if recibo.pagamento_id != pagamento.pk:
@@ -308,7 +308,7 @@ class Fatura(NoNameCoreModel):
             # Enfermagem: pode usar legado (procedimento) OU múltiplos (procedimentos).
             if self.procedimento_id and self.pk and self.procedimentos.exists():
                 raise ValidationError(
-                    {"procedimentos": ("Use apenas um: 'procedimento (legado)' OU 'procedimentos (múltiplos)'.")}
+                    {"procedimentos": ("Use um: 'procedimento (legado)' OU 'procedimentos (múltiplos)'.")}
                 )
 
             if self.requisicao_id:

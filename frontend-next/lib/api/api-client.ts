@@ -269,6 +269,7 @@ export class ApiClient {
       method: config.method,
       headers: config.headers,
       signal: controller.signal,
+      credentials: 'include',
     }
 
     if (config.body) {

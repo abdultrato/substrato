@@ -12,10 +12,6 @@ DEFAULT_TIMEOUT = 600  # 10 minutos
 class CacheService:
     """
     Serviço de cache genérico.
-
-    ✔ Wrapper centralizado
-    ✔ Evita duplicação
-    ✔ Namespace opcional
     """
 
     @staticmethod
@@ -49,10 +45,6 @@ class CacheService:
 class TenantCache:
     """
     Cache isolado por tenant.
-
-    ✔ Namespace automático
-    ✔ Seguro para multi-worker
-    ✔ Compatível com rate limit
     """
 
     PREFIX = "tenant"
@@ -80,16 +72,14 @@ class TenantCache:
     @staticmethod
     def incr(tenant_id: int, suffix: str, amount=1, timeout=DEFAULT_TIMEOUT):
         """
-        Incremento seguro:
-        ✔ Se chave não existir, cria
-        ✔ Seguro sob concorrência
+        Incrementa o contador do tenant com fallback transacional.
         """
 
         key = TenantCache._key(tenant_id, suffix)
         try:
             conn = get_redis_connection("default")
         except NotImplementedError:
-            # Ex.: LocMemCache em desenvolvimento.
+            # Fallback para LocMemCache quando Redis não estiver disponível.
             try:
                 return cache.incr(key, amount)
             except Exception:

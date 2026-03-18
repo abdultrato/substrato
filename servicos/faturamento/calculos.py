@@ -6,11 +6,6 @@ IVA_PERCENT = d("0.16")  # ajustar conforme legislação vigente
 def calcular_totais(fatura):
     """
     Recalcula todos os totais financeiros da fatura.
-
-    ✔ calcula subtotal
-    ✔ calcula IVA por item
-    ✔ aplica coberturas de seguro
-    ✔ determina valor do paciente
     """
 
     subtotal = d("0.00")

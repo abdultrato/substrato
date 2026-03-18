@@ -32,6 +32,11 @@ if command -v docker >/dev/null 2>&1; then
   COMPOSE="$(detect_compose 2>/dev/null || true)"
 fi
 
+docker_usable() {
+  # Verifica se o daemon está acessível (evita travar em ambientes sem permissão).
+  docker info >/dev/null 2>&1
+}
+
 detect_runner() {
   # Default strategy:
   # - Prefer Docker (creates user in the same Postgres used by the stack).
@@ -43,7 +48,7 @@ detect_runner() {
     return
   fi
 
-  if command -v docker >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && docker_usable; then
     if [[ -n "${COMPOSE:-}" ]] && $COMPOSE config -q >/dev/null 2>&1; then
       echo "docker"
       return

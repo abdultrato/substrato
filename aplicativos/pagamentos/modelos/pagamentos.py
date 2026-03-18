@@ -85,7 +85,7 @@ class Pagamento(CoreModel):
 
     def confirmar(self):
         if self.status != self.Status.PENDENTE:
-            raise ValidationError("Apenas pagamentos pendentes podem ser confirmados.")
+            raise ValidationError("Pagamentos pendentes podem ser confirmados.")
 
         self.status = self.Status.CONFIRMADO
         if not self.pago_em:
@@ -95,14 +95,14 @@ class Pagamento(CoreModel):
 
     def falhar(self):
         if self.status != self.Status.PENDENTE:
-            raise ValidationError("Apenas pagamentos pendentes podem falhar.")
+            raise ValidationError("Pagamentos pendentes podem falhar.")
 
         self.status = self.Status.FALHOU
         self.save(update_fields=["status"])
 
     def estornar(self):
         if self.status != self.Status.CONFIRMADO:
-            raise ValidationError("Apenas pagamentos confirmados podem ser estornados.")
+            raise ValidationError("Pagamentos confirmados podem ser estornados.")
 
         self.status = self.Status.ESTORNADO
         self.save(update_fields=["status"])
@@ -110,7 +110,7 @@ class Pagamento(CoreModel):
 
     def cancelar(self):
         if self.status != self.Status.PENDENTE:
-            raise ValidationError("Apenas pagamentos pendentes podem ser cancelados.")
+            raise ValidationError("Pagamentos pendentes podem ser cancelados.")
 
         self.status = self.Status.CANCELADO
         self.save(update_fields=["status"])

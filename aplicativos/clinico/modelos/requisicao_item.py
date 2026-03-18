@@ -46,7 +46,7 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
     def clean(self):
         # exige exatamente um tipo de exame
         if bool(self.exame) == bool(self.exame_medico):
-            raise ValidationError("Informe apenas um exame (laboratorial OU médico) por item.")
+            raise ValidationError("Informe um exame (laboratorial OU médico) por item.")
 
         # garante compatibilidade com o tipo/setor da requisição
         if self.requisicao_id:
@@ -116,7 +116,7 @@ class RequisicaoItem(PropagarInquilinoMixin, NoNameCoreModel):
                         inquilino=inquilino,
                     )
                 )
-            # exames médicos ainda não geram itens específicos (imagem/laudo)
+            # exames médicos não geram itens específicos (imagem/laudo)
 
         if itens:
             ResultadoItem.objects.bulk_create(itens)

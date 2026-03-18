@@ -37,6 +37,7 @@ interface Props {
     user: SessionUser | null
     open?: boolean
     onClose?: () => void
+    className?: string
 }
 
 interface NavItem {
@@ -235,7 +236,7 @@ const NAV_ITEMS: NavItem[] = [
     },
 ]
 
-export default function Sidebar ( { user, open = false, onClose }: Props ) {
+export default function Sidebar ( { user, open = false, onClose, className }: Props ) {
     const pathname = usePathname()
     const { isDark, toggle: toggleTheme } = useTheme()
 
@@ -274,7 +275,7 @@ export default function Sidebar ( { user, open = false, onClose }: Props ) {
                 flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent
                 ${active
                                     ? "bg-white/20 text-white shadow-sm"
-                                    : "text-white/80 hover:bg-white/10 hover:text-white"
+                                    : "text-white hover:bg-white/10 hover:text-white"
                                 }
               `}
                         >
@@ -311,7 +312,7 @@ export default function Sidebar ( { user, open = false, onClose }: Props ) {
 
     return (
         <>
-            <aside className="hidden md:flex">{menu}</aside>
+            <aside className={`hidden md:flex ${className || ""}`}>{menu}</aside>
 
             <div className={`md:hidden fixed inset-0 z-40 pointer-events-none ${open ? "" : ""}`}>
                 <div

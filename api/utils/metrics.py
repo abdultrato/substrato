@@ -14,12 +14,8 @@ logger = logging.getLogger("metrics")
 
 class Timer:
     """
-    Mede tempo de execução de blocos de código.
-
-    Uso:
-        with Timer() as t:
-            ...
-        print(t.duration)
+    Context manager que mede a duração de um bloco.
+    Atributo: duration (segundos).
     """
 
     def __enter__(self):
@@ -37,10 +33,7 @@ class Timer:
 
 def measure_time(label: str):
     """
-    Mede tempo de execução de funções.
-
-    Uso:
-        @measure_time("invoice_list")
+    Decorator que registra o tempo de execução (ms) com o label informado.
     """
 
     def decorator(func):
@@ -74,8 +67,7 @@ def measure_time(label: str):
 
 def get_query_count() -> int:
     """
-    Retorna quantidade de queries executadas.
-    Funciona apenas quando DEBUG=True.
+    Retorna a contagem de queries quando DEBUG=True; caso contrário, 0.
     """
     if not settings.DEBUG:
         return 0
@@ -84,8 +76,7 @@ def get_query_count() -> int:
 
 def count_queries(func):
     """
-    Conta queries executadas durante uma função.
-    Usar apenas em DEBUG.
+    Decorator que registra a contagem de queries executadas em DEBUG.
     """
 
     @wraps(func)
@@ -111,8 +102,7 @@ def count_queries(func):
 
 def log_slow_queries(threshold_ms: int = 200):
     """
-    Loga queries lentas.
-    Recomendado para auditoria e DEBUG.
+    Registra queries com tempo acima de threshold_ms em DEBUG.
     """
     if not settings.DEBUG:
         return
@@ -137,7 +127,7 @@ def log_slow_queries(threshold_ms: int = 200):
 
 def log_slow_request(path: str, duration_s: float, threshold_s: float = 1.0):
     """
-    Loga requisições lentas.
+    Registra requisições com tempo acima de threshold_s.
     """
     if duration_s > threshold_s:
         logger.warning(
@@ -156,8 +146,7 @@ def log_slow_request(path: str, duration_s: float, threshold_s: float = 1.0):
 
 def get_memory_usage():
     """
-    Retorna uso de memória do processo (MB).
-    Requer psutil instalado.
+    Retorna uso de memória do processo (MB) se psutil estiver disponível.
     """
     try:
         import psutil
@@ -175,7 +164,7 @@ def get_memory_usage():
 
 def request_metrics_summary(label: str, start_time: float):
     """
-    Registra resumo de métricas após request.
+    Registra métricas de request (duração, memória, queries).
     """
     duration_ms = (time.perf_counter() - start_time) * 1000
 

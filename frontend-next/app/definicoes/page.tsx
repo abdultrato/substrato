@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
+import { Eye, EyeOff } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -23,6 +24,9 @@ export default function DefinicoesPage () {
     const [currentPassword, setCurrentPassword] = useState( "" )
     const [newPassword, setNewPassword] = useState( "" )
     const [confirmPassword, setConfirmPassword] = useState( "" )
+    const [showCurrent, setShowCurrent] = useState( false )
+    const [showNew, setShowNew] = useState( false )
+    const [showConfirm, setShowConfirm] = useState( false )
 
     async function onSubmit ( e: FormEvent ) {
         e.preventDefault()
@@ -78,30 +82,63 @@ export default function DefinicoesPage () {
                 <Card title="Segurança" subtitle="Alterar palavra-passe da conta.">
                     <form onSubmit={onSubmit} className="grid gap-3 sm:max-w-xl">
                         <FormField label="Palavra-passe atual" required>
-                            <TextInput
-                                type="password"
-                                value={currentPassword}
-                                onChange={(e) => setCurrentPassword( e.target.value )}
-                                autoComplete="current-password"
-                            />
+                            <div className="flex items-center gap-2">
+                                <input
+                                    className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                                    type={showCurrent ? "text" : "password"}
+                                    value={currentPassword}
+                                    onChange={(e) => setCurrentPassword( e.target.value )}
+                                    autoComplete="current-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCurrent( (v) => !v )}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                    aria-label={showCurrent ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                >
+                                    {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                            </div>
                         </FormField>
 
                         <FormField label="Nova palavra-passe" required>
-                            <TextInput
-                                type="password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword( e.target.value )}
-                                autoComplete="new-password"
-                            />
+                            <div className="flex items-center gap-2">
+                                <input
+                                    className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                                    type={showNew ? "text" : "password"}
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword( e.target.value )}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNew( (v) => !v )}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                    aria-label={showNew ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                >
+                                    {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                            </div>
                         </FormField>
 
                         <FormField label="Confirmar nova palavra-passe" required>
-                            <TextInput
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword( e.target.value )}
-                                autoComplete="new-password"
-                            />
+                            <div className="flex items-center gap-2">
+                                <input
+                                    className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                                    type={showConfirm ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword( e.target.value )}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm( (v) => !v )}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
+                                    aria-label={showConfirm ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                >
+                                    {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
+                            </div>
                         </FormField>
 
                         <div className="pt-1">
@@ -115,4 +152,3 @@ export default function DefinicoesPage () {
         </AppLayout>
     )
 }
-

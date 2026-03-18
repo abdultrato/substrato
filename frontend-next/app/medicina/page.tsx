@@ -86,8 +86,8 @@ export default function MedicinaPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
           <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Anamnese" value="—" hint="Fluxo dedicado em evolução" />
-          <MetricCard label="Diagnósticos" value="—" hint="Modelos/endpoint ainda não expostos na API v1" />
+          <MetricCard label="Anamnese" value="—" hint="Indisponível na API v1" />
+          <MetricCard label="Diagnósticos" value="—" hint="Indisponível na API v1" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -136,11 +136,11 @@ export default function MedicinaPage() {
         </div>
 
         <Card
-          title="Status do fluxo clínico"
-          subtitle="O backend atual expõe principalmente a jornada laboratorial (Requisição de Análises)."
+          title="Cobertura da API v1"
+          subtitle="Resumo do que está disponível para o módulo de medicina."
         >
           <div className="text-sm text-slate-700">
-            O que já existe e está reutilizado aqui:
+            Disponível:
             <ul className="mt-2 list-disc pl-5">
               <li>Cadastro de pacientes</li>
               <li>Requisição de análises laboratoriais</li>
@@ -149,11 +149,11 @@ export default function MedicinaPage() {
             </ul>
 
             <div className="mt-4">
-              O que ainda precisa ser criado no backend para cobrir 100% do seu pedido (anamnese/diagnósticos/medicação/procedimentos integrados):
+              Indisponível na API v1:
               <ul className="mt-2 list-disc pl-5">
-                <li>Modelos/endpoint para atendimento clínico (anamnese, hipóteses, diagnósticos, plano)</li>
-                <li>Requisições unificadas (laboratório, exames médicos, procedimentos, farmácia) com estado de execução</li>
-                <li>Vínculo explícito entre requisição e execução em enfermagem/farmácia</li>
+                <li>Atendimento clínico (anamnese, hipóteses, diagnósticos, plano)</li>
+                <li>Requisições clínicas unificadas (laboratório, exames médicos, procedimentos, farmácia)</li>
+                <li>Vínculo entre requisição e execução em enfermagem/farmácia</li>
               </ul>
             </div>
           </div>

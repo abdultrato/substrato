@@ -115,7 +115,7 @@ export default function AuditoriaUsuariosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Histórico de Actividades"
-          subtitle="Apenas Administrador: lista de usuários e suas actividades."
+          subtitle="Administrador: usuários e atividades."
           actions={
             <input
               value={q}
@@ -145,4 +145,3 @@ export default function AuditoriaUsuariosPage() {
     </AppLayout>
   )
 }
-

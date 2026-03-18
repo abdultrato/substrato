@@ -83,7 +83,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--exclusive",
             action="store_true",
-            help="Remove o usuário de outros grupos RBAC e mantém apenas o informado.",
+            help="Remove o usuário de outros grupos RBAC e mantém o informado.",
         )
 
         parser.add_argument(
@@ -137,7 +137,7 @@ class Command(BaseCommand):
 
         is_admin_group = group_name == RBAC_GROUPS["ADMIN"]
 
-        # Política do projeto: apenas ADMIN tem acesso ao /admin.
+        # Política do projeto: ADMIN tem acesso ao /admin.
         desired_staff = bool(is_admin_group)
         # Superuser é controlado por allowlist; mesmo se True, o model pode forçar False.
         desired_superuser = bool(is_admin_group)

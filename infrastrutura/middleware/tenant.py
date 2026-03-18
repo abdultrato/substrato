@@ -18,12 +18,6 @@ TENANT_CACHE_TTL = 300  # 5 minutos
 class TenantMiddleware:
     """
     Resolve o tenant baseado no domínio.
-
-    ✔ Cache Redis
-    ✔ select_related("plano")
-    ✔ Multi-worker safe
-    ✔ Prepara para sharding
-    ✔ Limpa contexto após resposta
     """
 
     def __init__(self, get_response):

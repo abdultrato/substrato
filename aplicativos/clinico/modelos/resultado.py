@@ -58,7 +58,7 @@ class Resultado(NoNameCoreModel):
         requisicao_itens = self.requisicao.itens.select_related("exame").prefetch_related("exame__campos")
 
         for item in requisicao_itens:
-            # Requisições podem conter itens de exame médico (imagem), que ainda não
+            # Requisições podem conter itens de exame médico (imagem) que não
             # geram `ResultadoItem`. Evita erro quando `item.exame` é None.
             if not item.exame_id:
                 continue

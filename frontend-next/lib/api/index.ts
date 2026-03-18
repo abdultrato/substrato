@@ -1,5 +1,3 @@
-import { getAccessToken, getRefreshToken, setTokens } from "@/lib/tokens"
-
 type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
 }
@@ -50,27 +48,20 @@ function rewriteUrl(url: string): string {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const refresh = getRefreshToken()
-  if (!refresh) return null
-
   const res = await fetch("/api/v1/auth/refresh/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh }),
+    credentials: "include",
   })
 
   if (!res.ok) return null
 
-  const data = (await res.json()) as any
-  if (data?.access) setTokens({ access: data.access })
-  return data?.access || null
+  // Tokens são enviados em cookies HttpOnly; corpo contém apenas session_id.
+  return "refreshed"
 }
 
 function buildHeaders(options: ApiFetchOptions): HeadersInit {
   const headers: Record<string, string> = {}
-
-  const access = getAccessToken()
-  if (access) headers["Authorization"] = `Bearer ${access}`
 
   // Default JSON headers unless caller overrides or sends FormData.
   const hasContentType =

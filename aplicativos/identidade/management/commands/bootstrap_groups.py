@@ -52,7 +52,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--admin-only",
             action="store_true",
-            help="Atualiza apenas o grupo Administrador (nao cria/atualiza os demais).",
+            help="Atualiza o grupo Administrador (nao cria/atualiza os demais).",
         )
         parser.add_argument(
             "--dry-run",

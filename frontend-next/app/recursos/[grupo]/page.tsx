@@ -32,7 +32,10 @@ export default function RecursosGrupoPage() {
           <div className="text-sm text-gray-600">
             O módulo solicitado não existe na lista atual.
           </div>
-          <Link href={hrefVoltar} className="text-sm text-gray-700 underline">
+          <Link
+            href={hrefVoltar}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             Voltar
           </Link>
         </div>
@@ -61,7 +64,10 @@ export default function RecursosGrupoPage() {
         </div>
 
         <div className="pt-2">
-          <Link href={hrefVoltar} className="text-sm text-[var(--gray-700)] underline">
+          <Link
+            href={hrefVoltar}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             Voltar
           </Link>
         </div>

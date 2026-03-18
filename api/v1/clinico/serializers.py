@@ -156,7 +156,7 @@ class PacienteSerializer(serializers.ModelSerializer):
             "idade_gestacional_semanas": {
                 "required": False,
                 "allow_null": True,
-                "help_text": "Semanas de gestação (preencher apenas se gestante)",
+                "help_text": "Semanas de gestação (preencher se gestante)",
             },
         }
 

@@ -3,8 +3,7 @@ import django_filters
 
 class SafeFilterSet(django_filters.FilterSet):
     """
-    FilterSet corporativo que ignora campos inexistentes
-    sem quebrar o sistema.
+    FilterSet que ignora campos inexistentes definidos em _meta.fields.
     """
 
     @classmethod
@@ -23,7 +22,7 @@ class SafeFilterSet(django_filters.FilterSet):
         # Campos reais do model
         model_fields = {f.name for f in model._meta.get_fields()}
 
-        # Filtra apenas campos válidos
+        # Filtra campos válidos
         valid_fields = [field for field in declared_fields if field in model_fields]
 
         # NÃO modificar _meta.fields permanentemente

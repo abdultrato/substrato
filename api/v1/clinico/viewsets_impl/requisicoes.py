@@ -66,11 +66,11 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     @action(detail=True, methods=["get"])
     def pdf_resultados(self, request, pk=None):
         """
-        Gera o PDF institucional de resultados laboratoriais (somente validados).
+        Gera o PDF institucional de resultados laboratoriais (validados).
 
         - Autenticação via JWT (API v1)
         - RBAC controla acesso; reforçamos aqui para evitar exposição acidental
-          do PDF a perfis que apenas "consultam" requisições.
+          do PDF a perfis de consulta de requisições.
         """
         from seguranca.permissoes.rbac import GROUPS as RBAC_GROUPS, _normalize
 
@@ -89,7 +89,7 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
                 _normalize(RBAC_GROUPS["LABORATORIO"]),
             }
             if not (user_groups & permitidos):
-                raise PermissionDenied("Apenas Técnico de Laboratório ou Administrador pode emitir PDF de resultados.")
+                raise PermissionDenied("Requer Técnico de Laboratório ou Administrador para emitir PDF de resultados.")
 
         requisicao = self.get_object()
         # PDF de resultados aplica-se ao fluxo laboratorial.

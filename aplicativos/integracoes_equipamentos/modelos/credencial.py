@@ -63,7 +63,7 @@ class IntegracaoCredencial(NoNameCoreModel):
         cls, *, equipamento, label: str = "", scopes: Iterable[str] | None = None
     ) -> tuple["IntegracaoCredencial", str]:
         """
-        Cria credencial e retorna a chave em texto plano (somente uma vez).
+        Cria credencial e retorna a chave em texto plano (única emissão).
         """
 
         raw = base64.urlsafe_b64encode(os.urandom(32)).decode("ascii").rstrip("=")

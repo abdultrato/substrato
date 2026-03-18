@@ -82,7 +82,7 @@ export default function FarmaciaPage() {
           <MetricCard label="Produtos" value={loading ? "..." : produtos} />
           <MetricCard label="Lotes" value={loading ? "..." : lotes} />
           <MetricCard label="Movimentos" value={loading ? "..." : movimentos} />
-          <MetricCard label="Inventário" value="—" hint="Conferência/alertas em evolução" />
+          <MetricCard label="Inventário" value="—" hint="Indisponível na API v1" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -106,13 +106,12 @@ export default function FarmaciaPage() {
           />
         </div>
 
-          <Card
-            title="Nota"
-            subtitle="Este workspace é focado em almoxarifado (sem expor telas clínicas)."
-          >
+        <Card
+          title="Cobertura da API v1"
+          subtitle="Escopo do módulo de almoxarifado."
+        >
           <div className="text-sm text-slate-700">
-            Se a jornada incluir &quot;levantamento de medicação&quot; ligada a uma requisição clínica, ainda precisamos
-            do vínculo explícito entre requisição e saída de estoque no backend/serializers.
+            Integração entre requisição clínica e saída de estoque não está disponível na API v1.
           </div>
         </Card>
       </div>

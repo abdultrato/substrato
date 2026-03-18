@@ -51,7 +51,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-paciente": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
-            # Catálogo (somente leitura para criar requisições)
+            # Catálogo (leitura para criar requisições)
             "clinico-exame": SAFE_METHODS,
             "clinico-examecampo": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
@@ -109,7 +109,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "cirurgia-cirurgia": SAFE_METHODS,
         },
         g["MEDICINA"]: {
-            # Jornada clinica (anamnese/diagnostico ainda no admin/api futura)
+            # Jornada clinica (anamnese/diagnostico não expostos na API v1)
             "clinico-paciente": SAFE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
@@ -177,7 +177,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recepcao-checkin": SAFE_METHODS,
             "recepcao-atendimento": SAFE_METHODS,
             "recepcao-workspace": SAFE_METHODS,
-            # Consultas (somente leitura)
+            # Consultas (leitura)
             "consultas-consulta": SAFE_METHODS,
             "consultas-medicos": SAFE_METHODS,
             "consultas-especialidade": SAFE_METHODS,
@@ -235,7 +235,7 @@ class RBACPermission(permissions.BasePermission):
             return True
 
         # Tenant isolation: evita que um token de um tenant opere em outro tenant
-        # apenas mudando o Host header/domínio.
+        # mudando o Host header/domínio.
         if not tenant_matches_request(request, user):
             logger.info(
                 "tenant_mismatch_denied",

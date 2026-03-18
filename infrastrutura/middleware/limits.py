@@ -6,12 +6,6 @@ from servicos.inquilinos.tenant_usage_service import TenantUsageService
 class TenantLimitMiddleware:
     """
     Controle técnico de limite de requisições.
-
-    ✔ Usa assinatura ativa
-    ✔ Compatível com novo modelo
-    ✔ Redis atomic
-    ✔ Não conflita com trial
-    ✔ Retorna 429 padrão
     """
 
     def __init__(self, get_response):

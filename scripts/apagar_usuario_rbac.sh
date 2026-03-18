@@ -29,13 +29,18 @@ if command -v docker >/dev/null 2>&1; then
   COMPOSE="$(detect_compose 2>/dev/null || true)"
 fi
 
+docker_usable() {
+  # Verifica se o daemon está acessível (evita falhar quando não há permissão).
+  docker info >/dev/null 2>&1
+}
+
 detect_runner() {
   if [[ -n "${SUBSTRATO_RUNNER:-}" ]]; then
     echo "${SUBSTRATO_RUNNER}"
     return
   fi
 
-  if command -v docker >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && docker_usable; then
     if [[ -n "${COMPOSE:-}" ]] && $COMPOSE config -q >/dev/null 2>&1; then
       echo "docker"
       return
@@ -99,6 +104,16 @@ run_manage() {
   esac
 }
 
+list_users() {
+  run_manage shell -c "
+from django.contrib.auth import get_user_model
+qs = get_user_model().objects.order_by('username')
+for u in qs:
+    groups = ','.join(u.groups.values_list('name', flat=True))
+    print(f\"{u.username}\\t{u.email or ''}\\t{groups}\")
+"
+}
+
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   usage
   exit 0
@@ -155,12 +170,32 @@ if [[ ${#ARGS[@]} -eq 0 ]]; then
   echo "Runner: $RUNNER"
   echo
 
+  echo "Utilizadores disponíveis:"
+  mapfile -t USERS < <(list_users)
+  if [[ ${#USERS[@]} -eq 0 ]]; then
+    echo "Nenhum usuário encontrado."
+    exit 0
+  fi
+
+  for i in "${!USERS[@]}"; do
+    IFS=$'\t' read -r uname uemail ugroups <<<"${USERS[$i]}"
+    idx=$((i + 1))
+    echo "  ${idx}. ${uname} (${uemail:-sem email}) [${ugroups:-sem grupo}]"
+  done
+
+  choice=""
   username=""
   while [[ -z "${username:-}" ]]; do
-    read -r -p "Username: " username
-    username="$(trim "$username")"
+    read -r -p "Selecione o número do usuário: " choice
+    choice="$(trim "$choice")"
+    if [[ "$choice" =~ ^[0-9]+$ ]]; then
+      idx=$((choice - 1))
+      if (( idx >= 0 && idx < ${#USERS[@]} )); then
+        IFS=$'\t' read -r username _ _ <<<"${USERS[$idx]}"
+      fi
+    fi
     if [[ -z "$username" ]]; then
-      echo "Username nao pode estar vazio."
+      echo "Opção inválida. Tente novamente."
     fi
   done
 

@@ -27,7 +27,7 @@ class Paciente(CoreModel):
         verbose_name="Idade gestacional (semanas)",
         null=True,
         blank=True,
-        help_text="Preencher apenas se a paciente estiver gestante.",
+        help_text="Preencher se a paciente estiver gestante.",
     )
 
     data_nascimento = models.DateField(
