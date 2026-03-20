@@ -13,7 +13,7 @@ export default function ModulosPage() {
   if (loading) return null
 
   return (
-            <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+            <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="space-y-6">
         <PageHeader
           title="Módulos"

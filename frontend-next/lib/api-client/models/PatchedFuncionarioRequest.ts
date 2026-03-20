@@ -6,6 +6,7 @@ import type { FuncionarioEstadoEnum } from './FuncionarioEstadoEnum';
 export type PatchedFuncionarioRequest = {
     versao?: number;
     nome?: string;
+    profissao?: string;
     nuit?: string;
     nib?: string;
     numero_documento?: string;

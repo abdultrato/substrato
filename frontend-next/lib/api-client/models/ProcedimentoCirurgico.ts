@@ -12,6 +12,9 @@ export type ProcedimentoCirurgico = {
     readonly versao?: number;
     nome: string;
     descricao?: string;
+    preco_base?: string;
+    iva_percentual?: string;
+    aplica_iva_por_padrao?: boolean;
     ativo?: boolean;
     readonly criado_por?: number | null;
     readonly atualizado_por?: number | null;

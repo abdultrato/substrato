@@ -10,6 +10,7 @@ import {
   ScrollText,
   Baby,
   Scissors,
+  ImagePlus,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -132,6 +133,12 @@ export default function MedicinaPage() {
             description="Acompanhar procedimentos executados na enfermagem."
             href="/enfermagem/procedimentos"
             icon={HeartPulse}
+          />
+          <ActionTile
+            title="Resultados médicos"
+            description="Anexar laudos e imagens por exame médico."
+            href="/medicina/resultados-medicos"
+            icon={ImagePlus}
           />
         </div>
 

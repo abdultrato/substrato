@@ -6,12 +6,89 @@ from django.db import models
 from django.db.models import Q
 
 from infrastrutura.orm.fields.dinheiro_field import DinheiroField
-from infrastrutura.orm.fields.metodo_field import MetodoField
-from infrastrutura.orm.fields.setor_field import SetorField
-from nucleo.constantes.laboratorio.tipo_resultado import TipoResultado
-from nucleo.constantes.laboratorio.unidades import UnidadePadrao
+from infrastrutura.orm.fields.metodo_exame_medico_field import MetodoExameMedicoField
+from infrastrutura.orm.fields.setor_exame_medico_field import SetorExameMedicoField
+from nucleo.constantes.exame_medico.metodo_exame_medico import MetodoExameMedico
+from nucleo.constantes.exame_medico.tipo_resultado_exame_medico import TipoResultadoExameMedico
 from nucleo.mixins.tenant_propagation import PropagarInquilinoMixin
 from nucleo.modelos.base import CoreModel
+
+
+TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO = {
+    MetodoExameMedico.ULTRASSONOGRAFIA: {
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+        TipoResultadoExameMedico.VIDEO,
+    },
+    MetodoExameMedico.RAIOX_CONVENCIONAL: {
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.TOMOGRAFIA: {
+        TipoResultadoExameMedico.DICOM,
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.RESSONANCIA: {
+        TipoResultadoExameMedico.DICOM,
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.MAMOGRAFIA: {
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.DENSITOMETRIA: {
+        TipoResultadoExameMedico.RELATORIO_PDF,
+        TipoResultadoExameMedico.IMAGEM,
+    },
+    MetodoExameMedico.ECOCARDIOGRAMA: {
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+        TipoResultadoExameMedico.VIDEO,
+    },
+    MetodoExameMedico.ELETROCARDIOGRAMA: {
+        TipoResultadoExameMedico.RELATORIO_PDF,
+        TipoResultadoExameMedico.IMAGEM,
+    },
+    MetodoExameMedico.HOLTER: {
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.MAPA: {
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.EEG: {
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.ENDOSCOPIA: {
+        TipoResultadoExameMedico.VIDEO,
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.COLONOSCOPIA: {
+        TipoResultadoExameMedico.VIDEO,
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.ANGIOGRAFIA: {
+        TipoResultadoExameMedico.DICOM,
+        TipoResultadoExameMedico.IMAGEM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+    MetodoExameMedico.MEDICINA_NUCLEAR: {
+        TipoResultadoExameMedico.DICOM,
+        TipoResultadoExameMedico.RELATORIO_PDF,
+    },
+}
+
+
+def tipos_resultado_permitidos_para_metodo(metodo):
+    if not metodo:
+        return set(TipoResultadoExameMedico.values)
+    tipos = TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO.get(metodo)
+    if tipos:
+        return set(tipos)
+    return set(TipoResultadoExameMedico.values)
 
 
 class ExameMedico(PropagarInquilinoMixin, CoreModel):
@@ -54,13 +131,13 @@ class ExameMedico(PropagarInquilinoMixin, CoreModel):
         help_text="Desmarque se este exame normalmente não deve ter IVA.",
     )
 
-    metodo = MetodoField(
-        verbose_name="Método do exame",
+    metodo = MetodoExameMedicoField(
+        verbose_name="Método do exame (imagem/diagnóstico)",
         db_index=True,
     )
 
-    setor = SetorField(
-        verbose_name="Setor do exame",
+    setor = SetorExameMedicoField(
+        verbose_name="Setor do exame (imagem/diagnóstico)",
         db_index=True,
     )
 
@@ -102,6 +179,17 @@ class ExameMedico(PropagarInquilinoMixin, CoreModel):
         if erros:
             raise ValidationError(erros)
 
+    @property
+    def tipos_resultado_permitidos(self):
+        return tipos_resultado_permitidos_para_metodo(self.metodo)
+
+    @property
+    def tipos_resultado_cadastrados(self):
+        if not self.pk:
+            return self.tipos_resultado_permitidos
+        tipos = set(self.campos.values_list("tipo", flat=True))
+        return tipos or self.tipos_resultado_permitidos
+
     def __str__(self):
         return f"{self.nome or 'exame médico sem nome'}"
 
@@ -118,89 +206,29 @@ class ExameMedicoCampo(PropagarInquilinoMixin, CoreModel):
 
     tipo = models.CharField(
         max_length=20,
-        choices=TipoResultado.choices,
-        verbose_name="Tipo de parâmetro",
-    )
-
-    unidade = models.CharField(
-        max_length=30,
-        choices=UnidadePadrao.choices,
-        default=UnidadePadrao.P_UL,
-        verbose_name="Unidade de medida",
-    )
-
-    referencia_min = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Referência mínima",
-    )
-
-    referencia_max = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Referência máxima",
-    )
-
-    critico_min = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Valor crítico mínimo",
-    )
-
-    critico_max = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Valor crítico máximo",
-    )
-
-    delta_max = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Delta máximo permitido",
+        choices=TipoResultadoExameMedico.choices,
+        verbose_name="Tipo de parâmetro/arquivo",
     )
 
     class Meta:
         verbose_name = "parâmetro de exame médico"
         verbose_name_plural = "parâmetros de exame médico"
 
+    def clean(self):
+        super().clean()
+        if self.exame_id and self.tipo:
+            permitidos = self.exame.tipos_resultado_permitidos
+            if self.tipo not in permitidos:
+                metodo = self.exame.get_metodo_display() or self.exame.metodo
+                permitidos_fmt = ", ".join(sorted(permitidos))
+                raise ValidationError(
+                    {
+                        "tipo": (
+                            f"Tipo não permitido para o método {metodo}. "
+                            f"Permitidos: {permitidos_fmt}."
+                        )
+                    }
+                )
+
     def __str__(self):
         return self.nome
-
-    @property
-    def referencia(self):
-        if self.referencia_min is None and self.referencia_max is None:
-            return None
-        if self.referencia_min is not None and self.referencia_max is not None:
-            return f"{self.referencia_min} - {self.referencia_max}"
-        if self.referencia_min is not None:
-            return f">= {self.referencia_min}"
-        if self.referencia_max is not None:
-            return f"<= {self.referencia_max}"
-        return None
-
-    def interpretar_resultado(self, valor):
-        if valor is None:
-            return None
-        try:
-            valor = Decimal(valor)
-        except Exception:
-            return None
-        if self.critico_min is not None and valor < self.critico_min:
-            return "↓↓"
-        if self.critico_max is not None and valor > self.critico_max:
-            return "↑↑"
-        if self.referencia_min is not None and valor < self.referencia_min:
-            return "↓"
-        if self.referencia_max is not None and valor > self.referencia_max:
-            return "↑"
-        return "N"

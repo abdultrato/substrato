@@ -27,13 +27,10 @@ class GestacaoSerializer(serializers.ModelSerializer):
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "paciente_nome", "medico_nome")
 
     def get_medico_nome(self, obj: Gestacao) -> str:
-        u = getattr(obj, "medico_responsavel", None)
-        if not u:
+        medico = getattr(obj, "medico_responsavel", None)
+        if not medico:
             return ""
-        try:
-            return (u.get_full_name() or "").strip() or u.username
-        except Exception:
-            return getattr(u, "username", "")
+        return getattr(medico, "nome", "") or ""
 
 
 SERIALIZER_MAP = {

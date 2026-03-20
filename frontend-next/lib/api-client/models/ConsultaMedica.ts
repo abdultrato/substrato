@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { ConsultaMedicaEstadoEnum } from './ConsultaMedicaEstadoEnum';
+import type { TipoHorarioEnum } from './TipoHorarioEnum';
 export type ConsultaMedica = {
     readonly id?: number;
     tipo?: string;
@@ -21,6 +22,15 @@ export type ConsultaMedica = {
     agendada_para?: string;
     estado?: ConsultaMedicaEstadoEnum;
     preco?: string;
+    /**
+     * Fator aplicado sobre o preço base conforme horário/feriado.
+     */
+    readonly multiplicador_preco?: string;
+    readonly tipo_horario?: TipoHorarioEnum;
+    /**
+     * Marque se a data for feriado mesmo não sendo fim de semana.
+     */
+    feriado_manual?: boolean;
     concluida_em?: string | null;
     cancelada_em?: string | null;
     readonly criado_por?: number | null;

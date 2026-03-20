@@ -13,6 +13,10 @@ export type ProcedimentoCatalogoRequest = {
      * Taxa de IVA aplicada ao procedimento (0 a 100).
      */
     iva_percentual?: string;
+    /**
+     * Desmarque se este procedimento normalmente não deve ter IVA.
+     */
+    aplica_iva_por_padrao?: boolean;
     criado_por?: number | null;
     atualizado_por?: number | null;
     inquilino: number;

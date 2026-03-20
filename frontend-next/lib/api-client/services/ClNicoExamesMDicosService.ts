@@ -18,76 +18,36 @@ export class ClNicoExamesMDicosService {
      * @param deletado
      * @param idCustom
      * @param inquilino
-     * @param metodo * `Enzimatico` - Enzimático
-     * * `Colorimetrico` - Colorimétrico
-     * * `Espectrofotometrico` - Espectrofotométrico
-     * * `Turbidimetrico` - Turbidimétrico
-     * * `Nefelometrico` - Nefelométrico
-     * * `Potenciometrico` - Potenciométrico
-     * * `Eletroquimico` - Eletroquímico
-     * * `ELISA` - ELISA
-     * * `Quimioluminescencia` - Quimioluminescência
-     * * `Eletroquimioluminescencia` - Eletroquimioluminescência
-     * * `Imunofluorescencia` - Imunofluorescência
-     * * `Imunoturbidimetria` - Imunoturbidimetria
-     * * `Aglutinacao` - Aglutinação
-     * * `Cultura` - Cultura
-     * * `Antibiograma` - Antibiograma
-     * * `Microscopico` - Microscópico
-     * * `ColoracaoGram` - Coloração de Gram
-     * * `ColoracaoZiehl` - Ziehl-Neelsen
-     * * `IsolamentoMicrobiano` - Isolamento Microbiano
-     * * `CitometriaFluxo` - Citometria de Fluxo
-     * * `HematologiaAutomatizada` - Hematologia Automatizada
-     * * `MicroscopiaOptica` - Microscopia Óptica
-     * * `PCR` - PCR
-     * * `RT_PCR` - RT-PCR
-     * * `PCRTempoReal` - PCR em Tempo Real
-     * * `Sequenciamento` - Sequenciamento Genético
-     * * `HibridizacaoMolecular` - Hibridização Molecular
-     * * `Genotipagem` - Genotipagem
-     * * `Cromatografia` - Cromatografia
-     * * `CromatografiaGasosa` - Cromatografia Gasosa
-     * * `CromatografiaLiquida` - Cromatografia Líquida
-     * * `HPLC` - Cromatografia Líquida de Alta Eficiência
-     * * `Eletroforese` - Eletroforese
-     * * `Isoeletrofoque` - Isoeletrofocalização
-     * * `Sedimentacao` - Sedimentação
-     * * `Flutuacao` - Flutuação
-     * * `KatoKatz` - Kato-Katz
-     * * `TiraReagente` - Tira Reagente
-     * * `AnaliseMicroscopica` - Análise Microscópica
-     * * `EspectrometriaMassa` - Espectrometria de Massa
-     * * `MALDI_TOF` - MALDI-TOF
-     * * `RessonanciaMagneticaNuclear` - Ressonância Magnética Nuclear
+     * @param metodo * `USG` - Ultrassonografia / Ecografia
+     * * `RX` - Raio-X Convencional
+     * * `CT` - Tomografia Computorizada (CT)
+     * * `RM` - Ressonância Magnética (RM)
+     * * `MG` - Mamografia
+     * * `DXA` - Densitometria Óssea (DXA)
+     * * `ECO` - Ecocardiograma
+     * * `ECG` - Eletrocardiograma (ECG)
+     * * `HOLTER` - Holter
+     * * `MAPA` - MAPA (PA 24h)
+     * * `EEG` - Eletroencefalograma (EEG)
+     * * `ENDO` - Endoscopia
+     * * `COLONO` - Colonoscopia
+     * * `ANGIO` - Angiografia
+     * * `MN` - Medicina Nuclear / Cintilografia
+     * * `OUT` - Outro
      * @param nome
      * @param ordering Qual campo usar ao ordenar os resultados.
      * @param preco
      * @param search Um termo de busca.
-     * @param setor * `Hematologia` - Hematologia
-     * * `Bioquimica` - Bioquímica
-     * * `Microbiologia` - Microbiologia
-     * * `Imunologia` - Imunologia
-     * * `Serologia` - Serologia
-     * * `Parasitologia` - Parasitologia
-     * * `BiologiaMolecular` - Biologia Molecular
-     * * `Toxicologia` - Toxicologia
-     * * `Hormonios` - Hormônios e Endocrinologia
-     * * `MarcadoresTumorais` - Marcadores Tumorais
-     * * `Coagulacao` - Coagulação
-     * * `Urinalise` - Urinálise
-     * * `LiquidosCorporais` - Líquidos Corporais
-     * * `Gasometria` - Gasometria
-     * * `NutricaoClinica` - Nutrição Clínica
-     * * `Micologia` - Micologia
-     * * `Virologia` - Virologia
-     * * `Bacteriologia` - Bacteriologia
-     * * `BancoSangue` - Banco de Sangue
-     * * `ImunoHematologia` - Imuno-hematologia
-     * * `Triagem` - Triagem Laboratorial
-     * * `RecepcaoAmostras` - Recepção de Amostras
-     * * `ControleQualidade` - Controle de Qualidade
-     * * `Pesquisa` - Pesquisa Laboratorial
+     * @param setor * `Radiologia` - Radiologia
+     * * `DiagnosticoImagem` - Diagnóstico por Imagem
+     * * `Cardiologia` - Cardiologia
+     * * `GinecoObstetricia` - Ginecologia/Obstetrícia
+     * * `Ortopedia` - Ortopedia/Traumato
+     * * `Neurologia` - Neurologia
+     * * `Otorrino` - Otorrinolaringologia
+     * * `Oftalmologia` - Oftalmologia
+     * * `MedicinaNuclear` - Medicina Nuclear
+     * * `Endoscopia` - Endoscopia
      * * `Outro` - Outro
      * @param trlHoras
      * @returns ExameMedico
@@ -101,12 +61,12 @@ export class ClNicoExamesMDicosService {
         deletado?: boolean,
         idCustom?: string,
         inquilino?: number,
-        metodo?: 'Aglutinacao' | 'AnaliseMicroscopica' | 'Antibiograma' | 'CitometriaFluxo' | 'ColoracaoGram' | 'ColoracaoZiehl' | 'Colorimetrico' | 'Cromatografia' | 'CromatografiaGasosa' | 'CromatografiaLiquida' | 'Cultura' | 'ELISA' | 'Eletroforese' | 'Eletroquimico' | 'Eletroquimioluminescencia' | 'Enzimatico' | 'Espectrofotometrico' | 'EspectrometriaMassa' | 'Flutuacao' | 'Genotipagem' | 'HPLC' | 'HematologiaAutomatizada' | 'HibridizacaoMolecular' | 'Imunofluorescencia' | 'Imunoturbidimetria' | 'Isoeletrofoque' | 'IsolamentoMicrobiano' | 'KatoKatz' | 'MALDI_TOF' | 'MicroscopiaOptica' | 'Microscopico' | 'Nefelometrico' | 'PCR' | 'PCRTempoReal' | 'Potenciometrico' | 'Quimioluminescencia' | 'RT_PCR' | 'RessonanciaMagneticaNuclear' | 'Sedimentacao' | 'Sequenciamento' | 'TiraReagente' | 'Turbidimetrico',
+        metodo?: 'ANGIO' | 'COLONO' | 'CT' | 'DXA' | 'ECG' | 'ECO' | 'EEG' | 'ENDO' | 'HOLTER' | 'MAPA' | 'MG' | 'MN' | 'OUT' | 'RM' | 'RX' | 'USG',
         nome?: string,
         ordering?: string,
         preco?: number,
         search?: string,
-        setor?: 'Bacteriologia' | 'BancoSangue' | 'BiologiaMolecular' | 'Bioquimica' | 'Coagulacao' | 'ControleQualidade' | 'Gasometria' | 'Hematologia' | 'Hormonios' | 'ImunoHematologia' | 'Imunologia' | 'LiquidosCorporais' | 'MarcadoresTumorais' | 'Micologia' | 'Microbiologia' | 'NutricaoClinica' | 'Outro' | 'Parasitologia' | 'Pesquisa' | 'RecepcaoAmostras' | 'Serologia' | 'Toxicologia' | 'Triagem' | 'Urinalise' | 'Virologia' | null,
+        setor?: 'Cardiologia' | 'DiagnosticoImagem' | 'Endoscopia' | 'GinecoObstetricia' | 'MedicinaNuclear' | 'Neurologia' | 'Oftalmologia' | 'Ortopedia' | 'Otorrino' | 'Outro' | 'Radiologia' | null,
         trlHoras?: number,
     ): CancelablePromise<Array<ExameMedico>> {
         return __request(OpenAPI, {

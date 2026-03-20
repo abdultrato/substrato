@@ -162,8 +162,23 @@ export default function PacientesPage () {
 
             resetForm();
             carregarPacientes();
-        } catch {
-            setError( "Erro ao salvar paciente" );
+        } catch (err: any) {
+            const validation = (err as any)?.validation
+            if (validation && typeof validation === "object" && !Array.isArray(validation)) {
+                const first = Object.entries(validation)[0]
+                if (first) {
+                    const [campo, msgs] = first
+                    const msg =
+                        Array.isArray(msgs) && msgs.length
+                            ? msgs[0]
+                            : typeof msgs === "string"
+                                ? msgs
+                                : JSON.stringify(msgs)
+                    setError( `${campo}: ${msg}` )
+                    return
+                }
+            }
+            setError( err?.message || "Erro ao salvar paciente" );
         } finally {
             setSaving( false );
         }
@@ -278,6 +293,22 @@ export default function PacientesPage () {
                                 <option>Amarela</option>
                                 <option>Indígena</option>
                                 <option>Outro</option>
+                            </select>
+
+                            <select
+                                name="tipo_documento"
+                                value={form.tipo_documento}
+                                onChange={handleChange}
+                            >
+                                <option value="">Tipo de documento</option>
+                                <option value="BI">Bilhete de Identidade</option>
+                                <option value="PASS">Passaporte</option>
+                                <option value="CC">Carta de Condução</option>
+                                <option value="DIRE">DIRE</option>
+                                <option value="NUIT">NUIT</option>
+                                <option value="CE">Cartão de Eleitor</option>
+                                <option value="CN">Certidão de Nascimento</option>
+                                <option value="OUT">Outro</option>
                             </select>
 
                             <input

@@ -46,13 +46,10 @@ class RegistroProntuarioSerializer(serializers.ModelSerializer):
         )
 
     def get_medico_nome(self, obj: RegistroProntuario) -> str:
-        u = getattr(obj, "medico", None)
-        if not u:
+        medico = getattr(obj, "medico", None)
+        if not medico:
             return ""
-        try:
-            return (u.get_full_name() or "").strip() or u.username
-        except Exception:
-            return getattr(u, "username", "")
+        return getattr(medico, "nome", "") or ""
 
     def get_consultas_codigos(self, obj: RegistroProntuario) -> list[str]:
         try:

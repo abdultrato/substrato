@@ -8,6 +8,7 @@ from .modelos.requisicao_analise import RequisicaoAnalise
 from .modelos.requisicao_item import RequisicaoItem
 from .modelos.resultado import Resultado
 from .modelos.resultado_analise import ResultadoItem
+from .modelos.resultado_medico_arquivo import ResultadoMedicoArquivo
 
 __all__ = [
     "EventoClinico",
@@ -20,4 +21,5 @@ __all__ = [
     "RequisicaoItem",
     "Resultado",
     "ResultadoItem",
+    "ResultadoMedicoArquivo",
 ]

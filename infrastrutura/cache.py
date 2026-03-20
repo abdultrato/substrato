@@ -105,4 +105,10 @@ class TenantCache:
 
             except Exception:
                 pipe.reset()
-                return cache.incr(key, amount)
+                try:
+                    # Pode falhar se a chave foi expirada entre o watch e o incr.
+                    return cache.incr(key, amount)
+                except Exception:
+                    # Se a chave não existir, inicializa e devolve o valor inicial.
+                    cache.set(key, amount, timeout)
+                    return amount

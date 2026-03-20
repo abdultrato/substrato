@@ -3,6 +3,7 @@ from .exames import ExameMedicoViewSet, ExameViewSet
 from .pacientes import PacienteViewSet
 from .requisicoes import RequisicaoAnaliseViewSet, RequisicaoItemViewSet
 from .resultados import ResultadoItemViewSet
+from .resultados_medicos import ResultadoMedicoArquivoViewSet
 
 VIEWSET_MAP = {
     "exame": ExameViewSet,
@@ -13,6 +14,7 @@ VIEWSET_MAP = {
     "requisicaoanalise": RequisicaoAnaliseViewSet,
     "requisicaoitem": RequisicaoItemViewSet,
     "resultadoitem": ResultadoItemViewSet,
+    "resultadomedicoarquivo": ResultadoMedicoArquivoViewSet,
 }
 
 __all__ = [
@@ -25,4 +27,5 @@ __all__ = [
     "RequisicaoAnaliseViewSet",
     "RequisicaoItemViewSet",
     "ResultadoItemViewSet",
+    "ResultadoMedicoArquivoViewSet",
 ]

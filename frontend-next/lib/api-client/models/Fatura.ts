@@ -30,6 +30,7 @@ export type Fatura = {
      */
     procedimento?: number | null;
     consulta?: number | null;
+    cirurgia?: number | null;
     paciente?: number | null;
     /**
      * Pode associar múltiplos procedimentos de enfermagem à mesma fatura.

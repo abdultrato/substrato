@@ -192,12 +192,11 @@ import type { ResultadosInboxRequestRequest } from '../models/ResultadosInboxReq
 import type { ResultadosInboxResponse } from '../models/ResultadosInboxResponse';
 import type { Seguradora } from '../models/Seguradora';
 import type { SeguradoraRequest } from '../models/SeguradoraRequest';
+import type { SessionTokenObtainPairRequest } from '../models/SessionTokenObtainPairRequest';
+import type { SessionTokenRefresh } from '../models/SessionTokenRefresh';
+import type { SessionTokenRefreshRequest } from '../models/SessionTokenRefreshRequest';
 import type { SinalVitalEnfermagem } from '../models/SinalVitalEnfermagem';
 import type { SinalVitalEnfermagemRequest } from '../models/SinalVitalEnfermagemRequest';
-import type { TokenObtainPair } from '../models/TokenObtainPair';
-import type { TokenObtainPairRequest } from '../models/TokenObtainPairRequest';
-import type { TokenRefresh } from '../models/TokenRefresh';
-import type { TokenRefreshRequest } from '../models/TokenRefreshRequest';
 import type { Transacao } from '../models/Transacao';
 import type { TransacaoRequest } from '../models/TransacaoRequest';
 import type { UserMe } from '../models/UserMe';
@@ -349,12 +348,12 @@ export class V1Service {
      * Takes a set of user credentials and returns an access and refresh JSON web
      * token pair to prove the authentication of those credentials.
      * @param requestBody
-     * @returns TokenObtainPair
+     * @returns any No response body
      * @throws ApiError
      */
     public static v1AuthLoginCreate(
-        requestBody: TokenObtainPairRequest,
-    ): CancelablePromise<TokenObtainPair> {
+        requestBody: SessionTokenObtainPairRequest,
+    ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/login/',
@@ -421,12 +420,12 @@ export class V1Service {
      * Takes a refresh type JSON web token and returns an access type JSON web
      * token if the refresh token is valid.
      * @param requestBody
-     * @returns TokenRefresh
+     * @returns SessionTokenRefresh
      * @throws ApiError
      */
     public static v1AuthRefreshCreate(
-        requestBody: TokenRefreshRequest,
-    ): CancelablePromise<TokenRefresh> {
+        requestBody: SessionTokenRefreshRequest,
+    ): CancelablePromise<SessionTokenRefresh> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/refresh/',
@@ -626,6 +625,32 @@ export class V1Service {
      * - Remove campos invalidos (para nao quebrar em runtime).
      * - Guarda a lista removida em `_invalid_search_fields`/`_invalid_ordering_fields`
      * para ser inspecionada por testes/CI.
+     * @param id Um valor inteiro único que identifica este Cirurgia.
+     * @param requestBody
+     * @returns Cirurgia
+     * @throws ApiError
+     */
+    public static v1CirurgiaCirurgiaCriarFaturaCreate(
+        id: number,
+        requestBody: CirurgiaRequest,
+    ): CancelablePromise<Cirurgia> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/cirurgia/cirurgia/{id}/criar_fatura/',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Mixin "enterprise" para evitar 500 causados por configuracao incorreta de
+     * `search_fields`/`ordering_fields`.
+     *
+     * - Remove campos invalidos (para nao quebrar em runtime).
+     * - Guarda a lista removida em `_invalid_search_fields`/`_invalid_ordering_fields`
+     * para ser inspecionada por testes/CI.
      * @param ativo
      * @param criadoEm
      * @param nome
@@ -782,11 +807,16 @@ export class V1Service {
      * @param estado * `MARCADA` - Marcada
      * * `CONCLUIDA` - Concluída
      * * `CANCELADA` - Cancelada
+     * @param feriadoManual
      * @param medico
      * @param ordering Qual campo usar ao ordenar os resultados.
      * @param paciente
      * @param search Um termo de busca.
      * @param tipo
+     * @param tipoHorario * `NORMAL` - Normal (08h-18h)
+     * * `FORA_EXPEDIENTE` - Fora de expediente (19h-07h)
+     * * `FIM_SEMANA` - Fim de semana
+     * * `FERIADO_MANUAL` - Feriado (marcado)
      * @returns ConsultaMedica
      * @throws ApiError
      */
@@ -794,11 +824,13 @@ export class V1Service {
         agendadaPara?: string,
         criadoEm?: string,
         estado?: 'CANCELADA' | 'CONCLUIDA' | 'MARCADA',
+        feriadoManual?: boolean,
         medico?: number,
         ordering?: string,
         paciente?: number,
         search?: string,
         tipo?: string,
+        tipoHorario?: 'FERIADO_MANUAL' | 'FIM_SEMANA' | 'FORA_EXPEDIENTE' | 'NORMAL',
     ): CancelablePromise<Array<ConsultaMedica>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -807,11 +839,13 @@ export class V1Service {
                 'agendada_para': agendadaPara,
                 'criado_em': criadoEm,
                 'estado': estado,
+                'feriado_manual': feriadoManual,
                 'medico': medico,
                 'ordering': ordering,
                 'paciente': paciente,
                 'search': search,
                 'tipo': tipo,
+                'tipo_horario': tipoHorario,
             },
         });
     }
@@ -1054,11 +1088,13 @@ export class V1Service {
         });
     }
     /**
-     * Preview de preço (normal vs feriado) para uma especialidade + data/hora.
+     * Preview de preço (horário, fim de semana, fora de expediente, feriado manual)
+     * para uma especialidade + data/hora.
      *
      * Query params:
      * - especialidade: id (obrigatório)
      * - agendada_para: datetime ISO (opcional; default: now)
+     * - feriado_manual: bool (opcional; default: False)
      * @returns ConsultaMedica
      * @throws ApiError
      */
@@ -1374,33 +1410,37 @@ export class V1Service {
      * - Remove campos invalidos (para nao quebrar em runtime).
      * - Guarda a lista removida em `_invalid_search_fields`/`_invalid_ordering_fields`
      * para ser inspecionada por testes/CI.
-     * @param firstName
-     * @param isActive
-     * @param lastName
+     * @param cargo
+     * @param criadoEm
+     * @param estado * `ATIVO` - Ativo
+     * * `INATIVO` - Inativo
+     * @param nome
      * @param ordering Qual campo usar ao ordenar os resultados.
+     * @param profissao
      * @param search Um termo de busca.
-     * @param username
      * @returns Medico
      * @throws ApiError
      */
     public static v1ConsultasMedicosList(
-        firstName?: string,
-        isActive?: boolean,
-        lastName?: string,
+        cargo?: number,
+        criadoEm?: string,
+        estado?: 'ATIVO' | 'INATIVO',
+        nome?: string,
         ordering?: string,
+        profissao?: string,
         search?: string,
-        username?: string,
     ): CancelablePromise<Array<Medico>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/consultas/medicos/',
             query: {
-                'first_name': firstName,
-                'is_active': isActive,
-                'last_name': lastName,
+                'cargo': cargo,
+                'criado_em': criadoEm,
+                'estado': estado,
+                'nome': nome,
                 'ordering': ordering,
+                'profissao': profissao,
                 'search': search,
-                'username': username,
             },
         });
     }
@@ -1411,7 +1451,7 @@ export class V1Service {
      * - Remove campos invalidos (para nao quebrar em runtime).
      * - Guarda a lista removida em `_invalid_search_fields`/`_invalid_ordering_fields`
      * para ser inspecionada por testes/CI.
-     * @param id Um valor inteiro único que identifica este Usuário.
+     * @param id Um valor inteiro único que identifica este Funcionário.
      * @returns Medico
      * @throws ApiError
      */
@@ -5640,6 +5680,7 @@ export class V1Service {
      * para ser inspecionada por testes/CI.
      * @param atualizadoEm
      * @param atualizadoPor
+     * @param cirurgia
      * @param criadoEm
      * @param criadoPor
      * @param deletado
@@ -5665,6 +5706,7 @@ export class V1Service {
     public static v1FaturamentoFaturaList(
         atualizadoEm?: string,
         atualizadoPor?: number,
+        cirurgia?: number,
         criadoEm?: string,
         criadoPor?: number,
         deletado?: boolean,
@@ -5688,6 +5730,7 @@ export class V1Service {
             query: {
                 'atualizado_em': atualizadoEm,
                 'atualizado_por': atualizadoPor,
+                'cirurgia': cirurgia,
                 'criado_em': criadoEm,
                 'criado_por': criadoPor,
                 'deletado': deletado,
@@ -10653,6 +10696,7 @@ export class V1Service {
          * @param estado * `ATIVO` - Ativo
          * * `INATIVO` - Inativo
          * @param ordering Qual campo usar ao ordenar os resultados.
+         * @param profissao
          * @param search Um termo de busca.
          * @returns Funcionario
          * @throws ApiError
@@ -10663,6 +10707,7 @@ export class V1Service {
             dataAdmissao?: string,
             estado?: 'ATIVO' | 'INATIVO',
             ordering?: string,
+            profissao?: string,
             search?: string,
         ): CancelablePromise<Array<Funcionario>> {
             return __request(OpenAPI, {
@@ -10674,6 +10719,7 @@ export class V1Service {
                     'data_admissao': dataAdmissao,
                     'estado': estado,
                     'ordering': ordering,
+                    'profissao': profissao,
                     'search': search,
                 },
             });

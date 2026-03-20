@@ -33,6 +33,14 @@ class Funcionario(CoreModel):
         db_index=True,
     )
 
+    profissao = models.CharField(
+        verbose_name="Profissão",
+        max_length=120,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
     nuit = models.CharField(
         verbose_name="NUIT",
         max_length=30,

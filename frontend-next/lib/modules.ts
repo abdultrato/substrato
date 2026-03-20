@@ -37,6 +37,16 @@ export const MODULES: ModuleGroup[] = [
     ],
   },
   {
+    key: "equipamentos",
+    label: "Equipamentos",
+    resources: [
+      { key: "equipamento", label: "Equipamentos", endpoint: "/equipamentos/equipamento/", adminListHref: "/admin/equipamentos/equipamento/" },
+      { key: "inspecaodiaria", label: "Inspeções Diárias", endpoint: "/equipamentos/inspecaodiaria/", adminListHref: "/admin/inspecoes/inspecaodiaria/" },
+      { key: "manutencao", label: "Manutenções", endpoint: "/equipamentos/manutencao/", adminListHref: "/admin/manutencoes/manutencao/" },
+      { key: "ocorrencia", label: "Ocorrências", endpoint: "/equipamentos/ocorrencia/", adminListHref: "/admin/ocorrencias/ocorrencia/" },
+    ],
+  },
+  {
     key: "entidades",
     label: "Entidades",
     resources: [

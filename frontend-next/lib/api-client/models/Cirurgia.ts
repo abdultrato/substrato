@@ -8,6 +8,9 @@ export type Cirurgia = {
     readonly paciente_nome?: string;
     readonly cirurgiao_nome?: string;
     readonly procedimentos_nomes?: Array<string>;
+    readonly fatura_id?: number | null;
+    readonly fatura_codigo?: string;
+    readonly fatura_estado?: string;
     readonly criado_em?: string;
     readonly atualizado_em?: string;
     readonly id_custom?: string | null;
@@ -15,10 +18,13 @@ export type Cirurgia = {
     readonly deletado_em?: string | null;
     readonly versao?: number;
     /**
-     * Use apenas quando o procedimento não estiver no catálogo.
+     * Use quando o procedimento não estiver no catálogo.
      */
     procedimento?: string;
     descricao?: string;
+    preco_estimado?: string;
+    iva_percentual?: string;
+    aplica_iva_por_padrao?: boolean;
     agendada_para?: string;
     estado?: CirurgiaEstadoEnum;
     concluida_em?: string | null;

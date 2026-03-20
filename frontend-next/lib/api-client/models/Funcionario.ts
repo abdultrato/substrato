@@ -12,6 +12,7 @@ export type Funcionario = {
     readonly deletado_em?: string | null;
     versao?: number;
     nome: string;
+    profissao?: string;
     nuit?: string;
     nib?: string;
     numero_documento?: string;

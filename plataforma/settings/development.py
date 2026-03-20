@@ -30,6 +30,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://0.0.0.0:3001",
     "http://100.93.161.102:3000",
     "http://100.93.161.102:3001",
+    # Access via docker bridge (frontend container hitting backend container).
+    "http://172.18.0.1:3000",
+    "http://172.18.0.1:3001",
 ]
 CORS_ALLOW_CREDENTIALS = True
 

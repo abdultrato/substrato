@@ -14,6 +14,51 @@ export default function EditarExamePage () {
     useAuthGuard();
     const router = useRouter();
 
+    const metodoOptions = [
+        { value: "Enzimatico", label: "Enzimático" },
+        { value: "Colorimetrico", label: "Colorimétrico" },
+        { value: "Espectrofotometrico", label: "Espectrofotométrico" },
+        { value: "Turbidimetrico", label: "Turbidimétrico" },
+        { value: "Nefelometrico", label: "Nefelométrico" },
+        { value: "Potenciometrico", label: "Potenciométrico" },
+        { value: "Eletroquimico", label: "Eletroquímico" },
+        { value: "ELISA", label: "ELISA" },
+        { value: "Quimioluminescencia", label: "Quimioluminescência" },
+        { value: "Eletroquimioluminescencia", label: "Eletroquimioluminescência" },
+        { value: "Imunofluorescencia", label: "Imunofluorescência" },
+        { value: "Imunoturbidimetria", label: "Imunoturbidimetria" },
+        { value: "Aglutinacao", label: "Aglutinação" },
+        { value: "Cultura", label: "Cultura" },
+        { value: "Antibiograma", label: "Antibiograma" },
+        { value: "Microscopico", label: "Microscópico" },
+        { value: "ColoracaoGram", label: "Coloração de Gram" },
+        { value: "ColoracaoZiehl", label: "Ziehl-Neelsen" },
+        { value: "IsolamentoMicrobiano", label: "Isolamento Microbiano" },
+        { value: "CitometriaFluxo", label: "Citometria de Fluxo" },
+        { value: "HematologiaAutomatizada", label: "Hematologia Automatizada" },
+        { value: "MicroscopiaOptica", label: "Microscopia Óptica" },
+        { value: "PCR", label: "PCR" },
+        { value: "RT_PCR", label: "RT-PCR" },
+        { value: "PCRTempoReal", label: "PCR em Tempo Real" },
+        { value: "Sequenciamento", label: "Sequenciamento Genético" },
+        { value: "HibridizacaoMolecular", label: "Hibridização Molecular" },
+        { value: "Genotipagem", label: "Genotipagem" },
+        { value: "Cromatografia", label: "Cromatografia" },
+        { value: "CromatografiaGasosa", label: "Cromatografia Gasosa" },
+        { value: "CromatografiaLiquida", label: "Cromatografia Líquida" },
+        { value: "HPLC", label: "Cromatografia Líquida de Alta Eficiência" },
+        { value: "Eletroforese", label: "Eletroforese" },
+        { value: "Isoeletrofoque", label: "Isoeletrofocalização" },
+        { value: "Sedimentacao", label: "Sedimentação" },
+        { value: "Flutuacao", label: "Flutuação" },
+        { value: "KatoKatz", label: "Kato-Katz" },
+        { value: "TiraReagente", label: "Tira Reagente" },
+        { value: "AnaliseMicroscopica", label: "Análise Microscópica" },
+        { value: "EspectrometriaMassa", label: "Espectrometria de Massa" },
+        { value: "MALDI_TOF", label: "MALDI-TOF" },
+        { value: "RessonanciaMagneticaNuclear", label: "Ressonância Magnética Nuclear" },
+    ];
+
     const [form, setForm] = useState<any>( null );
 
     const carregar = useCallback( async () => {
@@ -74,11 +119,9 @@ export default function EditarExamePage () {
                     value={form.metodo || "Enzimatico"}
                     onChange={e => setForm( { ...form, metodo: e.target.value } )}
                 >
-                    <option value="Enzimatico">Enzimático</option>
-                    <option value="Colorimetrico">Colorimétrico</option>
-                    <option value="ELISA">ELISA</option>
-                    <option value="PCR">PCR</option>
-                    <option value="Outro">Outro</option>
+                    {metodoOptions.map( (m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                    ) )}
                 </select>
 
                 <label>Setor</label>

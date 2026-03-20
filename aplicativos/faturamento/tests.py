@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -22,6 +22,8 @@ from aplicativos.farmacia.models.produto import Produto
 from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
 from aplicativos.inquilinos.modelos.inquilino import Inquilino
+from nucleo.constantes.exame_medico.metodo_exame_medico import MetodoExameMedico
+from nucleo.constantes.exame_medico.setor_exame_medico import SetorExameMedico
 from nucleo.constantes.laboratorio.metodo import Metodo
 from nucleo.constantes.laboratorio.setor import Setor
 
@@ -54,9 +56,13 @@ def _exame_medico(tenant):
         inquilino=tenant,
         nome="Ecografia abdominal",
         preco=Decimal("150.00"),
-        metodo=Metodo.ENZIMATICO,
-        setor=Setor.IMUNOLOGIA,
+        metodo=MetodoExameMedico.ULTRASSONOGRAFIA,
+        setor=SetorExameMedico.RADIOLOGIA,
     )
+
+
+def _horario_normal():
+    return timezone.make_aware(datetime(2024, 1, 2, 10, 0))
 
 
 @pytest.mark.django_db
@@ -65,6 +71,8 @@ def test_fatura_clinico_recalcula_totais():
     paciente = _paciente(tenant)
     exame = _exame(tenant)
     req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
+    req.criado_em = _horario_normal()
+    req.save(update_fields=["criado_em"])
     RequisicaoItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
 
     fatura = Fatura.objects.create(
@@ -102,6 +110,8 @@ def test_fatura_clinico_sincroniza_exame_medico():
         paciente=paciente,
         tipo=RequisicaoAnalise.Tipo.EXAME_MEDICO,
     )
+    req.criado_em = _horario_normal()
+    req.save(update_fields=["criado_em"])
     RequisicaoItem.objects.create(
         inquilino=tenant,
         requisicao=req,

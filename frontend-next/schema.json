@@ -142,9 +142,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           },
           {}
@@ -284,9 +281,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -326,9 +320,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -419,9 +410,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -462,9 +450,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -493,17 +478,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TokenObtainPairRequest"
+                "$ref": "#/components/schemas/SessionTokenObtainPairRequest"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/TokenObtainPairRequest"
+                "$ref": "#/components/schemas/SessionTokenObtainPairRequest"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/TokenObtainPairRequest"
+                "$ref": "#/components/schemas/SessionTokenObtainPairRequest"
               }
             }
           },
@@ -517,14 +502,7 @@
         ],
         "responses": {
           "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenObtainPair"
-                }
-              }
-            },
-            "description": ""
+            "description": "No response body"
           }
         }
       }
@@ -536,9 +514,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -577,9 +552,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           },
@@ -629,9 +601,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           },
           {}
@@ -678,9 +647,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -712,17 +678,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TokenRefreshRequest"
+                "$ref": "#/components/schemas/SessionTokenRefreshRequest"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/TokenRefreshRequest"
+                "$ref": "#/components/schemas/SessionTokenRefreshRequest"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/TokenRefreshRequest"
+                "$ref": "#/components/schemas/SessionTokenRefreshRequest"
               }
             }
           },
@@ -739,7 +705,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenRefresh"
+                  "$ref": "#/components/schemas/SessionTokenRefresh"
                 }
               }
             },
@@ -755,9 +721,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -800,9 +763,6 @@
           }
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -894,9 +854,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -944,9 +901,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -983,9 +937,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -1042,9 +993,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1099,9 +1047,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1137,15 +1082,69 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
         "responses": {
           "204": {
             "description": "No response body"
+          }
+        }
+      }
+    },
+    "/api/v1/cirurgia/cirurgia/{id}/criar_fatura/": {
+      "post": {
+        "operationId": "v1_cirurgia_cirurgia_criar_fatura_create",
+        "description": "Mixin \"enterprise\" para evitar 500 causados por configuracao incorreta de\n`search_fields`/`ordering_fields`.\n\n- Remove campos invalidos (para nao quebrar em runtime).\n- Guarda a lista removida em `_invalid_search_fields`/`_invalid_ordering_fields`\n  para ser inspecionada por testes/CI.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Cirurgia.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "v1"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CirurgiaRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/CirurgiaRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/CirurgiaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cirurgia"
+                }
+              }
+            },
+            "description": ""
           }
         }
       }
@@ -1201,9 +1200,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1251,9 +1247,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1290,9 +1283,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -1349,9 +1339,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1406,9 +1393,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1443,9 +1427,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -1646,9 +1627,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1696,9 +1674,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1735,9 +1710,6 @@
           "Cl\u00ednico - Exames"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -1794,9 +1766,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1851,9 +1820,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -1888,9 +1854,6 @@
           "Cl\u00ednico - Exames"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2027,9 +1990,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2077,9 +2037,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2116,9 +2073,6 @@
           "Cl\u00ednico - Campos de Exame"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2175,9 +2129,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2232,9 +2183,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2269,9 +2217,6 @@
           "Cl\u00ednico - Campos de Exame"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2344,53 +2289,27 @@
             "name": "metodo",
             "schema": {
               "type": "string",
-              "title": "M\u00e9todo do exame",
+              "title": "M\u00e9todo do exame (imagem/diagn\u00f3stico)",
               "enum": [
-                "Aglutinacao",
-                "AnaliseMicroscopica",
-                "Antibiograma",
-                "CitometriaFluxo",
-                "ColoracaoGram",
-                "ColoracaoZiehl",
-                "Colorimetrico",
-                "Cromatografia",
-                "CromatografiaGasosa",
-                "CromatografiaLiquida",
-                "Cultura",
-                "ELISA",
-                "Eletroforese",
-                "Eletroquimico",
-                "Eletroquimioluminescencia",
-                "Enzimatico",
-                "Espectrofotometrico",
-                "EspectrometriaMassa",
-                "Flutuacao",
-                "Genotipagem",
-                "HPLC",
-                "HematologiaAutomatizada",
-                "HibridizacaoMolecular",
-                "Imunofluorescencia",
-                "Imunoturbidimetria",
-                "Isoeletrofoque",
-                "IsolamentoMicrobiano",
-                "KatoKatz",
-                "MALDI_TOF",
-                "MicroscopiaOptica",
-                "Microscopico",
-                "Nefelometrico",
-                "PCR",
-                "PCRTempoReal",
-                "Potenciometrico",
-                "Quimioluminescencia",
-                "RT_PCR",
-                "RessonanciaMagneticaNuclear",
-                "Sedimentacao",
-                "Sequenciamento",
-                "TiraReagente",
-                "Turbidimetrico"
+                "ANGIO",
+                "COLONO",
+                "CT",
+                "DXA",
+                "ECG",
+                "ECO",
+                "EEG",
+                "ENDO",
+                "HOLTER",
+                "MAPA",
+                "MG",
+                "MN",
+                "OUT",
+                "RM",
+                "RX",
+                "USG"
               ]
             },
-            "description": "* `Enzimatico` - Enzim\u00e1tico\n* `Colorimetrico` - Colorim\u00e9trico\n* `Espectrofotometrico` - Espectrofotom\u00e9trico\n* `Turbidimetrico` - Turbidim\u00e9trico\n* `Nefelometrico` - Nefelom\u00e9trico\n* `Potenciometrico` - Potenciom\u00e9trico\n* `Eletroquimico` - Eletroqu\u00edmico\n* `ELISA` - ELISA\n* `Quimioluminescencia` - Quimioluminesc\u00eancia\n* `Eletroquimioluminescencia` - Eletroquimioluminesc\u00eancia\n* `Imunofluorescencia` - Imunofluoresc\u00eancia\n* `Imunoturbidimetria` - Imunoturbidimetria\n* `Aglutinacao` - Aglutina\u00e7\u00e3o\n* `Cultura` - Cultura\n* `Antibiograma` - Antibiograma\n* `Microscopico` - Microsc\u00f3pico\n* `ColoracaoGram` - Colora\u00e7\u00e3o de Gram\n* `ColoracaoZiehl` - Ziehl-Neelsen\n* `IsolamentoMicrobiano` - Isolamento Microbiano\n* `CitometriaFluxo` - Citometria de Fluxo\n* `HematologiaAutomatizada` - Hematologia Automatizada\n* `MicroscopiaOptica` - Microscopia \u00d3ptica\n* `PCR` - PCR\n* `RT_PCR` - RT-PCR\n* `PCRTempoReal` - PCR em Tempo Real\n* `Sequenciamento` - Sequenciamento Gen\u00e9tico\n* `HibridizacaoMolecular` - Hibridiza\u00e7\u00e3o Molecular\n* `Genotipagem` - Genotipagem\n* `Cromatografia` - Cromatografia\n* `CromatografiaGasosa` - Cromatografia Gasosa\n* `CromatografiaLiquida` - Cromatografia L\u00edquida\n* `HPLC` - Cromatografia L\u00edquida de Alta Efici\u00eancia\n* `Eletroforese` - Eletroforese\n* `Isoeletrofoque` - Isoeletrofocaliza\u00e7\u00e3o\n* `Sedimentacao` - Sedimenta\u00e7\u00e3o\n* `Flutuacao` - Flutua\u00e7\u00e3o\n* `KatoKatz` - Kato-Katz\n* `TiraReagente` - Tira Reagente\n* `AnaliseMicroscopica` - An\u00e1lise Microsc\u00f3pica\n* `EspectrometriaMassa` - Espectrometria de Massa\n* `MALDI_TOF` - MALDI-TOF\n* `RessonanciaMagneticaNuclear` - Resson\u00e2ncia Magn\u00e9tica Nuclear"
+            "description": "* `USG` - Ultrassonografia / Ecografia\n* `RX` - Raio-X Convencional\n* `CT` - Tomografia Computorizada (CT)\n* `RM` - Resson\u00e2ncia Magn\u00e9tica (RM)\n* `MG` - Mamografia\n* `DXA` - Densitometria \u00d3ssea (DXA)\n* `ECO` - Ecocardiograma\n* `ECG` - Eletrocardiograma (ECG)\n* `HOLTER` - Holter\n* `MAPA` - MAPA (PA 24h)\n* `EEG` - Eletroencefalograma (EEG)\n* `ENDO` - Endoscopia\n* `COLONO` - Colonoscopia\n* `ANGIO` - Angiografia\n* `MN` - Medicina Nuclear / Cintilografia\n* `OUT` - Outro"
           },
           {
             "in": "query",
@@ -2430,36 +2349,22 @@
             "schema": {
               "type": "string",
               "nullable": true,
-              "title": "Setor do exame",
+              "title": "Setor do exame (imagem/diagn\u00f3stico)",
               "enum": [
-                "Bacteriologia",
-                "BancoSangue",
-                "BiologiaMolecular",
-                "Bioquimica",
-                "Coagulacao",
-                "ControleQualidade",
-                "Gasometria",
-                "Hematologia",
-                "Hormonios",
-                "ImunoHematologia",
-                "Imunologia",
-                "LiquidosCorporais",
-                "MarcadoresTumorais",
-                "Micologia",
-                "Microbiologia",
-                "NutricaoClinica",
+                "Cardiologia",
+                "DiagnosticoImagem",
+                "Endoscopia",
+                "GinecoObstetricia",
+                "MedicinaNuclear",
+                "Neurologia",
+                "Oftalmologia",
+                "Ortopedia",
+                "Otorrino",
                 "Outro",
-                "Parasitologia",
-                "Pesquisa",
-                "RecepcaoAmostras",
-                "Serologia",
-                "Toxicologia",
-                "Triagem",
-                "Urinalise",
-                "Virologia"
+                "Radiologia"
               ]
             },
-            "description": "* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro"
+            "description": "* `Radiologia` - Radiologia\n* `DiagnosticoImagem` - Diagn\u00f3stico por Imagem\n* `Cardiologia` - Cardiologia\n* `GinecoObstetricia` - Ginecologia/Obstetr\u00edcia\n* `Ortopedia` - Ortopedia/Traumato\n* `Neurologia` - Neurologia\n* `Otorrino` - Otorrinolaringologia\n* `Oftalmologia` - Oftalmologia\n* `MedicinaNuclear` - Medicina Nuclear\n* `Endoscopia` - Endoscopia\n* `Outro` - Outro"
           },
           {
             "in": "query",
@@ -2473,9 +2378,6 @@
           "Cl\u00ednico - Exames M\u00e9dicos"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2524,9 +2426,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2563,9 +2462,6 @@
           "Cl\u00ednico - Exames M\u00e9dicos"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2622,9 +2518,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2679,9 +2572,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2716,9 +2606,6 @@
           "Cl\u00ednico - Exames M\u00e9dicos"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2816,47 +2703,23 @@
             "name": "tipo",
             "schema": {
               "type": "string",
-              "title": "Tipo de par\u00e2metro",
+              "title": "Tipo de par\u00e2metro/arquivo",
               "enum": [
+                "DICOM",
+                "IMAGEM",
                 "NUMERICO",
-                "QUALITATIVO",
-                "SEMIQUANTITATIVO",
-                "TEXTO"
+                "PDF",
+                "TEXTO",
+                "VIDEO"
               ]
             },
-            "description": "* `NUMERICO` - Num\u00e9rico\n* `QUALITATIVO` - Qualitativo\n* `SEMIQUANTITATIVO` - Semi-quantitativo\n* `TEXTO` - Texto Livre"
-          },
-          {
-            "in": "query",
-            "name": "unidade",
-            "schema": {
-              "type": "string",
-              "title": "Unidade de medida",
-              "enum": [
-                "%",
-                "cel/mm3",
-                "fl",
-                "g/dl",
-                "mg/dl",
-                "mmol/l",
-                "p/\u00b5L",
-                "ph",
-                "u/l",
-                "x10\u00b3/\u00b5l",
-                "x10\u2076/\u00b5L",
-                "\u00b5mol/l"
-              ]
-            },
-            "description": "* `g/dl` - g/dl\n* `mg/dl` - mg/dl\n* `mmol/l` - mmol/l\n* `\u00b5mol/l` - \u00b5mol/l\n* `cel/mm3` - cel/mm3\n* `x10\u00b3/\u00b5l` - x10\u00b3/\u00b5l\n* `x10\u2076/\u00b5L` - x10\u2076/\u00b5L\n* `%` - %\n* `u/l` - u/l\n* `p/\u00b5L` - p/\u00b5L\n* `ph` - ph\n* `fl` - fl"
+            "description": "* `PDF` - Laudo/Relat\u00f3rio (PDF)\n* `IMAGEM` - Imagem (JPEG/PNG)\n* `DICOM` - DICOM\n* `VIDEO` - V\u00eddeo/loop\n* `TEXTO` - Texto livre\n* `NUMERICO` - Valor num\u00e9rico"
           }
         ],
         "tags": [
           "Cl\u00ednico - Campos de Exame M\u00e9dico"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -2905,9 +2768,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -2944,9 +2804,6 @@
           "Cl\u00ednico - Campos de Exame M\u00e9dico"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3003,9 +2860,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3060,9 +2914,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3097,9 +2948,6 @@
           "Cl\u00ednico - Campos de Exame M\u00e9dico"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3301,9 +3149,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3351,9 +3196,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3382,7 +3224,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
             "required": true
           }
         ],
@@ -3390,9 +3232,6 @@
           "Cl\u00ednico - Pacientes"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3420,7 +3259,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
             "required": true
           }
         ],
@@ -3449,9 +3288,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3478,7 +3314,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
             "required": true
           }
         ],
@@ -3506,9 +3342,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3535,7 +3368,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
             "required": true
           }
         ],
@@ -3543,9 +3376,6 @@
           "Cl\u00ednico - Pacientes"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3568,7 +3398,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Paciente.",
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
             "required": true
           }
         ],
@@ -3576,9 +3406,6 @@
           "Cl\u00ednico - Pacientes"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3605,9 +3432,6 @@
           "Cl\u00ednico - Pacientes"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3766,9 +3590,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3816,9 +3637,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3855,9 +3673,6 @@
           "Cl\u00ednico - Requisi\u00e7\u00f5es"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -3914,9 +3729,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -3971,9 +3783,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4009,9 +3818,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4041,9 +3847,6 @@
           "Cl\u00ednico - Requisi\u00e7\u00f5es"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4081,9 +3884,6 @@
           "Cl\u00ednico - Requisi\u00e7\u00f5es"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4196,9 +3996,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4246,9 +4043,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4285,9 +4079,6 @@
           "Cl\u00ednico - Requisi\u00e7\u00f5es"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4344,9 +4135,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4401,9 +4189,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4438,9 +4223,6 @@
           "Cl\u00ednico - Requisi\u00e7\u00f5es"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4590,9 +4372,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4640,9 +4419,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4679,9 +4455,6 @@
           "Cl\u00ednico - Resultados"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4738,9 +4511,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4795,9 +4565,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -4832,9 +4599,6 @@
           "Cl\u00ednico - Resultados"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4885,9 +4649,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -4946,9 +4707,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5006,9 +4764,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5022,6 +4777,337 @@
               }
             },
             "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/clinico/resultadomedicoarquivo/": {
+      "get": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_list",
+        "description": "Lista arquivos (PDF/imagens) associados a um exame m\u00e9dico.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "atualizado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "criado_em",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exame_medico",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id_custom",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inquilino",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ordering",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "requisicao_item",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resultado",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "type": "string",
+              "title": "Tipo de arquivo",
+              "enum": [
+                "DICOM",
+                "IMAGEM",
+                "NUMERICO",
+                "PDF",
+                "TEXTO",
+                "VIDEO"
+              ]
+            },
+            "description": "* `PDF` - Laudo/Relat\u00f3rio (PDF)\n* `IMAGEM` - Imagem (JPEG/PNG)\n* `DICOM` - DICOM\n* `VIDEO` - V\u00eddeo/loop\n* `TEXTO` - Texto livre\n* `NUMERICO` - Valor num\u00e9rico"
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultadoMedicoArquivo"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "post": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_create",
+        "description": "Arquivos/links gerados para exames m\u00e9dicos (imagens, laudos, DICOM).",
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoMedicoArquivo"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/v1/clinico/resultadomedicoarquivo/{id}/": {
+      "get": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_retrieve",
+        "description": "Arquivos/links gerados para exames m\u00e9dicos (imagens, laudos, DICOM).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Arquivo de resultado m\u00e9dico.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoMedicoArquivo"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_update",
+        "description": "Arquivos/links gerados para exames m\u00e9dicos (imagens, laudos, DICOM).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Arquivo de resultado m\u00e9dico.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultadoMedicoArquivoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoMedicoArquivo"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "patch": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_partial_update",
+        "description": "Arquivos/links gerados para exames m\u00e9dicos (imagens, laudos, DICOM).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Arquivo de resultado m\u00e9dico.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedResultadoMedicoArquivoRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedResultadoMedicoArquivoRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchedResultadoMedicoArquivoRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoMedicoArquivo"
+                }
+              }
+            },
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "operationId": "v1_clinico_resultadomedicoarquivo_destroy",
+        "description": "Arquivos/links gerados para exames m\u00e9dicos (imagens, laudos, DICOM).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Um valor inteiro \u00fanico que identifica este Arquivo de resultado m\u00e9dico.",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Cl\u00ednico - Resultados M\u00e9dicos"
+        ],
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
           }
         }
       }
@@ -5062,6 +5148,13 @@
           },
           {
             "in": "query",
+            "name": "feriado_manual",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "medico",
             "schema": {
               "type": "integer"
@@ -5098,15 +5191,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "tipo_horario",
+            "schema": {
+              "type": "string",
+              "title": "Tipo de hor\u00e1rio",
+              "enum": [
+                "FERIADO_MANUAL",
+                "FIM_SEMANA",
+                "FORA_EXPEDIENTE",
+                "NORMAL"
+              ]
+            },
+            "description": "* `NORMAL` - Normal (08h-18h)\n* `FORA_EXPEDIENTE` - Fora de expediente (19h-07h)\n* `FIM_SEMANA` - Fim de semana\n* `FERIADO_MANUAL` - Feriado (marcado)"
           }
         ],
         "tags": [
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5155,9 +5260,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5194,9 +5296,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5253,9 +5352,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5310,9 +5406,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5347,9 +5440,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5400,9 +5490,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5461,9 +5548,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5520,9 +5604,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5581,9 +5662,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5610,9 +5688,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5633,14 +5708,11 @@
     "/api/v1/consultas/consulta/preco/": {
       "get": {
         "operationId": "v1_consultas_consulta_preco_retrieve",
-        "description": "Preview de pre\u00e7o (normal vs feriado) para uma especialidade + data/hora.\n\nQuery params:\n- especialidade: id (obrigat\u00f3rio)\n- agendada_para: datetime ISO (opcional; default: now)",
+        "description": "Preview de pre\u00e7o (hor\u00e1rio, fim de semana, fora de expediente, feriado manual)\npara uma especialidade + data/hora.\n\nQuery params:\n- especialidade: id (obrigat\u00f3rio)\n- agendada_para: datetime ISO (opcional; default: now)\n- feriado_manual: bool (opcional; default: False)",
         "tags": [
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5709,9 +5781,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5759,9 +5828,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5798,9 +5864,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -5857,9 +5920,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5914,9 +5974,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -5951,9 +6008,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6009,9 +6063,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6059,9 +6110,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6098,9 +6146,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6157,9 +6202,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6214,9 +6256,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6252,9 +6291,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6272,21 +6308,34 @@
         "parameters": [
           {
             "in": "query",
-            "name": "first_name",
+            "name": "cargo",
             "schema": {
-              "type": "string"
+              "type": "integer"
             }
           },
           {
             "in": "query",
-            "name": "is_active",
+            "name": "criado_em",
             "schema": {
-              "type": "boolean"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
             "in": "query",
-            "name": "last_name",
+            "name": "estado",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ATIVO",
+                "INATIVO"
+              ]
+            },
+            "description": "* `ATIVO` - Ativo\n* `INATIVO` - Inativo"
+          },
+          {
+            "in": "query",
+            "name": "nome",
             "schema": {
               "type": "string"
             }
@@ -6301,17 +6350,17 @@
             }
           },
           {
-            "name": "search",
-            "required": false,
             "in": "query",
-            "description": "Um termo de busca.",
+            "name": "profissao",
             "schema": {
               "type": "string"
             }
           },
           {
+            "name": "search",
+            "required": false,
             "in": "query",
-            "name": "username",
+            "description": "Um termo de busca.",
             "schema": {
               "type": "string"
             }
@@ -6321,9 +6370,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6356,7 +6402,7 @@
             "schema": {
               "type": "integer"
             },
-            "description": "Um valor inteiro \u00fanico que identifica este Usu\u00e1rio.",
+            "description": "Um valor inteiro \u00fanico que identifica este Funcion\u00e1rio.",
             "required": true
           }
         ],
@@ -6364,9 +6410,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6436,9 +6479,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6486,9 +6526,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6525,9 +6562,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6584,9 +6618,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6641,9 +6672,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6678,9 +6706,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6786,6 +6811,7 @@
             "name": "tipo",
             "schema": {
               "type": "string",
+              "title": "Tipo de conta",
               "enum": [
                 "ATI",
                 "DES",
@@ -6801,9 +6827,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6852,9 +6875,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -6891,9 +6911,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -6950,9 +6967,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7007,9 +7021,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7044,9 +7055,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -7182,9 +7190,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7232,9 +7237,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7271,9 +7273,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -7330,9 +7329,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7387,9 +7383,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7424,9 +7417,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -7561,9 +7551,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7611,9 +7598,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7650,9 +7634,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -7709,9 +7690,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7766,9 +7744,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7803,9 +7778,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -7880,9 +7852,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7912,9 +7881,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -7939,9 +7905,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8047,9 +8010,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8097,9 +8057,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8136,9 +8093,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8195,9 +8149,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8252,9 +8203,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8289,9 +8237,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8383,9 +8328,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8433,9 +8375,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8472,9 +8411,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8531,9 +8467,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8588,9 +8521,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8626,9 +8556,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8647,9 +8574,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8759,9 +8683,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8809,9 +8730,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8848,9 +8766,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -8907,9 +8822,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -8964,9 +8876,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9001,9 +8910,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9134,9 +9040,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9184,9 +9087,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9223,9 +9123,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9282,9 +9179,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9339,9 +9233,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9376,9 +9267,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9485,9 +9373,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9535,9 +9420,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9574,9 +9456,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9633,9 +9512,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9690,9 +9566,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9727,9 +9600,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9829,9 +9699,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9879,9 +9746,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -9918,9 +9782,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -9977,9 +9838,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10034,9 +9892,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10071,9 +9926,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -10165,9 +10017,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10215,9 +10064,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10254,9 +10100,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -10313,9 +10156,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10370,9 +10210,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10407,9 +10244,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -10515,9 +10349,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10565,9 +10396,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10604,9 +10432,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -10663,9 +10488,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10720,9 +10542,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10757,9 +10576,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -10872,9 +10688,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10922,9 +10735,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -10961,9 +10771,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11020,9 +10827,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11077,9 +10881,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11114,9 +10915,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11208,9 +11006,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11258,9 +11053,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11297,9 +11089,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11356,9 +11145,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11413,9 +11199,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11450,9 +11233,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11572,9 +11352,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11622,9 +11399,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11661,9 +11435,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11720,9 +11491,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11777,9 +11545,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11814,9 +11579,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -11908,9 +11670,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11958,9 +11717,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -11997,9 +11753,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -12056,9 +11809,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12113,9 +11863,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12150,9 +11897,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -12265,9 +12009,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12315,9 +12056,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12354,9 +12092,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -12413,9 +12148,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12470,9 +12202,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12507,9 +12236,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -12637,9 +12363,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12687,9 +12410,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12726,9 +12446,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -12785,9 +12502,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12842,9 +12556,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -12879,9 +12590,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13022,9 +12730,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13072,9 +12777,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13111,9 +12813,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13170,9 +12869,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13227,9 +12923,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13264,9 +12957,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13401,9 +13091,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13451,9 +13138,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13490,9 +13174,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13549,9 +13230,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13606,9 +13284,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13643,9 +13318,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13781,9 +13453,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13831,9 +13500,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13870,9 +13536,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -13929,9 +13592,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -13986,9 +13646,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14023,9 +13680,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -14179,9 +13833,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14229,9 +13880,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14268,9 +13916,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -14327,9 +13972,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14384,9 +14026,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14421,9 +14060,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -14550,9 +14186,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14600,9 +14233,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14639,9 +14269,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -14698,9 +14325,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14755,9 +14379,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14792,9 +14413,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -14908,9 +14526,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14958,9 +14573,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -14997,9 +14609,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -15056,9 +14665,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15113,9 +14719,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15151,9 +14754,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15180,6 +14780,13 @@
           {
             "in": "query",
             "name": "atualizado_por",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cirurgia",
             "schema": {
               "type": "integer"
             }
@@ -15315,9 +14922,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15365,9 +14969,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15404,9 +15005,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -15463,9 +15061,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15520,9 +15115,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15557,9 +15149,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -15610,9 +15199,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -15671,9 +15257,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15710,9 +15293,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -15854,9 +15434,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15904,9 +15481,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -15943,9 +15517,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16002,9 +15573,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16059,9 +15627,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16096,9 +15661,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16168,9 +15730,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16218,9 +15777,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16257,9 +15813,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16316,9 +15869,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16373,9 +15923,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16410,9 +15957,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16482,9 +16026,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16532,9 +16073,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16571,9 +16109,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16630,9 +16165,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16687,9 +16219,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16724,9 +16253,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16818,9 +16344,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16868,9 +16391,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -16907,9 +16427,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -16966,9 +16483,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17023,9 +16537,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17060,9 +16571,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -17175,9 +16683,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17225,9 +16730,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17264,9 +16766,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -17323,9 +16822,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17380,9 +16876,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17417,9 +16910,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -17554,9 +17044,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17604,9 +17091,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17643,9 +17127,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -17702,9 +17183,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17759,9 +17237,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17796,9 +17271,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -17912,9 +17384,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -17962,9 +17431,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18001,9 +17467,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -18060,9 +17523,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18117,9 +17577,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18154,9 +17611,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -18306,9 +17760,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18356,9 +17807,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18395,9 +17843,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -18454,9 +17899,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18511,9 +17953,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18548,9 +17987,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -18726,9 +18162,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18776,9 +18209,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18815,9 +18245,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -18874,9 +18301,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18931,9 +18355,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -18968,9 +18389,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -19084,9 +18502,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19134,9 +18549,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19173,9 +18585,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -19232,9 +18641,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19289,9 +18695,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19326,9 +18729,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -19390,8 +18790,7 @@
         "security": [
           {
             "Bearer": []
-          },
-          {}
+          }
         ],
         "responses": {
           "200": {
@@ -19496,8 +18895,7 @@
         "security": [
           {
             "Bearer": []
-          },
-          {}
+          }
         ],
         "responses": {
           "200": {
@@ -19616,9 +19014,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19666,9 +19061,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19705,9 +19097,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -19764,9 +19153,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19821,9 +19207,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19858,9 +19241,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -19951,9 +19331,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -19993,9 +19370,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20072,9 +19446,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20122,9 +19493,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20161,9 +19529,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20220,9 +19585,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20277,9 +19639,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20314,9 +19673,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20399,9 +19755,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20449,9 +19802,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20488,9 +19838,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20547,9 +19894,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20604,9 +19948,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20641,9 +19982,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20789,6 +20127,7 @@
             "name": "status",
             "schema": {
               "type": "string",
+              "title": "Estado",
               "enum": [
                 "CAN",
                 "CON",
@@ -20811,9 +20150,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20862,9 +20198,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -20901,9 +20234,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -20960,9 +20290,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21017,9 +20344,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21054,9 +20378,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21133,9 +20454,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21183,9 +20501,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21222,9 +20537,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21281,9 +20593,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21338,9 +20647,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21376,9 +20682,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21408,9 +20711,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21488,9 +20788,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21538,9 +20835,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21577,9 +20871,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21636,9 +20927,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21693,9 +20981,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21730,9 +21015,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21802,9 +21084,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21852,9 +21131,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -21891,9 +21167,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -21950,9 +21223,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22007,9 +21277,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22044,9 +21311,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22132,9 +21396,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22182,9 +21443,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22221,9 +21479,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22280,9 +21535,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22337,9 +21589,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22374,9 +21623,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22480,9 +21726,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22530,9 +21773,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22569,9 +21809,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22628,9 +21865,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22685,9 +21919,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22722,9 +21953,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22764,9 +21992,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -22804,9 +22029,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -22951,9 +22173,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23001,9 +22220,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23040,9 +22256,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23099,9 +22312,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23156,9 +22366,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23194,9 +22401,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23226,9 +22430,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23287,9 +22488,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23346,9 +22544,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23407,9 +22602,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23466,9 +22658,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23527,9 +22716,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23586,9 +22772,6 @@
           "required": true
         },
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23647,9 +22830,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23707,9 +22887,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23735,9 +22912,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23824,9 +22998,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23874,9 +23045,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -23913,9 +23081,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -23972,9 +23137,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24029,9 +23191,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24066,9 +23225,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24124,9 +23280,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24174,9 +23327,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24213,9 +23363,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24272,9 +23419,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24329,9 +23473,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24366,9 +23507,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24438,9 +23576,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24488,9 +23623,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24527,9 +23659,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24586,9 +23715,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24643,9 +23769,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24680,9 +23803,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24745,9 +23865,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24795,9 +23912,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24834,9 +23948,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -24893,9 +24004,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24950,9 +24058,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -24987,9 +24092,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25059,9 +24161,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25109,9 +24208,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25148,9 +24244,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25207,9 +24300,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25264,9 +24354,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25301,9 +24388,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25372,9 +24456,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25422,9 +24503,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25461,9 +24539,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25520,9 +24595,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25577,9 +24649,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25614,9 +24683,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25678,6 +24744,13 @@
             }
           },
           {
+            "in": "query",
+            "name": "profissao",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -25691,9 +24764,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25742,9 +24812,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25781,9 +24848,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25840,9 +24904,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25897,9 +24958,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -25934,9 +24992,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -25992,9 +25047,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26042,9 +25094,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26081,9 +25130,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -26140,9 +25186,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26197,9 +25240,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26234,9 +25274,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -26308,9 +25345,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26358,9 +25392,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26397,9 +25428,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -26456,9 +25484,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26513,9 +25538,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26550,9 +25572,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -26722,9 +25741,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26772,9 +25788,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26811,9 +25824,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -26870,9 +25880,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26927,9 +25934,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -26964,9 +25968,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -27115,9 +26116,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27165,9 +26163,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27204,9 +26199,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -27263,9 +26255,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27320,9 +26309,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27357,9 +26343,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -27515,9 +26498,6 @@
         ],
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27565,9 +26545,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27604,9 +26581,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -27663,9 +26637,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27720,9 +26691,6 @@
         },
         "security": [
           {
-            "jwtAuth": []
-          },
-          {
             "Bearer": []
           }
         ],
@@ -27757,9 +26725,6 @@
           "v1"
         ],
         "security": [
-          {
-            "jwtAuth": []
-          },
           {
             "Bearer": []
           }
@@ -28069,7 +27034,8 @@
           },
           "usuario": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "Utilizador"
           },
           "usuario_nome": {
             "type": "string",
@@ -28077,27 +27043,32 @@
           },
           "metodo": {
             "type": "string",
-            "title": "M\u00e9todo",
+            "title": "M\u00e9todo HTTP",
             "maxLength": 10
           },
           "caminho": {
             "type": "string",
+            "title": "Rota curta",
             "maxLength": 255
           },
           "path_completo": {
-            "type": "string"
+            "type": "string",
+            "title": "URL completa"
           },
           "status_code": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "Status HTTP"
           },
           "duracao_ms": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "Dura\u00e7\u00e3o (ms)"
           },
           "ip": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "title": "IP de origem"
           },
           "user_agent": {
             "type": "string",
@@ -28105,21 +27076,26 @@
           },
           "view_basename": {
             "type": "string",
+            "title": "View",
             "maxLength": 120
           },
           "view_action": {
             "type": "string",
+            "title": "A\u00e7\u00e3o da view",
             "maxLength": 120
           },
           "objeto_id": {
             "type": "string",
+            "title": "Objeto (ID)",
             "maxLength": 80
           },
           "mensagem": {
             "type": "string",
             "maxLength": 255
           },
-          "metadata": {}
+          "metadata": {
+            "title": "Metadados"
+          }
         },
         "required": [
           "caminho",
@@ -28776,6 +27752,19 @@
             },
             "readOnly": true
           },
+          "fatura_id": {
+            "type": "integer",
+            "nullable": true,
+            "readOnly": true
+          },
+          "fatura_codigo": {
+            "type": "string",
+            "readOnly": true
+          },
+          "fatura_estado": {
+            "type": "string",
+            "readOnly": true
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -28810,12 +27799,28 @@
           "procedimento": {
             "type": "string",
             "title": "Procedimento (texto livre)",
-            "description": "Use apenas quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
+            "description": "Use quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
             "maxLength": 160
           },
           "descricao": {
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
+          },
+          "preco_estimado": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o estimado"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
           },
           "agendada_para": {
             "type": "string",
@@ -28892,12 +27897,28 @@
           "procedimento": {
             "type": "string",
             "title": "Procedimento (texto livre)",
-            "description": "Use apenas quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
+            "description": "Use quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
             "maxLength": 160
           },
           "descricao": {
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
+          },
+          "preco_estimado": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o estimado"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
           },
           "agendada_para": {
             "type": "string",
@@ -29307,10 +28328,33 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o"
           },
+          "multiplicador_preco": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "readOnly": true,
+            "title": "Multiplicador de pre\u00e7o",
+            "description": "Fator aplicado sobre o pre\u00e7o base conforme hor\u00e1rio/feriado."
+          },
+          "tipo_horario": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TipoHorarioEnum"
+              }
+            ],
+            "readOnly": true,
+            "title": "Tipo de hor\u00e1rio"
+          },
+          "feriado_manual": {
+            "type": "boolean",
+            "title": "Feriado (manual)",
+            "description": "Marque se a data for feriado mesmo n\u00e3o sendo fim de semana."
+          },
           "concluida_em": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Conclu\u00edda em"
           },
           "cancelada_em": {
             "type": "string",
@@ -29342,7 +28386,8 @@
           },
           "medico": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico"
           },
           "especialidade": {
             "type": "integer",
@@ -29385,10 +28430,16 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o"
           },
+          "feriado_manual": {
+            "type": "boolean",
+            "title": "Feriado (manual)",
+            "description": "Marque se a data for feriado mesmo n\u00e3o sendo fim de semana."
+          },
           "concluida_em": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Conclu\u00edda em"
           },
           "cancelada_em": {
             "type": "string",
@@ -29400,7 +28451,8 @@
           },
           "medico": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico"
           },
           "especialidade": {
             "type": "integer",
@@ -29454,7 +28506,12 @@
             "maxLength": 120
           },
           "tipo": {
-            "$ref": "#/components/schemas/ContaTipoEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContaTipoEnum"
+              }
+            ],
+            "title": "Tipo de conta"
           },
           "criado_por": {
             "type": "integer",
@@ -29493,7 +28550,12 @@
             "maxLength": 120
           },
           "tipo": {
-            "$ref": "#/components/schemas/ContaTipoEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContaTipoEnum"
+              }
+            ],
+            "title": "Tipo de conta"
           },
           "deletado_por": {
             "type": "integer",
@@ -30405,26 +29467,31 @@
           },
           "metodo": {
             "type": "string",
-            "title": "M\u00e9todo",
+            "title": "M\u00e9todo HTTP",
             "maxLength": 10
           },
           "caminho": {
             "type": "string",
+            "title": "Rota curta",
             "maxLength": 255
           },
           "path_completo": {
-            "type": "string"
+            "type": "string",
+            "title": "URL completa"
           },
           "status_code": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Status HTTP"
           },
           "duracao_ms": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "Dura\u00e7\u00e3o (ms)"
           },
           "ip": {
             "type": "string",
-            "nullable": true
+            "nullable": true,
+            "title": "IP de origem"
           },
           "user_agent": {
             "type": "string",
@@ -30432,18 +29499,22 @@
           },
           "view_basename": {
             "type": "string",
+            "title": "View",
             "maxLength": 120
           },
           "view_action": {
             "type": "string",
+            "title": "A\u00e7\u00e3o da view",
             "maxLength": 120
           },
           "objeto_id": {
             "type": "string",
+            "title": "Objeto (ID)",
             "maxLength": 80
           },
           "exception_class": {
             "type": "string",
+            "title": "Classe da exce\u00e7\u00e3o",
             "maxLength": 120
           },
           "mensagem": {
@@ -30453,7 +29524,9 @@
           "traceback": {
             "type": "string"
           },
-          "metadata": {},
+          "metadata": {
+            "title": "Metadados"
+          },
           "criado_por": {
             "type": "integer",
             "readOnly": true,
@@ -30476,7 +29549,8 @@
           },
           "usuario": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "Utilizador"
           }
         },
         "required": [
@@ -30810,6 +29884,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
@@ -30825,7 +29904,7 @@
             "description": "Setor do laborat\u00f3rio respons\u00e1vel pelo exame\n\n* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -31090,6 +30169,14 @@
             "type": "integer",
             "readOnly": true
           },
+          "tipos_resultado_permitidos": {
+            "type": "string",
+            "readOnly": true
+          },
+          "tipos_resultado_cadastrados": {
+            "type": "string",
+            "readOnly": true
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -31145,20 +30232,25 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame m\u00e9dico (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
+                "$ref": "#/components/schemas/ExameMedicoMetodoEnum"
               }
             ],
-            "title": "M\u00e9todo do exame"
+            "title": "M\u00e9todo do exame (imagem/diagn\u00f3stico)"
           },
           "setor": {
             "nullable": true,
-            "title": "Setor do exame",
+            "title": "Setor do exame (imagem/diagn\u00f3stico)",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameMedicoSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -31237,53 +30329,10 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/TipoResultadoEnum"
+                "$ref": "#/components/schemas/Tipo559Enum"
               }
             ],
-            "title": "Tipo de par\u00e2metro"
-          },
-          "unidade": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UnidadeEnum"
-              }
-            ],
-            "title": "Unidade de medida"
-          },
-          "referencia_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00ednima"
-          },
-          "referencia_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00e1xima"
-          },
-          "critico_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00ednimo"
-          },
-          "critico_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00e1ximo"
-          },
-          "delta_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Delta m\u00e1ximo permitido"
+            "title": "Tipo de par\u00e2metro/arquivo"
           },
           "criado_por": {
             "type": "integer",
@@ -31337,53 +30386,10 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/TipoResultadoEnum"
+                "$ref": "#/components/schemas/Tipo559Enum"
               }
             ],
-            "title": "Tipo de par\u00e2metro"
-          },
-          "unidade": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UnidadeEnum"
-              }
-            ],
-            "title": "Unidade de medida"
-          },
-          "referencia_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00ednima"
-          },
-          "referencia_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00e1xima"
-          },
-          "critico_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00ednimo"
-          },
-          "critico_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00e1ximo"
-          },
-          "delta_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Delta m\u00e1ximo permitido"
+            "title": "Tipo de par\u00e2metro/arquivo"
           },
           "criado_por": {
             "type": "integer",
@@ -31413,6 +30419,28 @@
           "tipo"
         ]
       },
+      "ExameMedicoMetodoEnum": {
+        "enum": [
+          "USG",
+          "RX",
+          "CT",
+          "RM",
+          "MG",
+          "DXA",
+          "ECO",
+          "ECG",
+          "HOLTER",
+          "MAPA",
+          "EEG",
+          "ENDO",
+          "COLONO",
+          "ANGIO",
+          "MN",
+          "OUT"
+        ],
+        "type": "string",
+        "description": "* `USG` - Ultrassonografia / Ecografia\n* `RX` - Raio-X Convencional\n* `CT` - Tomografia Computorizada (CT)\n* `RM` - Resson\u00e2ncia Magn\u00e9tica (RM)\n* `MG` - Mamografia\n* `DXA` - Densitometria \u00d3ssea (DXA)\n* `ECO` - Ecocardiograma\n* `ECG` - Eletrocardiograma (ECG)\n* `HOLTER` - Holter\n* `MAPA` - MAPA (PA 24h)\n* `EEG` - Eletroencefalograma (EEG)\n* `ENDO` - Endoscopia\n* `COLONO` - Colonoscopia\n* `ANGIO` - Angiografia\n* `MN` - Medicina Nuclear / Cintilografia\n* `OUT` - Outro"
+      },
       "ExameMedicoRequest": {
         "type": "object",
         "description": "Serializer para Exame M\u00e9dico (imagem/diagn\u00f3stico).",
@@ -31441,20 +30469,25 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame m\u00e9dico (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
+                "$ref": "#/components/schemas/ExameMedicoMetodoEnum"
               }
             ],
-            "title": "M\u00e9todo do exame"
+            "title": "M\u00e9todo do exame (imagem/diagn\u00f3stico)"
           },
           "setor": {
             "nullable": true,
-            "title": "Setor do exame",
+            "title": "Setor do exame (imagem/diagn\u00f3stico)",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameMedicoSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -31469,6 +30502,23 @@
           "metodo",
           "nome"
         ]
+      },
+      "ExameMedicoSetorEnum": {
+        "enum": [
+          "Radiologia",
+          "DiagnosticoImagem",
+          "Cardiologia",
+          "GinecoObstetricia",
+          "Ortopedia",
+          "Neurologia",
+          "Otorrino",
+          "Oftalmologia",
+          "MedicinaNuclear",
+          "Endoscopia",
+          "Outro"
+        ],
+        "type": "string",
+        "description": "* `Radiologia` - Radiologia\n* `DiagnosticoImagem` - Diagn\u00f3stico por Imagem\n* `Cardiologia` - Cardiologia\n* `GinecoObstetricia` - Ginecologia/Obstetr\u00edcia\n* `Ortopedia` - Ortopedia/Traumato\n* `Neurologia` - Neurologia\n* `Otorrino` - Otorrinolaringologia\n* `Oftalmologia` - Oftalmologia\n* `MedicinaNuclear` - Medicina Nuclear\n* `Endoscopia` - Endoscopia\n* `Outro` - Outro"
       },
       "ExameRequest": {
         "type": "object",
@@ -31501,6 +30551,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
@@ -31516,7 +30571,7 @@
             "description": "Setor do laborat\u00f3rio respons\u00e1vel pelo exame\n\n* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -31531,6 +30586,37 @@
           "metodo",
           "nome"
         ]
+      },
+      "ExameSetorEnum": {
+        "enum": [
+          "Hematologia",
+          "Bioquimica",
+          "Microbiologia",
+          "Imunologia",
+          "Serologia",
+          "Parasitologia",
+          "BiologiaMolecular",
+          "Toxicologia",
+          "Hormonios",
+          "MarcadoresTumorais",
+          "Coagulacao",
+          "Urinalise",
+          "LiquidosCorporais",
+          "Gasometria",
+          "NutricaoClinica",
+          "Micologia",
+          "Virologia",
+          "Bacteriologia",
+          "BancoSangue",
+          "ImunoHematologia",
+          "Triagem",
+          "RecepcaoAmostras",
+          "ControleQualidade",
+          "Pesquisa",
+          "Outro"
+        ],
+        "type": "string",
+        "description": "* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro"
       },
       "Falta": {
         "type": "object",
@@ -31740,6 +30826,10 @@
             "type": "integer",
             "nullable": true
           },
+          "cirurgia": {
+            "type": "integer",
+            "nullable": true
+          },
           "paciente": {
             "type": "integer",
             "nullable": true
@@ -31773,6 +30863,18 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "total_sem_iva": {
+            "type": "string",
+            "readOnly": true
+          },
+          "iva_valor": {
+            "type": "string",
+            "readOnly": true
+          },
+          "total_com_iva": {
+            "type": "string",
             "readOnly": true
           },
           "criado_em": {
@@ -31827,6 +30929,11 @@
             "format": "decimal",
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o unit\u00e1rio"
+          },
+          "aplica_iva": {
+            "type": "boolean",
+            "title": "Aplicar IVA?",
+            "description": "Desmarque para n\u00e3o aplicar IVA neste item."
           },
           "iva_percentual": {
             "type": "string",
@@ -31925,6 +31032,11 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o unit\u00e1rio"
           },
+          "aplica_iva": {
+            "type": "boolean",
+            "title": "Aplicar IVA?",
+            "description": "Desmarque para n\u00e3o aplicar IVA neste item."
+          },
           "iva_percentual": {
             "type": "string",
             "format": "decimal",
@@ -31987,10 +31099,11 @@
           "CLI",
           "FAR",
           "ENF",
-          "CON"
+          "CON",
+          "CIR"
         ],
         "type": "string",
-        "description": "* `CLI` - Cl\u00ednico\n* `FAR` - Farm\u00e1cia\n* `ENF` - Enfermagem\n* `CON` - Consulta"
+        "description": "* `CLI` - Cl\u00ednico\n* `FAR` - Farm\u00e1cia\n* `ENF` - Enfermagem\n* `CON` - Consulta\n* `CIR` - Cirurgia"
       },
       "FaturaRequest": {
         "type": "object",
@@ -32075,6 +31188,10 @@
             "description": "Legado: prefira usar o campo 'procedimentos' (m\u00faltiplos)."
           },
           "consulta": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cirurgia": {
             "type": "integer",
             "nullable": true
           },
@@ -32641,6 +31758,11 @@
             "type": "string",
             "maxLength": 120
           },
+          "profissao": {
+            "type": "string",
+            "title": "Profiss\u00e3o",
+            "maxLength": 120
+          },
           "nuit": {
             "type": "string",
             "maxLength": 30
@@ -32737,6 +31859,11 @@
           "nome": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 120
+          },
+          "profissao": {
+            "type": "string",
+            "title": "Profiss\u00e3o",
             "maxLength": 120
           },
           "nuit": {
@@ -33917,6 +33044,7 @@
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "confirmado": {
@@ -33968,6 +33096,7 @@
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "confirmado": {
@@ -34187,30 +33316,26 @@
             "type": "integer",
             "readOnly": true
           },
-          "username": {
-            "type": "string",
-            "title": "Usu\u00e1rio",
-            "description": "Obrigat\u00f3rio. 150 caracteres ou menos. Letras, n\u00fameros e @/./+/-/_ apenas.",
-            "pattern": "^[\\w.@+-]+$",
-            "maxLength": 150
-          },
-          "first_name": {
-            "type": "string",
-            "title": "Nome",
-            "maxLength": 150
-          },
-          "last_name": {
-            "type": "string",
-            "title": "Apelido",
-            "maxLength": 150
-          },
           "nome": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "profissao": {
+            "type": "string",
+            "title": "Profiss\u00e3o",
+            "maxLength": 120
+          },
+          "cargo": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cargo_nome": {
             "type": "string",
             "readOnly": true
           }
         },
         "required": [
-          "username"
+          "nome"
         ]
       },
       "MetodoLaboratorioEnum": {
@@ -34318,12 +33443,14 @@
           "debito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "D\u00e9bito"
           },
           "credito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "Cr\u00e9dito"
           },
           "criado_por": {
             "type": "integer",
@@ -34345,7 +33472,8 @@
             "nullable": true
           },
           "lancamento": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Lan\u00e7amento"
           },
           "conta": {
             "type": "integer"
@@ -34535,19 +33663,22 @@
           "debito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "D\u00e9bito"
           },
           "credito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "Cr\u00e9dito"
           },
           "deletado_por": {
             "type": "integer",
             "nullable": true
           },
           "lancamento": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Lan\u00e7amento"
           },
           "conta": {
             "type": "integer"
@@ -34743,7 +33874,7 @@
             "type": "integer",
             "nullable": true,
             "title": "Idade gestacional (semanas)",
-            "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
+            "description": "Semanas de gesta\u00e7\u00e3o (preencher se gestante)"
           },
           "data_nascimento": {
             "type": "string",
@@ -34971,7 +34102,7 @@
             "type": "integer",
             "nullable": true,
             "title": "Idade gestacional (semanas)",
-            "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
+            "description": "Semanas de gesta\u00e7\u00e3o (preencher se gestante)"
           },
           "data_nascimento": {
             "type": "string",
@@ -35155,10 +34286,16 @@
             "title": "M\u00e9todo"
           },
           "status": {
-            "$ref": "#/components/schemas/PagamentoStatusEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PagamentoStatusEnum"
+              }
+            ],
+            "title": "Estado"
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "description": "Refer\u00eancia externa (transa\u00e7\u00e3o, autoriza\u00e7\u00e3o, etc).",
             "maxLength": 120
           },
@@ -35229,10 +34366,16 @@
             "title": "M\u00e9todo"
           },
           "status": {
-            "$ref": "#/components/schemas/PagamentoStatusEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PagamentoStatusEnum"
+              }
+            ],
+            "title": "Estado"
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "description": "Refer\u00eancia externa (transa\u00e7\u00e3o, autoriza\u00e7\u00e3o, etc).",
             "maxLength": 120
           },
@@ -35638,12 +34781,28 @@
           "procedimento": {
             "type": "string",
             "title": "Procedimento (texto livre)",
-            "description": "Use apenas quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
+            "description": "Use quando o procedimento n\u00e3o estiver no cat\u00e1logo.",
             "maxLength": 160
           },
           "descricao": {
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
+          },
+          "preco_estimado": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o estimado"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
           },
           "agendada_para": {
             "type": "string",
@@ -35818,10 +34977,16 @@
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o"
           },
+          "feriado_manual": {
+            "type": "boolean",
+            "title": "Feriado (manual)",
+            "description": "Marque se a data for feriado mesmo n\u00e3o sendo fim de semana."
+          },
           "concluida_em": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Conclu\u00edda em"
           },
           "cancelada_em": {
             "type": "string",
@@ -35833,7 +34998,8 @@
           },
           "medico": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "title": "M\u00e9dico"
           },
           "especialidade": {
             "type": "integer",
@@ -35854,7 +35020,12 @@
             "maxLength": 120
           },
           "tipo": {
-            "$ref": "#/components/schemas/ContaTipoEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContaTipoEnum"
+              }
+            ],
+            "title": "Tipo de conta"
           },
           "deletado_por": {
             "type": "integer",
@@ -36184,53 +35355,10 @@
           "tipo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/TipoResultadoEnum"
+                "$ref": "#/components/schemas/Tipo559Enum"
               }
             ],
-            "title": "Tipo de par\u00e2metro"
-          },
-          "unidade": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/UnidadeEnum"
-              }
-            ],
-            "title": "Unidade de medida"
-          },
-          "referencia_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00ednima"
-          },
-          "referencia_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Refer\u00eancia m\u00e1xima"
-          },
-          "critico_min": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00ednimo"
-          },
-          "critico_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Valor cr\u00edtico m\u00e1ximo"
-          },
-          "delta_max": {
-            "type": "string",
-            "format": "decimal",
-            "pattern": "^-?\\d{0,8}(?:\\.\\d{0,2})?$",
-            "nullable": true,
-            "title": "Delta m\u00e1ximo permitido"
+            "title": "Tipo de par\u00e2metro/arquivo"
           },
           "criado_por": {
             "type": "integer",
@@ -36282,20 +35410,25 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame m\u00e9dico (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/MetodoLaboratorioEnum"
+                "$ref": "#/components/schemas/ExameMedicoMetodoEnum"
               }
             ],
-            "title": "M\u00e9todo do exame"
+            "title": "M\u00e9todo do exame (imagem/diagn\u00f3stico)"
           },
           "setor": {
             "nullable": true,
-            "title": "Setor do exame",
+            "title": "Setor do exame (imagem/diagn\u00f3stico)",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameMedicoSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -36338,6 +35471,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao exame (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este exame normalmente n\u00e3o deve ter IVA."
+          },
           "metodo": {
             "allOf": [
               {
@@ -36353,7 +35491,7 @@
             "description": "Setor do laborat\u00f3rio respons\u00e1vel pelo exame\n\n* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro",
             "oneOf": [
               {
-                "$ref": "#/components/schemas/SetorEnum"
+                "$ref": "#/components/schemas/ExameSetorEnum"
               },
               {
                 "$ref": "#/components/schemas/BlankEnum"
@@ -36427,6 +35565,11 @@
             "format": "decimal",
             "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
             "title": "Pre\u00e7o unit\u00e1rio"
+          },
+          "aplica_iva": {
+            "type": "boolean",
+            "title": "Aplicar IVA?",
+            "description": "Desmarque para n\u00e3o aplicar IVA neste item."
           },
           "iva_percentual": {
             "type": "string",
@@ -36564,6 +35707,10 @@
             "description": "Legado: prefira usar o campo 'procedimentos' (m\u00faltiplos)."
           },
           "consulta": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cirurgia": {
             "type": "integer",
             "nullable": true
           },
@@ -36711,6 +35858,11 @@
           "nome": {
             "type": "string",
             "minLength": 1,
+            "maxLength": 120
+          },
+          "profissao": {
+            "type": "string",
+            "title": "Profiss\u00e3o",
             "maxLength": 120
           },
           "nuit": {
@@ -37151,6 +36303,7 @@
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "confirmado": {
@@ -37307,19 +36460,22 @@
           "debito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "D\u00e9bito"
           },
           "credito": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,16}(?:\\.\\d{0,2})?$",
+            "title": "Cr\u00e9dito"
           },
           "deletado_por": {
             "type": "integer",
             "nullable": true
           },
           "lancamento": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Lan\u00e7amento"
           },
           "conta": {
             "type": "integer"
@@ -37392,7 +36548,7 @@
             "type": "integer",
             "nullable": true,
             "title": "Idade gestacional (semanas)",
-            "description": "Semanas de gesta\u00e7\u00e3o (preencher apenas se gestante)"
+            "description": "Semanas de gesta\u00e7\u00e3o (preencher se gestante)"
           },
           "data_nascimento": {
             "type": "string",
@@ -37554,10 +36710,16 @@
             "title": "M\u00e9todo"
           },
           "status": {
-            "$ref": "#/components/schemas/PagamentoStatusEnum"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PagamentoStatusEnum"
+              }
+            ],
+            "title": "Estado"
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "description": "Refer\u00eancia externa (transa\u00e7\u00e3o, autoriza\u00e7\u00e3o, etc).",
             "maxLength": 120
           },
@@ -37951,6 +37113,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao procedimento (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este procedimento normalmente n\u00e3o deve ter IVA."
+          },
           "criado_por": {
             "type": "integer",
             "nullable": true
@@ -37980,6 +37147,22 @@
           "descricao": {
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
+          },
+          "preco_base": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o base"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
           },
           "ativo": {
             "type": "boolean"
@@ -38221,12 +37404,13 @@
             "type": "string",
             "format": "decimal",
             "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-            "title": "Subtotal servi\u00e7os"
+            "title": "Subtotal (servi\u00e7os)"
           },
           "subtotal_materiais": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+            "title": "Subtotal (materiais)"
           },
           "total": {
             "type": "string",
@@ -38294,6 +37478,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao produto (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este produto normalmente n\u00e3o deve ter IVA."
+          },
           "criado_por": {
             "type": "integer",
             "nullable": true
@@ -38322,7 +37511,7 @@
           "numero": {
             "type": "string",
             "minLength": 1,
-            "title": "N\u00famero",
+            "title": "N\u00famero do recibo",
             "maxLength": 60
           },
           "valor": {
@@ -38347,10 +37536,12 @@
           "data_confirmacao": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Data de confirma\u00e7\u00e3o"
           },
           "transacao": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Transa\u00e7\u00e3o"
           }
         }
       },
@@ -38619,6 +37810,66 @@
           }
         }
       },
+      "PatchedResultadoMedicoArquivoRequest": {
+        "type": "object",
+        "properties": {
+          "arquivo": {
+            "type": "string",
+            "format": "binary"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tipo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Tipo559Enum"
+              }
+            ],
+            "title": "Tipo de arquivo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o/legenda",
+            "maxLength": 255
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "resultado": {
+            "type": "integer"
+          },
+          "requisicao_item": {
+            "type": "integer",
+            "nullable": true
+          },
+          "exame_medico": {
+            "type": "integer"
+          }
+        }
+      },
       "PatchedSeguradoraRequest": {
         "type": "object",
         "properties": {
@@ -38764,6 +38015,7 @@
           "referencia_externa": {
             "type": "string",
             "minLength": 1,
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "gateway": {
@@ -38774,10 +38026,12 @@
           "status": {
             "type": "string",
             "minLength": 1,
+            "title": "Status do gateway",
             "maxLength": 40
           },
           "resposta_gateway": {
-            "type": "string"
+            "type": "string",
+            "title": "Resposta do gateway"
           }
         }
       },
@@ -39741,12 +38995,13 @@
             "type": "string",
             "format": "decimal",
             "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-            "title": "Subtotal servi\u00e7os"
+            "title": "Subtotal (servi\u00e7os)"
           },
           "subtotal_materiais": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+            "title": "Subtotal (materiais)"
           },
           "total": {
             "type": "string",
@@ -39837,6 +39092,11 @@
             "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao procedimento (0 a 100)."
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este procedimento normalmente n\u00e3o deve ter IVA."
           },
           "criado_por": {
             "type": "integer",
@@ -40041,6 +39301,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao procedimento (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este procedimento normalmente n\u00e3o deve ter IVA."
+          },
           "criado_por": {
             "type": "integer",
             "nullable": true
@@ -40109,6 +39374,22 @@
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
           },
+          "preco_base": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o base"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
+          },
           "ativo": {
             "type": "boolean"
           },
@@ -40148,6 +39429,22 @@
           "descricao": {
             "type": "string",
             "title": "Descri\u00e7\u00e3o"
+          },
+          "preco_base": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,10}(?:\\.\\d{0,2})?$",
+            "title": "Pre\u00e7o base"
+          },
+          "iva_percentual": {
+            "type": "string",
+            "format": "decimal",
+            "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
+            "title": "IVA (%)"
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o"
           },
           "ativo": {
             "type": "boolean"
@@ -40727,12 +40024,13 @@
             "type": "string",
             "format": "decimal",
             "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
-            "title": "Subtotal servi\u00e7os"
+            "title": "Subtotal (servi\u00e7os)"
           },
           "subtotal_materiais": {
             "type": "string",
             "format": "decimal",
-            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$"
+            "pattern": "^-?\\d{0,12}(?:\\.\\d{0,2})?$",
+            "title": "Subtotal (materiais)"
           },
           "total": {
             "type": "string",
@@ -40823,6 +40121,11 @@
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao produto (0 a 100)."
           },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este produto normalmente n\u00e3o deve ter IVA."
+          },
           "criado_por": {
             "type": "integer",
             "nullable": true
@@ -40884,6 +40187,11 @@
             "pattern": "^-?\\d{0,3}(?:\\.\\d{0,2})?$",
             "title": "IVA (%)",
             "description": "Taxa de IVA aplicada ao produto (0 a 100)."
+          },
+          "aplica_iva_por_padrao": {
+            "type": "boolean",
+            "title": "Aplicar IVA por padr\u00e3o",
+            "description": "Desmarque se este produto normalmente n\u00e3o deve ter IVA."
           },
           "criado_por": {
             "type": "integer",
@@ -40976,7 +40284,7 @@
           },
           "numero": {
             "type": "string",
-            "title": "N\u00famero",
+            "title": "N\u00famero do recibo",
             "maxLength": 60
           },
           "valor": {
@@ -41009,7 +40317,7 @@
           "numero": {
             "type": "string",
             "minLength": 1,
-            "title": "N\u00famero",
+            "title": "N\u00famero do recibo",
             "maxLength": 60
           },
           "valor": {
@@ -41044,7 +40352,8 @@
           "data_confirmacao": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Data de confirma\u00e7\u00e3o"
           },
           "criado_em": {
             "type": "string",
@@ -41052,7 +40361,8 @@
             "readOnly": true
           },
           "transacao": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Transa\u00e7\u00e3o"
           }
         },
         "required": [
@@ -41068,10 +40378,12 @@
           "data_confirmacao": {
             "type": "string",
             "format": "date-time",
-            "nullable": true
+            "nullable": true,
+            "title": "Data de confirma\u00e7\u00e3o"
           },
           "transacao": {
-            "type": "integer"
+            "type": "integer",
+            "title": "Transa\u00e7\u00e3o"
           }
         },
         "required": [
@@ -41968,6 +41280,158 @@
           "resultado"
         ]
       },
+      "ResultadoMedicoArquivo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "arquivo": {
+            "type": "string",
+            "format": "uri"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "id_custom": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "title": "C\u00f3digo"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tipo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Tipo559Enum"
+              }
+            ],
+            "title": "Tipo de arquivo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o/legenda",
+            "maxLength": 255
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "resultado": {
+            "type": "integer"
+          },
+          "requisicao_item": {
+            "type": "integer",
+            "nullable": true
+          },
+          "exame_medico": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "arquivo",
+          "exame_medico",
+          "inquilino",
+          "resultado"
+        ]
+      },
+      "ResultadoMedicoArquivoRequest": {
+        "type": "object",
+        "properties": {
+          "arquivo": {
+            "type": "string",
+            "format": "binary"
+          },
+          "deletado": {
+            "type": "boolean"
+          },
+          "deletado_em": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "versao": {
+            "type": "integer",
+            "title": "Vers\u00e3o"
+          },
+          "tipo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Tipo559Enum"
+              }
+            ],
+            "title": "Tipo de arquivo"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descri\u00e7\u00e3o/legenda",
+            "maxLength": 255
+          },
+          "criado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "atualizado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "inquilino": {
+            "type": "integer",
+            "title": "Unidade"
+          },
+          "deletado_por": {
+            "type": "integer",
+            "nullable": true
+          },
+          "resultado": {
+            "type": "integer"
+          },
+          "requisicao_item": {
+            "type": "integer",
+            "nullable": true
+          },
+          "exame_medico": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "arquivo",
+          "exame_medico",
+          "inquilino",
+          "resultado"
+        ]
+      },
       "ResultadosInboxAplicado": {
         "type": "object",
         "properties": {
@@ -42247,36 +41711,51 @@
           "nome"
         ]
       },
-      "SetorEnum": {
-        "enum": [
-          "Hematologia",
-          "Bioquimica",
-          "Microbiologia",
-          "Imunologia",
-          "Serologia",
-          "Parasitologia",
-          "BiologiaMolecular",
-          "Toxicologia",
-          "Hormonios",
-          "MarcadoresTumorais",
-          "Coagulacao",
-          "Urinalise",
-          "LiquidosCorporais",
-          "Gasometria",
-          "NutricaoClinica",
-          "Micologia",
-          "Virologia",
-          "Bacteriologia",
-          "BancoSangue",
-          "ImunoHematologia",
-          "Triagem",
-          "RecepcaoAmostras",
-          "ControleQualidade",
-          "Pesquisa",
-          "Outro"
-        ],
-        "type": "string",
-        "description": "* `Hematologia` - Hematologia\n* `Bioquimica` - Bioqu\u00edmica\n* `Microbiologia` - Microbiologia\n* `Imunologia` - Imunologia\n* `Serologia` - Serologia\n* `Parasitologia` - Parasitologia\n* `BiologiaMolecular` - Biologia Molecular\n* `Toxicologia` - Toxicologia\n* `Hormonios` - Horm\u00f4nios e Endocrinologia\n* `MarcadoresTumorais` - Marcadores Tumorais\n* `Coagulacao` - Coagula\u00e7\u00e3o\n* `Urinalise` - Urin\u00e1lise\n* `LiquidosCorporais` - L\u00edquidos Corporais\n* `Gasometria` - Gasometria\n* `NutricaoClinica` - Nutri\u00e7\u00e3o Cl\u00ednica\n* `Micologia` - Micologia\n* `Virologia` - Virologia\n* `Bacteriologia` - Bacteriologia\n* `BancoSangue` - Banco de Sangue\n* `ImunoHematologia` - Imuno-hematologia\n* `Triagem` - Triagem Laboratorial\n* `RecepcaoAmostras` - Recep\u00e7\u00e3o de Amostras\n* `ControleQualidade` - Controle de Qualidade\n* `Pesquisa` - Pesquisa Laboratorial\n* `Outro` - Outro"
+      "SessionTokenObtainPairRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "password",
+          "username"
+        ]
+      },
+      "SessionTokenRefresh": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "refresh"
+        ]
+      },
+      "SessionTokenRefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refresh": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "refresh"
+        ]
       },
       "SinalVitalEnfermagem": {
         "type": "object",
@@ -42473,6 +41952,18 @@
         "type": "string",
         "description": "* `TRIAL` - Trial\n* `ATIVO` - Ativo\n* `SUSPENSO` - Suspenso"
       },
+      "Tipo559Enum": {
+        "enum": [
+          "PDF",
+          "IMAGEM",
+          "DICOM",
+          "VIDEO",
+          "TEXTO",
+          "NUMERICO"
+        ],
+        "type": "string",
+        "description": "* `PDF` - Laudo/Relat\u00f3rio (PDF)\n* `IMAGEM` - Imagem (JPEG/PNG)\n* `DICOM` - DICOM\n* `VIDEO` - V\u00eddeo/loop\n* `TEXTO` - Texto livre\n* `NUMERICO` - Valor num\u00e9rico"
+      },
       "TipoDocumentoEnum": {
         "enum": [
           "BI",
@@ -42498,6 +41989,16 @@
         "type": "string",
         "description": "* `GERAL` - Geral\n* `RESET_SENHA` - Reposi\u00e7\u00e3o de palavra-passe\n* `RESULTADO` - Resultado dispon\u00edvel\n* `FATURA` - Fatura emitida\n* `RECIBO` - Recibo gerado"
       },
+      "TipoHorarioEnum": {
+        "enum": [
+          "NORMAL",
+          "FORA_EXPEDIENTE",
+          "FIM_SEMANA",
+          "FERIADO_MANUAL"
+        ],
+        "type": "string",
+        "description": "* `NORMAL` - Normal (08h-18h)\n* `FORA_EXPEDIENTE` - Fora de expediente (19h-07h)\n* `FIM_SEMANA` - Fim de semana\n* `FERIADO_MANUAL` - Feriado (marcado)"
+      },
       "TipoItemEnum": {
         "enum": [
           "EXA",
@@ -42520,60 +42021,6 @@
         "type": "string",
         "description": "* `NUMERICO` - Num\u00e9rico\n* `QUALITATIVO` - Qualitativo\n* `SEMIQUANTITATIVO` - Semi-quantitativo\n* `TEXTO` - Texto Livre"
       },
-      "TokenObtainPair": {
-        "type": "object",
-        "properties": {
-          "access": {
-            "type": "string",
-            "readOnly": true
-          },
-          "refresh": {
-            "type": "string",
-            "readOnly": true
-          }
-        }
-      },
-      "TokenObtainPairRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "writeOnly": true,
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "writeOnly": true,
-            "minLength": 1
-          }
-        },
-        "required": [
-          "password",
-          "username"
-        ]
-      },
-      "TokenRefresh": {
-        "type": "object",
-        "properties": {
-          "access": {
-            "type": "string",
-            "readOnly": true
-          }
-        }
-      },
-      "TokenRefreshRequest": {
-        "type": "object",
-        "properties": {
-          "refresh": {
-            "type": "string",
-            "writeOnly": true,
-            "minLength": 1
-          }
-        },
-        "required": [
-          "refresh"
-        ]
-      },
       "Transacao": {
         "type": "object",
         "properties": {
@@ -42583,6 +42030,7 @@
           },
           "referencia_externa": {
             "type": "string",
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "gateway": {
@@ -42591,10 +42039,12 @@
           },
           "status": {
             "type": "string",
+            "title": "Status do gateway",
             "maxLength": 40
           },
           "resposta_gateway": {
-            "type": "string"
+            "type": "string",
+            "title": "Resposta do gateway"
           },
           "criado_em": {
             "type": "string",
@@ -42614,6 +42064,7 @@
           "referencia_externa": {
             "type": "string",
             "minLength": 1,
+            "title": "Refer\u00eancia externa",
             "maxLength": 120
           },
           "gateway": {
@@ -42624,10 +42075,12 @@
           "status": {
             "type": "string",
             "minLength": 1,
+            "title": "Status do gateway",
             "maxLength": 40
           },
           "resposta_gateway": {
-            "type": "string"
+            "type": "string",
+            "title": "Resposta do gateway"
           }
         },
         "required": [
@@ -43377,13 +42830,6 @@
           "equipamento",
           "results"
         ]
-      }
-    },
-    "securitySchemes": {
-      "jwtAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
       }
     }
   },

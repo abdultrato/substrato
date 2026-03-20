@@ -35,7 +35,7 @@ class RegistroProntuarioAdmin(CoreAdmin):
         "estado",
     )
     list_filter = ("estado",)
-    search_fields = ("paciente__nome", "medico__username", "diagnostico")
+    search_fields = ("paciente__nome", "medico__nome", "diagnostico")
     ordering = ("-inicio_atendimento", "-criado_em")
 
     filter_horizontal = ("consultas",)

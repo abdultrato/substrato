@@ -41,9 +41,9 @@ class CargoAdmin(CoreAdmin):
 
 @admin.register(Funcionario)
 class FuncionarioAdmin(CoreAdmin):
-    list_display = ("nome", "cargo", "estado", "salario_nominal", "inquilino")
+    list_display = ("nome", "cargo", "profissao", "estado", "salario_nominal", "inquilino")
     list_filter = ("estado", "cargo")
-    search_fields = ("nome", "email", "telefone")
+    search_fields = ("nome", "profissao", "email", "telefone")
     ordering = ("nome",)
     inlines = [AgregadoFamiliarInline]
 

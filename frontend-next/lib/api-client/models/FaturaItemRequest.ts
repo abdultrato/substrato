@@ -12,6 +12,10 @@ export type FaturaItemRequest = {
     quantidade?: string;
     preco_unitario?: string;
     /**
+     * Desmarque para não aplicar IVA neste item.
+     */
+    aplica_iva?: boolean;
+    /**
      * Deixe em branco para herdar do item (exame/produto/procedimento).
      */
     iva_percentual?: string | null;

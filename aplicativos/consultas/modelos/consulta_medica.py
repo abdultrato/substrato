@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
-from zoneinfo import ZoneInfo
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from aplicativos.consultas.utils.precificacao import (
+    calcular_multiplicador_preco,
+    calcular_tipo_horario,
+    is_feriado,
+    obter_datetime_local,
+    obter_timezone_inquilino,
+)
 from infrastrutura.orm.fields.dinheiro_field import DinheiroField
 from nucleo.modelos.base import NoNameCoreModel
-
-User = settings.AUTH_USER_MODEL
 
 
 class ConsultaMedica(NoNameCoreModel):
@@ -44,7 +47,7 @@ class ConsultaMedica(NoNameCoreModel):
         db_index=True,
     )
     medico = models.ForeignKey(
-        User,
+        "recursos_humanos.Funcionario",
         verbose_name="Médico",
         on_delete=models.SET_NULL,
         null=True,
@@ -135,68 +138,19 @@ class ConsultaMedica(NoNameCoreModel):
         """
         Retorna ZoneInfo do tenant (ou None para timezone default).
         """
-        try:
-            cfg = getattr(self.inquilino, "configuracao", None)
-            tz = (getattr(cfg, "fuso_horario", "") or "").strip()
-            if not tz:
-                return None
-            return ZoneInfo(tz)
-        except Exception:
-            return None
+        return obter_timezone_inquilino(self.inquilino)
 
     def _is_feriado(self) -> bool:
-        if not self.inquilino_id or not self.agendada_para:
-            return False
-        from .feriado import Feriado
-
-        tz = self._tenant_timezone()
-        if timezone.is_aware(self.agendada_para):
-            local_date = (
-                timezone.localtime(self.agendada_para, tz).date()
-                if tz
-                else timezone.localtime(self.agendada_para).date()
-            )
-        else:
-            local_date = self.agendada_para.date()
-
-        return Feriado.objects.filter(inquilino_id=self.inquilino_id, data=local_date, ativo=True).exists()
+        return is_feriado(self.inquilino, self.agendada_para)
 
     def _tenant_local_datetime(self):
-        tz = self._tenant_timezone()
-        if not self.agendada_para:
-            return None
-        if timezone.is_aware(self.agendada_para):
-            return timezone.localtime(self.agendada_para, tz) if tz else timezone.localtime(self.agendada_para)
-        return timezone.make_aware(self.agendada_para, tz) if tz else timezone.make_aware(self.agendada_para)
+        return obter_datetime_local(self.inquilino, self.agendada_para)
 
     def _tipo_horario_atual(self) -> str:
-        dt_local = self._tenant_local_datetime()
-        if not dt_local:
-            return self.Horario.NORMAL
-
-        if dt_local.weekday() >= 5:
-            return self.Horario.FIM_SEMANA
-
-        if dt_local.hour >= 19 or dt_local.hour < 8:
-            return self.Horario.FORA_EXPEDIENTE
-
-        if self.feriado_manual:
-            return self.Horario.FERIADO_MANUAL
-
-        return self.Horario.NORMAL
+        return calcular_tipo_horario(self.inquilino, self.agendada_para, feriado_manual=self.feriado_manual)
 
     def _multiplicador_preco_atual(self) -> Decimal:
-        tipo = self._tipo_horario_atual()
-
-        # 200% (2x) para fim de semana, fora de expediente ou feriado manual.
-        if tipo in {self.Horario.FIM_SEMANA, self.Horario.FORA_EXPEDIENTE, self.Horario.FERIADO_MANUAL}:
-            return Decimal("2.00")
-
-        # Mantém compatibilidade: feriado cadastrado em tabela também dobra.
-        if self._is_feriado():
-            return Decimal("2.00")
-
-        return Decimal("1.00")
+        return calcular_multiplicador_preco(self.inquilino, self.agendada_para, feriado_manual=self.feriado_manual)
 
     def _sincronizar_especialidade_e_preco(self, update_fields: set[str] | None = None) -> None:
         """

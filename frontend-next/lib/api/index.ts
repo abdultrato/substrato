@@ -1,7 +1,8 @@
+import { logout as clearSession } from "../session"
+
 type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
 }
-
 export type ApiListMeta = {
   total?: number
   page?: number
@@ -82,11 +83,29 @@ async function parseError(res: Response): Promise<Error> {
     const contentType = res.headers.get("content-type") || ""
     if (contentType.includes("application/json")) {
       const j = await res.json()
+      // DRF ValidationError costuma vir como {campo: ["msg"], ...}
+      if (!j?.detail && !j?.message && j && typeof j === "object" && !Array.isArray(j)) {
+        const entries = Object.entries(j)
+        if (entries.length) {
+          const [field, value] = entries[0]
+          const firstMessage =
+            Array.isArray(value) && value.length
+              ? String(value[0])
+              : typeof value === "string"
+                ? value
+                : JSON.stringify(value)
+          const err = new Error(`${field}: ${firstMessage}`)
+          ;(err as any).validation = j
+          return err
+        }
+      }
       const msg =
         j?.detail ||
         j?.message ||
         (typeof j === "string" ? j : JSON.stringify(j))
-      return new Error(msg || res.statusText)
+      const err = new Error(msg || res.statusText)
+      ;(err as any).validation = j
+      return err
     }
     const text = await res.text()
     return new Error(text || res.statusText)
@@ -116,6 +135,18 @@ export async function apiFetch<T = any>(
     const newAccess = await refreshAccessToken()
     if (newAccess) {
       res = await doFetch()
+    } else {
+      // Sessão inválida/expirada: limpa client-side e envia para login.
+      try {
+        clearSession()
+      } catch {
+        // ignore
+      }
+      if (typeof window !== "undefined") {
+        const next = encodeURIComponent(window.location.pathname + window.location.search)
+        window.location.href = `/login?next=${next}`
+      }
+      throw new Error("Sessão expirada. Faça login novamente.")
     }
   }
 

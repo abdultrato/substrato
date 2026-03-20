@@ -5,6 +5,9 @@
 import type { TipoItemEnum } from './TipoItemEnum';
 export type FaturaItem = {
     readonly id?: number;
+    readonly total_sem_iva?: string;
+    readonly iva_valor?: string;
+    readonly total_com_iva?: string;
     readonly criado_em?: string;
     readonly atualizado_em?: string;
     readonly id_custom?: string | null;
@@ -15,6 +18,10 @@ export type FaturaItem = {
     descricao?: string;
     quantidade?: string;
     preco_unitario?: string;
+    /**
+     * Desmarque para não aplicar IVA neste item.
+     */
+    aplica_iva?: boolean;
     /**
      * Deixe em branco para herdar do item (exame/produto/procedimento).
      */

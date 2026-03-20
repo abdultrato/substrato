@@ -6,6 +6,7 @@ export const GROUPS = {
   LABORATORIO: "Técnico de Laboratório",
   ENFERMAGEM: "Enfermeiro",
   FARMACIA: "Técnico de Farmácia",
+  MANUTENCAO: "Manutenção",
   MEDICINA: "Médico",
   MEDICINA_OCUPACIONAL: "Medicina Ocupacional",
   CONTABILIDADE: "Contabilidade",

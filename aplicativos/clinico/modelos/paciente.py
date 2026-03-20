@@ -159,8 +159,8 @@ class Paciente(CoreModel):
     )
 
     class Meta:
-        verbose_name = "Paciente"
-        verbose_name_plural = "Pacientes"
+        verbose_name = "Entrada"
+        verbose_name_plural = "Entradas"
 
         ordering = ["nome"]
 

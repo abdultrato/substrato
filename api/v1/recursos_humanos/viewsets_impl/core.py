@@ -53,8 +53,8 @@ class FuncionarioViewSet(TenantScopedModelViewSet):
     queryset = Funcionario.objects.select_related("cargo").all()
     serializer_class = FuncionarioSerializer
     filterset_class = FuncionarioFilter
-    search_fields = ["id_custom", "nome", "email", "telefone"]
-    ordering_fields = ["nome", "data_admissao", "estado", "criado_em"]
+    search_fields = ["id_custom", "nome", "profissao", "email", "telefone"]
+    ordering_fields = ["nome", "profissao", "data_admissao", "estado", "criado_em"]
     ordering = ["nome"]
 
 

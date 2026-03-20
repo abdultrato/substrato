@@ -3,14 +3,16 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { BlankEnum } from './BlankEnum';
-import type { MetodoLaboratorioEnum } from './MetodoLaboratorioEnum';
+import type { ExameMedicoMetodoEnum } from './ExameMedicoMetodoEnum';
+import type { ExameMedicoSetorEnum } from './ExameMedicoSetorEnum';
 import type { NullEnum } from './NullEnum';
-import type { SetorEnum } from './SetorEnum';
 /**
  * Serializer para Exame Médico (imagem/diagnóstico).
  */
 export type ExameMedico = {
     readonly id?: number;
+    readonly tipos_resultado_permitidos?: string;
+    readonly tipos_resultado_cadastrados?: string;
     readonly criado_em?: string;
     readonly atualizado_em?: string;
     readonly id_custom?: string | null;
@@ -30,8 +32,12 @@ export type ExameMedico = {
      * Taxa de IVA aplicada ao exame médico (0 a 100).
      */
     iva_percentual?: string;
-    metodo: MetodoLaboratorioEnum;
-    setor?: (SetorEnum | BlankEnum | NullEnum) | null;
+    /**
+     * Desmarque se este exame normalmente não deve ter IVA.
+     */
+    aplica_iva_por_padrao?: boolean;
+    metodo: ExameMedicoMetodoEnum;
+    setor?: (ExameMedicoSetorEnum | BlankEnum | NullEnum) | null;
     readonly criado_por?: number | null;
     readonly atualizado_por?: number | null;
     readonly inquilino?: number;

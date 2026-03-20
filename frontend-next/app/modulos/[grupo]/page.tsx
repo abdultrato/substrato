@@ -15,12 +15,15 @@ export default function ModuloGrupoPage() {
   const grupo = routeParamToString((params as any)?.grupo)
   const { loading } = useAuthGuard()
   const group = findModuleGroup(grupo)
+  const allGroups = Object.values(GROUPS)
+  const requiredGroups =
+    group?.key === "equipamentos" ? allGroups : [GROUPS.ADMIN, GROUPS.LABORATORIO]
 
   if (loading) return null
 
   if (!group) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
         <div className="space-y-6">
           <PageHeader title="Módulo não encontrado" subtitle={grupo} />
           <div className="text-sm text-gray-600">
@@ -35,7 +38,7 @@ export default function ModuloGrupoPage() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader title={group.label} subtitle="Recursos disponíveis" />
 

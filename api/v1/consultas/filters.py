@@ -2,7 +2,7 @@ from api.core.filters import SafeFilterSet
 from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
 from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
 from aplicativos.consultas.modelos.feriado import Feriado
-from aplicativos.identidade.modelos.usuario import Usuario
+from aplicativos.recursos_humanos.modelos.funcionario import Funcionario
 
 
 class ConsultaMedicaFilter(SafeFilterSet):
@@ -22,8 +22,8 @@ class ConsultaMedicaFilter(SafeFilterSet):
 
 class MedicoFilter(SafeFilterSet):
     class Meta:
-        model = Usuario
-        fields = ["username", "first_name", "last_name", "is_active"]
+        model = Funcionario
+        fields = ["nome", "profissao", "cargo", "estado", "criado_em"]
 
 
 class EspecialidadeConsultaFilter(SafeFilterSet):

@@ -460,23 +460,17 @@ def ensure_exames_medicos(n: int, tenants: list[Inquilino], faker: Faker) -> lis
 
 
 def ensure_exame_medico_campos(n: int, exames: list[ExameMedico], faker: Faker) -> list[ExameMedicoCampo]:
-    tipo = _safe_choice_value(ExameMedicoCampo, "tipo")
-    unidade = _safe_choice_value(ExameMedicoCampo, "unidade")
-
     while _count(ExameMedicoCampo) < n:
         idx = _count(ExameMedicoCampo) + 1
         exame = exames[(idx - 1) % len(exames)]
+        tipos_permitidos = list(exame.tipos_resultado_permitidos)
+        tipo = random.choice(tipos_permitidos) if tipos_permitidos else _safe_choice_value(ExameMedicoCampo, "tipo")
         with tenant_ctx(exame.inquilino):
             ExameMedicoCampo.objects.create(
                 inquilino=exame.inquilino,
                 exame=exame,
                 nome=f"Parâmetro {faker.word().title()} {idx}",
                 tipo=tipo,
-                unidade=unidade,
-                referencia_min=Decimal("0.00"),
-                referencia_max=Decimal("100.00"),
-                critico_min=Decimal("0.00"),
-                critico_max=Decimal("200.00"),
             )
     return list(ExameMedicoCampo.objects.order_by("id")[:n])
 

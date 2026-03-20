@@ -7,5 +7,6 @@
  * * `FAR` - Farmácia
  * * `ENF` - Enfermagem
  * * `CON` - Consulta
+ * * `CIR` - Cirurgia
  */
-export type FaturaOrigemEnum = 'CLI' | 'FAR' | 'ENF' | 'CON';
+export type FaturaOrigemEnum = 'CLI' | 'FAR' | 'ENF' | 'CON' | 'CIR';

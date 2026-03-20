@@ -1,6 +1,8 @@
+from datetime import datetime
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 import pytest
 
 from aplicativos.clinico.modelos.exame import Exame
@@ -41,8 +43,14 @@ def _exame(tenant):
     )
 
 
+def _horario_normal():
+    return timezone.make_aware(datetime(2024, 1, 2, 10, 0))
+
+
 def _fatura_com_exame(tenant, paciente, exame):
     req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
+    req.criado_em = _horario_normal()
+    req.save(update_fields=["criado_em"])
     RequisicaoItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
     fat = Fatura.objects.create(
         inquilino=tenant,

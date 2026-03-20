@@ -17,6 +17,9 @@ export default function ModuloRecursoPage() {
   const recurso = routeParamToString((params as any)?.recurso)
   const { loading } = useAuthGuard()
   const found = findModuleResource(grupo, recurso)
+  const allGroups = Object.values(GROUPS)
+  const requiredGroups =
+    found?.group.key === "equipamentos" ? allGroups : [GROUPS.ADMIN, GROUPS.LABORATORIO]
 
   if (loading) return null
 
@@ -44,7 +47,7 @@ export default function ModuloRecursoPage() {
       title={`${found.group.label} / ${found.resource.label}`}
       endpoint={found.resource.endpoint}
       adminListHref={found.resource.adminListHref}
-      requiredGroups={[GROUPS.ADMIN]}
+      requiredGroups={requiredGroups}
     />
   )
 }

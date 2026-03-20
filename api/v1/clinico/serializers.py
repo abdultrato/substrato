@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 import unicodedata
 
+from django.core.exceptions import ValidationError
 from django.utils.translation import override
 from django_countries import countries
 from rest_framework import serializers
@@ -14,6 +15,10 @@ from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
+from aplicativos.clinico.modelos.resultado_medico_arquivo import (
+    ResultadoMedicoArquivo,
+    validar_arquivo_medico_por_tipo,
+)
 from nucleo.constantes.proveniencia import Proveniencia
 
 CORE_READ_ONLY_FIELDS = [
@@ -325,6 +330,15 @@ class ExameSerializer(serializers.ModelSerializer):
 class ExameMedicoSerializer(serializers.ModelSerializer):
     """Serializer para Exame Médico (imagem/diagnóstico)."""
 
+    tipos_resultado_permitidos = serializers.SerializerMethodField()
+    tipos_resultado_cadastrados = serializers.SerializerMethodField()
+
+    def get_tipos_resultado_permitidos(self, obj):
+        return sorted(obj.tipos_resultado_permitidos)
+
+    def get_tipos_resultado_cadastrados(self, obj):
+        return sorted(obj.tipos_resultado_cadastrados)
+
     class Meta:
         model = ExameMedico
         fields = "__all__"
@@ -354,6 +368,19 @@ class ExameCampoSerializer(serializers.ModelSerializer):
 
 class ExameMedicoCampoSerializer(serializers.ModelSerializer):
     """Serializer para parâmetros de exame médico."""
+
+    def validate(self, attrs):
+        exame = attrs.get("exame") or getattr(self.instance, "exame", None)
+        tipo = attrs.get("tipo") or getattr(self.instance, "tipo", None)
+        if exame and tipo:
+            permitidos = exame.tipos_resultado_permitidos
+            if tipo not in permitidos:
+                metodo = exame.get_metodo_display() or exame.metodo
+                permitidos_fmt = ", ".join(sorted(permitidos))
+                raise serializers.ValidationError(
+                    {"tipo": f"Tipo não permitido para o método {metodo}. Permitidos: {permitidos_fmt}."}
+                )
+        return attrs
 
     class Meta:
         model = ExameMedicoCampo
@@ -653,6 +680,39 @@ class ResultadoItemLaboratorioSerializer(serializers.ModelSerializer):
         ]
 
 
+class ResultadoMedicoArquivoSerializer(serializers.ModelSerializer):
+
+    arquivo = serializers.FileField(required=True)
+
+    def validate(self, attrs):
+        exame_medico = attrs.get("exame_medico") or getattr(self.instance, "exame_medico", None)
+        tipo = attrs.get("tipo") or getattr(self.instance, "tipo", None)
+        arquivo = attrs.get("arquivo") or getattr(self.instance, "arquivo", None)
+
+        erros = {}
+        if exame_medico and tipo:
+            tipos_permitidos = exame_medico.tipos_resultado_cadastrados
+            if tipo not in tipos_permitidos:
+                metodo = exame_medico.get_metodo_display() or exame_medico.metodo
+                permitidos_fmt = ", ".join(sorted(tipos_permitidos))
+                erros["tipo"] = f"Tipo não permitido para o método {metodo}. Permitidos: {permitidos_fmt}."
+
+        if arquivo and tipo:
+            try:
+                validar_arquivo_medico_por_tipo(arquivo, tipo)
+            except ValidationError as err:
+                erros["arquivo"] = err.messages[0] if err.messages else "Arquivo inválido."
+
+        if erros:
+            raise serializers.ValidationError(erros)
+
+        return attrs
+
+    class Meta:
+        model = ResultadoMedicoArquivo
+        fields = "__all__"
+
+
 SERIALIZER_MAP = {
     "exame": ExameSerializer,
     "examemedico": ExameMedicoSerializer,
@@ -662,4 +722,5 @@ SERIALIZER_MAP = {
     "requisicaoanalise": RequisicaoAnaliseSerializer,
     "requisicaoitem": RequisicaoItemSerializer,
     "resultadoitem": ResultadoItemSerializer,
+    "resultadomedicoarquivo": ResultadoMedicoArquivoSerializer,
 }

@@ -19,7 +19,7 @@ class CargoFilter(SafeFilterSet):
 class FuncionarioFilter(SafeFilterSet):
     class Meta:
         model = Funcionario
-        fields = ["cargo", "estado", "data_admissao", "criado_em"]
+        fields = ["cargo", "profissao", "estado", "data_admissao", "criado_em"]
 
 
 class AgregadoFamiliarFilter(SafeFilterSet):

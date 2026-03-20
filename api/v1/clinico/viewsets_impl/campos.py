@@ -57,7 +57,7 @@ class ExameMedicoCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     filterset_class = ExameMedicoCampoFilter
     permission_classes = [IsAuthenticated]
     # ExameMedicoCampo nao possui `descricao`/`ativo`/`ordem`.
-    search_fields = ["id_custom", "nome", "tipo", "unidade", "exame__nome", "exame__id_custom"]
+    search_fields = ["id_custom", "nome", "tipo", "exame__nome", "exame__id_custom"]
     ordering_fields = [
         "inquilino",
         "id_custom",
@@ -70,12 +70,6 @@ class ExameMedicoCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
         "atualizado_por",
         "exame",
         "tipo",
-        "unidade",
-        "referencia_min",
-        "referencia_max",
-        "critico_min",
-        "critico_max",
-        "delta_max",
         "versao",
     ]
     ordering = ["-criado_em"]

@@ -22,7 +22,7 @@ export type PatchedPacienteRequest = {
      */
     gestante?: boolean;
     /**
-     * Semanas de gestação (preencher apenas se gestante)
+     * Semanas de gestação (preencher se gestante)
      */
     idade_gestacional_semanas?: number | null;
     /**

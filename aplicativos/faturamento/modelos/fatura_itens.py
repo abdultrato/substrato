@@ -1,10 +1,11 @@
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 
+from aplicativos.consultas.utils.precificacao import calcular_multiplicador_preco
 from nucleo.modelos.base import NoNameCoreModel
 
 
@@ -182,6 +183,31 @@ class FaturaItem(NoNameCoreModel):
             self.TipoItem.AJUSTE: None,
         }[self.tipo_item]
 
+    def _data_referencia_precificacao(self):
+        if not self.fatura_id:
+            return None
+
+        requisicao = getattr(self.fatura, "requisicao", None)
+        if requisicao and getattr(requisicao, "criado_em", None):
+            return requisicao.criado_em
+
+        return getattr(self.fatura, "criado_em", None)
+
+    def _aplicar_precificacao_exame(self, preco_base: Decimal) -> Decimal:
+        if preco_base is None:
+            return Decimal("0.00")
+
+        data_ref = self._data_referencia_precificacao()
+        if not data_ref:
+            return preco_base
+
+        try:
+            inquilino = getattr(self.fatura, "inquilino", None) or getattr(self, "inquilino", None)
+            multiplicador = calcular_multiplicador_preco(inquilino, data_ref, feriado_manual=False)
+            return (preco_base * multiplicador).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        except Exception:
+            return preco_base
+
     def _resolver_iva_percentual_referencia(self) -> Decimal:
         """
         Resolve IVA (%) a partir da referência do item.
@@ -244,7 +270,7 @@ class FaturaItem(NoNameCoreModel):
             if not self.descricao.strip():
                 self.descricao = self.exame.nome
             if self.preco_unitario == Decimal("0.00"):
-                self.preco_unitario = self.exame.preco
+                self.preco_unitario = self._aplicar_precificacao_exame(self.exame.preco)
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
             self.aplica_iva = self._resolver_aplica_iva_referencia()
@@ -254,7 +280,7 @@ class FaturaItem(NoNameCoreModel):
             if not self.descricao.strip():
                 self.descricao = self.exame_medico.nome
             if self.preco_unitario == Decimal("0.00"):
-                self.preco_unitario = self.exame_medico.preco
+                self.preco_unitario = self._aplicar_precificacao_exame(self.exame_medico.preco)
             if self.iva_percentual is None:
                 self.iva_percentual = self._resolver_iva_percentual_referencia()
             self.aplica_iva = self._resolver_aplica_iva_referencia()

@@ -28,6 +28,7 @@ import {
     CreditCard,
     Bell,
     Bug,
+    Wrench,
     Moon,
     Sun,
 } from "lucide-react"
@@ -46,6 +47,8 @@ interface NavItem {
     icon: any
     groups?: string[]
 }
+
+const ALL_GROUPS = Object.values( GROUPS )
 
 /**
  * Definição dos menus com RBAC
@@ -199,6 +202,12 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
+        href: "/modulos/equipamentos",
+        label: "Equipamentos",
+        icon: Wrench,
+        groups: ALL_GROUPS,
+    },
+    {
         href: "/exames",
         label: "Exames",
         icon: FlaskConical,
@@ -220,7 +229,7 @@ const NAV_ITEMS: NavItem[] = [
         href: "/modulos",
         label: "Módulos",
         icon: Layers,
-        groups: [GROUPS.ADMIN],
+        groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
     },
     {
         href: "/recursos",

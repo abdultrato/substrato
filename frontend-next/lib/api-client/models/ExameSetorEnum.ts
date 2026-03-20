@@ -29,4 +29,4 @@
  * * `Pesquisa` - Pesquisa Laboratorial
  * * `Outro` - Outro
  */
-export type SetorEnum = 'Hematologia' | 'Bioquimica' | 'Microbiologia' | 'Imunologia' | 'Serologia' | 'Parasitologia' | 'BiologiaMolecular' | 'Toxicologia' | 'Hormonios' | 'MarcadoresTumorais' | 'Coagulacao' | 'Urinalise' | 'LiquidosCorporais' | 'Gasometria' | 'NutricaoClinica' | 'Micologia' | 'Virologia' | 'Bacteriologia' | 'BancoSangue' | 'ImunoHematologia' | 'Triagem' | 'RecepcaoAmostras' | 'ControleQualidade' | 'Pesquisa' | 'Outro';
+export type ExameSetorEnum = 'Hematologia' | 'Bioquimica' | 'Microbiologia' | 'Imunologia' | 'Serologia' | 'Parasitologia' | 'BiologiaMolecular' | 'Toxicologia' | 'Hormonios' | 'MarcadoresTumorais' | 'Coagulacao' | 'Urinalise' | 'LiquidosCorporais' | 'Gasometria' | 'NutricaoClinica' | 'Micologia' | 'Virologia' | 'Bacteriologia' | 'BancoSangue' | 'ImunoHematologia' | 'Triagem' | 'RecepcaoAmostras' | 'ControleQualidade' | 'Pesquisa' | 'Outro';

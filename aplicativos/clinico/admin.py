@@ -428,12 +428,6 @@ class ExameMedicoCampoInline(admin.TabularInline):
         "inquilino",
         "nome",
         "tipo",
-        "unidade",
-        "referencia_min",
-        "referencia_max",
-        "critico_min",
-        "critico_max",
-        "delta_max",
     )
     ordering = ("nome",)
     show_change_link = True

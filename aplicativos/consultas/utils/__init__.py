@@ -1,0 +1,1 @@
+"""Utilitarios de consultas."""

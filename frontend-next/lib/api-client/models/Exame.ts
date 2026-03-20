@@ -3,9 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { BlankEnum } from './BlankEnum';
+import type { ExameSetorEnum } from './ExameSetorEnum';
 import type { MetodoLaboratorioEnum } from './MetodoLaboratorioEnum';
 import type { NullEnum } from './NullEnum';
-import type { SetorEnum } from './SetorEnum';
 /**
  * Serializer para a entidade Exame com validação robusta.
  * Inclui validação de preço e tempo de resposta.
@@ -34,6 +34,10 @@ export type Exame = {
      * Taxa de IVA aplicada ao exame (0 a 100).
      */
     iva_percentual?: string;
+    /**
+     * Desmarque se este exame normalmente não deve ter IVA.
+     */
+    aplica_iva_por_padrao?: boolean;
     /**
      * Método utilizado para realizar o exame
      *
@@ -110,7 +114,7 @@ export type Exame = {
      * * `Pesquisa` - Pesquisa Laboratorial
      * * `Outro` - Outro
      */
-    setor?: (SetorEnum | BlankEnum | NullEnum) | null;
+    setor?: (ExameSetorEnum | BlankEnum | NullEnum) | null;
     readonly criado_por?: number | null;
     readonly atualizado_por?: number | null;
     readonly inquilino?: number;

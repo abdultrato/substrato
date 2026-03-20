@@ -4,7 +4,7 @@ from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
 from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
 from aplicativos.consultas.modelos.feriado import Feriado
 from aplicativos.faturamento.modelos.fatura import Fatura
-from aplicativos.identidade.modelos.usuario import Usuario
+from aplicativos.recursos_humanos.modelos.funcionario import Funcionario
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -22,17 +22,11 @@ CORE_READ_ONLY_FIELDS = (
 
 
 class MedicoSerializer(serializers.ModelSerializer):
-    nome = serializers.SerializerMethodField()
+    cargo_nome = serializers.CharField(source="cargo.nome", read_only=True)
 
     class Meta:
-        model = Usuario
-        fields = ["id", "username", "first_name", "last_name", "nome"]
-
-    def get_nome(self, obj: Usuario) -> str:
-        try:
-            return (obj.get_full_name() or "").strip() or obj.username
-        except Exception:
-            return obj.username
+        model = Funcionario
+        fields = ["id", "nome", "profissao", "cargo", "cargo_nome"]
 
 
 class ConsultaMedicaSerializer(serializers.ModelSerializer):
@@ -59,13 +53,10 @@ class ConsultaMedicaSerializer(serializers.ModelSerializer):
         )
 
     def get_medico_nome(self, obj: ConsultaMedica) -> str:
-        u = getattr(obj, "medico", None)
-        if not u:
+        medico = getattr(obj, "medico", None)
+        if not medico:
             return ""
-        try:
-            return (u.get_full_name() or "").strip() or u.username
-        except Exception:
-            return getattr(u, "username", "")
+        return getattr(medico, "nome", "") or ""
 
     def _get_fatura(self, obj: ConsultaMedica) -> Fatura | None:
         try:

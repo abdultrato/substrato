@@ -8,6 +8,7 @@ from aplicativos.clinico.modelos.paciente import Paciente
 from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
 from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
 from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
+from aplicativos.clinico.modelos.resultado_medico_arquivo import ResultadoMedicoArquivo
 
 # =====================================================
 # EXAME
@@ -87,7 +88,6 @@ class ExameMedicoCampoFilter(SafeFilterSet):
             "exame",
             "nome",
             "tipo",
-            "unidade",
         ]
 
 
@@ -195,6 +195,22 @@ class ResultadoItemFilter(SafeFilterSet):
         ]
 
 
+class ResultadoMedicoArquivoFilter(SafeFilterSet):
+    class Meta:
+        model = ResultadoMedicoArquivo
+        fields = [
+            "inquilino",
+            "id_custom",
+            "criado_em",
+            "atualizado_em",
+            "requisicao",
+            "exame_medico",
+            "resultado",
+            "requisicao_item",
+            "tipo",
+        ]
+
+
 # =====================================================
 # MAPA
 # =====================================================
@@ -208,4 +224,5 @@ FILTER_MAP = {
     "requisicaoanalise": RequisicaoAnaliseFilter,
     "requisicaoitem": RequisicaoItemFilter,
     "resultadoitem": ResultadoItemFilter,
+    "resultadomedicoarquivo": ResultadoMedicoArquivoFilter,
 }

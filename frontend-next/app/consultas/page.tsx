@@ -12,7 +12,7 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Paciente = { id: number; nome: string }
-type Medico = { id: number; nome?: string; username?: string }
+type Medico = { id: number; nome?: string; profissao?: string; cargo_nome?: string }
 type Especialidade = {
   id: number
   nome?: string
@@ -403,11 +403,15 @@ export default function ConsultasPage() {
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 >
                   <option value="">Sem médico</option>
-                  {medicos.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.nome || m.username || `Médico ${m.id}`}
-                    </option>
-                  ))}
+                  {medicos.map((m) => {
+                    const detalhe = m.cargo_nome || m.profissao
+                    const label = [m.nome || `Médico ${m.id}`, detalhe].filter(Boolean).join(" · ")
+                    return (
+                      <option key={m.id} value={m.id}>
+                        {label}
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
 

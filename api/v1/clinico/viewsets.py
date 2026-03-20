@@ -17,6 +17,7 @@ from .viewsets_impl import (
     RequisicaoAnaliseViewSet,
     RequisicaoItemViewSet,
     ResultadoItemViewSet,
+    ResultadoMedicoArquivoViewSet,
 )
 
 __all__ = [
@@ -29,4 +30,5 @@ __all__ = [
     "RequisicaoAnaliseViewSet",
     "RequisicaoItemViewSet",
     "ResultadoItemViewSet",
+    "ResultadoMedicoArquivoViewSet",
 ]

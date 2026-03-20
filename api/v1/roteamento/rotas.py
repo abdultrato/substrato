@@ -5,6 +5,7 @@ from api.v1.consultas.viewsets import VIEWSET_MAP as CONSULTAS_VIEWSET_MAP
 from api.v1.contabilidade.viewsets import VIEWSET_MAP as CONTABILIDADE_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
 from api.v1.enfermagem.viewsets import VIEWSET_MAP as ENFERMAGEM_VIEWSET_MAP
+from api.v1.equipamentos.viewsets import VIEWSET_MAP as EQUIPAMENTOS_VIEWSET_MAP
 from api.v1.entidades.viewsets import VIEWSET_MAP as ENTIDADES_VIEWSET_MAP
 from api.v1.farmacia.viewsets import VIEWSET_MAP as FARMACIA_VIEWSET_MAP
 from api.v1.faturamento.viewsets import VIEWSET_MAP as FATURAMENTO_VIEWSET_MAP
@@ -27,6 +28,7 @@ VIEWSET_GROUPS = {
     "consultas": CONSULTAS_VIEWSET_MAP,
     "contabilidade": CONTABILIDADE_VIEWSET_MAP,
     "enfermagem": ENFERMAGEM_VIEWSET_MAP,
+    "equipamentos": EQUIPAMENTOS_VIEWSET_MAP,
     "entidades": ENTIDADES_VIEWSET_MAP,
     "farmacia": FARMACIA_VIEWSET_MAP,
     "faturamento": FATURAMENTO_VIEWSET_MAP,

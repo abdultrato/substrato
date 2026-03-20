@@ -20,5 +20,5 @@ class GestacaoAdmin(CoreAdmin):
         "data_prevista_parto",
     )
     list_filter = ("estado",)
-    search_fields = ("paciente__nome", "medico_responsavel__username")
+    search_fields = ("paciente__nome", "medico_responsavel__nome")
     ordering = ("-criado_em", "-id")

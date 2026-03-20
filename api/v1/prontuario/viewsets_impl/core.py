@@ -17,7 +17,7 @@ class RegistroProntuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     search_fields = [
         "id_custom",
         "paciente__nome",
-        "medico__username",
+        "medico__nome",
         "diagnostico",
         "sintomas",
     ]

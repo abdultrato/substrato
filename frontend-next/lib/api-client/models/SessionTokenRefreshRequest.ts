@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TokenRefresh = {
-    readonly access?: string;
+export type SessionTokenRefreshRequest = {
+    refresh: string;
 };
 

@@ -21,22 +21,12 @@ export class ClNicoCamposDeExameMDicoService {
      * @param nome
      * @param ordering Qual campo usar ao ordenar os resultados.
      * @param search Um termo de busca.
-     * @param tipo * `NUMERICO` - Numérico
-     * * `QUALITATIVO` - Qualitativo
-     * * `SEMIQUANTITATIVO` - Semi-quantitativo
-     * * `TEXTO` - Texto Livre
-     * @param unidade * `g/dl` - g/dl
-     * * `mg/dl` - mg/dl
-     * * `mmol/l` - mmol/l
-     * * `µmol/l` - µmol/l
-     * * `cel/mm3` - cel/mm3
-     * * `x10³/µl` - x10³/µl
-     * * `x10⁶/µL` - x10⁶/µL
-     * * `%` - %
-     * * `u/l` - u/l
-     * * `p/µL` - p/µL
-     * * `ph` - ph
-     * * `fl` - fl
+     * @param tipo * `PDF` - Laudo/Relatório (PDF)
+     * * `IMAGEM` - Imagem (JPEG/PNG)
+     * * `DICOM` - DICOM
+     * * `VIDEO` - Vídeo/loop
+     * * `TEXTO` - Texto livre
+     * * `NUMERICO` - Valor numérico
      * @returns ExameMedicoCampo
      * @throws ApiError
      */
@@ -51,8 +41,7 @@ export class ClNicoCamposDeExameMDicoService {
         nome?: string,
         ordering?: string,
         search?: string,
-        tipo?: 'NUMERICO' | 'QUALITATIVO' | 'SEMIQUANTITATIVO' | 'TEXTO',
-        unidade?: '%' | 'cel/mm3' | 'fl' | 'g/dl' | 'mg/dl' | 'mmol/l' | 'p/µL' | 'ph' | 'u/l' | 'x10³/µl' | 'x10⁶/µL' | 'µmol/l',
+        tipo?: 'DICOM' | 'IMAGEM' | 'NUMERICO' | 'PDF' | 'TEXTO' | 'VIDEO',
     ): CancelablePromise<Array<ExameMedicoCampo>> {
         return __request(OpenAPI, {
             method: 'GET',
@@ -69,7 +58,6 @@ export class ClNicoCamposDeExameMDicoService {
                 'ordering': ordering,
                 'search': search,
                 'tipo': tipo,
-                'unidade': unidade,
             },
         });
     }

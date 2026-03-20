@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TokenObtainPairRequest = {
-    username: string;
-    password: string;
+export type SessionTokenRefresh = {
+    refresh: string;
+    readonly access?: string;
 };
 

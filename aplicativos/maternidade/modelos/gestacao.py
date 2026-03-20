@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
 from nucleo.modelos.base import NoNameCoreModel
-
-User = settings.AUTH_USER_MODEL
 
 
 class Gestacao(NoNameCoreModel):
@@ -33,7 +30,7 @@ class Gestacao(NoNameCoreModel):
         db_index=True,
     )
     medico_responsavel = models.ForeignKey(
-        User,
+        "recursos_humanos.Funcionario",
         verbose_name="Médico/Ginecologista responsável",
         on_delete=models.SET_NULL,
         null=True,

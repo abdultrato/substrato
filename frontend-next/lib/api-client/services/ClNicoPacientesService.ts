@@ -122,7 +122,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Obter detalhes de um paciente
-     * @param id Um valor inteiro único que identifica este Paciente.
+     * @param id Um valor inteiro único que identifica este Entrada.
      * @returns Paciente
      * @throws ApiError
      */
@@ -139,7 +139,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Atualizar paciente completamente
-     * @param id Um valor inteiro único que identifica este Paciente.
+     * @param id Um valor inteiro único que identifica este Entrada.
      * @param requestBody
      * @returns Paciente
      * @throws ApiError
@@ -160,7 +160,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Atualizar parcialmente um paciente
-     * @param id Um valor inteiro único que identifica este Paciente.
+     * @param id Um valor inteiro único que identifica este Entrada.
      * @param requestBody
      * @returns Paciente
      * @throws ApiError
@@ -181,7 +181,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Gerenciamento de pacientes
-     * @param id Um valor inteiro único que identifica este Paciente.
+     * @param id Um valor inteiro único que identifica este Entrada.
      * @returns void
      * @throws ApiError
      */
@@ -198,7 +198,7 @@ export class ClNicoPacientesService {
     }
     /**
      * Gerenciamento de pacientes
-     * @param id Um valor inteiro único que identifica este Paciente.
+     * @param id Um valor inteiro único que identifica este Entrada.
      * @returns Paciente
      * @throws ApiError
      */

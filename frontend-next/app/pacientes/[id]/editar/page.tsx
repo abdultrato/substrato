@@ -124,6 +124,21 @@ export default function EditarPacientePage () {
 
             router.push( "/pacientes" );
         } catch ( err: any ) {
+            const validation = (err as any)?.validation
+            if (validation && typeof validation === "object" && !Array.isArray(validation)) {
+                const first = Object.entries(validation)[0]
+                if (first) {
+                    const [campo, msgs] = first
+                    const msg =
+                        Array.isArray(msgs) && msgs.length
+                            ? msgs[0]
+                            : typeof msgs === "string"
+                                ? msgs
+                                : JSON.stringify(msgs)
+                    setError( `${campo}: ${msg}` )
+                    return
+                }
+            }
             setError( err.message || "Erro ao atualizar paciente" );
         } finally {
             setSaving( false );

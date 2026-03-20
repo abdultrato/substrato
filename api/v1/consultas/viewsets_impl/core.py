@@ -2,7 +2,6 @@ from datetime import datetime, time
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
@@ -17,7 +16,7 @@ from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
 from aplicativos.consultas.modelos.especialidade_consulta import EspecialidadeConsulta
 from aplicativos.consultas.modelos.feriado import Feriado
 from aplicativos.faturamento.modelos.fatura import Fatura
-from aplicativos.identidade.modelos.usuario import Usuario
+from aplicativos.recursos_humanos.modelos.funcionario import Funcionario
 
 from ..filters import (
     ConsultaMedicaFilter,
@@ -37,25 +36,18 @@ from ..serializers import (
 
 
 class MedicosViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = Usuario.objects.all()
+    queryset = Funcionario.objects.select_related("cargo").all()
     serializer_class = MedicoSerializer
     filterset_class = MedicoFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["username", "first_name", "last_name"]
-    ordering_fields = ["username", "first_name", "last_name"]
-    ordering = ["username"]
+    search_fields = ["nome", "profissao", "cargo__nome"]
+    ordering_fields = ["nome", "profissao", "criado_em"]
+    ordering = ["nome"]
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # Grupo canônico com acento OU cargo RH marcado como médico.
-        return qs.filter(
-            Q(groups__name="Médico")
-            | Q(
-                perfil_profissional__funcionario__cargo__eh_medico=True,
-                perfil_profissional__funcionario__estado="ATIVO",
-                perfil_profissional__ativo=True,
-            )
-        ).distinct()
+        # Médicos são funcionários com cargo marcado como médico e ativos.
+        return qs.filter(cargo__eh_medico=True, estado="ATIVO").distinct()
 
 
 class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -85,7 +77,7 @@ class ConsultaMedicaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     serializer_class = ConsultaMedicaSerializer
     filterset_class = ConsultaMedicaFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "tipo", "paciente__nome", "medico__username"]
+    search_fields = ["id_custom", "tipo", "paciente__nome", "medico__nome"]
     ordering_fields = ["agendada_para", "criado_em", "tipo", "estado", "preco"]
     ordering = ["-agendada_para", "-criado_em"]
 

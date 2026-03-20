@@ -13,7 +13,7 @@ class GestacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     serializer_class = GestacaoSerializer
     filterset_class = GestacaoFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "paciente__nome", "medico_responsavel__username"]
+    search_fields = ["id_custom", "paciente__nome", "medico_responsavel__nome"]
     ordering_fields = ["criado_em", "estado", "data_prevista_parto"]
     ordering = ["-criado_em", "-id"]
 
