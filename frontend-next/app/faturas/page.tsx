@@ -24,11 +24,16 @@ type FaturaItem = {
   total_com_iva?: string | number
 }
 
-function money(v: any): string {
-  if (v === null || v === undefined || v === "") return "-"
-  const n = Number(v)
-  if (Number.isNaN(n)) return String(v)
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+const ITEM_TYPE_ORDER = ["EXM", "EXA", "AJU", "PRC", "MAT", "FAR"] as const
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  EXM: "Exames médicos",
+  EXA: "Exames",
+  AJU: "Consultas e ajustes",
+  PRC: "Procedimentos",
+  MAT: "Materiais",
+  FAR: "Medicação",
 }
 
 export default function FaturasPage() {
@@ -277,6 +282,42 @@ export default function FaturasPage() {
     [acaoId, anular, baixarPdf, emitir, podeAlterar, carregarItens, carregandoItens, itensFaturaId, detalhar]
   )
 
+  const groupedItens = useMemo(() => {
+    const normalize = (item: FaturaItem) => (item.tipo_item ?? "").toString().toUpperCase()
+    const groups: { key: string; label: string; items: FaturaItem[] }[] = []
+
+    ITEM_TYPE_ORDER.forEach((type) => {
+      const itensDoTipo = itens.filter((item) => normalize(item) === type)
+      if (itensDoTipo.length) {
+        groups.push({
+          key: type,
+          label: ITEM_TYPE_LABELS[type] || type,
+          items: itensDoTipo,
+        })
+      }
+    })
+
+    const restantes = itens.filter((item) => !ITEM_TYPE_ORDER.includes(normalize(item) as typeof ITEM_TYPE_ORDER[number]))
+    if (restantes.length) {
+      groups.push({
+        key: "OUTROS",
+        label: "Outros itens",
+        items: restantes,
+      })
+    }
+
+    return groups
+  }, [itens])
+
+  const ivaPercentual = useMemo(() => {
+    if (!selectedFatura) return "0.00"
+    const subtotal = Number(selectedFatura.subtotal ?? 0)
+    const iva = Number(selectedFatura.iva_valor ?? 0)
+    if (!subtotal) return "0.00"
+    const percentual = (iva / subtotal) * 100
+    return Number.isFinite(percentual) ? percentual.toFixed(2) : "0.00"
+  }, [selectedFatura])
+
   if (loading) return null
 
   return (
@@ -372,7 +413,7 @@ export default function FaturasPage() {
               ) : null
             }
           >
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Estado</div>
                 <div className="text-foreground">{selectedFatura.estado || "-"}</div>
@@ -382,28 +423,28 @@ export default function FaturasPage() {
                 <div className="text-foreground">{selectedFatura.origem || "-"}</div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Total</div>
-                <div className="text-foreground">
-                  <MoneyValue value={selectedFatura.total} />
-                </div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (com IVA)</div>
+                <div className="text-foreground"><MoneyValue value={selectedFatura.subtotal} /></div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">IVA (%)</div>
+                <div className="text-foreground">{ivaPercentual}%</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Valor do IVA</div>
+                <div className="text-foreground"><MoneyValue value={selectedFatura.iva_valor} /></div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Total (sem IVA)</div>
+                <div className="text-foreground"><MoneyValue value={selectedFatura.total} /></div>
               </div>
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Valor paciente</div>
-                <div className="text-foreground">
-                  <MoneyValue value={selectedFatura.valor_paciente} />
-                </div>
+                <div className="text-foreground"><MoneyValue value={selectedFatura.valor_paciente} /></div>
               </div>
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Valor seguro</div>
-                <div className="text-foreground">
-                  <MoneyValue value={selectedFatura.valor_seguro} />
-                </div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal</div>
-                <div className="text-foreground">
-                  <MoneyValue value={selectedFatura.subtotal} />
-                </div>
+                <div className="text-foreground"><MoneyValue value={selectedFatura.valor_seguro} /></div>
               </div>
             </div>
 
@@ -411,35 +452,51 @@ export default function FaturasPage() {
               <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
               {carregandoItens && itensFaturaId === selectedFatura.id ? (
                 <div className="py-2 text-sm text-gray-500">Carregando itens...</div>
-              ) : itensFaturaId === selectedFatura.id && itens.length ? (
-                <div className="mt-2 overflow-x-auto rounded-lg border border-border">
-                  <table className="min-w-full text-xs text-left">
-                    <thead className="bg-muted text-muted-foreground">
-                      <tr>
-                        <th className="px-2 py-1">Descrição</th>
-                        <th className="px-2 py-1 text-right">Qtd</th>
-                        <th className="px-2 py-1 text-right">Preço</th>
-                        <th className="px-2 py-1 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border text-foreground">
-                      {itens.map((item) => (
-                        <tr key={item.id}>
-                          <td className="px-2 py-1 font-semibold">{item.descricao || `Item ${item.id}`}</td>
-                          <td className="px-2 py-1 text-right">{item.quantidade || "-"}</td>
-                          <td className="px-2 py-1 text-right">{money(item.preco_unitario)}</td>
-                          <td className="px-2 py-1 text-right">{money(item.total_com_iva)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              ) : itensFaturaId === selectedFatura.id && groupedItens.length ? (
+                <div className="mt-2 space-y-6">
+                  {groupedItens.map((group) => (
+                    <div key={group.key} className="space-y-3">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">{group.label}</div>
+                      <div className="overflow-x-auto rounded-lg border border-border">
+                        <table className="min-w-full text-xs text-left">
+                          <thead className="bg-muted text-muted-foreground">
+                            <tr>
+                              <th className="px-2 py-1">Descrição</th>
+                              <th className="px-2 py-1 text-right">Qtd</th>
+                              <th className="px-2 py-1 text-right">Preço</th>
+                              <th className="px-2 py-1 text-right">Subtotal</th>
+                              <th className="px-2 py-1 text-right">IVA (%)</th>
+                              <th className="px-2 py-1 text-right">Valor IVA</th>
+                              <th className="px-2 py-1 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-foreground">
+                            {group.items.map((item) => (
+                              <tr key={item.id}>
+                                <td className="px-2 py-1 font-semibold">{item.descricao || `Item ${item.id}`}</td>
+                                <td className="px-2 py-1 text-right">{item.quantidade ?? "-"}</td>
+                                <td className="px-2 py-1 text-right"><MoneyValue value={item.preco_unitario} /></td>
+                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_sem_iva} /></td>
+                                <td className="px-2 py-1 text-right">{item.iva_percentual ?? "-"}%</td>
+                                <td className="px-2 py-1 text-right"><MoneyValue value={item.iva_valor} /></td>
+                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_com_iva} /></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              ) : itensFaturaId === selectedFatura.id ? (
+                <div className="py-2 text-sm text-gray-500">Nenhum item adicionado nesta fatura.</div>
               ) : (
                 <div className="py-2 text-sm text-gray-500">
                   Clique em “Detalhes” para carregar os itens da fatura.
                 </div>
               )}
             </div>
+
             {!temPagamentoPendente && (
               <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
                 Nenhum pagamento pendente encontrado para esta fatura.

@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import SearchInput from "@/components/ui/SearchInput"
 import SelectInput from "@/components/ui/SelectInput"
+import TextAreaInput from "@/components/ui/TextAreaInput"
 import TextInput from "@/components/ui/TextInput"
 import StatusBadge from "@/components/ui/StatusBadge"
 import MoneyValue from "@/components/ui/MoneyValue"
@@ -37,6 +38,7 @@ const PAGAMENTO_METODOS = [
   { value: "TRF", label: "Transferência" },
   { value: "MOB", label: "Mobile Money" },
   { value: "POS", label: "POS" },
+  { value: "SEG", label: "Seguro de saúde" },
   { value: "CHQ", label: "Cheque" },
   { value: "OUT", label: "Outro" },
 ]
@@ -44,6 +46,13 @@ const PAGAMENTO_METODOS = [
 function listFrom(res: any): any[] {
   if (res && (res as any).results) return (res as any).results
   return Array.isArray(res) ? res : []
+}
+
+function toNumberId(value: unknown): number | undefined {
+  if (typeof value === "number") return value
+  if (value === undefined || value === null || value === "") return undefined
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? undefined : parsed
 }
 
 export default function FaturaRascunhoPage() {
@@ -85,6 +94,17 @@ export default function FaturaRascunhoPage() {
   const [pagamentoMetodo, setPagamentoMetodo] = useState("DIN")
   const [pagamentoValor, setPagamentoValor] = useState("")
   const [recibo, setRecibo] = useState<Row | null>(null)
+  const [seguradoras, setSeguradoras] = useState<Row[]>([])
+  const [planos, setPlanos] = useState<Row[]>([])
+  const [pagamentoSeguradora, setPagamentoSeguradora] = useState("")
+  const [pagamentoPlano, setPagamentoPlano] = useState("")
+  const [numeroAutorizacao, setNumeroAutorizacao] = useState("")
+  const [dadosSeguro, setDadosSeguro] = useState("")
+  const pagamentoNomePadrao = useMemo(() => {
+    if (!fatura) return "Pagamento"
+    const codigo = fatura.id_custom || fatura.id
+    return `Pagamento ${codigo}`
+  }, [fatura])
 
   const faturaRascunho = fatura?.estado === "RASC"
 
@@ -111,6 +131,44 @@ export default function FaturaRascunhoPage() {
     })
     return map
   }, [produtos])
+
+  const referenciaIds = useMemo(() => {
+    const sets = {
+      exames: new Set<number>(),
+      examesMedicos: new Set<number>(),
+      procedimentoItens: new Set<number>(),
+      procedimentoMateriais: new Set<number>(),
+      itensVenda: new Set<number>(),
+    }
+
+    itens.forEach((item) => {
+      const exameId = toNumberId(item.exame)
+      if (exameId) sets.exames.add(exameId)
+
+      const exameMedId = toNumberId(item.exame_medico)
+      if (exameMedId) sets.examesMedicos.add(exameMedId)
+
+      const procItemId = toNumberId(item.procedimento_item)
+      if (procItemId) sets.procedimentoItens.add(procItemId)
+
+      const procMatId = toNumberId(item.procedimento_material)
+      if (procMatId) sets.procedimentoMateriais.add(procMatId)
+
+      const vendaItemId = toNumberId(item.item_venda)
+      if (vendaItemId) sets.itensVenda.add(vendaItemId)
+    })
+
+    return sets
+  }, [itens])
+
+  const planosDisponiveis = useMemo(() => {
+    const seguradoraId = toNumberId(pagamentoSeguradora)
+    if (!seguradoraId) return []
+    return planos.filter((pl) => {
+      const seguroId = toNumberId((pl as any).seguradora)
+      return seguroId === seguradoraId
+    })
+  }, [planos, pagamentoSeguradora])
 
   const carregarItens = useCallback(async (fatId: number) => {
     try {
@@ -145,6 +203,20 @@ export default function FaturaRascunhoPage() {
       setProdutos(listFrom(prods))
     } catch {
       // silencioso
+    }
+  }, [])
+
+  const carregarSeguros = useCallback(async () => {
+    try {
+      const [segRes, planoRes] = await Promise.all([
+        apiFetch<any>("/seguradora/seguradora/"),
+        apiFetch<any>("/seguradora/planocobertura/"),
+      ])
+      setSeguradoras(listFrom(segRes))
+      setPlanos(listFrom(planoRes))
+    } catch {
+      setSeguradoras([])
+      setPlanos([])
     }
   }, [])
 
@@ -206,6 +278,20 @@ export default function FaturaRascunhoPage() {
       setErro(e?.message || "Falha ao carregar itens do paciente.")
     }
   }, [])
+
+  useEffect(() => {
+    if (!podePagar) return
+    carregarSeguros()
+  }, [carregarSeguros, podePagar])
+
+  useEffect(() => {
+    if (pagamentoMetodo !== "SEG") {
+      setPagamentoSeguradora("")
+      setPagamentoPlano("")
+      setNumeroAutorizacao("")
+      setDadosSeguro("")
+    }
+  }, [pagamentoMetodo])
 
   const carregarFatura = useCallback(async () => {
     if (!faturaId || Number.isNaN(faturaId)) return
@@ -331,16 +417,39 @@ export default function FaturaRascunhoPage() {
       setErro("Informe o valor do pagamento.")
       return
     }
+    if (pagamentoMetodo === "SEG") {
+      if (!pagamentoSeguradora) {
+        setErro("Selecione a seguradora do seguro de saúde.")
+        return
+      }
+      if (!numeroAutorizacao.trim()) {
+        setErro("Informe o número de autorização do seguro.")
+        return
+      }
+    }
     try {
       setAcaoId(faturaId)
+      setErro(null)
+      const payload: Record<string, unknown> = {
+        fatura: faturaId,
+        nome: pagamentoNomePadrao,
+        valor: pagamentoValor,
+        metodo: pagamentoMetodo,
+        status: "CON",
+      }
+      if (pagamentoMetodo === "SEG") {
+        const seguradoraId = toNumberId(pagamentoSeguradora)
+        if (seguradoraId) payload.seguradora = seguradoraId
+        const planoId = toNumberId(pagamentoPlano)
+        if (planoId) payload.plano_cobertura = planoId
+        payload.numero_autorizacao = numeroAutorizacao.trim()
+        if (dadosSeguro.trim()) {
+          payload.dados_seguro = { observacoes: dadosSeguro.trim() }
+        }
+      }
       await apiFetch("/pagamentos/pagamento/", {
         method: "POST",
-        body: JSON.stringify({
-          fatura: faturaId,
-          valor: pagamentoValor,
-          metodo: pagamentoMetodo,
-          status: "CON",
-        }),
+        body: JSON.stringify(payload),
       })
       await carregarFatura()
       await carregarRecibo(faturaId)
@@ -349,7 +458,18 @@ export default function FaturaRascunhoPage() {
     } finally {
       setAcaoId(null)
     }
-  }, [carregarFatura, carregarRecibo, faturaId, pagamentoMetodo, pagamentoValor, podePagar])
+  }, [
+    carregarFatura,
+    carregarRecibo,
+    dadosSeguro,
+    faturaId,
+    numeroAutorizacao,
+    pagamentoMetodo,
+    pagamentoPlano,
+    pagamentoSeguradora,
+    pagamentoValor,
+    podePagar,
+  ])
 
   const baixarPdfFatura = useCallback(async () => {
     if (!faturaId) return
@@ -603,33 +723,83 @@ export default function FaturaRascunhoPage() {
           ) : !podePagar ? (
             <div className="text-sm text-gray-500">Sem permissão para registrar pagamento.</div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-600">Método</label>
-                <SelectInput
-                  value={pagamentoMetodo}
-                  onChange={(e) => setPagamentoMetodo(e.target.value)}
-                  options={PAGAMENTO_METODOS}
-                />
+            <>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600">Método</label>
+                  <SelectInput
+                    value={pagamentoMetodo}
+                    onChange={(e) => setPagamentoMetodo(e.target.value)}
+                    options={PAGAMENTO_METODOS}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600">Valor</label>
+                  <TextInput
+                    value={pagamentoValor}
+                    onChange={(e) => setPagamentoValor(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                    onClick={pagarFatura}
+                    disabled={acaoId === fatura.id}
+                  >
+                    Confirmar pagamento
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600">Valor</label>
-                <TextInput
-                  value={pagamentoValor}
-                  onChange={(e) => setPagamentoValor(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                  onClick={pagarFatura}
-                  disabled={acaoId === fatura.id}
-                >
-                  Confirmar pagamento
-                </button>
-              </div>
-            </div>
+              {pagamentoMetodo === "SEG" ? (
+                <>
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Seguradora</label>
+                      <SelectInput
+                        value={pagamentoSeguradora}
+                        onChange={(e) => setPagamentoSeguradora(e.target.value)}
+                        options={seguradoras.map((s) => ({
+                          value: String(s.id),
+                          label: s.nome || s.id_custom || `Seguradora ${s.id}`,
+                        }))}
+                        placeholder="Selecione"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Plano de cobertura</label>
+                      <SelectInput
+                        value={pagamentoPlano}
+                        onChange={(e) => setPagamentoPlano(e.target.value)}
+                        options={planosDisponiveis.map((p) => ({
+                          value: String(p.id),
+                          label: p.nome || p.id_custom || `Plano ${p.id}`,
+                        }))}
+                        placeholder="Selecione (opcional)"
+                        disabled={!planosDisponiveis.length}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Número de autorização</label>
+                      <TextInput
+                        value={numeroAutorizacao}
+                        onChange={(e) => setNumeroAutorizacao(e.target.value)}
+                        placeholder="Autorização"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-xs font-semibold text-gray-600">Dados adicionais do seguro</label>
+                    <TextAreaInput
+                      value={dadosSeguro}
+                      onChange={(e) => setDadosSeguro(e.target.value)}
+                      placeholder="Ex.: apólice, beneficiário, observações"
+                      rows={3}
+                    />
+                  </div>
+                </>
+              ) : null}
+            </>
           )}
         </Card>
 
@@ -644,37 +814,53 @@ export default function FaturaRascunhoPage() {
                 <div className="text-sm text-gray-500">Sem requisições.</div>
               ) : (
                 <div className="space-y-2">
-                  {requisicoes.map((r) => (
-                    <div key={r.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="font-semibold text-gray-800">{r.id_custom || `REQ ${r.id}`}</div>
-                      <div className="text-xs text-gray-500">Tipo: {r.tipo || "-"}</div>
-                      <div className="mt-2 space-y-1">
-                        {(requisicaoItens[r.id] || []).map((it) => {
-                          const exame = it.exame ? exameById.get(it.exame) : null
-                          const exameMed = it.exame_medico ? exameMedById.get(it.exame_medico) : null
-                          const label = exame?.nome || exameMed?.nome || (it.exame ? `Exame ${it.exame}` : `Exame médico ${it.exame_medico}`)
-                          return (
-                            <div key={it.id} className="flex items-center justify-between gap-2">
-                              <div className="text-gray-700">{label}</div>
-                              <button
-                                className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                onClick={() => {
-                                  if (it.exame) {
-                                    adicionarItem({ tipo_item: "EXA", exame: it.exame })
-                                  } else if (it.exame_medico) {
-                                    adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico })
-                                  }
-                                }}
-                                disabled={!faturaRascunho}
-                              >
-                                Adicionar
-                              </button>
-                            </div>
-                          )
-                        })}
+                  {requisicoes.map((r) => {
+                    const disponiveis = (requisicaoItens[r.id] || []).filter((it) => {
+                      const exameId = toNumberId(it.exame)
+                      if (exameId && referenciaIds.exames.has(exameId)) return false
+                      const exameMedId = toNumberId(it.exame_medico)
+                      if (exameMedId && referenciaIds.examesMedicos.has(exameMedId)) return false
+                      return true
+                    })
+                    return (
+                      <div key={r.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                        <div className="font-semibold text-gray-800">{r.id_custom || `REQ ${r.id}`}</div>
+                        <div className="text-xs text-gray-500">Tipo: {r.tipo || "-"}</div>
+                        <div className="mt-2 space-y-1">
+                          {disponiveis.length === 0 ? (
+                            <div className="text-xs text-gray-500">Todos os exames já foram adicionados.</div>
+                          ) : (
+                            disponiveis.map((it) => {
+                              const exame = it.exame ? exameById.get(it.exame) : null
+                              const exameMed = it.exame_medico ? exameMedById.get(it.exame_medico) : null
+                              const label =
+                                exame?.nome ||
+                                exameMed?.nome ||
+                                (it.exame ? `Exame ${it.exame}` : `Exame médico ${it.exame_medico}`)
+                              return (
+                                <div key={it.id} className="flex items-center justify-between gap-2">
+                                  <div className="text-gray-700">{label}</div>
+                                  <button
+                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                    onClick={() => {
+                                      if (it.exame) {
+                                        adicionarItem({ tipo_item: "EXA", exame: it.exame })
+                                      } else if (it.exame_medico) {
+                                        adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico })
+                                      }
+                                    }}
+                                    disabled={!faturaRascunho}
+                                  >
+                                    Adicionar
+                                  </button>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -685,42 +871,60 @@ export default function FaturaRascunhoPage() {
                 <div className="text-sm text-gray-500">Sem procedimentos.</div>
               ) : (
                 <div className="space-y-2">
-                  {procedimentos.map((p) => (
-                    <div key={p.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="font-semibold text-gray-800">{p.id_custom || `PROC ${p.id}`}</div>
-                      <div className="text-xs text-gray-500">Total: <MoneyValue value={p.total} /></div>
-                      <div className="mt-2 space-y-1">
-                        {(procedimentoItens[p.id] || []).map((it) => (
-                          <div key={it.id} className="flex items-center justify-between gap-2">
-                            <div className="text-gray-700">{it.descricao || `Serviço ${it.id}`}</div>
-                            <button
-                              className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                              onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id })}
-                              disabled={!faturaRascunho}
-                            >
-                              Adicionar
-                            </button>
-                          </div>
-                        ))}
-                        {(procedimentoMateriais[p.id] || []).map((mat) => {
-                          const prod = produtoById.get(mat.produto)
-                          const nome = prod?.nome || `Material ${mat.produto}`
-                          return (
-                            <div key={mat.id} className="flex items-center justify-between gap-2">
-                              <div className="text-gray-700">{nome}</div>
-                              <button
-                                className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id })}
-                                disabled={!faturaRascunho}
-                              >
-                                Adicionar
-                              </button>
-                            </div>
-                          )
-                        })}
+                  {procedimentos.map((p) => {
+                    const itensDisponiveis = (procedimentoItens[p.id] || []).filter((it) => {
+                      const id = toNumberId(it.id)
+                      return !(id && referenciaIds.procedimentoItens.has(id))
+                    })
+                    const materiaisDisponiveis = (procedimentoMateriais[p.id] || []).filter((mat) => {
+                      const id = toNumberId(mat.id)
+                      return !(id && referenciaIds.procedimentoMateriais.has(id))
+                    })
+                    return (
+                      <div key={p.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                        <div className="font-semibold text-gray-800">{p.id_custom || `PROC ${p.id}`}</div>
+                        <div className="text-xs text-gray-500">Total: <MoneyValue value={p.total} /></div>
+                        <div className="mt-2 space-y-1">
+                          {itensDisponiveis.length === 0 ? (
+                            <div className="text-xs text-gray-500">Todos os serviços deste procedimento já estão adicionados.</div>
+                          ) : (
+                            itensDisponiveis.map((it) => (
+                              <div key={it.id} className="flex items-center justify-between gap-2">
+                                <div className="text-gray-700">{it.descricao || `Serviço ${it.id}`}</div>
+                                <button
+                                  className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                  onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id })}
+                                  disabled={!faturaRascunho}
+                                >
+                                  Adicionar
+                                </button>
+                              </div>
+                            ))
+                          )}
+                          {materiaisDisponiveis.length === 0 ? (
+                            <div className="text-xs text-gray-500">Todos os materiais deste procedimento já foram adicionados.</div>
+                          ) : (
+                            materiaisDisponiveis.map((mat) => {
+                              const prod = produtoById.get(mat.produto)
+                              const nome = prod?.nome || `Material ${mat.produto}`
+                              return (
+                                <div key={mat.id} className="flex items-center justify-between gap-2">
+                                  <div className="text-gray-700">{nome}</div>
+                                  <button
+                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                    onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id })}
+                                    disabled={!faturaRascunho}
+                                  >
+                                    Adicionar
+                                  </button>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -731,29 +935,39 @@ export default function FaturaRascunhoPage() {
                 <div className="text-sm text-gray-500">Sem vendas.</div>
               ) : (
                 <div className="space-y-2">
-                  {vendas.map((v) => (
-                    <div key={v.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="font-semibold text-gray-800">{v.numero || v.id_custom || `VENDA ${v.id}`}</div>
-                      <div className="text-xs text-gray-500">Total: <MoneyValue value={v.total} /></div>
-                      <div className="mt-2 space-y-1">
-                        {(vendaItens[v.id] || []).map((it) => {
-                          const prod = produtoById.get(it.produto)
-                          return (
-                            <div key={it.id} className="flex items-center justify-between gap-2">
-                              <div className="text-gray-700">{prod?.nome || `Produto ${it.produto}`}</div>
-                              <button
-                                className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id })}
-                                disabled={!faturaRascunho}
-                              >
-                                Adicionar
-                              </button>
-                            </div>
-                          )
-                        })}
+                  {vendas.map((v) => {
+                    const itensDisponiveis = (vendaItens[v.id] || []).filter((it) => {
+                      const id = toNumberId(it.id)
+                      return !(id && referenciaIds.itensVenda.has(id))
+                    })
+                    return (
+                      <div key={v.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                        <div className="font-semibold text-gray-800">{v.numero || v.id_custom || `VENDA ${v.id}`}</div>
+                        <div className="text-xs text-gray-500">Total: <MoneyValue value={v.total} /></div>
+                        <div className="mt-2 space-y-1">
+                          {itensDisponiveis.length === 0 ? (
+                            <div className="text-xs text-gray-500">Todos os itens desta venda já foram adicionados.</div>
+                          ) : (
+                            itensDisponiveis.map((it) => {
+                              const prod = produtoById.get(it.produto)
+                              return (
+                                <div key={it.id} className="flex items-center justify-between gap-2">
+                                  <div className="text-gray-700">{prod?.nome || `Produto ${it.produto}`}</div>
+                                  <button
+                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                    onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id })}
+                                    disabled={!faturaRascunho}
+                                  >
+                                    Adicionar
+                                  </button>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
