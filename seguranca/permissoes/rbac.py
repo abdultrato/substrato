@@ -205,12 +205,15 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "contabilidade-lancamento": SAFE_METHODS | WRITE_METHODS,
             "contabilidade-movimento": SAFE_METHODS | WRITE_METHODS,
             "contabilidade-conciliacaofinanceira": SAFE_METHODS | WRITE_METHODS,
+            # Pacientes (leitura para contexto das faturas)
+            "clinico-paciente": SAFE_METHODS,
             # SGE (somente leitura)
             "equipamentos-equipamento": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
             "faturamento-fatura": SAFE_METHODS,
+            "faturamento-faturaitem": SAFE_METHODS,
             "faturamento-historicofatura": SAFE_METHODS,
             "pagamentos-recibo": SAFE_METHODS,
             # Contabilidade faz controle e pode lançar/ajustar pagamentos.

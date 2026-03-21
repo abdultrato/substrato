@@ -17,6 +17,8 @@ def calcular_totais(itens):
             iva_item = (total_linha * IVA_PERCENT).quantize(Decimal("0.01"))
             iva_total += iva_item
 
-    total = (subtotal + iva_total).quantize(Decimal("0.01"))
+    total = (subtotal - iva_total).quantize(Decimal("0.01"))
+    if total < Decimal("0.00"):
+        total = Decimal("0.00")
 
     return subtotal, iva_total, total

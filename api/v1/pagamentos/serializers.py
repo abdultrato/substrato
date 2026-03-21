@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
@@ -7,6 +8,28 @@ from aplicativos.pagamentos.modelos.transacao import Transacao
 
 
 class PagamentoSerializer(serializers.ModelSerializer):
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        instancia = self.instance or Pagamento()
+        for campo, valor in attrs.items():
+            setattr(instancia, campo, valor)
+
+        if not instancia.inquilino_id:
+            req = self.context.get("request") if hasattr(self, "context") else None
+            inquilino = getattr(req, "inquilino", None)
+            if inquilino is not None:
+                instancia.inquilino = inquilino
+
+        try:
+            instancia.clean()
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise serializers.ValidationError(exc.message_dict) from exc
+            raise serializers.ValidationError(exc.messages) from exc
+
+        return attrs
+
     def _apply_status_transition(self, instance: Pagamento, desired_status: str) -> Pagamento:
         if desired_status == instance.status:
             return instance

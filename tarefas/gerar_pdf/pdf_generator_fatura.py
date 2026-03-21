@@ -30,6 +30,8 @@ from .pdf_base import (
     pdf_encryption,
 )
 
+from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
+
 logger = logging.getLogger(__name__)
 
 
@@ -197,81 +199,174 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
     story.append(Paragraph("ITENS DA FATURA", style_section))
     story.append(Spacer(1, 0.12 * cm))
 
-    data = [
-        [
-            cell_paragraph("Descrição", is_bold=True),
-            cell_paragraph("Qtd", is_bold=True),
-            cell_paragraph("Preço", is_bold=True),
-            cell_paragraph("Subtotal", is_bold=True),
-        ]
-    ]
-
-    itens_qs = fatura.itens.select_related("exame", "exame_medico").all()
+    itens = list(fatura.itens.select_related("exame", "exame_medico").filter(deletado=False))
     subtotal_geral = Decimal("0.00")
 
-    for item in itens_qs:
-        qtd = getattr(item, "quantidade", Decimal("1.00")) or Decimal("1.00")
-        preco_unit = getattr(item, "preco_unitario", Decimal("0.00")) or Decimal("0.00")
+    for item in itens:
+        subtotal_geral += item.total_sem_iva or Decimal("0.00")
 
+    section_defs = [
+        ("Exames", lambda i: i.tipo_item == FaturaItem.TipoItem.EXAME),
+        ("Exames Médicos", lambda i: i.tipo_item == FaturaItem.TipoItem.EXAME_MEDICO),
+        (
+            "Consultas",
+            lambda i: i.tipo_item == FaturaItem.TipoItem.AJUSTE
+            and i.descricao
+            and "consulta" in i.descricao.lower(),
+        ),
+        (
+            "Procedimentos",
+            lambda i: i.tipo_item
+            in {
+                FaturaItem.TipoItem.PROCEDIMENTO_ITEM,
+                FaturaItem.TipoItem.PROCEDIMENTO_MATERIAL,
+            },
+        ),
+        ("Medicação", lambda i: i.tipo_item == FaturaItem.TipoItem.ITEM_VENDA),
+    ]
+
+    assigned = set()
+    header = [
+        cell_paragraph("Descrição", is_bold=True),
+        cell_paragraph("Qtd", is_bold=True),
+        cell_paragraph("Preço", is_bold=True),
+        cell_paragraph("% IVA", is_bold=True),
+        cell_paragraph("Valor IVA", is_bold=True),
+        cell_paragraph("Subtotal (sem IVA)", is_bold=True),
+    ]
+
+    def fmt_money(value):
         try:
-            qtd = Decimal(str(qtd))
+            value = Decimal(str(value)).quantize(Decimal("0.01"))
         except Exception:
-            qtd = Decimal("1.00")
+            value = Decimal("0.00")
+        return f"{value:,.2f} MZN".replace(",", " ")
+
+    def fmt_quant(value):
         try:
-            preco_unit = Decimal(str(preco_unit))
+            value = Decimal(str(value))
         except Exception:
-            preco_unit = Decimal("0.00")
+            value = Decimal("1.00")
+        return f"{value.normalize():f}".replace(".", ",")
 
-        total_linha = (qtd * preco_unit).quantize(Decimal("0.01"))
-        subtotal_geral += total_linha
+    def fmt_percent(value):
+        try:
+            value = Decimal(str(value))
+        except Exception:
+            value = Decimal("0.00")
+        return f"{value:,.2f}%".replace(",", " ")
 
-        exame = getattr(item, "exame", None) or getattr(item, "exame_medico", None)
-        exame_txt = ""
-        if exame:
-            codigo = _codigo_exame(exame)
-            nome = getattr(exame, "nome", "") or ""
-            exame_txt = f"{codigo.upper()} - {nome}" if codigo else nome
+    for label, predicate in section_defs:
+        section_items = [item for item in itens if predicate(item)]
+        for item in section_items:
+            assigned.add(item.pk)
+        if not section_items:
+            continue
 
-        descricao = getattr(item, "descricao", None) or exame_txt or "—"
+        story.append(Paragraph(label, style_section))
+        story.append(Spacer(1, 0.08 * cm))
 
-        data.append(
-            [
-                cell_paragraph(descricao),
-                cell_paragraph(f"{qtd}".replace(".", ",")),
-                cell_paragraph(f"{preco_unit:,.2f} MZN".replace(",", " ")),
-                cell_paragraph(f"{total_linha:,.2f} MZN".replace(",", " ")),
-            ]
+        rows = [header]
+        for item in section_items:
+            qtd = getattr(item, "quantidade", Decimal("1.00")) or Decimal("1.00")
+            preco_unit = getattr(item, "preco_unitario", Decimal("0.00")) or Decimal("0.00")
+            descricao = getattr(item, "descricao", None) or "—"
+            percentual = getattr(item, "iva_percentual", Decimal("0.00")) or Decimal("0.00")
+            valor_iva = getattr(item, "iva_valor", Decimal("0.00")) or Decimal("0.00")
+            subtotal_item = getattr(item, "total_sem_iva", Decimal("0.00")) or Decimal("0.00")
+
+            rows.append(
+                [
+                    cell_paragraph(descricao),
+                    cell_paragraph(fmt_quant(qtd)),
+                    cell_paragraph(fmt_money(preco_unit)),
+                    cell_paragraph(fmt_percent(percentual)),
+                    cell_paragraph(fmt_money(valor_iva)),
+                    cell_paragraph(fmt_money(subtotal_item)),
+                ]
+            )
+
+        table = Table(
+            rows,
+            colWidths=[
+                usable_width * 0.40,
+                usable_width * 0.10,
+                usable_width * 0.13,
+                usable_width * 0.12,
+                usable_width * 0.13,
+                usable_width * 0.12,
+            ],
         )
-
-    if not itens_qs.exists():
-        data.append([cell_paragraph("Nenhum item registrado.", is_bold=True), "", "", ""])
-
-    table = Table(
-        data,
-        colWidths=[
-            usable_width * 0.55,
-            usable_width * 0.10,
-            usable_width * 0.17,
-            usable_width * 0.18,
-        ],
-    )
-
-    table.setStyle(
-        TableStyle(
-            [
-                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
-                ("ALIGN", (0, 0), (0, -1), "LEFT"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-                ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.darkblue),
-            ]
+        table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                    ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.darkblue),
+                ]
+            )
         )
-    )
+        story.append(KeepTogether(table))
+        story.append(Spacer(1, 0.15 * cm))
 
-    story.append(KeepTogether(table))
-    story.append(Spacer(1, 0.22 * cm))
+    remaining = [item for item in itens if item.pk not in assigned]
+    if remaining:
+        story.append(Paragraph("Outros itens", style_section))
+        story.append(Spacer(1, 0.08 * cm))
+        rows = [header]
+        for item in remaining:
+            qtd = getattr(item, "quantidade", Decimal("1.00")) or Decimal("1.00")
+            preco_unit = getattr(item, "preco_unitario", Decimal("0.00")) or Decimal("0.00")
+            descricao = getattr(item, "descricao", None) or "—"
+            percentual = getattr(item, "iva_percentual", Decimal("0.00")) or Decimal("0.00")
+            valor_iva = getattr(item, "iva_valor", Decimal("0.00")) or Decimal("0.00")
+            subtotal_item = getattr(item, "total_sem_iva", Decimal("0.00")) or Decimal("0.00")
+
+            rows.append(
+                [
+                    cell_paragraph(descricao),
+                    cell_paragraph(fmt_quant(qtd)),
+                    cell_paragraph(fmt_money(preco_unit)),
+                    cell_paragraph(fmt_percent(percentual)),
+                    cell_paragraph(fmt_money(valor_iva)),
+                    cell_paragraph(fmt_money(subtotal_item)),
+                ]
+            )
+
+        table = Table(
+            rows,
+            colWidths=[
+                usable_width * 0.40,
+                usable_width * 0.10,
+                usable_width * 0.13,
+                usable_width * 0.12,
+                usable_width * 0.13,
+                usable_width * 0.12,
+            ],
+        )
+        table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                    ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.darkblue),
+                ]
+            )
+        )
+        story.append(KeepTogether(table))
+        story.append(Spacer(1, 0.15 * cm))
+
+    if not itens:
+        story.append(cell_paragraph("Nenhum item registrado.", is_bold=True))
+        story.append(Spacer(1, 0.22 * cm))
 
     # ==========================
     # TOTAIS
@@ -289,17 +384,18 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
             v = Decimal("0.00")
         return f"{v:,.2f} MZN".replace(",", " ")
 
-    subtotal_final = subtotal_model if subtotal_model is not None else subtotal_geral
-    total_final = total_model if total_model is not None else subtotal_geral
+    subtotal_sem_iva = subtotal_model if subtotal_model is not None else subtotal_geral
+    total_com_iva = total_model if total_model is not None else subtotal_sem_iva + (iva_model or Decimal("0.00"))
+    valor_total_iva = iva_model if iva_model is not None else max(total_com_iva - subtotal_sem_iva, Decimal("0.00"))
+    total_a_pagar_sem_iva = max(subtotal_sem_iva - desconto, Decimal("0.00"))
 
     totais_data = [
         [
-            cell_paragraph("Subtotal:", is_bold=True),
-            cell_paragraph(fmt_money(subtotal_final)),
-        ]
+            cell_paragraph("Subtotal com desconto de IVA:", is_bold=True),
+            cell_paragraph(fmt_money(subtotal_sem_iva)),
+        ],
+        [cell_paragraph("Valor total do IVA:", is_bold=True), cell_paragraph(fmt_money(valor_total_iva))],
     ]
-    if iva_model is not None:
-        totais_data.append([cell_paragraph("IVA:", is_bold=True), cell_paragraph(fmt_money(iva_model))])
     if desconto > 0:
         totais_data.append(
             [
@@ -309,8 +405,14 @@ def gerar_pdf_fatura(fatura, request=None) -> tuple[bytes, str]:
         )
     totais_data.append(
         [
-            cell_paragraph("TOTAL A PAGAR:", is_bold=True),
-            cell_paragraph(fmt_money(total_final), is_bold=True),
+            cell_paragraph("Total sem desconto de IVA:", is_bold=True),
+            cell_paragraph(fmt_money(total_com_iva)),
+        ]
+    )
+    totais_data.append(
+        [
+            cell_paragraph("TOTAL A PAGAR (sem IVA):", is_bold=True),
+            cell_paragraph(fmt_money(total_a_pagar_sem_iva), is_bold=True),
         ]
     )
 

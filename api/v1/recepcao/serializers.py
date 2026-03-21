@@ -95,7 +95,28 @@ class RegistrarPagamentoRecepcaoSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
+    seguradora_id = serializers.IntegerField(required=False, min_value=1)
+    plano_cobertura_id = serializers.IntegerField(required=False, min_value=1)
+    numero_autorizacao = serializers.CharField(
+        max_length=80,
+        required=False,
+        allow_blank=True,
+    )
+    dados_seguro = serializers.JSONField(required=False, allow_null=True)
     confirmar = serializers.BooleanField(default=True)
+
+    def validate(self, attrs):
+        metodo = attrs.get("metodo") or Pagamento.Metodo.DINHEIRO
+        if metodo == Pagamento.Metodo.SEGURO_SAUDE:
+            if not attrs.get("seguradora_id"):
+                raise serializers.ValidationError(
+                    {"seguradora_id": "Informe a seguradora para pagamento via seguro de saúde."}
+                )
+            if not (attrs.get("numero_autorizacao") or "").strip():
+                raise serializers.ValidationError(
+                    {"numero_autorizacao": "Informe o número de autorização do seguro."}
+                )
+        return attrs
 
 
 class PacienteFluxoSerializer(serializers.Serializer):

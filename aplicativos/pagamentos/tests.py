@@ -16,6 +16,8 @@ from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.pagamentos.modelos.recibo import Recibo
 from aplicativos.pagamentos.modelos.reconciliacao import Reconciliacao
 from aplicativos.pagamentos.modelos.transacao import Transacao
+from aplicativos.seguradora.modelos.plano_cobertura import PlanoCobertura
+from aplicativos.seguradora.modelos.seguradora import Seguradora
 from nucleo.constantes.laboratorio.metodo import Metodo
 from nucleo.constantes.laboratorio.setor import Setor
 
@@ -122,6 +124,33 @@ def test_pagamento_estorno_exige_confirmado():
     pagamento.confirmar()
     pagamento.estornar()
     assert pagamento.status == Pagamento.Status.ESTORNADO
+
+
+@pytest.mark.django_db
+def test_pagamento_seguro_exige_seguradora_e_autorizacao():
+    tenant = _tenant()
+    paciente = _paciente(tenant)
+    exame = _exame(tenant)
+    fatura = _fatura_com_exame(tenant, paciente, exame)
+
+    pagamento = Pagamento(
+        inquilino=tenant,
+        nome="Pagamento Seguro",
+        fatura=fatura,
+        valor=fatura.total,
+        metodo=Pagamento.Metodo.SEGURO_SAUDE,
+    )
+
+    with pytest.raises(ValidationError):
+        pagamento.full_clean()
+
+    seguradora = Seguradora.objects.create(inquilino=tenant, nome="Seguradora Teste")
+    plano = PlanoCobertura.objects.create(inquilino=tenant, seguradora=seguradora, nome="Plano Teste")
+
+    pagamento.seguradora = seguradora
+    pagamento.plano_cobertura = plano
+    pagamento.numero_autorizacao = "AUT-123"
+    pagamento.full_clean()
 
 
 @pytest.mark.django_db

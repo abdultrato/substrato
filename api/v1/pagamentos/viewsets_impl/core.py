@@ -18,7 +18,7 @@ class PagamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     serializer_class = PagamentoSerializer
     filterset_class = PagamentoFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "metodo", "status", "referencia_externa"]
+    search_fields = ["id_custom", "nome", "metodo", "status", "referencia_externa", "numero_autorizacao"]
     ordering_fields = [
         "inquilino",
         "id_custom",
@@ -34,6 +34,9 @@ class PagamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
         "metodo",
         "status",
         "referencia_externa",
+        "seguradora",
+        "plano_cobertura",
+        "numero_autorizacao",
         "pago_em",
         "versao",
     ]

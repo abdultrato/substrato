@@ -12,6 +12,8 @@ from aplicativos.faturamento.modelos.fatura import Fatura
 from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 from aplicativos.pagamentos.modelos.recibo import Recibo
 from aplicativos.recepcao.modelos.checkin_recepcao import CheckinRecepcao
+from aplicativos.seguradora.modelos.plano_cobertura import PlanoCobertura
+from aplicativos.seguradora.modelos.seguradora import Seguradora
 
 
 def _quantizar_valor(valor):
@@ -159,6 +161,10 @@ def registrar_pagamento_para_checkin(
     valor=None,
     metodo=Pagamento.Metodo.DINHEIRO,
     referencia_externa="",
+    seguradora_id=None,
+    plano_cobertura_id=None,
+    numero_autorizacao="",
+    dados_seguro=None,
     confirmar=True,
 ):
     if not checkin.fatura_id:
@@ -172,6 +178,34 @@ def registrar_pagamento_para_checkin(
     if valor_pagamento <= Decimal("0.00"):
         raise ValidationError({"pagamento": {"valor": "Valor do pagamento deve ser maior que zero."}})
 
+    seguradora = None
+    plano_cobertura = None
+    numero_autorizacao = (numero_autorizacao or "").strip()
+
+    if metodo == Pagamento.Metodo.SEGURO_SAUDE:
+        if not seguradora_id:
+            raise ValidationError({"pagamento": {"seguradora_id": "Informe a seguradora do seguro de saúde."}})
+
+        seguradora = Seguradora.objects.filter(inquilino=checkin.inquilino, pk=seguradora_id).first()
+        if not seguradora:
+            raise ValidationError({"pagamento": {"seguradora_id": "Seguradora não encontrada para este tenant."}})
+
+        if plano_cobertura_id:
+            plano_cobertura = PlanoCobertura.objects.filter(
+                inquilino=checkin.inquilino, pk=plano_cobertura_id
+            ).first()
+            if not plano_cobertura:
+                raise ValidationError(
+                    {"pagamento": {"plano_cobertura_id": "Plano de cobertura não encontrado para este tenant."}}
+                )
+            if plano_cobertura.seguradora_id != seguradora.id:
+                raise ValidationError(
+                    {"pagamento": {"plano_cobertura_id": "Plano de cobertura não pertence à seguradora selecionada."}}
+                )
+
+        if not numero_autorizacao:
+            raise ValidationError({"pagamento": {"numero_autorizacao": "Informe o número de autorização do seguro."}})
+
     pagamento = Pagamento(
         inquilino=checkin.inquilino,
         nome=f"Pagamento {fatura.id_custom or fatura.pk}",
@@ -179,6 +213,10 @@ def registrar_pagamento_para_checkin(
         valor=valor_pagamento,
         metodo=metodo,
         referencia_externa=referencia_externa or "",
+        seguradora=seguradora,
+        plano_cobertura=plano_cobertura,
+        numero_autorizacao=numero_autorizacao or "",
+        dados_seguro=dados_seguro or {},
     )
     pagamento.full_clean()
     pagamento.save()
@@ -292,6 +330,10 @@ def obter_resumo_atendimento(checkin):
                 "status": pagamento.status,
                 "status_display": pagamento.get_status_display(),
                 "referencia_externa": pagamento.referencia_externa,
+                "seguradora_id": pagamento.seguradora_id,
+                "plano_cobertura_id": pagamento.plano_cobertura_id,
+                "numero_autorizacao": pagamento.numero_autorizacao,
+                "dados_seguro": pagamento.dados_seguro,
                 "pago_em": pagamento.pago_em.isoformat() if pagamento.pago_em else None,
             }
             for pagamento in pagamentos
@@ -368,6 +410,10 @@ def executar_fluxo_completo(
             valor=dados_pagamento.get("valor"),
             metodo=dados_pagamento.get("metodo", Pagamento.Metodo.DINHEIRO),
             referencia_externa=dados_pagamento.get("referencia_externa", ""),
+            seguradora_id=dados_pagamento.get("seguradora_id"),
+            plano_cobertura_id=dados_pagamento.get("plano_cobertura_id"),
+            numero_autorizacao=dados_pagamento.get("numero_autorizacao", ""),
+            dados_seguro=dados_pagamento.get("dados_seguro"),
             confirmar=dados_pagamento.get("confirmar", True),
         )
 

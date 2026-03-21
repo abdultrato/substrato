@@ -171,9 +171,32 @@ class FaturaItem(NoNameCoreModel):
         if not fatura_id:
             return
 
-        transaction.on_commit(lambda: recalcular_fatura_task.delay(fatura_id))
+        def _enqueue():
+            try:
+                recalcular_fatura_task.delay(fatura_id)
+                return
+            except Exception:
+                # Fallback local quando o broker não está disponível.
+                try:
+                    from aplicativos.faturamento.modelos.fatura import Fatura
+
+                    fatura = Fatura.objects.filter(pk=fatura_id).first()
+                    if fatura:
+                        fatura.persistir_totais()
+                except Exception:
+                    pass
+
+        try:
+            transaction.on_commit(_enqueue)
+        except Exception:
+            _enqueue()
 
     def _origem_esperada(self):
+        try:
+            if self.fatura_id and self.fatura.origem == self.fatura.Origem.MISTA:
+                return None
+        except Exception:
+            pass
         return {
             self.TipoItem.EXAME: self.fatura.Origem.CLINICO,
             self.TipoItem.EXAME_MEDICO: self.fatura.Origem.CLINICO,

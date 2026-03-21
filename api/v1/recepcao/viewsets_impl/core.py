@@ -169,6 +169,10 @@ class CheckinRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mod
             valor=payload.validated_data.get("valor"),
             metodo=payload.validated_data.get("metodo"),
             referencia_externa=payload.validated_data.get("referencia_externa", ""),
+            seguradora_id=payload.validated_data.get("seguradora_id"),
+            plano_cobertura_id=payload.validated_data.get("plano_cobertura_id"),
+            numero_autorizacao=payload.validated_data.get("numero_autorizacao", ""),
+            dados_seguro=payload.validated_data.get("dados_seguro"),
             confirmar=payload.validated_data.get("confirmar", True),
         )
         return Response(obter_resumo_atendimento(checkin))

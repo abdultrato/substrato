@@ -30,6 +30,9 @@ class PagamentoFilter(SafeFilterSet):
             "metodo",
             "status",
             "referencia_externa",
+            "seguradora",
+            "plano_cobertura",
+            "numero_autorizacao",
             "pago_em",
         ]
 

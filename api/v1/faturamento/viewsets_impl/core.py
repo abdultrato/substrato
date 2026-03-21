@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -12,6 +13,7 @@ from tarefas.gerar_pdf.pdf_generator_fatura import gerar_pdf_fatura
 
 from ..filters import FaturaFilter, FaturaItemFilter, HistoricoFaturaFilter
 from ..serializers import FaturaItemSerializer, FaturaSerializer, HistoricoFaturaSerializer
+from aplicativos.pagamentos.modelos.pagamentos import Pagamento
 
 
 class FaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -74,6 +76,25 @@ class FaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mod
                 fatura.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=linhas)
             except Exception:
                 pass
+        return Response(self.get_serializer(fatura).data)
+
+    @action(detail=True, methods=["post"])
+    def confirmar_pagamento(self, request, pk=None):
+        fatura = self.get_object()
+        pagamento = (
+            fatura.pagamentos.filter(status=Pagamento.Status.PENDENTE, deletado=False)
+            .order_by("-criado_em")
+            .first()
+        )
+        if not pagamento:
+            raise ValidationError("Nenhum pagamento pendente para confirmar.")
+
+        try:
+            pagamento.confirmar()
+        except ValidationError as exc:
+            raise ValidationError(str(exc)) from exc
+
+        fatura.refresh_from_db()
         return Response(self.get_serializer(fatura).data)
 
     @action(detail=True, methods=["get"])

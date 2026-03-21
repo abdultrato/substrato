@@ -95,7 +95,7 @@ def test_fatura_clinico_recalcula_totais():
     fatura.refresh_from_db()
 
     assert fatura.subtotal == exame.preco
-    assert fatura.total == fatura.subtotal + fatura.iva_valor
+    assert fatura.total == fatura.subtotal - fatura.iva_valor
     assert fatura.valor_paciente == fatura.total
 
 

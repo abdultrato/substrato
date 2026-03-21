@@ -23,6 +23,7 @@ class Pagamento(CoreModel):
         MOBILE_MONEY = "MOB", "Mobile Money"
         POS = "POS", "POS"
         CHEQUE = "CHQ", "Cheque"
+        SEGURO_SAUDE = "SEG", "Seguro de Saúde"
         OUTRO = "OUT", "Outro"
 
     class Status(models.TextChoices):
@@ -62,6 +63,39 @@ class Pagamento(CoreModel):
         help_text="Referência externa (transação, autorização, etc).",
     )
 
+    seguradora = models.ForeignKey(
+        "seguradora.Seguradora",
+        verbose_name="Seguradora",
+        on_delete=models.PROTECT,
+        related_name="pagamentos",
+        null=True,
+        blank=True,
+    )
+
+    plano_cobertura = models.ForeignKey(
+        "seguradora.PlanoCobertura",
+        verbose_name="Plano de cobertura",
+        on_delete=models.PROTECT,
+        related_name="pagamentos",
+        null=True,
+        blank=True,
+    )
+
+    numero_autorizacao = models.CharField(
+        verbose_name="Número de autorização",
+        max_length=80,
+        blank=True,
+        default="",
+        help_text="Número de autorização do seguro de saúde.",
+    )
+
+    dados_seguro = models.JSONField(
+        verbose_name="Dados do seguro",
+        blank=True,
+        default=dict,
+        help_text="Dados adicionais do seguro de saúde (ex.: apólice, beneficiário).",
+    )
+
     pago_em = models.DateTimeField(
         verbose_name="Pago em",
         null=True,
@@ -78,6 +112,32 @@ class Pagamento(CoreModel):
 
     def __str__(self):
         return f"{self.get_metodo_display()} - {self.valor} ({self.get_status_display()})"
+
+    def clean(self):
+        super().clean()
+        if self.metodo != self.Metodo.SEGURO_SAUDE:
+            return
+
+        erros = {}
+
+        if not self.seguradora_id:
+            erros["seguradora"] = "Informe a seguradora para pagamentos via seguro de saúde."
+
+        if not (self.numero_autorizacao or "").strip():
+            erros["numero_autorizacao"] = "Informe o número de autorização do seguro."
+
+        if self.seguradora_id and self.inquilino_id:
+            if self.seguradora.inquilino_id != self.inquilino_id:
+                erros["seguradora"] = "Seguradora deve pertencer ao mesmo inquilino."
+
+        if self.plano_cobertura_id:
+            if self.inquilino_id and self.plano_cobertura.inquilino_id != self.inquilino_id:
+                erros["plano_cobertura"] = "Plano de cobertura deve pertencer ao mesmo inquilino."
+            if self.seguradora_id and self.plano_cobertura.seguradora_id != self.seguradora_id:
+                erros["plano_cobertura"] = "Plano de cobertura deve pertencer à seguradora selecionada."
+
+        if erros:
+            raise ValidationError(erros)
 
     # =========================
     # TRANSIÇÕES DE ESTADO

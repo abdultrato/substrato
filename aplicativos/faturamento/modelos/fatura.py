@@ -25,6 +25,7 @@ class Fatura(NoNameCoreModel):
         ENFERMAGEM = "ENF", "Enfermagem"
         CONSULTA = "CON", "Consulta"
         CIRURGIA = "CIR", "Cirurgia"
+        MISTA = "MIX", "Mista"
 
     origem = models.CharField(
         verbose_name="Origem",
@@ -169,7 +170,9 @@ class Fatura(NoNameCoreModel):
             )
         )["total"]
 
-        total = (subtotal or Decimal("0.00")) + (iva or Decimal("0.00"))
+        total = (subtotal or Decimal("0.00")) - (iva or Decimal("0.00"))
+        if total < Decimal("0.00"):
+            total = Decimal("0.00")
 
         self.subtotal = subtotal
         self.iva_valor = iva
@@ -301,9 +304,47 @@ class Fatura(NoNameCoreModel):
             return self.consulta
         if self.origem == self.Origem.CIRURGIA:
             return self.cirurgia
+        if self.origem == self.Origem.MISTA:
+            return None
         return None
 
     def _validar_origem(self):
+        if self.origem == self.Origem.MISTA:
+            refs = []
+            if self.requisicao_id:
+                refs.append(self.requisicao)
+            if self.venda_id and getattr(self.venda, "paciente_id", None):
+                refs.append(self.venda)
+            if self.procedimento_id:
+                refs.append(self.procedimento)
+            if self.consulta_id:
+                refs.append(self.consulta)
+            if self.cirurgia_id:
+                refs.append(self.cirurgia)
+            if self.pk and self.procedimentos.exists():
+                refs.extend(list(self.procedimentos.select_related("paciente").all()))
+
+            if refs:
+                primeiro = refs[0]
+                paciente_ref = getattr(primeiro, "paciente", None)
+                paciente_id = getattr(paciente_ref, "id", None)
+                inquilino_id = getattr(primeiro, "inquilino_id", None)
+
+                for ref in refs[1:]:
+                    ref_paciente_id = getattr(getattr(ref, "paciente", None), "id", None)
+                    if paciente_id and ref_paciente_id and ref_paciente_id != paciente_id:
+                        raise ValidationError({"paciente": "Referências da fatura mista devem ser do mesmo paciente."})
+                    ref_inquilino_id = getattr(ref, "inquilino_id", None)
+                    if inquilino_id and ref_inquilino_id and ref_inquilino_id != inquilino_id:
+                        raise ValidationError({"inquilino": "Referências da fatura mista devem ser do mesmo inquilino."})
+
+                if not self.paciente_id and paciente_ref is not None:
+                    self.paciente = paciente_ref
+
+            if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
+                raise ValidationError({"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."})
+            return
+
         if self.origem == self.Origem.ENFERMAGEM:
             # Enfermagem: pode usar legado (procedimento) OU múltiplos (procedimentos).
             if self.procedimento_id and self.pk and self.procedimentos.exists():
@@ -401,6 +442,11 @@ class Fatura(NoNameCoreModel):
     def sincronizar_itens_da_origem(self):
         if self.estado != self.Estado.RASCUNHO:
             raise ValidationError("Somente faturas em rascunho podem sincronizar itens.")
+
+        if self.origem == self.Origem.MISTA:
+            # Fatura mista não sincroniza itens automaticamente.
+            self.persistir_totais()
+            return
 
         from aplicativos.faturamento.modelos.fatura_itens import FaturaItem
 

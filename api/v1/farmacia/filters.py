@@ -138,6 +138,7 @@ class VendaFilter(SafeFilterSet):
             "criado_por",
             "atualizado_por",
             "numero",
+            "paciente",
             "total",
         ]
 

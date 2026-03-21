@@ -22,7 +22,9 @@ def calcular_totais(fatura):
             iva_item = (total_linha * IVA_PERCENT).quantize(d("0.01"))
             iva_total += iva_item
 
-    total = (subtotal + iva_total).quantize(d("0.01"))
+    total = (subtotal - iva_total).quantize(d("0.01"))
+    if total < d("0.00"):
+        total = d("0.00")
 
     # ==========================================
     # COBERTURAS DE SEGURO
