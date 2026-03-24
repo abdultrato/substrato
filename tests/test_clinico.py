@@ -4,26 +4,26 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError as DjangoValidationError
 import pytest
 
-from aplicativos.clinico.modelos.exame import Exame
-from aplicativos.clinico.modelos.exame_campo import ExameCampo
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
-from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
-from aplicativos.clinico.modelos.resultado import Resultado
-from aplicativos.clinico.modelos.resultado_analise import ResultadoItem
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
-from nucleo.constantes.laboratorio.metodo import Metodo
-from nucleo.constantes.laboratorio.setor import Setor
-from nucleo.constantes.laboratorio.tipo_resultado import TipoResultado
-from nucleo.constantes.laboratorio.unidades import UnidadePadrao
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.lab_exam_field import LabExamField
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.result import Result
+from apps.clinical.models.result_item import ResultItem
+from apps.tenants.models.tenant import Tenant
+from core.constants.laboratory.metodo import Metodo
+from core.constants.laboratory.setor import Setor
+from core.constants.laboratory.tipo_resultado import TipoResultado
+from core.constants.laboratory.unidades import UnidadePadrao
 
 
 def _tenant():
-    return Inquilino.objects.create(identificador="tn-cli", nome="Tenant Clinico")
+    return Tenant.objects.create(identificador="tn-cli", nome="Tenant Clinico")
 
 
 def _paciente(tenant):
-    return Paciente.objects.create(
+    return Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Clinico",
         genero="Masculino",
@@ -33,7 +33,7 @@ def _paciente(tenant):
 
 
 def _exame(tenant):
-    return Exame.objects.create(
+    return LabExam.objects.create(
         inquilino=tenant,
         nome="Hemograma",
         preco=Decimal("15.00"),
@@ -44,7 +44,7 @@ def _exame(tenant):
 
 
 def _campo(exame):
-    return ExameCampo.objects.create(
+    return LabExamField.objects.create(
         inquilino=exame.inquilino,
         exame=exame,
         nome="Hemoglobina",
@@ -67,23 +67,23 @@ def test_requisicao_cria_resultado_e_itens():
     exame = _exame(tenant)
     campo = _campo(exame)
 
-    req = RequisicaoAnalise.objects.create(inquilino=tenant, paciente=paciente)
-    item = RequisicaoItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
+    item = LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
 
     # cria resultado automaticamente via RequisicaoItem._criar_resultados (quando chamado externamente)
-    resultado = Resultado.objects.create(requisicao=req, inquilino=tenant)
+    resultado = Result.objects.create(requisicao=req, inquilino=tenant)
     # popula itens
     item._criar_resultados()
 
     assert req.inquilino == tenant
     assert resultado.requisicao == req
-    assert ResultadoItem.objects.filter(resultado=resultado, exame_campo=campo).exists()
+    assert ResultItem.objects.filter(resultado=resultado, exame_campo=campo).exists()
 
 
 @pytest.mark.django_db
 def test_exame_validacao_preco_zero():
     tenant = _tenant()
-    exame = Exame(
+    exame = LabExam(
         inquilino=tenant,
         nome="Exame Zero",
         preco=Decimal("0.00"),

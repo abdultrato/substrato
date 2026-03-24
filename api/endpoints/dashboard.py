@@ -4,10 +4,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.clinico.modelos.requisicao import Requisicao
-from aplicativos.clinico.modelos.resultado import Resultado
-from aplicativos.financeiro.modelos.fatura import Fatura
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.requisicao import Requisicao
+from apps.clinical.models.result import Result
+from apps.financeiro.models.invoice import Invoice
 
 
 class DashboardView(APIView):
@@ -17,10 +17,10 @@ class DashboardView(APIView):
         hoje = now().date()
 
         data = {
-            "pacientes_total": Paciente.objects.count(),
+            "pacientes_total": Patient.objects.count(),
             "requisicoes_hoje": Requisicao.objects.filter(criado_em__date=hoje).count(),
-            "resultados_pendentes": Resultado.objects.filter(status_clinico="").count(),
-            "faturamento_total": Fatura.objects.aggregate(total=Sum("total"))["total"] or 0,
+            "resultados_pendentes": Result.objects.filter(status_clinico="").count(),
+            "faturamento_total": Invoice.objects.aggregate(total=Sum("total"))["total"] or 0,
             "requisicoes_por_status": list(Requisicao.objects.values("status").annotate(total=Count("id")).order_by()),
         }
 

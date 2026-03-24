@@ -2,7 +2,7 @@
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
-from frontend.models import Fatura, Paciente, RequisicaoAnalise, ResultadoItem
+from frontend.models import Invoice, Patient, LabRequest, ResultItem
 
 
 class Command(BaseCommand):
@@ -25,10 +25,10 @@ class Command(BaseCommand):
 
         # Permissões específicas
         # Exemplo: Recepcionista -> CRUD Paciente e Requisicao, visualizar/print Fatura
-        paciente_ct = ContentType.objects.get_for_model(Paciente)
-        requisicao_ct = ContentType.objects.get_for_model(RequisicaoAnalise)
-        fatura_ct = ContentType.objects.get_for_model(Fatura)
-        resultado_ct = ContentType.objects.get_for_model(ResultadoItem)
+        paciente_ct = ContentType.objects.get_for_model(Patient)
+        requisicao_ct = ContentType.objects.get_for_model(LabRequest)
+        fatura_ct = ContentType.objects.get_for_model(Invoice)
+        resultado_ct = ContentType.objects.get_for_model(ResultItem)
 
         recep_perms = Permission.objects.filter(content_type__in=[paciente_ct, requisicao_ct])
         print_fatura = Permission.objects.filter(content_type=fatura_ct, codename__in=["view_fatura"])

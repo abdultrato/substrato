@@ -2,7 +2,7 @@ from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from seguranca.permissoes import IsAdmin
+from security.permissions import IsAdmin
 
 
 class FeatureFlagsView(APIView):

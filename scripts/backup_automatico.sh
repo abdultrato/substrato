@@ -122,7 +122,7 @@ else
   read_db_settings() {
     "$PYTHON_BIN" - <<'PY'
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings")
 from django.conf import settings
 db = settings.DATABASES.get("default", {})
 print(db.get("ENGINE", "") or "")

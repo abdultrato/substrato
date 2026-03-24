@@ -641,7 +641,7 @@ def build_deck() -> Path:
             "Integração com equipamentos: worklist e inbox de resultados (HTTP JSON, chave por equipamento).",
             "Notificações com templates e logs (e-mail/WhatsApp/SMS) com idempotência por referência.",
             "API documentada (OpenAPI) para parceiros, ERPs e integrações futuras.",
-            "Processamento assíncrono com Celery: tarefas pesadas sem travar o atendimento.",
+            "Processamento assíncrono com Celery: tasks pesadas sem travar o atendimento.",
         ],
         title_size=20,
         bullet_size=17,

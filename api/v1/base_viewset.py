@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet as mvs
 
-from .respostas import created, deleted, success
+from .responses import created, deleted, success
 
 
 class BaseModelViewSet(mvs):

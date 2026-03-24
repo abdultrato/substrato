@@ -7,11 +7,11 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
-from aplicativos.faturamento.modelos.fatura import Fatura
-from dominio.clinico.estado_resultado import EstadoResultado
-from seguranca.permissoes.grupos import IsAdminOrContabilidade
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.lab_request import LabRequest
+from apps.billing.models.invoice import Invoice
+from domain.clinical.estado_resultado import EstadoResultado
+from security.permissions.groups import IsAdminOrContabilidade
 
 
 class DashboardStatsSerializer(serializers.Serializer):
@@ -28,9 +28,9 @@ class DashboardStatsView(APIView):
     def get(self, request):
         inquilino = getattr(request, "inquilino", None)
 
-        pacientes_qs = Paciente.objects.all()
-        requisicoes_qs = RequisicaoAnalise.objects.all()
-        faturas_qs = Fatura.objects.all()
+        pacientes_qs = Patient.objects.all()
+        requisicoes_qs = LabRequest.objects.all()
+        faturas_qs = Invoice.objects.all()
 
         if inquilino is not None:
             pacientes_qs = pacientes_qs.filter(inquilino=inquilino)

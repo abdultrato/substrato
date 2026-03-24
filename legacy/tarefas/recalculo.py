@@ -1,4 +1,4 @@
-from frontend.models import Fatura
+from frontend.models import Invoice
 
 from .base import TaskBase
 
@@ -10,7 +10,7 @@ class RecalculoFaturasTask(TaskBase):
     def run(cls):
         cls.log_inicio()
 
-        for fatura in Fatura.objects.all():
+        for fatura in Invoice.objects.all():
             fatura.recalcular_totais(save=True)
 
         cls.log_fim()

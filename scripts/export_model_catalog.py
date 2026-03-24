@@ -24,7 +24,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 # Rodando como "python scripts/..." faz o sys.path[0] apontar para /scripts.
-# Garantimos que o root do projeto esteja no path para importar "plataforma", "aplicativos", etc.
+# Garantimos que o root do projeto esteja no path para importar "platform", "apps", etc.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -293,8 +293,8 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--prefix",
-        default="aplicativos.",
-        help="Prefixo de apps a incluir (default: aplicativos.)",
+        default="apps.",
+        help="Prefixo de apps a incluir (default: apps.)",
     )
     parser.add_argument(
         "--json",
@@ -308,7 +308,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings")
 
     import django
 

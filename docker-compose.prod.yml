@@ -24,7 +24,7 @@ services:
     env_file:
       - .env.prod
     environment:
-      DJANGO_SETTINGS_MODULE: plataforma.settings.production
+      DJANGO_SETTINGS_MODULE: platform.settings.production
       DJANGO_DEBUG: "False"
       REDIS_URL: redis://redis:6379/0
     labels:
@@ -57,7 +57,7 @@ services:
     image: substrato_backend:latest
     env_file:
       - .env.prod
-    command: celery -A plataforma worker -l info
+    command: celery -A platform worker -l info
     healthcheck:
       disable: true
     depends_on:
@@ -70,7 +70,7 @@ services:
     image: substrato_backend:latest
     env_file:
       - .env.prod
-    command: celery -A plataforma beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A platform beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     healthcheck:
       disable: true
     depends_on:

@@ -82,7 +82,7 @@ if ($env:DJANGO_DEBUG -eq "True") {
 import django
 django.setup()
 from django.contrib.auth import get_user_model
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
+from apps.tenants.modelos.inquilino import Inquilino
 User = get_user_model()
 tenant, _ = Inquilino.objects.get_or_create(
     identificador="default",
@@ -146,4 +146,3 @@ Write-Host "=================================================="
 # Execução final (adaptado para Windows)
 # Para rodar comandos adicionais, use Start-Process ou Invoke-Expression
 # Exemplo: Invoke-Expression $args
-

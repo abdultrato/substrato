@@ -150,10 +150,10 @@ stats:
 	docker stats
 
 celery-inspect:
-	$(COMPOSE) exec backend python -m celery -A plataforma inspect active
+	$(COMPOSE) exec backend python -m celery -A platform inspect active
 
 celery-purge:
-	$(COMPOSE) exec backend python -m celery -A plataforma purge
+	$(COMPOSE) exec backend python -m celery -A platform purge
 
 redis-cli:
 	$(COMPOSE) exec redis redis-cli

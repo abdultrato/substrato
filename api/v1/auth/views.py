@@ -22,10 +22,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from aplicativos.identidade.modelos.password_reset import PasswordResetToken
-from aplicativos.notificacoes.modelos.notificacao import Notificacao
-from aplicativos.notificacoes.servicos import ServicoNotificacao
-from seguranca.permissoes.rbac import RBACPermission
+from apps.identity.models.password_reset_token import PasswordResetToken
+from apps.notifications.models.notification import Notification
+from apps.notifications.services import ServicoNotificacao
+from security.permissions.rbac import RBACPermission
 
 User = get_user_model()
 
@@ -153,7 +153,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     telefone = serializers.CharField(required=False, allow_blank=True)
     # Canal opcional; se omitido, tenta enviar para email + whatsapp se existirem.
     canal = serializers.ChoiceField(
-        choices=[Notificacao.Canal.EMAIL, Notificacao.Canal.WHATSAPP],
+        choices=[Notification.Canal.EMAIL, Notification.Canal.WHATSAPP],
         required=False,
         allow_null=True,
     )
@@ -425,13 +425,13 @@ class PasswordResetRequestView(APIView):
             canais = [canal]
         else:
             if getattr(user, "email", None):
-                canais.append(Notificacao.Canal.EMAIL)
+                canais.append(Notification.Canal.EMAIL)
             if getattr(user, "telefone", None):
-                canais.append(Notificacao.Canal.WHATSAPP)
+                canais.append(Notification.Canal.WHATSAPP)
 
         servico = ServicoNotificacao()
         for c in canais:
-            destino = user.email if c == Notificacao.Canal.EMAIL else str(user.telefone)
+            destino = user.email if c == Notification.Canal.EMAIL else str(user.telefone)
             if not destino:
                 continue
             # referência externa evita spam (idempotência por token+canal).
@@ -440,7 +440,7 @@ class PasswordResetRequestView(APIView):
                 mensagem=mensagem,
                 canal=c,
                 assunto="Reposição de palavra-passe",
-                tipo_evento=getattr(Notificacao.TipoEvento, "PASSWORD_RESET", Notificacao.TipoEvento.GENERICA),
+                tipo_evento=getattr(Notification.TipoEvento, "PASSWORD_RESET", Notification.TipoEvento.GENERICA),
                 referencia_externa=f"password_reset:{user.pk}:{token_obj.pk}:{c}",
             )
 

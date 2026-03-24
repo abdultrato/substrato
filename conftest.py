@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 import pytest
 
 # Setup Django (pytest-django will manage DB lifecycle)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings.development")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings.development")
 django.setup()
 
 

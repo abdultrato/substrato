@@ -4,7 +4,7 @@ set -euo pipefail
 # Reset TOTAL (DEV) via Docker, SEM BACKUP.
 #
 # O que faz:
-# 1) Apaga migrações locais em aplicativos/*/migrations (exceto __init__.py)
+# 1) Apaga migrações locais em apps/*/migrations (exceto __init__.py)
 # 2) Drop/Create da base Postgres no container `db`
 # 3) Recria migrações e aplica migrate via serviço `backend`
 #
@@ -47,7 +47,7 @@ delete_local_migrations() {
     find "$migdir" -type f -name "*.py" ! -name "__init__.py" -delete
     find "$migdir" -type f -name "*.pyc" -delete
     find "$migdir" -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
-  done < <(find "$ROOT_DIR/aplicativos" -maxdepth 2 -type d -name migrations -print0)
+  done < <(find "$ROOT_DIR/apps" -maxdepth 2 -type d -name migrations -print0)
 }
 
 docker_running() {
@@ -92,7 +92,7 @@ docker_drop_create() {
 echo "RESET TOTAL (SEM BACKUP) - DOCKER - DEV"
 echo
 echo "Isto vai:"
-echo "1) Apagar migrações locais em aplicativos/*/migrations (exceto __init__.py)"
+echo "1) Apagar migrações locais em apps/*/migrations (exceto __init__.py)"
 echo "2) Apagar TODOS os dados do Postgres (DROP/CREATE DATABASE)"
 echo "3) Recriar migrações e executar migrate"
 echo

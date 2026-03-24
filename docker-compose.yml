@@ -53,10 +53,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_backend
-    command: gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
+    command: gunicorn platform.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
     environment:
       DJANGO_ENV: development
-      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_SETTINGS_MODULE: platform.settings.development
       DJANGO_DEBUG: "True"
 
       DJANGO_SECRET_KEY: dev-insecure-key-change-in-production
@@ -135,12 +135,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_celery
-    command: celery -A plataforma worker -l info --concurrency=2
+    command: celery -A platform worker -l info --concurrency=2
     healthcheck:
       disable: true
 
     environment:
-      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_SETTINGS_MODULE: platform.settings.development
 
       DB_ENGINE: postgres
       DB_NAME: substrato
@@ -176,12 +176,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_celery_beat
-    command: celery -A plataforma beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A platform beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     healthcheck:
       disable: true
 
     environment:
-      DJANGO_SETTINGS_MODULE: plataforma.settings.development
+      DJANGO_SETTINGS_MODULE: platform.settings.development
 
       DB_ENGINE: postgres
       DB_NAME: substrato

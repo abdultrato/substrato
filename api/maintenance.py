@@ -3,13 +3,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from seguranca.permissoes.grupos import IsAdmin
-from sistema.service.configuracao_service import ConfiguracaoSistemaService
+from security.permissions.groups import IsAdmin
+from system.services.configuracao_service import ConfiguracaoSistemaService
 
 
 class MaintenanceModeView(APIView):
     """
-    Controla o modo de manutenção global do sistema.
+    Controla o modo de manutenção global do system.
     """
 
     permission_classes = [IsAdmin]

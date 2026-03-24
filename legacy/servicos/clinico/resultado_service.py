@@ -1,5 +1,5 @@
 from django.db import transaction
-from frontend.billing.models.resultado_analise import ResultadoItem
+from frontend.billing.models.result_item import ResultItem
 
 from ..base import BaseService
 
@@ -7,7 +7,7 @@ from ..base import BaseService
 class ResultadoService(BaseService):
     @classmethod
     @transaction.atomic
-    def registrar_resultado(cls, resultado: ResultadoItem, valor, usuario=None):
+    def registrar_resultado(cls, resultado: ResultItem, valor, usuario=None):
         resultado.resultado = valor
 
         if valor not in (None, "", " "):
@@ -24,7 +24,7 @@ class ResultadoService(BaseService):
 
     @classmethod
     @transaction.atomic
-    def validar(cls, resultado: ResultadoItem, usuario):
+    def validar(cls, resultado: ResultItem, usuario):
         resultado.validado = True
         resultado.validado_por = usuario
         resultado.save(update_fields=["validado", "validado_por"])

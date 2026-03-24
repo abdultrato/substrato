@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Configuração mínima Django para que funcione.
 # Mantém o mesmo comportamento do `manage.py` (resolve dev/prod via DJANGO_ENV).
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings")
 
 import django
 

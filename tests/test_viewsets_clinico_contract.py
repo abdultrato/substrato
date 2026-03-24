@@ -6,7 +6,7 @@ def test_clinico_viewsets_search_and_ordering_fields_are_valid():
     # Enterprise contract:
     # - viewsets must not include fields that do not exist in the ORM
     # - otherwise DRF SearchFilter/OrderingFilter can raise FieldError (500)
-    from api.v1.clinico.viewsets import VIEWSET_MAP
+    from api.v1.clinical.viewsets import VIEWSET_MAP
 
     invalid = {}
 
@@ -28,7 +28,7 @@ def test_clinico_viewsets_do_not_raise_on_search_or_invalid_ordering():
     from rest_framework.request import Request
     from rest_framework.test import APIRequestFactory
 
-    from api.v1.clinico.viewsets import VIEWSET_MAP
+    from api.v1.clinical.viewsets import VIEWSET_MAP
 
     factory = APIRequestFactory()
     sf = SearchFilter()

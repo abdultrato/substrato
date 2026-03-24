@@ -2,25 +2,25 @@ from decimal import Decimal
 
 import pytest
 
-from aplicacao.recepcao.fluxo_atendimento import (
+from application.reception.fluxo_atendimento import (
     abrir_checkin,
     criar_fatura_para_checkin,
     criar_requisicao_para_checkin,
     registrar_pagamento_para_checkin,
 )
-from aplicativos.clinico.modelos.exame import Exame
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
-from aplicativos.recepcao.modelos.checkin_recepcao import CheckinRecepcao
-from nucleo.constantes.laboratorio.metodo import Metodo
-from nucleo.constantes.laboratorio.setor import Setor
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.patient import Patient
+from apps.tenants.models.tenant import Tenant
+from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from core.constants.laboratory.metodo import Metodo
+from core.constants.laboratory.setor import Setor
 
 
 @pytest.mark.django_db
 def test_fluxo_recepcao_faturamento_pagamento():
-    tenant = Inquilino.objects.create(identificador="tn-flow", nome="Tenant Flow")
+    tenant = Tenant.objects.create(identificador="tn-flow", nome="Tenant Flow")
 
-    paciente = Paciente.objects.create(
+    paciente = Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Flow",
         genero="Masculino",
@@ -28,7 +28,7 @@ def test_fluxo_recepcao_faturamento_pagamento():
         endereco_cidade="Maputo",
     )
 
-    exame = Exame.objects.create(
+    exame = LabExam.objects.create(
         inquilino=tenant,
         nome="Hemograma",
         preco=Decimal("25.00"),

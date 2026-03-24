@@ -3,9 +3,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from aplicativos.clinico.modelos.requisicao import Requisicao
-from aplicativos.clinico.modelos.resultado import Resultado
-from aplicativos.financeiro.modelos.fatura import Fatura
+from apps.clinical.models.requisicao import Requisicao
+from apps.clinical.models.result import Result
+from apps.financeiro.models.invoice import Invoice
 
 
 class RecentActivityView(APIView):
@@ -19,10 +19,10 @@ class RecentActivityView(APIView):
         )
 
         resultados = (
-            Resultado.objects.filter(atualizado_em__gte=since).select_related("exame").order_by("-atualizado_em")[:5]
+            Result.objects.filter(atualizado_em__gte=since).select_related("exame").order_by("-atualizado_em")[:5]
         )
 
-        faturas = Fatura.objects.filter(criado_em__gte=since).select_related("requisicao").order_by("-criado_em")[:5]
+        faturas = Invoice.objects.filter(criado_em__gte=since).select_related("requisicao").order_by("-criado_em")[:5]
 
         return Response(
             {

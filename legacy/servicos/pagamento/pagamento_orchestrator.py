@@ -1,5 +1,5 @@
 from frontend.billing.models.historico import HistoricoFinanceiro
-from frontend.payments.models.recibo import Recibo
+from frontend.payments.models.receipt import Receipt
 
 
 def registrar_pagamento(pagamento):
@@ -14,7 +14,7 @@ def registrar_pagamento(pagamento):
     # ==============================
     # GERAR RECIBO
     # ==============================
-    Recibo.objects.create(
+    Receipt.objects.create(
         fatura=pagamento.fatura,
         pagamento=pagamento,
         numero=f"REC-{pagamento.id}",

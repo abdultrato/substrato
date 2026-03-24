@@ -7,9 +7,9 @@ import factory
 from faker import Faker
 import pytest
 
-from aplicativos.clinico.modelos.exame import Exame
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.inquilinos.modelos.inquilino import Inquilino
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.patient import Patient
+from apps.tenants.models.tenant import Tenant
 
 User = get_user_model()
 
@@ -76,7 +76,7 @@ class InquilinoFactory(factory.django.DjangoModelFactory):
     """Factory para criar tenants"""
 
     class Meta:
-        model = Inquilino
+        model = Tenant
 
     nome = factory.Faker("company")
     identificador = factory.Faker("slug")
@@ -93,7 +93,7 @@ class PacienteFactory(factory.django.DjangoModelFactory):
     """Factory para criar pacientes"""
 
     class Meta:
-        model = Paciente
+        model = Patient
 
     nome = factory.Faker("name")
     email = factory.Faker("email")
@@ -116,7 +116,7 @@ class ExameFactory(factory.django.DjangoModelFactory):
     """Factory para criar exames"""
 
     class Meta:
-        model = Exame
+        model = LabExam
 
     nome = factory.Faker("word")
     preco = factory.Faker("pyfloat", left_digits=3, right_digits=2, positive=True)
@@ -145,7 +145,7 @@ class BatchFactory:
         """Cria um tenant com N usuários"""
         tenant = InquilinoFactory()
         usuarios = [UserFactory(password="test123") for _ in range(num_usuarios)]
-        tenant.usuarios.set(usuarios)
+        tenant.users.set(usuarios)
         return tenant, usuarios
 
     @staticmethod
@@ -193,7 +193,7 @@ def tenant():
 def tenant_with_users(tenant):
     """Cria um tenant com usuários"""
     users = [UserFactory() for _ in range(3)]
-    tenant.usuarios.set(users)
+    tenant.users.set(users)
     return tenant, users
 
 

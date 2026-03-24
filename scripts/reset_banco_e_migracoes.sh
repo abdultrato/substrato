@@ -81,7 +81,7 @@ TS="$(date +%Y%m%d_%H%M%S)"
 
 backup_migrations_tar() {
   mkdir -p "$ROOT_DIR/backups"
-  tar -czf "$ROOT_DIR/backups/migrations_pre_reset_${TS}.tgz" -C "$ROOT_DIR" aplicativos/*/migrations >/dev/null 2>&1 || true
+  tar -czf "$ROOT_DIR/backups/migrations_pre_reset_${TS}.tgz" -C "$ROOT_DIR" apps/*/migrations >/dev/null 2>&1 || true
 }
 
 delete_local_migrations() {
@@ -89,7 +89,7 @@ delete_local_migrations() {
     find "$migdir" -type f -name "*.py" ! -name "__init__.py" -delete
     find "$migdir" -type f -name "*.pyc" -delete
     find "$migdir" -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
-  done < <(find "$ROOT_DIR/aplicativos" -maxdepth 2 -type d -name migrations -print0)
+  done < <(find "$ROOT_DIR/apps" -maxdepth 2 -type d -name migrations -print0)
 }
 
 require_docker() {
@@ -159,7 +159,7 @@ if [[ "$FORCE_DOCKER_DB" == "1" ]]; then
   echo
   echo "Isto vai:"
   echo "1) Fazer backup (a menos que --no-backup)"
-  echo "2) Apagar migrações locais em aplicativos/*/migrations (exceto __init__.py)"
+  echo "2) Apagar migrações locais em apps/*/migrations (exceto __init__.py)"
   echo "3) Drop/Create do banco Postgres no container db"
   echo "4) Recriar migrações e executar migrate via serviço backend"
   echo
@@ -210,7 +210,7 @@ fi
 read_db_settings() {
   "$PYTHON_BIN" - <<'PY'
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings")
 from django.conf import settings
 db = settings.DATABASES.get("default", {})
 print(db.get("ENGINE", "") or "")
@@ -240,7 +240,7 @@ echo "DB detectado: $DB_ENGINE (NAME=$DB_NAME HOST=$DB_HOST PORT=$DB_PORT USER=$
 echo
 echo "Isto vai:"
 echo "1) Fazer backup (a menos que --no-backup)"
-echo "2) Apagar migrações locais em aplicativos/*/migrations (exceto __init__.py)"
+echo "2) Apagar migrações locais em apps/*/migrations (exceto __init__.py)"
 echo "3) Apagar o banco (SQLite: remove ficheiro; Postgres: drop/create database)"
 echo "4) Recriar migrações e executar migrate"
 echo

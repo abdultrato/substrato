@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 
-from eventos.publicador import publicar_evento
+from events.publicador import publicar_evento
 
 logger = logging.getLogger("webhooks")
 

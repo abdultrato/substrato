@@ -23,17 +23,17 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
-from aplicativos.clinico.modelos.paciente import Paciente
-from aplicativos.clinico.modelos.requisicao_analise import RequisicaoAnalise
-from aplicativos.clinico.modelos.requisicao_item import RequisicaoItem
-from aplicativos.consultas.modelos.consulta_medica import ConsultaMedica
-from aplicativos.enfermagem.modelos.enfermaria import InternamentoEnfermaria
-from aplicativos.enfermagem.modelos.procedimento_item import ProcedimentoItem
-from aplicativos.farmacia.models.item_venda import ItemVenda
-from aplicativos.farmacia.models.produto import Produto
-from aplicativos.faturamento.modelos.fatura import Fatura
-from aplicativos.pagamentos.modelos.pagamentos import Pagamento
-from dominio.clinico.estado_resultado import EstadoResultado
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.consultations.models.medical_consultation import MedicalConsultation
+from apps.nursing.models.ward import WardAdmission
+from apps.nursing.models.procedure_item import ProcedureItem
+from apps.pharmacy.models.sale_item import SaleItem
+from apps.pharmacy.models.product import Product
+from apps.billing.models.invoice import Invoice
+from apps.payments.models.payment import Payment
+from domain.clinical.estado_resultado import EstadoResultado
 
 
 def _aware_or_none(value):
@@ -112,7 +112,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
     Painel de estatísticas (Top N) para o Administrador/Contabilidade.
     """
 
-    queryset = RequisicaoAnalise.objects.none()
+    queryset = LabRequest.objects.none()
     serializer_class = AnalyticsResponseSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
@@ -148,12 +148,12 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # KPIs (agregados principais)
         # =========================
-        qs_pacientes = Paciente.objects.filter(deletado=False)
-        qs_requisicoes = RequisicaoAnalise.objects.filter(deletado=False)
-        qs_faturas = Fatura.objects.filter(deletado=False)
-        qs_consultas = ConsultaMedica.objects.filter(deletado=False)
-        qs_internamentos = InternamentoEnfermaria.objects.filter(deletado=False)
-        qs_pagamentos = Pagamento.objects.all()
+        qs_pacientes = Patient.objects.filter(deletado=False)
+        qs_requisicoes = LabRequest.objects.filter(deletado=False)
+        qs_faturas = Invoice.objects.filter(deletado=False)
+        qs_consultas = MedicalConsultation.objects.filter(deletado=False)
+        qs_internamentos = WardAdmission.objects.filter(deletado=False)
+        qs_pagamentos = Payment.objects.all()
 
         if inquilino is not None:
             qs_pacientes = qs_pacientes.filter(inquilino=inquilino)
@@ -180,7 +180,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         faturas_pagas = qs_faturas.filter(
             criado_em__gte=inicio,
             criado_em__lte=fim,
-            estado=Fatura.Estado.PAGA,
+            estado=Invoice.Estado.PAGA,
         ).count()
 
         valor_faturado = (
@@ -188,7 +188,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
                 criado_em__gte=inicio,
                 criado_em__lte=fim,
             )
-            .exclude(estado=Fatura.Estado.CANCELADA)
+            .exclude(estado=Invoice.Estado.CANCELADA)
             .aggregate(
                 total=Coalesce(
                     Sum(
@@ -201,7 +201,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         )
 
         valor_pago_confirmado = qs_pagamentos.filter(
-            status=Pagamento.Status.CONFIRMADO,
+            status=Payment.Status.CONFIRMADO,
             pago_em__isnull=False,
             pago_em__gte=inicio,
             pago_em__lte=fim,
@@ -221,7 +221,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # EXAMES MAIS SOLICITADOS
         # =========================
-        base_exames = RequisicaoItem.objects.filter(
+        base_exames = LabRequestItem.objects.filter(
             deletado=False,
             criado_em__gte=inicio,
             criado_em__lte=fim,
@@ -265,7 +265,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # PROCEDIMENTOS MAIS SOLICITADOS
         # =========================
-        base_procs = ProcedimentoItem.objects.filter(
+        base_procs = ProcedureItem.objects.filter(
             deletado=False,
             criado_em__gte=inicio,
             criado_em__lte=fim,
@@ -281,11 +281,11 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # MEDICAMENTOS MAIS REQUISITADOS
         # =========================
-        base_meds = ItemVenda.objects.filter(
+        base_meds = SaleItem.objects.filter(
             deletado=False,
             criado_em__gte=inicio,
             criado_em__lte=fim,
-            produto__tipo=Produto.TipoProduto.MEDICAMENTO,
+            produto__tipo=Product.TipoProduto.MEDICAMENTO,
         )
         if inquilino is not None:
             base_meds = base_meds.filter(inquilino=inquilino)
@@ -299,7 +299,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # CONSULTAS MAIS MARCADAS
         # =========================
-        base_cons = ConsultaMedica.objects.filter(
+        base_cons = MedicalConsultation.objects.filter(
             deletado=False,
             criado_em__gte=inicio,
             criado_em__lte=fim,
@@ -484,7 +484,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             return resp
 
         # PDF (default)
-        from tarefas.gerar_pdf.pdf_generator_analytics import gerar_pdf_analytics
+        from tasks.gerar_pdf.pdf_generator_analytics import gerar_pdf_analytics
 
         pdf_bytes, filename = gerar_pdf_analytics(payload, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")

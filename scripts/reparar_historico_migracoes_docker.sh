@@ -56,7 +56,7 @@ fi
 echo "DB alvo: ${DB_NAME} (user=${DB_USER})"
 echo
 
-mapfile -t MIGS < <(find aplicativos -maxdepth 3 -type f -path '*/migrations/0002_initial.py' | sort)
+mapfile -t MIGS < <(find apps -maxdepth 3 -type f -path '*/migrations/0002_initial.py' | sort)
 if [[ ${#MIGS[@]} -eq 0 ]]; then
   echo "Nada a fazer: não encontrei migrations */0002_initial.py no código."
   exit 0
@@ -64,7 +64,7 @@ fi
 
 echo "Marcando migrations 0002_initial como aplicadas (ON CONFLICT DO NOTHING):"
 for f in "${MIGS[@]}"; do
-  # f = aplicativos/<app>/migrations/0002_initial.py
+  # f = apps/<app>/migrations/0002_initial.py
   app="$(echo "$f" | awk -F/ '{print $2}')"
   echo "  - ${app}.0002_initial"
   $COMPOSE exec -T db psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" -c \
