@@ -58,11 +58,11 @@ class IntegrationKeyPermission(BasePermission):
         return True
 
 
-class IntegracaoDetailSerializer(serializers.Serializer):
+class IntegrationDetailSerializer(serializers.Serializer):
     detail = serializers.CharField()
 
 
-class WorklistEquipamentoSerializer(serializers.Serializer):
+class WorklistEquipmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     codigo = serializers.CharField()
     nome = serializers.CharField()
@@ -70,7 +70,7 @@ class WorklistEquipamentoSerializer(serializers.Serializer):
     protocolo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
-class WorklistPacienteSerializer(serializers.Serializer):
+class WorklistPatientSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     codigo = serializers.CharField()
     nome = serializers.CharField()
@@ -79,7 +79,7 @@ class WorklistPacienteSerializer(serializers.Serializer):
     numero_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
-class WorklistExameItemSerializer(serializers.Serializer):
+class WorklistExamItemSerializer(serializers.Serializer):
     requisicao_item_id = serializers.IntegerField()
     tipo = serializers.CharField()
     exame_id = serializers.IntegerField()
@@ -88,58 +88,58 @@ class WorklistExameItemSerializer(serializers.Serializer):
     setor = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
-class WorklistOrdemSerializer(serializers.Serializer):
+class WorklistOrderSerializer(serializers.Serializer):
     accession = serializers.CharField()
     ordem_id = serializers.IntegerField()
     estado = serializers.CharField()
     requisicao_id = serializers.IntegerField()
     requisicao_codigo = serializers.CharField()
-    paciente = WorklistPacienteSerializer()
-    itens = WorklistExameItemSerializer(many=True)
+    paciente = WorklistPatientSerializer()
+    itens = WorklistExamItemSerializer(many=True)
     criado_em = serializers.DateTimeField(required=False, allow_null=True)
 
 
 class WorklistResponseSerializer(serializers.Serializer):
-    equipamento = WorklistEquipamentoSerializer()
+    equipamento = WorklistEquipmentSerializer()
     count = serializers.IntegerField()
-    results = WorklistOrdemSerializer(many=True)
+    results = WorklistOrderSerializer(many=True)
 
 
-class ResultadosInboxResultadoSerializer(serializers.Serializer):
+class ResultsInboxResultSerializer(serializers.Serializer):
     codigo = serializers.CharField()
     valor = serializers.JSONField(required=False, allow_null=True)
 
 
-class ResultadosInboxDocumentoSerializer(serializers.Serializer):
+class ResultsInboxDocumentSerializer(serializers.Serializer):
     filename = serializers.CharField(required=False, allow_blank=True)
     content_type = serializers.CharField(required=False, allow_blank=True)
     base64 = serializers.CharField(required=False, allow_blank=True)
     requisicao_item_id = serializers.IntegerField(required=False, allow_null=True)
 
 
-class ResultadosInboxRequestSerializer(serializers.Serializer):
+class ResultsInboxRequestSerializer(serializers.Serializer):
     message_id = serializers.CharField(required=False, allow_blank=True)
     accession = serializers.CharField()
-    results = ResultadosInboxResultadoSerializer(many=True, required=False)
-    documentos = ResultadosInboxDocumentoSerializer(many=True, required=False)
+    results = ResultsInboxResultSerializer(many=True, required=False)
+    documentos = ResultsInboxDocumentSerializer(many=True, required=False)
 
 
-class ResultadosInboxAplicadoSerializer(serializers.Serializer):
+class ResultsInboxAppliedSerializer(serializers.Serializer):
     codigo = serializers.CharField()
     exame_campo_id = serializers.IntegerField()
     exame_campo = serializers.CharField()
     valor = serializers.CharField()
 
 
-class ResultadosInboxResponseSerializer(serializers.Serializer):
+class ResultsInboxResponseSerializer(serializers.Serializer):
     mensagem = serializers.CharField()
     ordem = serializers.CharField()
     ordem_estado = serializers.CharField()
-    aplicados = ResultadosInboxAplicadoSerializer(many=True)
+    aplicados = ResultsInboxAppliedSerializer(many=True)
     erros = serializers.ListField(child=serializers.CharField())
 
 
-class EquipamentoWorklistView(APIView):
+class EquipmentWorklistView(APIView):
     """
     Worklist para equipamentos (HTTP JSON).
 
@@ -170,9 +170,9 @@ class EquipamentoWorklistView(APIView):
         ],
         responses={
             200: WorklistResponseSerializer,
-            401: IntegracaoDetailSerializer,
-            403: IntegracaoDetailSerializer,
-            404: IntegracaoDetailSerializer,
+            401: IntegrationDetailSerializer,
+            403: IntegrationDetailSerializer,
+            404: IntegrationDetailSerializer,
         },
     )
     def get(self, request, equipment_id_custom: str):
@@ -294,7 +294,7 @@ class EquipamentoWorklistView(APIView):
         )
 
 
-class EquipamentoResultadosInboxView(APIView):
+class EquipmentResultsInboxView(APIView):
     """
     Inbox de resultados para equipamentos (HTTP JSON).
 
@@ -323,13 +323,13 @@ class EquipamentoResultadosInboxView(APIView):
                 required=True,
             ),
         ],
-        request=ResultadosInboxRequestSerializer,
+        request=ResultsInboxRequestSerializer,
         responses={
-            200: ResultadosInboxResponseSerializer,
-            400: ResultadosInboxResponseSerializer,
-            401: IntegracaoDetailSerializer,
-            403: IntegracaoDetailSerializer,
-            404: IntegracaoDetailSerializer,
+            200: ResultsInboxResponseSerializer,
+            400: ResultsInboxResponseSerializer,
+            401: IntegrationDetailSerializer,
+            403: IntegrationDetailSerializer,
+            404: IntegrationDetailSerializer,
         },
     )
     def post(self, request, equipment_id_custom: str):
@@ -582,3 +582,17 @@ class EquipamentoResultadosInboxView(APIView):
             },
             status=status.HTTP_200_OK if not erros else status.HTTP_400_BAD_REQUEST,
         )
+
+
+IntegracaoDetailSerializer = IntegrationDetailSerializer
+WorklistEquipamentoSerializer = WorklistEquipmentSerializer
+WorklistPacienteSerializer = WorklistPatientSerializer
+WorklistExameItemSerializer = WorklistExamItemSerializer
+WorklistOrdemSerializer = WorklistOrderSerializer
+ResultadosInboxResultadoSerializer = ResultsInboxResultSerializer
+ResultadosInboxDocumentoSerializer = ResultsInboxDocumentSerializer
+ResultadosInboxRequestSerializer = ResultsInboxRequestSerializer
+ResultadosInboxAplicadoSerializer = ResultsInboxAppliedSerializer
+ResultadosInboxResponseSerializer = ResultsInboxResponseSerializer
+EquipamentoWorklistView = EquipmentWorklistView
+EquipamentoResultadosInboxView = EquipmentResultsInboxView

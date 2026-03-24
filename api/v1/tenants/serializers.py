@@ -7,7 +7,7 @@ from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant_usage import TenantUsage
 
 
-class ConfiguracaoInquilinoSerializer(serializers.ModelSerializer):
+class TenantConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = TenantConfiguration
         fields = "__all__"
@@ -19,28 +19,33 @@ class FeatureFlagTenantSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class InquilinoSerializer(serializers.ModelSerializer):
+class TenantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
         fields = "__all__"
 
 
-class PlanoAssinaturaSerializer(serializers.ModelSerializer):
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = "__all__"
 
 
-class UsoTenantSerializer(serializers.ModelSerializer):
+class TenantUsageSerializer(serializers.ModelSerializer):
     class Meta:
         model = TenantUsage
         fields = "__all__"
 
 
 SERIALIZER_MAP = {
-    "configuracaoinquilino": ConfiguracaoInquilinoSerializer,
+    "configuracaoinquilino": TenantConfigurationSerializer,
     "featureflagtenant": FeatureFlagTenantSerializer,
-    "inquilino": InquilinoSerializer,
-    "planoassinatura": PlanoAssinaturaSerializer,
-    "usotenant": UsoTenantSerializer,
+    "inquilino": TenantSerializer,
+    "planoassinatura": SubscriptionPlanSerializer,
+    "usotenant": TenantUsageSerializer,
 }
+
+ConfiguracaoInquilinoSerializer = TenantConfigurationSerializer
+InquilinoSerializer = TenantSerializer
+PlanoAssinaturaSerializer = SubscriptionPlanSerializer
+UsoTenantSerializer = TenantUsageSerializer

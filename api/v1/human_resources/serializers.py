@@ -11,7 +11,7 @@ from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.work_schedule import WorkSchedule
 
 
-class CargoSerializer(serializers.ModelSerializer):
+class JobTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobTitle
         fields = "__all__"
@@ -28,7 +28,7 @@ class CargoSerializer(serializers.ModelSerializer):
         )
 
 
-class FuncionarioSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = "__all__"
@@ -45,7 +45,7 @@ class FuncionarioSerializer(serializers.ModelSerializer):
         )
 
 
-class AgregadoFamiliarSerializer(serializers.ModelSerializer):
+class FamilyDependentSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamilyDependent
         fields = "__all__"
@@ -62,7 +62,7 @@ class AgregadoFamiliarSerializer(serializers.ModelSerializer):
         )
 
 
-class HorarioTrabalhoSerializer(serializers.ModelSerializer):
+class WorkScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkSchedule
         fields = "__all__"
@@ -79,7 +79,7 @@ class HorarioTrabalhoSerializer(serializers.ModelSerializer):
         )
 
 
-class FaltaSerializer(serializers.ModelSerializer):
+class AbsenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Absence
         fields = "__all__"
@@ -96,7 +96,7 @@ class FaltaSerializer(serializers.ModelSerializer):
         )
 
 
-class FeriasSerializer(serializers.ModelSerializer):
+class VacationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vacation
         fields = "__all__"
@@ -113,7 +113,7 @@ class FeriasSerializer(serializers.ModelSerializer):
         )
 
 
-class DispensaSerializer(serializers.ModelSerializer):
+class TerminationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Termination
         fields = "__all__"
@@ -130,7 +130,7 @@ class DispensaSerializer(serializers.ModelSerializer):
         )
 
 
-class HoraExtraSerializer(serializers.ModelSerializer):
+class OvertimeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Overtime
         fields = "__all__"
@@ -147,7 +147,7 @@ class HoraExtraSerializer(serializers.ModelSerializer):
         )
 
 
-class FolhaPagamentoSerializer(serializers.ModelSerializer):
+class PayrollSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payroll
         fields = "__all__"
@@ -169,13 +169,23 @@ class FolhaPagamentoSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "cargo": CargoSerializer,
-    "funcionario": FuncionarioSerializer,
-    "agregadofamiliar": AgregadoFamiliarSerializer,
-    "horario": HorarioTrabalhoSerializer,
-    "falta": FaltaSerializer,
-    "ferias": FeriasSerializer,
-    "dispensa": DispensaSerializer,
-    "horaextra": HoraExtraSerializer,
-    "folhapagamento": FolhaPagamentoSerializer,
+    "cargo": JobTitleSerializer,
+    "funcionario": EmployeeSerializer,
+    "agregadofamiliar": FamilyDependentSerializer,
+    "horario": WorkScheduleSerializer,
+    "falta": AbsenceSerializer,
+    "ferias": VacationSerializer,
+    "dispensa": TerminationSerializer,
+    "horaextra": OvertimeSerializer,
+    "folhapagamento": PayrollSerializer,
 }
+
+CargoSerializer = JobTitleSerializer
+FuncionarioSerializer = EmployeeSerializer
+AgregadoFamiliarSerializer = FamilyDependentSerializer
+HorarioTrabalhoSerializer = WorkScheduleSerializer
+FaltaSerializer = AbsenceSerializer
+FeriasSerializer = VacationSerializer
+DispensaSerializer = TerminationSerializer
+HoraExtraSerializer = OvertimeSerializer
+FolhaPagamentoSerializer = PayrollSerializer

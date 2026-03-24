@@ -2,7 +2,7 @@ from api.core.filters import SafeFilterSet
 from apps.monitoring.models.system_error import SystemError
 
 
-class ErroSistemaFilter(SafeFilterSet):
+class SystemErrorFilter(SafeFilterSet):
     class Meta:
         model = SystemError
         fields = [
@@ -17,5 +17,7 @@ class ErroSistemaFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "erro": ErroSistemaFilter,
+    "erro": SystemErrorFilter,
 }
+
+ErroSistemaFilter = SystemErrorFilter

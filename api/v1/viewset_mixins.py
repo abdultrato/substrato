@@ -173,16 +173,18 @@ class ValidatedSearchOrderingMixin:
 
 class TenantScopedQuerysetMixin:
     """
-    Aplica automaticamente escopo de `inquilino` (tenant) quando presente no request.
+    Automatically applies `inquilino` (tenant) scoping when present on the request.
 
-    Além de filtrar o queryset, também força o `inquilino` no CREATE/UPDATE para
-    evitar "tenant injection" via payload (ex.: enviar `{"inquilino": 999}`).
+    Besides filtering the queryset, it also forces the correct tenant on CREATE/UPDATE
+    to avoid payload-based tenant injection (for example `{"inquilino": 999}`).
     """
 
     tenant_field_name = "inquilino"
 
-    def _get_request_inquilino(self):
+    def _get_request_tenant(self):
         return getattr(getattr(self, "request", None), "inquilino", None)
+
+    _get_request_inquilino = _get_request_tenant
 
     def _get_model_from_queryset(self, qs):
         return getattr(qs, "model", None)
@@ -200,19 +202,19 @@ class TenantScopedQuerysetMixin:
 
     def get_queryset(self):
         qs = super().get_queryset()
-        inquilino = self._get_request_inquilino()
-        if inquilino is None:
+        tenant = self._get_request_tenant()
+        if tenant is None:
             return qs
 
         model = self._get_model_from_queryset(qs)
         if not self._model_has_tenant_field(model):
             return qs
 
-        return qs.filter(**{self.tenant_field_name: inquilino})
+        return qs.filter(**{self.tenant_field_name: tenant})
 
     def perform_create(self, serializer):
-        inquilino = self._get_request_inquilino()
-        if inquilino is None:
+        tenant = self._get_request_tenant()
+        if tenant is None:
             return super().perform_create(serializer)
 
         user = getattr(getattr(self, "request", None), "user", None)
@@ -223,16 +225,16 @@ class TenantScopedQuerysetMixin:
         if not self._model_has_tenant_field(model):
             return super().perform_create(serializer)
 
-        # Força o tenant correto, ignorando qualquer valor enviado pelo cliente.
+        # Force the correct tenant, ignoring any value sent by the client.
         try:
-            serializer.save(**{self.tenant_field_name: inquilino})
+            serializer.save(**{self.tenant_field_name: tenant})
         except TypeError:
-            # Serializer não aceita esse campo explicitamente.
+            # Serializer does not explicitly accept this field.
             super().perform_create(serializer)
 
     def perform_update(self, serializer):
-        inquilino = self._get_request_inquilino()
-        if inquilino is None:
+        tenant = self._get_request_tenant()
+        if tenant is None:
             return super().perform_update(serializer)
 
         user = getattr(getattr(self, "request", None), "user", None)
@@ -245,22 +247,22 @@ class TenantScopedQuerysetMixin:
 
         inst = getattr(serializer, "instance", None)
         inst_tenant_id = getattr(inst, f"{self.tenant_field_name}_id", None)
-        req_tenant_id = getattr(inquilino, "id", None)
+        req_tenant_id = getattr(tenant, "id", None)
         if inst_tenant_id is not None and req_tenant_id is not None and inst_tenant_id != req_tenant_id:
             raise PermissionDenied("Registro de outro tenant.")
 
-        # Bloqueia tentativa explícita de troca de tenant via payload.
+        # Block explicit tenant replacement attempts via payload.
         if self.tenant_field_name in getattr(serializer, "validated_data", {}):
             val = serializer.validated_data.get(self.tenant_field_name)
             val_id = getattr(val, "id", None) if val is not None else None
-            # Se veio um FK id cru, DRF pode manter como int.
+            # If a raw FK id comes through, DRF may keep it as int.
             if val_id is None and isinstance(val, int):
                 val_id = val
             if req_tenant_id is not None and val_id is not None and val_id != req_tenant_id:
                 raise PermissionDenied("Não é permitido alterar o tenant do registro.")
 
-        # Força o tenant correto na gravação.
+        # Force the correct tenant when saving.
         try:
-            serializer.save(**{self.tenant_field_name: inquilino})
+            serializer.save(**{self.tenant_field_name: tenant})
         except TypeError:
             super().perform_update(serializer)

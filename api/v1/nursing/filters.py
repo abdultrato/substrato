@@ -17,7 +17,7 @@ from apps.nursing.models import (
 )
 
 
-class RegistroEnfermagemFilter(SafeFilterSet):
+class NursingRecordFilter(SafeFilterSet):
     class Meta:
         model = NursingRecord
         fields = [
@@ -33,7 +33,7 @@ class RegistroEnfermagemFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoCatalogoFilter(SafeFilterSet):
+class ProcedureCatalogFilter(SafeFilterSet):
     class Meta:
         model = ProcedureCatalog
         fields = [
@@ -47,7 +47,7 @@ class ProcedimentoCatalogoFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoCatalogoMaterialFilter(SafeFilterSet):
+class ProcedureCatalogMaterialFilter(SafeFilterSet):
     class Meta:
         model = ProcedureCatalogMaterial
         fields = [
@@ -63,7 +63,7 @@ class ProcedimentoCatalogoMaterialFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoFilter(SafeFilterSet):
+class ProcedureFilter(SafeFilterSet):
     class Meta:
         model = Procedure
         fields = [
@@ -78,7 +78,7 @@ class ProcedimentoFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoItemFilter(SafeFilterSet):
+class ProcedureItemFilter(SafeFilterSet):
     class Meta:
         model = ProcedureItem
         fields = [
@@ -95,7 +95,7 @@ class ProcedimentoItemFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoMaterialFilter(SafeFilterSet):
+class ProcedureMaterialFilter(SafeFilterSet):
     class Meta:
         model = ProcedureMaterial
         fields = [
@@ -113,7 +113,7 @@ class ProcedimentoMaterialFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoItemValorFilter(SafeFilterSet):
+class ProcedureItemValueFilter(SafeFilterSet):
     class Meta:
         model = ProcedureItemValue
         fields = [
@@ -127,7 +127,7 @@ class ProcedimentoItemValorFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoMaterialValorFilter(SafeFilterSet):
+class ProcedureMaterialValueFilter(SafeFilterSet):
     class Meta:
         model = ProcedureMaterialValue
         fields = [
@@ -141,7 +141,7 @@ class ProcedimentoMaterialValorFilter(SafeFilterSet):
         ]
 
 
-class SinalVitalEnfermagemFilter(SafeFilterSet):
+class NursingVitalSignFilter(SafeFilterSet):
     class Meta:
         model = NursingVitalSign
         fields = [
@@ -160,7 +160,7 @@ class SinalVitalEnfermagemFilter(SafeFilterSet):
         ]
 
 
-class PrescricaoEnfermagemFilter(SafeFilterSet):
+class NursingPrescriptionFilter(SafeFilterSet):
     class Meta:
         model = NursingPrescription
         fields = [
@@ -176,7 +176,7 @@ class PrescricaoEnfermagemFilter(SafeFilterSet):
         ]
 
 
-class EvolucaoEnfermagemFilter(SafeFilterSet):
+class NursingEvolutionFilter(SafeFilterSet):
     class Meta:
         model = NursingEvolution
         fields = [
@@ -191,7 +191,7 @@ class EvolucaoEnfermagemFilter(SafeFilterSet):
         ]
 
 
-class EnfermariaFilter(SafeFilterSet):
+class WardFilter(SafeFilterSet):
     class Meta:
         model = Ward
         fields = [
@@ -205,7 +205,7 @@ class EnfermariaFilter(SafeFilterSet):
         ]
 
 
-class CamaEnfermariaFilter(SafeFilterSet):
+class WardBedFilter(SafeFilterSet):
     class Meta:
         model = WardBed
         fields = [
@@ -220,7 +220,7 @@ class CamaEnfermariaFilter(SafeFilterSet):
         ]
 
 
-class InternamentoEnfermariaFilter(SafeFilterSet):
+class WardAdmissionFilter(SafeFilterSet):
     class Meta:
         model = WardAdmission
         fields = [
@@ -240,18 +240,34 @@ class InternamentoEnfermariaFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "evolucaoenfermagem": EvolucaoEnfermagemFilter,
-    "procedimentocatalogo": ProcedimentoCatalogoFilter,
-    "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialFilter,
-    "procedimento": ProcedimentoFilter,
-    "procedimentoitem": ProcedimentoItemFilter,
-    "procedimentoitemvalor": ProcedimentoItemValorFilter,
-    "procedimentomaterial": ProcedimentoMaterialFilter,
-    "procedimentomaterialvalor": ProcedimentoMaterialValorFilter,
-    "prescricaoenfermagem": PrescricaoEnfermagemFilter,
-    "registroenfermagem": RegistroEnfermagemFilter,
-    "sinalvitalenfermagem": SinalVitalEnfermagemFilter,
-    "enfermaria": EnfermariaFilter,
-    "camaenfermaria": CamaEnfermariaFilter,
-    "internamentoenfermaria": InternamentoEnfermariaFilter,
+    "evolucaoenfermagem": NursingEvolutionFilter,
+    "procedimentocatalogo": ProcedureCatalogFilter,
+    "procedimentocatalogomaterial": ProcedureCatalogMaterialFilter,
+    "procedimento": ProcedureFilter,
+    "procedimentoitem": ProcedureItemFilter,
+    "procedimentoitemvalor": ProcedureItemValueFilter,
+    "procedimentomaterial": ProcedureMaterialFilter,
+    "procedimentomaterialvalor": ProcedureMaterialValueFilter,
+    "prescricaoenfermagem": NursingPrescriptionFilter,
+    "registroenfermagem": NursingRecordFilter,
+    "sinalvitalenfermagem": NursingVitalSignFilter,
+    "enfermaria": WardFilter,
+    "camaenfermaria": WardBedFilter,
+    "internamentoenfermaria": WardAdmissionFilter,
 }
+
+
+RegistroEnfermagemFilter = NursingRecordFilter
+ProcedimentoCatalogoFilter = ProcedureCatalogFilter
+ProcedimentoCatalogoMaterialFilter = ProcedureCatalogMaterialFilter
+ProcedimentoFilter = ProcedureFilter
+ProcedimentoItemFilter = ProcedureItemFilter
+ProcedimentoMaterialFilter = ProcedureMaterialFilter
+ProcedimentoItemValorFilter = ProcedureItemValueFilter
+ProcedimentoMaterialValorFilter = ProcedureMaterialValueFilter
+SinalVitalEnfermagemFilter = NursingVitalSignFilter
+PrescricaoEnfermagemFilter = NursingPrescriptionFilter
+EvolucaoEnfermagemFilter = NursingEvolutionFilter
+EnfermariaFilter = WardFilter
+CamaEnfermariaFilter = WardBedFilter
+InternamentoEnfermariaFilter = WardAdmissionFilter

@@ -10,13 +10,13 @@ class PasswordResetTokenFilter(SafeFilterSet):
         fields = ["user", "token", "criado_em", "usado"]
 
 
-class PerfilProfissionalFilter(SafeFilterSet):
+class ProfessionalProfileFilter(SafeFilterSet):
     class Meta:
         model = ProfessionalProfile
         fields = ["usuario", "cargo", "registro_profissional", "departamento", "ativo", "criado_em", "atualizado_em"]
 
 
-class UsuarioFilter(SafeFilterSet):
+class UserFilter(SafeFilterSet):
     class Meta:
         model = User
         fields = [
@@ -37,6 +37,9 @@ class UsuarioFilter(SafeFilterSet):
 
 FILTER_MAP = {
     "passwordresettoken": PasswordResetTokenFilter,
-    "perfilprofissional": PerfilProfissionalFilter,
-    "usuario": UsuarioFilter,
+    "perfilprofissional": ProfessionalProfileFilter,
+    "usuario": UserFilter,
 }
+
+PerfilProfissionalFilter = ProfessionalProfileFilter
+UsuarioFilter = UserFilter

@@ -10,60 +10,60 @@ from apps.surgery.models.surgery import Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 from apps.billing.models.invoice import Invoice
 
-from ..filters import CirurgiaFilter, ProcedimentoCirurgicoFilter
-from ..serializers import CirurgiaSerializer, ProcedimentoCirurgicoSerializer
+from ..filters import SurgeryFilter, SurgicalProcedureFilter
+from ..serializers import SurgicalProcedureSerializer, SurgerySerializer
 
 
-class CirurgiaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Surgery.objects.select_related("paciente", "cirurgiao").prefetch_related("procedimentos").all()
-    serializer_class = CirurgiaSerializer
-    filterset_class = CirurgiaFilter
+    serializer_class = SurgerySerializer
+    filterset_class = SurgeryFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "procedimento", "paciente__nome", "cirurgiao__username"]
     ordering_fields = ["agendada_para", "criado_em", "estado"]
     ordering = ["-agendada_para", "-criado_em"]
 
-    @action(detail=True, methods=["post"])
-    def criar_fatura(self, request, pk=None):
-        cirurgia = self.get_object()
+    @action(detail=True, methods=["post"], url_path="criar_fatura", url_name="criar-fatura")
+    def create_invoice(self, request, pk=None):
+        surgery = self.get_object()
 
-        if hasattr(cirurgia, "fatura") and getattr(cirurgia, "fatura", None):
-            fatura = cirurgia.fatura
+        if hasattr(surgery, "fatura") and getattr(surgery, "fatura", None):
+            invoice = surgery.fatura
         else:
-            fatura = Invoice(
-                inquilino=cirurgia.inquilino,
+            invoice = Invoice(
+                inquilino=surgery.inquilino,
                 origem=Invoice.Origem.CIRURGIA,
-                cirurgia=cirurgia,
-                paciente=cirurgia.paciente,
+                cirurgia=surgery,
+                paciente=surgery.paciente,
             )
-            fatura.full_clean()
-            fatura.save()
+            invoice.full_clean()
+            invoice.save()
 
-        if fatura.estado != Invoice.Estado.RASCUNHO:
+        if invoice.estado != Invoice.Estado.RASCUNHO:
             raise ValidationError("A fatura vinculada já foi emitida/paga/cancelada.")
 
-        fatura.sincronizar_itens_da_origem()
+        invoice.sincronizar_itens_da_origem()
 
         emit = (request.data or {}).get("emitir", True)
         if emit:
-            fatura.emitir()
+            invoice.emitir()
 
         return Response(
             {
-                "cirurgia_id": cirurgia.id,
-                "fatura_id": fatura.id,
-                "fatura_codigo": fatura.id_custom,
-                "fatura_estado": fatura.estado,
-                "total": str(fatura.total),
+                "cirurgia_id": surgery.id,
+                "fatura_id": invoice.id,
+                "fatura_codigo": invoice.id_custom,
+                "fatura_estado": invoice.estado,
+                "total": str(invoice.total),
             },
             status=status.HTTP_200_OK,
         )
 
 
-class ProcedimentoCirurgicoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SurgicalProcedure.objects.all()
-    serializer_class = ProcedimentoCirurgicoSerializer
-    filterset_class = ProcedimentoCirurgicoFilter
+    serializer_class = SurgicalProcedureSerializer
+    filterset_class = SurgicalProcedureFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "descricao"]
     ordering_fields = ["nome", "ativo", "criado_em"]
@@ -71,12 +71,15 @@ class ProcedimentoCirurgicoViewSet(ValidatedSearchOrderingMixin, TenantScopedQue
 
 
 VIEWSET_MAP = {
-    "cirurgia": CirurgiaViewSet,
-    "procedimentocirurgico": ProcedimentoCirurgicoViewSet,
+    "cirurgia": SurgeryViewSet,
+    "procedimentocirurgico": SurgicalProcedureViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "CirurgiaViewSet",
-    "ProcedimentoCirurgicoViewSet",
+    "SurgeryViewSet",
+    "SurgicalProcedureViewSet",
 ]
+
+CirurgiaViewSet = SurgeryViewSet
+ProcedimentoCirurgicoViewSet = SurgicalProcedureViewSet

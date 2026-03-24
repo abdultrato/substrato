@@ -3,7 +3,7 @@ from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 
 
-class RegistroProntuarioFilter(SafeFilterSet):
+class MedicalRecordEntryFilter(SafeFilterSet):
     class Meta:
         model = MedicalRecordEntry
         fields = [
@@ -17,7 +17,7 @@ class RegistroProntuarioFilter(SafeFilterSet):
         ]
 
 
-class PrescricaoItemFilter(SafeFilterSet):
+class PrescriptionItemFilter(SafeFilterSet):
     class Meta:
         model = PrescriptionItem
         fields = [
@@ -30,6 +30,9 @@ class PrescricaoItemFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "registro": RegistroProntuarioFilter,
-    "prescricaoitem": PrescricaoItemFilter,
+    "registro": MedicalRecordEntryFilter,
+    "prescricaoitem": PrescriptionItemFilter,
 }
+
+RegistroProntuarioFilter = MedicalRecordEntryFilter
+PrescricaoItemFilter = PrescriptionItemFilter

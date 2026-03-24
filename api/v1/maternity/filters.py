@@ -2,7 +2,7 @@ from api.core.filters import SafeFilterSet
 from apps.maternity.models.pregnancy import Pregnancy
 
 
-class GestacaoFilter(SafeFilterSet):
+class PregnancyFilter(SafeFilterSet):
     class Meta:
         model = Pregnancy
         fields = [
@@ -15,5 +15,7 @@ class GestacaoFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "gestacao": GestacaoFilter,
+    "gestacao": PregnancyFilter,
 }
+
+GestacaoFilter = PregnancyFilter

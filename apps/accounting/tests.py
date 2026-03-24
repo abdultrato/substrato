@@ -27,7 +27,7 @@ def test_conta_criacao():
 
 
 @pytest.mark.django_db
-def test_lancamento_com_movimentos_balanca():
+def test_entry_balances_with_movements():
     tenant = _tenant()
     conta_debito = Account.objects.create(inquilino=tenant, nome="Caixa", tipo=Account.Tipo.ATIVO)
     conta_credito = Account.objects.create(inquilino=tenant, nome="Receita", tipo=Account.Tipo.RECEITA)
@@ -56,7 +56,7 @@ def test_lancamento_com_movimentos_balanca():
 
 
 @pytest.mark.django_db
-def test_conciliacao_financeira_filtra_por_fatura():
+def test_financial_reconciliation_filters_by_invoice():
     tenant = _tenant()
     conta = Account.objects.create(inquilino=tenant, nome="Banco", tipo=Account.Tipo.ATIVO)
     lancamento = LegacyEntry.objects.create(inquilino=tenant, descricao="Pagamento fatura")

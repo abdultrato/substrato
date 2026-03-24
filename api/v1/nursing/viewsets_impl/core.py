@@ -23,36 +23,36 @@ from apps.nursing.models import (
 )
 
 from ..filters import (
-    CamaEnfermariaFilter,
-    EnfermariaFilter,
-    EvolucaoEnfermagemFilter,
-    InternamentoEnfermariaFilter,
-    PrescricaoEnfermagemFilter,
-    ProcedimentoCatalogoFilter,
-    ProcedimentoCatalogoMaterialFilter,
-    ProcedimentoFilter,
-    ProcedimentoItemFilter,
-    ProcedimentoItemValorFilter,
-    ProcedimentoMaterialFilter,
-    ProcedimentoMaterialValorFilter,
-    RegistroEnfermagemFilter,
-    SinalVitalEnfermagemFilter,
+    NursingEvolutionFilter,
+    NursingPrescriptionFilter,
+    NursingRecordFilter,
+    NursingVitalSignFilter,
+    ProcedureCatalogFilter,
+    ProcedureCatalogMaterialFilter,
+    ProcedureFilter,
+    ProcedureItemFilter,
+    ProcedureItemValueFilter,
+    ProcedureMaterialFilter,
+    ProcedureMaterialValueFilter,
+    WardAdmissionFilter,
+    WardBedFilter,
+    WardFilter,
 )
 from ..serializers import (
-    CamaEnfermariaSerializer,
-    EnfermariaSerializer,
-    EvolucaoEnfermagemSerializer,
-    InternamentoEnfermariaSerializer,
-    PrescricaoEnfermagemSerializer,
-    ProcedimentoCatalogoMaterialSerializer,
-    ProcedimentoCatalogoSerializer,
-    ProcedimentoItemSerializer,
-    ProcedimentoItemValorSerializer,
-    ProcedimentoMaterialSerializer,
-    ProcedimentoMaterialValorSerializer,
-    ProcedimentoSerializer,
-    RegistroEnfermagemSerializer,
-    SinalVitalEnfermagemSerializer,
+    NursingEvolutionSerializer,
+    NursingPrescriptionSerializer,
+    NursingRecordSerializer,
+    NursingVitalSignSerializer,
+    ProcedureCatalogMaterialSerializer,
+    ProcedureCatalogSerializer,
+    ProcedureItemSerializer,
+    ProcedureItemValueSerializer,
+    ProcedureMaterialSerializer,
+    ProcedureMaterialValueSerializer,
+    ProcedureSerializer,
+    WardAdmissionSerializer,
+    WardBedSerializer,
+    WardSerializer,
 )
 
 
@@ -60,14 +60,14 @@ class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     permission_classes = [IsAuthenticated]
 
 
-class EnfermariaDashboardResumoSerializer(serializers.Serializer):
+class WardDashboardSummarySerializer(serializers.Serializer):
     pacientes = serializers.IntegerField()
     camas_total = serializers.IntegerField()
     camas_ocupadas = serializers.IntegerField()
     camas_livres = serializers.IntegerField()
 
 
-class EnfermariaDashboardCamaSerializer(serializers.Serializer):
+class WardDashboardBedSerializer(serializers.Serializer):
     internamento_id = serializers.IntegerField()
     internamento_codigo = serializers.CharField(allow_blank=True)
     enfermaria = serializers.CharField(allow_blank=True)
@@ -82,15 +82,15 @@ class EnfermariaDashboardCamaSerializer(serializers.Serializer):
     proxima_medicacao_descricao = serializers.CharField(required=False, allow_blank=True)
 
 
-class EnfermariaDashboardResponseSerializer(serializers.Serializer):
-    resumo = EnfermariaDashboardResumoSerializer()
-    camas = EnfermariaDashboardCamaSerializer(many=True)
+class WardDashboardResponseSerializer(serializers.Serializer):
+    resumo = WardDashboardSummarySerializer()
+    camas = WardDashboardBedSerializer(many=True)
 
 
-class RegistroEnfermagemViewSet(TenantScopedModelViewSet):
+class NursingRecordViewSet(TenantScopedModelViewSet):
     queryset = NursingRecord.objects.all()
-    serializer_class = RegistroEnfermagemSerializer
-    filterset_class = RegistroEnfermagemFilter
+    serializer_class = NursingRecordSerializer
+    filterset_class = NursingRecordFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -112,10 +112,10 @@ class RegistroEnfermagemViewSet(TenantScopedModelViewSet):
     ordering = ["-data_registro", "-criado_em"]
 
 
-class ProcedimentoCatalogoViewSet(TenantScopedModelViewSet):
+class ProcedureCatalogViewSet(TenantScopedModelViewSet):
     queryset = ProcedureCatalog.objects.all()
-    serializer_class = ProcedimentoCatalogoSerializer
-    filterset_class = ProcedimentoCatalogoFilter
+    serializer_class = ProcedureCatalogSerializer
+    filterset_class = ProcedureCatalogFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -134,10 +134,10 @@ class ProcedimentoCatalogoViewSet(TenantScopedModelViewSet):
     ordering = ["nome", "-criado_em"]
 
 
-class ProcedimentoCatalogoMaterialViewSet(TenantScopedModelViewSet):
+class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
     queryset = ProcedureCatalogMaterial.objects.all()
-    serializer_class = ProcedimentoCatalogoMaterialSerializer
-    filterset_class = ProcedimentoCatalogoMaterialFilter
+    serializer_class = ProcedureCatalogMaterialSerializer
+    filterset_class = ProcedureCatalogMaterialFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -158,10 +158,10 @@ class ProcedimentoCatalogoMaterialViewSet(TenantScopedModelViewSet):
     ordering = ["catalogo", "produto", "-criado_em"]
 
 
-class ProcedimentoViewSet(TenantScopedModelViewSet):
+class ProcedureViewSet(TenantScopedModelViewSet):
     queryset = Procedure.objects.all()
-    serializer_class = ProcedimentoSerializer
-    filterset_class = ProcedimentoFilter
+    serializer_class = ProcedureSerializer
+    filterset_class = ProcedureFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -184,10 +184,10 @@ class ProcedimentoViewSet(TenantScopedModelViewSet):
     ordering = ["-data_realizacao", "-criado_em"]
 
 
-class ProcedimentoItemViewSet(TenantScopedModelViewSet):
+class ProcedureItemViewSet(TenantScopedModelViewSet):
     queryset = ProcedureItem.objects.all()
-    serializer_class = ProcedimentoItemSerializer
-    filterset_class = ProcedimentoItemFilter
+    serializer_class = ProcedureItemSerializer
+    filterset_class = ProcedureItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -238,10 +238,10 @@ class ProcedimentoItemViewSet(TenantScopedModelViewSet):
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ProcedimentoItemValorViewSet(TenantScopedModelViewSet):
+class ProcedureItemValueViewSet(TenantScopedModelViewSet):
     queryset = ProcedureItemValue.objects.all()
-    serializer_class = ProcedimentoItemValorSerializer
-    filterset_class = ProcedimentoItemValorFilter
+    serializer_class = ProcedureItemValueSerializer
+    filterset_class = ProcedureItemValueFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -261,10 +261,10 @@ class ProcedimentoItemValorViewSet(TenantScopedModelViewSet):
     ordering = ["-criado_em"]
 
 
-class ProcedimentoMaterialViewSet(TenantScopedModelViewSet):
+class ProcedureMaterialViewSet(TenantScopedModelViewSet):
     queryset = ProcedureMaterial.objects.all()
-    serializer_class = ProcedimentoMaterialSerializer
-    filterset_class = ProcedimentoMaterialFilter
+    serializer_class = ProcedureMaterialSerializer
+    filterset_class = ProcedureMaterialFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -290,10 +290,10 @@ class ProcedimentoMaterialViewSet(TenantScopedModelViewSet):
     ordering = ["-criado_em"]
 
 
-class ProcedimentoMaterialValorViewSet(TenantScopedModelViewSet):
+class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
     queryset = ProcedureMaterialValue.objects.all()
-    serializer_class = ProcedimentoMaterialValorSerializer
-    filterset_class = ProcedimentoMaterialValorFilter
+    serializer_class = ProcedureMaterialValueSerializer
+    filterset_class = ProcedureMaterialValueFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -313,10 +313,10 @@ class ProcedimentoMaterialValorViewSet(TenantScopedModelViewSet):
     ordering = ["-criado_em"]
 
 
-class SinalVitalEnfermagemViewSet(TenantScopedModelViewSet):
+class NursingVitalSignViewSet(TenantScopedModelViewSet):
     queryset = NursingVitalSign.objects.all()
-    serializer_class = SinalVitalEnfermagemSerializer
-    filterset_class = SinalVitalEnfermagemFilter
+    serializer_class = NursingVitalSignSerializer
+    filterset_class = NursingVitalSignFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -341,10 +341,10 @@ class SinalVitalEnfermagemViewSet(TenantScopedModelViewSet):
     ordering = ["-coletado_em", "-criado_em"]
 
 
-class PrescricaoEnfermagemViewSet(TenantScopedModelViewSet):
+class NursingPrescriptionViewSet(TenantScopedModelViewSet):
     queryset = NursingPrescription.objects.all()
-    serializer_class = PrescricaoEnfermagemSerializer
-    filterset_class = PrescricaoEnfermagemFilter
+    serializer_class = NursingPrescriptionSerializer
+    filterset_class = NursingPrescriptionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -366,10 +366,10 @@ class PrescricaoEnfermagemViewSet(TenantScopedModelViewSet):
     ordering = ["-data_prescricao", "-criado_em"]
 
 
-class EvolucaoEnfermagemViewSet(TenantScopedModelViewSet):
+class NursingEvolutionViewSet(TenantScopedModelViewSet):
     queryset = NursingEvolution.objects.all()
-    serializer_class = EvolucaoEnfermagemSerializer
-    filterset_class = EvolucaoEnfermagemFilter
+    serializer_class = NursingEvolutionSerializer
+    filterset_class = NursingEvolutionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -390,34 +390,34 @@ class EvolucaoEnfermagemViewSet(TenantScopedModelViewSet):
     ordering = ["-data_evolucao", "-criado_em"]
 
 
-class EnfermariaViewSet(TenantScopedModelViewSet):
+class WardViewSet(TenantScopedModelViewSet):
     queryset = Ward.objects.all()
-    serializer_class = EnfermariaSerializer
-    filterset_class = EnfermariaFilter
+    serializer_class = WardSerializer
+    filterset_class = WardFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "descricao"]
     ordering_fields = ["nome", "criado_em", "atualizado_em"]
     ordering = ["nome"]
 
 
-class CamaEnfermariaViewSet(TenantScopedModelViewSet):
+class WardBedViewSet(TenantScopedModelViewSet):
     queryset = WardBed.objects.select_related("enfermaria").all()
-    serializer_class = CamaEnfermariaSerializer
-    filterset_class = CamaEnfermariaFilter
+    serializer_class = WardBedSerializer
+    filterset_class = WardBedFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "numero", "enfermaria__nome"]
     ordering_fields = ["enfermaria", "numero", "criado_em", "atualizado_em"]
     ordering = ["enfermaria", "numero", "-criado_em"]
 
 
-class InternamentoEnfermariaViewSet(TenantScopedModelViewSet):
+class WardAdmissionViewSet(TenantScopedModelViewSet):
     queryset = WardAdmission.objects.select_related(
         "cama",
         "cama__enfermaria",
         "paciente",
     ).all()
-    serializer_class = InternamentoEnfermariaSerializer
-    filterset_class = InternamentoEnfermariaFilter
+    serializer_class = WardAdmissionSerializer
+    filterset_class = WardAdmissionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -437,15 +437,15 @@ class InternamentoEnfermariaViewSet(TenantScopedModelViewSet):
     ordering = ["-data_internamento", "-criado_em"]
 
 
-class EnfermariaDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
+class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
     """
-    Dashboard operacional da Enfermaria (ocupação + próximas medicações).
+    Operational ward dashboard (occupancy + upcoming medications).
     """
 
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
 
-    @extend_schema(responses={200: EnfermariaDashboardResponseSerializer})
+    @extend_schema(responses={200: WardDashboardResponseSerializer})
     def list(self, request):
         inquilino = getattr(request, "inquilino", None)
 
@@ -496,39 +496,56 @@ class EnfermariaDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
 
 
 VIEWSET_MAP = {
-    "evolucaoenfermagem": EvolucaoEnfermagemViewSet,
-    "procedimentocatalogo": ProcedimentoCatalogoViewSet,
-    "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialViewSet,
-    "procedimento": ProcedimentoViewSet,
-    "procedimentoitem": ProcedimentoItemViewSet,
-    "procedimentoitemvalor": ProcedimentoItemValorViewSet,
-    "procedimentomaterial": ProcedimentoMaterialViewSet,
-    "procedimentomaterialvalor": ProcedimentoMaterialValorViewSet,
-    "prescricaoenfermagem": PrescricaoEnfermagemViewSet,
-    "registroenfermagem": RegistroEnfermagemViewSet,
-    "sinalvitalenfermagem": SinalVitalEnfermagemViewSet,
-    "enfermaria": EnfermariaViewSet,
-    "camaenfermaria": CamaEnfermariaViewSet,
-    "internamentoenfermaria": InternamentoEnfermariaViewSet,
-    "enfermariadashboard": EnfermariaDashboardViewSet,
+    "evolucaoenfermagem": NursingEvolutionViewSet,
+    "procedimentocatalogo": ProcedureCatalogViewSet,
+    "procedimentocatalogomaterial": ProcedureCatalogMaterialViewSet,
+    "procedimento": ProcedureViewSet,
+    "procedimentoitem": ProcedureItemViewSet,
+    "procedimentoitemvalor": ProcedureItemValueViewSet,
+    "procedimentomaterial": ProcedureMaterialViewSet,
+    "procedimentomaterialvalor": ProcedureMaterialValueViewSet,
+    "prescricaoenfermagem": NursingPrescriptionViewSet,
+    "registroenfermagem": NursingRecordViewSet,
+    "sinalvitalenfermagem": NursingVitalSignViewSet,
+    "enfermaria": WardViewSet,
+    "camaenfermaria": WardBedViewSet,
+    "internamentoenfermaria": WardAdmissionViewSet,
+    "enfermariadashboard": WardDashboardViewSet,
 }
 
 
 __all__ = [
     "VIEWSET_MAP",
-    "CamaEnfermariaViewSet",
-    "EnfermariaDashboardViewSet",
-    "EnfermariaViewSet",
-    "EvolucaoEnfermagemViewSet",
-    "InternamentoEnfermariaViewSet",
-    "PrescricaoEnfermagemViewSet",
-    "ProcedimentoCatalogoMaterialViewSet",
-    "ProcedimentoCatalogoViewSet",
-    "ProcedimentoItemValorViewSet",
-    "ProcedimentoItemViewSet",
-    "ProcedimentoMaterialValorViewSet",
-    "ProcedimentoMaterialViewSet",
-    "ProcedimentoViewSet",
-    "RegistroEnfermagemViewSet",
-    "SinalVitalEnfermagemViewSet",
+    "NursingEvolutionViewSet",
+    "NursingPrescriptionViewSet",
+    "NursingRecordViewSet",
+    "NursingVitalSignViewSet",
+    "ProcedureCatalogMaterialViewSet",
+    "ProcedureCatalogViewSet",
+    "ProcedureItemValueViewSet",
+    "ProcedureItemViewSet",
+    "ProcedureMaterialValueViewSet",
+    "ProcedureMaterialViewSet",
+    "ProcedureViewSet",
+    "WardAdmissionViewSet",
+    "WardBedViewSet",
+    "WardDashboardViewSet",
+    "WardViewSet",
 ]
+
+
+RegistroEnfermagemViewSet = NursingRecordViewSet
+ProcedimentoCatalogoViewSet = ProcedureCatalogViewSet
+ProcedimentoCatalogoMaterialViewSet = ProcedureCatalogMaterialViewSet
+ProcedimentoViewSet = ProcedureViewSet
+ProcedimentoItemViewSet = ProcedureItemViewSet
+ProcedimentoItemValorViewSet = ProcedureItemValueViewSet
+ProcedimentoMaterialViewSet = ProcedureMaterialViewSet
+ProcedimentoMaterialValorViewSet = ProcedureMaterialValueViewSet
+SinalVitalEnfermagemViewSet = NursingVitalSignViewSet
+PrescricaoEnfermagemViewSet = NursingPrescriptionViewSet
+EvolucaoEnfermagemViewSet = NursingEvolutionViewSet
+EnfermariaViewSet = WardViewSet
+CamaEnfermariaViewSet = WardBedViewSet
+InternamentoEnfermariaViewSet = WardAdmissionViewSet
+EnfermariaDashboardViewSet = WardDashboardViewSet

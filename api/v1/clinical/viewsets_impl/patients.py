@@ -260,7 +260,7 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         if inquilino is not None:
             qs_faturas = qs_faturas.filter(inquilino=inquilino)
 
-        from api.v1.payments.serializers import ReciboSerializer
+        from api.v1.payments.serializers import ReceiptSerializer
         from apps.payments.models.receipt import Receipt
 
         qs_recibos = (
@@ -289,7 +289,7 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             "internamentos_enfermaria": InternamentoEnfermariaSerializer(qs_internamentos[:limit], many=True).data,
             "vendas_farmacia": VendaSerializer(qs_vendas[:limit], many=True).data,
             "faturas": InvoiceSerializer(qs_faturas[:limit], many=True).data,
-            "recibos": ReciboSerializer(qs_recibos[:limit], many=True).data,
+            "recibos": ReceiptSerializer(qs_recibos[:limit], many=True).data,
         }
 
     @extend_schema(operation_id="v1_clinico_paciente_historia_clinica_por_id")

@@ -10,68 +10,78 @@ from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.work_schedule import WorkSchedule
 
 
-class CargoFilter(SafeFilterSet):
+class JobTitleFilter(SafeFilterSet):
     class Meta:
         model = JobTitle
         fields = ["nome", "criado_em"]
 
 
-class FuncionarioFilter(SafeFilterSet):
+class EmployeeFilter(SafeFilterSet):
     class Meta:
         model = Employee
         fields = ["cargo", "profissao", "estado", "data_admissao", "criado_em"]
 
 
-class AgregadoFamiliarFilter(SafeFilterSet):
+class FamilyDependentFilter(SafeFilterSet):
     class Meta:
         model = FamilyDependent
         fields = ["funcionario", "parentesco", "vive_com_funcionario", "criado_em"]
 
 
-class HorarioTrabalhoFilter(SafeFilterSet):
+class WorkScheduleFilter(SafeFilterSet):
     class Meta:
         model = WorkSchedule
         fields = ["funcionario", "dia_semana", "ativo"]
 
 
-class FaltaFilter(SafeFilterSet):
+class AbsenceFilter(SafeFilterSet):
     class Meta:
         model = Absence
         fields = ["funcionario", "data", "justificada"]
 
 
-class FeriasFilter(SafeFilterSet):
+class VacationFilter(SafeFilterSet):
     class Meta:
         model = Vacation
         fields = ["funcionario", "estado", "data_inicio"]
 
 
-class DispensaFilter(SafeFilterSet):
+class TerminationFilter(SafeFilterSet):
     class Meta:
         model = Termination
         fields = ["funcionario", "tipo", "data"]
 
 
-class HoraExtraFilter(SafeFilterSet):
+class OvertimeFilter(SafeFilterSet):
     class Meta:
         model = Overtime
         fields = ["funcionario", "data"]
 
 
-class FolhaPagamentoFilter(SafeFilterSet):
+class PayrollFilter(SafeFilterSet):
     class Meta:
         model = Payroll
         fields = ["funcionario", "ano", "mes", "fechado"]
 
 
 FILTER_MAP = {
-    "cargo": CargoFilter,
-    "funcionario": FuncionarioFilter,
-    "agregadofamiliar": AgregadoFamiliarFilter,
-    "horario": HorarioTrabalhoFilter,
-    "falta": FaltaFilter,
-    "ferias": FeriasFilter,
-    "dispensa": DispensaFilter,
-    "horaextra": HoraExtraFilter,
-    "folhapagamento": FolhaPagamentoFilter,
+    "cargo": JobTitleFilter,
+    "funcionario": EmployeeFilter,
+    "agregadofamiliar": FamilyDependentFilter,
+    "horario": WorkScheduleFilter,
+    "falta": AbsenceFilter,
+    "ferias": VacationFilter,
+    "dispensa": TerminationFilter,
+    "horaextra": OvertimeFilter,
+    "folhapagamento": PayrollFilter,
 }
+
+CargoFilter = JobTitleFilter
+FuncionarioFilter = EmployeeFilter
+AgregadoFamiliarFilter = FamilyDependentFilter
+HorarioTrabalhoFilter = WorkScheduleFilter
+FaltaFilter = AbsenceFilter
+FeriasFilter = VacationFilter
+DispensaFilter = TerminationFilter
+HoraExtraFilter = OvertimeFilter
+FolhaPagamentoFilter = PayrollFilter

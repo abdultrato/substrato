@@ -27,10 +27,10 @@ class PrescricaoItemSerializer(serializers.ModelSerializer):
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "medicacao_nome")
 
 
-class RegistroProntuarioSerializer(serializers.ModelSerializer):
+class MedicalRecordEntrySerializer(serializers.ModelSerializer):
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
-    medico_nome = serializers.SerializerMethodField()
-    consultas_codigos = serializers.SerializerMethodField()
+    medico_nome = serializers.SerializerMethodField(method_name="get_doctor_name")
+    consultas_codigos = serializers.SerializerMethodField(method_name="get_consultation_codes")
 
     itens_prescricao = PrescricaoItemSerializer(many=True, read_only=True)
 
@@ -45,13 +45,13 @@ class RegistroProntuarioSerializer(serializers.ModelSerializer):
             "itens_prescricao",
         )
 
-    def get_medico_nome(self, obj: MedicalRecordEntry) -> str:
-        medico = getattr(obj, "medico", None)
-        if not medico:
+    def get_doctor_name(self, obj: MedicalRecordEntry) -> str:
+        doctor = getattr(obj, "medico", None)
+        if not doctor:
             return ""
-        return getattr(medico, "nome", "") or ""
+        return getattr(doctor, "nome", "") or ""
 
-    def get_consultas_codigos(self, obj: MedicalRecordEntry) -> list[str]:
+    def get_consultation_codes(self, obj: MedicalRecordEntry) -> list[str]:
         try:
             return list(obj.consultas.values_list("id_custom", flat=True))
         except Exception:
@@ -59,6 +59,8 @@ class RegistroProntuarioSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "registro": RegistroProntuarioSerializer,
+    "registro": MedicalRecordEntrySerializer,
     "prescricaoitem": PrescricaoItemSerializer,
 }
+
+RegistroProntuarioSerializer = MedicalRecordEntrySerializer

@@ -6,11 +6,11 @@ from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 
 # =====================================================
-# ITEM VENDA
+# SALE ITEMS
 # =====================================================
 
 
-class ItemVendaFilter(SafeFilterSet):
+class SaleItemFilter(SafeFilterSet):
     class Meta:
         model = SaleItem
         fields = [
@@ -34,11 +34,11 @@ class ItemVendaFilter(SafeFilterSet):
 
 
 # =====================================================
-# LOTE
+# LOTS
 # =====================================================
 
 
-class LoteFilter(SafeFilterSet):
+class LotFilter(SafeFilterSet):
     class Meta:
         model = Lot
         fields = [
@@ -62,11 +62,11 @@ class LoteFilter(SafeFilterSet):
 
 
 # =====================================================
-# MOVIMENTO ESTOQUE
+# INVENTORY MOVEMENTS
 # =====================================================
 
 
-class MovimentoEstoqueFilter(SafeFilterSet):
+class InventoryMovementFilter(SafeFilterSet):
     class Meta:
         model = InventoryMovement
         fields = [
@@ -91,11 +91,11 @@ class MovimentoEstoqueFilter(SafeFilterSet):
 
 
 # =====================================================
-# PRODUTO
+# PRODUCTS
 # =====================================================
 
 
-class ProdutoFilter(SafeFilterSet):
+class ProductFilter(SafeFilterSet):
     class Meta:
         model = Product
         fields = [
@@ -117,11 +117,11 @@ class ProdutoFilter(SafeFilterSet):
 
 
 # =====================================================
-# VENDA
+# SALES
 # =====================================================
 
 
-class VendaFilter(SafeFilterSet):
+class SaleFilter(SafeFilterSet):
     class Meta:
         model = Sale
         fields = [
@@ -148,9 +148,15 @@ class VendaFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "itemvenda": ItemVendaFilter,
-    "lote": LoteFilter,
-    "movimentoestoque": MovimentoEstoqueFilter,
-    "produto": ProdutoFilter,
-    "venda": VendaFilter,
+    "itemvenda": SaleItemFilter,
+    "lote": LotFilter,
+    "movimentoestoque": InventoryMovementFilter,
+    "produto": ProductFilter,
+    "venda": SaleFilter,
 }
+
+ItemVendaFilter = SaleItemFilter
+LoteFilter = LotFilter
+MovimentoEstoqueFilter = InventoryMovementFilter
+ProdutoFilter = ProductFilter
+VendaFilter = SaleFilter

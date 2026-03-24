@@ -1,9 +1,10 @@
-"""
-Facade module for Seguradora ViewSets.
-"""
+"""Facade module for insurer viewsets."""
 
 from .viewsets_impl import (
     VIEWSET_MAP,
+    CoveragePlanViewSet,
+    InsurerViewSet,
+    ProcedureAuthorizationViewSet,
     AutorizacaoProcedimentoViewSet,
     PlanoCoberturaViewSet,
     SeguradoraViewSet,
@@ -11,6 +12,9 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "ProcedureAuthorizationViewSet",
+    "CoveragePlanViewSet",
+    "InsurerViewSet",
     "AutorizacaoProcedimentoViewSet",
     "PlanoCoberturaViewSet",
     "SeguradoraViewSet",

@@ -63,10 +63,10 @@ class EquipamentoSerializer(serializers.ModelSerializer):
 
 
 class InspecaoDiariaSerializer(serializers.ModelSerializer):
-    descricao = serializers.SerializerMethodField()
+    descricao = serializers.SerializerMethodField(method_name="get_description")
     estado = serializers.SerializerMethodField()
 
-    def get_descricao(self, obj: DailyInspection) -> str:
+    def get_description(self, obj: DailyInspection) -> str:
         equipamento = getattr(obj, "equipamento", None)
         if equipamento:
             nome = equipamento.nome or equipamento.numero_serie or f"Equipamento {equipamento.pk}"

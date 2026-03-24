@@ -1,9 +1,11 @@
-"""
-Facade module for Pagamentos ViewSets.
-"""
+"""Facade module for payments viewsets."""
 
 from .viewsets_impl import (
     VIEWSET_MAP,
+    PaymentViewSet,
+    ReceiptViewSet,
+    ReconciliationViewSet,
+    TransactionViewSet,
     PagamentoViewSet,
     ReciboViewSet,
     ReconciliacaoViewSet,
@@ -12,6 +14,10 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "PaymentViewSet",
+    "ReceiptViewSet",
+    "ReconciliationViewSet",
+    "TransactionViewSet",
     "PagamentoViewSet",
     "ReciboViewSet",
     "ReconciliacaoViewSet",

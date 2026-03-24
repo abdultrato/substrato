@@ -8,20 +8,20 @@ from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 
-from ..filters import ItemVendaFilter, LoteFilter, MovimentoEstoqueFilter, ProdutoFilter, VendaFilter
+from ..filters import InventoryMovementFilter, LotFilter, ProductFilter, SaleFilter, SaleItemFilter
 from ..serializers import (
-    ItemVendaSerializer,
-    LoteSerializer,
-    MovimentoEstoqueSerializer,
-    ProdutoSerializer,
-    VendaSerializer,
+    InventoryMovementSerializer,
+    LotSerializer,
+    ProductSerializer,
+    SaleItemSerializer,
+    SaleSerializer,
 )
 
 
-class ItemVendaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class SaleItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SaleItem.objects.all()
-    serializer_class = ItemVendaSerializer
-    filterset_class = ItemVendaFilter
+    serializer_class = SaleItemSerializer
+    filterset_class = SaleItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "produto__nome", "venda__numero"]
     ordering_fields = [
@@ -43,10 +43,10 @@ class ItemVendaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     ordering = ["-criado_em"]
 
 
-class LoteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Lot.objects.all()
-    serializer_class = LoteSerializer
-    filterset_class = LoteFilter
+    serializer_class = LotSerializer
+    filterset_class = LotFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "numero_lote", "produto__nome"]
     ordering_fields = [
@@ -68,10 +68,10 @@ class LoteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
     ordering = ["-criado_em"]
 
 
-class MovimentoEstoqueViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = InventoryMovement.objects.all()
-    serializer_class = MovimentoEstoqueSerializer
-    filterset_class = MovimentoEstoqueFilter
+    serializer_class = InventoryMovementSerializer
+    filterset_class = InventoryMovementFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "tipo", "origem", "lote__numero_lote", "item_venda__id_custom"]
     ordering_fields = [
@@ -94,10 +94,10 @@ class MovimentoEstoqueViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     ordering = ["-criado_em"]
 
 
-class ProdutoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Product.objects.all()
-    serializer_class = ProdutoSerializer
-    filterset_class = ProdutoFilter
+    serializer_class = ProductSerializer
+    filterset_class = ProductFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "tipo"]
     ordering_fields = [
@@ -119,10 +119,10 @@ class ProdutoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ordering = ["-criado_em"]
 
 
-class VendaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Sale.objects.all()
-    serializer_class = VendaSerializer
-    filterset_class = VendaFilter
+    serializer_class = SaleSerializer
+    filterset_class = SaleFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "numero", "paciente__id_custom", "paciente__nome"]
     ordering_fields = [
@@ -144,18 +144,24 @@ class VendaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mode
 
 
 VIEWSET_MAP = {
-    "itemvenda": ItemVendaViewSet,
-    "lote": LoteViewSet,
-    "movimentoestoque": MovimentoEstoqueViewSet,
-    "produto": ProdutoViewSet,
-    "venda": VendaViewSet,
+    "itemvenda": SaleItemViewSet,
+    "lote": LotViewSet,
+    "movimentoestoque": InventoryMovementViewSet,
+    "produto": ProductViewSet,
+    "venda": SaleViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "ItemVendaViewSet",
-    "LoteViewSet",
-    "MovimentoEstoqueViewSet",
-    "ProdutoViewSet",
-    "VendaViewSet",
+    "SaleItemViewSet",
+    "LotViewSet",
+    "InventoryMovementViewSet",
+    "ProductViewSet",
+    "SaleViewSet",
 ]
+
+ItemVendaViewSet = SaleItemViewSet
+LoteViewSet = LotViewSet
+MovimentoEstoqueViewSet = InventoryMovementViewSet
+ProdutoViewSet = ProductViewSet
+VendaViewSet = SaleViewSet

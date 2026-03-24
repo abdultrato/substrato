@@ -5,14 +5,14 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 
-from ..filters import PrescricaoItemFilter, RegistroProntuarioFilter
-from ..serializers import PrescricaoItemSerializer, RegistroProntuarioSerializer
+from ..filters import MedicalRecordEntryFilter, PrescriptionItemFilter
+from ..serializers import MedicalRecordEntrySerializer, PrescricaoItemSerializer
 
 
-class RegistroProntuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class MedicalRecordEntryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MedicalRecordEntry.objects.select_related("paciente", "medico").prefetch_related("consultas").all()
-    serializer_class = RegistroProntuarioSerializer
-    filterset_class = RegistroProntuarioFilter
+    serializer_class = MedicalRecordEntrySerializer
+    filterset_class = MedicalRecordEntryFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -25,10 +25,10 @@ class RegistroProntuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     ordering = ["-inicio_atendimento", "-criado_em"]
 
 
-class PrescricaoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class PrescriptionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = PrescriptionItem.objects.select_related("registro", "medicacao").all()
     serializer_class = PrescricaoItemSerializer
-    filterset_class = PrescricaoItemFilter
+    filterset_class = PrescriptionItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "medicacao__nome", "observacoes"]
     ordering_fields = ["criado_em", "dosagem_valor", "numero_doses"]
@@ -36,12 +36,15 @@ class PrescricaoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
 
 
 VIEWSET_MAP = {
-    "registro": RegistroProntuarioViewSet,
-    "prescricaoitem": PrescricaoItemViewSet,
+    "registro": MedicalRecordEntryViewSet,
+    "prescricaoitem": PrescriptionItemViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "PrescricaoItemViewSet",
-    "RegistroProntuarioViewSet",
+    "PrescriptionItemViewSet",
+    "MedicalRecordEntryViewSet",
 ]
+
+RegistroProntuarioViewSet = MedicalRecordEntryViewSet
+PrescricaoItemViewSet = PrescriptionItemViewSet

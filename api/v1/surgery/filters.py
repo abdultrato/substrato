@@ -3,7 +3,7 @@ from apps.surgery.models.surgery import Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 
 
-class CirurgiaFilter(SafeFilterSet):
+class SurgeryFilter(SafeFilterSet):
     class Meta:
         model = Surgery
         fields = [
@@ -15,7 +15,7 @@ class CirurgiaFilter(SafeFilterSet):
         ]
 
 
-class ProcedimentoCirurgicoFilter(SafeFilterSet):
+class SurgicalProcedureFilter(SafeFilterSet):
     class Meta:
         model = SurgicalProcedure
         fields = [
@@ -26,6 +26,9 @@ class ProcedimentoCirurgicoFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "cirurgia": CirurgiaFilter,
-    "procedimentocirurgico": ProcedimentoCirurgicoFilter,
+    "cirurgia": SurgeryFilter,
+    "procedimentocirurgico": SurgicalProcedureFilter,
 }
+
+CirurgiaFilter = SurgeryFilter
+ProcedimentoCirurgicoFilter = SurgicalProcedureFilter

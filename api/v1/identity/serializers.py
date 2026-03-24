@@ -25,13 +25,13 @@ class PasswordResetTokenSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class PerfilProfissionalSerializer(serializers.ModelSerializer):
+class ProfessionalProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfessionalProfile
         fields = "__all__"
 
 
-class UsuarioSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
 
     class Meta:
@@ -60,6 +60,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "passwordresettoken": PasswordResetTokenSerializer,
-    "perfilprofissional": PerfilProfissionalSerializer,
-    "usuario": UsuarioSerializer,
+    "perfilprofissional": ProfessionalProfileSerializer,
+    "usuario": UserSerializer,
 }
+
+PerfilProfissionalSerializer = ProfessionalProfileSerializer
+UsuarioSerializer = UserSerializer

@@ -5,24 +5,24 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 
-from ..filters import LogEnvioFilter, NotificacaoFilter
-from ..serializers import LogEnvioSerializer, NotificacaoSerializer
+from ..filters import DeliveryLogFilter, NotificationFilter
+from ..serializers import DeliveryLogSerializer, NotificationSerializer
 
 
-class LogEnvioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class DeliveryLogViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DeliveryLog.objects.all()
-    serializer_class = LogEnvioSerializer
-    filterset_class = LogEnvioFilter
+    serializer_class = DeliveryLogSerializer
+    filterset_class = DeliveryLogFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["status", "resposta"]
     ordering_fields = ["notificacao", "status", "resposta", "criado_em"]
     ordering = ["-criado_em"]
 
 
-class NotificacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class NotificationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Notification.objects.all()
-    serializer_class = NotificacaoSerializer
-    filterset_class = NotificacaoFilter
+    serializer_class = NotificationSerializer
+    filterset_class = NotificationFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["destinatario", "canal", "mensagem"]
     ordering_fields = ["destinatario", "canal", "mensagem", "enviada", "criado_em"]
@@ -30,12 +30,15 @@ class NotificacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 
 VIEWSET_MAP = {
-    "logenvio": LogEnvioViewSet,
-    "notificacao": NotificacaoViewSet,
+    "logenvio": DeliveryLogViewSet,
+    "notificacao": NotificationViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "LogEnvioViewSet",
-    "NotificacaoViewSet",
+    "DeliveryLogViewSet",
+    "NotificationViewSet",
 ]
+
+LogEnvioViewSet = DeliveryLogViewSet
+NotificacaoViewSet = NotificationViewSet

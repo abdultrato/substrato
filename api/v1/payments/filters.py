@@ -5,11 +5,11 @@ from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
 # =====================================================
-# PAGAMENTO
+# PAYMENTS
 # =====================================================
 
 
-class PagamentoFilter(SafeFilterSet):
+class PaymentFilter(SafeFilterSet):
     class Meta:
         model = Payment
         fields = [
@@ -38,11 +38,11 @@ class PagamentoFilter(SafeFilterSet):
 
 
 # =====================================================
-# RECIBO
+# RECEIPTS
 # =====================================================
 
 
-class ReciboFilter(SafeFilterSet):
+class ReceiptFilter(SafeFilterSet):
     class Meta:
         model = Receipt
         fields = [
@@ -55,11 +55,11 @@ class ReciboFilter(SafeFilterSet):
 
 
 # =====================================================
-# RECONCILIAÇÃO
+# RECONCILIATIONS
 # =====================================================
 
 
-class ReconciliacaoFilter(SafeFilterSet):
+class ReconciliationFilter(SafeFilterSet):
     class Meta:
         model = Reconciliation
         fields = [
@@ -71,11 +71,11 @@ class ReconciliacaoFilter(SafeFilterSet):
 
 
 # =====================================================
-# TRANSAÇÃO
+# TRANSACTIONS
 # =====================================================
 
 
-class TransacaoFilter(SafeFilterSet):
+class TransactionFilter(SafeFilterSet):
     class Meta:
         model = Transaction
         fields = [
@@ -91,8 +91,13 @@ class TransacaoFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "pagamento": PagamentoFilter,
-    "recibo": ReciboFilter,
-    "reconciliacao": ReconciliacaoFilter,
-    "transacao": TransacaoFilter,
+    "pagamento": PaymentFilter,
+    "recibo": ReceiptFilter,
+    "reconciliacao": ReconciliationFilter,
+    "transacao": TransactionFilter,
 }
+
+PagamentoFilter = PaymentFilter
+ReciboFilter = ReceiptFilter
+ReconciliacaoFilter = ReconciliationFilter
+TransacaoFilter = TransactionFilter

@@ -18,31 +18,31 @@ from apps.nursing.models import (
 )
 
 
-class RegistroEnfermagemSerializer(serializers.ModelSerializer):
+class NursingRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = NursingRecord
         fields = "__all__"
 
 
-class ProcedimentoCatalogoSerializer(serializers.ModelSerializer):
+class ProcedureCatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCatalog
         fields = "__all__"
 
 
-class ProcedimentoCatalogoMaterialSerializer(serializers.ModelSerializer):
+class ProcedureCatalogMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCatalogMaterial
         fields = "__all__"
 
 
-class ProcedimentoSerializer(serializers.ModelSerializer):
+class ProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Procedure
         fields = "__all__"
 
 
-class ProcedimentoItemSerializer(serializers.ModelSerializer):
+class ProcedureItemSerializer(serializers.ModelSerializer):
     valor_unitario = serializers.DecimalField(
         source="valor.preco_unitario",
         max_digits=14,
@@ -55,7 +55,7 @@ class ProcedimentoItemSerializer(serializers.ModelSerializer):
         exclude = ("preco_unitario",)
 
 
-class ProcedimentoMaterialSerializer(serializers.ModelSerializer):
+class ProcedureMaterialSerializer(serializers.ModelSerializer):
     valor_unitario = serializers.DecimalField(
         source="valor.custo_unitario",
         max_digits=14,
@@ -68,43 +68,43 @@ class ProcedimentoMaterialSerializer(serializers.ModelSerializer):
         exclude = ("custo_unitario",)
 
 
-class ProcedimentoItemValorSerializer(serializers.ModelSerializer):
+class ProcedureItemValueSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureItemValue
         fields = "__all__"
 
 
-class ProcedimentoMaterialValorSerializer(serializers.ModelSerializer):
+class ProcedureMaterialValueSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureMaterialValue
         fields = "__all__"
 
 
-class SinalVitalEnfermagemSerializer(serializers.ModelSerializer):
+class NursingVitalSignSerializer(serializers.ModelSerializer):
     class Meta:
         model = NursingVitalSign
         fields = "__all__"
 
 
-class PrescricaoEnfermagemSerializer(serializers.ModelSerializer):
+class NursingPrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NursingPrescription
         fields = "__all__"
 
 
-class EvolucaoEnfermagemSerializer(serializers.ModelSerializer):
+class NursingEvolutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = NursingEvolution
         fields = "__all__"
 
 
-class EnfermariaSerializer(serializers.ModelSerializer):
+class WardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ward
         fields = "__all__"
 
 
-class CamaEnfermariaSerializer(serializers.ModelSerializer):
+class WardBedSerializer(serializers.ModelSerializer):
     enfermaria_nome = serializers.CharField(source="enfermaria.nome", read_only=True)
 
     class Meta:
@@ -112,7 +112,7 @@ class CamaEnfermariaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class InternamentoEnfermariaSerializer(serializers.ModelSerializer):
+class WardAdmissionSerializer(serializers.ModelSerializer):
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
     cama_numero = serializers.CharField(source="cama.numero", read_only=True)
     enfermaria_nome = serializers.CharField(source="cama.enfermaria.nome", read_only=True)
@@ -123,18 +123,34 @@ class InternamentoEnfermariaSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "evolucaoenfermagem": EvolucaoEnfermagemSerializer,
-    "procedimentocatalogo": ProcedimentoCatalogoSerializer,
-    "procedimentocatalogomaterial": ProcedimentoCatalogoMaterialSerializer,
-    "procedimento": ProcedimentoSerializer,
-    "procedimentoitem": ProcedimentoItemSerializer,
-    "procedimentoitemvalor": ProcedimentoItemValorSerializer,
-    "procedimentomaterial": ProcedimentoMaterialSerializer,
-    "procedimentomaterialvalor": ProcedimentoMaterialValorSerializer,
-    "prescricaoenfermagem": PrescricaoEnfermagemSerializer,
-    "registroenfermagem": RegistroEnfermagemSerializer,
-    "sinalvitalenfermagem": SinalVitalEnfermagemSerializer,
-    "enfermaria": EnfermariaSerializer,
-    "camaenfermaria": CamaEnfermariaSerializer,
-    "internamentoenfermaria": InternamentoEnfermariaSerializer,
+    "evolucaoenfermagem": NursingEvolutionSerializer,
+    "procedimentocatalogo": ProcedureCatalogSerializer,
+    "procedimentocatalogomaterial": ProcedureCatalogMaterialSerializer,
+    "procedimento": ProcedureSerializer,
+    "procedimentoitem": ProcedureItemSerializer,
+    "procedimentoitemvalor": ProcedureItemValueSerializer,
+    "procedimentomaterial": ProcedureMaterialSerializer,
+    "procedimentomaterialvalor": ProcedureMaterialValueSerializer,
+    "prescricaoenfermagem": NursingPrescriptionSerializer,
+    "registroenfermagem": NursingRecordSerializer,
+    "sinalvitalenfermagem": NursingVitalSignSerializer,
+    "enfermaria": WardSerializer,
+    "camaenfermaria": WardBedSerializer,
+    "internamentoenfermaria": WardAdmissionSerializer,
 }
+
+
+RegistroEnfermagemSerializer = NursingRecordSerializer
+ProcedimentoCatalogoSerializer = ProcedureCatalogSerializer
+ProcedimentoCatalogoMaterialSerializer = ProcedureCatalogMaterialSerializer
+ProcedimentoSerializer = ProcedureSerializer
+ProcedimentoItemSerializer = ProcedureItemSerializer
+ProcedimentoMaterialSerializer = ProcedureMaterialSerializer
+ProcedimentoItemValorSerializer = ProcedureItemValueSerializer
+ProcedimentoMaterialValorSerializer = ProcedureMaterialValueSerializer
+SinalVitalEnfermagemSerializer = NursingVitalSignSerializer
+PrescricaoEnfermagemSerializer = NursingPrescriptionSerializer
+EvolucaoEnfermagemSerializer = NursingEvolutionSerializer
+EnfermariaSerializer = WardSerializer
+CamaEnfermariaSerializer = WardBedSerializer
+InternamentoEnfermariaSerializer = WardAdmissionSerializer

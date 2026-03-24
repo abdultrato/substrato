@@ -9,14 +9,14 @@ from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
-from ..filters import PagamentoFilter, ReciboFilter, ReconciliacaoFilter, TransacaoFilter
-from ..serializers import PagamentoSerializer, ReciboSerializer, ReconciliacaoSerializer, TransacaoSerializer
+from ..filters import PaymentFilter, ReceiptFilter, ReconciliationFilter, TransactionFilter
+from ..serializers import PaymentSerializer, ReceiptSerializer, ReconciliationSerializer, TransactionSerializer
 
 
-class PagamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class PaymentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Payment.objects.all()
-    serializer_class = PagamentoSerializer
-    filterset_class = PagamentoFilter
+    serializer_class = PaymentSerializer
+    filterset_class = PaymentFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "metodo", "status", "referencia_externa", "numero_autorizacao"]
     ordering_fields = [
@@ -43,10 +43,10 @@ class PagamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     ordering = ["-criado_em"]
 
 
-class ReciboViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Receipt.objects.all()
-    serializer_class = ReciboSerializer
-    filterset_class = ReciboFilter
+    serializer_class = ReceiptSerializer
+    filterset_class = ReceiptFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["numero"]
     ordering_fields = ["fatura", "pagamento", "numero", "valor", "criado_em"]
@@ -56,35 +56,35 @@ class ReciboViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mod
         queryset = super().get_queryset()
         inquilino = getattr(self.request, "inquilino", None)
         if inquilino is not None:
-            # Recibo não tem campo inquilino próprio; filtra pelo inquilino da fatura.
+            # Receipt has no own tenant field; filter via the related invoice tenant.
             queryset = queryset.filter(fatura__inquilino=inquilino)
         return queryset
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
-        recibo = self.get_object()
+        receipt = self.get_object()
         from tasks.gerar_pdf.pdf_generator_recibo import gerar_pdf_recibo
 
-        pdf_bytes, filename = gerar_pdf_recibo(recibo, request=request)
+        pdf_bytes, filename = gerar_pdf_recibo(receipt, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
 
 
-class ReconciliacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class ReconciliationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Reconciliation.objects.all()
-    serializer_class = ReconciliacaoSerializer
-    filterset_class = ReconciliacaoFilter
+    serializer_class = ReconciliationSerializer
+    filterset_class = ReconciliationFilter
     permission_classes = [IsAuthenticated]
     search_fields = []
     ordering_fields = ["transacao", "confirmado", "data_confirmacao", "criado_em"]
     ordering = ["-criado_em"]
 
 
-class TransacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Transaction.objects.all()
-    serializer_class = TransacaoSerializer
-    filterset_class = TransacaoFilter
+    serializer_class = TransactionSerializer
+    filterset_class = TransactionFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["referencia_externa", "gateway", "status"]
     ordering_fields = ["referencia_externa", "gateway", "status", "resposta_gateway", "criado_em"]
@@ -92,16 +92,21 @@ class TransacaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
 
 
 VIEWSET_MAP = {
-    "pagamento": PagamentoViewSet,
-    "recibo": ReciboViewSet,
-    "reconciliacao": ReconciliacaoViewSet,
-    "transacao": TransacaoViewSet,
+    "pagamento": PaymentViewSet,
+    "recibo": ReceiptViewSet,
+    "reconciliacao": ReconciliationViewSet,
+    "transacao": TransactionViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "PagamentoViewSet",
-    "ReciboViewSet",
-    "ReconciliacaoViewSet",
-    "TransacaoViewSet",
+    "PaymentViewSet",
+    "ReceiptViewSet",
+    "ReconciliationViewSet",
+    "TransactionViewSet",
 ]
+
+PagamentoViewSet = PaymentViewSet
+ReciboViewSet = ReceiptViewSet
+ReconciliacaoViewSet = ReconciliationViewSet
+TransacaoViewSet = TransactionViewSet

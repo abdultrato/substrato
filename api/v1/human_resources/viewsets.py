@@ -1,9 +1,16 @@
-"""
-Facade module for Recursos Humanos ViewSets.
-"""
+"""Facade module for human resources viewsets."""
 
 from .viewsets_impl import (
     VIEWSET_MAP,
+    AbsenceViewSet,
+    EmployeeViewSet,
+    FamilyDependentViewSet,
+    JobTitleViewSet,
+    OvertimeViewSet,
+    PayrollViewSet,
+    TerminationViewSet,
+    VacationViewSet,
+    WorkScheduleViewSet,
     AgregadoFamiliarViewSet,
     CargoViewSet,
     DispensaViewSet,
@@ -17,6 +24,15 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "AbsenceViewSet",
+    "EmployeeViewSet",
+    "FamilyDependentViewSet",
+    "JobTitleViewSet",
+    "OvertimeViewSet",
+    "PayrollViewSet",
+    "TerminationViewSet",
+    "VacationViewSet",
+    "WorkScheduleViewSet",
     "AgregadoFamiliarViewSet",
     "CargoViewSet",
     "DispensaViewSet",

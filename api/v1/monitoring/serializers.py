@@ -17,15 +17,15 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class ErroSistemaSerializer(serializers.ModelSerializer):
-    usuario_nome = serializers.SerializerMethodField()
+class SystemErrorSerializer(serializers.ModelSerializer):
+    usuario_nome = serializers.SerializerMethodField(method_name="get_user_name")
 
     class Meta:
         model = SystemError
         fields = "__all__"
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "usuario_nome")
 
-    def get_usuario_nome(self, obj: SystemError) -> str:
+    def get_user_name(self, obj: SystemError) -> str:
         u = getattr(obj, "usuario", None)
         if not u:
             return ""
@@ -36,5 +36,7 @@ class ErroSistemaSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "erro": ErroSistemaSerializer,
+    "erro": SystemErrorSerializer,
 }
+
+ErroSistemaSerializer = SystemErrorSerializer

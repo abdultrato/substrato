@@ -17,22 +17,24 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class GestacaoSerializer(serializers.ModelSerializer):
+class PregnancySerializer(serializers.ModelSerializer):
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
-    medico_nome = serializers.SerializerMethodField()
+    medico_nome = serializers.SerializerMethodField(method_name="get_doctor_name")
 
     class Meta:
         model = Pregnancy
         fields = "__all__"
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "paciente_nome", "medico_nome")
 
-    def get_medico_nome(self, obj: Pregnancy) -> str:
-        medico = getattr(obj, "medico_responsavel", None)
-        if not medico:
+    def get_doctor_name(self, obj: Pregnancy) -> str:
+        doctor = getattr(obj, "medico_responsavel", None)
+        if not doctor:
             return ""
-        return getattr(medico, "nome", "") or ""
+        return getattr(doctor, "nome", "") or ""
 
 
 SERIALIZER_MAP = {
-    "gestacao": GestacaoSerializer,
+    "gestacao": PregnancySerializer,
 }
+
+GestacaoSerializer = PregnancySerializer

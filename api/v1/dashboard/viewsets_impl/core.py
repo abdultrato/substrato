@@ -73,7 +73,7 @@ class AnalyticsRangeSerializer(serializers.Serializer):
     fim = serializers.CharField(required=False, allow_null=True)
 
 
-class AnalyticsTopExameSerializer(serializers.Serializer):
+class AnalyticsTopExamSerializer(serializers.Serializer):
     tipo = serializers.CharField()
     id = serializers.IntegerField(required=False, allow_null=True)
     nome = serializers.CharField()
@@ -101,7 +101,7 @@ class AnalyticsTopConsultaSerializer(serializers.Serializer):
 class AnalyticsResponseSerializer(serializers.Serializer):
     range = AnalyticsRangeSerializer()
     kpis = serializers.DictField(child=serializers.JSONField())
-    top_exames = AnalyticsTopExameSerializer(many=True)
+    top_exames = AnalyticsTopExamSerializer(many=True)
     top_procedimentos = AnalyticsTopProcedimentoSerializer(many=True)
     top_medicamentos = AnalyticsTopMedicamentoSerializer(many=True)
     top_consultas = AnalyticsTopConsultaSerializer(many=True)

@@ -21,7 +21,7 @@ from domain.accounting.excecoes import (
 # =========================================================
 
 
-def tratar_excecao_dominio(
+def handle_domain_exception(
     exc: Exception,
 ):
     """
@@ -47,7 +47,7 @@ def tratar_excecao_dominio(
 # =========================================================
 
 
-class DominioAPIException(
+class DomainAPIException(
     APIException,
 ):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -55,7 +55,7 @@ class DominioAPIException(
     default_code = "erro_dominio"
 
 
-def tratar_excecao_api(
+def handle_api_exception(
     exc: Exception,
 ):
     """
@@ -66,7 +66,7 @@ def tratar_excecao_api(
         exc,
         LedgerImutavelErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -76,7 +76,7 @@ def tratar_excecao_api(
         exc,
         LedgerJaRevertidoErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -86,7 +86,7 @@ def tratar_excecao_api(
         exc,
         ReversaoInvalidaErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -96,7 +96,7 @@ def tratar_excecao_api(
         exc,
         PeriodoContabilFechadoErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -106,7 +106,7 @@ def tratar_excecao_api(
         exc,
         PartidasDesbalanceadasErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -116,7 +116,7 @@ def tratar_excecao_api(
         exc,
         LancamentoSemLinhasSuficientesErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -126,7 +126,7 @@ def tratar_excecao_api(
         exc,
         AlteracaoTipoContaNaoPermitidaErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -136,7 +136,7 @@ def tratar_excecao_api(
         exc,
         ContaComSaldoNaoPodeSerDesativadaErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -146,7 +146,7 @@ def tratar_excecao_api(
         exc,
         ContaInativaErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
@@ -156,10 +156,15 @@ def tratar_excecao_api(
         exc,
         ViolacaoInquilinoErro,
     ):
-        raise DominioAPIException(
+        raise DomainAPIException(
             detail=str(
                 exc,
             ),
         )
 
     raise exc
+
+
+DominioAPIException = DomainAPIException
+tratar_excecao_dominio = handle_domain_exception
+tratar_excecao_api = handle_api_exception

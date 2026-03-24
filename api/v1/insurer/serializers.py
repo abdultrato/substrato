@@ -5,26 +5,30 @@ from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 
 
-class AutorizacaoProcedimentoSerializer(serializers.ModelSerializer):
+class ProcedureAuthorizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureAuthorization
         fields = "__all__"
 
 
-class PlanoCoberturaSerializer(serializers.ModelSerializer):
+class CoveragePlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = CoveragePlan
         fields = "__all__"
 
 
-class SeguradoraSerializer(serializers.ModelSerializer):
+class InsurerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Insurer
         fields = "__all__"
 
 
 SERIALIZER_MAP = {
-    "autorizacaoprocedimento": AutorizacaoProcedimentoSerializer,
-    "planocobertura": PlanoCoberturaSerializer,
-    "seguradora": SeguradoraSerializer,
+    "autorizacaoprocedimento": ProcedureAuthorizationSerializer,
+    "planocobertura": CoveragePlanSerializer,
+    "seguradora": InsurerSerializer,
 }
+
+AutorizacaoProcedimentoSerializer = ProcedureAuthorizationSerializer
+PlanoCoberturaSerializer = CoveragePlanSerializer
+SeguradoraSerializer = InsurerSerializer

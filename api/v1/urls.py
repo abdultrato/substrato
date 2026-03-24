@@ -3,8 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from api.v1.dashboard.views import DashboardStatsView
 from api.v1.equipment_integrations.views import (
-    EquipamentoResultadosInboxView,
-    EquipamentoWorklistView,
+    EquipmentResultsInboxView,
+    EquipmentWorklistView,
 )
 from api.v1.routing.routes import register_routes
 
@@ -20,12 +20,12 @@ urlpatterns = [
     # Integrações de equipamentos (worklist + inbox HTTP).
     re_path(
         r"^equipment_integrations/equipment/(?P<equipment_id_custom>[^/]+)/worklist/?$",
-        EquipamentoWorklistView.as_view(),
+        EquipmentWorklistView.as_view(),
         name="equipment-integrations-worklist",
     ),
     re_path(
         r"^equipment_integrations/equipment/(?P<equipment_id_custom>[^/]+)/results/?$",
-        EquipamentoResultadosInboxView.as_view(),
+        EquipmentResultsInboxView.as_view(),
         name="equipment-integrations-results",
     ),
     path("", include(router.urls)),

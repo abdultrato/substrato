@@ -4,11 +4,11 @@ from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 
 # =====================================================
-# AUTORIZAÇÃO PROCEDIMENTO
+# PROCEDURE AUTHORIZATIONS
 # =====================================================
 
 
-class AutorizacaoProcedimentoFilter(SafeFilterSet):
+class ProcedureAuthorizationFilter(SafeFilterSet):
     class Meta:
         model = ProcedureAuthorization
         fields = [
@@ -33,11 +33,11 @@ class AutorizacaoProcedimentoFilter(SafeFilterSet):
 
 
 # =====================================================
-# PLANO COBERTURA
+# COVERAGE PLANS
 # =====================================================
 
 
-class PlanoCoberturaFilter(SafeFilterSet):
+class CoveragePlanFilter(SafeFilterSet):
     class Meta:
         model = CoveragePlan
         fields = [
@@ -60,11 +60,11 @@ class PlanoCoberturaFilter(SafeFilterSet):
 
 
 # =====================================================
-# SEGURADORA
+# INSURERS
 # =====================================================
 
 
-class SeguradoraFilter(SafeFilterSet):
+class InsurerFilter(SafeFilterSet):
     class Meta:
         model = Insurer
         fields = [
@@ -92,7 +92,11 @@ class SeguradoraFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "autorizacaoprocedimento": AutorizacaoProcedimentoFilter,
-    "planocobertura": PlanoCoberturaFilter,
-    "seguradora": SeguradoraFilter,
+    "autorizacaoprocedimento": ProcedureAuthorizationFilter,
+    "planocobertura": CoveragePlanFilter,
+    "seguradora": InsurerFilter,
 }
+
+AutorizacaoProcedimentoFilter = ProcedureAuthorizationFilter
+PlanoCoberturaFilter = CoveragePlanFilter
+SeguradoraFilter = InsurerFilter

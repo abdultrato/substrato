@@ -6,14 +6,14 @@ from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 
-from ..filters import AutorizacaoProcedimentoFilter, PlanoCoberturaFilter, SeguradoraFilter
-from ..serializers import AutorizacaoProcedimentoSerializer, PlanoCoberturaSerializer, SeguradoraSerializer
+from ..filters import CoveragePlanFilter, InsurerFilter, ProcedureAuthorizationFilter
+from ..serializers import CoveragePlanSerializer, InsurerSerializer, ProcedureAuthorizationSerializer
 
 
-class AutorizacaoProcedimentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = ProcedureAuthorization.objects.all()
-    serializer_class = AutorizacaoProcedimentoSerializer
-    filterset_class = AutorizacaoProcedimentoFilter
+    serializer_class = ProcedureAuthorizationSerializer
+    filterset_class = ProcedureAuthorizationFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "descricao", "status", "codigo_autorizacao"]
     ordering_fields = [
@@ -38,10 +38,10 @@ class AutorizacaoProcedimentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
     ordering = ["-criado_em"]
 
 
-class PlanoCoberturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = CoveragePlan.objects.all()
-    serializer_class = PlanoCoberturaSerializer
-    filterset_class = PlanoCoberturaFilter
+    serializer_class = CoveragePlanSerializer
+    filterset_class = CoveragePlanFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "descricao"]
     ordering_fields = [
@@ -64,10 +64,10 @@ class PlanoCoberturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     ordering = ["-criado_em"]
 
 
-class SeguradoraViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class InsurerViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Insurer.objects.all()
-    serializer_class = SeguradoraSerializer
-    filterset_class = SeguradoraFilter
+    serializer_class = InsurerSerializer
+    filterset_class = InsurerFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "email", "telefone", "descricao", "codigo_externo"]
     ordering_fields = [
@@ -92,14 +92,18 @@ class SeguradoraViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
 
 VIEWSET_MAP = {
-    "autorizacaoprocedimento": AutorizacaoProcedimentoViewSet,
-    "planocobertura": PlanoCoberturaViewSet,
-    "seguradora": SeguradoraViewSet,
+    "autorizacaoprocedimento": ProcedureAuthorizationViewSet,
+    "planocobertura": CoveragePlanViewSet,
+    "seguradora": InsurerViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "AutorizacaoProcedimentoViewSet",
-    "PlanoCoberturaViewSet",
-    "SeguradoraViewSet",
+    "ProcedureAuthorizationViewSet",
+    "CoveragePlanViewSet",
+    "InsurerViewSet",
 ]
+
+AutorizacaoProcedimentoViewSet = ProcedureAuthorizationViewSet
+PlanoCoberturaViewSet = CoveragePlanViewSet
+SeguradoraViewSet = InsurerViewSet

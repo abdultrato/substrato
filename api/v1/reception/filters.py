@@ -2,7 +2,7 @@ from api.core.filters import SafeFilterSet
 from apps.reception.models.checkin_recepcao import CheckinRecepcao
 
 
-class CheckinRecepcaoFilter(SafeFilterSet):
+class ReceptionCheckinFilter(SafeFilterSet):
     class Meta:
         model = CheckinRecepcao
         fields = [
@@ -21,5 +21,8 @@ class CheckinRecepcaoFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "checkin": CheckinRecepcaoFilter,
+    "checkin": ReceptionCheckinFilter,
 }
+
+
+CheckinRecepcaoFilter = ReceptionCheckinFilter

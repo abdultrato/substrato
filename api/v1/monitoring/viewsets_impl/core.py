@@ -4,14 +4,14 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.monitoring.models.system_error import SystemError
 
-from ..filters import ErroSistemaFilter
-from ..serializers import ErroSistemaSerializer
+from ..filters import SystemErrorFilter
+from ..serializers import SystemErrorSerializer
 
 
-class ErroSistemaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
+class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
     queryset = SystemError.objects.select_related("usuario").all()
-    serializer_class = ErroSistemaSerializer
-    filterset_class = ErroSistemaFilter
+    serializer_class = SystemErrorSerializer
+    filterset_class = SystemErrorFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["caminho", "exception_class", "mensagem", "usuario__username"]
     ordering_fields = ["criado_em", "status_code", "exception_class"]
@@ -19,10 +19,12 @@ class ErroSistemaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 
 VIEWSET_MAP = {
-    "erro": ErroSistemaViewSet,
+    "erro": SystemErrorViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "ErroSistemaViewSet",
+    "SystemErrorViewSet",
 ]
+
+ErroSistemaViewSet = SystemErrorViewSet

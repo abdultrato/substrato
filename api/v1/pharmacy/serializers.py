@@ -7,40 +7,46 @@ from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 
 
-class ItemVendaSerializer(serializers.ModelSerializer):
+class SaleItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SaleItem
         fields = "__all__"
 
 
-class LoteSerializer(serializers.ModelSerializer):
+class LotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lot
         fields = "__all__"
 
 
-class MovimentoEstoqueSerializer(serializers.ModelSerializer):
+class InventoryMovementSerializer(serializers.ModelSerializer):
     class Meta:
         model = InventoryMovement
         fields = "__all__"
 
 
-class ProdutoSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
 
 
-class VendaSerializer(serializers.ModelSerializer):
+class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sale
         fields = "__all__"
 
 
 SERIALIZER_MAP = {
-    "itemvenda": ItemVendaSerializer,
-    "lote": LoteSerializer,
-    "movimentoestoque": MovimentoEstoqueSerializer,
-    "produto": ProdutoSerializer,
-    "venda": VendaSerializer,
+    "itemvenda": SaleItemSerializer,
+    "lote": LotSerializer,
+    "movimentoestoque": InventoryMovementSerializer,
+    "produto": ProductSerializer,
+    "venda": SaleSerializer,
 }
+
+ItemVendaSerializer = SaleItemSerializer
+LoteSerializer = LotSerializer
+MovimentoEstoqueSerializer = InventoryMovementSerializer
+ProdutoSerializer = ProductSerializer
+VendaSerializer = SaleSerializer

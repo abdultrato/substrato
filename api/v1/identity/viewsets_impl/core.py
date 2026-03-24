@@ -6,8 +6,8 @@ from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
 
-from ..filters import PasswordResetTokenFilter, PerfilProfissionalFilter, UsuarioFilter
-from ..serializers import PasswordResetTokenSerializer, PerfilProfissionalSerializer, UsuarioSerializer
+from ..filters import PasswordResetTokenFilter, ProfessionalProfileFilter, UserFilter
+from ..serializers import PasswordResetTokenSerializer, ProfessionalProfileSerializer, UserSerializer
 
 
 class PasswordResetTokenViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -20,10 +20,10 @@ class PasswordResetTokenViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     ordering = ["-criado_em"]
 
 
-class PerfilProfissionalViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class ProfessionalProfileViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = ProfessionalProfile.objects.all()
-    serializer_class = PerfilProfissionalSerializer
-    filterset_class = PerfilProfissionalFilter
+    serializer_class = ProfessionalProfileSerializer
+    filterset_class = ProfessionalProfileFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["cargo", "registro_profissional", "departamento"]
     ordering_fields = [
@@ -38,10 +38,10 @@ class PerfilProfissionalViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     ordering = ["-criado_em"]
 
 
-class UsuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UsuarioSerializer
-    filterset_class = UsuarioFilter
+    serializer_class = UserSerializer
+    filterset_class = UserFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["email", "telefone", "password", "first_name", "last_name"]
     ordering_fields = [
@@ -62,13 +62,16 @@ class UsuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
 VIEWSET_MAP = {
     "passwordresettoken": PasswordResetTokenViewSet,
-    "perfilprofissional": PerfilProfissionalViewSet,
-    "usuario": UsuarioViewSet,
+    "perfilprofissional": ProfessionalProfileViewSet,
+    "usuario": UserViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
     "PasswordResetTokenViewSet",
-    "PerfilProfissionalViewSet",
-    "UsuarioViewSet",
+    "ProfessionalProfileViewSet",
+    "UserViewSet",
 ]
+
+PerfilProfissionalViewSet = ProfessionalProfileViewSet
+UsuarioViewSet = UserViewSet

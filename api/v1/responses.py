@@ -1,9 +1,13 @@
 from rest_framework.response import Response
 
 
-def sucesso(dados):
-    return Response({"sucesso": True, "dados": dados})
+def success(data):
+    return Response({"sucesso": True, "dados": data})
 
 
-def erro(mensagem):
-    return Response({"sucesso": False, "erro": mensagem}, status=400)
+def error(message):
+    return Response({"sucesso": False, "erro": message}, status=400)
+
+
+sucesso = success
+erro = error

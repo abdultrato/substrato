@@ -1,8 +1,17 @@
-from .core import VIEWSET_MAP, PasswordResetTokenViewSet, PerfilProfissionalViewSet, UsuarioViewSet
+from .core import (
+    VIEWSET_MAP,
+    PasswordResetTokenViewSet,
+    ProfessionalProfileViewSet,
+    UserViewSet,
+    PerfilProfissionalViewSet,
+    UsuarioViewSet,
+)
 
 __all__ = [
     "VIEWSET_MAP",
     "PasswordResetTokenViewSet",
+    "ProfessionalProfileViewSet",
+    "UserViewSet",
     "PerfilProfissionalViewSet",
     "UsuarioViewSet",
 ]

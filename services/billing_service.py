@@ -4,7 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from django_redis import get_redis_connection
 
-from application.payments.iniciar_pagamento import iniciar_pagamento
+from application.payments.start_payment import start_payment
 from infrastructure.cache import TenantCache
 from services.tenants.tenant_usage_service import TenantUsageService
 
@@ -74,7 +74,7 @@ class BillingService:
         excedente = uso - limite
         valor_extra = BillingService._calcular_valor_excedente(excedente)
 
-        iniciar_pagamento(
+        start_payment(
             inquilino=inquilino,
             valor=valor_extra,
             descricao=f"Excedente de requisições - {periodo}",

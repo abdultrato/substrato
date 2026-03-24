@@ -1,5 +1,9 @@
 from .core import (
     VIEWSET_MAP,
+    SubscriptionPlanViewSet,
+    TenantConfigurationViewSet,
+    TenantUsageViewSet,
+    TenantViewSet,
     ConfiguracaoInquilinoViewSet,
     FeatureFlagTenantViewSet,
     InquilinoViewSet,
@@ -9,6 +13,10 @@ from .core import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "TenantConfigurationViewSet",
+    "TenantViewSet",
+    "SubscriptionPlanViewSet",
+    "TenantUsageViewSet",
     "ConfiguracaoInquilinoViewSet",
     "FeatureFlagTenantViewSet",
     "InquilinoViewSet",

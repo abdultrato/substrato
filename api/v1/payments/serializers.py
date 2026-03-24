@@ -7,7 +7,7 @@ from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
 
-class PagamentoSerializer(serializers.ModelSerializer):
+class PaymentSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
 
@@ -75,7 +75,7 @@ class PagamentoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ReciboSerializer(serializers.ModelSerializer):
+class ReceiptSerializer(serializers.ModelSerializer):
     fatura_codigo = serializers.CharField(source="fatura.id_custom", read_only=True)
     paciente_nome = serializers.CharField(source="fatura.paciente.nome", read_only=True)
     pagamento_metodo = serializers.CharField(source="pagamento.get_metodo_display", read_only=True)
@@ -86,21 +86,26 @@ class ReciboSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ReconciliacaoSerializer(serializers.ModelSerializer):
+class ReconciliationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reconciliation
         fields = "__all__"
 
 
-class TransacaoSerializer(serializers.ModelSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
 
 
 SERIALIZER_MAP = {
-    "pagamento": PagamentoSerializer,
-    "recibo": ReciboSerializer,
-    "reconciliacao": ReconciliacaoSerializer,
-    "transacao": TransacaoSerializer,
+    "pagamento": PaymentSerializer,
+    "recibo": ReceiptSerializer,
+    "reconciliacao": ReconciliationSerializer,
+    "transacao": TransactionSerializer,
 }
+
+PagamentoSerializer = PaymentSerializer
+ReciboSerializer = ReceiptSerializer
+ReconciliacaoSerializer = ReconciliationSerializer
+TransacaoSerializer = TransactionSerializer

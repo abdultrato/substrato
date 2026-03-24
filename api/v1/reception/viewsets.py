@@ -1,17 +1,20 @@
-"""
-Facade module for Recepcao ViewSets.
-"""
+"""Facade module for Reception ViewSets."""
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    AtendimentoRecepcaoViewSet,
-    CheckinRecepcaoViewSet,
-    WorkspaceRecepcaoViewSet,
+    ReceptionCareViewSet,
+    ReceptionCheckinViewSet,
+    ReceptionWorkspaceViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "AtendimentoRecepcaoViewSet",
-    "CheckinRecepcaoViewSet",
-    "WorkspaceRecepcaoViewSet",
+    "ReceptionCareViewSet",
+    "ReceptionCheckinViewSet",
+    "ReceptionWorkspaceViewSet",
 ]
+
+
+AtendimentoRecepcaoViewSet = ReceptionCareViewSet
+CheckinRecepcaoViewSet = ReceptionCheckinViewSet
+WorkspaceRecepcaoViewSet = ReceptionWorkspaceViewSet

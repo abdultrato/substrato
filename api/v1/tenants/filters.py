@@ -6,11 +6,11 @@ from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant_usage import TenantUsage
 
 # =====================================================
-# CONFIGURAÇÃO INQUILINO
+# TENANT CONFIGURATIONS
 # =====================================================
 
 
-class ConfiguracaoInquilinoFilter(SafeFilterSet):
+class TenantConfigurationFilter(SafeFilterSet):
     class Meta:
         model = TenantConfiguration
         fields = [
@@ -60,11 +60,11 @@ class FeatureFlagTenantFilter(SafeFilterSet):
 
 
 # =====================================================
-# INQUILINO
+# TENANTS
 # =====================================================
 
 
-class InquilinoFilter(SafeFilterSet):
+class TenantFilter(SafeFilterSet):
     class Meta:
         model = Tenant
         fields = [
@@ -88,11 +88,11 @@ class InquilinoFilter(SafeFilterSet):
 
 
 # =====================================================
-# PLANO ASSINATURA
+# SUBSCRIPTION PLANS
 # =====================================================
 
 
-class PlanoAssinaturaFilter(SafeFilterSet):
+class SubscriptionPlanFilter(SafeFilterSet):
     class Meta:
         model = SubscriptionPlan
         fields = [
@@ -118,11 +118,11 @@ class PlanoAssinaturaFilter(SafeFilterSet):
 
 
 # =====================================================
-# USO TENANT
+# TENANT USAGE
 # =====================================================
 
 
-class UsoTenantFilter(SafeFilterSet):
+class TenantUsageFilter(SafeFilterSet):
     class Meta:
         model = TenantUsage
         fields = [
@@ -148,9 +148,14 @@ class UsoTenantFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "configuracaoinquilino": ConfiguracaoInquilinoFilter,
+    "configuracaoinquilino": TenantConfigurationFilter,
     "featureflagtenant": FeatureFlagTenantFilter,
-    "inquilino": InquilinoFilter,
-    "planoassinatura": PlanoAssinaturaFilter,
-    "usotenant": UsoTenantFilter,
+    "inquilino": TenantFilter,
+    "planoassinatura": SubscriptionPlanFilter,
+    "usotenant": TenantUsageFilter,
 }
+
+ConfiguracaoInquilinoFilter = TenantConfigurationFilter
+InquilinoFilter = TenantFilter
+PlanoAssinaturaFilter = SubscriptionPlanFilter
+UsoTenantFilter = TenantUsageFilter

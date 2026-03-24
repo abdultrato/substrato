@@ -105,7 +105,7 @@ class LedgerEntryAdmin(admin.ModelAdmin):
 
 
 @admin.register(AccountBalance)
-class SaldoContaAdmin(admin.ModelAdmin):
+class AccountBalanceAdmin(admin.ModelAdmin):
     list_display = (
         "conta",
         "saldo_atual",
@@ -131,7 +131,7 @@ class SaldoContaAdmin(admin.ModelAdmin):
 # =====================================================
 
 
-class MovimentoInline(admin.TabularInline):
+class LegacyMovementInline(admin.TabularInline):
     model = LegacyMovement
     extra = 0
     can_delete = False
@@ -152,7 +152,7 @@ class MovimentoInline(admin.TabularInline):
 
 
 @admin.register(LegacyEntry)
-class LancamentoAdmin(admin.ModelAdmin):
+class LegacyEntryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "descricao",
@@ -164,7 +164,7 @@ class LancamentoAdmin(admin.ModelAdmin):
 
     ordering = ("-data",)
 
-    inlines = [MovimentoInline]
+    inlines = [LegacyMovementInline]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -198,7 +198,7 @@ class LancamentoAdmin(admin.ModelAdmin):
 
 
 @admin.register(LegacyMovement)
-class MovimentoAdmin(admin.ModelAdmin):
+class LegacyMovementAdmin(admin.ModelAdmin):
     list_display = (
         "lancamento",
         "conta",

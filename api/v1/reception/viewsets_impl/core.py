@@ -10,40 +10,42 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
-from application.reception.fluxo_atendimento import (
-    criar_fatura_para_checkin,
-    criar_requisicao_para_checkin,
-    executar_fluxo_completo,
-    obter_resumo_atendimento,
-    registrar_pagamento_para_checkin,
+from application.reception.care_flow import (
+    criar_fatura_para_checkin as create_invoice_for_checkin,
+    criar_requisicao_para_checkin as create_request_for_checkin,
+    executar_fluxo_completo as execute_full_flow,
+    obter_resumo_atendimento as get_care_summary,
+    registrar_pagamento_para_checkin as register_payment_for_checkin,
 )
-from application.reception.obter_area_trabalho import executar as obter_area_trabalho
+from application.reception.get_workspace import execute as get_workspace_data
 from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
 from apps.reception.models.checkin_recepcao import CheckinRecepcao
 
-from ..filters import CheckinRecepcaoFilter
+from ..filters import ReceptionCheckinFilter
 from ..serializers import (
-    CheckinRecepcaoSerializer,
-    CriarFaturaRecepcaoSerializer,
-    CriarRequisicaoRecepcaoSerializer,
-    FluxoAtendimentoCreateSerializer,
-    RegistrarPagamentoRecepcaoSerializer,
-    VincularFaturaSerializer,
-    VincularRequisicaoSerializer,
+    CareFlowCreateSerializer,
+    CreateReceptionInvoiceSerializer,
+    CreateReceptionRequestSerializer,
+    LinkInvoiceSerializer,
+    LinkRequestSerializer,
+    ReceptionCheckinSerializer,
+    RegisterReceptionPaymentSerializer,
 )
 
 
 class TenantAwareMixin:
     permission_classes = [IsAuthenticated]
 
-    def get_inquilino(self):
-        inquilino = getattr(self.request, "inquilino", None)
-        if inquilino is None:
+    def get_tenant(self):
+        tenant = getattr(self.request, "inquilino", None)
+        if tenant is None:
             raise ValidationError("Tenant não identificado na requisição.")
-        return inquilino
+        return tenant
 
-    def executar_seguro(self, func, *args, **kwargs):
+    get_inquilino = get_tenant
+
+    def execute_safely(self, func, *args, **kwargs):
         try:
             return func(*args, **kwargs)
         except DjangoValidationError as exc:
@@ -53,24 +55,26 @@ class TenantAwareMixin:
                 raise ValidationError(exc.messages) from exc
             raise ValidationError(str(exc)) from exc
 
+    executar_seguro = execute_safely
 
-class WorkspaceRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
+
+class ReceptionWorkspaceViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
     http_method_names = ["get"]
 
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
     def list(self, request):
-        return Response(obter_area_trabalho(self.get_inquilino()))
+        return Response(get_workspace_data(self.get_tenant()))
 
 
-class CheckinRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ModelViewSet):
+class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ModelViewSet):
     queryset = CheckinRecepcao.objects.select_related(
         "paciente",
         "requisicao",
         "fatura",
         "atendente",
     ).all()
-    serializer_class = CheckinRecepcaoSerializer
-    filterset_class = CheckinRecepcaoFilter
+    serializer_class = ReceptionCheckinSerializer
+    filterset_class = ReceptionCheckinFilter
     search_fields = [
         "id_custom",
         "paciente__id_custom",
@@ -90,12 +94,12 @@ class CheckinRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mod
     ordering = ["-chegou_em"]
 
     def get_queryset(self):
-        return super().get_queryset().filter(inquilino=self.get_inquilino())
+        return super().get_queryset().filter(inquilino=self.get_tenant())
 
     @transaction.atomic
     def perform_create(self, serializer):
         serializer.save(
-            inquilino=self.get_inquilino(),
+            inquilino=self.get_tenant(),
             criado_por=self.request.user,
             atualizado_por=self.request.user,
         )
@@ -104,67 +108,67 @@ class CheckinRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mod
     def perform_update(self, serializer):
         serializer.save(atualizado_por=self.request.user)
 
-    @action(detail=True, methods=["post"])
-    def iniciar_atendimento(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="iniciar_atendimento", url_name="iniciar-atendimento")
+    def start_care(self, request, pk=None):
         checkin = self.get_object()
-        self.executar_seguro(checkin.iniciar_atendimento, atendente=request.user)
+        self.execute_safely(checkin.iniciar_atendimento, atendente=request.user)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"])
-    def concluir(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def complete(self, request, pk=None):
         checkin = self.get_object()
-        self.executar_seguro(checkin.concluir)
+        self.execute_safely(checkin.concluir)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"])
-    def cancelar(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancel(self, request, pk=None):
         checkin = self.get_object()
-        self.executar_seguro(checkin.cancelar)
+        self.execute_safely(checkin.cancelar)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["get"])
-    def atendimento(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="atendimento", url_name="atendimento")
+    def care(self, request, pk=None):
         checkin = self.get_object()
-        return Response(obter_resumo_atendimento(checkin))
+        return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"])
-    def criar_requisicao(self, request, pk=None):
-        payload = CriarRequisicaoRecepcaoSerializer(data=request.data)
+    @action(detail=True, methods=["post"], url_path="criar_requisicao", url_name="criar-requisicao")
+    def create_request(self, request, pk=None):
+        payload = CreateReceptionRequestSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        self.executar_seguro(
-            criar_requisicao_para_checkin,
+        self.execute_safely(
+            create_request_for_checkin,
             checkin=checkin,
             exame_ids=payload.validated_data["exames_ids"],
             status_clinico=payload.validated_data.get("status_clinico"),
         )
-        return Response(obter_resumo_atendimento(checkin))
+        return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"])
-    def criar_fatura(self, request, pk=None):
-        payload = CriarFaturaRecepcaoSerializer(data=request.data)
+    @action(detail=True, methods=["post"], url_path="criar_fatura", url_name="criar-fatura")
+    def create_invoice(self, request, pk=None):
+        payload = CreateReceptionInvoiceSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        self.executar_seguro(
-            criar_fatura_para_checkin,
+        self.execute_safely(
+            create_invoice_for_checkin,
             checkin=checkin,
             emitir=payload.validated_data.get("emitir", True),
         )
-        return Response(obter_resumo_atendimento(checkin))
+        return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"])
-    def registrar_pagamento(self, request, pk=None):
-        payload = RegistrarPagamentoRecepcaoSerializer(data=request.data)
+    @action(detail=True, methods=["post"], url_path="registrar_pagamento", url_name="registrar-pagamento")
+    def register_payment(self, request, pk=None):
+        payload = RegisterReceptionPaymentSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        self.executar_seguro(
-            registrar_pagamento_para_checkin,
+        self.execute_safely(
+            register_payment_for_checkin,
             checkin=checkin,
             valor=payload.validated_data.get("valor"),
             metodo=payload.validated_data.get("metodo"),
@@ -175,53 +179,53 @@ class CheckinRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mod
             dados_seguro=payload.validated_data.get("dados_seguro"),
             confirmar=payload.validated_data.get("confirmar", True),
         )
-        return Response(obter_resumo_atendimento(checkin))
+        return Response(get_care_summary(checkin))
 
-    @action(detail=True, methods=["post"])
-    def vincular_requisicao(self, request, pk=None):
-        payload = VincularRequisicaoSerializer(data=request.data)
+    @action(detail=True, methods=["post"], url_path="vincular_requisicao", url_name="vincular-requisicao")
+    def link_request(self, request, pk=None):
+        payload = LinkRequestSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        requisicao = get_object_or_404(
-            LabRequest.objects.filter(inquilino=self.get_inquilino()),
+        lab_request = get_object_or_404(
+            LabRequest.objects.filter(inquilino=self.get_tenant()),
             pk=payload.validated_data["requisicao_id"],
         )
 
-        self.executar_seguro(checkin.registrar_requisicao, requisicao)
+        self.execute_safely(checkin.registrar_requisicao, lab_request)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"])
-    def vincular_fatura(self, request, pk=None):
-        payload = VincularFaturaSerializer(data=request.data)
+    @action(detail=True, methods=["post"], url_path="vincular_fatura", url_name="vincular-fatura")
+    def link_invoice(self, request, pk=None):
+        payload = LinkInvoiceSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        fatura = get_object_or_404(
-            Invoice.objects.filter(inquilino=self.get_inquilino()),
+        invoice = get_object_or_404(
+            Invoice.objects.filter(inquilino=self.get_tenant()),
             pk=payload.validated_data["fatura_id"],
         )
 
-        self.executar_seguro(checkin.registrar_fatura, fatura)
+        self.execute_safely(checkin.registrar_fatura, invoice)
         return Response(self.get_serializer(checkin).data)
 
 
-class AtendimentoRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
+class ReceptionCareViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
     http_method_names = ["get", "post"]
 
     @transaction.atomic
-    @extend_schema(request=FluxoAtendimentoCreateSerializer, responses={201: OpenApiTypes.OBJECT})
+    @extend_schema(request=CareFlowCreateSerializer, responses={201: OpenApiTypes.OBJECT})
     def create(self, request):
-        payload = FluxoAtendimentoCreateSerializer(data=request.data)
+        payload = CareFlowCreateSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
 
-        resumo = self.executar_seguro(
-            executar_fluxo_completo,
-            inquilino=self.get_inquilino(),
+        summary = self.execute_safely(
+            execute_full_flow,
+            inquilino=self.get_tenant(),
             usuario=request.user,
             **payload.validated_data,
         )
-        return Response(resumo, status=status.HTTP_201_CREATED)
+        return Response(summary, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[OpenApiParameter("id", OpenApiTypes.INT, OpenApiParameter.PATH, description="ID do check-in")],
@@ -229,21 +233,26 @@ class AtendimentoRecepcaoViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin,
     )
     def retrieve(self, request, pk=None):
         checkin = get_object_or_404(
-            CheckinRecepcao.objects.filter(inquilino=self.get_inquilino()),
+            CheckinRecepcao.objects.filter(inquilino=self.get_tenant()),
             pk=pk,
         )
-        return Response(obter_resumo_atendimento(checkin))
+        return Response(get_care_summary(checkin))
 
 
 VIEWSET_MAP = {
-    "atendimento": AtendimentoRecepcaoViewSet,
-    "checkin": CheckinRecepcaoViewSet,
-    "workspace": WorkspaceRecepcaoViewSet,
+    "atendimento": ReceptionCareViewSet,
+    "checkin": ReceptionCheckinViewSet,
+    "workspace": ReceptionWorkspaceViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "AtendimentoRecepcaoViewSet",
-    "CheckinRecepcaoViewSet",
-    "WorkspaceRecepcaoViewSet",
+    "ReceptionCareViewSet",
+    "ReceptionCheckinViewSet",
+    "ReceptionWorkspaceViewSet",
 ]
+
+
+WorkspaceRecepcaoViewSet = ReceptionWorkspaceViewSet
+CheckinRecepcaoViewSet = ReceptionCheckinViewSet
+AtendimentoRecepcaoViewSet = ReceptionCareViewSet

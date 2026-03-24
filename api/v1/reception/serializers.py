@@ -23,14 +23,14 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class CheckinRecepcaoSerializer(serializers.ModelSerializer):
+class ReceptionCheckinSerializer(serializers.ModelSerializer):
     paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
     paciente_codigo = serializers.CharField(source="paciente.id_custom", read_only=True)
     requisicao_codigo = serializers.CharField(source="requisicao.id_custom", read_only=True)
     fatura_codigo = serializers.CharField(source="fatura.id_custom", read_only=True)
     estado_display = serializers.CharField(source="get_estado_display", read_only=True)
     prioridade_display = serializers.CharField(source="get_prioridade_display", read_only=True)
-    atendente_nome = serializers.SerializerMethodField()
+    atendente_nome = serializers.SerializerMethodField(method_name="get_attendant_name")
 
     class Meta:
         model = CheckinRecepcao
@@ -46,7 +46,7 @@ class CheckinRecepcaoSerializer(serializers.ModelSerializer):
             "atendente_nome",
         )
 
-    def get_atendente_nome(self, obj: CheckinRecepcao) -> str:
+    def get_attendant_name(self, obj: CheckinRecepcao) -> str:
         if not obj.atendente_id:
             return ""
 
@@ -57,15 +57,15 @@ class CheckinRecepcaoSerializer(serializers.ModelSerializer):
         )
 
 
-class VincularRequisicaoSerializer(serializers.Serializer):
+class LinkRequestSerializer(serializers.Serializer):
     requisicao_id = serializers.IntegerField()
 
 
-class VincularFaturaSerializer(serializers.Serializer):
+class LinkInvoiceSerializer(serializers.Serializer):
     fatura_id = serializers.IntegerField()
 
 
-class CriarRequisicaoRecepcaoSerializer(serializers.Serializer):
+class CreateReceptionRequestSerializer(serializers.Serializer):
     exames_ids = serializers.ListField(
         child=serializers.IntegerField(min_value=1),
         allow_empty=False,
@@ -76,11 +76,11 @@ class CriarRequisicaoRecepcaoSerializer(serializers.Serializer):
     )
 
 
-class CriarFaturaRecepcaoSerializer(serializers.Serializer):
+class CreateReceptionInvoiceSerializer(serializers.Serializer):
     emitir = serializers.BooleanField(default=True)
 
 
-class RegistrarPagamentoRecepcaoSerializer(serializers.Serializer):
+class RegisterReceptionPaymentSerializer(serializers.Serializer):
     valor = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -119,7 +119,7 @@ class RegistrarPagamentoRecepcaoSerializer(serializers.Serializer):
         return attrs
 
 
-class PacienteFluxoSerializer(serializers.Serializer):
+class PatientFlowSerializer(serializers.Serializer):
     nome = serializers.CharField(max_length=120)
     morada = serializers.CharField(max_length=150)
     data_nascimento = serializers.DateField(required=False, allow_null=True)
@@ -134,7 +134,7 @@ class PacienteFluxoSerializer(serializers.Serializer):
     idade_gestacional_semanas = serializers.IntegerField(required=False, allow_null=True, min_value=0)
 
 
-class CheckinFluxoSerializer(serializers.Serializer):
+class CheckinFlowSerializer(serializers.Serializer):
     prioridade = serializers.ChoiceField(
         choices=CheckinRecepcao.Prioridade.choices,
         required=False,
@@ -144,13 +144,13 @@ class CheckinFluxoSerializer(serializers.Serializer):
     iniciar_atendimento = serializers.BooleanField(default=False)
 
 
-class FluxoAtendimentoCreateSerializer(serializers.Serializer):
+class CareFlowCreateSerializer(serializers.Serializer):
     paciente_id = serializers.IntegerField(required=False, min_value=1)
-    paciente = PacienteFluxoSerializer(required=False)
-    checkin = CheckinFluxoSerializer(required=False)
-    requisicao = CriarRequisicaoRecepcaoSerializer(required=False)
-    faturamento = CriarFaturaRecepcaoSerializer(required=False)
-    pagamento = RegistrarPagamentoRecepcaoSerializer(required=False)
+    paciente = PatientFlowSerializer(required=False)
+    checkin = CheckinFlowSerializer(required=False)
+    requisicao = CreateReceptionRequestSerializer(required=False)
+    faturamento = CreateReceptionInvoiceSerializer(required=False)
+    pagamento = RegisterReceptionPaymentSerializer(required=False)
     concluir_checkin = serializers.BooleanField(default=False)
 
     def validate(self, attrs):
@@ -179,5 +179,16 @@ class FluxoAtendimentoCreateSerializer(serializers.Serializer):
 
 
 SERIALIZER_MAP = {
-    "checkin": CheckinRecepcaoSerializer,
+    "checkin": ReceptionCheckinSerializer,
 }
+
+
+CheckinRecepcaoSerializer = ReceptionCheckinSerializer
+VincularRequisicaoSerializer = LinkRequestSerializer
+VincularFaturaSerializer = LinkInvoiceSerializer
+CriarRequisicaoRecepcaoSerializer = CreateReceptionRequestSerializer
+CriarFaturaRecepcaoSerializer = CreateReceptionInvoiceSerializer
+RegistrarPagamentoRecepcaoSerializer = RegisterReceptionPaymentSerializer
+PacienteFluxoSerializer = PatientFlowSerializer
+CheckinFluxoSerializer = CheckinFlowSerializer
+FluxoAtendimentoCreateSerializer = CareFlowCreateSerializer

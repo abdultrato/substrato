@@ -9,25 +9,25 @@ from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant_usage import TenantUsage
 
 from ..filters import (
-    ConfiguracaoInquilinoFilter,
     FeatureFlagTenantFilter,
-    InquilinoFilter,
-    PlanoAssinaturaFilter,
-    UsoTenantFilter,
+    SubscriptionPlanFilter,
+    TenantConfigurationFilter,
+    TenantFilter,
+    TenantUsageFilter,
 )
 from ..serializers import (
-    ConfiguracaoInquilinoSerializer,
     FeatureFlagTenantSerializer,
-    InquilinoSerializer,
-    PlanoAssinaturaSerializer,
-    UsoTenantSerializer,
+    SubscriptionPlanSerializer,
+    TenantConfigurationSerializer,
+    TenantSerializer,
+    TenantUsageSerializer,
 )
 
 
-class ConfiguracaoInquilinoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class TenantConfigurationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = TenantConfiguration.objects.all()
-    serializer_class = ConfiguracaoInquilinoSerializer
-    filterset_class = ConfiguracaoInquilinoFilter
+    serializer_class = TenantConfigurationSerializer
+    filterset_class = TenantConfigurationFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "fuso_horario", "moeda", "idioma"]
     ordering_fields = [
@@ -72,10 +72,10 @@ class FeatureFlagTenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ordering = ["-criado_em"]
 
 
-class InquilinoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class TenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Tenant.objects.all()
-    serializer_class = InquilinoSerializer
-    filterset_class = InquilinoFilter
+    serializer_class = TenantSerializer
+    filterset_class = TenantFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "identificador", "dominio", "status_comercial"]
     ordering_fields = [
@@ -98,10 +98,10 @@ class InquilinoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     ordering = ["-criado_em"]
 
 
-class PlanoAssinaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class SubscriptionPlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SubscriptionPlan.objects.all()
-    serializer_class = PlanoAssinaturaSerializer
-    filterset_class = PlanoAssinaturaFilter
+    serializer_class = SubscriptionPlanSerializer
+    filterset_class = SubscriptionPlanFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "nome", "descricao", "tipo"]
     ordering_fields = [
@@ -127,10 +127,10 @@ class PlanoAssinaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
     ordering = ["-criado_em"]
 
 
-class UsoTenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class TenantUsageViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = TenantUsage.objects.all()
-    serializer_class = UsoTenantSerializer
-    filterset_class = UsoTenantFilter
+    serializer_class = TenantUsageSerializer
+    filterset_class = TenantUsageFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "inquilino__nome", "inquilino__identificador"]
     ordering_fields = [
@@ -150,18 +150,23 @@ class UsoTenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
 
 
 VIEWSET_MAP = {
-    "configuracaoinquilino": ConfiguracaoInquilinoViewSet,
+    "configuracaoinquilino": TenantConfigurationViewSet,
     "featureflagtenant": FeatureFlagTenantViewSet,
-    "inquilino": InquilinoViewSet,
-    "planoassinatura": PlanoAssinaturaViewSet,
-    "usotenant": UsoTenantViewSet,
+    "inquilino": TenantViewSet,
+    "planoassinatura": SubscriptionPlanViewSet,
+    "usotenant": TenantUsageViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "ConfiguracaoInquilinoViewSet",
+    "TenantConfigurationViewSet",
     "FeatureFlagTenantViewSet",
-    "InquilinoViewSet",
-    "PlanoAssinaturaViewSet",
-    "UsoTenantViewSet",
+    "TenantViewSet",
+    "SubscriptionPlanViewSet",
+    "TenantUsageViewSet",
 ]
+
+ConfiguracaoInquilinoViewSet = TenantConfigurationViewSet
+InquilinoViewSet = TenantViewSet
+PlanoAssinaturaViewSet = SubscriptionPlanViewSet
+UsoTenantViewSet = TenantUsageViewSet

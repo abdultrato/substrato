@@ -2,11 +2,11 @@ from decimal import Decimal
 
 import pytest
 
-from application.reception.fluxo_atendimento import (
-    abrir_checkin,
-    criar_fatura_para_checkin,
-    criar_requisicao_para_checkin,
-    registrar_pagamento_para_checkin,
+from application.reception.care_flow import (
+    create_invoice_for_checkin,
+    create_request_for_checkin,
+    open_checkin,
+    register_payment_for_checkin,
 )
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
@@ -36,20 +36,20 @@ def test_fluxo_recepcao_faturamento_pagamento():
         setor=Setor.HEMATOLOGIA,
     )
 
-    checkin = abrir_checkin(
+    checkin = open_checkin(
         inquilino=tenant,
         paciente=paciente,
         prioridade=CheckinRecepcao.Prioridade.NORMAL,
     )
 
-    requisicao = criar_requisicao_para_checkin(
+    requisicao = create_request_for_checkin(
         checkin=checkin,
         exame_ids=[exame.id],
     )
 
-    fatura = criar_fatura_para_checkin(checkin=checkin, emitir=True)
+    fatura = create_invoice_for_checkin(checkin=checkin, emitir=True)
 
-    pagamento, recibo = registrar_pagamento_para_checkin(
+    pagamento, recibo = register_payment_for_checkin(
         checkin=checkin,
         valor=fatura.total,
     )
