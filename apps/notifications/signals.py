@@ -9,22 +9,22 @@ from apps.payments.models.receipt import Receipt
 from domain.clinical.estado_resultado import EstadoResultado
 
 from .models.notification import Notification
-from .services import ServicoNotificacao
+from .services import NotificationService
 
 
-def _resolver_paciente_fatura(fatura):
-    paciente = getattr(fatura, "paciente", None)
-    if paciente:
-        return paciente
+def _resolve_invoice_patient(invoice):
+    patient = getattr(invoice, "paciente", None)
+    if patient:
+        return patient
 
-    origem = getattr(fatura, "origem", None)
-    if origem == Invoice.Origem.CLINICO:
-        requisicao = getattr(fatura, "requisicao", None)
-        return getattr(requisicao, "paciente", None)
+    origin = getattr(invoice, "origem", None)
+    if origin == Invoice.Origem.CLINICO:
+        request = getattr(invoice, "requisicao", None)
+        return getattr(request, "paciente", None)
 
-    if origem == Invoice.Origem.ENFERMAGEM:
-        procedimento = getattr(fatura, "procedimento", None)
-        return getattr(procedimento, "paciente", None)
+    if origin == Invoice.Origem.ENFERMAGEM:
+        procedure = getattr(invoice, "procedimento", None)
+        return getattr(procedure, "paciente", None)
 
     return None
 
@@ -34,28 +34,28 @@ def _resolver_paciente_fatura(fatura):
     sender=ResultItem,
     dispatch_uid="notificacoes.resultado_disponivel",
 )
-def notificar_resultado(sender, instance, created, **kwargs):
+def notify_result(sender, instance, created, **kwargs):
     if instance.estado != EstadoResultado.VALIDADO:
         return
 
-    # Notifica quando o último item do resultado foi validado.
+    # Notify only after the last result item is validated.
     if instance.resultado.itens.exclude(estado=EstadoResultado.VALIDADO).exists():
         return
 
-    paciente = instance.resultado.requisicao.paciente
-    if not paciente:
+    patient = instance.resultado.requisicao.paciente
+    if not patient:
         return
 
-    codigo_requisicao = instance.resultado.requisicao.id_custom or instance.resultado.requisicao_id
-    codigo_resultado = instance.resultado.id_custom or instance.resultado_id
-    assunto = "Resultado disponível"
-    mensagem = f"Seu resultado {codigo_resultado} da requisição {codigo_requisicao} já está disponível para consulta."
+    request_code = instance.resultado.requisicao.id_custom or instance.resultado.requisicao_id
+    result_code = instance.resultado.id_custom or instance.resultado_id
+    subject = "Resultado disponível"
+    message = f"Seu resultado {result_code} da requisição {request_code} já está disponível para consulta."
 
-    ServicoNotificacao().enviar_para_paciente(
-        paciente=paciente,
-        assunto=assunto,
-        mensagem=mensagem,
-        tipo_evento=Notification.TipoEvento.RESULTADO_DISPONIVEL,
+    NotificationService().send_to_patient(
+        patient=patient,
+        subject=subject,
+        message=message,
+        event_type=Notification.EventType.RESULTADO_DISPONIVEL,
         referencia_externa=f"resultado:{instance.resultado_id}:validado",
     )
 
@@ -65,24 +65,24 @@ def notificar_resultado(sender, instance, created, **kwargs):
     sender=Invoice,
     dispatch_uid="notificacoes.fatura_emitida",
 )
-def notificar_fatura_emitida(sender, instance, created, **kwargs):
+def notify_invoice_issued(sender, instance, created, **kwargs):
     if instance.estado != Invoice.Estado.EMITIDA:
         return
 
-    paciente = _resolver_paciente_fatura(instance)
-    if not paciente:
+    patient = _resolve_invoice_patient(instance)
+    if not patient:
         return
 
-    codigo_fatura = instance.id_custom or instance.pk
-    valor_total = instance.total or Decimal("0.00")
-    assunto = "Fatura emitida"
-    mensagem = f"A sua fatura {codigo_fatura} foi emitida. Valor total: {valor_total:.2f}."
+    invoice_code = instance.id_custom or instance.pk
+    total_amount = instance.total or Decimal("0.00")
+    subject = "Fatura emitida"
+    message = f"A sua fatura {invoice_code} foi emitida. Valor total: {total_amount:.2f}."
 
-    ServicoNotificacao().enviar_para_paciente(
-        paciente=paciente,
-        assunto=assunto,
-        mensagem=mensagem,
-        tipo_evento=Notification.TipoEvento.FATURA_EMITIDA,
+    NotificationService().send_to_patient(
+        patient=patient,
+        subject=subject,
+        message=message,
+        event_type=Notification.EventType.FATURA_EMITIDA,
         referencia_externa=f"fatura:{instance.pk}:emitida",
     )
 
@@ -92,24 +92,30 @@ def notificar_fatura_emitida(sender, instance, created, **kwargs):
     sender=Receipt,
     dispatch_uid="notificacoes.recibo_gerado",
 )
-def notificar_recibo_gerado(sender, instance, created, **kwargs):
+def notify_receipt_generated(sender, instance, created, **kwargs):
     if not created:
         return
 
-    paciente = _resolver_paciente_fatura(instance.fatura)
-    if not paciente:
+    patient = _resolve_invoice_patient(instance.fatura)
+    if not patient:
         return
 
-    codigo_fatura = instance.fatura.id_custom or instance.fatura_id
-    assunto = "Recibo disponível"
-    mensagem = (
-        f"Seu recibo {instance.numero} foi gerado para a fatura {codigo_fatura}. Valor recebido: {instance.valor:.2f}."
+    invoice_code = instance.fatura.id_custom or instance.fatura_id
+    subject = "Recibo disponível"
+    message = (
+        f"Seu recibo {instance.numero} foi gerado para a fatura {invoice_code}. Valor recebido: {instance.valor:.2f}."
     )
 
-    ServicoNotificacao().enviar_para_paciente(
-        paciente=paciente,
-        assunto=assunto,
-        mensagem=mensagem,
-        tipo_evento=Notification.TipoEvento.RECIBO_GERADO,
+    NotificationService().send_to_patient(
+        patient=patient,
+        subject=subject,
+        message=message,
+        event_type=Notification.EventType.RECIBO_GERADO,
         referencia_externa=f"recibo:{instance.pk}:gerado",
     )
+
+
+_resolver_paciente_fatura = _resolve_invoice_patient
+notificar_resultado = notify_result
+notificar_fatura_emitida = notify_invoice_issued
+notificar_recibo_gerado = notify_receipt_generated

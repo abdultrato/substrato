@@ -6,7 +6,7 @@ from .models.notification_template import NotificationTemplate
 
 
 @admin.register(Notification)
-class NotificacaoAdmin(admin.ModelAdmin):
+class NotificationAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "tipo_evento",
@@ -31,7 +31,7 @@ class NotificacaoAdmin(admin.ModelAdmin):
 
 
 @admin.register(NotificationTemplate)
-class TemplateNotificacaoAdmin(admin.ModelAdmin):
+class NotificationTemplateAdmin(admin.ModelAdmin):
     list_display = ("nome", "criado_em")
     search_fields = ("nome", "conteudo")
     readonly_fields = ("criado_em",)
@@ -39,9 +39,14 @@ class TemplateNotificacaoAdmin(admin.ModelAdmin):
 
 
 @admin.register(DeliveryLog)
-class LogEnvioAdmin(admin.ModelAdmin):
+class DeliveryLogAdmin(admin.ModelAdmin):
     list_display = ("id", "notificacao", "status", "criado_em")
     list_filter = ("status", "criado_em")
     search_fields = ("notificacao__destinatario", "status", "resposta")
     readonly_fields = ("criado_em",)
     ordering = ("-criado_em",)
+
+
+NotificacaoAdmin = NotificationAdmin
+TemplateNotificacaoAdmin = NotificationTemplateAdmin
+LogEnvioAdmin = DeliveryLogAdmin

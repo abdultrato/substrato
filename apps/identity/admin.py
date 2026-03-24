@@ -5,5 +5,8 @@ from .models import User
 
 
 @admin.register(User)
-class UsuarioAdmin(UserAdmin):
+class UserModelAdmin(UserAdmin):
     pass
+
+
+UsuarioAdmin = UserModelAdmin

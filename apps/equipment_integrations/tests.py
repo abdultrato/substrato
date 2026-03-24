@@ -28,7 +28,7 @@ def _tenant():
     return Tenant.objects.create(identificador="tn-int", nome="Tenant Int")
 
 
-def _paciente(tenant):
+def _patient(tenant):
     return Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Int",
@@ -37,7 +37,7 @@ def _paciente(tenant):
     )
 
 
-def _exame(tenant):
+def _exam(tenant):
     return LabExam.objects.create(
         inquilino=tenant,
         nome="Hemograma",
@@ -48,10 +48,10 @@ def _exame(tenant):
 
 
 @pytest.mark.django_db
-def test_requisicao_item_cria_ordem_integracao_por_setor():
+def test_request_item_creates_integration_order_by_sector():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
 
     equipamento = IntegrationEquipment.objects.create(
         inquilino=tenant,
@@ -64,28 +64,28 @@ def test_requisicao_item_cria_ordem_integracao_por_setor():
     IntegrationRouting.objects.create(
         inquilino=tenant,
         equipamento=equipamento,
-        tipo_exame=IntegrationRouting.TipoExame.LABORATORIO,
+        tipo_exame=IntegrationRouting.ExamType.LABORATORIO,
         setor=Setor.HEMATOLOGIA,
         ativo=True,
     )
 
-    req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
-    item = LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    req = LabRequest.objects.create(inquilino=tenant, paciente=patient)
+    item = LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exam)
 
-    ordem = IntegrationOrder.objects.get(equipamento=equipamento, requisicao=req, deletado=False)
-    assert ordem.estado == IntegrationOrder.Estado.PENDENTE
-    assert ordem.itens.filter(requisicao_item=item, deletado=False).exists()
+    order = IntegrationOrder.objects.get(equipamento=equipamento, requisicao=req, deletado=False)
+    assert order.estado == IntegrationOrder.Estado.PENDENTE
+    assert order.itens.filter(requisicao_item=item, deletado=False).exists()
 
 
 @pytest.mark.django_db
-def test_inbox_http_aplica_resultado_por_mapeamento():
+def test_http_inbox_applies_result_by_mapping():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
 
     campo = LabExamField.objects.create(
         inquilino=tenant,
-        exame=exame,
+        exame=exam,
         nome="Hemoglobina",
         tipo=TipoResultado.NUMERICO,
         unidade=UnidadePadrao.G_DL,
@@ -100,7 +100,7 @@ def test_inbox_http_aplica_resultado_por_mapeamento():
     IntegrationRouting.objects.create(
         inquilino=tenant,
         equipamento=equipamento,
-        tipo_exame=IntegrationRouting.TipoExame.LABORATORIO,
+        tipo_exame=IntegrationRouting.ExamType.LABORATORIO,
         setor=Setor.HEMATOLOGIA,
         ativo=True,
     )
@@ -113,13 +113,13 @@ def test_inbox_http_aplica_resultado_por_mapeamento():
         ativo=True,
     )
 
-    cred, key = IntegrationCredential.gerar(equipamento=equipamento, label="key")
-    assert IntegrationCredential.validar_chave(key).id == cred.id
+    cred, key = IntegrationCredential.generate(equipment=equipamento, label="key")
+    assert IntegrationCredential.validate_key(key).id == cred.id
 
-    req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
-    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    req = LabRequest.objects.create(inquilino=tenant, paciente=patient)
+    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exam)
 
-    ordem = IntegrationOrder.objects.get(equipamento=equipamento, requisicao=req, deletado=False)
+    order = IntegrationOrder.objects.get(equipamento=equipamento, requisicao=req, deletado=False)
 
     client = APIClient()
 
@@ -136,7 +136,7 @@ def test_inbox_http_aplica_resultado_por_mapeamento():
         f"/api/v1/equipment_integrations/equipment/{equipamento.id_custom}/results/",
         data={
             "message_id": "msg-1",
-            "accession": ordem.id_custom,
+            "accession": order.id_custom,
             "results": [{"codigo": "HB", "valor": "13.2"}],
         },
         format="json",
@@ -145,6 +145,12 @@ def test_inbox_http_aplica_resultado_por_mapeamento():
     assert resp.status_code == 200
     assert resp.data["ordem_estado"] in {IntegrationOrder.Estado.EM_EXECUCAO, IntegrationOrder.Estado.CONCLUIDA}
 
-    resultado = Result.objects.get(requisicao=req)
-    item = ResultItem.objects.get(resultado=resultado, exame_campo=campo)
+    result = Result.objects.get(requisicao=req)
+    item = ResultItem.objects.get(resultado=result, exame_campo=campo)
     assert item.resultado_valor == Decimal("13.20")
+
+
+_paciente = _patient
+_exame = _exam
+test_requisicao_item_cria_ordem_integracao_por_setor = test_request_item_creates_integration_order_by_sector
+test_inbox_http_aplica_resultado_por_mapeamento = test_http_inbox_applies_result_by_mapping

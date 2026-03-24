@@ -13,7 +13,7 @@ def _tenant():
 
 
 @pytest.mark.django_db
-def test_seguradora_criacao():
+def test_insurer_creation():
     tenant = _tenant()
     seg = Insurer.objects.create(inquilino=tenant, nome="Seguro X", email="seg@example.com")
     assert seg.pk
@@ -21,7 +21,7 @@ def test_seguradora_criacao():
 
 
 @pytest.mark.django_db
-def test_plano_cobertura_percentual():
+def test_coverage_plan_percentage():
     tenant = _tenant()
     seg = Insurer.objects.create(inquilino=tenant, nome="Seguro Y")
     plano = CoveragePlan.objects.create(
@@ -36,7 +36,7 @@ def test_plano_cobertura_percentual():
 
 
 @pytest.mark.django_db
-def test_autorizacao_fluxo():
+def test_authorization_flow():
     tenant = _tenant()
     seg = Insurer.objects.create(inquilino=tenant, nome="Seguro Z")
     plano = CoveragePlan.objects.create(
@@ -48,8 +48,13 @@ def test_autorizacao_fluxo():
         requisicao_id="REQ123",
         status=ProcedureAuthorization.Status.PENDENTE,
     )
-    aut.marcar_resposta(ProcedureAuthorization.Status.APROVADA, codigo_autorizacao="AUTH-001")
+    aut.mark_response(ProcedureAuthorization.Status.APROVADA, authorization_code="AUTH-001")
     aut.refresh_from_db()
     assert aut.status == ProcedureAuthorization.Status.APROVADA
     assert aut.codigo_autorizacao == "AUTH-001"
     assert aut.data_resposta is not None
+
+
+test_seguradora_criacao = test_insurer_creation
+test_plano_cobertura_percentual = test_coverage_plan_percentage
+test_autorizacao_fluxo = test_authorization_flow

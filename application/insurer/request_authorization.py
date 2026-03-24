@@ -1,10 +1,10 @@
-from services.insurer.servico_autorizacao import ServicoAutorizacao
+from services.insurer.authorization_service import AuthorizationService
 
 
 class RequestAuthorizationUseCase:
     @staticmethod
     def execute(requisicao, plano):
-        return ServicoAutorizacao.solicitar(
+        return AuthorizationService.request(
             requisicao_id=requisicao.id,
             plano=plano,
         )

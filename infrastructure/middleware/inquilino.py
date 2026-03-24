@@ -129,7 +129,7 @@ class InquilinoMiddleware:
                 raw_key = (
                     request.headers.get("X-Integration-Key") or request.META.get("HTTP_X_INTEGRATION_KEY") or ""
                 ).strip()
-                cred = IntegrationCredential.validar_chave(raw_key)
+                cred = IntegrationCredential.validate_key(raw_key)
                 if cred and getattr(cred, "equipamento_id", None):
                     inquilino = cred.equipamento.inquilino
             except Exception:

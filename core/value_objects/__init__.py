@@ -1,6 +1,6 @@
-from .dinheiro import Dinheiro
-from .endereco import Endereco
+from .address import Address, Endereco
+from .money import Dinheiro, Money
 from .nuit import Nuit
-from .telefone import Telefone
+from .phone import Phone, Telefone
 
-__all__ = ["Dinheiro", "Endereco", "Nuit", "Telefone"]
+__all__ = ["Address", "Dinheiro", "Endereco", "Money", "Nuit", "Phone", "Telefone"]

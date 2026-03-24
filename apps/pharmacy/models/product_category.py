@@ -77,7 +77,7 @@ class ProductCategory(CoreModel):
         return nivel
 
     @classmethod
-    def categorias_pai_referencia(cls):
+    def parent_category_references(cls):
         """
         Categorias-pai sugeridas para cadastro inicial.
         Não cria registros no banco de dados.
@@ -94,3 +94,6 @@ class ProductCategory(CoreModel):
             return f"{self.categoria_pai} / {self.nome}"
 
         return self.nome
+
+
+ProductCategory.categorias_pai_referencia = ProductCategory.parent_category_references

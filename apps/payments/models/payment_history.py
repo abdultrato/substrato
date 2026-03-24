@@ -11,12 +11,14 @@ class PaymentHistory(CoreModel):
     Serve como trilha auditável.
     """
 
-    class TipoEvento(models.TextChoices):
+    class EventType(models.TextChoices):
         CRIADO = "CRIADO", "Criado"
         CONFIRMADO = "CONFIRMADO", "Confirmado"
         FALHA = "FALHA", "Falha"
         ESTORNADO = "ESTORNADO", "Estornado"
         CANCELADO = "CANCELADO", "Cancelado"
+
+    TipoEvento = EventType
 
     pagamento = models.ForeignKey(
         "pagamentos.Payment",
@@ -28,7 +30,7 @@ class PaymentHistory(CoreModel):
     tipo_evento = models.CharField(
         verbose_name="Tipo de evento",
         max_length=15,
-        choices=TipoEvento.choices,
+        choices=EventType.choices,
         db_index=True,
     )
 

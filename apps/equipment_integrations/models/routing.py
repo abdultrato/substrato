@@ -6,16 +6,17 @@ from core.models.base import NoNameCoreModel
 
 class IntegrationRouting(NoNameCoreModel):
     """
-    Regra de roteamento: define qual equipamento atende um "setor" (ex.: Hematologia,
-    Bioquímica) para que, ao criar uma requisição, o sistema crie uma ordem na worklist
-    do equipamento (via integrações).
+    Routing rule that decides which equipment serves a sector so the system can
+    create a worklist order automatically when a request is created.
     """
 
     prefixo = "ROUT"
 
-    class TipoExame(models.TextChoices):
+    class ExamType(models.TextChoices):
         LABORATORIO = "LAB", "Exame laboratorial"
         MEDICO = "MED", "Exame médico (imagem/diagnóstico)"
+
+    TipoExame = ExamType
 
     equipamento = models.ForeignKey(
         "integracoes_equipamentos.IntegrationEquipment",
@@ -26,8 +27,8 @@ class IntegrationRouting(NoNameCoreModel):
 
     tipo_exame = models.CharField(
         max_length=3,
-        choices=TipoExame.choices,
-        default=TipoExame.LABORATORIO,
+        choices=ExamType.choices,
+        default=ExamType.LABORATORIO,
         db_index=True,
     )
 

@@ -2,10 +2,10 @@ from django.db import models
 from django.utils import timezone
 
 from core.mixins.audit import AuditoriaMixin
-from core.mixins.identificador import IdentificadorMixin
-from core.mixins.model.nome import NomeMixin
+from core.mixins.identifier import IdentificadorMixin
+from core.mixins.model.name import NomeMixin
 from core.mixins.soft_delete import SoftDeleteMixin
-from core.mixins.versionamento import VersionamentoMixin
+from core.mixins.versioning import VersionamentoMixin
 from core.models.base import BaseModel
 
 
@@ -57,13 +57,17 @@ class Tenant(
         hoje = timezone.localdate()
         return self.trial_ate >= hoje
 
-    def obter_assinatura_ativa(self):
+    def get_active_subscription(self):
         return self.assinaturas.filter(status="ATIVA").order_by("-data_inicio").first()
 
     @property
-    def plano(self):
-        assinatura = self.obter_assinatura_ativa()
+    def plan(self):
+        assinatura = self.get_active_subscription()
         return getattr(assinatura, "plano", None)
 
     def __str__(self) -> str:
         return self.nome or self.identificador
+
+
+Tenant.obter_assinatura_ativa = Tenant.get_active_subscription
+Tenant.plano = Tenant.plan

@@ -1,8 +1,21 @@
-from .codigo import CodigoMixin
-from .data_hora import TimeStampMixin
-from .descricao import DescricaoMixin
-from .identificador_custom import IdentificadorMixin
-from .nome import NomeMixin
-from .order import OrdemMixin
+from .code import CodeMixin, CodigoMixin
+from .custom_identifier import CustomIdentifierMixin, IdentificadorMixin
+from .description import DescriptionMixin, DescricaoMixin
+from .name import NameMixin, NomeMixin
+from .order import OrderMixin, OrdemMixin
+from .timestamp import TimeStampMixin, TimestampMixin
 
-__all__ = ["CodigoMixin", "DescricaoMixin", "IdentificadorMixin", "NomeMixin", "OrdemMixin", "TimeStampMixin"]
+__all__ = [
+    "CodeMixin",
+    "CodigoMixin",
+    "CustomIdentifierMixin",
+    "DescriptionMixin",
+    "DescricaoMixin",
+    "IdentificadorMixin",
+    "NameMixin",
+    "NomeMixin",
+    "OrderMixin",
+    "OrdemMixin",
+    "TimeStampMixin",
+    "TimestampMixin",
+]

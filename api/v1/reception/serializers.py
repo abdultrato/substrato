@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.payments.models.payment import Payment
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from core.constants.genero import Genero
 from core.constants.laboratory.status_clinico import StatusClinico
 from core.constants.proveniencia import Proveniencia
@@ -33,7 +33,7 @@ class ReceptionCheckinSerializer(serializers.ModelSerializer):
     atendente_nome = serializers.SerializerMethodField(method_name="get_attendant_name")
 
     class Meta:
-        model = CheckinRecepcao
+        model = ReceptionCheckin
         fields = "__all__"
         read_only_fields = (
             *CORE_READ_ONLY_FIELDS,
@@ -46,7 +46,7 @@ class ReceptionCheckinSerializer(serializers.ModelSerializer):
             "atendente_nome",
         )
 
-    def get_attendant_name(self, obj: CheckinRecepcao) -> str:
+    def get_attendant_name(self, obj: ReceptionCheckin) -> str:
         if not obj.atendente_id:
             return ""
 
@@ -87,8 +87,8 @@ class RegisterReceptionPaymentSerializer(serializers.Serializer):
         required=False,
     )
     metodo = serializers.ChoiceField(
-        choices=Payment.Metodo.choices,
-        default=Payment.Metodo.DINHEIRO,
+        choices=Payment.Method.choices,
+        default=Payment.Method.DINHEIRO,
     )
     referencia_externa = serializers.CharField(
         max_length=120,
@@ -106,8 +106,8 @@ class RegisterReceptionPaymentSerializer(serializers.Serializer):
     confirmar = serializers.BooleanField(default=True)
 
     def validate(self, attrs):
-        metodo = attrs.get("metodo") or Payment.Metodo.DINHEIRO
-        if metodo == Payment.Metodo.SEGURO_SAUDE:
+        metodo = attrs.get("metodo") or Payment.Method.DINHEIRO
+        if metodo == Payment.Method.SEGURO_SAUDE:
             if not attrs.get("seguradora_id"):
                 raise serializers.ValidationError(
                     {"seguradora_id": "Informe a seguradora para pagamento via seguro de saúde."}
@@ -136,7 +136,7 @@ class PatientFlowSerializer(serializers.Serializer):
 
 class CheckinFlowSerializer(serializers.Serializer):
     prioridade = serializers.ChoiceField(
-        choices=CheckinRecepcao.Prioridade.choices,
+        choices=ReceptionCheckin.Priority.choices,
         required=False,
     )
     motivo = serializers.CharField(max_length=255, required=False, allow_blank=True)

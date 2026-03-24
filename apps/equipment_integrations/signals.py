@@ -11,21 +11,15 @@ logger = logging.getLogger("equipment_integrations.signals")
 
 
 @receiver(post_save, sender=LabRequestItem)
-def criar_ordem_integracao_para_item(sender, instance: LabRequestItem, created: bool, **kwargs):
+def create_integration_order_for_item(sender, instance: LabRequestItem, created: bool, **kwargs):
     """
-    Cria/atualiza ordens de integração (worklist) automaticamente quando um item de
-    requisição é criado.
-
-    Regras:
-    - Depende de existir roteamento ativo (IntegracaoRoteamento) para o setor do exame.
-    - Agrupa por (equipamento, requisicao) em uma única ordem.
-    - Cria item de ordem ligando o RequisicaoItem.
+    Create or update worklist orders automatically when a request item is created.
     """
 
     if not created:
         return
 
-    # Lazy import para evitar ciclos.
+    # Lazy import avoids cycles.
     try:
         from apps.equipment_integrations.models.order import (
             IntegrationOrder,
@@ -43,10 +37,10 @@ def criar_ordem_integracao_para_item(sender, instance: LabRequestItem, created: 
     tipo_exame = None
     setor = None
     if instance.exame_id:
-        tipo_exame = IntegrationRouting.TipoExame.LABORATORIO
+        tipo_exame = IntegrationRouting.ExamType.LABORATORIO
         setor = getattr(instance.exame, "setor", None)
     elif instance.exame_medico_id:
-        tipo_exame = IntegrationRouting.TipoExame.MEDICO
+        tipo_exame = IntegrationRouting.ExamType.MEDICO
         setor = getattr(instance.exame_medico, "setor", None)
 
     if not tipo_exame or not setor:
@@ -85,3 +79,6 @@ def criar_ordem_integracao_para_item(sender, instance: LabRequestItem, created: 
         requisicao_item=instance,
         defaults={"estado": IntegrationOrderItem.Estado.PENDENTE},
     )
+
+
+criar_ordem_integracao_para_item = create_integration_order_for_item

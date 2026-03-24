@@ -35,8 +35,8 @@ def _formatar_data_requisicao(requisicao):
     return data.strftime("%d/%m/%Y %H:%M")
 
 
-def _codigo_exame(exame):
-    return getattr(exame, "codigo", None) or getattr(exame, "id_custom", None) or "—"
+def _exam_code(exam):
+    return getattr(exam, "codigo", None) or getattr(exam, "id_custom", None) or "—"
 
 
 def _resolver_usuario_documento(requisicao):
@@ -135,7 +135,7 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
         [
             [
                 cell_paragraph(
-                    f"{bold('Código')}: {_codigo_exame(e)} - {bold('Nome')}: {e.nome.capitalize()} - {bold('Método')}: {e.metodo.capitalize()}"
+                    f"{bold('Código')}: {_exam_code(e)} - {bold('Nome')}: {e.nome.capitalize()} - {bold('Método')}: {e.metodo.capitalize()}"
                 )
             ]
             for e in exames
@@ -168,3 +168,6 @@ def gerar_pdf_requisicao(requisicao) -> tuple[bytes, str]:
     buffer.close()
     filename = f"{requisicao.id_custom}_{requisicao.paciente.nome}.pdf"
     return pdf_bytes, filename
+
+
+_codigo_exame = _exam_code

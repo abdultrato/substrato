@@ -11,7 +11,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(UserActivity)
-class AtividadeUsuarioAdmin(CoreAdmin):
+class UserActivityAdmin(CoreAdmin):
     list_display = (
         "criado_em",
         "usuario",
@@ -25,3 +25,6 @@ class AtividadeUsuarioAdmin(CoreAdmin):
     list_filter = ("metodo", "status_code", "view_basename")
     search_fields = ("caminho", "path_completo", "usuario__username", "mensagem")
     ordering = ("-criado_em", "-id")
+
+
+AtividadeUsuarioAdmin = UserActivityAdmin

@@ -83,7 +83,7 @@ class ProcedureItem(NoNameCoreModel):
 
         return (self.quantidade or 0) * (preco or Decimal("0.00"))
 
-    def _aplicar_defaults_catalogo(self):
+    def _apply_catalog_defaults(self):
         if not self.catalogo_id:
             return
 
@@ -102,7 +102,7 @@ class ProcedureItem(NoNameCoreModel):
         except ObjectDoesNotExist:
             return Decimal("0.00")
 
-    def _upsert_valor(self):
+    def _upsert_value(self):
         from apps.nursing.models.procedure_item_value import (
             ProcedureItemValue,
         )
@@ -126,7 +126,7 @@ class ProcedureItem(NoNameCoreModel):
             self.__class__.all_objects.filter(pk=self.pk).update(preco_unitario=preco)
             self.preco_unitario = preco
 
-    def _gerar_materiais_padrao(self):
+    def _generate_default_materials(self):
         if not self.catalogo_id:
             return
 
@@ -197,16 +197,16 @@ class ProcedureItem(NoNameCoreModel):
         if not self.inquilino_id and self.procedimento_id:
             self.inquilino_id = self.procedimento.inquilino_id
 
-        self._aplicar_defaults_catalogo()
+        self._apply_catalog_defaults()
         self.full_clean()
 
         super().save(*args, **kwargs)
 
         if criando:
-            self._gerar_materiais_padrao()
+            self._generate_default_materials()
 
-        self._upsert_valor()
-        self.procedimento.recalcular_totais()
+        self._upsert_value()
+        self.procedimento.recalculate_totals()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
@@ -224,7 +224,12 @@ class ProcedureItem(NoNameCoreModel):
             valor.delete()
 
         super().delete(*args, **kwargs)
-        procedimento.recalcular_totais()
+        procedimento.recalculate_totals()
 
     def __str__(self):
         return f"{self.descricao} x{self.quantidade}"
+
+
+ProcedureItem._aplicar_defaults_catalogo = ProcedureItem._apply_catalog_defaults
+ProcedureItem._upsert_valor = ProcedureItem._upsert_value
+ProcedureItem._gerar_materiais_padrao = ProcedureItem._generate_default_materials

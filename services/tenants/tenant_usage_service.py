@@ -5,15 +5,11 @@ from infrastructure.cache import TenantCache
 
 class TenantUsageService:
     """
-    Controle de uso mensal por tenant.
+    Controls monthly tenant request usage.
     """
 
     KEY_PREFIX = "requests"
-    TTL_DAYS = 40  # mantém histórico curto pós-fechamento
-
-    # =====================================================
-    # CHAVE
-    # =====================================================
+    TTL_DAYS = 40
 
     @staticmethod
     def _month_reference(date=None):
@@ -22,63 +18,49 @@ class TenantUsageService:
         return date.strftime("%Y-%m")
 
     @staticmethod
-    def _key(periodo: str):
-        return f"{TenantUsageService.KEY_PREFIX}:{periodo}"
-
-    # =====================================================
-    # INCREMENTO
-    # =====================================================
+    def _cache_key(period: str):
+        return f"{TenantUsageService.KEY_PREFIX}:{period}"
 
     @staticmethod
-    def incrementar_requisicao(inquilino):
-        """
-        Incrementa o contador mensal do tenant.
-        """
-        periodo = TenantUsageService._month_reference()
-        key = TenantUsageService._key(periodo)
+    def increment_request(tenant):
+        period = TenantUsageService._month_reference()
+        key = TenantUsageService._cache_key(period)
 
         return TenantCache.incr(
-            inquilino.id,
+            tenant.id,
             key,
             amount=1,
             timeout=60 * 60 * 24 * TenantUsageService.TTL_DAYS,
         )
 
-    # =====================================================
-    # CONSULTA
-    # =====================================================
+    @staticmethod
+    def get_requests(tenant, period=None):
+        period = period or TenantUsageService._month_reference()
+        key = TenantUsageService._cache_key(period)
+
+        return TenantCache.get(tenant.id, key) or 0
 
     @staticmethod
-    def obter_requisicoes(inquilino, periodo=None):
-        """
-        Retorna a contagem do mês atual ou do período informado.
-        """
-        periodo = periodo or TenantUsageService._month_reference()
-        key = TenantUsageService._key(periodo)
+    def reset_requests(tenant, period=None):
+        period = period or TenantUsageService._month_reference()
+        key = TenantUsageService._cache_key(period)
 
-        return TenantCache.get(inquilino.id, key) or 0
-
-    # =====================================================
-    # RESET
-    # =====================================================
+        TenantCache.set(tenant.id, key, 0)
 
     @staticmethod
-    def resetar_requisicoes(inquilino, periodo=None):
-        periodo = periodo or TenantUsageService._month_reference()
-        key = TenantUsageService._key(periodo)
+    def usage_percentage(tenant):
+        usage = TenantUsageService.get_requests(tenant)
+        plan = getattr(tenant, "plan", None)
+        limit = getattr(plan, "limite_requisicoes_mes", 0) or 0
 
-        TenantCache.set(inquilino.id, key, 0)
-
-    # =====================================================
-    # MÉTRICAS AUXILIARES
-    # =====================================================
-
-    @staticmethod
-    def percentual_uso(inquilino):
-        uso = TenantUsageService.obter_requisicoes(inquilino)
-        limite = inquilino.plano.limite_requisicoes_mes or 0
-
-        if not limite:
+        if not limit:
             return 0
 
-        return round((uso / limite) * 100, 2)
+        return round((usage / limit) * 100, 2)
+
+
+TenantUsageService._key = TenantUsageService._cache_key
+TenantUsageService.incrementar_requisicao = TenantUsageService.increment_request
+TenantUsageService.obter_requisicoes = TenantUsageService.get_requests
+TenantUsageService.resetar_requisicoes = TenantUsageService.reset_requests
+TenantUsageService.percentual_uso = TenantUsageService.usage_percentage

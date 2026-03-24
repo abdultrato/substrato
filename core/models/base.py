@@ -1,11 +1,11 @@
 from django.db import models
 
-from core.mixins.audit import AuditoriaMixin
-from core.mixins.escopo_inquilino import InquilinoMixin
-from core.mixins.identificador import IdentificadorMixin
-from core.mixins.model.nome import NomeMixin
+from core.mixins.audit import AuditMixin
+from core.mixins.identifier import IdentifierMixin
+from core.mixins.model.name import NameMixin
 from core.mixins.soft_delete import SoftDeleteMixin
-from core.mixins.versionamento import VersionamentoMixin
+from core.mixins.tenant_scope import TenantMixin
+from core.mixins.versioning import VersioningMixin
 
 from .managers import ManagerAtivo
 
@@ -29,7 +29,7 @@ class BaseModel(models.Model):
 # =========================================================
 
 
-class IdentidadeModel(IdentificadorMixin, BaseModel):
+class IdentityModel(IdentifierMixin, BaseModel):
     """
     Adiciona identificador customizado (id_custom).
     """
@@ -43,7 +43,7 @@ class IdentidadeModel(IdentificadorMixin, BaseModel):
 # =========================================================
 
 
-class AuditoriaModel(AuditoriaMixin, VersionamentoMixin, BaseModel):
+class AuditModel(AuditMixin, VersioningMixin, BaseModel):
     """
     Adiciona controle de auditoria e versionamento.
     """
@@ -80,7 +80,7 @@ class SoftDeleteModel(SoftDeleteMixin, BaseModel):
 # =========================================================
 
 
-class TenantModel(InquilinoMixin, BaseModel):
+class TenantModel(TenantMixin, BaseModel):
     """
     Adiciona escopo de inquilino.
     """
@@ -95,12 +95,12 @@ class TenantModel(InquilinoMixin, BaseModel):
 
 
 class CoreModel(
-    NomeMixin,
-    IdentificadorMixin,
-    AuditoriaMixin,
-    VersionamentoMixin,
+    NameMixin,
+    IdentifierMixin,
+    AuditMixin,
+    VersioningMixin,
     SoftDeleteMixin,
-    InquilinoMixin,
+    TenantMixin,
     BaseModel,
 ):
     """
@@ -124,9 +124,9 @@ class CoreModel(
 
 
 class InqCoreModel(
-    IdentificadorMixin,
-    AuditoriaMixin,
-    VersionamentoMixin,
+    IdentifierMixin,
+    AuditMixin,
+    VersioningMixin,
     SoftDeleteMixin,
     BaseModel,
 ):
@@ -151,11 +151,11 @@ class InqCoreModel(
 
 
 class NoNameCoreModel(
-    IdentificadorMixin,
-    AuditoriaMixin,
-    VersionamentoMixin,
+    IdentifierMixin,
+    AuditMixin,
+    VersioningMixin,
     SoftDeleteMixin,
-    InquilinoMixin,
+    TenantMixin,
     BaseModel,
 ):
     """
@@ -168,3 +168,7 @@ class NoNameCoreModel(
 
     class Meta:
         abstract = True
+
+
+IdentidadeModel = IdentityModel
+AuditoriaModel = AuditModel

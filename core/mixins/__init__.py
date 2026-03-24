@@ -1,7 +1,17 @@
-from .audit import AuditoriaMixin
-from .escopo_inquilino import InquilinoMixin
-from .identificador import IdentificadorMixin
+from .audit import AuditMixin, AuditoriaMixin
+from .identifier import IdentifierMixin, IdentificadorMixin
 from .soft_delete import SoftDeleteMixin
-from .versionamento import VersionamentoMixin
+from .tenant_scope import InquilinoMixin, TenantMixin
+from .versioning import VersionamentoMixin, VersioningMixin
 
-__all__ = ["AuditoriaMixin", "IdentificadorMixin", "InquilinoMixin", "SoftDeleteMixin", "VersionamentoMixin"]
+__all__ = [
+    "AuditMixin",
+    "AuditoriaMixin",
+    "IdentifierMixin",
+    "IdentificadorMixin",
+    "InquilinoMixin",
+    "SoftDeleteMixin",
+    "TenantMixin",
+    "VersionamentoMixin",
+    "VersioningMixin",
+]

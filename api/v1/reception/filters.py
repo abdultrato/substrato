@@ -1,10 +1,10 @@
 from api.core.filters import SafeFilterSet
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 
 
 class ReceptionCheckinFilter(SafeFilterSet):
     class Meta:
-        model = CheckinRecepcao
+        model = ReceptionCheckin
         fields = [
             "inquilino",
             "paciente",

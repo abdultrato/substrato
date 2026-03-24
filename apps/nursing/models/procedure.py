@@ -64,7 +64,7 @@ class Procedure(NoNameCoreModel):
             self.inquilino_id = self.paciente.inquilino_id
         super().save(*args, **kwargs)
 
-    def recalcular_totais(self):
+    def recalculate_totals(self):
         if not self.pk:
             return
 
@@ -102,3 +102,6 @@ class Procedure(NoNameCoreModel):
 
     def __str__(self):
         return f"{self.id_custom} - {self.paciente.nome}"
+
+
+Procedure.recalcular_totais = Procedure.recalculate_totals

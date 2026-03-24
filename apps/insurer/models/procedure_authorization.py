@@ -1,14 +1,14 @@
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.model.descricao import DescricaoMixin
+from core.mixins.model.description import DescricaoMixin
 from core.mixins.model.order import OrdemMixin
 from core.models import CoreModel
 
 
 class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Solicitação de autorização a seguradora para um procedimento/requisicao.
+    Insurer authorization request for a procedure/request.
     """
 
     prefixo = "AUT"
@@ -50,11 +50,14 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
         verbose_name = "Autorização de Procedimento"
         verbose_name_plural = "Autorizações de Procedimento"
 
-    def marcar_resposta(self, status, codigo_autorizacao=None):
+    def mark_response(self, status, authorization_code=None):
         self.status = status
-        self.codigo_autorizacao = codigo_autorizacao
+        self.codigo_autorizacao = authorization_code
         self.data_resposta = timezone.now()
         self.save(update_fields=["status", "codigo_autorizacao", "data_resposta"])
 
     def __str__(self) -> str:
         return self.id_custom or f"Autorizacao {self.pk}"
+
+
+ProcedureAuthorization.marcar_resposta = ProcedureAuthorization.mark_response

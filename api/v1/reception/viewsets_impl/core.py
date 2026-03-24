@@ -20,7 +20,7 @@ from application.reception.care_flow import (
 from application.reception.get_workspace import execute as get_workspace_data
 from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 
 from ..filters import ReceptionCheckinFilter
 from ..serializers import (
@@ -67,7 +67,7 @@ class ReceptionWorkspaceViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, 
 
 
 class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ModelViewSet):
-    queryset = CheckinRecepcao.objects.select_related(
+    queryset = ReceptionCheckin.objects.select_related(
         "paciente",
         "requisicao",
         "fatura",
@@ -111,7 +111,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
     @action(detail=True, methods=["post"], url_path="iniciar_atendimento", url_name="iniciar-atendimento")
     def start_care(self, request, pk=None):
         checkin = self.get_object()
-        self.execute_safely(checkin.iniciar_atendimento, atendente=request.user)
+        self.execute_safely(checkin.start_care, attendant=request.user)
         return Response(self.get_serializer(checkin).data)
 
     @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
@@ -192,7 +192,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
             pk=payload.validated_data["requisicao_id"],
         )
 
-        self.execute_safely(checkin.registrar_requisicao, lab_request)
+        self.execute_safely(checkin.register_request, lab_request)
         return Response(self.get_serializer(checkin).data)
 
     @action(detail=True, methods=["post"], url_path="vincular_fatura", url_name="vincular-fatura")
@@ -206,7 +206,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
             pk=payload.validated_data["fatura_id"],
         )
 
-        self.execute_safely(checkin.registrar_fatura, invoice)
+        self.execute_safely(checkin.register_invoice, invoice)
         return Response(self.get_serializer(checkin).data)
 
 
@@ -233,7 +233,7 @@ class ReceptionCareViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewS
     )
     def retrieve(self, request, pk=None):
         checkin = get_object_or_404(
-            CheckinRecepcao.objects.filter(inquilino=self.get_tenant()),
+            ReceptionCheckin.objects.filter(inquilino=self.get_tenant()),
             pk=pk,
         )
         return Response(get_care_summary(checkin))

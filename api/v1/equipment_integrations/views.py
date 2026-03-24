@@ -51,7 +51,7 @@ class IntegrationKeyPermission(BasePermission):
 
     def has_permission(self, request, view):
         raw_key = _get_integration_key(request)
-        cred = IntegrationCredential.validar_chave(raw_key)
+        cred = IntegrationCredential.validate_key(raw_key)
         if cred is None or not cred.ativo or cred.revogada_em:
             return False
         request.integration_cred = cred
@@ -180,7 +180,7 @@ class EquipmentWorklistView(APIView):
         if cred is None:
             return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if not cred.possui_scope(IntegrationCredential.Scope.WORKLIST_READ):
+        if not cred.has_scope(IntegrationCredential.Scope.WORKLIST_READ):
             return Response(
                 {"detail": "Sem permissão para ler worklist."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -337,7 +337,7 @@ class EquipmentResultsInboxView(APIView):
         if cred is None:
             return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if not cred.possui_scope(IntegrationCredential.Scope.RESULT_WRITE):
+        if not cred.has_scope(IntegrationCredential.Scope.RESULT_WRITE):
             return Response(
                 {"detail": "Sem permissão para enviar resultados."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -408,11 +408,11 @@ class EquipmentResultsInboxView(APIView):
                     }
                 )
 
-        msg = IntegrationMessage.criar_de_payload(
-            equipamento=equipamento,
-            ordem=ordem,
-            direcao=IntegrationMessage.Direcao.ENTRADA,
-            protocolo=equipamento.protocolo,
+        msg = IntegrationMessage.create_from_payload(
+            equipment=equipamento,
+            order=ordem,
+            direction=IntegrationMessage.Direction.ENTRADA,
+            protocol=equipamento.protocolo,
             message_id=message_id,
             content_type=content_type,
             raw_body=raw_body,

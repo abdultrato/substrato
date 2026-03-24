@@ -12,7 +12,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(Tenant)
-class InquilinoAdmin(admin.ModelAdmin):
+class TenantAdmin(admin.ModelAdmin):
     list_display = ("identificador", "nome", "dominio", "ativo", "status_comercial", "trial_ate")
     list_filter = ("ativo", "status_comercial")
     search_fields = ("identificador", "nome", "dominio")
@@ -20,7 +20,7 @@ class InquilinoAdmin(admin.ModelAdmin):
 
 
 @admin.register(TenantConfiguration)
-class ConfiguracaoInquilinoAdmin(CoreAdmin):
+class TenantConfigurationAdmin(CoreAdmin):
     list_display = (
         "inquilino",
         "fuso_horario",
@@ -30,3 +30,7 @@ class ConfiguracaoInquilinoAdmin(CoreAdmin):
     )
     list_filter = ("moeda", "idioma")
     search_fields = ("inquilino__nome", "inquilino__identificador")
+
+
+InquilinoAdmin = TenantAdmin
+ConfiguracaoInquilinoAdmin = TenantConfigurationAdmin

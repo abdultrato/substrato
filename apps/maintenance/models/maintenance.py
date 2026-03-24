@@ -16,12 +16,14 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
     fonte_inquilino = "equipamento"
     prefixo = "MNT"
 
-    class Tipo(models.TextChoices):
+    class Type(models.TextChoices):
         DIARIA = "DIARIA", "Diária"
         SEMANAL = "SEMANAL", "Semanal"
         MENSAL = "MENSAL", "Mensal"
         SEMESTRAL = "SEMESTRAL", "Semestral"
         ANUAL = "ANUAL", "Anual"
+
+    Tipo = Type
 
     equipamento = models.ForeignKey(
         "equipamentos.Equipment",
@@ -30,7 +32,7 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
         db_index=True,
     )
 
-    tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.MENSAL, db_index=True)
+    tipo = models.CharField(max_length=20, choices=Type.choices, default=Type.MENSAL, db_index=True)
     data_programada = models.DateField(default=timezone.localdate, db_index=True)
     data_realizada = models.DateField(null=True, blank=True, db_index=True)
 

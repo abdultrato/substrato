@@ -6,12 +6,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from apps.consultations.utils.precificacao import (
+from apps.consultations.utils.pricing import (
     calcular_multiplicador_preco,
-    calcular_tipo_horario,
+    calculate_schedule_type,
     is_feriado,
-    obter_datetime_local,
-    obter_timezone_inquilino,
+    get_local_datetime,
+    get_tenant_timezone,
 )
 from infrastructure.orm.fields.dinheiro_field import DinheiroField
 from core.models.base import NoNameCoreModel
@@ -138,16 +138,16 @@ class MedicalConsultation(NoNameCoreModel):
         """
         Retorna ZoneInfo do tenant (ou None para timezone default).
         """
-        return obter_timezone_inquilino(self.inquilino)
+        return get_tenant_timezone(self.inquilino)
 
     def _is_feriado(self) -> bool:
         return is_feriado(self.inquilino, self.agendada_para)
 
     def _tenant_local_datetime(self):
-        return obter_datetime_local(self.inquilino, self.agendada_para)
+        return get_local_datetime(self.inquilino, self.agendada_para)
 
-    def _tipo_horario_atual(self) -> str:
-        return calcular_tipo_horario(self.inquilino, self.agendada_para, feriado_manual=self.feriado_manual)
+    def _current_schedule_type(self) -> str:
+        return calculate_schedule_type(self.inquilino, self.agendada_para, feriado_manual=self.feriado_manual)
 
     def _multiplicador_preco_atual(self) -> Decimal:
         return calcular_multiplicador_preco(self.inquilino, self.agendada_para, feriado_manual=self.feriado_manual)
@@ -170,7 +170,7 @@ class MedicalConsultation(NoNameCoreModel):
 
         base = especialidade.preco_base if especialidade.preco_base is not None else Decimal("0.00")
 
-        self.tipo_horario = self._tipo_horario_atual()
+        self.tipo_horario = self._current_schedule_type()
         self.multiplicador_preco = self._multiplicador_preco_atual()
 
         try:
@@ -202,3 +202,6 @@ class MedicalConsultation(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.id_custom} - {self.paciente.nome} ({self.tipo})"
+
+
+MedicalConsultation._tipo_horario_atual = MedicalConsultation._current_schedule_type

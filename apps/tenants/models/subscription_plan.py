@@ -4,12 +4,12 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from core.mixins.audit import AuditoriaMixin
-from core.mixins.identificador import IdentificadorMixin
-from core.mixins.model.descricao import DescricaoMixin
-from core.mixins.model.nome import NomeMixin
+from core.mixins.identifier import IdentificadorMixin
+from core.mixins.model.description import DescricaoMixin
+from core.mixins.model.name import NomeMixin
 from core.mixins.model.order import OrdemMixin
 from core.mixins.soft_delete import SoftDeleteMixin
-from core.mixins.versionamento import VersionamentoMixin
+from core.mixins.versioning import VersionamentoMixin
 from core.models.base import BaseModel
 
 
@@ -25,15 +25,17 @@ class SubscriptionPlan(
 ):
     prefixo = "PLAN"
 
-    class TipoPlano(models.TextChoices):
+    class PlanType(models.TextChoices):
         FREE = "FREE", "Free"
         BASIC = "BASIC", "Basic"
         PRO = "PRO", "Pro"
 
+    TipoPlano = PlanType
+
     tipo = models.CharField(
         max_length=10,
-        choices=TipoPlano.choices,
-        default=TipoPlano.FREE,
+        choices=PlanType.choices,
+        default=PlanType.FREE,
         db_index=True,
     )
 

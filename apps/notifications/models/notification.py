@@ -2,17 +2,20 @@ from django.db import models
 
 
 class Notification(models.Model):
-    class Canal(models.TextChoices):
+    class Channel(models.TextChoices):
         EMAIL = "email", "E-mail"
         SMS = "sms", "SMS"
         WHATSAPP = "whatsapp", "WhatsApp"
 
-    class TipoEvento(models.TextChoices):
+    class EventType(models.TextChoices):
         GENERICA = "GERAL", "Geral"
         PASSWORD_RESET = "RESET_SENHA", "Reposição de palavra-passe"
         RESULTADO_DISPONIVEL = "RESULTADO", "Resultado disponível"
         FATURA_EMITIDA = "FATURA", "Fatura emitida"
         RECIBO_GERADO = "RECIBO", "Recibo gerado"
+
+    Canal = Channel
+    TipoEvento = EventType
 
     paciente = models.ForeignKey(
         "clinico.Patient",
@@ -25,13 +28,13 @@ class Notification(models.Model):
     destinatario = models.CharField(max_length=255)
     canal = models.CharField(
         max_length=50,
-        choices=Canal.choices,
+        choices=Channel.choices,
     )
     assunto = models.CharField(max_length=160, blank=True, default="")
     tipo_evento = models.CharField(
         max_length=40,
-        choices=TipoEvento.choices,
-        default=TipoEvento.GENERICA,
+        choices=EventType.choices,
+        default=EventType.GENERICA,
     )
     referencia_externa = models.CharField(max_length=120, blank=True)
 

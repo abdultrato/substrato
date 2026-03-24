@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 
-from apps.consultations.utils.precificacao import calcular_multiplicador_preco
+from apps.consultations.utils.pricing import calcular_multiplicador_preco
 from core.models.base import NoNameCoreModel
 
 

@@ -13,8 +13,8 @@ from core.models.base import NoNameCoreModel
 
 def _hash_key(raw_key: str) -> str:
     """
-    Hash determinístico (para lookup) com "pepper" do servidor.
-    Não é um hash de senha; é para identificar a credencial rapidamente.
+    Deterministic lookup hash using the server pepper.
+    This is not a password hash; it only helps identify the credential quickly.
     """
 
     pepper = getattr(settings, "SECRET_KEY", "") or ""
@@ -59,11 +59,11 @@ class IntegrationCredential(NoNameCoreModel):
         ]
 
     @classmethod
-    def gerar(
-        cls, *, equipamento, label: str = "", scopes: Iterable[str] | None = None
+    def generate(
+        cls, *, equipment, label: str = "", scopes: Iterable[str] | None = None
     ) -> tuple["IntegrationCredential", str]:
         """
-        Cria credencial e retorna a chave em texto plano (única emissão).
+        Create a credential and return the raw key once.
         """
 
         raw = base64.urlsafe_b64encode(os.urandom(32)).decode("ascii").rstrip("=")
@@ -72,8 +72,8 @@ class IntegrationCredential(NoNameCoreModel):
         s = list(scopes) if scopes is not None else [cls.Scope.WORKLIST_READ, cls.Scope.RESULT_WRITE]
 
         obj = cls.objects.create(
-            inquilino=equipamento.inquilino,
-            equipamento=equipamento,
+            inquilino=equipment.inquilino,
+            equipamento=equipment,
             label=label or "",
             key_prefix=key[:12],
             key_last4=key[-4:],
@@ -92,19 +92,25 @@ class IntegrationCredential(NoNameCoreModel):
         if self.scopes is None:
             self.scopes = []
 
-    def revogar(self):
+    def revoke(self):
         if self.revogada_em:
             return
         self.ativo = False
         self.revogada_em = timezone.now()
         self.save(update_fields=["ativo", "revogada_em"])
 
-    def possui_scope(self, scope: str) -> bool:
+    def has_scope(self, scope: str) -> bool:
         return scope in (self.scopes or [])
 
     @classmethod
-    def validar_chave(cls, raw_key: str) -> "IntegrationCredential | None":
+    def validate_key(cls, raw_key: str) -> "IntegrationCredential | None":
         if not raw_key:
             return None
         h = _hash_key(raw_key)
         return cls.objects.filter(key_hash=h, ativo=True, deletado=False).select_related("equipamento").first()
+
+
+IntegrationCredential.gerar = IntegrationCredential.generate
+IntegrationCredential.revogar = IntegrationCredential.revoke
+IntegrationCredential.possui_scope = IntegrationCredential.has_scope
+IntegrationCredential.validar_chave = IntegrationCredential.validate_key

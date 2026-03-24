@@ -11,7 +11,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(Pregnancy)
-class GestacaoAdmin(CoreAdmin):
+class PregnancyAdmin(CoreAdmin):
     list_display = (
         "criado_em",
         "paciente",
@@ -22,3 +22,6 @@ class GestacaoAdmin(CoreAdmin):
     list_filter = ("estado",)
     search_fields = ("paciente__nome", "medico_responsavel__nome")
     ordering = ("-criado_em", "-id")
+
+
+GestacaoAdmin = PregnancyAdmin

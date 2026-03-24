@@ -35,7 +35,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             return instance
 
         if desired_status == Payment.Status.CONFIRMADO:
-            instance.confirmar()
+            instance.confirm()
             return instance
         if desired_status == Payment.Status.ESTORNADO:
             instance.estornar()

@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.mixins.model.descricao import DescricaoMixin
+from core.mixins.model.description import DescricaoMixin
 from core.mixins.model.order import OrdemMixin
 from core.models import CoreModel
 

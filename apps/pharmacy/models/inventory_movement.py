@@ -7,16 +7,20 @@ from django.db.models.functions import Coalesce
 from core.models.base import CoreModel
 
 
-class TipoMovimento(models.TextChoices):
+class MovementType(models.TextChoices):
     ENTRADA = "ENT", "Entrada"
     SAIDA = "SAI", "Saída"
     AJUSTE = "AJU", "Ajuste"
 
 
-class OrigemMovimento(models.TextChoices):
+class MovementOrigin(models.TextChoices):
     VENDA = "VEND", "Venda"
     PROCEDIMENTO = "PROC", "Procedimento"
     AJUSTE = "AJUS", "Ajuste"
+
+
+TipoMovimento = MovementType
+OrigemMovimento = MovementOrigin
 
 
 class InventoryMovement(CoreModel):
@@ -31,13 +35,13 @@ class InventoryMovement(CoreModel):
 
     tipo = models.CharField(
         max_length=3,
-        choices=TipoMovimento.choices,
+        choices=MovementType.choices,
         db_index=True,
     )
     origem = models.CharField(
         max_length=4,
-        choices=OrigemMovimento.choices,
-        default=OrigemMovimento.AJUSTE,
+        choices=MovementOrigin.choices,
+        default=MovementOrigin.AJUSTE,
         db_index=True,
     )
 
@@ -65,14 +69,14 @@ class InventoryMovement(CoreModel):
     # SALDO DO LOTE
     # =====================================
 
-    def saldo_lote(self):
+    def lot_balance(self):
 
         total = self.lote.movimentos.aggregate(
             total=Coalesce(
                 Sum(
                     Case(
                         When(
-                            tipo=TipoMovimento.SAIDA,
+                            tipo=MovementType.SAIDA,
                             then=-F("quantidade"),
                         ),
                         default=F("quantidade"),
@@ -107,21 +111,21 @@ class InventoryMovement(CoreModel):
             raise ValidationError("Inquilino do movimento difere do item de venda.")
 
         # coerência origem / tipo / vínculo de venda
-        if self.origem == OrigemMovimento.VENDA and self.tipo != TipoMovimento.SAIDA:
+        if self.origem == MovementOrigin.VENDA and self.tipo != MovementType.SAIDA:
             raise ValidationError("Movimento com origem em venda deve ser de saída.")
 
-        if self.tipo == TipoMovimento.SAIDA and self.origem == OrigemMovimento.VENDA and not self.item_venda:
+        if self.tipo == MovementType.SAIDA and self.origem == MovementOrigin.VENDA and not self.item_venda:
             raise ValidationError("Movimentos de saída devem estar ligados a um ItemVenda.")
 
-        if self.tipo == TipoMovimento.SAIDA and self.origem != OrigemMovimento.VENDA and self.item_venda:
+        if self.tipo == MovementType.SAIDA and self.origem != MovementOrigin.VENDA and self.item_venda:
             raise ValidationError("Saídas que não são de venda não devem estar ligadas a ItemVenda.")
 
-        if self.tipo == TipoMovimento.ENTRADA and self.item_venda:
+        if self.tipo == MovementType.ENTRADA and self.item_venda:
             raise ValidationError("Entradas de estoque não devem estar ligadas a vendas.")
 
         # valida saldo
-        if self.tipo == TipoMovimento.SAIDA:
-            saldo = self.saldo_lote()
+        if self.tipo == MovementType.SAIDA:
+            saldo = self.lot_balance()
 
             if self.quantidade > saldo:
                 raise ValidationError("Estoque insuficiente.")
@@ -133,7 +137,7 @@ class InventoryMovement(CoreModel):
     @property
     def quantidade_assinada(self):
 
-        if self.tipo == TipoMovimento.SAIDA:
+        if self.tipo == MovementType.SAIDA:
             return -self.quantidade
 
         return self.quantidade
@@ -144,11 +148,11 @@ class InventoryMovement(CoreModel):
 
     def save(self, *args, **kwargs):
         if not self.nome and self.lote_id:
-            if self.origem == OrigemMovimento.VENDA and self.item_venda_id:
+            if self.origem == MovementOrigin.VENDA and self.item_venda_id:
                 venda = self.item_venda.venda
                 referencia = venda.numero or venda.id_custom
                 self.nome = f"Venda {referencia} - Lote {self.lote.numero_lote}"
-            elif self.origem == OrigemMovimento.PROCEDIMENTO:
+            elif self.origem == MovementOrigin.PROCEDIMENTO:
                 self.nome = f"Procedimento - Lote {self.lote.numero_lote}"
             else:
                 self.nome = f"{self.get_tipo_display()} - Lote {self.lote.numero_lote}"
@@ -159,3 +163,6 @@ class InventoryMovement(CoreModel):
 
     def __str__(self):
         return f"{self.lote} - {self.tipo} ({self.quantidade})"
+
+
+InventoryMovement.saldo_lote = InventoryMovement.lot_balance

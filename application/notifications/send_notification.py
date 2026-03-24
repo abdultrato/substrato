@@ -2,7 +2,7 @@ from django.db import transaction
 
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
-from domain.notifications.excecoes import FalhaEnvio
+from domain.notifications.exceptions import DeliveryFailure
 from integrations.messaging.email import EmailService
 from integrations.messaging.sms import SMSService
 from integrations.messaging.whatsapp import WhatsAppService
@@ -45,7 +45,7 @@ def send_notification(destino: str, mensagem: str, canal: str):
             resposta=str(erro),
         )
 
-        raise FalhaEnvio(str(erro)) from erro
+        raise DeliveryFailure(str(erro)) from erro
 
     return notificacao
 

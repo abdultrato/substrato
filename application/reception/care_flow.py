@@ -11,7 +11,7 @@ from apps.clinical.models.result import Result
 from apps.billing.models.invoice import Invoice
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 
@@ -60,10 +60,10 @@ def open_checkin(
     observacoes="",
     atendente=None,
 ):
-    return CheckinRecepcao.objects.create(
+    return ReceptionCheckin.objects.create(
         inquilino=inquilino,
         paciente=paciente,
-        prioridade=prioridade or CheckinRecepcao.Prioridade.NORMAL,
+        prioridade=prioridade or ReceptionCheckin.Priority.NORMAL,
         motivo=motivo or "",
         observacoes=observacoes or "",
         atendente=atendente,
@@ -120,7 +120,7 @@ def create_request_for_checkin(
         inquilino=checkin.inquilino,
     )
 
-    checkin.registrar_requisicao(requisicao)
+    checkin.register_request(requisicao)
     return requisicao
 
 
@@ -149,7 +149,7 @@ def create_invoice_for_checkin(
     if emitir:
         fatura.emitir()
 
-    checkin.registrar_fatura(fatura)
+    checkin.register_invoice(fatura)
     return fatura
 
 
@@ -158,7 +158,7 @@ def register_payment_for_checkin(
     *,
     checkin,
     valor=None,
-    metodo=Payment.Metodo.DINHEIRO,
+    metodo=Payment.Method.DINHEIRO,
     referencia_externa="",
     seguradora_id=None,
     plano_cobertura_id=None,
@@ -181,7 +181,7 @@ def register_payment_for_checkin(
     plano_cobertura = None
     numero_autorizacao = (numero_autorizacao or "").strip()
 
-    if metodo == Payment.Metodo.SEGURO_SAUDE:
+    if metodo == Payment.Method.SEGURO_SAUDE:
         if not seguradora_id:
             raise ValidationError({"pagamento": {"seguradora_id": "Informe a seguradora do seguro de saúde."}})
 
@@ -221,7 +221,7 @@ def register_payment_for_checkin(
     pagamento.save()
 
     if confirmar:
-        pagamento.confirmar()
+        pagamento.confirm()
 
     recibo = Receipt.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
     return pagamento, recibo
@@ -229,7 +229,7 @@ def register_payment_for_checkin(
 
 def get_care_summary(checkin):
     checkin = (
-        CheckinRecepcao.objects.select_related(
+        ReceptionCheckin.objects.select_related(
             "paciente",
             "requisicao",
             "fatura",
@@ -381,7 +381,7 @@ def execute_full_flow(
     )
 
     if iniciar_atendimento:
-        checkin_obj.iniciar_atendimento(atendente=usuario)
+        checkin_obj.start_care(attendant=usuario)
 
     requisicao_obj = None
     if requisicao:
@@ -407,7 +407,7 @@ def execute_full_flow(
         register_payment_for_checkin(
             checkin=checkin_obj,
             valor=dados_pagamento.get("valor"),
-            metodo=dados_pagamento.get("metodo", Payment.Metodo.DINHEIRO),
+            metodo=dados_pagamento.get("metodo", Payment.Method.DINHEIRO),
             referencia_externa=dados_pagamento.get("referencia_externa", ""),
             seguradora_id=dados_pagamento.get("seguradora_id"),
             plano_cobertura_id=dados_pagamento.get("plano_cobertura_id"),

@@ -1,3 +1,7 @@
-class IntegracaoFHIR:
-    def enviar_paciente(self, paciente):
+class FHIRIntegration:
+    def send_patient(self, patient):
         pass
+
+
+IntegracaoFHIR = FHIRIntegration
+FHIRIntegration.enviar_paciente = FHIRIntegration.send_patient

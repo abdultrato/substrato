@@ -1,11 +1,11 @@
-class PropagarInquilinoMixin:
+class TenantPropagationMixin:
     """
-    Propaga automaticamente o inquilino a partir de relações.
+    Automatically propagates the tenant from a related object.
     """
 
     fonte_inquilino = None
 
-    def resolver_inquilino(self):
+    def resolve_tenant(self):
         if not self.fonte_inquilino:
             return None
 
@@ -18,9 +18,13 @@ class PropagarInquilinoMixin:
 
     def save(self, *args, **kwargs):
         if not getattr(self, "inquilino", None):
-            inquilino = self.resolver_inquilino()
+            inquilino = self.resolve_tenant()
 
             if inquilino:
                 self.inquilino = inquilino
 
         super().save(*args, **kwargs)
+
+
+PropagarInquilinoMixin = TenantPropagationMixin
+TenantPropagationMixin.resolver_inquilino = TenantPropagationMixin.resolve_tenant

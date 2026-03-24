@@ -1,21 +1,19 @@
 from django.db import transaction
 
-from apps.billing.models.item_fatura import ItemFatura
-from domain.billing.calculos import calcular_total_fatura
+from apps.billing.models.invoice_items import InvoiceItem
 
 
 @transaction.atomic
 def add_invoice_item(fatura, descricao, quantidade, preco):
-
-    item = ItemFatura.objects.create(
+    item = InvoiceItem.objects.create(
+        inquilino=fatura.inquilino,
         fatura=fatura,
+        tipo_item=InvoiceItem.ItemType.AJUSTE,
         descricao=descricao,
         quantidade=quantidade,
         preco_unitario=preco,
-        subtotal=quantidade * preco,
     )
-
-    calcular_total_fatura(fatura)
+    fatura.persistir_totais()
 
     return item
 

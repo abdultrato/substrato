@@ -16,10 +16,12 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
     fonte_inquilino = "equipamento"
     prefixo = "OCR"
 
-    class Tipo(models.TextChoices):
+    class Type(models.TextChoices):
         AVARIA = "AVARIA", "Avaria"
         INCIDENTE = "INCIDENTE", "Incidente"
         OUTRO = "OUTRO", "Outro"
+
+    Tipo = Type
 
     equipamento = models.ForeignKey(
         "equipamentos.Equipment",
@@ -28,7 +30,7 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
         db_index=True,
     )
     data = models.DateTimeField(default=timezone.now, db_index=True)
-    tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.AVARIA, db_index=True)
+    tipo = models.CharField(max_length=20, choices=Type.choices, default=Type.AVARIA, db_index=True)
     descricao = models.TextField()
     contacto_assistencia = models.CharField("Contacto de assistência", max_length=120, blank=True, default="")
     resolvido = models.BooleanField(default=False, db_index=True)

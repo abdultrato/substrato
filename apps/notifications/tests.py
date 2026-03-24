@@ -5,35 +5,35 @@ import pytest
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
-from apps.notifications.services import ServicoNotificacao
+from apps.notifications.services import NotificationService
 
 
-class StubCanal:
+class StubChannel:
     def __init__(self):
         self.calls = []
 
-    def enviar(self, destino, mensagem, assunto=None, **kwargs):
-        self.calls.append((destino, mensagem, assunto))
+    def send(self, destination, message, subject=None, **kwargs):
+        self.calls.append((destination, message, subject))
         return {"status": "ok"}
 
 
 @pytest.mark.django_db
 def test_enviar_email_sucesso_cria_log(monkeypatch, settings):
-    stub_email = StubCanal()
+    stub_email = StubChannel()
     monkeypatch.setattr(
-        "apps.notifications.services.CANAIS",
-        {Notification.Canal.EMAIL: stub_email},
+        "apps.notifications.services.CHANNELS",
+        {Notification.Channel.EMAIL: stub_email},
         raising=False,
     )
     settings.NOTIFICACOES_EMAIL_ATIVAS = True
 
-    servico = ServicoNotificacao()
-    notif = servico.enviar(
-        destino="user@example.com",
-        mensagem="Olá!",
-        canal=Notification.Canal.EMAIL,
-        assunto="Teste",
-        referencia_externa="ref-1",
+    service = NotificationService()
+    notif = service.send(
+        destination="user@example.com",
+        message="Olá!",
+        channel=Notification.Channel.EMAIL,
+        subject="Teste",
+        external_reference="ref-1",
     )
 
     assert notif.enviada is True
@@ -45,20 +45,20 @@ def test_enviar_email_sucesso_cria_log(monkeypatch, settings):
 
 @pytest.mark.django_db
 def test_enviar_sms_desativado_registra_ignore(monkeypatch, settings):
-    stub_sms = StubCanal()
+    stub_sms = StubChannel()
     monkeypatch.setattr(
-        "apps.notifications.services.CANAIS",
-        {Notification.Canal.SMS: stub_sms},
+        "apps.notifications.services.CHANNELS",
+        {Notification.Channel.SMS: stub_sms},
         raising=False,
     )
     settings.NOTIFICACOES_SMS_ATIVAS = False  # mantém desativado
 
-    servico = ServicoNotificacao()
-    notif = servico.enviar(
-        destino="+258840000000",
-        mensagem="Seu código",
-        canal=Notification.Canal.SMS,
-        referencia_externa="code-123",
+    service = NotificationService()
+    notif = service.send(
+        destination="+258840000000",
+        message="Seu código",
+        channel=Notification.Channel.SMS,
+        external_reference="code-123",
     )
 
     assert notif.enviada is False
@@ -67,55 +67,55 @@ def test_enviar_sms_desativado_registra_ignore(monkeypatch, settings):
 
 
 @pytest.mark.django_db
-def test_enviar_nao_duplica_mesma_referencia(monkeypatch, settings):
-    stub_email = StubCanal()
+def test_send_does_not_duplicate_same_reference(monkeypatch, settings):
+    stub_email = StubChannel()
     monkeypatch.setattr(
-        "apps.notifications.services.CANAIS",
-        {Notification.Canal.EMAIL: stub_email},
+        "apps.notifications.services.CHANNELS",
+        {Notification.Channel.EMAIL: stub_email},
         raising=False,
     )
     settings.NOTIFICACOES_EMAIL_ATIVAS = True
 
-    servico = ServicoNotificacao()
-    primeiro = servico.enviar(
-        destino="dup@example.com",
-        mensagem="Primeira",
-        canal=Notification.Canal.EMAIL,
-        tipo_evento=Notification.TipoEvento.FATURA_EMITIDA,
-        referencia_externa="fat-1",
+    service = NotificationService()
+    first = service.send(
+        destination="dup@example.com",
+        message="Primeira",
+        channel=Notification.Channel.EMAIL,
+        event_type=Notification.EventType.FATURA_EMITIDA,
+        external_reference="fat-1",
     )
-    segundo = servico.enviar(
-        destino="dup@example.com",
-        mensagem="Segunda deveria reutilizar",
-        canal=Notification.Canal.EMAIL,
-        tipo_evento=Notification.TipoEvento.FATURA_EMITIDA,
-        referencia_externa="fat-1",
+    second = service.send(
+        destination="dup@example.com",
+        message="Segunda deveria reutilizar",
+        channel=Notification.Channel.EMAIL,
+        event_type=Notification.EventType.FATURA_EMITIDA,
+        external_reference="fat-1",
     )
 
-    assert primeiro.pk == segundo.pk  # reutilizou existente
+    assert first.pk == second.pk  # reused the existing notification
     assert Notification.objects.filter(destinatario="dup@example.com").count() == 1
 
 
 @pytest.mark.django_db
-def test_enviar_validacoes_basicas(monkeypatch):
-    servico = ServicoNotificacao()
+def test_send_basic_validations(monkeypatch):
+    service = NotificationService()
 
     with pytest.raises(ValueError):
-        servico.enviar(destino="", mensagem="oi", canal=Notification.Canal.EMAIL)
+        service.send(destination="", message="oi", channel=Notification.Channel.EMAIL)
 
     with pytest.raises(ValueError):
-        servico.enviar(destino="a@b.com", mensagem="oi", canal="push")
+        service.send(destination="a@b.com", message="oi", channel="push")
 
 
 @pytest.mark.django_db
-def test_enviar_para_paciente_com_email_e_sms(monkeypatch, settings):
-    stub_email = StubCanal()
-    stub_sms = StubCanal()
+def test_send_to_patient_with_email_and_sms(monkeypatch, settings):
+    stub_email = StubChannel()
+    stub_sms = StubChannel()
     monkeypatch.setattr(
-        "apps.notifications.services.CANAIS",
+        "apps.notifications.services.CHANNELS",
         {
-            Notification.Canal.EMAIL: stub_email,
-            Notification.Canal.SMS: stub_sms,
+            Notification.Channel.EMAIL: stub_email,
+            Notification.Channel.SMS: stub_sms,
         },
         raising=False,
     )
@@ -124,18 +124,18 @@ def test_enviar_para_paciente_com_email_e_sms(monkeypatch, settings):
     settings.SMS_API_URL = "http://sms.test"
     settings.SMS_API_KEY = "key"
 
-    paciente_fake = SimpleNamespace(email="pac@example.com", contacto="+258840000001")
+    fake_patient = SimpleNamespace(email="pac@example.com", contacto="+258840000001")
 
-    servico = ServicoNotificacao()
-    notificacoes = servico.enviar_para_paciente(
-        paciente=paciente_fake,
-        mensagem="Pronto",
-        assunto="Resultado",
-        tipo_evento=Notification.TipoEvento.RESULTADO_DISPONIVEL,
-        referencia_externa="req-99",
+    service = NotificationService()
+    notifications = service.send_to_patient(
+        patient=fake_patient,
+        message="Pronto",
+        subject="Resultado",
+        event_type=Notification.EventType.RESULTADO_DISPONIVEL,
+        external_reference="req-99",
     )
 
-    assert len(notificacoes) == 2
+    assert len(notifications) == 2
     assert stub_email.calls
     assert stub_sms.calls
     assert DeliveryLog.objects.filter(status="sucesso").count() == 2
@@ -150,3 +150,9 @@ def test_template_str_and_ordering():
     assert nomes == ["A", "B"]
     assert str(t1) == "B"
     assert str(t2) == "A"
+
+
+StubCanal = StubChannel
+test_enviar_nao_duplica_mesma_referencia = test_send_does_not_duplicate_same_reference
+test_enviar_validacoes_basicas = test_send_basic_validations
+test_enviar_para_paciente_com_email_e_sms = test_send_to_patient_with_email_and_sms

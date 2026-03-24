@@ -21,7 +21,7 @@ class TenantLimitMiddleware:
 
         # Trial ignora limite
         if inquilino.esta_em_trial():
-            TenantUsageService.incrementar_requisicao(inquilino)
+            TenantUsageService.increment_request(inquilino)
             return self.get_response(request)
 
         assinatura = inquilino.obter_assinatura_ativa()
@@ -35,7 +35,7 @@ class TenantLimitMiddleware:
         plano = assinatura.plano
 
         limite = plano.limite_requisicoes_mes or 0
-        atual = TenantUsageService.obter_requisicoes(inquilino)
+        atual = TenantUsageService.get_requests(inquilino)
 
         if limite and atual >= limite:
             return JsonResponse(
@@ -47,6 +47,6 @@ class TenantLimitMiddleware:
             )
 
         # Incremento ocorre antes da resposta
-        TenantUsageService.incrementar_requisicao(inquilino)
+        TenantUsageService.increment_request(inquilino)
 
         return self.get_response(request)

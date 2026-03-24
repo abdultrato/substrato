@@ -9,10 +9,12 @@ from core.models.base import CoreModel
 class Product(CoreModel):
     prefixo = "PROD"
 
-    class TipoProduto(models.TextChoices):
+    class ProductType(models.TextChoices):
         MEDICAMENTO = "MED", "Medicamento"
         MATERIAL = "MAT", "Material"
         OUTRO = "OUT", "Outro"
+
+    TipoProduto = ProductType
 
     categoria = models.ForeignKey(
         "farmacia.ProductCategory",
@@ -27,8 +29,8 @@ class Product(CoreModel):
     tipo = models.CharField(
         verbose_name="Tipo",
         max_length=3,
-        choices=TipoProduto.choices,
-        default=TipoProduto.OUTRO,
+        choices=ProductType.choices,
+        default=ProductType.OUTRO,
         db_index=True,
     )
 

@@ -96,7 +96,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raise ValidationError("Nenhum pagamento pendente para confirmar.")
 
         try:
-            payment.confirmar()
+            payment.confirm()
         except ValidationError as exc:
             raise ValidationError(str(exc)) from exc
 

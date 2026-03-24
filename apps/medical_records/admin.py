@@ -26,7 +26,7 @@ class PrescricaoItemInline(admin.TabularInline):
 
 
 @admin.register(MedicalRecordEntry)
-class RegistroProntuarioAdmin(CoreAdmin):
+class MedicalRecordEntryAdmin(CoreAdmin):
     list_display = (
         "inicio_atendimento",
         "fim_atendimento",
@@ -60,3 +60,6 @@ class PrescricaoItemAdmin(CoreAdmin):
         "medicacao__nome",
     )
     autocomplete_fields = ("registro", "medicacao")
+
+
+RegistroProntuarioAdmin = MedicalRecordEntryAdmin

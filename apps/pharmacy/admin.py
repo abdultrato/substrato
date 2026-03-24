@@ -16,7 +16,7 @@ from .models.sale import Sale
 
 
 @admin.register(Product)
-class ProdutoAdmin(admin.ModelAdmin):
+class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -24,7 +24,7 @@ class ProdutoAdmin(admin.ModelAdmin):
         "preco_venda",
         "iva_percentual",
         "aplica_iva_por_padrao",
-        "estoque_total",
+        "inventory_total",
         "proximo_vencimento",
         "criado_em",
     )
@@ -103,25 +103,25 @@ class ProdutoAdmin(admin.ModelAdmin):
             proximo_vencimento=Min("lotes__validade"),
         )
 
-        return qs.annotate(estoque_total_calc=F("quantidade_lotes") + F("movimentos_total"))
+        return qs.annotate(inventory_total_calc=F("quantidade_lotes") + F("movimentos_total"))
 
     # =========================
     # ESTOQUE
     # =========================
 
-    def estoque_total(self, obj):
+    def inventory_total(self, obj):
 
-        estoque = obj.estoque_total_calc or 0
+        inventory = obj.inventory_total_calc or 0
 
-        if estoque <= 5:
+        if inventory <= 5:
             return format_html(
                 "<span style='color:red;font-weight:bold'>{}</span>",
-                estoque,
+                inventory,
             )
 
-        return estoque
+        return inventory
 
-    estoque_total.short_description = "Estoque"
+    inventory_total.short_description = "Estoque"
 
     # =========================
     # VENCIMENTO
@@ -143,13 +143,13 @@ class ProdutoAdmin(admin.ModelAdmin):
 
 
 @admin.register(Lot)
-class LoteAdmin(admin.ModelAdmin):
+class LotAdmin(admin.ModelAdmin):
     list_display = (
         "produto",
         "numero_lote",
         "validade",
         "quantidade_inicial",
-        "saldo_atual",
+        "current_balance",
         "vencido_status",
     )
 
@@ -237,7 +237,7 @@ class LoteAdmin(admin.ModelAdmin):
     # SALDO
     # =========================
 
-    def saldo_atual(self, obj):
+    def current_balance(self, obj):
 
         saldo = obj.saldo_calc
 
@@ -246,8 +246,8 @@ class LoteAdmin(admin.ModelAdmin):
 
         return saldo
 
-    saldo_atual.short_description = "Saldo"
-    saldo_atual.admin_order_field = "saldo_calc"
+    current_balance.short_description = "Saldo"
+    current_balance.admin_order_field = "saldo_calc"
 
     # =========================
     # STATUS
@@ -277,7 +277,7 @@ class LoteAdmin(admin.ModelAdmin):
 
 
 @admin.register(InventoryMovement)
-class MovimentoEstoqueAdmin(admin.ModelAdmin):
+class InventoryMovementAdmin(admin.ModelAdmin):
     list_display = (
         "lote",
         "tipo",
@@ -458,11 +458,11 @@ class VendaAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductCategory)
-class CategoriaProdutoAdmin(admin.ModelAdmin):
+class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = (
         "nome",
         "categoria_pai",
-        "nivel_categoria",
+        "category_level",
         "criado_em",
     )
 
@@ -477,7 +477,7 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
     list_select_related = ("categoria_pai",)
 
     readonly_fields = (
-        "categorias_pai_referencia",
+        "parent_category_references",
         "criado_em",
         "criado_por",
         "atualizado_em",
@@ -502,7 +502,7 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
             "Categorias-pai de Referência",
             {
                 "description": "Sugestões para classificação inicial (não salvas automaticamente no banco de dados).",
-                "fields": ("categorias_pai_referencia",),
+                "fields": ("parent_category_references",),
             },
         ),
         (
@@ -526,17 +526,27 @@ class CategoriaProdutoAdmin(admin.ModelAdmin):
     # NÍVEL DA CATEGORIA
     # =====================================
 
-    def nivel_categoria(self, obj):
+    def category_level(self, obj):
         return obj.nivel
 
-    nivel_categoria.short_description = "Nível"
+    category_level.short_description = "Nível"
 
-    def categorias_pai_referencia(self, obj):
+    def parent_category_references(self, obj):
         itens = format_html_join(
             "",
             "<li>{}</li>",
-            ((categoria,) for categoria in ProductCategory.categorias_pai_referencia()),
+            ((categoria,) for categoria in ProductCategory.parent_category_references()),
         )
         return format_html("<ul>{}</ul>", itens)
 
-    categorias_pai_referencia.short_description = "Categorias sugeridas"
+    parent_category_references.short_description = "Categorias sugeridas"
+
+
+ProdutoAdmin = ProductAdmin
+ProductAdmin.estoque_total = ProductAdmin.inventory_total
+LoteAdmin = LotAdmin
+LotAdmin.saldo_atual = LotAdmin.current_balance
+MovimentoEstoqueAdmin = InventoryMovementAdmin
+CategoriaProdutoAdmin = ProductCategoryAdmin
+ProductCategoryAdmin.nivel_categoria = ProductCategoryAdmin.category_level
+ProductCategoryAdmin.categorias_pai_referencia = ProductCategoryAdmin.parent_category_references

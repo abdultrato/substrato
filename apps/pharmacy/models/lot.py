@@ -80,7 +80,7 @@ class Lot(CoreModel):
     # SALDO
     # =====================================================
 
-    def saldo(self):
+    def balance(self):
 
         movimentos = self.movimentos.aggregate(
             total=Coalesce(
@@ -137,3 +137,6 @@ class Lot(CoreModel):
     def __str__(self):
 
         return f"{self.produto} - Lote {self.numero_lote}"
+
+
+Lot.saldo = Lot.balance

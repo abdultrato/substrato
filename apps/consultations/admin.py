@@ -13,7 +13,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(MedicalConsultation)
-class ConsultaMedicaAdmin(CoreAdmin):
+class MedicalConsultationAdmin(CoreAdmin):
     list_display = (
         "agendada_para",
         "paciente",
@@ -31,7 +31,7 @@ class ConsultaMedicaAdmin(CoreAdmin):
 
 
 @admin.register(ConsultationSpecialty)
-class EspecialidadeConsultaAdmin(CoreAdmin):
+class ConsultationSpecialtyAdmin(CoreAdmin):
     list_display = ("nome", "preco_base", "iva_percentual", "ativo", "inquilino", "criado_em")
     list_filter = ("ativo",)
     search_fields = ("nome",)
@@ -39,8 +39,13 @@ class EspecialidadeConsultaAdmin(CoreAdmin):
 
 
 @admin.register(Holiday)
-class FeriadoAdmin(CoreAdmin):
+class HolidayAdmin(CoreAdmin):
     list_display = ("data", "descricao", "ativo", "inquilino", "criado_em")
     list_filter = ("ativo", "data")
     search_fields = ("descricao",)
     ordering = ("-data", "-criado_em")
+
+
+ConsultaMedicaAdmin = MedicalConsultationAdmin
+EspecialidadeConsultaAdmin = ConsultationSpecialtyAdmin
+FeriadoAdmin = HolidayAdmin

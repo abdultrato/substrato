@@ -66,7 +66,7 @@ from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
@@ -860,7 +860,7 @@ def ensure_pagamentos(n: int, faturas: list[Invoice]) -> list[Payment]:
                     fatura.emitir()
             if idx % 3 == 0 and pagamento.status == pagamento.Status.PENDENTE:
                 with suppress(Exception):
-                    pagamento.confirmar()
+                    pagamento.confirm()
 
     return list(Payment.objects.order_by("id")[:n])
 
@@ -874,7 +874,7 @@ def ensure_historico_pagamentos(n: int, pagamentos: list[Payment]) -> None:
                 inquilino=pagamento.inquilino,
                 nome=f"Hist Pag {idx}",
                 pagamento=pagamento,
-                tipo_evento=PaymentHistory.TipoEvento.CRIADO,
+                tipo_evento=PaymentHistory.EventType.CRIADO,
                 valor=pagamento.valor,
                 descricao="Pagamento criado (seed)",
                 referencia_externa=pagamento.referencia_externa,
@@ -1140,9 +1140,9 @@ def ensure_notificacoes(n: int, pacientes: list[Patient], faker: Faker) -> None:
         Notification.objects.create(
             paciente=paciente,
             destinatario=f"destinatario{idx:04d}@example.com",
-            canal=Notification.Canal.EMAIL,
+            canal=Notification.Channel.EMAIL,
             assunto=f"Notificação {idx}",
-            tipo_evento=Notification.TipoEvento.GENERICA,
+            tipo_evento=Notification.EventType.GENERICA,
             referencia_externa=f"NTF-SEED-{idx:06d}",
             mensagem=msg,
             enviada=idx % 2 == 0,
@@ -1168,8 +1168,8 @@ def ensure_checkins(
     faturas: list[Invoice],
     faker: Faker,
 ) -> None:
-    while _count(CheckinRecepcao) < n and pacientes:
-        idx = _count(CheckinRecepcao) + 1
+    while _count(ReceptionCheckin) < n and pacientes:
+        idx = _count(ReceptionCheckin) + 1
         paciente = pacientes[(idx - 1) % len(pacientes)]
         atendente = users[(idx - 1) % len(users)] if users else None
         req = requisicoes[(idx - 1) % len(requisicoes)] if requisicoes else None
@@ -1177,14 +1177,14 @@ def ensure_checkins(
         if faturas and req is not None:
             fat = next((f for f in faturas if f.requisicao_id == req.id), None)
         with tenant_ctx(paciente.inquilino):
-            CheckinRecepcao.objects.create(
+            ReceptionCheckin.objects.create(
                 inquilino=paciente.inquilino,
                 paciente=paciente,
                 requisicao=req if idx % 2 == 0 else None,
                 fatura=fat if idx % 3 == 0 else None,
                 atendente=atendente,
-                prioridade=random.choice([c[0] for c in CheckinRecepcao.Prioridade.choices]),
-                estado=random.choice([c[0] for c in CheckinRecepcao.Estado.choices]),
+                prioridade=random.choice([c[0] for c in ReceptionCheckin.Priority.choices]),
+                estado=random.choice([c[0] for c in ReceptionCheckin.Status.choices]),
                 motivo=faker.sentence(nb_words=8),
                 observacoes=faker.sentence(nb_words=12),
             )

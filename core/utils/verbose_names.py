@@ -94,27 +94,27 @@ TOKENS_CURTOS = {
 }
 
 
-def _rotulo_para_nome(nome_campo: str) -> str:
-    if nome_campo in ROTULOS_FIXOS:
-        return ROTULOS_FIXOS[nome_campo]
+def _label_for_name(field_name: str) -> str:
+    if field_name in ROTULOS_FIXOS:
+        return ROTULOS_FIXOS[field_name]
 
-    partes = [p for p in nome_campo.split("_") if p]
-    if not partes:
-        return nome_campo
+    parts = [part for part in field_name.split("_") if part]
+    if not parts:
+        return field_name
 
-    palavras = []
-    for idx, parte in enumerate(partes):
-        base = TOKENS_CURTOS.get(parte.lower())
+    words = []
+    for index, part in enumerate(parts):
+        base = TOKENS_CURTOS.get(part.lower())
         if base is None:
-            base = parte.capitalize()
-        elif idx > 0 and base.isupper() is False:
+            base = part.capitalize()
+        elif index > 0 and base.isupper() is False:
             base = base.lower()
-        palavras.append(base)
+        words.append(base)
 
-    return " ".join(palavras)
+    return " ".join(words)
 
 
-def _deve_aplicar_modelo(model: type[models.Model]) -> bool:
+def _should_apply_model(model: type[models.Model]) -> bool:
     app_config = model._meta.app_config
     if app_config is None:
         return False
@@ -123,8 +123,8 @@ def _deve_aplicar_modelo(model: type[models.Model]) -> bool:
     return app_name.startswith("apps.") or app_name == "system"
 
 
-def _aplicar_verbose_em_modelo(model: type[models.Model]) -> None:
-    if not _deve_aplicar_modelo(model):
+def _apply_verbose_to_model(model: type[models.Model]) -> None:
+    if not _should_apply_model(model):
         return
 
     for field in model._meta.get_fields():
@@ -135,14 +135,14 @@ def _aplicar_verbose_em_modelo(model: type[models.Model]) -> None:
 
         padrao = field.name.replace("_", " ")
         if field.verbose_name == padrao:
-            field.verbose_name = _rotulo_para_nome(field.name)
+            field.verbose_name = _label_for_name(field.name)
 
 
 def _on_class_prepared(sender, **kwargs):
-    _aplicar_verbose_em_modelo(sender)
+    _apply_verbose_to_model(sender)
 
 
-def aplicar_verbose_names_globais() -> None:
+def apply_global_verbose_names() -> None:
     global _SINAL_CONECTADO
 
     if not _SINAL_CONECTADO:
@@ -154,4 +154,10 @@ def aplicar_verbose_names_globais() -> None:
         _SINAL_CONECTADO = True
 
     for model in apps.get_models():
-        _aplicar_verbose_em_modelo(model)
+        _apply_verbose_to_model(model)
+
+
+_rotulo_para_nome = _label_for_name
+_deve_aplicar_modelo = _should_apply_model
+_aplicar_verbose_em_modelo = _apply_verbose_to_model
+aplicar_verbose_names_globais = apply_global_verbose_names

@@ -148,7 +148,7 @@ class ProcedureMaterial(NoNameCoreModel):
 
         return Decimal("0.00")
 
-    def _selecionar_lote_automatico(self):
+    def _select_automatic_lot(self):
         if self.lote_id or not self.produto_id:
             return
 
@@ -164,7 +164,7 @@ class ProcedureMaterial(NoNameCoreModel):
 
         self.lote = lote
 
-    def _upsert_valor(self):
+    def _upsert_value(self):
         from apps.nursing.models.procedure_material_value import (
             ProcedureMaterialValue,
         )
@@ -196,7 +196,7 @@ class ProcedureMaterial(NoNameCoreModel):
             self.inquilino_id = self.procedimento.inquilino_id
 
         if alocar_estoque:
-            self._selecionar_lote_automatico()
+            self._select_automatic_lot()
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -219,8 +219,8 @@ class ProcedureMaterial(NoNameCoreModel):
             self.movimento_estoque = movimento
             super().save(update_fields=["movimento_estoque"])
 
-        self._upsert_valor()
-        self.procedimento.recalcular_totais()
+        self._upsert_value()
+        self.procedimento.recalculate_totals()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
@@ -248,7 +248,11 @@ class ProcedureMaterial(NoNameCoreModel):
             valor.delete()
 
         super().delete(*args, **kwargs)
-        procedimento.recalcular_totais()
+        procedimento.recalculate_totals()
 
     def __str__(self):
         return f"{self.produto.nome} x{self.quantidade}"
+
+
+ProcedureMaterial._selecionar_lote_automatico = ProcedureMaterial._select_automatic_lot
+ProcedureMaterial._upsert_valor = ProcedureMaterial._upsert_value

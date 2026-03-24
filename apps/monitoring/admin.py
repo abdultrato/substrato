@@ -11,7 +11,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(SystemError)
-class ErroSistemaAdmin(CoreAdmin):
+class SystemErrorAdmin(CoreAdmin):
     list_display = (
         "criado_em",
         "status_code",
@@ -22,3 +22,6 @@ class ErroSistemaAdmin(CoreAdmin):
     list_filter = ("status_code", "exception_class")
     search_fields = ("caminho", "mensagem", "exception_class", "usuario__username")
     ordering = ("-criado_em", "-id")
+
+
+ErroSistemaAdmin = SystemErrorAdmin

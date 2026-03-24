@@ -24,10 +24,13 @@ class Reconciliation(models.Model):
             models.Index(fields=["confirmado"]),
         ]
 
-    def confirmar(self):
+    def confirm(self):
         self.confirmado = True
         self.data_confirmacao = timezone.now()
         self.save(update_fields=["confirmado", "data_confirmacao"])
 
     def __str__(self) -> str:
         return f"{self.transacao_id} - {'ok' if self.confirmado else 'pendente'}"
+
+
+Reconciliation.confirmar = Reconciliation.confirm

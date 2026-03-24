@@ -12,13 +12,7 @@ from core.models.base import NoNameCoreModel
 
 class Payroll(NoNameCoreModel):
     """
-    Folha de pagamento mensal por funcionário (MVP).
-
-    A folha apura horas extras a partir dos registros de HoraExtra do mês.
-    Regra (default):
-    - valor_hora = salario_nominal / horas_base_mes
-    - valor_horas_extras = horas_extras * valor_hora * multiplicador_hora_extra
-    - salario_total = salario_nominal + valor_horas_extras
+    Monthly payroll per employee (MVP).
     """
 
     prefixo = "FPG"
@@ -77,7 +71,7 @@ class Payroll(NoNameCoreModel):
         if self.multiplicador_hora_extra <= Decimal("0.00"):
             raise ValidationError({"multiplicador_hora_extra": "Multiplicador de hora extra inválido."})
 
-    def _apuracao_horas_extras(self) -> Decimal:
+    def _calculate_overtime_hours(self) -> Decimal:
         from .overtime import Overtime
 
         qs = Overtime.objects.filter(
@@ -90,17 +84,17 @@ class Payroll(NoNameCoreModel):
         raw = qs.aggregate(total=Sum("horas")).get("total") or Decimal("0.00")
         return Decimal(raw)
 
-    def recalcular(self):
-        # Se não informado, sincroniza salário/horas base do funcionário.
+    def recalculate(self):
+        # If not provided, synchronize salary/base hours from the employee.
         if self.funcionario_id:
             if self.salario_nominal is None:
-                # Inclui aumentos/promocoes no salário efetivo.
+                # Includes promotions and salary increases in the effective salary.
                 salario_atual = getattr(self.funcionario, "salario_atual", None)
                 self.salario_nominal = salario_atual if salario_atual is not None else self.funcionario.salario_nominal
             if not self.horas_base_mes:
                 self.horas_base_mes = self.funcionario.horas_base_mes or 176
 
-        horas_extras = self._apuracao_horas_extras() if self.funcionario_id and self.inquilino_id else Decimal("0.00")
+        horas_extras = self._calculate_overtime_hours() if self.funcionario_id and self.inquilino_id else Decimal("0.00")
         self.horas_extras_apuradas = horas_extras
 
         valor_hora = Decimal("0.0000")
@@ -117,7 +111,11 @@ class Payroll(NoNameCoreModel):
     def save(self, *args, **kwargs):
         if not self.inquilino_id and self.funcionario_id:
             self.inquilino_id = self.funcionario.inquilino_id
-        # Sempre recalcula para manter consistência.
-        self.recalcular()
+        # Always recalculate to keep the aggregate consistent.
+        self.recalculate()
         self.full_clean()
         return super().save(*args, **kwargs)
+
+
+Payroll._apuracao_horas_extras = Payroll._calculate_overtime_hours
+Payroll.recalcular = Payroll.recalculate

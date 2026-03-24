@@ -11,7 +11,7 @@ from .models.insurer import Insurer
 
 
 @admin.register(Insurer)
-class SeguradoraAdmin(admin.ModelAdmin):
+class InsurerAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -69,7 +69,7 @@ class SeguradoraAdmin(admin.ModelAdmin):
 
 
 @admin.register(CoveragePlan)
-class PlanoCoberturaAdmin(admin.ModelAdmin):
+class CoveragePlanAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -132,7 +132,7 @@ class PlanoCoberturaAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProcedureAuthorization)
-class AutorizacaoProcedimentoAdmin(admin.ModelAdmin):
+class ProcedureAuthorizationAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "requisicao_id",
@@ -202,3 +202,8 @@ class AutorizacaoProcedimentoAdmin(admin.ModelAdmin):
         )
 
     status_colorido.short_description = "Status"
+
+
+SeguradoraAdmin = InsurerAdmin
+PlanoCoberturaAdmin = CoveragePlanAdmin
+AutorizacaoProcedimentoAdmin = ProcedureAuthorizationAdmin

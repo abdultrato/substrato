@@ -21,7 +21,7 @@ def _tenant():
 
 
 @pytest.mark.django_db
-def test_inquilino_trial_e_bloqueio():
+def test_tenant_trial_and_blocking():
     tenant = _tenant()
     assert tenant.esta_em_trial() is True
     assert tenant.esta_bloqueado() is False
@@ -35,10 +35,10 @@ def test_inquilino_trial_e_bloqueio():
 
 
 @pytest.mark.django_db
-def test_plano_ativo_retorna_da_assinatura():
+def test_active_plan_returns_from_subscription():
     tenant = _tenant()
-    plano_basic = SubscriptionPlan.objects.create(nome="Basic", tipo=SubscriptionPlan.TipoPlano.BASIC)
-    plano_pro = SubscriptionPlan.objects.create(nome="Pro", tipo=SubscriptionPlan.TipoPlano.PRO)
+    plano_basic = SubscriptionPlan.objects.create(nome="Basic", tipo=SubscriptionPlan.PlanType.BASIC)
+    plano_pro = SubscriptionPlan.objects.create(nome="Pro", tipo=SubscriptionPlan.PlanType.PRO)
 
     TenantSubscription.objects.create(
         inquilino=tenant,
@@ -54,14 +54,14 @@ def test_plano_ativo_retorna_da_assinatura():
         data_inicio=timezone.localdate(),
     )
 
-    assert tenant.plano == plano_pro
-    assert tenant.obter_assinatura_ativa() == assinatura_ativa
+    assert tenant.plan == plano_pro
+    assert tenant.get_active_subscription() == assinatura_ativa
 
 
 @pytest.mark.django_db
 def test_assinatura_cancelar_define_status_e_data_fim():
     tenant = _tenant()
-    plano = SubscriptionPlan.objects.create(nome="Free", tipo=SubscriptionPlan.TipoPlano.FREE)
+    plano = SubscriptionPlan.objects.create(nome="Free", tipo=SubscriptionPlan.PlanType.FREE)
     assinatura = TenantSubscription.objects.create(inquilino=tenant, plano=plano)
 
     assinatura.cancelar()
@@ -71,7 +71,7 @@ def test_assinatura_cancelar_define_status_e_data_fim():
 
 
 @pytest.mark.django_db
-def test_feature_flag_unica_por_inquilino():
+def test_feature_flag_unique_per_tenant():
     tenant = _tenant()
     TenantFeatureFlag.objects.create(inquilino=tenant, chave="beta-ui")
     with pytest.raises(IntegrityError):
@@ -79,7 +79,7 @@ def test_feature_flag_unica_por_inquilino():
 
 
 @pytest.mark.django_db
-def test_configuracao_inquilino_defaults():
+def test_tenant_configuration_defaults():
     tenant = _tenant()
     cfg = TenantConfiguration.objects.create(inquilino=tenant)
 
@@ -100,3 +100,9 @@ def test_uso_tenant_repr():
 
     assert "Uso" in str(uso)
     assert str(uso).endswith(str(tenant.id))
+
+
+test_inquilino_trial_e_bloqueio = test_tenant_trial_and_blocking
+test_plano_ativo_retorna_da_assinatura = test_active_plan_returns_from_subscription
+test_feature_flag_unica_por_inquilino = test_feature_flag_unique_per_tenant
+test_configuracao_inquilino_defaults = test_tenant_configuration_defaults

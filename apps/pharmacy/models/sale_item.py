@@ -84,7 +84,7 @@ class SaleItem(CoreModel):
     # ATUALIZA TOTAL DA VENDA
     # ==========================================
 
-    def atualizar_total_venda(self):
+    def update_sale_total(self):
 
         total = self.venda.itens.aggregate(
             total=Coalesce(
@@ -103,13 +103,13 @@ class SaleItem(CoreModel):
     # BAIXA DE ESTOQUE (FEFO)
     # ==========================================
 
-    def baixar_estoque(self):
+    def consume_inventory(self):
 
         from apps.pharmacy.models.lot import Lot
         from apps.pharmacy.models.inventory_movement import (
             InventoryMovement,
-            OrigemMovimento,
-            TipoMovimento,
+            MovementOrigin,
+            MovementType,
         )
 
         restante = self.quantidade
@@ -122,7 +122,7 @@ class SaleItem(CoreModel):
             if callable(saldo_lote):
                 saldo = saldo_lote()
             elif saldo_lote is None:
-                saldo = lote.saldo()
+                saldo = lote.balance()
             else:
                 saldo = saldo_lote
 
@@ -133,8 +133,8 @@ class SaleItem(CoreModel):
             InventoryMovement.objects.create(
                 nome=f"Saída {self.venda.numero or self.venda.id_custom} - {self.produto.nome}",
                 lote=lote,
-                tipo=TipoMovimento.SAIDA,
-                origem=OrigemMovimento.VENDA,
+                tipo=MovementType.SAIDA,
+                origem=MovementOrigin.VENDA,
                 quantidade=consumir,
                 item_venda=self,
                 inquilino=self.inquilino,
@@ -162,9 +162,9 @@ class SaleItem(CoreModel):
         super().save(*args, **kwargs)
 
         if criando:
-            self.baixar_estoque()
+            self.consume_inventory()
 
-        self.atualizar_total_venda()
+        self.update_sale_total()
 
     # ==========================================
     # DELETE
@@ -191,3 +191,7 @@ class SaleItem(CoreModel):
 
     def __str__(self):
         return f"{self.produto} x{self.quantidade}"
+
+
+SaleItem.atualizar_total_venda = SaleItem.update_sale_total
+SaleItem.baixar_estoque = SaleItem.consume_inventory

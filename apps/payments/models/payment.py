@@ -16,7 +16,7 @@ class Payment(CoreModel):
     - Integração com a fatura
     """
 
-    class Metodo(models.TextChoices):
+    class Method(models.TextChoices):
         DINHEIRO = "DIN", "Dinheiro"
         CARTAO = "CAR", "Cartão"
         TRANSFERENCIA = "TRF", "Transferência"
@@ -25,6 +25,8 @@ class Payment(CoreModel):
         CHEQUE = "CHQ", "Cheque"
         SEGURO_SAUDE = "SEG", "Seguro de Saúde"
         OUTRO = "OUT", "Outro"
+
+    Metodo = Method
 
     class Status(models.TextChoices):
         PENDENTE = "PEN", "Pendente"
@@ -45,7 +47,7 @@ class Payment(CoreModel):
     metodo = models.CharField(
         verbose_name="Método",
         max_length=4,
-        choices=Metodo.choices,
+        choices=Method.choices,
     )
 
     status = models.CharField(
@@ -115,7 +117,7 @@ class Payment(CoreModel):
 
     def clean(self):
         super().clean()
-        if self.metodo != self.Metodo.SEGURO_SAUDE:
+        if self.metodo != self.Method.SEGURO_SAUDE:
             return
 
         erros = {}
@@ -143,7 +145,7 @@ class Payment(CoreModel):
     # TRANSIÇÕES DE ESTADO
     # =========================
 
-    def confirmar(self):
+    def confirm(self):
         if self.status != self.Status.PENDENTE:
             raise ValidationError("Pagamentos pendentes podem ser confirmados.")
 
@@ -151,7 +153,7 @@ class Payment(CoreModel):
         if not self.pago_em:
             self.pago_em = timezone.now()
         self.save(update_fields=["status", "pago_em"])
-        self._atualizar_fatura(pagamento=self)
+        self._update_invoice(payment=self)
 
     def falhar(self):
         if self.status != self.Status.PENDENTE:
@@ -166,7 +168,7 @@ class Payment(CoreModel):
 
         self.status = self.Status.ESTORNADO
         self.save(update_fields=["status"])
-        self._atualizar_fatura()
+        self._update_invoice()
 
     def cancelar(self):
         if self.status != self.Status.PENDENTE:
@@ -179,6 +181,10 @@ class Payment(CoreModel):
     # INTEGRAÇÃO COM FATURA
     # =========================
 
-    def _atualizar_fatura(self, pagamento=None):
+    def _update_invoice(self, payment=None):
         if self.fatura_id:
-            self.fatura.atualizar_estado_pagamento(pagamento=pagamento)
+            self.fatura.atualizar_estado_pagamento(pagamento=payment)
+
+
+Payment.confirmar = Payment.confirm
+Payment._atualizar_fatura = Payment._update_invoice

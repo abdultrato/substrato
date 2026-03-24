@@ -217,7 +217,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
 
 
 @admin.register(NursingRecord)
-class RegistroEnfermagemAdmin(admin.ModelAdmin):
+class NursingRecordAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -503,7 +503,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProcedureItemValue)
-class ProcedimentoItemValorAdmin(admin.ModelAdmin):
+class ProcedureItemValueAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "item",
@@ -556,7 +556,7 @@ class ProcedimentoItemValorAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProcedureMaterialValue)
-class ProcedimentoMaterialValorAdmin(admin.ModelAdmin):
+class ProcedureMaterialValueAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "material",
@@ -668,3 +668,8 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+
+RegistroEnfermagemAdmin = NursingRecordAdmin
+ProcedimentoItemValorAdmin = ProcedureItemValueAdmin
+ProcedimentoMaterialValorAdmin = ProcedureMaterialValueAdmin

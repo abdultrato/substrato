@@ -7,11 +7,11 @@ from django.dispatch import receiver
 from .models.medical_record_entry import MedicalRecordEntry
 
 
-def _resolver_medico_unico(consultas_qs):
-    medicos = set(consultas_qs.exclude(medico__isnull=True).values_list("medico_id", flat=True))
-    if len(medicos) == 1:
-        return next(iter(medicos))
-    if len(medicos) == 0:
+def _resolve_single_doctor(consultations_qs):
+    doctors = set(consultations_qs.exclude(medico__isnull=True).values_list("medico_id", flat=True))
+    if len(doctors) == 1:
+        return next(iter(doctors))
+    if len(doctors) == 0:
         return None
     raise ValidationError("As consultas vinculadas devem pertencer ao mesmo médico.")
 
@@ -51,10 +51,13 @@ def sincronizar_cardex_consultas(sender, instance, action, pk_set=None, **kwargs
     # post_*: sincroniza médico derivado
     if action in {"post_add", "post_remove", "post_clear"}:
         try:
-            medico_id = _resolver_medico_unico(instance.consultas.all())
+            medico_id = _resolve_single_doctor(instance.consultas.all())
         except ValidationError as exc:
             raise ValidationError({"consultas": str(exc)}) from exc
 
         if instance.medico_id != medico_id:
             instance.medico_id = medico_id
             instance.save(update_fields=["medico"])
+
+
+_resolver_medico_unico = _resolve_single_doctor

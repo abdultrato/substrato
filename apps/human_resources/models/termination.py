@@ -14,11 +14,13 @@ class Termination(NoNameCoreModel):
 
     prefixo = "DSP"
 
-    class Tipo(models.TextChoices):
+    class Type(models.TextChoices):
         DEMISSAO = "DEMISSAO", "Demissão"
         RESCISAO = "RESCISAO", "Rescisão"
         FIM_CONTRATO = "FIM_CONTRATO", "Fim de contrato"
         OUTRO = "OUTRO", "Outro"
+
+    Tipo = Type
 
     funcionario = models.ForeignKey(
         "recursos_humanos.Employee",
@@ -28,7 +30,7 @@ class Termination(NoNameCoreModel):
     )
 
     data = models.DateField(default=timezone.now, db_index=True)
-    tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.DEMISSAO, db_index=True)
+    tipo = models.CharField(max_length=20, choices=Type.choices, default=Type.DEMISSAO, db_index=True)
     motivo = models.TextField(blank=True, default="")
 
     class Meta:

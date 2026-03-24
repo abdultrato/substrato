@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.internationalization.idioma_service import listar_idiomas_iso
+from core.internationalization.language_service import list_iso_languages
 
 
 class IdiomaField(models.CharField):
@@ -11,6 +11,6 @@ class IdiomaField(models.CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("max_length", 2)
-        kwargs.setdefault("choices", listar_idiomas_iso())
+        kwargs.setdefault("choices", list_iso_languages())
         kwargs.setdefault("default", "pt")
         super().__init__(*args, **kwargs)

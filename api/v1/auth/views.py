@@ -24,7 +24,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.notifications.models.notification import Notification
-from apps.notifications.services import ServicoNotificacao
+from apps.notifications.services import NotificationService
 from security.permissions.rbac import RBACPermission
 
 User = get_user_model()
@@ -153,7 +153,7 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     telefone = serializers.CharField(required=False, allow_blank=True)
     # Canal opcional; se omitido, tenta enviar para email + whatsapp se existirem.
     canal = serializers.ChoiceField(
-        choices=[Notification.Canal.EMAIL, Notification.Canal.WHATSAPP],
+        choices=[Notification.Channel.EMAIL, Notification.Channel.WHATSAPP],
         required=False,
         allow_null=True,
     )
@@ -425,23 +425,23 @@ class PasswordResetRequestView(APIView):
             canais = [canal]
         else:
             if getattr(user, "email", None):
-                canais.append(Notification.Canal.EMAIL)
+                canais.append(Notification.Channel.EMAIL)
             if getattr(user, "telefone", None):
-                canais.append(Notification.Canal.WHATSAPP)
+                canais.append(Notification.Channel.WHATSAPP)
 
-        servico = ServicoNotificacao()
+        service = NotificationService()
         for c in canais:
-            destino = user.email if c == Notification.Canal.EMAIL else str(user.telefone)
+            destino = user.email if c == Notification.Channel.EMAIL else str(user.telefone)
             if not destino:
                 continue
             # referência externa evita spam (idempotência por token+canal).
-            servico.enviar(
-                destino=destino,
-                mensagem=mensagem,
-                canal=c,
-                assunto="Reposição de palavra-passe",
-                tipo_evento=getattr(Notification.TipoEvento, "PASSWORD_RESET", Notification.TipoEvento.GENERICA),
-                referencia_externa=f"password_reset:{user.pk}:{token_obj.pk}:{c}",
+            service.send(
+                destination=destino,
+                message=mensagem,
+                channel=c,
+                subject="Reposição de palavra-passe",
+                event_type=getattr(Notification.EventType, "PASSWORD_RESET", Notification.EventType.GENERICA),
+                external_reference=f"password_reset:{user.pk}:{token_obj.pk}:{c}",
             )
 
         return Response(

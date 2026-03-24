@@ -9,14 +9,14 @@ from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from domain.clinical.estado_resultado import EstadoResultado
 
 
 def execute(inquilino):
     hoje = timezone.localdate()
 
-    checkins_hoje = CheckinRecepcao.objects.filter(
+    checkins_hoje = ReceptionCheckin.objects.filter(
         inquilino=inquilino,
         chegou_em__date=hoje,
     )
@@ -24,23 +24,23 @@ def execute(inquilino):
     fila = (
         checkins_hoje.exclude(
             estado__in=[
-                CheckinRecepcao.Estado.CONCLUIDO,
-                CheckinRecepcao.Estado.CANCELADO,
+                ReceptionCheckin.Status.CONCLUIDO,
+                ReceptionCheckin.Status.CANCELADO,
             ]
         )
         .select_related("paciente", "requisicao", "fatura", "atendente")
         .annotate(
             prioridade_ordem=Case(
-                When(prioridade=CheckinRecepcao.Prioridade.URGENTE, then=Value(0)),
-                When(prioridade=CheckinRecepcao.Prioridade.PREFERENCIAL, then=Value(1)),
+                When(prioridade=ReceptionCheckin.Priority.URGENTE, then=Value(0)),
+                When(prioridade=ReceptionCheckin.Priority.PREFERENCIAL, then=Value(1)),
                 default=Value(2),
                 output_field=IntegerField(),
             ),
             estado_ordem=Case(
-                When(estado=CheckinRecepcao.Estado.AGUARDANDO, then=Value(0)),
-                When(estado=CheckinRecepcao.Estado.EM_ATENDIMENTO, then=Value(1)),
-                When(estado=CheckinRecepcao.Estado.REQUISICAO_CRIADA, then=Value(2)),
-                When(estado=CheckinRecepcao.Estado.FATURA_VINCULADA, then=Value(3)),
+                When(estado=ReceptionCheckin.Status.AGUARDANDO, then=Value(0)),
+                When(estado=ReceptionCheckin.Status.EM_ATENDIMENTO, then=Value(1)),
+                When(estado=ReceptionCheckin.Status.REQUISICAO_CRIADA, then=Value(2)),
+                When(estado=ReceptionCheckin.Status.FATURA_VINCULADA, then=Value(3)),
                 default=Value(4),
                 output_field=IntegerField(),
             ),
@@ -60,8 +60,8 @@ def execute(inquilino):
         "data": str(hoje),
         "resumo": {
             "checkins_hoje": checkins_hoje.count(),
-            "na_fila": checkins_hoje.filter(estado=CheckinRecepcao.Estado.AGUARDANDO).count(),
-            "em_atendimento": checkins_hoje.filter(estado=CheckinRecepcao.Estado.EM_ATENDIMENTO).count(),
+            "na_fila": checkins_hoje.filter(estado=ReceptionCheckin.Status.AGUARDANDO).count(),
+            "em_atendimento": checkins_hoje.filter(estado=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
             "pacientes_novos": Patient.objects.filter(inquilino=inquilino, criado_em__date=hoje).count(),
             "requisicoes_pendentes": LabRequest.objects.filter(
                 inquilino=inquilino,

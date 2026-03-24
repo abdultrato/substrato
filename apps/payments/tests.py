@@ -26,7 +26,7 @@ def _tenant():
     return Tenant.objects.create(identificador="tn-pay", nome="Tenant Pay")
 
 
-def _paciente(tenant):
+def _patient(tenant):
     return Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Pay",
@@ -35,7 +35,7 @@ def _paciente(tenant):
     )
 
 
-def _exame(tenant):
+def _exam(tenant):
     return LabExam.objects.create(
         inquilino=tenant,
         nome="Glicose",
@@ -49,14 +49,14 @@ def _horario_normal():
     return timezone.make_aware(datetime(2024, 1, 2, 10, 0))
 
 
-def _fatura_com_exame(tenant, paciente, exame):
-    req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
+def _invoice_with_exam(tenant, patient, exam):
+    req = LabRequest.objects.create(inquilino=tenant, paciente=patient)
     req.criado_em = _horario_normal()
     req.save(update_fields=["criado_em"])
-    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exam)
     fat = Invoice.objects.create(
         inquilino=tenant,
-        paciente=paciente,
+        paciente=patient,
         requisicao=req,
         origem=Invoice.Origem.CLINICO,
     )
@@ -64,7 +64,7 @@ def _fatura_com_exame(tenant, paciente, exame):
         inquilino=tenant,
         fatura=fat,
         tipo_item=InvoiceItem.TipoItem.EXAME,
-        exame=exame,
+        exame=exam,
     )
     item._preencher_de_referencia()
     item.save(update_fields=["descricao", "preco_unitario", "quantidade"])
@@ -73,11 +73,11 @@ def _fatura_com_exame(tenant, paciente, exame):
 
 
 @pytest.mark.django_db
-def test_pagamento_confirma_gera_recibo():
+def test_payment_confirm_generates_receipt():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
-    fatura = _fatura_com_exame(tenant, paciente, exame)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fatura = _invoice_with_exam(tenant, patient, exam)
 
     # Emite fatura para permitir atualização de estado/pagamento
     fatura.estado = Invoice.Estado.EMITIDA
@@ -87,10 +87,10 @@ def test_pagamento_confirma_gera_recibo():
         inquilino=tenant,
         fatura=fatura,
         valor=fatura.total,
-        metodo=Payment.Metodo.DINHEIRO,
+        metodo=Payment.Method.DINHEIRO,
     )
 
-    pagamento.confirmar()
+    pagamento.confirm()
     fatura.refresh_from_db()
     fatura.gerar_recibo_automatico(pagamento)
 
@@ -105,40 +105,40 @@ def test_pagamento_confirma_gera_recibo():
 
 
 @pytest.mark.django_db
-def test_pagamento_estorno_exige_confirmado():
+def test_payment_refund_requires_confirmed_status():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
-    fatura = _fatura_com_exame(tenant, paciente, exame)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fatura = _invoice_with_exam(tenant, patient, exam)
 
     pagamento = Payment.objects.create(
         inquilino=tenant,
         fatura=fatura,
         valor=fatura.total,
-        metodo=Payment.Metodo.DINHEIRO,
+        metodo=Payment.Method.DINHEIRO,
     )
 
     with pytest.raises(ValidationError):
         pagamento.estornar()
 
-    pagamento.confirmar()
+    pagamento.confirm()
     pagamento.estornar()
     assert pagamento.status == Payment.Status.ESTORNADO
 
 
 @pytest.mark.django_db
-def test_pagamento_seguro_exige_seguradora_e_autorizacao():
+def test_insurance_payment_requires_insurer_and_authorization():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
-    fatura = _fatura_com_exame(tenant, paciente, exame)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fatura = _invoice_with_exam(tenant, patient, exam)
 
     pagamento = Payment(
         inquilino=tenant,
         nome="Pagamento Seguro",
         fatura=fatura,
         valor=fatura.total,
-        metodo=Payment.Metodo.SEGURO_SAUDE,
+        metodo=Payment.Method.SEGURO_SAUDE,
     )
 
     with pytest.raises(ValidationError):
@@ -154,14 +154,23 @@ def test_pagamento_seguro_exige_seguradora_e_autorizacao():
 
 
 @pytest.mark.django_db
-def test_transacao_e_reconciliacao():
+def test_transaction_and_reconciliation():
     trans = Transaction.objects.create(
         referencia_externa="TX123",
         gateway="local",
         status="PEN",
     )
     rec = Reconciliation.objects.create(transacao=trans)
-    rec.confirmar()
+    rec.confirm()
     rec.refresh_from_db()
     assert rec.confirmado is True
     assert rec.data_confirmacao is not None
+
+
+_paciente = _patient
+_exame = _exam
+_fatura_com_exame = _invoice_with_exam
+test_pagamento_confirma_gera_recibo = test_payment_confirm_generates_receipt
+test_pagamento_estorno_exige_confirmado = test_payment_refund_requires_confirmed_status
+test_pagamento_seguro_exige_seguradora_e_autorizacao = test_insurance_payment_requires_insurer_and_authorization
+test_transacao_e_reconciliacao = test_transaction_and_reconciliation

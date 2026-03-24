@@ -4,108 +4,91 @@ from django.db import transaction
 from django.utils import timezone
 from django_redis import get_redis_connection
 
-from application.payments.start_payment import start_payment
+from application.payments.start_payment import execute as charge_payment
 from infrastructure.cache import TenantCache
 from services.tenants.tenant_usage_service import TenantUsageService
 
 
 class BillingService:
     """
-    Serviço de cobrança multi-tenant.
-
-    - Idempotente.
-    - Usa lock distribuído.
-    - Processamento mensal.
+    Processes tenant overage charges once per billing period.
     """
 
-    EXCEDENTE_PRECO_UNITARIO = Decimal("2.00")  # MZN por requisição
-    LOCK_TIMEOUT = 60  # segundos
+    EXTRA_REQUEST_UNIT_PRICE = Decimal("2.00")
+    LOCK_TIMEOUT = 60
+    CACHE_TTL_SECONDS = 60 * 60 * 24 * 40
 
     @staticmethod
-    def processar_cobranca_mensal(inquilino):
-        """
-        Processa cobrança do mês atual.
-        """
-
-        if not inquilino or not inquilino.ativo:
+    def process_monthly_charge(tenant):
+        if not tenant or not tenant.ativo:
             return None
 
-        if not inquilino.plano or not inquilino.plano.ativo:
+        plan = getattr(tenant, "plan", None)
+        if not plan or not plan.ativo:
             return None
 
-        periodo = BillingService._periodo_atual()
-        lock_key = f"billing:{inquilino.id}:{periodo}"
-
+        period = BillingService._current_period()
+        lock_key = f"billing:{tenant.id}:{period}"
         redis = get_redis_connection("default")
 
-        # Lock distribuído (evita cobrança duplicada)
         if not redis.set(lock_key, "1", nx=True, ex=BillingService.LOCK_TIMEOUT):
             return None
 
         try:
-            return BillingService._processar(inquilino, periodo)
+            return BillingService._process_charge(tenant, period)
         finally:
             redis.delete(lock_key)
 
-    # =====================================================
-    # PROCESSAMENTO INTERNO
-    # =====================================================
-
     @staticmethod
     @transaction.atomic
-    def _processar(inquilino, periodo):
-
-        # Idempotência via cache
-        if TenantCache.get(inquilino.id, f"billing_done:{periodo}"):
+    def _process_charge(tenant, period):
+        if TenantCache.get(tenant.id, f"billing_done:{period}"):
             return None
 
-        uso = TenantUsageService.obter_requisicoes(inquilino) or 0
-        limite = inquilino.plano.limite_requisicoes_mes or 0
+        usage = TenantUsageService.get_requests(tenant) or 0
+        plan = getattr(tenant, "plan", None)
+        limit = getattr(plan, "limite_requisicoes_mes", 0) or 0
 
-        if uso <= limite:
+        if usage <= limit:
             TenantCache.set(
-                inquilino.id,
-                f"billing_done:{periodo}",
+                tenant.id,
+                f"billing_done:{period}",
                 True,
-                timeout=60 * 60 * 24 * 40,  # 40 dias
+                timeout=BillingService.CACHE_TTL_SECONDS,
             )
             return None
 
-        excedente = uso - limite
-        valor_extra = BillingService._calcular_valor_excedente(excedente)
+        excess_requests = usage - limit
+        extra_value = BillingService._calculate_extra_value(tenant, excess_requests)
 
-        start_payment(
-            inquilino=inquilino,
-            valor=valor_extra,
-            descricao=f"Excedente de requisições - {periodo}",
+        charge_payment(
+            value=extra_value,
+            reference=f"TENANT-BILLING-{tenant.id}-{period}",
         )
 
-        # Marca como processado
         TenantCache.set(
-            inquilino.id,
-            f"billing_done:{periodo}",
+            tenant.id,
+            f"billing_done:{period}",
             True,
-            timeout=60 * 60 * 24 * 40,
+            timeout=BillingService.CACHE_TTL_SECONDS,
         )
-
-        # Reset contador mensal
-        TenantUsageService.resetar_requisicoes(inquilino)
-
-        return valor_extra
-
-    # =====================================================
-    # CÁLCULO
-    # =====================================================
+        TenantUsageService.reset_requests(tenant)
+        return extra_value
 
     @staticmethod
-    def _calcular_valor_excedente(excedente: int) -> Decimal:
-        return Decimal(excedente) * BillingService.EXCEDENTE_PRECO_UNITARIO
-
-    # =====================================================
-    # PERÍODO
-    # =====================================================
+    def _calculate_extra_value(tenant, excess_requests: int) -> Decimal:
+        plan = getattr(tenant, "plan", None)
+        unit_price = getattr(plan, "preco_excedente_requisicao", None) or BillingService.EXTRA_REQUEST_UNIT_PRICE
+        return Decimal(excess_requests) * Decimal(unit_price)
 
     @staticmethod
-    def _periodo_atual():
-        hoje = timezone.now().date()
-        return hoje.strftime("%Y-%m")
+    def _current_period():
+        today = timezone.now().date()
+        return today.strftime("%Y-%m")
+
+
+BillingService.EXCEDENTE_PRECO_UNITARIO = BillingService.EXTRA_REQUEST_UNIT_PRICE
+BillingService.processar_cobranca_mensal = BillingService.process_monthly_charge
+BillingService._processar = BillingService._process_charge
+BillingService._calcular_valor_excedente = BillingService._calculate_extra_value
+BillingService._periodo_atual = BillingService._current_period

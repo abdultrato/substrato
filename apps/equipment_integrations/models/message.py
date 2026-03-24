@@ -19,14 +19,17 @@ def _upload_path(instance: "IntegrationDocument", filename: str) -> str:
 class IntegrationMessage(NoNameCoreModel):
     prefixo = "MSG"
 
-    class Direcao(models.TextChoices):
+    class Direction(models.TextChoices):
         ENTRADA = "IN", "Entrada"
         SAIDA = "OUT", "Saída"
 
-    class Estado(models.TextChoices):
+    class Status(models.TextChoices):
         RECEBIDA = "RECV", "Recebida"
         PROCESSADA = "PROC", "Processada"
         ERRO = "ERRO", "Erro"
+
+    Direcao = Direction
+    Estado = Status
 
     equipamento = models.ForeignKey(
         "integracoes_equipamentos.IntegrationEquipment",
@@ -45,8 +48,8 @@ class IntegrationMessage(NoNameCoreModel):
 
     direcao = models.CharField(
         max_length=3,
-        choices=Direcao.choices,
-        default=Direcao.ENTRADA,
+        choices=Direction.choices,
+        default=Direction.ENTRADA,
         db_index=True,
     )
     protocolo = models.CharField(max_length=20, blank=True, default="", db_index=True)
@@ -59,8 +62,8 @@ class IntegrationMessage(NoNameCoreModel):
 
     estado = models.CharField(
         max_length=4,
-        choices=Estado.choices,
-        default=Estado.RECEBIDA,
+        choices=Status.choices,
+        default=Status.RECEBIDA,
         db_index=True,
     )
     erro = models.TextField(blank=True, default="")
@@ -77,13 +80,13 @@ class IntegrationMessage(NoNameCoreModel):
         ]
 
     @classmethod
-    def criar_de_payload(
+    def create_from_payload(
         cls,
         *,
-        equipamento,
-        ordem=None,
-        direcao: str,
-        protocolo: str,
+        equipment,
+        order=None,
+        direction: str,
+        protocol: str,
         message_id: str,
         content_type: str,
         raw_body: bytes,
@@ -91,18 +94,21 @@ class IntegrationMessage(NoNameCoreModel):
     ) -> "IntegrationMessage":
         raw_body = raw_body or b""
         return cls.objects.create(
-            inquilino=equipamento.inquilino,
-            equipamento=equipamento,
-            ordem=ordem,
-            direcao=direcao,
-            protocolo=protocolo or "",
+            inquilino=equipment.inquilino,
+            equipamento=equipment,
+            ordem=order,
+            direcao=direction,
+            protocolo=protocol or "",
             message_id=message_id or "",
             content_type=content_type or "",
             sha256=_sha256_bytes(raw_body),
             payload_raw=raw_body.decode("utf-8", errors="replace"),
             payload_json=payload_json or {},
-            estado=cls.Estado.RECEBIDA,
+            estado=cls.Status.RECEBIDA,
         )
+
+
+IntegrationMessage.criar_de_payload = IntegrationMessage.create_from_payload
 
 
 class IntegrationDocument(NoNameCoreModel):

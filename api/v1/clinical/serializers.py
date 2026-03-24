@@ -516,10 +516,10 @@ class LabRequestSerializer(serializers.ModelSerializer):
 
         if tipo == LabRequest.Tipo.LABORATORIO:
             for exame in exames:
-                requisicao.adicionar_exame(exame)
+                requisicao.add_exam(exame)
         elif tipo == LabRequest.Tipo.EXAME_MEDICO:
             for exame_medico in exames_medicos:
-                requisicao.adicionar_exame_medico(exame_medico)
+                requisicao.add_medical_exam(exame_medico)
 
         return requisicao
 
@@ -548,7 +548,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
                     instance.itens.filter(exame_id__in=remover).delete()
 
                 for exame in LabExam.objects.filter(id__in=adicionar):
-                    instance.adicionar_exame(exame)
+                    instance.add_exam(exame)
 
         elif instance.tipo == LabRequest.Tipo.EXAME_MEDICO:
             if exames is not None:
@@ -566,7 +566,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
                     instance.itens.filter(exame_medico_id__in=remover).delete()
 
                 for exame_medico in MedicalExam.objects.filter(id__in=adicionar):
-                    instance.adicionar_exame_medico(exame_medico)
+                    instance.add_medical_exam(exame_medico)
 
         return instance
 

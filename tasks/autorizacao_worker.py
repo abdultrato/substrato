@@ -3,7 +3,7 @@ import logging
 from celery import shared_task
 from django.db.utils import OperationalError
 
-from services.insurer.processar_autorizacao_service import ProcessarAutorizacaoService
+from services.insurer.process_authorization_service import ProcessAuthorizationService
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def processar_autorizacao_task(self, autorizacao_id: int):
 
     try:
-        resultado = ProcessarAutorizacaoService.executar(autorizacao_id)
+        resultado = ProcessAuthorizationService.execute(autorizacao_id)
 
         logger.info(
             "Autorizacao processada",

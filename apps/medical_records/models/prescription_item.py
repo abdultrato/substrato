@@ -18,12 +18,14 @@ class PrescriptionItem(NoNameCoreModel):
 
     prefixo = "PRTI"
 
-    class UnidadeDosagem(models.TextChoices):
+    class DosageUnit(models.TextChoices):
         MG = "MG", "mg"
         ML = "ML", "ml"
         G = "G", "g"
         L = "L", "L"
         KG = "KG", "kg"
+
+    UnidadeDosagem = DosageUnit
 
     registro = models.ForeignKey(
         "prontuario.MedicalRecordEntry",
@@ -53,8 +55,8 @@ class PrescriptionItem(NoNameCoreModel):
     dosagem_unidade = models.CharField(
         verbose_name="Unidade da dosagem",
         max_length=3,
-        choices=UnidadeDosagem.choices,
-        default=UnidadeDosagem.MG,
+        choices=DosageUnit.choices,
+        default=DosageUnit.MG,
         db_index=True,
     )
 

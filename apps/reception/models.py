@@ -1,5 +1,8 @@
-from .models import CheckinRecepcao
+from .models import ReceptionCheckin
 
 __all__ = [
-    "CheckinRecepcao",
+    "ReceptionCheckin",
 ]
+
+
+CheckinRecepcao = ReceptionCheckin

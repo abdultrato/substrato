@@ -49,8 +49,11 @@ def _formatar_data_requisicao(requisicao):
         return "—"
 
 
-def _codigo_exame(exame):
-    return getattr(exame, "codigo", "") or getattr(exame, "id_custom", "") or ""
+def _exam_code(exam):
+    return getattr(exam, "codigo", "") or getattr(exam, "id_custom", "") or ""
+
+
+_codigo_exame = _exam_code
 
 
 def _resolver_usuario_documento(fatura, requisicao):

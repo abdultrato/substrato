@@ -11,7 +11,7 @@ from application.reception.care_flow import (
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
 from apps.tenants.models.tenant import Tenant
-from apps.reception.models.checkin_recepcao import CheckinRecepcao
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from core.constants.laboratory.metodo import Metodo
 from core.constants.laboratory.setor import Setor
 
@@ -20,7 +20,7 @@ def _tenant():
     return Tenant.objects.create(identificador="tn-rec", nome="Tenant Recepcao")
 
 
-def _paciente(tenant):
+def _patient(tenant):
     return Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Rec",
@@ -29,7 +29,7 @@ def _paciente(tenant):
     )
 
 
-def _exame(tenant):
+def _exam(tenant):
     return LabExam.objects.create(
         inquilino=tenant,
         nome="Raio-X",
@@ -40,23 +40,28 @@ def _exame(tenant):
 
 
 @pytest.mark.django_db
-def test_checkin_fluxo_basico():
+def test_checkin_basic_flow():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
 
-    checkin = open_checkin(inquilino=tenant, paciente=paciente, prioridade=CheckinRecepcao.Prioridade.NORMAL)
+    checkin = open_checkin(inquilino=tenant, paciente=patient, prioridade=ReceptionCheckin.Priority.NORMAL)
 
-    requisicao = create_request_for_checkin(checkin=checkin, exame_ids=[exame.id])
+    request = create_request_for_checkin(checkin=checkin, exame_ids=[exam.id])
 
     fatura = create_invoice_for_checkin(checkin=checkin, emitir=True)
 
-    pagamento, recibo = register_payment_for_checkin(checkin=checkin, valor=Decimal("50.00"))
+    payment, receipt = register_payment_for_checkin(checkin=checkin, valor=Decimal("50.00"))
 
     checkin.refresh_from_db()
     fatura.refresh_from_db()
 
-    assert checkin.requisicao_id == requisicao.id
+    assert checkin.requisicao_id == request.id
     assert checkin.fatura_id == fatura.id
-    assert pagamento.status in {pagamento.Status.CONFIRMADO, pagamento.Status.PENDENTE}
-    assert recibo is None or recibo.valor == pagamento.valor
+    assert payment.status in {payment.Status.CONFIRMADO, payment.Status.PENDENTE}
+    assert receipt is None or receipt.valor == payment.valor
+
+
+_paciente = _patient
+_exame = _exam
+test_checkin_fluxo_basico = test_checkin_basic_flow
