@@ -1,4 +1,4 @@
-from .grupos import GroupsPermissionsView
+from .groups import GroupsPermissionsView
 from .logout import LogoutView
 
 __all__ = [

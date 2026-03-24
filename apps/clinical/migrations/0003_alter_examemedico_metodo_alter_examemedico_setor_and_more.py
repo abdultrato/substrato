@@ -4,8 +4,8 @@ import apps.clinical.models.medical_result_file
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import infrastructure.orm.fields.metodo_exame_medico_field
-import infrastructure.orm.fields.setor_exame_medico_field
+import infrastructure.orm.fields.medical_exam_method_field
+import infrastructure.orm.fields.medical_exam_sector_field
 import core.mixins.tenant_propagation
 
 
@@ -21,12 +21,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='examemedico',
             name='metodo',
-            field=infrastructure.orm.fields.metodo_exame_medico_field.MetodoExameMedicoField(choices=[('USG', 'Ultrassonografia / Ecografia'), ('RX', 'Raio-X Convencional'), ('CT', 'Tomografia Computorizada (CT)'), ('RM', 'Ressonância Magnética (RM)'), ('MG', 'Mamografia'), ('DXA', 'Densitometria Óssea (DXA)'), ('ECO', 'Ecocardiograma'), ('ECG', 'Eletrocardiograma (ECG)'), ('HOLTER', 'Holter'), ('MAPA', 'MAPA (PA 24h)'), ('EEG', 'Eletroencefalograma (EEG)'), ('ENDO', 'Endoscopia'), ('COLONO', 'Colonoscopia'), ('ANGIO', 'Angiografia'), ('MN', 'Medicina Nuclear / Cintilografia'), ('OUT', 'Outro')], db_index=True, max_length=30, verbose_name='Método do exame (imagem/diagnóstico)'),
+            field=infrastructure.orm.fields.medical_exam_method_field.MedicalExamMethodField(choices=[('USG', 'Ultrassonografia / Ecografia'), ('RX', 'Raio-X Convencional'), ('CT', 'Tomografia Computorizada (CT)'), ('RM', 'Ressonância Magnética (RM)'), ('MG', 'Mamografia'), ('DXA', 'Densitometria Óssea (DXA)'), ('ECO', 'Ecocardiograma'), ('ECG', 'Eletrocardiograma (ECG)'), ('HOLTER', 'Holter'), ('MAPA', 'MAPA (PA 24h)'), ('EEG', 'Eletroencefalograma (EEG)'), ('ENDO', 'Endoscopia'), ('COLONO', 'Colonoscopia'), ('ANGIO', 'Angiografia'), ('MN', 'Medicina Nuclear / Cintilografia'), ('OUT', 'Outro')], db_index=True, max_length=30, verbose_name='Método do exame (imagem/diagnóstico)'),
         ),
         migrations.AlterField(
             model_name='examemedico',
             name='setor',
-            field=infrastructure.orm.fields.setor_exame_medico_field.SetorExameMedicoField(blank=True, choices=[('Radiologia', 'Radiologia'), ('DiagnosticoImagem', 'Diagnóstico por Imagem'), ('Cardiologia', 'Cardiologia'), ('GinecoObstetricia', 'Ginecologia/Obstetrícia'), ('Ortopedia', 'Ortopedia/Traumato'), ('Neurologia', 'Neurologia'), ('Otorrino', 'Otorrinolaringologia'), ('Oftalmologia', 'Oftalmologia'), ('MedicinaNuclear', 'Medicina Nuclear'), ('Endoscopia', 'Endoscopia'), ('Outro', 'Outro')], db_index=True, max_length=40, null=True, verbose_name='Setor do exame (imagem/diagnóstico)'),
+            field=infrastructure.orm.fields.medical_exam_sector_field.MedicalExamSectorField(blank=True, choices=[('Radiologia', 'Radiologia'), ('DiagnosticoImagem', 'Diagnóstico por Imagem'), ('Cardiologia', 'Cardiologia'), ('GinecoObstetricia', 'Ginecologia/Obstetrícia'), ('Ortopedia', 'Ortopedia/Traumato'), ('Neurologia', 'Neurologia'), ('Otorrino', 'Otorrinolaringologia'), ('Oftalmologia', 'Oftalmologia'), ('MedicinaNuclear', 'Medicina Nuclear'), ('Endoscopia', 'Endoscopia'), ('Outro', 'Outro')], db_index=True, max_length=40, null=True, verbose_name='Setor do exame (imagem/diagnóstico)'),
         ),
         migrations.AlterField(
             model_name='examemedicocampo',
@@ -62,3 +62,4 @@ class Migration(migrations.Migration):
             bases=(core.mixins.tenant_propagation.PropagarInquilinoMixin, models.Model),
         ),
     ]
+

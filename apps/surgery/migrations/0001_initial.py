@@ -3,7 +3,7 @@
 from decimal import Decimal
 from django.db import migrations, models
 import django.utils.timezone
-import infrastructure.orm.fields.dinheiro_field
+import infrastructure.orm.fields.money_field
 
 
 class Migration(migrations.Migration):
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('procedimento', models.CharField(blank=True, db_index=True, default='', help_text='Use quando o procedimento não estiver no catálogo.', max_length=160, verbose_name='Procedimento (texto livre)')),
                 ('descricao', models.TextField(blank=True, default='', verbose_name='Descrição')),
-                ('preco_estimado', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço estimado')),
+                ('preco_estimado', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço estimado')),
                 ('iva_percentual', models.DecimalField(decimal_places=2, default=Decimal('16.00'), max_digits=5, verbose_name='IVA (%)')),
                 ('aplica_iva_por_padrao', models.BooleanField(default=True, verbose_name='Aplicar IVA por padrão')),
                 ('agendada_para', models.DateTimeField(db_index=True, default=django.utils.timezone.now, verbose_name='Agendada para')),
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('nome', models.CharField(db_index=True, max_length=120)),
                 ('descricao', models.TextField(blank=True, default='', verbose_name='Descrição')),
-                ('preco_base', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço base')),
+                ('preco_base', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço base')),
                 ('iva_percentual', models.DecimalField(decimal_places=2, default=Decimal('16.00'), max_digits=5, verbose_name='IVA (%)')),
                 ('aplica_iva_por_padrao', models.BooleanField(default=True, verbose_name='Aplicar IVA por padrão')),
                 ('ativo', models.BooleanField(db_index=True, default=True, verbose_name='Ativo')),
@@ -64,3 +64,4 @@ class Migration(migrations.Migration):
             },
         ),
     ]
+

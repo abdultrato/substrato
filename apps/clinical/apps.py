@@ -8,6 +8,6 @@ class ClinicalConfig(AppConfig):
     verbose_name = "Laboratório"
 
     def ready(self):
-        from events.registry import registrar_handlers
+        from events.registry import register_handlers
 
-        registrar_handlers()
+        register_handlers()

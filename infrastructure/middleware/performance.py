@@ -1,7 +1,7 @@
 import logging
 import time
 
-from observability.metricas import log_slow_request
+from observability.metrics import log_slow_request
 
 logger = logging.getLogger("api")
 

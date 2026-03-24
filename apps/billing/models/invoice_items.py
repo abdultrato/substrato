@@ -165,7 +165,7 @@ class InvoiceItem(NoNameCoreModel):
 
     def _schedule_recalculation(self):
         try:
-            from tasks.billing.recalculo import recalcular_fatura_task
+            from tasks.billing.recalculation import recalculate_invoice_task
         except ImportError:
             return
 
@@ -175,7 +175,7 @@ class InvoiceItem(NoNameCoreModel):
 
         def _enqueue():
             try:
-                recalcular_fatura_task.delay(fatura_id)
+                recalculate_invoice_task.delay(fatura_id)
                 return
             except Exception:
                 # Fallback local quando o broker não está disponível.

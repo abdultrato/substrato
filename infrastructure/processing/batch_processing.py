@@ -1,11 +1,9 @@
 # infraestrutura/processamento/batch_processing.py
 
 from collections.abc import Callable
-
-
-def processar_em_lotes(
+def process_in_batches(
     queryset,
-    tamanho_lote: int = 500,
+    batch_size: int = 500,
     handler: Callable | None = None,
 ):
     """
@@ -13,16 +11,16 @@ def processar_em_lotes(
     """
 
     total = queryset.count()
-    inicio = 0
+    start = 0
 
-    while inicio < total:
-        lote = queryset[inicio : inicio + tamanho_lote]
+    while start < total:
+        batch = queryset[start : start + batch_size]
 
-        for objeto in lote:
+        for item in batch:
             if handler:
-                handler(objeto)
+                handler(item)
 
-        inicio += tamanho_lote
+        start += batch_size
 
 
 def iterar_em_chunks(queryset, chunk_size=1000):
@@ -41,3 +39,6 @@ def iterar_em_chunks(queryset, chunk_size=1000):
         for obj in lote:
             yield obj
             ultimo_id = obj.id
+
+
+processar_em_lotes = process_in_batches

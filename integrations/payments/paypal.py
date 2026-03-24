@@ -1,7 +1,7 @@
 from django.conf import settings
 import requests
 
-from .base import PaymentGateway
+from .base_gateway import PaymentGateway
 
 
 class PaypalGateway(PaymentGateway):

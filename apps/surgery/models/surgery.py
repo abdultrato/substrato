@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 
 from core.models.base import NoNameCoreModel
 
@@ -64,7 +64,7 @@ class Surgery(NoNameCoreModel):
     )
     descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
 
-    preco_estimado = DinheiroField(verbose_name="Preço estimado", default=Decimal("0.00"))
+    preco_estimado = MoneyField(verbose_name="Preço estimado", default=Decimal("0.00"))
     iva_percentual = models.DecimalField(verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
     aplica_iva_por_padrao = models.BooleanField(verbose_name="Aplicar IVA por padrão", default=True)
 
@@ -112,3 +112,4 @@ class Surgery(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.id_custom or f"Cirurgia {self.pk}"
+

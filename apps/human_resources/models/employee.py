@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
 
 
@@ -76,8 +76,8 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    salario_nominal = DinheiroField(verbose_name="Salário nominal", default=Decimal("0.00"))
-    aumento_salarial = DinheiroField(
+    salario_nominal = MoneyField(verbose_name="Salário nominal", default=Decimal("0.00"))
+    aumento_salarial = MoneyField(
         verbose_name="Aumento salarial",
         default=Decimal("0.00"),
         help_text="Valor adicional por promoção/aumento (somado ao salário nominal).",
@@ -120,3 +120,4 @@ class Employee(CoreModel):
 
         if self.cargo_id and self.inquilino_id and self.cargo.inquilino_id != self.inquilino_id:
             raise ValidationError({"cargo": "Cargo e funcionário devem pertencer ao mesmo inquilino."})
+

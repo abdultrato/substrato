@@ -63,9 +63,9 @@ class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         receipt = self.get_object()
-        from tasks.gerar_pdf.pdf_generator_recibo import gerar_pdf_recibo
+        from tasks.generate_pdf.receipt_pdf_generator import generate_receipt_pdf
 
-        pdf_bytes, filename = gerar_pdf_recibo(receipt, request=request)
+        pdf_bytes, filename = generate_receipt_pdf(receipt, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp

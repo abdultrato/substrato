@@ -1,8 +1,8 @@
-from . import mixin_auditoria_acesso, mixin_permissao_inquilino, mixin_permissao_requerida, mixin_verificacao_contextual
+from . import access_audit_mixin, contextual_verification_mixin, required_permission_mixin, tenant_permission_mixin
 
 __all__ = [
-    "mixin_auditoria_acesso",
-    "mixin_permissao_inquilino",
-    "mixin_permissao_requerida",
-    "mixin_verificacao_contextual",
+    "access_audit_mixin",
+    "tenant_permission_mixin",
+    "required_permission_mixin",
+    "contextual_verification_mixin",
 ]

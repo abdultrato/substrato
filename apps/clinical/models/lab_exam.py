@@ -5,9 +5,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
-from infrastructure.orm.fields.metodo_field import MetodoField
-from infrastructure.orm.fields.setor_field import SetorField
+from infrastructure.orm.fields.money_field import MoneyField
+from infrastructure.orm.fields.method_field import MethodField
+from infrastructure.orm.fields.sector_field import SectorField
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 
@@ -30,7 +30,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
         help_text="Tempo de resposta em horas.",
     )
 
-    preco = DinheiroField(
+    preco = MoneyField(
         verbose_name="Preço do exame",
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
@@ -55,12 +55,12 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
         help_text="Desmarque se este exame normalmente não deve ter IVA.",
     )
 
-    metodo = MetodoField(
+    metodo = MethodField(
         verbose_name="Método do exame",
         db_index=True,
     )
 
-    setor = SetorField(
+    setor = SectorField(
         verbose_name="Setor do exame",
         db_index=True,
     )
@@ -126,3 +126,4 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
     def __str__(self):
         return f"{self.nome or 'exame sem nome'}"
+

@@ -23,7 +23,7 @@ class ActiveUsersView(APIView):
 logger = logging.getLogger("tenant_audit")
 
 
-def registrar_evento(
+def register_event(
     usuario,
     tenant_id,
     caminho,
@@ -40,3 +40,6 @@ def registrar_evento(
             "status": status_code,
         },
     )
+
+
+registrar_evento = register_event

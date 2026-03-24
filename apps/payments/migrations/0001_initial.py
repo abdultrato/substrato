@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import infrastructure.orm.fields.dinheiro_field
+import infrastructure.orm.fields.money_field
 
 
 class Migration(migrations.Migration):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('deletado_em', models.DateTimeField(blank=True, null=True)),
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('nome', models.CharField(db_index=True, max_length=120)),
-                ('valor', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, max_digits=12, verbose_name='Valor')),
+                ('valor', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, max_digits=12, verbose_name='Valor')),
                 ('metodo', models.CharField(choices=[('DIN', 'Dinheiro'), ('CAR', 'Cartão'), ('TRF', 'Transferência'), ('MOB', 'Mobile Money'), ('POS', 'POS'), ('CHQ', 'Cheque'), ('OUT', 'Outro')], max_length=4, verbose_name='Método')),
                 ('status', models.CharField(choices=[('PEN', 'Pendente'), ('CON', 'Confirmado'), ('FAL', 'Falhou'), ('EST', 'Estornado'), ('CAN', 'Cancelado')], db_index=True, default='PEN', max_length=3, verbose_name='Estado')),
                 ('referencia_externa', models.CharField(blank=True, help_text='Referência externa (transação, autorização, etc).', max_length=120, verbose_name='Referência externa')),
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('nome', models.CharField(db_index=True, max_length=120)),
                 ('tipo_evento', models.CharField(choices=[('CRIADO', 'Criado'), ('CONFIRMADO', 'Confirmado'), ('FALHA', 'Falha'), ('ESTORNADO', 'Estornado'), ('CANCELADO', 'Cancelado')], db_index=True, max_length=15, verbose_name='Tipo de evento')),
-                ('valor', infrastructure.orm.fields.dinheiro_field.DinheiroField(blank=True, decimal_places=2, max_digits=12, null=True, verbose_name='Valor')),
+                ('valor', infrastructure.orm.fields.money_field.MoneyField(blank=True, decimal_places=2, max_digits=12, null=True, verbose_name='Valor')),
                 ('descricao', models.CharField(blank=True, max_length=255, verbose_name='Descrição')),
                 ('referencia_externa', models.CharField(blank=True, max_length=120, verbose_name='Referência externa')),
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('numero', models.CharField(db_index=True, max_length=60, verbose_name='Número do recibo')),
-                ('valor', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, max_digits=12, verbose_name='Valor')),
+                ('valor', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, max_digits=12, verbose_name='Valor')),
                 ('criado_em', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Criado em')),
                 ('fatura', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='recibos', to='faturamento.fatura', verbose_name='Fatura')),
                 ('pagamento', models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, related_name='recibo', to='pagamentos.pagamento', verbose_name='Pagamento')),
@@ -145,3 +145,4 @@ class Migration(migrations.Migration):
             index=models.Index(fields=['criado_em'], name='pagamentos__criado__a317e2_idx'),
         ),
     ]
+

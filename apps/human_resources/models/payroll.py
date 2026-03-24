@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import NoNameCoreModel
 
 
@@ -27,14 +27,14 @@ class Payroll(NoNameCoreModel):
     ano = models.PositiveSmallIntegerField(db_index=True)
     mes = models.PositiveSmallIntegerField(db_index=True)
 
-    salario_nominal = DinheiroField(default=Decimal("0.00"))
+    salario_nominal = MoneyField(default=Decimal("0.00"))
     horas_base_mes = models.PositiveSmallIntegerField(default=176)
     multiplicador_hora_extra = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("1.50"))
 
     horas_extras_apuradas = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0.00"))
     valor_hora = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal("0.0000"))
-    valor_horas_extras = DinheiroField(default=Decimal("0.00"))
-    salario_total = DinheiroField(default=Decimal("0.00"))
+    valor_horas_extras = MoneyField(default=Decimal("0.00"))
+    salario_total = MoneyField(default=Decimal("0.00"))
 
     fechado = models.BooleanField(default=False, db_index=True)
 
@@ -119,3 +119,4 @@ class Payroll(NoNameCoreModel):
 
 Payroll._apuracao_horas_extras = Payroll._calculate_overtime_hours
 Payroll.recalcular = Payroll.recalculate
+

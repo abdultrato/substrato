@@ -33,7 +33,7 @@ from apps.pharmacy.models.sale_item import SaleItem
 from apps.pharmacy.models.product import Product
 from apps.billing.models.invoice import Invoice
 from apps.payments.models.payment import Payment
-from domain.clinical.estado_resultado import EstadoResultado
+from domain.clinical.request_state import RequestState
 
 
 def _aware_or_none(value):
@@ -171,7 +171,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         requisicoes_validadas = qs_requisicoes.filter(
             criado_em__gte=inicio,
             criado_em__lte=fim,
-            estado=EstadoResultado.VALIDADO,
+            estado=RequestState.VALIDATED,
         ).count()
 
         consultas_total = qs_consultas.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
@@ -484,9 +484,9 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             return resp
 
         # PDF (default)
-        from tasks.gerar_pdf.pdf_generator_analytics import gerar_pdf_analytics
+        from tasks.generate_pdf.analytics_pdf_generator import generate_analytics_pdf
 
-        pdf_bytes, filename = gerar_pdf_analytics(payload, request=request)
+        pdf_bytes, filename = generate_analytics_pdf(payload, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         return resp

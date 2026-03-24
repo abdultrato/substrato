@@ -7,9 +7,13 @@ def info(msg):
     logger.info(msg)
 
 
-def erro(msg):
+def error(msg):
     logger.error(msg)
 
 
-def aviso(msg):
+def warning(msg):
     logger.warning(msg)
+
+
+erro = error
+aviso = warning

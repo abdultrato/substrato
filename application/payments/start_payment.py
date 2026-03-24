@@ -19,7 +19,7 @@ def start_payment(fatura, valor):
 
     gateway = MpesaGateway()
 
-    resposta = gateway.iniciar_pagamento(valor, referencia)
+    resposta = gateway.charge(valor, referencia)
 
     return Transaction.objects.create(
         referencia_externa=referencia,

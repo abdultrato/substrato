@@ -5,9 +5,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
-from infrastructure.orm.fields.metodo_exame_medico_field import MetodoExameMedicoField
-from infrastructure.orm.fields.setor_exame_medico_field import SetorExameMedicoField
+from infrastructure.orm.fields.money_field import MoneyField
+from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
+from infrastructure.orm.fields.medical_exam_sector_field import MedicalExamSectorField
 from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
 from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
@@ -106,7 +106,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
         help_text="Tempo de resposta em horas.",
     )
 
-    preco = DinheiroField(
+    preco = MoneyField(
         verbose_name="Preço do exame médico",
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
@@ -131,12 +131,12 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
         help_text="Desmarque se este exame normalmente não deve ter IVA.",
     )
 
-    metodo = MetodoExameMedicoField(
+    metodo = MedicalExamMethodField(
         verbose_name="Método do exame (imagem/diagnóstico)",
         db_index=True,
     )
 
-    setor = SetorExameMedicoField(
+    setor = MedicalExamSectorField(
         verbose_name="Setor do exame (imagem/diagnóstico)",
         db_index=True,
     )
@@ -238,3 +238,4 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
 
 
 tipos_resultado_permitidos_para_metodo = allowed_result_types_for_method
+

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 
 @dataclass
-class Evento(ABC):
+class Event(ABC):
     """
     Contrato base de evento corporativo.
     """
@@ -18,3 +18,6 @@ class Evento(ABC):
     def __post_init__(self):
         if not self.identificador:
             self.identificador = str(uuid4())
+
+
+Evento = Event

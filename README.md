@@ -123,8 +123,8 @@ Nota:
 Scripts prontos (ignorados pelo git via `backups/`):
 ```bash
 ./scripts/backup_automatico.sh --dest backups --keep 14
-./scripts/reset_banco_e_migracoes.sh
-./scripts/reset_banco_e_migracoes.sh --docker-db
+./scripts/reset_database_and_migrations.sh
+./scripts/reset_database_and_migrations.sh --docker-db
 ```
 
 ---
@@ -247,3 +247,4 @@ npm test
 - Habilitar métricas (Prometheus/Grafana já previsto no compose).
 - SSL end‑to‑end com Traefik e DNS configurado.
 - Backups automatizados do Postgres e rotação de logs.
+

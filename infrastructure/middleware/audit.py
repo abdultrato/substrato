@@ -1,5 +1,5 @@
 from apps.audit_activities.models.user_activity import UserActivity
-from observability.audit import registrar_evento
+from observability.audit import register_event
 
 
 def _client_ip(request) -> str | None:
@@ -53,7 +53,7 @@ class TenantAuditMiddleware:
         inquilino = getattr(request, "inquilino", None)
 
         # Mantém log estruturado em arquivo (observabilidade)
-        registrar_evento(
+        register_event(
             usuario=getattr(request, "user", None),
             tenant_id=getattr(inquilino, "id", None),
             caminho=request.path,

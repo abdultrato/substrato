@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 
-from system.services.configuracao_service import ConfiguracaoSistemaService
+from system.services.configuration_service import SystemConfigurationService
 
 
 class MaintenanceMiddleware:
@@ -10,7 +10,7 @@ class MaintenanceMiddleware:
     def __call__(self, request):
 
         # permitir superusers
-        if ConfiguracaoSistemaService.esta_em_manutencao() and not request.user.is_superuser:
+        if SystemConfigurationService.is_in_maintenance() and not request.user.is_superuser:
             return JsonResponse(
                 {"detail": "Sistema em manutenção."},
                 status=503,

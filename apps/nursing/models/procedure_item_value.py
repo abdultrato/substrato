@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.db import models
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
 
@@ -22,7 +22,7 @@ class ProcedureItemValue(PropagarInquilinoMixin, NoNameCoreModel):
         db_index=True,
     )
 
-    preco_unitario = DinheiroField(
+    preco_unitario = MoneyField(
         default=Decimal("0.00"),
     )
 
@@ -38,3 +38,4 @@ class ProcedureItemValue(PropagarInquilinoMixin, NoNameCoreModel):
 
     def __str__(self):
         return f"{self.item_id} - {self.preco_unitario}"
+

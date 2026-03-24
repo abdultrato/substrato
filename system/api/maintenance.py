@@ -2,17 +2,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from security.permissions.groups import IsAdmin
-from system.services.configuracao_service import ConfiguracaoSistemaService
+from system.services.configuration_service import SystemConfigurationService
 
 
 class MaintenanceModeView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        return Response({"maintenance_mode": ConfiguracaoSistemaService.esta_em_manutencao()})
+        return Response({"maintenance_mode": SystemConfigurationService.is_in_maintenance()})
 
     def post(self, request):
         enabled = bool(request.data.get("enabled", False))
-        ConfiguracaoSistemaService.definir_manutencao(enabled)
+        SystemConfigurationService.set_maintenance(enabled)
 
-        return Response({"maintenance_mode": ConfiguracaoSistemaService.esta_em_manutencao()})
+        return Response({"maintenance_mode": SystemConfigurationService.is_in_maintenance()})

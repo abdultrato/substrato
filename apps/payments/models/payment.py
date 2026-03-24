@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
 
 
@@ -42,7 +42,7 @@ class Payment(CoreModel):
         related_name="pagamentos",
     )
 
-    valor = DinheiroField(verbose_name="Valor")
+    valor = MoneyField(verbose_name="Valor")
 
     metodo = models.CharField(
         verbose_name="Método",
@@ -188,3 +188,4 @@ class Payment(CoreModel):
 
 Payment.confirmar = Payment.confirm
 Payment._atualizar_fatura = Payment._update_invoice
+

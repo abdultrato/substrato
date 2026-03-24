@@ -9,7 +9,7 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.billing.models.invoice_history import InvoiceHistory
-from tasks.gerar_pdf.pdf_generator_fatura import gerar_pdf_fatura
+from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
 from apps.payments.models.payment import Payment
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
@@ -106,7 +106,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         invoice = self.get_object()
-        pdf_bytes, filename = gerar_pdf_fatura(invoice, request=request)
+        pdf_bytes, filename = generate_invoice_pdf(invoice, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp

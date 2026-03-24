@@ -169,7 +169,7 @@ fi
 if [[ "$backend_ok" == "0" ]]; then
   if $COMPOSE logs --tail=400 backend 2>/dev/null | grep -q "InconsistentMigrationHistory\\|DuplicateColumn"; then
     echo " - Backend: inconsistência de migrations detectada."
-    echo "   Fix: scripts/reparar_historico_migracoes_docker.sh"
+    echo "   Fix: scripts/repair_migration_history_docker.sh"
   fi
 fi
 
@@ -187,3 +187,4 @@ else
   echo "  $COMPOSE logs --tail=200 nginx"
   exit 1
 fi
+

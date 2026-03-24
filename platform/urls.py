@@ -73,7 +73,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # API
     path("api/", include("api.urls")),
-    path("pdf/", include("tasks.gerar_pdf.urls")),
+    path("pdf/", include("tasks.generate_pdf.urls")),
     # OpenAPI Schema & Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),

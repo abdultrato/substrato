@@ -1,17 +1,20 @@
 from abc import ABC, abstractmethod
 
 
-class GatewayPagamento(ABC):
+class PaymentGateway(ABC):
     name: str
 
     @abstractmethod
-    def iniciar_pagamento(self, valor, referencia):
+    def charge(self, amount, reference, phone=None):
         pass
 
     @abstractmethod
-    def verificar_status(self, referencia):
+    def status(self, transaction_id):
         pass
 
     @abstractmethod
-    def reembolsar(self, referencia, valor=None):
+    def refund(self, transaction_id, amount=None):
         pass
+
+
+GatewayPagamento = PaymentGateway

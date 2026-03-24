@@ -13,7 +13,7 @@ from apps.consultations.utils.pricing import (
     get_local_datetime,
     get_tenant_timezone,
 )
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import NoNameCoreModel
 
 
@@ -78,7 +78,7 @@ class MedicalConsultation(NoNameCoreModel):
         db_index=True,
     )
 
-    preco = DinheiroField("Preço", default=Decimal("0.00"))
+    preco = MoneyField("Preço", default=Decimal("0.00"))
     multiplicador_preco = models.DecimalField(
         "Multiplicador de preço",
         max_digits=5,
@@ -205,3 +205,4 @@ class MedicalConsultation(NoNameCoreModel):
 
 
 MedicalConsultation._tipo_horario_atual = MedicalConsultation._current_schedule_type
+

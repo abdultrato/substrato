@@ -425,7 +425,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     # multi-tenant
-    "infrastructure.middleware.inquilino.InquilinoMiddleware",
+    "infrastructure.middleware.tenant.TenantMiddleware",
     # captura de erros (persistência em BD para monitoramento)
     "infrastructure.middleware.errors.ErrorCaptureMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -505,7 +505,7 @@ else:
                 DATABASES = _sqlite_databases()
                 PASSWORD_HASHERS = _dev_weaker_password_hashers()
 
-DATABASE_ROUTERS = ["infrastructure.banco_dados.TenantDatabaseRouter"]
+DATABASE_ROUTERS = ["infrastructure.database.TenantDatabaseRouter"]
 
 # =========================================================
 # CACHE (Redis)

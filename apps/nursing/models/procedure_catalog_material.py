@@ -4,7 +4,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
 
@@ -38,7 +38,7 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    custo_unitario_padrao = DinheiroField(
+    custo_unitario_padrao = MoneyField(
         default=Decimal("0.00"),
     )
 
@@ -58,3 +58,4 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
 
     def __str__(self):
         return f"{self.produto} ({self.catalogo})"
+

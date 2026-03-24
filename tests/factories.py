@@ -72,7 +72,7 @@ class AdminUserFactory(UserFactory):
 # ============================================================================
 
 
-class InquilinoFactory(factory.django.DjangoModelFactory):
+class TenantFactory(factory.django.DjangoModelFactory):
     """Factory para criar tenants"""
 
     class Meta:
@@ -89,7 +89,7 @@ class InquilinoFactory(factory.django.DjangoModelFactory):
 # ============================================================================
 
 
-class PacienteFactory(factory.django.DjangoModelFactory):
+class PatientFactory(factory.django.DjangoModelFactory):
     """Factory para criar pacientes"""
 
     class Meta:
@@ -108,11 +108,11 @@ class PacienteFactory(factory.django.DjangoModelFactory):
     def _create(cls, model_class, *args, **kwargs):
         """Override para adicionar tenant automaticamente"""
         if "inquilino" not in kwargs:
-            kwargs["inquilino"] = InquilinoFactory()
+            kwargs["inquilino"] = TenantFactory()
         return super()._create(model_class, *args, **kwargs)
 
 
-class ExameFactory(factory.django.DjangoModelFactory):
+class ExamFactory(factory.django.DjangoModelFactory):
     """Factory para criar exames"""
 
     class Meta:
@@ -122,7 +122,7 @@ class ExameFactory(factory.django.DjangoModelFactory):
     preco = factory.Faker("pyfloat", left_digits=3, right_digits=2, positive=True)
     metodo = factory.Faker("word", word_list=["ELISA", "PCR", "Colorimetrico"])
     setor = factory.Faker("word")
-    paciente = factory.SubFactory(PacienteFactory)
+    paciente = factory.SubFactory(PatientFactory)
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
@@ -141,29 +141,36 @@ class BatchFactory:
     """Cria múltiplos objetos para testes"""
 
     @staticmethod
-    def criar_tenant_com_usuarios(num_usuarios=3):
+    def create_tenant_with_users(num_usuarios=3):
         """Cria um tenant com N usuários"""
-        tenant = InquilinoFactory()
+        tenant = TenantFactory()
         usuarios = [UserFactory(password="test123") for _ in range(num_usuarios)]
         tenant.users.set(usuarios)
         return tenant, usuarios
 
     @staticmethod
-    def criar_pacientes_com_exames(num_pacientes=5, exames_por_paciente=3):
+    def create_patients_with_exams(num_pacientes=5, exames_por_paciente=3):
         """Cria pacientes com exames"""
-        tenant = InquilinoFactory()
+        tenant = TenantFactory()
         pacientes = []
         exames = []
 
         for _ in range(num_pacientes):
-            paciente = PacienteFactory(inquilino=tenant)
+            paciente = PatientFactory(inquilino=tenant)
             pacientes.append(paciente)
 
             for _ in range(exames_por_paciente):
-                exame = ExameFactory(paciente=paciente, inquilino=tenant)
+                exame = ExamFactory(paciente=paciente, inquilino=tenant)
                 exames.append(exame)
 
         return tenant, pacientes, exames
+
+
+InquilinoFactory = TenantFactory
+PacienteFactory = PatientFactory
+ExameFactory = ExamFactory
+BatchFactory.criar_tenant_com_usuarios = staticmethod(BatchFactory.create_tenant_with_users)
+BatchFactory.criar_pacientes_com_exames = staticmethod(BatchFactory.create_patients_with_exams)
 
 
 # ============================================================================
@@ -186,7 +193,7 @@ def admin_user():
 @pytest.fixture
 def tenant():
     """Cria um tenant"""
-    return InquilinoFactory()
+    return TenantFactory()
 
 
 @pytest.fixture
@@ -197,19 +204,34 @@ def tenant_with_users(tenant):
     return tenant, users
 
 
-@pytest.fixture
-def paciente(tenant):
+@pytest.fixture(name="patient")
+def patient_fixture(tenant):
     """Cria um paciente"""
-    return PacienteFactory(inquilino=tenant)
+    return PatientFactory(inquilino=tenant)
 
 
-@pytest.fixture
-def exame(paciente):
+@pytest.fixture(name="paciente")
+def legacy_patient_fixture(tenant):
+    return PatientFactory(inquilino=tenant)
+
+
+@pytest.fixture(name="exam")
+def exam_fixture(patient):
     """Cria um exame"""
-    return ExameFactory(paciente=paciente, inquilino=paciente.inquilino)
+    return ExamFactory(paciente=patient, inquilino=patient.inquilino)
 
 
-@pytest.fixture
-def pacientes_batch(tenant):
+@pytest.fixture(name="exame")
+def legacy_exam_fixture(paciente):
+    return ExamFactory(paciente=paciente, inquilino=paciente.inquilino)
+
+
+@pytest.fixture(name="patients_batch")
+def patients_batch_fixture(tenant):
     """Cria múltiplos pacientes"""
-    return [PacienteFactory(inquilino=tenant) for _ in range(5)]
+    return [PatientFactory(inquilino=tenant) for _ in range(5)]
+
+
+@pytest.fixture(name="pacientes_batch")
+def legacy_patients_batch_fixture(tenant):
+    return [PatientFactory(inquilino=tenant) for _ in range(5)]

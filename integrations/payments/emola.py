@@ -1,4 +1,4 @@
-from .base import PaymentGateway
+from .base_gateway import PaymentGateway
 
 
 class EmolaGateway(PaymentGateway):

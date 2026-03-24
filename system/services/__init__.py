@@ -1,5 +1,5 @@
-from .configuracao_service import ConfiguracaoSistemaService
+from .configuration_service import SystemConfigurationService
 
 __all__ = [
-    "ConfiguracaoSistemaService",
+    "SystemConfigurationService",
 ]

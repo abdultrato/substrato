@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
 
 
@@ -21,7 +21,7 @@ class ConsultationSpecialty(CoreModel):
 
     descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
 
-    preco_base = DinheiroField(verbose_name="Preço base", default=Decimal("0.00"))
+    preco_base = MoneyField(verbose_name="Preço base", default=Decimal("0.00"))
 
     iva_percentual = models.DecimalField(
         verbose_name="IVA (%)",
@@ -56,3 +56,4 @@ class ConsultationSpecialty(CoreModel):
 
     def __str__(self) -> str:
         return self.nome
+

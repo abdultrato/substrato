@@ -7,9 +7,9 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from domain.clinical.estado_resultado import EstadoResultado
-from domain.clinical.events import ResultadoValidadoEvent
-from domain.clinical.state_machine_resultado import ResultadoStateMachine
+from domain.clinical.events import ResultValidatedEvent
+from domain.clinical.result_state import ResultState
+from domain.clinical.result_state_machine import ResultStateMachine
 from events.bus import event_bus
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
@@ -48,8 +48,8 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
     estado = models.CharField(
         max_length=30,
-        choices=EstadoResultado.CHOICES,
-        default=EstadoResultado.PENDENTE,
+        choices=ResultState.CHOICES,
+        default=ResultState.PENDING,
         db_index=True,
     )
 
@@ -73,9 +73,9 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
     @staticmethod
     def _result_service():
-        from domain.clinical.servico_resultado import ServicoResultado
+        from domain.clinical.result_service import ResultService
 
-        return ServicoResultado
+        return ResultService
 
     # =====================================================
     # SAVE CONTROLADO
@@ -95,7 +95,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         valor_alterado = valor_anterior != self.resultado_valor
 
         # interpretação automática
-        if valor_alterado and self.estado != EstadoResultado.VALIDADO:
+        if valor_alterado and self.estado != ResultState.VALIDATED:
             try:
                 if self.resultado_valor is not None:
                     self.resultado_valor = Decimal(self.resultado_valor)
@@ -114,7 +114,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # =====================================================
 
     def delete(self, *args, **kwargs):
-        if self.estado in EstadoResultado.TERMINAIS:
+        if self.estado in ResultState.TERMINAL:
             raise ValidationError("Resultado validado não pode ser removido.")
 
         super().delete(*args, **kwargs)
@@ -127,12 +127,12 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         with transaction.atomic():
             resultado = ResultItem.all_objects.select_for_update().get(pk=self.pk)
 
-            ResultadoStateMachine.validar_transicao(
+            ResultStateMachine.validate_transition(
                 resultado.estado,
                 novo_estado,
             )
 
-            if novo_estado == EstadoResultado.VALIDADO:
+            if novo_estado == ResultState.VALIDATED:
                 if resultado.resultado_valor is None:
                     raise ValidationError("Não é possível validar resultado vazio.")
 
@@ -155,8 +155,8 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
                 ]
             )
 
-        if novo_estado == EstadoResultado.VALIDADO:
-            event_bus.publish_after_commit(ResultadoValidadoEvent(resultado_id=self.id))
+        if novo_estado == ResultState.VALIDATED:
+            event_bus.publish_after_commit(ResultValidatedEvent(result_id=self.id))
 
     def __str__(self):
         return f"{self.id_custom} - {self.exame_campo.nome}"

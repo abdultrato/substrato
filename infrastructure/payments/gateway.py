@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 
-class PagamentoGateway:
+class PaymentGateway:
     """
     Interface base para integração com provedores externos
     (Mobile Money, POS, bancos, gateways online).
@@ -21,7 +21,7 @@ class PagamentoGateway:
         raise NotImplementedError
 
 
-class GatewaySimulado(PagamentoGateway):
+class SimulatedGateway(PaymentGateway):
     """
     Gateway de teste para desenvolvimento.
     """
@@ -36,22 +36,27 @@ class GatewaySimulado(PagamentoGateway):
         }
 
 
-def processar_pagamento_gateway(pagamento, gateway: PagamentoGateway):
+def process_payment_gateway(payment, gateway: PaymentGateway):
     """
     Processa pagamento usando gateway externo.
     """
 
     resposta = gateway.cobrar(
-        valor=pagamento.valor,
-        referencia=pagamento.id_custom,
+        valor=payment.valor,
+        referencia=payment.id_custom,
     )
 
     if resposta.get("sucesso"):
-        pagamento.referencia = resposta.get("transacao_id", "")
-        pagamento.confirmado = True
-        pagamento.save(update_fields=["referencia", "confirmado", "atualizado_em"])
+        payment.referencia = resposta.get("transacao_id", "")
+        payment.confirmado = True
+        payment.save(update_fields=["referencia", "confirmado", "atualizado_em"])
     else:
-        pagamento.confirmado = False
-        pagamento.save(update_fields=["confirmado", "atualizado_em"])
+        payment.confirmado = False
+        payment.save(update_fields=["confirmado", "atualizado_em"])
 
     return resposta
+
+
+PagamentoGateway = PaymentGateway
+GatewaySimulado = SimulatedGateway
+processar_pagamento_gateway = process_payment_gateway

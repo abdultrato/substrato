@@ -1,17 +1,20 @@
 # LOCAL: eventos/registro.py
 
-from domain.clinical.events import ResultadoValidadoEvent
-from domain.insurer.events import AutorizacaoSolicitadaEvent
+from domain.clinical.events import ResultValidatedEvent
+from domain.insurer.events import AuthorizationRequestedEvent
 from events.bus import event_bus
-from events.handlers import AutorizacaoSolicitadaHandler, ResultadoValidadoHandler
+from events.handlers import AuthorizationRequestedHandler, ResultValidatedHandler
 
 
-def registrar_handlers():
+def register_handlers():
     event_bus.register(
-        ResultadoValidadoEvent,
-        ResultadoValidadoHandler.handle,
+        ResultValidatedEvent,
+        ResultValidatedHandler.handle,
     )
     event_bus.register(
-        AutorizacaoSolicitadaEvent,
-        AutorizacaoSolicitadaHandler.handle,
+        AuthorizationRequestedEvent,
+        AuthorizationRequestedHandler.handle,
     )
+
+
+registrar_handlers = register_handlers

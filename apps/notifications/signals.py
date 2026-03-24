@@ -6,7 +6,7 @@ from django.dispatch import receiver
 from apps.clinical.models.result_item import ResultItem
 from apps.billing.models.invoice import Invoice
 from apps.payments.models.receipt import Receipt
-from domain.clinical.estado_resultado import EstadoResultado
+from domain.clinical.result_state import ResultState
 
 from .models.notification import Notification
 from .services import NotificationService
@@ -35,11 +35,11 @@ def _resolve_invoice_patient(invoice):
     dispatch_uid="notificacoes.resultado_disponivel",
 )
 def notify_result(sender, instance, created, **kwargs):
-    if instance.estado != EstadoResultado.VALIDADO:
+    if instance.estado != ResultState.VALIDATED:
         return
 
     # Notify only after the last result item is validated.
-    if instance.resultado.itens.exclude(estado=EstadoResultado.VALIDADO).exists():
+    if instance.resultado.itens.exclude(estado=ResultState.VALIDATED).exists():
         return
 
     patient = instance.resultado.requisicao.paciente

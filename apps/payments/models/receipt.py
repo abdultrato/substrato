@@ -1,6 +1,6 @@
 from django.db import models
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Receipt(models.Model):
@@ -20,7 +20,7 @@ class Receipt(models.Model):
     )
 
     numero = models.CharField("Número do recibo", max_length=60, db_index=True)
-    valor = DinheiroField(verbose_name="Valor")
+    valor = MoneyField(verbose_name="Valor")
 
     criado_em = models.DateTimeField("Criado em", auto_now_add=True, db_index=True)
 
@@ -35,3 +35,4 @@ class Receipt(models.Model):
 
     def __str__(self) -> str:
         return self.numero
+

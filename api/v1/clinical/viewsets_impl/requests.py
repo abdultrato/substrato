@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
-from domain.clinical.estado_resultado import EstadoResultado
+from domain.clinical.result_state import ResultState
 
 from ..filters import LabRequestFilter, LabRequestItemFilter
 from ..serializers import (
@@ -95,12 +95,12 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
         result = getattr(request_record, "resultado", None)
-        if not result or not result.itens.filter(estado=EstadoResultado.VALIDADO).exists():
+        if not result or not result.itens.filter(estado=ResultState.VALIDATED).exists():
             raise ValidationError("Não é possível emitir PDF sem nenhum resultado validado.")
 
-        from tasks.gerar_pdf.pdf_generator_resultado import gerar_pdf_resultados
+        from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 
-        pdf_bytes, filename = gerar_pdf_resultados(request_record, apenas_validados=True)
+        pdf_bytes, filename = generate_results_pdf(request_record, apenas_validados=True)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
@@ -138,11 +138,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         summary = {
             "total": qs.count(),
-            "pendente": qs.filter(estado=EstadoResultado.PENDENTE).count(),
-            "em_analise": qs.filter(estado=EstadoResultado.EM_ANALISE).count(),
-            "aguardando_validacao": qs.filter(estado=EstadoResultado.AGUARDANDO_VALIDACAO).count(),
-            "validado": qs.filter(estado=EstadoResultado.VALIDADO).count(),
-            "rejeitado": qs.filter(estado=EstadoResultado.REJEITADO).count(),
+            "pendente": qs.filter(estado=ResultState.PENDING).count(),
+            "em_analise": qs.filter(estado=ResultState.IN_ANALYSIS).count(),
+            "aguardando_validacao": qs.filter(estado=ResultState.AWAITING_VALIDATION).count(),
+            "validado": qs.filter(estado=ResultState.VALIDATED).count(),
+            "rejeitado": qs.filter(estado=ResultState.REJECTED).count(),
         }
 
         return Response(

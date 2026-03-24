@@ -1,5 +1,5 @@
 from apps.clinical.models import LabRequestItem
-from domain.clinical.regras_requisicao import CalculadoraRequisicao
+from domain.clinical.request_rules import RequestCalculator
 
 
 class AddRequestItem:
@@ -14,7 +14,7 @@ class AddRequestItem:
             },
         )
 
-        total = CalculadoraRequisicao.calcular_total(requisicao)
+        total = RequestCalculator.calculate_total(requisicao)
 
         return item, total
 

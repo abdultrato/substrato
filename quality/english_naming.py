@@ -246,12 +246,31 @@ EXCLUDED_NAMES = {
     ".ruff_cache",
     ".venv",
     "__pycache__",
+    "api-client",
+    "artefatos",
     "build",
     "dist",
+    "legacy",
     "media",
+    "migrations",
     "node_modules",
     "staticfiles",
     "venv",
+}
+
+EXCLUDED_FILE_SUFFIXES = {
+    ".gif",
+    ".jpeg",
+    ".jpg",
+    ".md",
+    ".pdf",
+    ".png",
+    ".svg",
+}
+
+EXCLUDED_RELATIVE_PATHS = {
+    Path("plataforma"),
+    Path("templates/admin/clinico"),
 }
 
 
@@ -293,6 +312,15 @@ def find_portuguese_tokens(value: str) -> tuple[str, ...]:
     return tuple(sorted(matched))
 
 
+def is_excluded_relative_path(root: Path, path: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return False
+
+    return any(relative == excluded or relative.is_relative_to(excluded) for excluded in EXCLUDED_RELATIVE_PATHS)
+
+
 def normalize_scan_targets(root: Path, raw_targets: list[str] | None) -> tuple[Path, ...] | None:
     if not raw_targets:
         return None
@@ -323,7 +351,12 @@ def iter_repository_entries(root: Path, targets: tuple[Path, ...] | None = None)
     scan_roots = targets or (root,)
 
     for scan_root in scan_roots:
+        if is_excluded_relative_path(root, scan_root):
+            continue
+
         if scan_root.is_file():
+            if scan_root.suffix.lower() in EXCLUDED_FILE_SUFFIXES:
+                continue
             yield scan_root, False
             continue
 
@@ -331,14 +364,27 @@ def iter_repository_entries(root: Path, targets: tuple[Path, ...] | None = None)
             yield scan_root, True
 
         for current_root, dirnames, filenames in os.walk(scan_root):
-            dirnames[:] = sorted(name for name in dirnames if name not in EXCLUDED_NAMES)
             current_path = Path(current_root)
+            if is_excluded_relative_path(root, current_path):
+                dirnames[:] = []
+                continue
+
+            dirnames[:] = sorted(
+                name
+                for name in dirnames
+                if name not in EXCLUDED_NAMES
+                and not name.startswith("tmp")
+                and not is_excluded_relative_path(root, current_path / name)
+            )
 
             for dirname in dirnames:
                 yield current_path / dirname, True
 
             for filename in sorted(filenames):
-                yield current_path / filename, False
+                file_path = current_path / filename
+                if file_path.suffix.lower() in EXCLUDED_FILE_SUFFIXES:
+                    continue
+                yield file_path, False
 
 
 def scan_paths(root: Path, targets: tuple[Path, ...] | None = None) -> list[NamingFinding]:

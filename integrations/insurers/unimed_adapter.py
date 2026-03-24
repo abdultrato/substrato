@@ -1,7 +1,10 @@
-from .base_adapter import BaseSeguradoraAdapter
+from .base_adapter import BaseInsurerAdapter
 
 
-class UnimedAdapter(BaseSeguradoraAdapter):
-    def consultar_autorizacao(self, dados):
+class UnimedAdapter(BaseInsurerAdapter):
+    def query_authorization(self, data):
         # chamada real API externa
         return {"status": "APROVADA", "codigo": "AUTH12345"}
+
+
+UnimedAdapter.consultar_autorizacao = UnimedAdapter.query_authorization

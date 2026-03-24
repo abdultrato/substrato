@@ -4,7 +4,7 @@ from decimal import Decimal
 import django.core.validators
 from django.db import migrations, models
 import django.utils.timezone
-import infrastructure.orm.fields.dinheiro_field
+import infrastructure.orm.fields.money_field
 import core.mixins.tenant_propagation
 
 
@@ -157,7 +157,7 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('nome', models.CharField(db_index=True, max_length=120)),
                 ('descricao', models.TextField(blank=True, default='', verbose_name='Descrição')),
-                ('preco_padrao', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço padrão')),
+                ('preco_padrao', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço padrão')),
                 ('iva_percentual', models.DecimalField(decimal_places=2, default=Decimal('16.00'), help_text='Taxa de IVA aplicada ao procedimento (0 a 100).', max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00')), django.core.validators.MaxValueValidator(Decimal('100.00'))], verbose_name='IVA (%)')),
                 ('aplica_iva_por_padrao', models.BooleanField(default=True, help_text='Desmarque se este procedimento normalmente não deve ter IVA.', verbose_name='Aplicar IVA por padrão')),
             ],
@@ -178,7 +178,7 @@ class Migration(migrations.Migration):
                 ('deletado_em', models.DateTimeField(blank=True, null=True)),
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('quantidade_padrao', models.DecimalField(decimal_places=2, default=Decimal('1.00'), max_digits=10, validators=[django.core.validators.MinValueValidator(Decimal('0.00'))])),
-                ('custo_unitario_padrao', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('custo_unitario_padrao', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('observacao', models.TextField(blank=True, default='')),
             ],
             options={
@@ -220,7 +220,7 @@ class Migration(migrations.Migration):
                 ('deletado', models.BooleanField(db_index=True, default=False)),
                 ('deletado_em', models.DateTimeField(blank=True, null=True)),
                 ('versao', models.PositiveIntegerField(default=1)),
-                ('preco_unitario', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('preco_unitario', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('ativo', models.BooleanField(db_index=True, default=True)),
             ],
             options={
@@ -260,7 +260,7 @@ class Migration(migrations.Migration):
                 ('deletado', models.BooleanField(db_index=True, default=False)),
                 ('deletado_em', models.DateTimeField(blank=True, null=True)),
                 ('versao', models.PositiveIntegerField(default=1)),
-                ('custo_unitario', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('custo_unitario', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('ativo', models.BooleanField(db_index=True, default=True)),
             ],
             options={
@@ -318,3 +318,4 @@ class Migration(migrations.Migration):
             bases=(core.mixins.tenant_propagation.PropagarInquilinoMixin, models.Model),
         ),
     ]
+

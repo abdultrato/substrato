@@ -1,6 +1,6 @@
 from django.db import models
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
 
 
@@ -34,7 +34,7 @@ class PaymentHistory(CoreModel):
         db_index=True,
     )
 
-    valor = DinheiroField(
+    valor = MoneyField(
         verbose_name="Valor",
         null=True,
         blank=True,
@@ -72,3 +72,4 @@ class PaymentHistory(CoreModel):
         if self.pk:
             raise ValueError("Registros do histórico não podem ser alterados.")
         super().save(*args, **kwargs)
+

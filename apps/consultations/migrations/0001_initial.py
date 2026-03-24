@@ -4,7 +4,7 @@ from decimal import Decimal
 import django.core.validators
 from django.db import migrations, models
 import django.utils.timezone
-import infrastructure.orm.fields.dinheiro_field
+import infrastructure.orm.fields.money_field
 
 
 class Migration(migrations.Migration):
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('descricao', models.TextField(blank=True, default='', verbose_name='Descrição')),
                 ('agendada_para', models.DateTimeField(db_index=True, default=django.utils.timezone.now, verbose_name='Agendada para')),
                 ('estado', models.CharField(choices=[('MARCADA', 'Marcada'), ('CONCLUIDA', 'Concluída'), ('CANCELADA', 'Cancelada')], db_index=True, default='MARCADA', max_length=20, verbose_name='Estado')),
-                ('preco', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço')),
+                ('preco', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço')),
                 ('multiplicador_preco', models.DecimalField(decimal_places=2, default=Decimal('1.00'), help_text='Fator aplicado sobre o preço base conforme horário/feriado.', max_digits=5, verbose_name='Multiplicador de preço')),
                 ('tipo_horario', models.CharField(choices=[('NORMAL', 'Normal (08h-18h)'), ('FORA_EXPEDIENTE', 'Fora de expediente (19h-07h)'), ('FIM_SEMANA', 'Fim de semana'), ('FERIADO_MANUAL', 'Feriado (marcado)')], db_index=True, default='NORMAL', max_length=32, verbose_name='Tipo de horário')),
                 ('feriado_manual', models.BooleanField(default=False, help_text='Marque se a data for feriado mesmo não sendo fim de semana.', verbose_name='Feriado (manual)')),
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('nome', models.CharField(db_index=True, max_length=120)),
                 ('descricao', models.TextField(blank=True, default='', verbose_name='Descrição')),
-                ('preco_base', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço base')),
+                ('preco_base', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Preço base')),
                 ('iva_percentual', models.DecimalField(decimal_places=2, default=Decimal('16.00'), help_text='Taxa de IVA aplicada ao serviço de consulta (0 a 100).', max_digits=5, validators=[django.core.validators.MinValueValidator(Decimal('0.00')), django.core.validators.MaxValueValidator(Decimal('100.00'))], verbose_name='IVA (%)')),
                 ('ativo', models.BooleanField(db_index=True, default=True, verbose_name='Ativo')),
             ],
@@ -85,3 +85,4 @@ class Migration(migrations.Migration):
             },
         ),
     ]
+

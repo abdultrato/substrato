@@ -3,7 +3,7 @@ from django.utils import timezone
 from django_countries.fields import CountryField
 
 from infrastructure.orm.fields.email_field import NormalizedEmailField
-from infrastructure.orm.fields.telefone_field import TelefoneField
+from infrastructure.orm.fields.phone_field import PhoneField
 from core.constants.genero import Genero
 from core.constants.provenance import Proveniencia
 from core.constants.raca_origem import RacaOrigem
@@ -127,7 +127,7 @@ class Patient(CoreModel):
         help_text="Texto livre ou resumo (auto) da morada.",
     )
 
-    contacto = TelefoneField(
+    contacto = PhoneField(
         verbose_name="Contacto",
         blank=True,
         null=True,
@@ -299,3 +299,4 @@ class Patient(CoreModel):
 
     def __str__(self):
         return f"{self.id_custom} - {self.nome}"
+

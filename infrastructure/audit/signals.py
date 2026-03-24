@@ -6,7 +6,7 @@ from core.models.base import AuditModel
 
 
 @receiver(pre_save)
-def preencher_auditoria(sender, instance, **kwargs):
+def populate_audit_fields(sender, instance, **kwargs):
     """
     Preenche criado_por e atualizado_por automaticamente.
     """
@@ -24,3 +24,6 @@ def preencher_auditoria(sender, instance, **kwargs):
 
     if hasattr(instance, "atualizado_por"):
         instance.atualizado_por = user
+
+
+preencher_auditoria = populate_audit_fields

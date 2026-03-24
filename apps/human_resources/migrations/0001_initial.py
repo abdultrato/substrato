@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import infrastructure.orm.fields.dinheiro_field
+import infrastructure.orm.fields.money_field
 
 
 class Migration(migrations.Migration):
@@ -60,8 +60,8 @@ class Migration(migrations.Migration):
                 ('telefone', models.CharField(blank=True, default='', max_length=30, verbose_name='Telefone')),
                 ('data_admissao', models.DateField(default=django.utils.timezone.now, verbose_name='Data de admissão')),
                 ('estado', models.CharField(choices=[('ATIVO', 'Ativo'), ('INATIVO', 'Inativo')], db_index=True, default='ATIVO', max_length=10, verbose_name='Estado')),
-                ('salario_nominal', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Salário nominal')),
-                ('aumento_salarial', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), help_text='Valor adicional por promoção/aumento (somado ao salário nominal).', max_digits=12, verbose_name='Aumento salarial')),
+                ('salario_nominal', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12, verbose_name='Salário nominal')),
+                ('aumento_salarial', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), help_text='Valor adicional por promoção/aumento (somado ao salário nominal).', max_digits=12, verbose_name='Aumento salarial')),
                 ('horas_base_mes', models.PositiveSmallIntegerField(default=176, help_text='Horas contratuais base por mês (ex.: 176).', verbose_name='Horas base (mês)')),
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('cargo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='funcionarios', to='human_resources.cargo', verbose_name='Cargo')),
@@ -87,13 +87,13 @@ class Migration(migrations.Migration):
                 ('versao', models.PositiveIntegerField(default=1)),
                 ('ano', models.PositiveSmallIntegerField(db_index=True)),
                 ('mes', models.PositiveSmallIntegerField(db_index=True)),
-                ('salario_nominal', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('salario_nominal', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('horas_base_mes', models.PositiveSmallIntegerField(default=176)),
                 ('multiplicador_hora_extra', models.DecimalField(decimal_places=2, default=Decimal('1.50'), max_digits=4)),
                 ('horas_extras_apuradas', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=8)),
                 ('valor_hora', models.DecimalField(decimal_places=4, default=Decimal('0.0000'), max_digits=12)),
-                ('valor_horas_extras', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
-                ('salario_total', infrastructure.orm.fields.dinheiro_field.DinheiroField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('valor_horas_extras', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
+                ('salario_total', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
                 ('fechado', models.BooleanField(db_index=True, default=False)),
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
@@ -326,3 +326,4 @@ class Migration(migrations.Migration):
             index=models.Index(fields=['inquilino', 'parentesco'], name='recursos_hu_inquili_1e274f_idx'),
         ),
     ]
+

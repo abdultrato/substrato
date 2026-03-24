@@ -2,8 +2,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
-from domain.clinical.estado_resultado import EstadoResultado
-from domain.clinical.state_machine_resultado import ResultadoStateMachine
+from domain.clinical.result_state import ResultState
+from domain.clinical.result_state_machine import ResultStateMachine
 from core.constants.laboratory.clinical_status import StatusClinico
 from core.models.base import NoNameCoreModel
 
@@ -71,8 +71,8 @@ class LabRequest(NoNameCoreModel):
 
     estado = models.CharField(
         max_length=30,
-        choices=EstadoResultado.CHOICES,
-        default=EstadoResultado.PENDENTE,
+        choices=ResultState.CHOICES,
+        default=ResultState.PENDING,
         db_index=True,
     )
 
@@ -98,7 +98,7 @@ class LabRequest(NoNameCoreModel):
     # =====================================================
 
     def _esta_editavel(self):
-        return self.estado == EstadoResultado.PENDENTE
+        return self.estado == ResultState.PENDING
 
     def _verify_terminal_state(self):
         if not self.pk:
@@ -106,7 +106,7 @@ class LabRequest(NoNameCoreModel):
 
         original = self.__class__.all_objects.filter(pk=self.pk).only("estado").first()
 
-        if original and original.estado in EstadoResultado.TERMINAIS:
+        if original and original.estado in ResultState.TERMINAL:
             raise ValidationError("Requisição finalizada é imutável.")
 
     # =====================================================
@@ -180,7 +180,7 @@ class LabRequest(NoNameCoreModel):
         with transaction.atomic():
             requisicao = LabRequest.all_objects.select_for_update().get(pk=self.pk)
 
-            ResultadoStateMachine.validar_transicao(
+            ResultStateMachine.validate_transition(
                 requisicao.estado,
                 novo_estado,
             )
@@ -229,7 +229,7 @@ class LabRequest(NoNameCoreModel):
 
     def update_clinical_status(self):
         # Não recalcula nem altera requisição já finalizada (imutável).
-        if self.estado in EstadoResultado.TERMINAIS:
+        if self.estado in ResultState.TERMINAL:
             try:
                 if hasattr(self, "resultado") and not self.resultado.finalizado:
                     self.resultado.finalizado = True
@@ -240,7 +240,7 @@ class LabRequest(NoNameCoreModel):
 
         novo_status = StatusClinico.NAO_URGENTE
         possui_critico = False
-        novo_estado = EstadoResultado.PENDENTE
+        novo_estado = ResultState.PENDING
         resultado_finalizado = False
 
         if hasattr(self, "resultado"):
@@ -252,9 +252,9 @@ class LabRequest(NoNameCoreModel):
                 criticos=models.Count("id", filter=models.Q(alerta_critico=True)),
                 urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.URGENTE)),
                 muito_urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.MUITO_URGENTE)),
-                pendentes=models.Count("id", filter=models.Q(estado=EstadoResultado.PENDENTE)),
-                aguardando=models.Count("id", filter=models.Q(estado=EstadoResultado.AGUARDANDO_VALIDACAO)),
-                validados=models.Count("id", filter=models.Q(estado=EstadoResultado.VALIDADO)),
+                pendentes=models.Count("id", filter=models.Q(estado=ResultState.PENDING)),
+                aguardando=models.Count("id", filter=models.Q(estado=ResultState.AWAITING_VALIDATION)),
+                validados=models.Count("id", filter=models.Q(estado=ResultState.VALIDATED)),
             )
 
             total = int(stats.get("total") or 0)
@@ -266,7 +266,7 @@ class LabRequest(NoNameCoreModel):
 
             if total == 0:
                 novo_status = StatusClinico.NAO_URGENTE
-                novo_estado = EstadoResultado.PENDENTE
+                novo_estado = ResultState.PENDING
             else:
                 if possui_critico:
                     novo_status = StatusClinico.URGENTISSIMO
@@ -284,15 +284,15 @@ class LabRequest(NoNameCoreModel):
                 # Sincroniza o estado geral da requisição com o fluxo dos itens:
                 # PENDENTE -> EM_ANALISE -> AGUARDANDO_VALIDACAO -> VALIDADO
                 if validados == total:
-                    novo_estado = EstadoResultado.VALIDADO
+                    novo_estado = ResultState.VALIDATED
                 elif (validados + aguardando) == total:
-                    novo_estado = EstadoResultado.AGUARDANDO_VALIDACAO
+                    novo_estado = ResultState.AWAITING_VALIDATION
                 elif pendentes == total:
-                    novo_estado = EstadoResultado.PENDENTE
+                    novo_estado = ResultState.PENDING
                 else:
-                    novo_estado = EstadoResultado.EM_ANALISE
+                    novo_estado = ResultState.IN_ANALYSIS
 
-            resultado_finalizado = novo_estado == EstadoResultado.VALIDADO
+            resultado_finalizado = novo_estado == ResultState.VALIDATED
 
             if resultado.finalizado != resultado_finalizado:
                 resultado.finalizado = resultado_finalizado

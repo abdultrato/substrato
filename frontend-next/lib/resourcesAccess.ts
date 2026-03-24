@@ -1,7 +1,7 @@
 import { GROUPS } from "@/lib/rbac"
 
-export function requiredGroupsForResourceGroup(grupo: string): string[] {
-  switch (grupo) {
+export function requiredGroupsForResourceGroup(groupKey: string): string[] {
+  switch (groupKey) {
     case "enfermagem":
       return [GROUPS.ADMIN, GROUPS.ENFERMAGEM]
     case "recursos_humanos":

@@ -71,17 +71,17 @@ from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
-from infrastructure.context.tenant import reset_inquilino, set_inquilino
+from infrastructure.context.tenant import reset_tenant, set_tenant
 from core.constants.clinical_event_type import TipoEventoClinico
 
 
 @contextmanager
 def tenant_ctx(tenant: Tenant):
-    token = set_inquilino(tenant)
+    token = set_tenant(tenant)
     try:
         yield
     finally:
-        reset_inquilino(token)
+        reset_tenant(token)
 
 
 def _count(model) -> int:
@@ -93,7 +93,7 @@ def _needed(model, n: int) -> int:
 
 
 def _moz_phone(i: int) -> str:
-    # TelefoneField valida 9 digitos e prefixos 82..87 (Moçambique).
+    # PhoneField valida 9 digitos e prefixos 82..87 (Moçambique).
     # Gera algo como: 84xxxxxxx
     return f"84{i:07d}"
 
@@ -116,7 +116,7 @@ def _ensure_local_tenant() -> Tenant:
     )
 
 
-def ensure_inquilinos(n: int, faker: Faker) -> list[Tenant]:
+def ensure_tenants(n: int, faker: Faker) -> list[Tenant]:
     tenants: list[Tenant] = []
     tenants.append(_ensure_local_tenant())
 
@@ -162,7 +162,7 @@ def ensure_config_uso(tenants: Iterable[Tenant]) -> None:
         )
 
 
-def ensure_planos_assinatura(n: int) -> list[SubscriptionPlan]:
+def ensure_subscription_plans(n: int) -> list[SubscriptionPlan]:
     tipos = [c[0] for c in SubscriptionPlan.TipoPlano.choices]
     while _count(SubscriptionPlan) < n:
         idx = _count(SubscriptionPlan) + 1
@@ -231,7 +231,7 @@ def ensure_feature_flags(n: int, tenants: list[Tenant]) -> None:
         )
 
 
-def ensure_usuarios(n: int, tenants: list[Tenant], password: str, faker: Faker) -> list[User]:
+def ensure_users(n: int, tenants: list[Tenant], password: str, faker: Faker) -> list[User]:
     while User.objects.count() < n:
         idx = User.objects.count() + 1
         tenant = tenants[(idx - 1) % len(tenants)]
@@ -262,7 +262,7 @@ def ensure_usuarios(n: int, tenants: list[Tenant], password: str, faker: Faker) 
     return list(User.objects.order_by("id")[:n])
 
 
-def ensure_perfis_profissionais(users: list[User], faker: Faker) -> None:
+def ensure_professional_profiles(users: list[User], faker: Faker) -> None:
     for idx, user in enumerate(users, start=1):
         ProfessionalProfile.objects.get_or_create(
             usuario=user,
@@ -281,7 +281,7 @@ def ensure_password_reset_tokens(n: int, users: list[User]) -> None:
         PasswordResetToken.objects.create(user=user)
 
 
-def ensure_categorias_produto(n: int, tenants: list[Tenant], faker: Faker) -> list[ProductCategory]:
+def ensure_product_categories(n: int, tenants: list[Tenant], faker: Faker) -> list[ProductCategory]:
     # CategoriaProduto possui unique (inquilino, nome)
     while _count(ProductCategory) < n:
         idx = _count(ProductCategory) + 1
@@ -383,7 +383,7 @@ def ensure_itens_venda(n: int, vendas: list[Sale], produtos: list[Product]) -> l
     return list(SaleItem.objects.order_by("id")[:n])
 
 
-def ensure_movimentos_estoque(n: int, lotes: list[Lot]) -> None:
+def ensure_inventory_movements(n: int, lotes: list[Lot]) -> None:
     # MovimentoEstoque ja e criado por vendas/procedimentos. Este passo so completa se faltar.
     while _count(InventoryMovement) < n and lotes:
         idx = _count(InventoryMovement) + 1
@@ -398,7 +398,7 @@ def ensure_movimentos_estoque(n: int, lotes: list[Lot]) -> None:
             )
 
 
-def ensure_exames(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
+def ensure_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
     metodo = _safe_choice_value(LabExam, "metodo")
     setor = _safe_choice_value(LabExam, "setor")
 
@@ -417,7 +417,7 @@ def ensure_exames(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
     return list(LabExam.objects.order_by("id")[:n])
 
 
-def ensure_exame_campos(n: int, exames: list[LabExam], faker: Faker) -> list[LabExamField]:
+def ensure_exam_fields(n: int, exames: list[LabExam], faker: Faker) -> list[LabExamField]:
     tipo = _safe_choice_value(LabExamField, "tipo")
     unidade = _safe_choice_value(LabExamField, "unidade")
 
@@ -440,7 +440,7 @@ def ensure_exame_campos(n: int, exames: list[LabExam], faker: Faker) -> list[Lab
     return list(LabExamField.objects.order_by("id")[:n])
 
 
-def ensure_exames_medicos(n: int, tenants: list[Tenant], faker: Faker) -> list[MedicalExam]:
+def ensure_medical_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[MedicalExam]:
     metodo = _safe_choice_value(MedicalExam, "metodo")
     setor = _safe_choice_value(MedicalExam, "setor")
 
@@ -459,7 +459,7 @@ def ensure_exames_medicos(n: int, tenants: list[Tenant], faker: Faker) -> list[M
     return list(MedicalExam.objects.order_by("id")[:n])
 
 
-def ensure_exame_medico_campos(n: int, exames: list[MedicalExam], faker: Faker) -> list[MedicalExamField]:
+def ensure_medical_exam_fields(n: int, exames: list[MedicalExam], faker: Faker) -> list[MedicalExamField]:
     while _count(MedicalExamField) < n:
         idx = _count(MedicalExamField) + 1
         exame = exames[(idx - 1) % len(exames)]
@@ -475,7 +475,7 @@ def ensure_exame_medico_campos(n: int, exames: list[MedicalExam], faker: Faker) 
     return list(MedicalExamField.objects.order_by("id")[:n])
 
 
-def ensure_pacientes(n: int, tenants: list[Tenant], faker: Faker) -> list[Patient]:
+def ensure_patients(n: int, tenants: list[Tenant], faker: Faker) -> list[Patient]:
     genero = _safe_choice_value(Patient, "genero")
     raca = _safe_choice_value(Patient, "raca_origem")
     tipo_documento = _safe_choice_value(Patient, "tipo_documento")
@@ -523,7 +523,7 @@ def ensure_pacientes(n: int, tenants: list[Tenant], faker: Faker) -> list[Patien
     return list(Patient.objects.order_by("id")[:n])
 
 
-def ensure_requisicoes(n: int, pacientes: list[Patient], users: list[User]) -> list[LabRequest]:
+def ensure_requests(n: int, pacientes: list[Patient], users: list[User]) -> list[LabRequest]:
     while _count(LabRequest) < n:
         idx = _count(LabRequest) + 1
         paciente = pacientes[(idx - 1) % len(pacientes)]
@@ -536,7 +536,7 @@ def ensure_requisicoes(n: int, pacientes: list[Patient], users: list[User]) -> l
     return list(LabRequest.objects.order_by("id")[:n])
 
 
-def ensure_requisicao_itens(
+def ensure_request_items(
     n: int, requisicoes: list[LabRequest], exames: list[LabExam], exames_medicos: list[MedicalExam]
 ) -> None:
     # Garante pelo menos 1 exame laboratorial por requisição (gera `ResultadoItem` e itens de fatura).
@@ -573,7 +573,7 @@ def ensure_requisicao_itens(
             LabRequestItem.objects.create(requisicao=req, exame=exame)
 
 
-def ensure_resultados(requisicoes: list[LabRequest], users: list[User]) -> list[Result]:
+def ensure_results(requisicoes: list[LabRequest], users: list[User]) -> list[Result]:
     for idx, req in enumerate(requisicoes, start=1):
         Result.objects.get_or_create(
             requisicao=req,
@@ -604,7 +604,7 @@ def ensure_referencias(n: int, campos: list[LabExamField], faker: Faker) -> list
     return list(ClinicalReference.objects.order_by("id")[:n])
 
 
-def ensure_valores_resultado(n: int) -> None:
+def ensure_result_values(n: int) -> None:
     # Preenche alguns valores para ficar mais "real" (sem forcar validacao).
     itens = list(ResultItem.objects.filter(resultado_valor__isnull=True).order_by("id")[:n])
     for idx, item in enumerate(itens, start=1):
@@ -613,7 +613,7 @@ def ensure_valores_resultado(n: int) -> None:
             item.save(update_fields=["resultado_valor"])
 
 
-def ensure_eventos_clinicos(n: int, pacientes: list[Patient], requisicoes: list[LabRequest]) -> None:
+def ensure_clinical_events(n: int, pacientes: list[Patient], requisicoes: list[LabRequest]) -> None:
     while _count(ClinicalEvent) < n and pacientes and requisicoes:
         idx = _count(ClinicalEvent) + 1
         req = requisicoes[(idx - 1) % len(requisicoes)]
@@ -629,7 +629,7 @@ def ensure_eventos_clinicos(n: int, pacientes: list[Patient], requisicoes: list[
             )
 
 
-def ensure_historico_clinico(n: int, pacientes: list[Patient], faker: Faker) -> None:
+def ensure_clinical_history(n: int, pacientes: list[Patient], faker: Faker) -> None:
     while ClinicalHistory.objects.count() < n and pacientes:
         idx = ClinicalHistory.objects.count() + 1
         paciente = pacientes[(idx - 1) % len(pacientes)]
@@ -639,7 +639,7 @@ def ensure_historico_clinico(n: int, pacientes: list[Patient], faker: Faker) -> 
         )
 
 
-def ensure_registros_enfermagem(n: int, pacientes: list[Patient], faker: Faker) -> list[NursingRecord]:
+def ensure_nursing_records(n: int, pacientes: list[Patient], faker: Faker) -> list[NursingRecord]:
     prioridade = _safe_choice_value(NursingRecord, "prioridade")
     while _count(NursingRecord) < n and pacientes:
         idx = _count(NursingRecord) + 1
@@ -774,7 +774,7 @@ def ensure_prescricoes(n: int, pacientes: list[Patient], faker: Faker) -> None:
             )
 
 
-def ensure_faturas(
+def ensure_invoices(
     n: int, requisicoes: list[LabRequest], vendas: list[Sale], procedimentos: list[Procedure]
 ) -> list[Invoice]:
     # Cria faturas clinico primeiro
@@ -824,7 +824,7 @@ def ensure_faturas(
     return list(Invoice.objects.order_by("id"))
 
 
-def ensure_historico_faturas(n: int, faturas: list[Invoice]) -> None:
+def ensure_invoice_history(n: int, faturas: list[Invoice]) -> None:
     while _count(InvoiceHistory) < n and faturas:
         idx = _count(InvoiceHistory) + 1
         fatura = faturas[(idx - 1) % len(faturas)]
@@ -838,7 +838,7 @@ def ensure_historico_faturas(n: int, faturas: list[Invoice]) -> None:
             )
 
 
-def ensure_pagamentos(n: int, faturas: list[Invoice]) -> list[Payment]:
+def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
     metodo = _safe_choice_value(Payment, "metodo")
 
     while _count(Payment) < n and faturas:
@@ -865,7 +865,7 @@ def ensure_pagamentos(n: int, faturas: list[Invoice]) -> list[Payment]:
     return list(Payment.objects.order_by("id")[:n])
 
 
-def ensure_historico_pagamentos(n: int, pagamentos: list[Payment]) -> None:
+def ensure_payment_history(n: int, pagamentos: list[Payment]) -> None:
     while _count(PaymentHistory) < n and pagamentos:
         idx = _count(PaymentHistory) + 1
         pagamento = pagamentos[(idx - 1) % len(pagamentos)]
@@ -881,7 +881,7 @@ def ensure_historico_pagamentos(n: int, pagamentos: list[Payment]) -> None:
             )
 
 
-def ensure_transacoes(n: int) -> list[Transaction]:
+def ensure_transactions(n: int) -> list[Transaction]:
     while _count(Transaction) < n:
         idx = _count(Transaction) + 1
         Transaction.objects.create(
@@ -1048,7 +1048,7 @@ def ensure_contabilidade(n: int, tenants: list[Tenant], faturas: list[Invoice]) 
             )
 
 
-def ensure_seguradora(n: int, tenants: list[Tenant]) -> None:
+def ensure_insurer(n: int, tenants: list[Tenant]) -> None:
     while _count(Insurer) < n:
         idx = _count(Insurer) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
@@ -1120,7 +1120,7 @@ def ensure_seguradora(n: int, tenants: list[Tenant]) -> None:
             )
 
 
-def ensure_notificacoes(n: int, pacientes: list[Patient], faker: Faker) -> None:
+def ensure_notifications(n: int, pacientes: list[Patient], faker: Faker) -> None:
     while NotificationTemplate.objects.count() < n:
         idx = NotificationTemplate.objects.count() + 1
         NotificationTemplate.objects.create(
@@ -1243,37 +1243,37 @@ class Command(BaseCommand):
         except Exception:
             faker = Faker()
 
-        tenants = ensure_inquilinos(n, faker)
+        tenants = ensure_tenants(n, faker)
         ensure_config_uso(tenants)
-        planos = ensure_planos_assinatura(n)
+        planos = ensure_subscription_plans(n)
         ensure_assinaturas(n, tenants, planos)
         ensure_feature_flags(n, tenants)
 
-        users = ensure_usuarios(n, tenants, password, faker)
-        ensure_perfis_profissionais(users, faker)
+        users = ensure_users(n, tenants, password, faker)
+        ensure_professional_profiles(users, faker)
         ensure_password_reset_tokens(n, users)
 
-        categorias = ensure_categorias_produto(n, tenants, faker)
+        categorias = ensure_product_categories(n, tenants, faker)
         produtos = ensure_produtos(n, tenants, categorias, faker)
         lotes = ensure_lotes(n, produtos)
         vendas = ensure_vendas(n, tenants)
         ensure_itens_venda(n, vendas, produtos)
-        ensure_movimentos_estoque(n, lotes)
+        ensure_inventory_movements(n, lotes)
 
-        exames = ensure_exames(n, tenants, faker)
-        campos = ensure_exame_campos(n, exames, faker)
-        exames_med = ensure_exames_medicos(n, tenants, faker)
-        ensure_exame_medico_campos(n, exames_med, faker)
-        pacientes = ensure_pacientes(n, tenants, faker)
-        requisicoes = ensure_requisicoes(n, pacientes, users)
-        ensure_requisicao_itens(n, requisicoes, exames, exames_med)
-        ensure_resultados(requisicoes, users)
+        exames = ensure_exams(n, tenants, faker)
+        campos = ensure_exam_fields(n, exames, faker)
+        exames_med = ensure_medical_exams(n, tenants, faker)
+        ensure_medical_exam_fields(n, exames_med, faker)
+        pacientes = ensure_patients(n, tenants, faker)
+        requisicoes = ensure_requests(n, pacientes, users)
+        ensure_request_items(n, requisicoes, exames, exames_med)
+        ensure_results(requisicoes, users)
         ensure_referencias(n, campos, faker)
-        ensure_valores_resultado(n)
-        ensure_eventos_clinicos(n, pacientes, requisicoes)
-        ensure_historico_clinico(n, pacientes, faker)
+        ensure_result_values(n)
+        ensure_clinical_events(n, pacientes, requisicoes)
+        ensure_clinical_history(n, pacientes, faker)
 
-        registros = ensure_registros_enfermagem(n, pacientes, faker)
+        registros = ensure_nursing_records(n, pacientes, faker)
         ensure_signals_vitais(n, registros)
         procedimentos = ensure_procedimentos(n, pacientes, users, faker)
         catalogos = ensure_catalogos_procedimento(n, tenants, faker)
@@ -1284,20 +1284,21 @@ class Command(BaseCommand):
         ensure_evolucoes(n, pacientes, faker)
         ensure_prescricoes(n, pacientes, faker)
 
-        faturas = ensure_faturas(n, requisicoes, vendas, procedimentos)
-        ensure_historico_faturas(n, faturas)
+        faturas = ensure_invoices(n, requisicoes, vendas, procedimentos)
+        ensure_invoice_history(n, faturas)
 
         # Recepcao usa requisicoes/faturas
         ensure_checkins(n, pacientes, users, requisicoes, faturas, faker)
 
-        pagamentos = ensure_pagamentos(n, faturas)
-        ensure_historico_pagamentos(n, pagamentos)
-        transacoes = ensure_transacoes(n)
+        pagamentos = ensure_payments(n, faturas)
+        ensure_payment_history(n, pagamentos)
+        transacoes = ensure_transactions(n)
         ensure_reconciliacoes(n, transacoes)
         ensure_recibos(n, pagamentos)
 
         ensure_contabilidade(n, tenants, faturas)
-        ensure_seguradora(n, tenants)
-        ensure_notificacoes(n, pacientes, faker)
+        ensure_insurer(n, tenants)
+        ensure_notifications(n, pacientes, faker)
 
         report(n)
+

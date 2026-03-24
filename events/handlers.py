@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger("eventos")
 
 
-class ResultadoValidadoHandler:
+class ResultValidatedHandler:
     """
     Handler responsável por reagir ao evento ResultadoValidadoEvent.
 
@@ -44,7 +44,7 @@ class ResultadoValidadoHandler:
         )
 
 
-class AutorizacaoSolicitadaHandler:
+class AuthorizationRequestedHandler:
     """
     Handler responsável por enfileirar o processamento de autorizações.
     """
@@ -52,11 +52,15 @@ class AutorizacaoSolicitadaHandler:
     @staticmethod
     def handle(event) -> None:
         try:
-            from tasks.autorizacao_worker import processar_autorizacao_task
+            from tasks.authorization_worker import process_authorization_task
 
-            processar_autorizacao_task.delay(event.autorizacao_id)
+            process_authorization_task.delay(event.autorizacao_id)
         except Exception:
             logger.exception(
                 "Erro ao enfileirar autorizacao",
                 extra={"autorizacao_id": getattr(event, "autorizacao_id", None)},
             )
+
+
+ResultadoValidadoHandler = ResultValidatedHandler
+AutorizacaoSolicitadaHandler = AuthorizationRequestedHandler

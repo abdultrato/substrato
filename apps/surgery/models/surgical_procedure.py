@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.db import models
 
-from infrastructure.orm.fields.dinheiro_field import DinheiroField
+from infrastructure.orm.fields.money_field import MoneyField
 
 from core.models.base import CoreModel
 
@@ -25,7 +25,7 @@ class SurgicalProcedure(CoreModel):
         default="",
     )
 
-    preco_base = DinheiroField(
+    preco_base = MoneyField(
         verbose_name="Preço base",
         default=Decimal("0.00"),
     )
@@ -58,3 +58,4 @@ class SurgicalProcedure(CoreModel):
 
     def __str__(self) -> str:
         return self.nome or f"Procedimento Cirúrgico {self.pk}"
+

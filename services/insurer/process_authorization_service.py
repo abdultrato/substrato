@@ -14,7 +14,7 @@ class ProcessAuthorizationService:
             return "ignored"
 
         adapter = InsurerIntegrationService.get_adapter(authorization.plano.seguradora)
-        response = adapter.consultar_autorizacao({"requisicao_id": authorization.requisicao_id})
+        response = adapter.query_authorization({"requisicao_id": authorization.requisicao_id})
 
         if response["status"] == "APROVADA":
             authorization.mark_response(

@@ -2,7 +2,7 @@
 
 from django.db import models
 
-from infrastructure.context.tenant import get_inquilino
+from infrastructure.context.tenant import get_tenant
 
 
 class TenantMixin(models.Model):
@@ -21,9 +21,9 @@ class TenantMixin(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.inquilino_id:
-            inquilino = get_inquilino()
-            if inquilino:
-                self.inquilino = inquilino
+            tenant = get_tenant()
+            if tenant:
+                self.inquilino = tenant
 
         super().save(*args, **kwargs)
 

@@ -6,8 +6,10 @@ durante descoberta de testes.
 """
 
 try:
-    from . import gerar_pdf
+    from . import generate_pdf
 except Exception:  # pragma: no cover
-    gerar_pdf = None
+    generate_pdf = None
 
-__all__ = ["gerar_pdf"]
+gerar_pdf = generate_pdf
+
+__all__ = ["generate_pdf", "gerar_pdf"]

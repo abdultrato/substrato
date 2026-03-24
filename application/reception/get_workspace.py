@@ -10,7 +10,7 @@ from apps.billing.models.invoice import Invoice
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.reception.models.reception_checkin import ReceptionCheckin
-from domain.clinical.estado_resultado import EstadoResultado
+from domain.clinical.result_state import ResultState
 
 
 def execute(inquilino):
@@ -65,7 +65,7 @@ def execute(inquilino):
             "pacientes_novos": Patient.objects.filter(inquilino=inquilino, criado_em__date=hoje).count(),
             "requisicoes_pendentes": LabRequest.objects.filter(
                 inquilino=inquilino,
-                estado=EstadoResultado.PENDENTE,
+                estado=ResultState.PENDING,
             ).count(),
             "faturas_em_aberto": Invoice.objects.filter(
                 inquilino=inquilino,
