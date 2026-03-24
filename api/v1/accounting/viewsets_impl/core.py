@@ -10,16 +10,16 @@ from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
 
 from ..filters import (
-    ConciliacaoFinanceiraFilter,
-    ContaFilter,
-    LancamentoFilter,
-    MovimentoFilter,
+    AccountFilter,
+    FinancialReconciliationFilter,
+    LedgerEntryFilter,
+    LedgerMovementFilter,
 )
 from ..serializers import (
-    ConciliacaoFinanceiraSerializer,
-    ContaSerializer,
-    LancamentoSerializer,
-    MovimentoSerializer,
+    AccountSerializer,
+    FinancialReconciliationSerializer,
+    LedgerEntrySerializer,
+    LedgerMovementSerializer,
 )
 
 
@@ -59,10 +59,10 @@ class TenantOwnedViewSet(ValidatedSearchOrderingMixin, ModelViewSet):
         serializer.save(**payload)
 
 
-class ContaViewSet(TenantOwnedViewSet):
+class AccountViewSet(TenantOwnedViewSet):
     queryset = Account.objects.all()
-    serializer_class = ContaSerializer
-    filterset_class = ContaFilter
+    serializer_class = AccountSerializer
+    filterset_class = AccountFilter
     search_fields = ["id_custom", "nome", "tipo"]
     ordering_fields = [
         "id_custom",
@@ -75,10 +75,10 @@ class ContaViewSet(TenantOwnedViewSet):
     ordering = ["-criado_em"]
 
 
-class LancamentoViewSet(TenantOwnedViewSet):
+class LedgerEntryViewSet(TenantOwnedViewSet):
     queryset = LegacyEntry.objects.all()
-    serializer_class = LancamentoSerializer
-    filterset_class = LancamentoFilter
+    serializer_class = LedgerEntrySerializer
+    filterset_class = LedgerEntryFilter
     search_fields = ["id_custom", "nome", "descricao", "referencia_externa"]
     ordering_fields = [
         "id_custom",
@@ -91,10 +91,10 @@ class LancamentoViewSet(TenantOwnedViewSet):
     ordering = ["-criado_em"]
 
 
-class MovimentoViewSet(TenantOwnedViewSet):
+class LedgerMovementViewSet(TenantOwnedViewSet):
     queryset = LegacyMovement.objects.select_related("conta", "lancamento").all()
-    serializer_class = MovimentoSerializer
-    filterset_class = MovimentoFilter
+    serializer_class = LedgerMovementSerializer
+    filterset_class = LedgerMovementFilter
     search_fields = ["id_custom", "nome", "conta__id_custom"]
     ordering_fields = [
         "id_custom",
@@ -139,10 +139,10 @@ class MovimentoViewSet(TenantOwnedViewSet):
         serializer.save(atualizado_por=self.request.user)
 
 
-class ConciliacaoFinanceiraViewSet(TenantOwnedViewSet):
+class FinancialReconciliationViewSet(TenantOwnedViewSet):
     queryset = FinancialReconciliation.objects.select_related("fatura").all()
-    serializer_class = ConciliacaoFinanceiraSerializer
-    filterset_class = ConciliacaoFinanceiraFilter
+    serializer_class = FinancialReconciliationSerializer
+    filterset_class = FinancialReconciliationFilter
     search_fields = ["fatura__id_custom"]
     ordering_fields = ["fatura", "conciliado", "criado_em"]
     ordering = ["-criado_em"]
@@ -156,16 +156,16 @@ class ConciliacaoFinanceiraViewSet(TenantOwnedViewSet):
 
 
 VIEWSET_MAP = {
-    "conciliacaofinanceira": ConciliacaoFinanceiraViewSet,
-    "conta": ContaViewSet,
-    "lancamento": LancamentoViewSet,
-    "movimento": MovimentoViewSet,
+    "conciliacaofinanceira": FinancialReconciliationViewSet,
+    "conta": AccountViewSet,
+    "lancamento": LedgerEntryViewSet,
+    "movimento": LedgerMovementViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "ConciliacaoFinanceiraViewSet",
-    "ContaViewSet",
-    "LancamentoViewSet",
-    "MovimentoViewSet",
+    "FinancialReconciliationViewSet",
+    "AccountViewSet",
+    "LedgerEntryViewSet",
+    "LedgerMovementViewSet",
 ]

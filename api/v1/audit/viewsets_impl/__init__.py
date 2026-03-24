@@ -1,7 +1,7 @@
-from .core import VIEWSET_MAP, AtividadeUsuarioViewSet, UsuarioAuditoriaViewSet
+from .core import VIEWSET_MAP, UserActivityViewSet, UserAuditViewSet
 
 __all__ = [
     "VIEWSET_MAP",
-    "AtividadeUsuarioViewSet",
-    "UsuarioAuditoriaViewSet",
+    "UserActivityViewSet",
+    "UserAuditViewSet",
 ]

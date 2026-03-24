@@ -37,7 +37,7 @@ class BaseSystemAPIView(APIView):
         )
 
 
-class SaudeSistemaAPI(BaseSystemAPIView):
+class SystemHealthAPI(BaseSystemAPIView):
     """
     Health check corporativo.
     Ideal para Kubernetes, Load Balancer e monitoramento externo.
@@ -45,34 +45,38 @@ class SaudeSistemaAPI(BaseSystemAPIView):
 
     def get(self, request):
         try:
-            resultado = verificar_sistema()
+            system_result = verificar_sistema()
 
-            http_status = status.HTTP_200_OK if resultado.get("status") == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
+            http_status = (
+                status.HTTP_200_OK
+                if system_result.get("status") == "ok"
+                else status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
-            return self.success(resultado, http_status)
+            return self.success(system_result, http_status)
 
         except Exception as e:
             return self.error(str(e))
 
 
-class MetricasAPI(BaseSystemAPIView):
+class MetricsAPI(BaseSystemAPIView):
     """
     Endpoint de métricas internas.
     Pode ser consumido por Prometheus, Grafana ou monitor interno.
     """
 
-    CACHE_KEY = "metricas_sistema"
+    CACHE_KEY = "system_metrics"
     CACHE_TIMEOUT = 10  # segundos
 
     def get(self, request):
         try:
-            metricas = cache.get(self.CACHE_KEY)
+            metrics_data = cache.get(self.CACHE_KEY)
 
-            if not metricas:
-                metricas = obter_metricas()
-                cache.set(self.CACHE_KEY, metricas, self.CACHE_TIMEOUT)
+            if not metrics_data:
+                metrics_data = obter_metricas()
+                cache.set(self.CACHE_KEY, metrics_data, self.CACHE_TIMEOUT)
 
-            return self.success(metricas)
+            return self.success(metrics_data)
 
         except Exception as e:
             return self.error(str(e))

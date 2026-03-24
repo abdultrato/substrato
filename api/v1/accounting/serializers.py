@@ -17,28 +17,28 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class ContaSerializer(serializers.ModelSerializer):
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class LancamentoSerializer(serializers.ModelSerializer):
+class LedgerEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = LegacyEntry
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class MovimentoSerializer(serializers.ModelSerializer):
+class LedgerMovementSerializer(serializers.ModelSerializer):
     class Meta:
         model = LegacyMovement
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class ConciliacaoFinanceiraSerializer(serializers.ModelSerializer):
+class FinancialReconciliationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinancialReconciliation
         fields = "__all__"
@@ -51,8 +51,8 @@ class ConciliacaoFinanceiraSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "conta": ContaSerializer,
-    "conciliacaofinanceira": ConciliacaoFinanceiraSerializer,
-    "lancamento": LancamentoSerializer,
-    "movimento": MovimentoSerializer,
+    "conta": AccountSerializer,
+    "conciliacaofinanceira": FinancialReconciliationSerializer,
+    "lancamento": LedgerEntrySerializer,
+    "movimento": LedgerMovementSerializer,
 }

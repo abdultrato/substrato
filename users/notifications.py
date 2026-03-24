@@ -11,13 +11,13 @@ class NotificationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        pendentes = ResultItem.objects.filter(validado=False).count()
+        pending_results = ResultItem.objects.filter(validado=False).count()
 
-        requisicoes_hoje = LabRequest.objects.filter(criado_em__date=timezone.localdate()).count()
+        requests_today = LabRequest.objects.filter(criado_em__date=timezone.localdate()).count()
 
         return Response(
             {
-                "resultados_pendentes": pendentes,
-                "requisicoes_hoje": requisicoes_hoje,
+                "resultados_pendentes": pending_results,
+                "requisicoes_hoje": requests_today,
             }
         )

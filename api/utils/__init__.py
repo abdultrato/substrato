@@ -1,4 +1,4 @@
-from . import extrair_ip, formatacao_resposta
+from . import extract_ip, response_formatting
 from .metrics import (
     count_queries,
     get_memory_usage,
@@ -11,8 +11,8 @@ from .metrics import (
 
 __all__ = [
     "count_queries",
-    "extrair_ip",
-    "formatacao_resposta",
+    "extract_ip",
+    "response_formatting",
     "get_memory_usage",
     "get_query_count",
     "log_slow_queries",

@@ -1,8 +1,8 @@
-from .core import VIEWSET_MAP, FaturaItemViewSet, FaturaViewSet, HistoricoFaturaViewSet
+from .core import VIEWSET_MAP, InvoiceHistoryViewSet, InvoiceItemViewSet, InvoiceViewSet
 
 __all__ = [
     "VIEWSET_MAP",
-    "FaturaItemViewSet",
-    "FaturaViewSet",
-    "HistoricoFaturaViewSet",
+    "InvoiceHistoryViewSet",
+    "InvoiceItemViewSet",
+    "InvoiceViewSet",
 ]

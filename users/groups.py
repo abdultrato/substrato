@@ -14,11 +14,11 @@ class GroupViewSet(ViewSet):
         return Response(groups)
 
     def retrieve(self, request, pk=None):
-        group = Group.objects.filter(pk=pk).values("id", "name").first()
+        group_record = Group.objects.filter(pk=pk).values("id", "name").first()
         permissions = Permission.objects.filter(group__id=pk).values_list("codename", flat=True)
         return Response(
             {
-                "group": group,
+                "group": group_record,
                 "permissions": list(permissions),
             }
         )

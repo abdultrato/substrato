@@ -8,7 +8,7 @@ from apps.billing.models.invoice_history import InvoiceHistory
 # =====================================================
 
 
-class FaturaFilter(SafeFilterSet):
+class InvoiceFilter(SafeFilterSet):
     class Meta:
         model = Invoice
         fields = [
@@ -40,7 +40,7 @@ class FaturaFilter(SafeFilterSet):
 # =====================================================
 
 
-class FaturaItemFilter(SafeFilterSet):
+class InvoiceItemFilter(SafeFilterSet):
     class Meta:
         model = InvoiceItem
         fields = [
@@ -67,7 +67,7 @@ class FaturaItemFilter(SafeFilterSet):
 # =====================================================
 
 
-class HistoricoFaturaFilter(SafeFilterSet):
+class InvoiceHistoryFilter(SafeFilterSet):
     class Meta:
         model = InvoiceHistory
         fields = [
@@ -83,7 +83,7 @@ class HistoricoFaturaFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "fatura": FaturaFilter,
-    "faturaitem": FaturaItemFilter,
-    "historicofatura": HistoricoFaturaFilter,
+    "fatura": InvoiceFilter,
+    "faturaitem": InvoiceItemFilter,
+    "historicofatura": InvoiceHistoryFilter,
 }

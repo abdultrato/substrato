@@ -21,12 +21,12 @@ class UserViewSet(ModelViewSet):
     ]
 
     def list(self, request, *args, **kwargs):
-        users = self.get_queryset().values(*self.fields)
-        return Response(users)
+        user_records = self.get_queryset().values(*self.fields)
+        return Response(user_records)
 
     def retrieve(self, request, pk=None):
-        user = self.get_queryset().filter(pk=pk).values(*self.fields).first()
-        return Response(user)
+        user_record = self.get_queryset().filter(pk=pk).values(*self.fields).first()
+        return Response(user_record)
 
     @action(detail=True, methods=["post"])
     def activate(self, request, pk=None):

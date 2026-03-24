@@ -6,18 +6,18 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.identity.models.user import User
 
-from ..filters import AtividadeUsuarioFilter, UsuarioAuditoriaFilter
-from ..serializers import AtividadeUsuarioSerializer, UsuarioAuditoriaSerializer
+from ..filters import UserActivityFilter, UserAuditFilter
+from ..serializers import UserActivitySerializer, UserAuditSerializer
 
 
-class UsuarioAuditoriaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
+class UserAuditViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
     """
     Lista usuários com contagem e última actividade registrada.
     """
 
     queryset = User.objects.all()
-    serializer_class = UsuarioAuditoriaSerializer
-    filterset_class = UsuarioAuditoriaFilter
+    serializer_class = UserAuditSerializer
+    filterset_class = UserAuditFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["username", "first_name", "last_name"]
     ordering_fields = ["username", "first_name", "last_name", "last_login"]
@@ -37,10 +37,10 @@ class UsuarioAuditoriaViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
         )
 
 
-class AtividadeUsuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
+class UserActivityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
     queryset = UserActivity.objects.select_related("usuario").all()
-    serializer_class = AtividadeUsuarioSerializer
-    filterset_class = AtividadeUsuarioFilter
+    serializer_class = UserActivitySerializer
+    filterset_class = UserActivityFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "caminho",
@@ -63,12 +63,12 @@ class AtividadeUsuarioViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
 
 
 VIEWSET_MAP = {
-    "usuarios": UsuarioAuditoriaViewSet,
-    "atividade": AtividadeUsuarioViewSet,
+    "usuarios": UserAuditViewSet,
+    "atividade": UserActivityViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "AtividadeUsuarioViewSet",
-    "UsuarioAuditoriaViewSet",
+    "UserActivityViewSet",
+    "UserAuditViewSet",
 ]

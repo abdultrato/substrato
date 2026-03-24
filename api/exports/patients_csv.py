@@ -8,18 +8,18 @@ from rest_framework.views import APIView
 from apps.clinical.models.patient import Patient
 
 
-class ExportPacientesCSV(APIView):
+class ExportPatientsCSV(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         response = HttpResponse(content_type="text/csv")
-        filename = f"pacientes_{now().date()}.csv"
+        filename = f"patients_{now().date()}.csv"
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response)
-        writer.writerow(["ID", "Nome"])
+        writer.writerow(["ID", "Name"])
 
-        for p in Patient.objects.all():
-            writer.writerow([p.id, p.nome])
+        for patient in Patient.objects.all():
+            writer.writerow([patient.id, patient.nome])
 
         return response

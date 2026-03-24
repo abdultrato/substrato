@@ -250,7 +250,7 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             qs_vendas = qs_vendas.filter(inquilino=inquilino)
 
         # Financeiro: faturas e recibos
-        from api.v1.billing.serializers import FaturaSerializer
+        from api.v1.billing.serializers import InvoiceSerializer
         from apps.billing.models.invoice import Invoice
 
         qs_faturas = Invoice.objects.filter(
@@ -288,7 +288,7 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             "procedimentos_enfermagem": ProcedimentoSerializer(qs_procedimentos[:limit], many=True).data,
             "internamentos_enfermaria": InternamentoEnfermariaSerializer(qs_internamentos[:limit], many=True).data,
             "vendas_farmacia": VendaSerializer(qs_vendas[:limit], many=True).data,
-            "faturas": FaturaSerializer(qs_faturas[:limit], many=True).data,
+            "faturas": InvoiceSerializer(qs_faturas[:limit], many=True).data,
             "recibos": ReciboSerializer(qs_recibos[:limit], many=True).data,
         }
 

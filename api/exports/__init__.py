@@ -1,5 +1,5 @@
-from .pacientes_csv import ExportPacientesCSV
+from .patients_csv import ExportPatientsCSV
 
 __all__ = [
-    "ExportPacientesCSV",
+    "ExportPatientsCSV",
 ]

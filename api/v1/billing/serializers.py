@@ -20,64 +20,64 @@ CORE_READ_ONLY_FIELDS = [
 ]
 
 
-class FaturaSerializer(serializers.ModelSerializer):
+class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class FaturaItemSerializer(serializers.ModelSerializer):
-    def _remove_itens_preexistentes(self, *, fatura, tipo_item, referencia):
-        if not fatura or not referencia:
+class InvoiceItemSerializer(serializers.ModelSerializer):
+    def _remove_existing_items(self, *, invoice, item_type, reference):
+        if not invoice or not reference:
             return
 
-        campo_ref = {
+        reference_field = {
             InvoiceItem.TipoItem.EXAME: "exame",
             InvoiceItem.TipoItem.EXAME_MEDICO: "exame_medico",
             InvoiceItem.TipoItem.ITEM_VENDA: "item_venda",
             InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: "procedimento_item",
             InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: "procedimento_material",
-        }.get(tipo_item)
+        }.get(item_type)
 
-        if not campo_ref:
+        if not reference_field:
             return
 
-        qs = InvoiceItem.objects.filter(
-            fatura=fatura,
+        queryset = InvoiceItem.objects.filter(
+            fatura=invoice,
             deletado=False,
-            **{campo_ref: referencia},
+            **{reference_field: reference},
         )
 
         if getattr(self, "instance", None) is not None:
-            qs = qs.exclude(pk=self.instance.pk)
+            queryset = queryset.exclude(pk=self.instance.pk)
 
-        for item in qs:
+        for item in queryset:
             item.delete()
 
     def create(self, validated_data):
-        fatura = validated_data.get("fatura")
-        tipo_item = validated_data.get("tipo_item", InvoiceItem.TipoItem.EXAME)
-        referencia = {
+        invoice = validated_data.get("fatura")
+        item_type = validated_data.get("tipo_item", InvoiceItem.TipoItem.EXAME)
+        reference = {
             InvoiceItem.TipoItem.EXAME: validated_data.get("exame"),
             InvoiceItem.TipoItem.EXAME_MEDICO: validated_data.get("exame_medico"),
             InvoiceItem.TipoItem.ITEM_VENDA: validated_data.get("item_venda"),
             InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: validated_data.get("procedimento_item"),
             InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_data.get("procedimento_material"),
-        }.get(tipo_item)
+        }.get(item_type)
 
         with transaction.atomic():
-            self._remove_itens_preexistentes(
-                fatura=fatura,
-                tipo_item=tipo_item,
-                referencia=referencia,
+            self._remove_existing_items(
+                invoice=invoice,
+                item_type=item_type,
+                reference=reference,
             )
 
             return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        tipo_item = validated_data.get("tipo_item", instance.tipo_item)
-        referencia = {
+        item_type = validated_data.get("tipo_item", instance.tipo_item)
+        reference = {
             InvoiceItem.TipoItem.EXAME: validated_data.get("exame", instance.exame),
             InvoiceItem.TipoItem.EXAME_MEDICO: validated_data.get("exame_medico", instance.exame_medico),
             InvoiceItem.TipoItem.ITEM_VENDA: validated_data.get("item_venda", instance.item_venda),
@@ -87,34 +87,34 @@ class FaturaItemSerializer(serializers.ModelSerializer):
             InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_data.get(
                 "procedimento_material", instance.procedimento_material
             ),
-        }.get(tipo_item)
+        }.get(item_type)
 
         with transaction.atomic():
-            self._remove_itens_preexistentes(
-                fatura=validated_data.get("fatura", instance.fatura),
-                tipo_item=tipo_item,
-                referencia=referencia,
+            self._remove_existing_items(
+                invoice=validated_data.get("fatura", instance.fatura),
+                item_type=item_type,
+                reference=reference,
             )
 
             return super().update(instance, validated_data)
 
-    total_sem_iva = serializers.SerializerMethodField()
-    iva_valor = serializers.SerializerMethodField()
-    total_com_iva = serializers.SerializerMethodField()
+    total_sem_iva = serializers.SerializerMethodField(method_name="get_total_before_tax")
+    iva_valor = serializers.SerializerMethodField(method_name="get_tax_amount")
+    total_com_iva = serializers.SerializerMethodField(method_name="get_total_with_tax")
 
-    def get_total_sem_iva(self, obj):
+    def get_total_before_tax(self, obj):
         try:
             return str(obj.total_sem_iva)
         except Exception:
             return None
 
-    def get_iva_valor(self, obj):
+    def get_tax_amount(self, obj):
         try:
             return str(obj.iva_valor)
         except Exception:
             return None
 
-    def get_total_com_iva(self, obj):
+    def get_total_with_tax(self, obj):
         try:
             return str(obj.total_com_iva)
         except Exception:
@@ -126,7 +126,7 @@ class FaturaItemSerializer(serializers.ModelSerializer):
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class HistoricoFaturaSerializer(serializers.ModelSerializer):
+class InvoiceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoiceHistory
         fields = "__all__"
@@ -134,7 +134,7 @@ class HistoricoFaturaSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "fatura": FaturaSerializer,
-    "faturaitem": FaturaItemSerializer,
-    "historicofatura": HistoricoFaturaSerializer,
+    "fatura": InvoiceSerializer,
+    "faturaitem": InvoiceItemSerializer,
+    "historicofatura": InvoiceHistorySerializer,
 }

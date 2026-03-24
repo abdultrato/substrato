@@ -4,9 +4,9 @@ from apps.audit_activities.models.user_activity import UserActivity
 from apps.identity.models.user import User
 
 
-class UsuarioAuditoriaSerializer(serializers.ModelSerializer):
-    nome = serializers.SerializerMethodField()
-    grupos = serializers.SerializerMethodField()
+class UserAuditSerializer(serializers.ModelSerializer):
+    nome = serializers.SerializerMethodField(method_name="get_full_name")
+    grupos = serializers.SerializerMethodField(method_name="get_group_names")
 
     # anotados no queryset
     total_atividades = serializers.IntegerField(read_only=True)
@@ -25,21 +25,21 @@ class UsuarioAuditoriaSerializer(serializers.ModelSerializer):
             "ultima_atividade_em",
         ]
 
-    def get_nome(self, obj: User) -> str:
+    def get_full_name(self, obj: User) -> str:
         try:
             return (obj.get_full_name() or "").strip() or obj.username
         except Exception:
             return obj.username
 
-    def get_grupos(self, obj: User) -> list[str]:
+    def get_group_names(self, obj: User) -> list[str]:
         try:
             return list(obj.groups.values_list("name", flat=True))
         except Exception:
             return []
 
 
-class AtividadeUsuarioSerializer(serializers.ModelSerializer):
-    usuario_nome = serializers.SerializerMethodField()
+class UserActivitySerializer(serializers.ModelSerializer):
+    usuario_nome = serializers.SerializerMethodField(method_name="get_user_name")
 
     class Meta:
         model = UserActivity
@@ -62,17 +62,17 @@ class AtividadeUsuarioSerializer(serializers.ModelSerializer):
             "metadata",
         ]
 
-    def get_usuario_nome(self, obj: UserActivity) -> str:
-        u = getattr(obj, "usuario", None)
-        if not u:
+    def get_user_name(self, obj: UserActivity) -> str:
+        user = getattr(obj, "usuario", None)
+        if not user:
             return ""
         try:
-            return (u.get_full_name() or "").strip() or u.username
+            return (user.get_full_name() or "").strip() or user.username
         except Exception:
-            return getattr(u, "username", "")
+            return getattr(user, "username", "")
 
 
 SERIALIZER_MAP = {
-    "usuarios": UsuarioAuditoriaSerializer,
-    "atividade": AtividadeUsuarioSerializer,
+    "usuarios": UserAuditSerializer,
+    "atividade": UserActivitySerializer,
 }

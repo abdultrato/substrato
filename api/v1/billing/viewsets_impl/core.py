@@ -11,15 +11,15 @@ from apps.billing.models.invoice_items import InvoiceItem
 from apps.billing.models.invoice_history import InvoiceHistory
 from tasks.gerar_pdf.pdf_generator_fatura import gerar_pdf_fatura
 
-from ..filters import FaturaFilter, FaturaItemFilter, HistoricoFaturaFilter
-from ..serializers import FaturaItemSerializer, FaturaSerializer, HistoricoFaturaSerializer
 from apps.payments.models.payment import Payment
+from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
+from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, InvoiceSerializer
 
 
-class FaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Invoice.objects.all()
-    serializer_class = FaturaSerializer
-    filterset_class = FaturaFilter
+    serializer_class = InvoiceSerializer
+    filterset_class = InvoiceFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -56,60 +56,66 @@ class FaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mod
     ordering = ["-criado_em"]
 
     @action(detail=True, methods=["post"])
-    def emitir(self, request, pk=None):
-        fatura = self.get_object()
-        fatura.emitir()
-        return Response(self.get_serializer(fatura).data)
+    @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
+    def issue(self, request, pk=None):
+        invoice = self.get_object()
+        invoice.emitir()
+        return Response(self.get_serializer(invoice).data)
 
-    @action(detail=True, methods=["post"])
-    def anular(self, request, pk=None):
-        fatura = self.get_object()
-        if fatura.estado != Invoice.Estado.CANCELADA:
-            fatura.estado = Invoice.Estado.CANCELADA
-            fatura.save(update_fields=["estado"])
+    @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
+    def void(self, request, pk=None):
+        invoice = self.get_object()
+        if invoice.estado != Invoice.Estado.CANCELADA:
+            invoice.estado = Invoice.Estado.CANCELADA
+            invoice.save(update_fields=["estado"])
             try:
-                linhas = [
-                    f"Origem: {fatura.get_origem_display()}",
-                    f"Paciente: {getattr(fatura.paciente, 'nome', '-')}",
-                    f"Total com IVA: {getattr(fatura, 'total', 0):.2f}",
+                history_lines = [
+                    f"Origem: {invoice.get_origem_display()}",
+                    f"Paciente: {getattr(invoice.paciente, 'nome', '-')}",
+                    f"Total com IVA: {getattr(invoice, 'total', 0):.2f}",
                 ]
-                fatura.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=linhas)
+                invoice.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=history_lines)
             except Exception:
                 pass
-        return Response(self.get_serializer(fatura).data)
+        return Response(self.get_serializer(invoice).data)
 
-    @action(detail=True, methods=["post"])
-    def confirmar_pagamento(self, request, pk=None):
-        fatura = self.get_object()
-        pagamento = (
-            fatura.pagamentos.filter(status=Payment.Status.PENDENTE, deletado=False)
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="confirmar_pagamento",
+        url_name="confirmar_pagamento",
+    )
+    def confirm_payment(self, request, pk=None):
+        invoice = self.get_object()
+        payment = (
+            invoice.pagamentos.filter(status=Payment.Status.PENDENTE, deletado=False)
             .order_by("-criado_em")
             .first()
         )
-        if not pagamento:
+        if not payment:
             raise ValidationError("Nenhum pagamento pendente para confirmar.")
 
         try:
-            pagamento.confirmar()
+            payment.confirmar()
         except ValidationError as exc:
             raise ValidationError(str(exc)) from exc
 
-        fatura.refresh_from_db()
-        return Response(self.get_serializer(fatura).data)
+        invoice.refresh_from_db()
+        return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
-        fatura = self.get_object()
-        pdf_bytes, filename = gerar_pdf_fatura(fatura, request=request)
+        invoice = self.get_object()
+        pdf_bytes, filename = gerar_pdf_fatura(invoice, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
 
 
-class FaturaItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = InvoiceItem.objects.all()
-    serializer_class = FaturaItemSerializer
-    filterset_class = FaturaItemFilter
+    serializer_class = InvoiceItemSerializer
+    filterset_class = InvoiceItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "id_custom",
@@ -145,10 +151,10 @@ class FaturaItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     ordering = ["-criado_em"]
 
 
-class HistoricoFaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = InvoiceHistory.objects.all()
-    serializer_class = HistoricoFaturaSerializer
-    filterset_class = HistoricoFaturaFilter
+    serializer_class = InvoiceHistorySerializer
+    filterset_class = InvoiceHistoryFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["descricao", "tipo_evento"]
     ordering_fields = ["fatura", "descricao", "tipo_evento", "criado_em"]
@@ -156,14 +162,14 @@ class HistoricoFaturaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
 
 
 VIEWSET_MAP = {
-    "fatura": FaturaViewSet,
-    "faturaitem": FaturaItemViewSet,
-    "historicofatura": HistoricoFaturaViewSet,
+    "fatura": InvoiceViewSet,
+    "faturaitem": InvoiceItemViewSet,
+    "historicofatura": InvoiceHistoryViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "FaturaItemViewSet",
-    "FaturaViewSet",
-    "HistoricoFaturaViewSet",
+    "InvoiceHistoryViewSet",
+    "InvoiceItemViewSet",
+    "InvoiceViewSet",
 ]

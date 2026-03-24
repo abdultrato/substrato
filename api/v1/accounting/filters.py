@@ -5,11 +5,11 @@ from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
 
 # =====================================================
-# CONTA
+# ACCOUNT
 # =====================================================
 
 
-class ContaFilter(SafeFilterSet):
+class AccountFilter(SafeFilterSet):
     class Meta:
         model = Account
         fields = [
@@ -30,11 +30,11 @@ class ContaFilter(SafeFilterSet):
 
 
 # =====================================================
-# LANÇAMENTO
+# LEDGER ENTRY
 # =====================================================
 
 
-class LancamentoFilter(SafeFilterSet):
+class LedgerEntryFilter(SafeFilterSet):
     class Meta:
         model = LegacyEntry
         fields = [
@@ -57,11 +57,11 @@ class LancamentoFilter(SafeFilterSet):
 
 
 # =====================================================
-# MOVIMENTO
+# LEDGER MOVEMENT
 # =====================================================
 
 
-class MovimentoFilter(SafeFilterSet):
+class LedgerMovementFilter(SafeFilterSet):
     class Meta:
         model = LegacyMovement
         fields = [
@@ -85,11 +85,11 @@ class MovimentoFilter(SafeFilterSet):
 
 
 # =====================================================
-# CONCILIAÇÃO
+# RECONCILIATION
 # =====================================================
 
 
-class ConciliacaoFinanceiraFilter(SafeFilterSet):
+class FinancialReconciliationFilter(SafeFilterSet):
     class Meta:
         model = FinancialReconciliation
         fields = [
@@ -104,8 +104,8 @@ class ConciliacaoFinanceiraFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "conta": ContaFilter,
-    "conciliacaofinanceira": ConciliacaoFinanceiraFilter,
-    "lancamento": LancamentoFilter,
-    "movimento": MovimentoFilter,
+    "conta": AccountFilter,
+    "conciliacaofinanceira": FinancialReconciliationFilter,
+    "lancamento": LedgerEntryFilter,
+    "movimento": LedgerMovementFilter,
 }
