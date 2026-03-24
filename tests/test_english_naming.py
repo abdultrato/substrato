@@ -75,6 +75,39 @@ class UserProfile:
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_scan_repository_can_scope_to_specific_paths(self) -> None:
+        root = build_fixture_root("scoped_paths")
+        try:
+            portuguese_dir = root / "usuarios"
+            portuguese_dir.mkdir()
+            (portuguese_dir / "perfil_usuario.py").write_text(
+                """
+class PerfilUsuario:
+    pass
+""".strip(),
+                encoding="utf-8",
+            )
+
+            english_dir = root / "users"
+            english_dir.mkdir()
+            (english_dir / "user_profile.py").write_text(
+                """
+class UserProfile:
+    pass
+""".strip(),
+                encoding="utf-8",
+            )
+
+            english_findings = scan_repository(root, targets=(english_dir,))
+            self.assertEqual(english_findings, [])
+
+            portuguese_findings = scan_repository(root, targets=(portuguese_dir,))
+            formatted = [finding.format(root) for finding in portuguese_findings]
+            self.assertTrue(any("directory: usuarios" in line for line in formatted))
+            self.assertTrue(any("class: usuarios/perfil_usuario.py:1 -> PerfilUsuario" in line for line in formatted))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

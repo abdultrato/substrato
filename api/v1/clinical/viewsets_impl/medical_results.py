@@ -4,22 +4,22 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.medical_result_file import MedicalResultFile
-from ..filters import ResultadoMedicoArquivoFilter
-from ..serializers import ResultadoMedicoArquivoSerializer
+from ..filters import MedicalResultFileFilter
+from ..serializers import MedicalResultFileSerializer
 
 
 @extend_schema(
     description="Arquivos/links gerados para exames médicos (imagens, laudos, DICOM).",
     tags=["Clínico - Resultados Médicos"],
 )
-class ResultadoMedicoArquivoViewSet(
+class MedicalResultFileViewSet(
     ValidatedSearchOrderingMixin,
     TenantScopedQuerysetMixin,
     ModelViewSet,
 ):
     queryset = MedicalResultFile.objects.all()
-    serializer_class = ResultadoMedicoArquivoSerializer
-    filterset_class = ResultadoMedicoArquivoFilter
+    serializer_class = MedicalResultFileSerializer
+    filterset_class = MedicalResultFileFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["id_custom", "descricao", "tipo"]
     ordering_fields = [
@@ -41,3 +41,6 @@ class ResultadoMedicoArquivoViewSet(
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+
+ResultadoMedicoArquivoViewSet = MedicalResultFileViewSet

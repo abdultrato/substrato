@@ -293,22 +293,58 @@ def find_portuguese_tokens(value: str) -> tuple[str, ...]:
     return tuple(sorted(matched))
 
 
-def iter_repository_entries(root: Path):
-    for current_root, dirnames, filenames in os.walk(root):
-        dirnames[:] = sorted(name for name in dirnames if name not in EXCLUDED_NAMES)
-        current_path = Path(current_root)
+def normalize_scan_targets(root: Path, raw_targets: list[str] | None) -> tuple[Path, ...] | None:
+    if not raw_targets:
+        return None
 
-        for dirname in dirnames:
-            yield current_path / dirname, True
+    targets: list[Path] = []
+    for raw_target in raw_targets:
+        target = Path(raw_target)
+        resolved = (target if target.is_absolute() else root / target).resolve()
 
-        for filename in sorted(filenames):
-            yield current_path / filename, False
+        if not resolved.exists():
+            raise FileNotFoundError(f"Target path does not exist: {raw_target}")
+
+        try:
+            resolved.relative_to(root)
+        except ValueError as error:
+            raise ValueError(f"Target path must stay within the repository root: {raw_target}") from error
+
+        if any(resolved == existing or resolved.is_relative_to(existing) for existing in targets):
+            continue
+
+        targets = [existing for existing in targets if not existing.is_relative_to(resolved)]
+        targets.append(resolved)
+
+    return tuple(sorted(targets, key=lambda item: item.as_posix()))
 
 
-def scan_paths(root: Path) -> list[NamingFinding]:
+def iter_repository_entries(root: Path, targets: tuple[Path, ...] | None = None):
+    scan_roots = targets or (root,)
+
+    for scan_root in scan_roots:
+        if scan_root.is_file():
+            yield scan_root, False
+            continue
+
+        if scan_root != root:
+            yield scan_root, True
+
+        for current_root, dirnames, filenames in os.walk(scan_root):
+            dirnames[:] = sorted(name for name in dirnames if name not in EXCLUDED_NAMES)
+            current_path = Path(current_root)
+
+            for dirname in dirnames:
+                yield current_path / dirname, True
+
+            for filename in sorted(filenames):
+                yield current_path / filename, False
+
+
+def scan_paths(root: Path, targets: tuple[Path, ...] | None = None) -> list[NamingFinding]:
     findings: list[NamingFinding] = []
 
-    for entry, is_dir in iter_repository_entries(root):
+    for entry, is_dir in iter_repository_entries(root, targets):
         name = entry.name if is_dir else entry.stem
         matched_tokens = find_portuguese_tokens(name)
 
@@ -361,10 +397,10 @@ class IdentifierVisitor(ast.NodeVisitor):
         )
 
 
-def scan_python_identifiers(root: Path) -> list[NamingFinding]:
+def scan_python_identifiers(root: Path, targets: tuple[Path, ...] | None = None) -> list[NamingFinding]:
     findings: list[NamingFinding] = []
 
-    for entry, is_dir in iter_repository_entries(root):
+    for entry, is_dir in iter_repository_entries(root, targets):
         if is_dir or entry.suffix != ".py":
             continue
 
@@ -394,8 +430,8 @@ def scan_python_identifiers(root: Path) -> list[NamingFinding]:
     return findings
 
 
-def scan_repository(root: Path) -> list[NamingFinding]:
-    findings = [*scan_paths(root), *scan_python_identifiers(root)]
+def scan_repository(root: Path, targets: tuple[Path, ...] | None = None) -> list[NamingFinding]:
+    findings = [*scan_paths(root, targets), *scan_python_identifiers(root, targets)]
     return sorted(findings, key=lambda item: (item.path.as_posix(), item.line or 0, item.kind, item.identifier))
 
 
@@ -414,6 +450,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=100,
         help="Maximum number of findings to print before truncating the report.",
     )
+    parser.add_argument(
+        "--path",
+        dest="paths",
+        action="append",
+        default=[],
+        help="Optional file or directory path to scan relative to the repository root. Can be repeated.",
+    )
     return parser
 
 
@@ -422,7 +465,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     root = Path(args.root).resolve()
 
-    findings = scan_repository(root)
+    try:
+        targets = normalize_scan_targets(root, args.paths)
+    except (FileNotFoundError, ValueError) as error:
+        parser.error(str(error))
+
+    findings = scan_repository(root, targets=targets)
     if not findings:
         print("No Portuguese naming violations found.")
         return 0

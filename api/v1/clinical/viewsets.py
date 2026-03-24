@@ -1,14 +1,21 @@
 """
-Facade module for Clinico ViewSets.
+Facade module for clinical viewsets.
 
-The implementation is split into smaller modules under `viewsets_impl/`, but
-external imports remain stable:
-
-    from api.v1.clinical.viewsets import VIEWSET_MAP, PacienteViewSet, ...
+The implementation is split into smaller modules under `viewsets_impl/`, while
+top-level imports remain stable.
 """
 
 from .viewsets_impl import (
     VIEWSET_MAP,
+    LabExamFieldViewSet,
+    MedicalExamFieldViewSet,
+    LabExamViewSet,
+    MedicalExamViewSet,
+    PatientViewSet,
+    LabRequestViewSet,
+    LabRequestItemViewSet,
+    ResultItemViewSet,
+    MedicalResultFileViewSet,
     ExameCampoViewSet,
     ExameMedicoCampoViewSet,
     ExameMedicoViewSet,
@@ -22,6 +29,15 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "LabExamFieldViewSet",
+    "MedicalExamFieldViewSet",
+    "LabExamViewSet",
+    "MedicalExamViewSet",
+    "PatientViewSet",
+    "LabRequestViewSet",
+    "LabRequestItemViewSet",
+    "ResultItemViewSet",
+    "MedicalResultFileViewSet",
     "ExameCampoViewSet",
     "ExameMedicoCampoViewSet",
     "ExameMedicoViewSet",

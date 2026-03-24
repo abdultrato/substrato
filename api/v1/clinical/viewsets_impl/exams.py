@@ -6,32 +6,32 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.medical_exam import MedicalExam
 
-from ..filters import ExameFilter, ExameMedicoFilter
-from ..serializers import ExameMedicoSerializer, ExameSerializer
+from ..filters import LabExamFilter, MedicalExamFilter
+from ..serializers import LabExamSerializer, MedicalExamSerializer
 
 
 @extend_schema(
     description="Gerenciamento de exames laboratoriais",
     tags=["Clínico - Exames"],
 )
-class ExameViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class LabExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     """
-    ViewSet para gerenciar exames laboratoriais.
+    Viewset for laboratory exams.
 
-    Operações disponíveis:
-    - LIST: Listar todos os exames (com filtros, busca e paginação)
-    - CREATE: Criar novo exame
-    - RETRIEVE: Obter detalhes de um exame
-    - UPDATE: Atualizar exame
-    - DELETE: Deletar exame
+    Available operations:
+    - LIST: list all exams with filters, search, and pagination
+    - CREATE: create a new exam
+    - RETRIEVE: fetch exam details
+    - UPDATE: fully update an exam
+    - DELETE: soft-delete an exam
     """
 
     queryset = LabExam.objects.all()
-    serializer_class = ExameSerializer
-    filterset_class = ExameFilter
+    serializer_class = LabExamSerializer
+    filterset_class = LabExamFilter
     permission_classes = [IsAuthenticated]
-    # O modelo Exame nao possui campo `descricao` (nem `ativo`/`ordem`).
-    # Manter campos reais evita 500 (FieldError) quando o frontend usa `?search=...` ou `?ordering=...`.
+    # LabExam does not expose `descricao`/`ativo`/`ordem`.
+    # Keep search/order fields aligned with real model fields.
     search_fields = ["id_custom", "nome", "metodo", "setor"]
     ordering_fields = [
         "inquilino",
@@ -66,31 +66,31 @@ class ExameViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mode
 
     @extend_schema(
         description="Criar novo exame com validação de campos obrigatórios",
-        request=ExameSerializer,
-        responses={201: ExameSerializer},
+        request=LabExamSerializer,
+        responses={201: LabExamSerializer},
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
     @extend_schema(
         description="Obter detalhes de um exame específico",
-        responses={200: ExameSerializer},
+        responses={200: LabExamSerializer},
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
     @extend_schema(
         description="Atualizar exame completamente",
-        request=ExameSerializer,
-        responses={200: ExameSerializer},
+        request=LabExamSerializer,
+        responses={200: LabExamSerializer},
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
     @extend_schema(
         description="Atualizar parcialmente um exame",
-        request=ExameSerializer,
-        responses={200: ExameSerializer},
+        request=LabExamSerializer,
+        responses={200: LabExamSerializer},
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
@@ -107,12 +107,12 @@ class ExameViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mode
     description="Gerenciamento de exames médicos (imagem/diagnóstico)",
     tags=["Clínico - Exames Médicos"],
 )
-class ExameMedicoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class MedicalExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MedicalExam.objects.all()
-    serializer_class = ExameMedicoSerializer
-    filterset_class = ExameMedicoFilter
+    serializer_class = MedicalExamSerializer
+    filterset_class = MedicalExamFilter
     permission_classes = [IsAuthenticated]
-    # ExameMedico segue o mesmo shape de Exame (sem `descricao`/`ativo`/`ordem`).
+    # MedicalExam follows the same shape as LabExam.
     search_fields = ["id_custom", "nome", "metodo", "setor"]
     ordering_fields = [
         "inquilino",
@@ -132,3 +132,7 @@ class ExameMedicoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
         "versao",
     ]
     ordering = ["-criado_em"]
+
+
+ExameViewSet = LabExamViewSet
+ExameMedicoViewSet = MedicalExamViewSet

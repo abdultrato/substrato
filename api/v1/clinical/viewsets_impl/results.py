@@ -12,22 +12,22 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.clinical.models.result_item import ResultItem
 from domain.clinical.estado_resultado import EstadoResultado
 
-from ..filters import ResultadoItemFilter
-from ..serializers import ResultadoItemLaboratorioSerializer, ResultadoItemSerializer
+from ..filters import ResultItemFilter
+from ..serializers import LaboratoryResultItemSerializer, ResultItemSerializer
 
 
 @extend_schema(
     description="Gerenciamento de resultados de análises",
     tags=["Clínico - Resultados"],
 )
-class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    """ViewSet para gerenciar resultados de análises laboratoriais."""
+class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    """Viewset for laboratory result items."""
 
     queryset = ResultItem.objects.all()
-    serializer_class = ResultadoItemSerializer
-    filterset_class = ResultadoItemFilter
+    serializer_class = ResultItemSerializer
+    filterset_class = ResultItemFilter
     permission_classes = [IsAuthenticated]
-    # ResultadoItem (NoNameCoreModel) nao possui `nome`/`descricao`/`ativo`/`ordem`.
+    # ResultItem does not expose `nome`/`descricao`/`ativo`/`ordem`.
     search_fields = [
         "id_custom",
         "resultado__requisicao__id_custom",
@@ -76,11 +76,8 @@ class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
         except Exception:
             return False
 
-    # -----------------------------------------------------------------
-    # Restrição: alterações diretas no ResultadoItem (PUT/PATCH) podem
-    # burlar a máquina de estados. Para perfis não-admin, obrigamos o uso
-    # das ações `lancar`, `gravar` e `validar`.
-    # -----------------------------------------------------------------
+    # Direct PUT/PATCH can bypass the state machine.
+    # Non-admin users must go through the dedicated actions below.
 
     def update(self, request, *args, **kwargs):
         if not self._is_admin_user(getattr(request, "user", None)):
@@ -92,12 +89,12 @@ class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
             raise PermissionDenied("Use as ações: lancar, gravar e validar.")
         return super().partial_update(request, *args, **kwargs)
 
-    @action(detail=True, methods=["post"])
-    def lancar(self, request, pk=None):
-        """Transiciona o item de resultado para EM_ANALISE (passo 1: lançar)."""
+    @action(detail=True, methods=["post"], url_path="lancar", url_name="lancar")
+    def start_analysis(self, request, pk=None):
+        """Move the result item to EM_ANALISE."""
         item = self.get_object()
         if item.estado == EstadoResultado.EM_ANALISE:
-            return Response(ResultadoItemLaboratorioSerializer(item).data)
+            return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
             item.transicionar(EstadoResultado.EM_ANALISE, usuario=getattr(request, "user", None))
@@ -105,13 +102,12 @@ class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
             raise ValidationError(str(err)) from err
 
         item.refresh_from_db()
-        return Response(ResultadoItemLaboratorioSerializer(item).data)
+        return Response(LaboratoryResultItemSerializer(item).data)
 
-    @action(detail=True, methods=["post"])
-    def gravar(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="gravar", url_name="gravar")
+    def save_result(self, request, pk=None):
         """
-        Salva o valor do resultado e transiciona para AGUARDANDO_VALIDACAO
-        (passo 2: gravar).
+        Save the result value and move to AGUARDANDO_VALIDACAO.
         """
         item = self.get_object()
 
@@ -155,14 +151,14 @@ class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
             locked.save()
 
         locked.refresh_from_db()
-        return Response(ResultadoItemLaboratorioSerializer(locked).data)
+        return Response(LaboratoryResultItemSerializer(locked).data)
 
-    @action(detail=True, methods=["post"])
-    def validar(self, request, pk=None):
-        """Transiciona o item de resultado para VALIDADO (passo 3: validar)."""
+    @action(detail=True, methods=["post"], url_path="validar", url_name="validar")
+    def validate_result(self, request, pk=None):
+        """Move the result item to VALIDADO."""
         item = self.get_object()
         if item.estado == EstadoResultado.VALIDADO:
-            return Response(ResultadoItemLaboratorioSerializer(item).data)
+            return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
             item.transicionar(EstadoResultado.VALIDADO, usuario=getattr(request, "user", None))
@@ -170,4 +166,7 @@ class ResultadoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
             raise ValidationError(str(err)) from err
 
         item.refresh_from_db()
-        return Response(ResultadoItemLaboratorioSerializer(item).data)
+        return Response(LaboratoryResultItemSerializer(item).data)
+
+
+ResultadoItemViewSet = ResultItemViewSet

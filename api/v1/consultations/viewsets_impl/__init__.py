@@ -1,4 +1,8 @@
 from .core import (
+    ConsultationSpecialtyViewSet,
+    DoctorsViewSet,
+    HolidayViewSet,
+    MedicalConsultationViewSet,
     VIEWSET_MAP,
     ConsultaMedicaViewSet,
     EspecialidadeConsultaViewSet,
@@ -8,6 +12,10 @@ from .core import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "MedicalConsultationViewSet",
+    "ConsultationSpecialtyViewSet",
+    "HolidayViewSet",
+    "DoctorsViewSet",
     "ConsultaMedicaViewSet",
     "EspecialidadeConsultaViewSet",
     "FeriadoViewSet",

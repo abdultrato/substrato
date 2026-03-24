@@ -9,15 +9,15 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
 
-from ..filters import PacienteFilter
-from ..serializers import PacienteSerializer, RequisicaoAnaliseSerializer
+from ..filters import PatientFilter
+from ..serializers import LabRequestSerializer, PatientSerializer
 
 
 @extend_schema(
     description="Gerenciamento de pacientes",
     tags=["Clínico - Pacientes"],
 )
-class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     """
     ViewSet para gerenciar pacientes.
 
@@ -32,8 +32,8 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     """
 
     queryset = Patient.objects.all()
-    serializer_class = PacienteSerializer
-    filterset_class = PacienteFilter
+    serializer_class = PatientSerializer
+    filterset_class = PatientFilter
     permission_classes = [IsAuthenticated]
     # Paciente nao possui `descricao`/`ativo`/`ordem`.
     search_fields = [
@@ -87,31 +87,31 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
 
     @extend_schema(
         description="Criar novo paciente com validação de email e documento únicos",
-        request=PacienteSerializer,
-        responses={201: PacienteSerializer},
+        request=PatientSerializer,
+        responses={201: PatientSerializer},
     )
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
     @extend_schema(
         description="Obter detalhes de um paciente",
-        responses={200: PacienteSerializer},
+        responses={200: PatientSerializer},
     )
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
     @extend_schema(
         description="Atualizar paciente completamente",
-        request=PacienteSerializer,
-        responses={200: PacienteSerializer},
+        request=PatientSerializer,
+        responses={200: PatientSerializer},
     )
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
 
     @extend_schema(
         description="Atualizar parcialmente um paciente",
-        request=PacienteSerializer,
-        responses={200: PacienteSerializer},
+        request=PatientSerializer,
+        responses={200: PatientSerializer},
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
@@ -190,7 +190,7 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             qs_requisicoes = qs_requisicoes.filter(inquilino=inquilino)
 
         # Consultas
-        from api.v1.consultations.serializers import ConsultaMedicaSerializer
+        from api.v1.consultations.serializers import MedicalConsultationSerializer
         from apps.consultations.models.medical_consultation import MedicalConsultation
 
         qs_consultas = (
@@ -275,14 +275,14 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             qs_recibos = qs_recibos.filter(fatura__inquilino=inquilino)
 
         return {
-            "paciente": PacienteSerializer(paciente).data,
+            "paciente": PatientSerializer(paciente).data,
             "referencia": {
                 "numero_documento": numero_id or None,
                 "pacientes_vinculados": len(set(paciente_ids)),
             },
             "cardex": RegistroProntuarioSerializer(qs_prontuario[:limit], many=True).data,
-            "consultas": ConsultaMedicaSerializer(qs_consultas[:limit], many=True).data,
-            "requisicoes": RequisicaoAnaliseSerializer(
+            "consultas": MedicalConsultationSerializer(qs_consultas[:limit], many=True).data,
+            "requisicoes": LabRequestSerializer(
                 qs_requisicoes[:limit], many=True, context={"request": request}
             ).data,
             "procedimentos_enfermagem": ProcedimentoSerializer(qs_procedimentos[:limit], many=True).data,
@@ -325,3 +325,6 @@ class PacienteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             raise NotFound("Paciente não encontrado para este número de documento.")
 
         return Response(self._montar_historia_clinica(request, paciente))
+
+
+PacienteViewSet = PatientViewSet

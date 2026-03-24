@@ -11,11 +11,11 @@ from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.medical_result_file import MedicalResultFile
 
 # =====================================================
-# EXAME
+# EXAMS
 # =====================================================
 
 
-class ExameFilter(SafeFilterSet):
+class LabExamFilter(SafeFilterSet):
     class Meta:
         model = LabExam
         fields = [
@@ -34,7 +34,7 @@ class ExameFilter(SafeFilterSet):
         ]
 
 
-class ExameMedicoFilter(SafeFilterSet):
+class MedicalExamFilter(SafeFilterSet):
     class Meta:
         model = MedicalExam
         fields = [
@@ -54,11 +54,11 @@ class ExameMedicoFilter(SafeFilterSet):
 
 
 # =====================================================
-# EXAME CAMPO
+# EXAM FIELDS
 # =====================================================
 
 
-class ExameCampoFilter(SafeFilterSet):
+class LabExamFieldFilter(SafeFilterSet):
     class Meta:
         model = LabExamField
         fields = [
@@ -75,7 +75,7 @@ class ExameCampoFilter(SafeFilterSet):
         ]
 
 
-class ExameMedicoCampoFilter(SafeFilterSet):
+class MedicalExamFieldFilter(SafeFilterSet):
     class Meta:
         model = MedicalExamField
         fields = [
@@ -92,11 +92,11 @@ class ExameMedicoCampoFilter(SafeFilterSet):
 
 
 # =====================================================
-# PACIENTE
+# PATIENTS
 # =====================================================
 
 
-class PacienteFilter(SafeFilterSet):
+class PatientFilter(SafeFilterSet):
     morada = django_filters.CharFilter(field_name="morada", lookup_expr="icontains")
 
     class Meta:
@@ -124,11 +124,11 @@ class PacienteFilter(SafeFilterSet):
 
 
 # =====================================================
-# REQUISIÇÃO
+# REQUESTS
 # =====================================================
 
 
-class RequisicaoAnaliseFilter(SafeFilterSet):
+class LabRequestFilter(SafeFilterSet):
     class Meta:
         model = LabRequest
         fields = [
@@ -148,11 +148,11 @@ class RequisicaoAnaliseFilter(SafeFilterSet):
 
 
 # =====================================================
-# REQUISIÇÃO ITEM
+# REQUEST ITEMS
 # =====================================================
 
 
-class RequisicaoItemFilter(SafeFilterSet):
+class LabRequestItemFilter(SafeFilterSet):
     class Meta:
         model = LabRequestItem
         fields = [
@@ -169,11 +169,11 @@ class RequisicaoItemFilter(SafeFilterSet):
 
 
 # =====================================================
-# RESULTADO
+# RESULTS
 # =====================================================
 
 
-class ResultadoItemFilter(SafeFilterSet):
+class ResultItemFilter(SafeFilterSet):
     class Meta:
         model = ResultItem
         fields = [
@@ -195,7 +195,7 @@ class ResultadoItemFilter(SafeFilterSet):
         ]
 
 
-class ResultadoMedicoArquivoFilter(SafeFilterSet):
+class MedicalResultFileFilter(SafeFilterSet):
     class Meta:
         model = MedicalResultFile
         fields = [
@@ -216,13 +216,24 @@ class ResultadoMedicoArquivoFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "exame": ExameFilter,
-    "examemedico": ExameMedicoFilter,
-    "examecampo": ExameCampoFilter,
-    "examemedicocampo": ExameMedicoCampoFilter,
-    "paciente": PacienteFilter,
-    "requisicaoanalise": RequisicaoAnaliseFilter,
-    "requisicaoitem": RequisicaoItemFilter,
-    "resultadoitem": ResultadoItemFilter,
-    "resultadomedicoarquivo": ResultadoMedicoArquivoFilter,
+    "exame": LabExamFilter,
+    "examemedico": MedicalExamFilter,
+    "examecampo": LabExamFieldFilter,
+    "examemedicocampo": MedicalExamFieldFilter,
+    "paciente": PatientFilter,
+    "requisicaoanalise": LabRequestFilter,
+    "requisicaoitem": LabRequestItemFilter,
+    "resultadoitem": ResultItemFilter,
+    "resultadomedicoarquivo": MedicalResultFileFilter,
 }
+
+# Backwards-compatible aliases while callers are migrated incrementally.
+ExameFilter = LabExamFilter
+ExameMedicoFilter = MedicalExamFilter
+ExameCampoFilter = LabExamFieldFilter
+ExameMedicoCampoFilter = MedicalExamFieldFilter
+PacienteFilter = PatientFilter
+RequisicaoAnaliseFilter = LabRequestFilter
+RequisicaoItemFilter = LabRequestItemFilter
+ResultadoItemFilter = ResultItemFilter
+ResultadoMedicoArquivoFilter = MedicalResultFileFilter

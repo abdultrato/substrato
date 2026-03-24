@@ -11,11 +11,11 @@ from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from domain.clinical.estado_resultado import EstadoResultado
 
-from ..filters import RequisicaoAnaliseFilter, RequisicaoItemFilter
+from ..filters import LabRequestFilter, LabRequestItemFilter
 from ..serializers import (
-    RequisicaoAnaliseSerializer,
-    RequisicaoItemSerializer,
-    ResultadoItemLaboratorioSerializer,
+    LaboratoryResultItemSerializer,
+    LabRequestItemSerializer,
+    LabRequestSerializer,
 )
 
 
@@ -23,15 +23,15 @@ from ..serializers import (
     description="Gerenciamento de requisições de análise",
     tags=["Clínico - Requisições"],
 )
-class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    """ViewSet para gerenciar requisições de análise laboratorial."""
+class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    """Viewset for laboratory and medical requests."""
 
     queryset = LabRequest.objects.all()
-    serializer_class = RequisicaoAnaliseSerializer
-    filterset_class = RequisicaoAnaliseFilter
+    serializer_class = LabRequestSerializer
+    filterset_class = LabRequestFilter
     permission_classes = [IsAuthenticated]
-    # RequisicaoAnalise (NoNameCoreModel) nao possui `nome`/`descricao`/`ativo`/`ordem`/`observacoes`/`status`.
-    # A busca mais util e por codigo da requisicao, paciente e estado.
+    # LabRequest does not expose `nome`/`descricao`/`ativo`/`ordem`/`observacoes`/`status`.
+    # Keep search focused on request code, patient, and state.
     search_fields = [
         "id_custom",
         "paciente__id_custom",
@@ -63,14 +63,12 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ]
     ordering = ["-criado_em"]
 
-    @action(detail=True, methods=["get"])
-    def pdf_resultados(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="pdf_resultados", url_name="pdf-resultados")
+    def results_pdf(self, request, pk=None):
         """
-        Gera o PDF institucional de resultados laboratoriais (validados).
+        Generate the institutional PDF for validated laboratory results.
 
-        - Autenticação via JWT (API v1)
-        - RBAC controla acesso; reforçamos aqui para evitar exposição acidental
-          do PDF a perfis de consulta de requisições.
+        Access is still restricted via RBAC to avoid accidental exposure.
         """
         from security.permissions.rbac import GROUPS as RBAC_GROUPS, _normalize
 
@@ -91,42 +89,40 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
             if not (user_groups & permitidos):
                 raise PermissionDenied("Requer Técnico de Laboratório ou Administrador para emitir PDF de resultados.")
 
-        requisicao = self.get_object()
-        # PDF de resultados aplica-se ao fluxo laboratorial.
-        if requisicao.tipo != requisicao.Tipo.LABORATORIO:
+        request_record = self.get_object()
+        # Result PDFs only apply to the laboratory workflow.
+        if request_record.tipo != request_record.Tipo.LABORATORIO:
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
-        # Não gerar PDF se nenhum resultado estiver validado.
-        resultado = getattr(requisicao, "resultado", None)
-        if not resultado or not resultado.itens.filter(estado=EstadoResultado.VALIDADO).exists():
+        result = getattr(request_record, "resultado", None)
+        if not result or not result.itens.filter(estado=EstadoResultado.VALIDADO).exists():
             raise ValidationError("Não é possível emitir PDF sem nenhum resultado validado.")
 
         from tasks.gerar_pdf.pdf_generator_resultado import gerar_pdf_resultados
 
-        pdf_bytes, filename = gerar_pdf_resultados(requisicao, apenas_validados=True)
+        pdf_bytes, filename = gerar_pdf_resultados(request_record, apenas_validados=True)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
 
-    @action(detail=True, methods=["get"])
-    def resultado_itens(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="resultado_itens", url_name="resultado-itens")
+    def result_items(self, request, pk=None):
         """
-        Retorna os itens de resultados de uma requisição LAB com campos derivados
-        para suportar o lançamento/validação inline no frontend.
+        Return LAB result items with derived fields for inline entry/validation.
         """
-        requisicao = self.get_object()
+        request_record = self.get_object()
 
-        if requisicao.tipo != requisicao.Tipo.LABORATORIO:
+        if request_record.tipo != request_record.Tipo.LABORATORIO:
             raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
 
         from apps.clinical.models.result import Result
 
-        resultado, _ = Result.objects.get_or_create(
-            requisicao=requisicao,
-            defaults={"inquilino": requisicao.inquilino},
+        result, _ = Result.objects.get_or_create(
+            requisicao=request_record,
+            defaults={"inquilino": request_record.inquilino},
         )
 
-        qs = resultado.itens.select_related(
+        qs = result.itens.select_related(
             "exame_campo",
             "exame_campo__exame",
             "resultado",
@@ -138,9 +134,9 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
             "id",
         )
 
-        itens = ResultadoItemLaboratorioSerializer(qs, many=True).data
+        items = LaboratoryResultItemSerializer(qs, many=True).data
 
-        resumo = {
+        summary = {
             "total": qs.count(),
             "pendente": qs.filter(estado=EstadoResultado.PENDENTE).count(),
             "em_analise": qs.filter(estado=EstadoResultado.EM_ANALISE).count(),
@@ -152,16 +148,16 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
         return Response(
             {
                 "requisicao": {
-                    "id": requisicao.id,
-                    "id_custom": requisicao.id_custom,
-                    "paciente": requisicao.paciente_id,
-                    "paciente_nome": requisicao.paciente.nome,
-                    "estado": requisicao.estado,
-                    "status_clinico": requisicao.status_clinico,
-                    "possui_resultado_critico": requisicao.possui_resultado_critico,
+                    "id": request_record.id,
+                    "id_custom": request_record.id_custom,
+                    "paciente": request_record.paciente_id,
+                    "paciente_nome": request_record.paciente.nome,
+                    "estado": request_record.estado,
+                    "status_clinico": request_record.status_clinico,
+                    "possui_resultado_critico": request_record.possui_resultado_critico,
                 },
-                "resumo": resumo,
-                "itens": itens,
+                "resumo": summary,
+                "itens": items,
             }
         )
 
@@ -170,14 +166,14 @@ class RequisicaoAnaliseViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     description="Gerenciamento de itens de requisição",
     tags=["Clínico - Requisições"],
 )
-class RequisicaoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    """ViewSet para gerenciar itens (exames) de uma requisição."""
+class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    """Viewset for request items."""
 
     queryset = LabRequestItem.objects.all()
-    serializer_class = RequisicaoItemSerializer
-    filterset_class = RequisicaoItemFilter
+    serializer_class = LabRequestItemSerializer
+    filterset_class = LabRequestItemFilter
     permission_classes = [IsAuthenticated]
-    # RequisicaoItem (NoNameCoreModel) nao possui `nome`/`descricao`/`ativo`/`ordem`.
+    # LabRequestItem does not expose `nome`/`descricao`/`ativo`/`ordem`.
     search_fields = [
         "id_custom",
         "requisicao__id_custom",
@@ -201,3 +197,7 @@ class RequisicaoItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         "versao",
     ]
     ordering = ["-criado_em"]
+
+
+RequisicaoAnaliseViewSet = LabRequestViewSet
+RequisicaoItemViewSet = LabRequestItemViewSet

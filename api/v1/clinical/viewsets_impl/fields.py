@@ -6,23 +6,23 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.clinical.models.lab_exam_field import LabExamField
 from apps.clinical.models.medical_exam import MedicalExamField
 
-from ..filters import ExameCampoFilter, ExameMedicoCampoFilter
-from ..serializers import ExameCampoSerializer, ExameMedicoCampoSerializer
+from ..filters import LabExamFieldFilter, MedicalExamFieldFilter
+from ..serializers import LabExamFieldSerializer, MedicalExamFieldSerializer
 
 
 @extend_schema(
     description="Gerenciamento de campos de exames",
     tags=["Clínico - Campos de Exame"],
 )
-class ExameCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    """ViewSet para gerenciar campos (parâmetros) de exames laboratoriais."""
+class LabExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    """Viewset for laboratory exam fields."""
 
     queryset = LabExamField.objects.all()
-    serializer_class = ExameCampoSerializer
-    filterset_class = ExameCampoFilter
+    serializer_class = LabExamFieldSerializer
+    filterset_class = LabExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # ExameCampo nao possui `descricao`/`ativo`/`ordem`.
-    # Incluimos campos do exame para busca util no frontend.
+    # LabExamField does not expose `descricao`/`ativo`/`ordem`.
+    # Keep exam fields searchable for frontend workflows.
     search_fields = ["id_custom", "nome", "tipo", "unidade", "exame__nome", "exame__id_custom"]
     ordering_fields = [
         "inquilino",
@@ -51,12 +51,12 @@ class ExameCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     description="Gerenciamento de campos de exames médicos",
     tags=["Clínico - Campos de Exame Médico"],
 )
-class ExameMedicoCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MedicalExamField.objects.all()
-    serializer_class = ExameMedicoCampoSerializer
-    filterset_class = ExameMedicoCampoFilter
+    serializer_class = MedicalExamFieldSerializer
+    filterset_class = MedicalExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # ExameMedicoCampo nao possui `descricao`/`ativo`/`ordem`.
+    # MedicalExamField does not expose `descricao`/`ativo`/`ordem`.
     search_fields = ["id_custom", "nome", "tipo", "exame__nome", "exame__id_custom"]
     ordering_fields = [
         "inquilino",
@@ -73,3 +73,7 @@ class ExameMedicoCampoViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
         "versao",
     ]
     ordering = ["-criado_em"]
+
+
+ExameCampoViewSet = LabExamFieldViewSet
+ExameMedicoCampoViewSet = MedicalExamFieldViewSet

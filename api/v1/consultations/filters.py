@@ -1,11 +1,11 @@
 from api.core.filters import SafeFilterSet
-from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
+from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.human_resources.models.employee import Employee
 
 
-class ConsultaMedicaFilter(SafeFilterSet):
+class MedicalConsultationFilter(SafeFilterSet):
     class Meta:
         model = MedicalConsultation
         fields = [
@@ -20,27 +20,33 @@ class ConsultaMedicaFilter(SafeFilterSet):
         ]
 
 
-class MedicoFilter(SafeFilterSet):
+class DoctorFilter(SafeFilterSet):
     class Meta:
         model = Employee
         fields = ["nome", "profissao", "cargo", "estado", "criado_em"]
 
 
-class EspecialidadeConsultaFilter(SafeFilterSet):
+class ConsultationSpecialtyFilter(SafeFilterSet):
     class Meta:
         model = ConsultationSpecialty
         fields = ["nome", "ativo", "preco_base"]
 
 
-class FeriadoFilter(SafeFilterSet):
+class HolidayFilter(SafeFilterSet):
     class Meta:
         model = Holiday
         fields = ["data", "ativo"]
 
 
 FILTER_MAP = {
-    "consulta": ConsultaMedicaFilter,
-    "medicos": MedicoFilter,
-    "especialidade": EspecialidadeConsultaFilter,
-    "feriado": FeriadoFilter,
+    "consulta": MedicalConsultationFilter,
+    "medicos": DoctorFilter,
+    "especialidade": ConsultationSpecialtyFilter,
+    "feriado": HolidayFilter,
 }
+
+# Backwards-compatible aliases while the rest of the codebase is still migrating.
+ConsultaMedicaFilter = MedicalConsultationFilter
+MedicoFilter = DoctorFilter
+EspecialidadeConsultaFilter = ConsultationSpecialtyFilter
+FeriadoFilter = HolidayFilter

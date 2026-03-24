@@ -84,7 +84,7 @@ def _coerce_country_to_code(value: str | None) -> str | None:
     return mapped or raw
 
 
-class PacienteSerializer(serializers.ModelSerializer):
+class PatientSerializer(serializers.ModelSerializer):
     """
     Serializer para a entidade Paciente com validação robusta.
     Inclui campos de paciente para leitura/escrita com validação de domínio.
@@ -263,7 +263,7 @@ class PacienteSerializer(serializers.ModelSerializer):
         return data
 
 
-class ExameSerializer(serializers.ModelSerializer):
+class LabExamSerializer(serializers.ModelSerializer):
     """
     Serializer para a entidade Exame com validação robusta.
     Inclui validação de preço e tempo de resposta.
@@ -327,16 +327,16 @@ class ExameSerializer(serializers.ModelSerializer):
         return value
 
 
-class ExameMedicoSerializer(serializers.ModelSerializer):
+class MedicalExamSerializer(serializers.ModelSerializer):
     """Serializer para Exame Médico (imagem/diagnóstico)."""
 
-    tipos_resultado_permitidos = serializers.SerializerMethodField()
-    tipos_resultado_cadastrados = serializers.SerializerMethodField()
+    tipos_resultado_permitidos = serializers.SerializerMethodField(method_name="get_allowed_result_types")
+    tipos_resultado_cadastrados = serializers.SerializerMethodField(method_name="get_registered_result_types")
 
-    def get_tipos_resultado_permitidos(self, obj):
+    def get_allowed_result_types(self, obj):
         return sorted(obj.tipos_resultado_permitidos)
 
-    def get_tipos_resultado_cadastrados(self, obj):
+    def get_registered_result_types(self, obj):
         return sorted(obj.tipos_resultado_cadastrados)
 
     class Meta:
@@ -345,7 +345,7 @@ class ExameMedicoSerializer(serializers.ModelSerializer):
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class ExameCampoSerializer(serializers.ModelSerializer):
+class LabExamFieldSerializer(serializers.ModelSerializer):
     """
     Serializer para campos de exame.
     Define parâmetros específicos de cada exame.
@@ -366,7 +366,7 @@ class ExameCampoSerializer(serializers.ModelSerializer):
         }
 
 
-class ExameMedicoCampoSerializer(serializers.ModelSerializer):
+class MedicalExamFieldSerializer(serializers.ModelSerializer):
     """Serializer para parâmetros de exame médico."""
 
     def validate(self, attrs):
@@ -387,7 +387,7 @@ class ExameMedicoCampoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
+class LabRequestSerializer(serializers.ModelSerializer):
     """
     Serializer para requisições (por setor).
 
@@ -414,7 +414,7 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
     empresa_solicitante_nome = serializers.CharField(source="empresa_solicitante.nome", read_only=True)
     empresa_executora_externa_nome = serializers.CharField(source="empresa_executora_externa.nome", read_only=True)
 
-    class RequisicaoItemResumoSerializer(serializers.ModelSerializer):
+    class LabRequestItemSummarySerializer(serializers.ModelSerializer):
         exame_nome = serializers.CharField(source="exame.nome", read_only=True)
         exame_medico_nome = serializers.CharField(source="exame_medico.nome", read_only=True)
 
@@ -429,7 +429,7 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
                 "exame_medico_nome",
             ]
 
-    itens = RequisicaoItemResumoSerializer(many=True, read_only=True)
+    itens = LabRequestItemSummarySerializer(many=True, read_only=True)
 
     class Meta:
         model = LabRequest
@@ -571,7 +571,7 @@ class RequisicaoAnaliseSerializer(serializers.ModelSerializer):
         return instance
 
 
-class RequisicaoItemSerializer(serializers.ModelSerializer):
+class LabRequestItemSerializer(serializers.ModelSerializer):
     """
     Serializer para itens de uma requisição de análise.
     Vincula exames específicos a uma requisição.
@@ -588,7 +588,7 @@ class RequisicaoItemSerializer(serializers.ModelSerializer):
         }
 
 
-class ResultadoItemSerializer(serializers.ModelSerializer):
+class ResultItemSerializer(serializers.ModelSerializer):
     """
     Serializer para resultados de análises.
     Contém os valores medidos para cada parâmetro.
@@ -610,7 +610,7 @@ class ResultadoItemSerializer(serializers.ModelSerializer):
         }
 
 
-class ResultadoItemLaboratorioSerializer(serializers.ModelSerializer):
+class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     """
     Serializer enxuto para a tela do laboratório.
 
@@ -680,7 +680,7 @@ class ResultadoItemLaboratorioSerializer(serializers.ModelSerializer):
         ]
 
 
-class ResultadoMedicoArquivoSerializer(serializers.ModelSerializer):
+class MedicalResultFileSerializer(serializers.ModelSerializer):
 
     arquivo = serializers.FileField(required=True)
 
@@ -714,13 +714,25 @@ class ResultadoMedicoArquivoSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "exame": ExameSerializer,
-    "examemedico": ExameMedicoSerializer,
-    "examecampo": ExameCampoSerializer,
-    "examemedicocampo": ExameMedicoCampoSerializer,
-    "paciente": PacienteSerializer,
-    "requisicaoanalise": RequisicaoAnaliseSerializer,
-    "requisicaoitem": RequisicaoItemSerializer,
-    "resultadoitem": ResultadoItemSerializer,
-    "resultadomedicoarquivo": ResultadoMedicoArquivoSerializer,
+    "exame": LabExamSerializer,
+    "examemedico": MedicalExamSerializer,
+    "examecampo": LabExamFieldSerializer,
+    "examemedicocampo": MedicalExamFieldSerializer,
+    "paciente": PatientSerializer,
+    "requisicaoanalise": LabRequestSerializer,
+    "requisicaoitem": LabRequestItemSerializer,
+    "resultadoitem": ResultItemSerializer,
+    "resultadomedicoarquivo": MedicalResultFileSerializer,
 }
+
+# Backwards-compatible aliases while imports are migrated incrementally.
+PacienteSerializer = PatientSerializer
+ExameSerializer = LabExamSerializer
+ExameMedicoSerializer = MedicalExamSerializer
+ExameCampoSerializer = LabExamFieldSerializer
+ExameMedicoCampoSerializer = MedicalExamFieldSerializer
+RequisicaoAnaliseSerializer = LabRequestSerializer
+RequisicaoItemSerializer = LabRequestItemSerializer
+ResultadoItemSerializer = ResultItemSerializer
+ResultadoItemLaboratorioSerializer = LaboratoryResultItemSerializer
+ResultadoMedicoArquivoSerializer = MedicalResultFileSerializer

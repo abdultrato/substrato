@@ -1,8 +1,10 @@
-"""
-Facade module for Consultas ViewSets.
-"""
+"""Facade module for consultation viewsets."""
 
 from .viewsets_impl import (
+    ConsultationSpecialtyViewSet,
+    DoctorsViewSet,
+    HolidayViewSet,
+    MedicalConsultationViewSet,
     VIEWSET_MAP,
     ConsultaMedicaViewSet,
     EspecialidadeConsultaViewSet,
@@ -12,6 +14,10 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "MedicalConsultationViewSet",
+    "ConsultationSpecialtyViewSet",
+    "HolidayViewSet",
+    "DoctorsViewSet",
     "ConsultaMedicaViewSet",
     "EspecialidadeConsultaViewSet",
     "FeriadoViewSet",
