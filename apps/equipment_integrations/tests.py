@@ -18,10 +18,10 @@ from apps.equipment_integrations.models import (
     IntegrationOrder,
     IntegrationRouting,
 )
-from core.constants.laboratory.metodo import Metodo
-from core.constants.laboratory.setor import Setor
-from core.constants.laboratory.tipo_resultado import TipoResultado
-from core.constants.laboratory.unidades import UnidadePadrao
+from core.constants.laboratory.method import Metodo
+from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.result_type import TipoResultado
+from core.constants.laboratory.units import UnidadePadrao
 
 
 def _tenant():

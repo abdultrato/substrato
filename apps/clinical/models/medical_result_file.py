@@ -3,7 +3,7 @@ import os
 from django.core.exceptions import ValidationError
 from django.db import models
 from PIL import Image
-from core.constants.medical_exam.tipo_resultado_exame_medico import TipoResultadoExameMedico
+from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
 

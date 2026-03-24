@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Metodo(models.TextChoices):
+class Method(models.TextChoices):
     ENZIMATICO = "Enzimatico", "Enzimático"
     COLORIMETRICO = "Colorimetrico", "Colorimétrico"
     ESPECTROFOTOMETRICO = "Espectrofotometrico", "Espectrofotométrico"
@@ -55,3 +55,6 @@ class Metodo(models.TextChoices):
         "RessonanciaMagneticaNuclear",
         "Ressonância Magnética Nuclear",
     )
+
+
+Metodo = Method

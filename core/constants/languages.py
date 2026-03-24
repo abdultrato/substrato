@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Idioma(models.TextChoices):
+class Language(models.TextChoices):
     """
     ISO 639-1 — Códigos internacionais de idioma.
     """
@@ -15,3 +15,6 @@ class Idioma(models.TextChoices):
     HI = "hi", "Hindi"
     AR = "ar", "Árabe"
     SW = "sw", "Suaíli"
+
+
+Idioma = Language

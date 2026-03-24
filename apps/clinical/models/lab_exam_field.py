@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from django.db import models
 
-from core.constants.laboratory.tipo_resultado import TipoResultado
-from core.constants.laboratory.unidades import UnidadePadrao
+from core.constants.laboratory.result_type import TipoResultado
+from core.constants.laboratory.units import UnidadePadrao
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 

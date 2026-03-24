@@ -5,9 +5,9 @@ from django_countries.fields import CountryField
 from infrastructure.orm.fields.email_field import NormalizedEmailField
 from infrastructure.orm.fields.telefone_field import TelefoneField
 from core.constants.genero import Genero
-from core.constants.proveniencia import Proveniencia
+from core.constants.provenance import Proveniencia
 from core.constants.raca_origem import RacaOrigem
-from core.constants.tipos_documento import TipoDocumento
+from core.constants.document_types import TipoDocumento
 from core.models.base import CoreModel
 
 

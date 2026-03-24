@@ -1,4 +1,4 @@
-from domain.insurer.motor_cobertura import resolver_regra as resolve_rule
+from domain.insurer.coverage_engine import resolver_regra as resolve_rule
 
 
 class CoverageService:

@@ -4,7 +4,7 @@ from django.db import IntegrityError, models, transaction
 
 from domain.clinical.estado_resultado import EstadoResultado
 from domain.clinical.state_machine_resultado import ResultadoStateMachine
-from core.constants.laboratory.status_clinico import StatusClinico
+from core.constants.laboratory.clinical_status import StatusClinico
 from core.models.base import NoNameCoreModel
 
 from .lab_exam import LabExam

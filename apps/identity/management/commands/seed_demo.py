@@ -72,7 +72,7 @@ from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
 from infrastructure.context.tenant import reset_inquilino, set_inquilino
-from core.constants.tipo_evento_clinico import TipoEventoClinico
+from core.constants.clinical_event_type import TipoEventoClinico
 
 
 @contextmanager

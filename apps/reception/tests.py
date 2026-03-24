@@ -12,8 +12,8 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
 from apps.tenants.models.tenant import Tenant
 from apps.reception.models.reception_checkin import ReceptionCheckin
-from core.constants.laboratory.metodo import Metodo
-from core.constants.laboratory.setor import Setor
+from core.constants.laboratory.method import Metodo
+from core.constants.laboratory.sector import Setor
 
 
 def _tenant():

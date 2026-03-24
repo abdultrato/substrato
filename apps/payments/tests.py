@@ -18,8 +18,8 @@ from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
-from core.constants.laboratory.metodo import Metodo
-from core.constants.laboratory.setor import Setor
+from core.constants.laboratory.method import Metodo
+from core.constants.laboratory.sector import Setor
 
 
 def _tenant():

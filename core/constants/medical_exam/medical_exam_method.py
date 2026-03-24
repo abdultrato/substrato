@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class MetodoExameMedico(models.TextChoices):
+class MedicalExamMethod(models.TextChoices):
     """
     Modalidades/técnicas típicas de exames médicos (imagem/diagnóstico).
     Mantidas separadas dos métodos laboratoriais.
@@ -23,3 +23,6 @@ class MetodoExameMedico(models.TextChoices):
     ANGIOGRAFIA = "ANGIO", "Angiografia"
     MEDICINA_NUCLEAR = "MN", "Medicina Nuclear / Cintilografia"
     OUTRO = "OUT", "Outro"
+
+
+MetodoExameMedico = MedicalExamMethod

@@ -1,5 +1,5 @@
 from apps.payments.models.payment import Payment
-from domain.payments.regras_liquidacao import pagamento_quitado as payment_settled
+from domain.payments.settlement_rules import pagamento_quitado as payment_settled
 
 
 class PaymentService:

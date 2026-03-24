@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class TipoDocumento(models.TextChoices):
+class DocumentType(models.TextChoices):
     """
     Tipos de documento pessoais e institucionais.
     """
@@ -14,3 +14,6 @@ class TipoDocumento(models.TextChoices):
     CARTAO_ELEITOR = "CE", "Cartão de Eleitor"
     CERTIDAO_NASCIMENTO = "CN", "Certidão de Nascimento"
     OUTRO = "OUT", "Outro"
+
+
+TipoDocumento = DocumentType

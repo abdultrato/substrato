@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class TipoResultadoExameMedico(models.TextChoices):
+class MedicalExamResultType(models.TextChoices):
     """
     Tipos de saída esperados para exames médicos (imagem/diagnóstico).
     Controla o tipo de campo exibido ao lançar resultado.
@@ -13,3 +13,6 @@ class TipoResultadoExameMedico(models.TextChoices):
     VIDEO = "VIDEO", "Vídeo/loop"
     TEXTO = "TEXTO", "Texto livre"
     NUMERICO = "NUMERICO", "Valor numérico"
+
+
+TipoResultadoExameMedico = MedicalExamResultType

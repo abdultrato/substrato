@@ -1,34 +1,38 @@
 from django.utils import timezone
 
 
-def gerar_numero_fatura(fatura):
+def generate_invoice_number(invoice):
     """
-    Gera número legível e sequencial para documentos financeiros.
+    Generates a readable sequential invoice number.
 
     Formato sugerido:
     FAT-ANO-MES-SEQUENCIAL
     """
 
-    data = timezone.now()
+    current_date = timezone.now()
 
-    ano = data.strftime("%Y")
-    mes = data.strftime("%m")
+    year = current_date.strftime("%Y")
+    month = current_date.strftime("%m")
 
-    sequencial = fatura.id_custom[-6:]  # usa parte final do id custom
+    sequence = invoice.id_custom[-6:]
 
-    return f"FAT-{ano}{mes}-{sequencial}"
+    return f"FAT-{year}{month}-{sequence}"
 
 
-def gerar_numero_recibo(recibo):
+def generate_receipt_number(receipt):
     """
-    Gera número legível para recibos.
+    Generates a readable receipt number.
     """
 
-    data = timezone.now()
+    current_date = timezone.now()
 
-    ano = data.strftime("%Y")
-    mes = data.strftime("%m")
+    year = current_date.strftime("%Y")
+    month = current_date.strftime("%m")
 
-    sequencial = str(recibo.id).zfill(6)
+    sequence = str(receipt.id).zfill(6)
 
-    return f"REC-{ano}{mes}-{sequencial}"
+    return f"REC-{year}{month}-{sequence}"
+
+
+gerar_numero_fatura = generate_invoice_number
+gerar_numero_recibo = generate_receipt_number

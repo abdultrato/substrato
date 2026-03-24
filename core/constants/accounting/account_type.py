@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class TipoConta(
+class AccountType(
     models.TextChoices,
 ):
     ATIVO = "ATI", "Ativo"
@@ -9,3 +9,6 @@ class TipoConta(
     RECEITA = "REC", "Receita"
     DESPESA = "DES", "Despesa"
     PATRIMONIO = "PAT", "Patrimônio"
+
+
+TipoConta = AccountType

@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.laboratory.setor import Setor
+from core.constants.laboratory.sector import Setor
 
 
 class SetorField(models.CharField):

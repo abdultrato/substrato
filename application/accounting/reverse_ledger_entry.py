@@ -3,11 +3,11 @@ from django.utils import timezone
 
 from application.accounting.register_ledger_entry import execute as register_entry
 from apps.accounting.models.ledger_entry import LedgerEntry
-from domain.accounting.excecoes import DominioContabilidadeErro
+from domain.accounting.exceptions import AccountingDomainError
 
 
 class LedgerAlreadyReversedError(
-    DominioContabilidadeErro,
+    AccountingDomainError,
 ):
     pass
 

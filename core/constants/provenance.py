@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Proveniencia(models.TextChoices):
+class Provenance(models.TextChoices):
     AMBULATORIO = "Ambulatório", "Ambulatório"
     CLINICA_EXTERNA = "Clínica Externa", "Clínica Externa"
     MEDICINA_OCUPACIONAL = "Medicina Ocupacional", "Medicina Ocupacional"
@@ -15,3 +15,6 @@ class Proveniencia(models.TextChoices):
     DENTARIA = "Dentária", "Dentária"
     OFTALMOLOGIA = "Oftalmologia", "Oftalmologia"
     OUTRO = "Outro", "Outro"
+
+
+Proveniencia = Provenance

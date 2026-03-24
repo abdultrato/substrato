@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.laboratory.metodo import Metodo
+from core.constants.laboratory.method import Metodo
 
 
 class MetodoField(models.CharField):

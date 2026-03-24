@@ -5,7 +5,7 @@ from django.db import models
 # =========================================================
 
 
-class Setor(models.TextChoices):
+class Sector(models.TextChoices):
     HEMATOLOGIA = "Hematologia", "Hematologia"
     BIOQUIMICA = "Bioquimica", "Bioquímica"
     MICROBIOLOGIA = "Microbiologia", "Microbiologia"
@@ -36,3 +36,6 @@ class Setor(models.TextChoices):
 
     PESQUISA = "Pesquisa", "Pesquisa Laboratorial"
     OUTRO = "Outro", "Outro"
+
+
+Setor = Sector

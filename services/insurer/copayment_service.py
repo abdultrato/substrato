@@ -1,4 +1,4 @@
-from domain.insurer.regras_coparticipacao import calcular_coparticipacao as calculate_copayment
+from domain.insurer.copayment_rules import calcular_coparticipacao as calculate_copayment
 from services.insurer.plan_resolution_service import PlanResolutionService
 
 

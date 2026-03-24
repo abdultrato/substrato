@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class IndicadorResultado(models.TextChoices):
+class ResultIndicator(models.TextChoices):
     NORMAL = "N", "Normal"
 
     BAIXO = "↓", "Baixo"
@@ -11,3 +11,6 @@ class IndicadorResultado(models.TextChoices):
     MUITO_ALTO = "↑↑", "Muito alto"
 
     INDETERMINADO = "?", "Indeterminado"
+
+
+IndicadorResultado = ResultIndicator

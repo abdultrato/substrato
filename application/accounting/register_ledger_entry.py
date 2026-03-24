@@ -1,23 +1,22 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounting.models.idempotencia_ledger import IdempotenciaLedger
 from apps.accounting.models.ledger_entry import LedgerEntry
 from apps.accounting.models.ledger_line import LedgerLine
-from domain.accounting.agregados import LedgerAggregate
-from domain.accounting.excecoes import (
-    DominioContabilidadeErro,
-    ViolacaoInquilinoErro,
+from domain.accounting.aggregates import LedgerAggregate
+from domain.accounting.exceptions import (
+    AccountingDomainError,
+    TenantViolationError,
 )
-from events.accounting.handler_atualizar_saldo import handle as atualizar_saldo
-from events.accounting.ledger_entry_criado import (
-    LedgerEntryCriado,
-    LinhaLedgerDTO,
+from events.accounting.balance_update_handler import handle as update_balance
+from events.accounting.ledger_entry_created import (
+    LedgerEntryCreated,
+    LedgerLineDTO,
 )
 
 
 class DuplicateOperationError(
-    DominioContabilidadeErro,
+    AccountingDomainError,
 ):
     pass
 
@@ -30,20 +29,13 @@ def execute(
     linhas,
     idempotency_key=None,
 ):
-    # =====================================================
-    # 🔐 IDEMPOTÊNCIA PERSISTENTE
-    # =====================================================
-
-    if idempotency_key:
-        _, created = IdempotenciaLedger.objects.select_for_update().get_or_create(
-            inquilino=inquilino,
-            chave=idempotency_key,
+    if idempotency_key and LedgerEntry.objects.select_for_update().filter(
+        inquilino=inquilino,
+        idempotency_key=idempotency_key,
+    ).exists():
+        raise DuplicateOperationError(
+            "Operação já processada para esta chave.",
         )
-
-        if not created:
-            raise DuplicateOperationError(
-                "Operação já processada para esta chave.",
-            )
 
     # =====================================================
     # 🔍 VALIDAÇÃO DOMÍNIO
@@ -52,7 +44,7 @@ def execute(
     aggregate = LedgerAggregate(
         linhas,
     )
-    aggregate.validar()
+    aggregate.validate()
 
     # =====================================================
     # 🔎 VALIDAÇÃO MULTI-TENANT
@@ -60,7 +52,7 @@ def execute(
 
     for linha in linhas:
         if linha.conta.inquilino_id != inquilino.id:
-            raise ViolacaoInquilinoErro(
+            raise TenantViolationError(
                 "Conta pertence a outro inquilino.",
             )
 
@@ -68,28 +60,38 @@ def execute(
     # 🧾 CRIAR LEDGER ENTRY
     # =====================================================
 
-    entry = LedgerEntry.objects.create(
-        inquilino=inquilino,
-        descricao=descricao,
-        data_contabil=data_contabil,
-        criado_em=timezone.now(),
-        idempotency_key=idempotency_key,
-    )
+    reference = (idempotency_key or f"LED-{timezone.now():%Y%m%d%H%M%S%f}")[:120]
+
+    try:
+        entry = LedgerEntry.objects.create(
+            inquilino=inquilino,
+            descricao=descricao,
+            data_contabil=data_contabil,
+            referencia_externa=reference,
+            idempotency_key=idempotency_key,
+        )
+    except IntegrityError as exc:
+        if idempotency_key:
+            raise DuplicateOperationError(
+                "Operação já processada para esta chave.",
+            ) from exc
+        raise
 
     # =====================================================
     # 💰 BULK CREATE LINHAS
     # =====================================================
 
-    linhas_model = [
-        LedgerLine(
-            entry=entry,
-            conta=linha.conta,
-            valor=linha.valor,
-            natureza=linha.natureza,
-            inquilino=inquilino,
+    linhas_model = []
+    for linha in linhas:
+        linhas_model.append(
+            LedgerLine(
+                entry=entry,
+                conta=linha.conta,
+                valor=getattr(linha.valor, "valor", linha.valor),
+                natureza=getattr(linha.natureza, "tipo", linha.natureza),
+                inquilino=inquilino,
+            )
         )
-        for linha in linhas
-    ]
 
     LedgerLine.objects.bulk_create(
         linhas_model,
@@ -100,13 +102,13 @@ def execute(
     # =====================================================
 
     def publish_event():
-        evento = LedgerEntryCriado(
+        event = LedgerEntryCreated(
             entry_id=entry.id,
             inquilino_id=entry.inquilino_id,
             data_contabil=entry.data_contabil,
             linhas=[
-                LinhaLedgerDTO(
-                    conta_id=linha_model.id_custom,
+                LedgerLineDTO(
+                    conta_id=linha_model.conta_id,
                     valor=str(
                         linha_model.valor,
                     ),
@@ -116,8 +118,8 @@ def execute(
             ],
         )
 
-        atualizar_saldo(
-            evento,
+        update_balance(
+            event,
         )
 
     transaction.on_commit(

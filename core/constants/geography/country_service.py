@@ -1,19 +1,23 @@
 import pycountry
 
 
-def listar_paises_iso():
+def list_iso_countries():
     """
-    Retorna lista de tuplas (codigo_iso, nome_oficial)
+    Returns `(iso_code, country_name)` tuples.
     """
     return sorted(
-        [(pais.alpha_2, pais.name) for pais in pycountry.countries],
-        key=lambda x: x[1],
+        [(country.alpha_2, country.name) for country in pycountry.countries],
+        key=lambda item: item[1],
     )
 
 
-def obter_nome_pais(codigo_iso):
+def get_country_name(iso_code):
     try:
-        pais = pycountry.countries.get(alpha_2=codigo_iso.upper())
-        return pais.name if pais else None
+        country = pycountry.countries.get(alpha_2=iso_code.upper())
+        return country.name if country else None
     except Exception:
         return None
+
+
+listar_paises_iso = list_iso_countries
+obter_nome_pais = get_country_name

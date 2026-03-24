@@ -2,18 +2,18 @@ from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.exceptions import APIException
 
-from domain.accounting.excecoes import (
-    AlteracaoTipoContaNaoPermitidaErro,
-    ContaComSaldoNaoPodeSerDesativadaErro,
-    ContaInativaErro,
-    DominioContabilidadeErro,
-    LancamentoSemLinhasSuficientesErro,
-    LedgerImutavelErro,
-    LedgerJaRevertidoErro,
-    PartidasDesbalanceadasErro,
-    PeriodoContabilFechadoErro,
-    ReversaoInvalidaErro,
-    ViolacaoInquilinoErro,
+from domain.accounting.exceptions import (
+    AccountTypeChangeNotAllowedError,
+    AccountWithBalanceCannotBeDeactivatedError,
+    AccountingDomainError,
+    ClosedAccountingPeriodError,
+    ImmutableLedgerError,
+    InactiveAccountError,
+    InsufficientEntryLinesError,
+    InvalidReversalError,
+    LedgerAlreadyReversedError,
+    TenantViolationError,
+    UnbalancedEntriesError,
 )
 
 # =========================================================
@@ -31,7 +31,7 @@ def handle_domain_exception(
 
     if isinstance(
         exc,
-        DominioContabilidadeErro,
+        AccountingDomainError,
     ):
         raise ValidationError(
             str(
@@ -64,7 +64,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        LedgerImutavelErro,
+        ImmutableLedgerError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -74,7 +74,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        LedgerJaRevertidoErro,
+        LedgerAlreadyReversedError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -84,7 +84,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        ReversaoInvalidaErro,
+        InvalidReversalError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -94,7 +94,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        PeriodoContabilFechadoErro,
+        ClosedAccountingPeriodError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -104,7 +104,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        PartidasDesbalanceadasErro,
+        UnbalancedEntriesError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -114,7 +114,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        LancamentoSemLinhasSuficientesErro,
+        InsufficientEntryLinesError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -124,7 +124,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        AlteracaoTipoContaNaoPermitidaErro,
+        AccountTypeChangeNotAllowedError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -134,7 +134,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        ContaComSaldoNaoPodeSerDesativadaErro,
+        AccountWithBalanceCannotBeDeactivatedError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -144,7 +144,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        ContaInativaErro,
+        InactiveAccountError,
     ):
         raise DomainAPIException(
             detail=str(
@@ -154,7 +154,7 @@ def handle_api_exception(
 
     if isinstance(
         exc,
-        ViolacaoInquilinoErro,
+        TenantViolationError,
     ):
         raise DomainAPIException(
             detail=str(

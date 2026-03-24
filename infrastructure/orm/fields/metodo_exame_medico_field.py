@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.medical_exam.metodo_exame_medico import MetodoExameMedico
+from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
 
 
 class MetodoExameMedicoField(models.CharField):

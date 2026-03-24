@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.medical_exam.setor_exame_medico import SetorExameMedico
+from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
 
 
 class SetorExameMedicoField(models.CharField):

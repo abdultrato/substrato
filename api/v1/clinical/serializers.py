@@ -19,7 +19,7 @@ from apps.clinical.models.medical_result_file import (
     MedicalResultFile,
     validar_arquivo_medico_por_tipo,
 )
-from core.constants.proveniencia import Proveniencia
+from core.constants.provenance import Proveniencia
 
 CORE_READ_ONLY_FIELDS = [
     "id",

@@ -3,7 +3,7 @@
 from django.db import models
 
 
-class TipoEventoClinico(models.TextChoices):
+class ClinicalEventType(models.TextChoices):
     """
     Enumeração oficial de eventos clínicos do system.
     Usado para histórico, auditoria clínica e event bus.
@@ -28,3 +28,6 @@ class TipoEventoClinico(models.TextChoices):
     # OUTROS
     OBSERVACAO_CLINICA = "observacao_clinica", "Observação Clínica"
     DIAGNOSTICO = "diagnóstico", "Diagnóstico"
+
+
+TipoEventoClinico = ClinicalEventType

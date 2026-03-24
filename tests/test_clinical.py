@@ -12,10 +12,10 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.metodo import Metodo
-from core.constants.laboratory.setor import Setor
-from core.constants.laboratory.tipo_resultado import TipoResultado
-from core.constants.laboratory.unidades import UnidadePadrao
+from core.constants.laboratory.method import Metodo
+from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.result_type import TipoResultado
+from core.constants.laboratory.units import UnidadePadrao
 
 
 def _tenant():

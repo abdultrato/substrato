@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class UnidadePadrao(models.TextChoices):
+class DefaultUnit(models.TextChoices):
     G_DL = "g/dl", "g/dl"
     MG_DL = "mg/dl", "mg/dl"
     MMOL_L = "mmol/l", "mmol/l"
@@ -14,3 +14,6 @@ class UnidadePadrao(models.TextChoices):
     P_UL = "p/µL", "p/µL"
     PH = "ph", "ph"
     FL = "fl", "fl"
+
+
+UnidadePadrao = DefaultUnit

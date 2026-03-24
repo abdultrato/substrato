@@ -1,50 +1,52 @@
 from decimal import Decimal
 
 
-def aplicar_desconto_percentual(valor, percentual):
+def apply_percentage_discount(value, percentage):
     """
-    Aplica desconto percentual sobre um valor.
+    Applies a percentage discount to a value.
     """
-    if not percentual:
-        return valor
+    if not percentage:
+        return value
 
-    percentual = Decimal(percentual) / Decimal("100")
-    desconto = (valor * percentual).quantize(Decimal("0.01"))
-    return (valor - desconto).quantize(Decimal("0.01"))
+    percentage = Decimal(percentage) / Decimal("100")
+    discount = (value * percentage).quantize(Decimal("0.01"))
+    return (value - discount).quantize(Decimal("0.01"))
 
 
-def aplicar_acrescimo_percentual(valor, percentual):
+def apply_percentage_surcharge(value, percentage):
     """
-    Aplica acréscimo percentual sobre um valor.
+    Applies a percentage surcharge to a value.
     """
-    if not percentual:
-        return valor
+    if not percentage:
+        return value
 
-    percentual = Decimal(percentual) / Decimal("100")
-    acrescimo = (valor * percentual).quantize(Decimal("0.01"))
-    return (valor + acrescimo).quantize(Decimal("0.01"))
+    percentage = Decimal(percentage) / Decimal("100")
+    surcharge = (value * percentage).quantize(Decimal("0.01"))
+    return (value + surcharge).quantize(Decimal("0.01"))
 
 
-def calcular_preco_item(preco_base, quantidade=1, desconto_percentual=0, acrescimo_percentual=0):
+def calculate_item_price(base_price, quantity=1, discount_percent=0, surcharge_percent=0):
     """
-    Calcula preço final de um item considerando:
-
-    ✔ quantidade
-    ✔ descontos
-    ✔ acréscimos
+    Calculates a final item price using quantity, discounts, and surcharges.
     """
 
-    quantidade = Decimal(quantidade or 1)
-    preco = (Decimal(preco_base) * quantidade).quantize(Decimal("0.01"))
+    quantity = Decimal(quantity or 1)
+    price = (Decimal(base_price) * quantity).quantize(Decimal("0.01"))
 
-    preco = aplicar_desconto_percentual(preco, desconto_percentual)
-    return aplicar_acrescimo_percentual(preco, acrescimo_percentual)
+    price = apply_percentage_discount(price, discount_percent)
+    return apply_percentage_surcharge(price, surcharge_percent)
 
 
-def aplicar_preco_contratual(preco_base, preco_contrato=None):
+def apply_contract_price(base_price, contract_price=None):
     """
-    Retorna preço contratual quando disponível.
+    Returns the contract price when available.
     """
-    if preco_contrato is not None:
-        return Decimal(preco_contrato).quantize(Decimal("0.01"))
-    return Decimal(preco_base).quantize(Decimal("0.01"))
+    if contract_price is not None:
+        return Decimal(contract_price).quantize(Decimal("0.01"))
+    return Decimal(base_price).quantize(Decimal("0.01"))
+
+
+aplicar_desconto_percentual = apply_percentage_discount
+aplicar_acrescimo_percentual = apply_percentage_surcharge
+calcular_preco_item = calculate_item_price
+aplicar_preco_contratual = apply_contract_price

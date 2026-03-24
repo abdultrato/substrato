@@ -3,10 +3,10 @@ from rest_framework import serializers
 from apps.payments.models.payment import Payment
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from core.constants.genero import Genero
-from core.constants.laboratory.status_clinico import StatusClinico
-from core.constants.proveniencia import Proveniencia
+from core.constants.laboratory.clinical_status import StatusClinico
+from core.constants.provenance import Proveniencia
 from core.constants.raca_origem import RacaOrigem
-from core.constants.tipos_documento import TipoDocumento
+from core.constants.document_types import TipoDocumento
 
 CORE_READ_ONLY_FIELDS = (
     "id",

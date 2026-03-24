@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.geografia.pais_service import listar_paises_iso
+from core.constants.geography.country_service import listar_paises_iso
 
 
 class PaisField(models.CharField):

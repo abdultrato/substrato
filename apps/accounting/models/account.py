@@ -4,7 +4,7 @@ from django.db.models import (
     Q,
 )
 
-from core.constants.accounting.tipo_conta import TipoConta
+from core.constants.accounting.account_type import TipoConta
 from core.models.base import CoreModel
 
 

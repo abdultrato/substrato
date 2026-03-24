@@ -1,6 +1,15 @@
-from .metodo import Metodo
-from .setor import Setor
-from .tipo_resultado import TipoResultado
-from .unidades import UnidadePadrao
+from .method import Method, Metodo
+from .result_type import ResultType, TipoResultado
+from .sector import Sector, Setor
+from .units import DefaultUnit, UnidadePadrao
 
-__all__ = ["Metodo", "Setor", "TipoResultado", "UnidadePadrao"]
+__all__ = [
+    "DefaultUnit",
+    "Method",
+    "Metodo",
+    "ResultType",
+    "Sector",
+    "Setor",
+    "TipoResultado",
+    "UnidadePadrao",
+]

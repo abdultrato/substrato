@@ -763,8 +763,8 @@ SPECTACULAR_SETTINGS = {
             ("validado", "Validado"),
             ("rejeitado", "Rejeitado"),
         ],
-        "TipoResultadoEnum": "core.constants.laboratory.tipo_resultado.TipoResultado",
-        "MetodoLaboratorioEnum": "core.constants.laboratory.metodo.Metodo",
+        "TipoResultadoEnum": "core.constants.laboratory.result_type.TipoResultado",
+        "MetodoLaboratorioEnum": "core.constants.laboratory.method.Metodo",
         "MetodoPagamentoEnum": [
             ("DIN", "Dinheiro"),
             ("CAR", "Cartão"),

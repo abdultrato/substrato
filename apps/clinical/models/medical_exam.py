@@ -8,8 +8,8 @@ from django.db.models import Q
 from infrastructure.orm.fields.dinheiro_field import DinheiroField
 from infrastructure.orm.fields.metodo_exame_medico_field import MetodoExameMedicoField
 from infrastructure.orm.fields.setor_exame_medico_field import SetorExameMedicoField
-from core.constants.medical_exam.metodo_exame_medico import MetodoExameMedico
-from core.constants.medical_exam.tipo_resultado_exame_medico import TipoResultadoExameMedico
+from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
+from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 

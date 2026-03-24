@@ -1,2 +1,0 @@
-class ErroDominio(Exception):
-    pass

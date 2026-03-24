@@ -1,2 +1,0 @@
-class PagamentoFalhou(Exception):
-    pass

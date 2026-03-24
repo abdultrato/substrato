@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class SetorExameMedico(models.TextChoices):
+class MedicalExamSector(models.TextChoices):
     """
     Setores/serviços onde exames médicos (imagem/diagnóstico) são executados.
     Separado dos setores laboratoriais.
@@ -18,3 +18,6 @@ class SetorExameMedico(models.TextChoices):
     MEDICINA_NUCLEAR = "MedicinaNuclear", "Medicina Nuclear"
     ENDOSCOPIA = "Endoscopia", "Endoscopia"
     OUTRO = "Outro", "Outro"
+
+
+SetorExameMedico = MedicalExamSector

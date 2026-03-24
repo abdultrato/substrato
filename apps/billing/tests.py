@@ -22,10 +22,10 @@ from apps.pharmacy.models.product import Product
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.tenants.models.tenant import Tenant
-from core.constants.medical_exam.metodo_exame_medico import MetodoExameMedico
-from core.constants.medical_exam.setor_exame_medico import SetorExameMedico
-from core.constants.laboratory.metodo import Metodo
-from core.constants.laboratory.setor import Setor
+from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
+from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
+from core.constants.laboratory.method import Metodo
+from core.constants.laboratory.sector import Setor
 
 
 def _tenant():

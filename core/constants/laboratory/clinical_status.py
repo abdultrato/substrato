@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class StatusClinico(models.TextChoices):
+class ClinicalStatus(models.TextChoices):
     NAO_URGENTE = "NAO_URGENTE", "Não urgente"
     NORMAL = "NORMAL", "Normal"
     ROTINA = "ROTINA", "Rotina"
@@ -11,3 +11,6 @@ class StatusClinico(models.TextChoices):
     MUITO_URGENTE = "MUITO_URGENTE", "Muito urgente"
     URGENTISSIMO = "URGENTISSIMO", "Urgentíssimo"
     EMERGENCIA = "EMERGENCIA", "Emergência"
+
+
+StatusClinico = ClinicalStatus

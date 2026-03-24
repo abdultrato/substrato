@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.laboratory.tipo_resultado import TipoResultado
+from core.constants.laboratory.result_type import TipoResultado
 
 
 class TipoResultadoField(models.CharField):

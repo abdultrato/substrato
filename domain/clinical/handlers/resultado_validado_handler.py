@@ -1,6 +1,6 @@
 # LOCAL: dominio/clinico/handlers/resultado_validado_handler.py
 
-from core.constants.tipo_evento_clinico import TipoEventoClinico
+from core.constants.clinical_event_type import TipoEventoClinico
 
 
 class ResultadoValidadoHandler:
