@@ -12,7 +12,7 @@ from .lab_request_item import LabRequestItem
 from .result import Result
 
 
-def _resultado_medico_upload_to(instance, filename):
+def _medical_result_upload_to(instance, filename):
     parts = [
         "resultados_medicos",
         str(instance.resultado.inquilino_id or "tenant"),
@@ -54,7 +54,7 @@ def _ler_bytes(arquivo, tamanho=4, offset=0):
                 pass
 
 
-def _validar_imagem(arquivo):
+def _validate_image(arquivo):
     try:
         pos = arquivo.tell()
     except Exception:
@@ -73,13 +73,13 @@ def _validar_imagem(arquivo):
                 pass
 
 
-def _validar_pdf(arquivo):
+def _validate_pdf(arquivo):
     cabecalho = _ler_bytes(arquivo, tamanho=4, offset=0)
     if cabecalho != b"%PDF":
         raise ValidationError("Arquivo PDF inválido.")
 
 
-def validar_arquivo_medico_por_tipo(arquivo, tipo):
+def validate_medical_file_for_type(arquivo, tipo):
     if not arquivo or not tipo:
         return
     exts = EXTENSOES_POR_TIPO.get(tipo)
@@ -90,9 +90,9 @@ def validar_arquivo_medico_por_tipo(arquivo, tipo):
             ext_fmt = ext or "desconhecida"
             raise ValidationError(f"Extensão '{ext_fmt}' inválida. Permitidas: {exts_fmt}.")
     if tipo == TipoResultadoExameMedico.IMAGEM:
-        _validar_imagem(arquivo)
+        _validate_image(arquivo)
     if tipo == TipoResultadoExameMedico.RELATORIO_PDF:
-        _validar_pdf(arquivo)
+        _validate_pdf(arquivo)
 
 
 class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
@@ -132,7 +132,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
     )
 
     arquivo = models.FileField(
-        upload_to=_resultado_medico_upload_to,
+        upload_to=_medical_result_upload_to,
         verbose_name="Arquivo (PDF/Imagem/DICOM)",
     )
 
@@ -157,7 +157,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
         if self.arquivo and self.tipo:
             try:
-                validar_arquivo_medico_por_tipo(self.arquivo, self.tipo)
+                validate_medical_file_for_type(self.arquivo, self.tipo)
             except ValidationError as err:
                 erros["arquivo"] = err.messages[0] if err.messages else "Arquivo inválido."
 
@@ -166,3 +166,9 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
     def __str__(self):
         return f"{self.exame_medico.nome or 'exame médico'} · {self.tipo}"
+
+
+_resultado_medico_upload_to = _medical_result_upload_to
+_validar_imagem = _validate_image
+_validar_pdf = _validate_pdf
+validar_arquivo_medico_por_tipo = validate_medical_file_for_type

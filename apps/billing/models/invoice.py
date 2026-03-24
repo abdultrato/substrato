@@ -121,7 +121,7 @@ class Invoice(NoNameCoreModel):
     # RECÁLCULO FINANCEIRO
     # ==========================================
 
-    def registrar_historico(self, tipo_evento: str, titulo: str, linhas: list[str] | None = None) -> None:
+    def register_history(self, tipo_evento: str, titulo: str, linhas: list[str] | None = None) -> None:
         """
         Registra histórico textual com formatação linha-a-linha.
         """
@@ -142,7 +142,7 @@ class Invoice(NoNameCoreModel):
             tipo_evento=tipo_evento,
         )
 
-    def recalcular_totais(self):
+    def recalculate_totals(self):
         linha_expr = F("quantidade") * F("preco_unitario")
         subtotal = self.itens.aggregate(
             total=Coalesce(
@@ -180,7 +180,7 @@ class Invoice(NoNameCoreModel):
         self.valor_paciente = total - (self.valor_seguro or Decimal("0.00"))
 
     def persistir_totais(self):
-        self.recalcular_totais()
+        self.recalculate_totals()
         if not self.pk:
             return
         self.__class__.all_objects.filter(pk=self.pk).update(
@@ -190,7 +190,7 @@ class Invoice(NoNameCoreModel):
             valor_paciente=self.valor_paciente,
         )
 
-    def valor_pago_confirmado(self):
+    def confirmed_paid_amount(self):
         from apps.payments.models.payment import Payment
 
         return self.pagamentos.filter(
@@ -206,7 +206,7 @@ class Invoice(NoNameCoreModel):
             )
         )["total"]
 
-    def _numero_recibo_padrao(self, pagamento):
+    def _default_receipt_number(self, pagamento):
         # Um recibo é gerado quando a fatura fica totalmente paga. O número
         # precisa ser estável e rastreável pela fatura (não pelo pagamento
         # parcial), mas mantemos referência do pagamento que fechou a fatura.
@@ -216,7 +216,7 @@ class Invoice(NoNameCoreModel):
             return f"REC-{fat_ref}-{pag_ref}"
         return f"REC-{fat_ref}"
 
-    def gerar_recibo_automatico(self, pagamento):
+    def generate_automatic_receipt(self, pagamento):
         if not pagamento or pagamento.status != pagamento.Status.CONFIRMADO:
             return None
 
@@ -243,7 +243,7 @@ class Invoice(NoNameCoreModel):
                 recibo.pagamento = pagamento
                 campos_atualizar.append("pagamento")
 
-            numero = self._numero_recibo_padrao(pagamento)
+            numero = self._default_receipt_number(pagamento)
             if recibo.numero != numero:
                 recibo.numero = numero
                 campos_atualizar.append("numero")
@@ -256,22 +256,22 @@ class Invoice(NoNameCoreModel):
         return Receipt.objects.create(
             fatura=self,
             pagamento=pagamento,
-            numero=self._numero_recibo_padrao(pagamento),
+            numero=self._default_receipt_number(pagamento),
             valor=self.total,
         )
 
-    def atualizar_estado_pagamento(self, pagamento=None):
+    def update_payment_status(self, pagamento=None):
         if self.estado in {self.Estado.RASCUNHO, self.Estado.CANCELADA}:
             return
 
-        total_pago = self.valor_pago_confirmado() or Decimal("0.00")
+        total_paid = self.confirmed_paid_amount() or Decimal("0.00")
         total_fatura = self.total or Decimal("0.00")
         novo_estado = (
-            self.Estado.PAGA if total_pago >= total_fatura and total_fatura > Decimal("0.00") else self.Estado.EMITIDA
+            self.Estado.PAGA if total_paid >= total_fatura and total_fatura > Decimal("0.00") else self.Estado.EMITIDA
         )
 
         if novo_estado == self.Estado.PAGA and pagamento is not None:
-            self.gerar_recibo_automatico(pagamento)
+            self.generate_automatic_receipt(pagamento)
 
         if self.estado != novo_estado:
             self.estado = novo_estado
@@ -280,9 +280,9 @@ class Invoice(NoNameCoreModel):
                 linhas = [
                     f"Novo estado: {self.get_estado_display()}",
                     f"Total com IVA: {self.total:.2f}",
-                    f"Total pago confirmado: {(total_pago or Decimal('0.00')):.2f}",
+                    f"Total pago confirmado: {(total_paid or Decimal('0.00')):.2f}",
                 ]
-                self.registrar_historico("PAGAMENTO", "Estado de pagamento atualizado", linhas=linhas)
+                self.register_history("PAGAMENTO", "Estado de pagamento atualizado", linhas=linhas)
             except Exception:
                 pass
 
@@ -291,7 +291,7 @@ class Invoice(NoNameCoreModel):
     # ==========================================
 
     @property
-    def referencia_origem(self):
+    def source_reference(self):
         if self.origem == self.Origem.CLINICO:
             return self.requisicao
         if self.origem == self.Origem.FARMACIA:
@@ -308,7 +308,7 @@ class Invoice(NoNameCoreModel):
             return None
         return None
 
-    def _validar_origem(self):
+    def _validate_source(self):
         if self.origem == self.Origem.MISTA:
             refs = []
             if self.requisicao_id:
@@ -567,7 +567,7 @@ class Invoice(NoNameCoreModel):
                 f"IVA: {self.iva_valor:.2f}",
                 f"Total com IVA: {self.total:.2f}",
             ]
-            self.registrar_historico("SINCRONIZACAO", "Itens sincronizados", linhas=linhas)
+            self.register_history("SINCRONIZACAO", "Itens sincronizados", linhas=linhas)
         except Exception:
             pass
 
@@ -576,7 +576,7 @@ class Invoice(NoNameCoreModel):
     # ==========================================
 
     @transaction.atomic
-    def emitir(self):
+    def issue(self):
         if self.estado != self.Estado.RASCUNHO:
             raise ValidationError("Somente faturas em rascunho podem ser emitidas.")
 
@@ -641,9 +641,19 @@ class Invoice(NoNameCoreModel):
                 f"IVA: {self.iva_valor:.2f}",
                 f"Total com IVA: {self.total:.2f}",
             ]
-            self.registrar_historico("EMISSAO", "Fatura emitida", linhas=linhas)
+            self.register_history("EMISSAO", "Fatura emitida", linhas=linhas)
         except Exception:
             pass
+
+    registrar_historico = register_history
+    recalcular_totais = recalculate_totals
+    valor_pago_confirmado = confirmed_paid_amount
+    _numero_recibo_padrao = _default_receipt_number
+    gerar_recibo_automatico = generate_automatic_receipt
+    atualizar_estado_pagamento = update_payment_status
+    referencia_origem = source_reference
+    _validar_origem = _validate_source
+    emitir = issue
 
     # ==========================================
     # BLOQUEIO DE ALTERAÇÃO
@@ -652,7 +662,7 @@ class Invoice(NoNameCoreModel):
     def clean(self):
         super().clean()
 
-        self._validar_origem()
+        self._validate_source()
 
         if self.pk:
             original = Invoice.all_objects.get(pk=self.pk)

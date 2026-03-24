@@ -79,7 +79,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
 
     # -----------------------------------------------------
 
-    def _criar_resultados(self):
+    def _create_results(self):
         requisicao = self.requisicao
         inquilino = requisicao.inquilino
 
@@ -120,6 +120,8 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         if itens:
             ResultItem.objects.bulk_create(itens)
+
+    _criar_resultados = _create_results
 
     # -----------------------------------------------------
 

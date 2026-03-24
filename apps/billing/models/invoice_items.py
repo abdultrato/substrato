@@ -12,13 +12,15 @@ from core.models.base import NoNameCoreModel
 class InvoiceItem(NoNameCoreModel):
     prefixo = "FTIT"
 
-    class TipoItem(models.TextChoices):
+    class ItemType(models.TextChoices):
         EXAME = "EXA", "Exame"
         EXAME_MEDICO = "EXM", "Exame médico"
         ITEM_VENDA = "FAR", "Item de farmácia"
         PROCEDIMENTO_ITEM = "PRC", "Serviço de enfermagem"
         PROCEDIMENTO_MATERIAL = "MAT", "Material de enfermagem"
         AJUSTE = "AJU", "Ajuste manual"
+
+    TipoItem = ItemType
 
     fatura = models.ForeignKey(
         "faturamento.Invoice",
@@ -29,8 +31,8 @@ class InvoiceItem(NoNameCoreModel):
     tipo_item = models.CharField(
         verbose_name="Tipo de item",
         max_length=3,
-        choices=TipoItem.choices,
-        default=TipoItem.EXAME,
+        choices=ItemType.choices,
+        default=ItemType.EXAME,
         db_index=True,
     )
 
@@ -144,7 +146,7 @@ class InvoiceItem(NoNameCoreModel):
         return self.total or Decimal("0.00")
 
     @property
-    def iva_valor(self) -> Decimal:
+    def vat_amount(self) -> Decimal:
         if not self.aplica_iva:
             return Decimal("0.00")
         base = self.total_sem_iva or Decimal("0.00")
@@ -159,9 +161,9 @@ class InvoiceItem(NoNameCoreModel):
 
     @property
     def total_com_iva(self) -> Decimal:
-        return (self.total_sem_iva or Decimal("0.00")) + (self.iva_valor or Decimal("0.00"))
+        return (self.total_sem_iva or Decimal("0.00")) + (self.vat_amount or Decimal("0.00"))
 
-    def _schedule_recalculo(self):
+    def _schedule_recalculation(self):
         try:
             from tasks.billing.recalculo import recalcular_fatura_task
         except ImportError:
@@ -206,7 +208,7 @@ class InvoiceItem(NoNameCoreModel):
             self.TipoItem.AJUSTE: None,
         }[self.tipo_item]
 
-    def _data_referencia_precificacao(self):
+    def _pricing_reference_date(self):
         if not self.fatura_id:
             return None
 
@@ -216,11 +218,11 @@ class InvoiceItem(NoNameCoreModel):
 
         return getattr(self.fatura, "criado_em", None)
 
-    def _aplicar_precificacao_exame(self, preco_base: Decimal) -> Decimal:
+    def _apply_exam_pricing(self, preco_base: Decimal) -> Decimal:
         if preco_base is None:
             return Decimal("0.00")
 
-        data_ref = self._data_referencia_precificacao()
+        data_ref = self._pricing_reference_date()
         if not data_ref:
             return preco_base
 
@@ -231,7 +233,7 @@ class InvoiceItem(NoNameCoreModel):
         except Exception:
             return preco_base
 
-    def _resolver_iva_percentual_referencia(self) -> Decimal:
+    def _resolve_reference_vat_percentage(self) -> Decimal:
         """
         Resolve IVA (%) a partir da referência do item.
         Mantém 16% como padrão defensivo (compatível com o comportamento anterior),
@@ -262,7 +264,7 @@ class InvoiceItem(NoNameCoreModel):
 
         return Decimal("0.00")
 
-    def _resolver_aplica_iva_referencia(self) -> bool:
+    def _resolve_reference_applies_vat(self) -> bool:
         if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
             return getattr(self.exame, "aplica_iva_por_padrao", True)
 
@@ -288,25 +290,25 @@ class InvoiceItem(NoNameCoreModel):
 
         return True
 
-    def _preencher_de_referencia(self):
+    def _fill_from_reference(self):
         if self.tipo_item == self.TipoItem.EXAME and self.exame_id:
             if not self.descricao.strip():
                 self.descricao = self.exame.nome
             if self.preco_unitario == Decimal("0.00"):
-                self.preco_unitario = self._aplicar_precificacao_exame(self.exame.preco)
+                self.preco_unitario = self._apply_exam_pricing(self.exame.preco)
             if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
-            self.aplica_iva = self._resolver_aplica_iva_referencia()
+                self.iva_percentual = self._resolve_reference_vat_percentage()
+            self.aplica_iva = self._resolve_reference_applies_vat()
             return
 
         if self.tipo_item == self.TipoItem.EXAME_MEDICO and self.exame_medico_id:
             if not self.descricao.strip():
                 self.descricao = self.exame_medico.nome
             if self.preco_unitario == Decimal("0.00"):
-                self.preco_unitario = self._aplicar_precificacao_exame(self.exame_medico.preco)
+                self.preco_unitario = self._apply_exam_pricing(self.exame_medico.preco)
             if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
-            self.aplica_iva = self._resolver_aplica_iva_referencia()
+                self.iva_percentual = self._resolve_reference_vat_percentage()
+            self.aplica_iva = self._resolve_reference_applies_vat()
             return
 
         if self.tipo_item == self.TipoItem.ITEM_VENDA and self.item_venda_id:
@@ -314,8 +316,8 @@ class InvoiceItem(NoNameCoreModel):
             self.quantidade = Decimal(self.item_venda.quantidade)
             self.preco_unitario = self.item_venda.preco_unitario
             if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
-            self.aplica_iva = self._resolver_aplica_iva_referencia()
+                self.iva_percentual = self._resolve_reference_vat_percentage()
+            self.aplica_iva = self._resolve_reference_applies_vat()
             return
 
         if self.tipo_item == self.TipoItem.PROCEDIMENTO_ITEM and self.procedimento_item_id:
@@ -327,8 +329,8 @@ class InvoiceItem(NoNameCoreModel):
             except ObjectDoesNotExist:
                 self.preco_unitario = self.procedimento_item.preco_unitario
             if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
-            self.aplica_iva = self._resolver_aplica_iva_referencia()
+                self.iva_percentual = self._resolve_reference_vat_percentage()
+            self.aplica_iva = self._resolve_reference_applies_vat()
             return
 
         if self.tipo_item == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedimento_material_id:
@@ -340,12 +342,12 @@ class InvoiceItem(NoNameCoreModel):
             except ObjectDoesNotExist:
                 self.preco_unitario = self.procedimento_material.custo_unitario
             if self.iva_percentual is None:
-                self.iva_percentual = self._resolver_iva_percentual_referencia()
-            self.aplica_iva = self._resolver_aplica_iva_referencia()
+                self.iva_percentual = self._resolve_reference_vat_percentage()
+            self.aplica_iva = self._resolve_reference_applies_vat()
             return
 
         if self.tipo_item == self.TipoItem.AJUSTE and self.iva_percentual is None:
-            self.iva_percentual = self._resolver_iva_percentual_referencia()
+            self.iva_percentual = self._resolve_reference_vat_percentage()
 
     def clean(self):
         super().clean()
@@ -443,11 +445,11 @@ class InvoiceItem(NoNameCoreModel):
         if not self.inquilino_id and self.fatura_id:
             self.inquilino_id = self.fatura.inquilino_id
 
-        self._preencher_de_referencia()
+        self._fill_from_reference()
         self.full_clean()
 
         super().save(*args, **kwargs)
-        self._schedule_recalculo()
+        self._schedule_recalculation()
 
     def delete(self, *args, **kwargs):
         if self.fatura.estado != self.fatura.Estado.RASCUNHO:
@@ -456,4 +458,12 @@ class InvoiceItem(NoNameCoreModel):
         fatura = self.fatura
         super().delete(*args, **kwargs)
         fatura.persistir_totais()  # manter estado imediato para gravação local
-        self._schedule_recalculo()
+        self._schedule_recalculation()
+
+    iva_valor = vat_amount
+    _schedule_recalculo = _schedule_recalculation
+    _data_referencia_precificacao = _pricing_reference_date
+    _aplicar_precificacao_exame = _apply_exam_pricing
+    _resolver_iva_percentual_referencia = _resolve_reference_vat_percentage
+    _resolver_aplica_iva_referencia = _resolve_reference_applies_vat
+    _preencher_de_referencia = _fill_from_reference

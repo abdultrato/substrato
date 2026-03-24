@@ -32,7 +32,7 @@ def _tenant():
     return Tenant.objects.create(identificador="tn-fat", nome="Tenant Fat")
 
 
-def _paciente(tenant):
+def _patient(tenant):
     return Patient.objects.create(
         inquilino=tenant,
         nome="Paciente Fat",
@@ -41,7 +41,7 @@ def _paciente(tenant):
     )
 
 
-def _exame(tenant):
+def _exam(tenant):
     return LabExam.objects.create(
         inquilino=tenant,
         nome="Hemograma",
@@ -51,7 +51,7 @@ def _exame(tenant):
     )
 
 
-def _exame_medico(tenant):
+def _medical_exam(tenant):
     return MedicalExam.objects.create(
         inquilino=tenant,
         nome="Ecografia abdominal",
@@ -66,10 +66,10 @@ def _horario_normal():
 
 
 @pytest.mark.django_db
-def test_fatura_clinico_recalcula_totais():
+def test_clinical_invoice_recalculates_totals():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
+    paciente = _patient(tenant)
+    exame = _exam(tenant)
     req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
     req.criado_em = _horario_normal()
     req.save(update_fields=["criado_em"])
@@ -88,7 +88,7 @@ def test_fatura_clinico_recalcula_totais():
         tipo_item=InvoiceItem.TipoItem.EXAME,
         exame=exame,
     )
-    item._preencher_de_referencia()
+    item._fill_from_reference()
     item.save(update_fields=["descricao", "preco_unitario", "quantidade"])
 
     fatura.persistir_totais()
@@ -100,10 +100,10 @@ def test_fatura_clinico_recalcula_totais():
 
 
 @pytest.mark.django_db
-def test_fatura_clinico_sincroniza_exame_medico():
+def test_clinical_invoice_syncs_medical_exam():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame_medico = _exame_medico(tenant)
+    paciente = _patient(tenant)
+    exame_medico = _medical_exam(tenant)
 
     req = LabRequest.objects.create(
         inquilino=tenant,
@@ -141,9 +141,9 @@ def test_fatura_clinico_sincroniza_exame_medico():
 
 
 @pytest.mark.django_db
-def test_item_ajuste_manual_requer_descricao():
+def test_manual_adjustment_item_requires_description():
     tenant = _tenant()
-    paciente = _paciente(tenant)
+    paciente = _patient(tenant)
     fatura = Invoice.objects.create(inquilino=tenant, paciente=paciente, origem=Invoice.Origem.CLINICO)
 
     item = InvoiceItem(
@@ -159,10 +159,10 @@ def test_item_ajuste_manual_requer_descricao():
 
 
 @pytest.mark.django_db
-def test_item_exame_origem_incompativel():
+def test_exam_item_has_incompatible_source():
     tenant = _tenant()
-    paciente = _paciente(tenant)
-    exame = _exame(tenant)
+    paciente = _patient(tenant)
+    exame = _exam(tenant)
     fatura = Invoice.objects.create(inquilino=tenant, paciente=paciente, origem=Invoice.Origem.FARMACIA)
 
     item = InvoiceItem(
@@ -178,9 +178,9 @@ def test_item_exame_origem_incompativel():
 
 
 @pytest.mark.django_db
-def test_fatura_enfermagem_bloqueia_emissao_quando_material_sem_estoque_e_libera_apos_atualizacao():
+def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_update():
     tenant = _tenant()
-    paciente = _paciente(tenant)
+    paciente = _patient(tenant)
 
     proc = Procedure.objects.create(paciente=paciente)
 

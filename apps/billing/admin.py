@@ -21,7 +21,7 @@ class CoreAdmin(admin.ModelAdmin):
 # =====================================================
 
 
-class FaturaItemInline(admin.TabularInline):
+class InvoiceItemInline(admin.TabularInline):
     model = InvoiceItem
     extra = 1
     autocomplete_fields = (
@@ -78,11 +78,11 @@ class FaturaItemInline(admin.TabularInline):
 
 
 @admin.register(Invoice)
-class FaturaAdmin(CoreAdmin):
+class InvoiceAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "origem",
-        "referencia_origem",
+        "source_reference",
         "paciente",
         "total",
         "estado",
@@ -155,17 +155,17 @@ class FaturaAdmin(CoreAdmin):
         ),
     )
 
-    inlines = [FaturaItemInline]
+    inlines = [InvoiceItemInline]
     actions = ("sincronizar_itens_origem",)
     filter_horizontal = ("procedimentos",)
 
-    def referencia_origem(self, obj):
-        referencia = obj.referencia_origem
-        if not referencia:
+    def source_reference(self, obj):
+        source_reference = obj.source_reference
+        if not source_reference:
             return "-"
-        return str(referencia)
+        return str(source_reference)
 
-    referencia_origem.short_description = "Referência"
+    source_reference.short_description = "Referência"
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)

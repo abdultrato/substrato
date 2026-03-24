@@ -82,7 +82,7 @@ TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO = {
 }
 
 
-def tipos_resultado_permitidos_para_metodo(metodo):
+def allowed_result_types_for_method(metodo):
     if not metodo:
         return set(TipoResultadoExameMedico.values)
     tipos = TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO.get(metodo)
@@ -180,18 +180,21 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
             raise ValidationError(erros)
 
     @property
-    def tipos_resultado_permitidos(self):
-        return tipos_resultado_permitidos_para_metodo(self.metodo)
+    def allowed_result_types(self):
+        return allowed_result_types_for_method(self.metodo)
 
     @property
-    def tipos_resultado_cadastrados(self):
+    def registered_result_types(self):
         if not self.pk:
-            return self.tipos_resultado_permitidos
+            return self.allowed_result_types
         tipos = set(self.campos.values_list("tipo", flat=True))
-        return tipos or self.tipos_resultado_permitidos
+        return tipos or self.allowed_result_types
 
     def __str__(self):
         return f"{self.nome or 'exame médico sem nome'}"
+
+    tipos_resultado_permitidos = allowed_result_types
+    tipos_resultado_cadastrados = registered_result_types
 
 
 class MedicalExamField(PropagarInquilinoMixin, CoreModel):
@@ -217,7 +220,7 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
     def clean(self):
         super().clean()
         if self.exame_id and self.tipo:
-            permitidos = self.exame.tipos_resultado_permitidos
+            permitidos = self.exame.allowed_result_types
             if self.tipo not in permitidos:
                 metodo = self.exame.get_metodo_display() or self.exame.metodo
                 permitidos_fmt = ", ".join(sorted(permitidos))
@@ -232,3 +235,6 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
 
     def __str__(self):
         return self.nome
+
+
+tipos_resultado_permitidos_para_metodo = allowed_result_types_for_method

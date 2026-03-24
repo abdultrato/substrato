@@ -41,11 +41,11 @@ class Result(NoNameCoreModel):
         super().save(*args, **kwargs)
 
         if criando:
-            self._criar_itens()
+            self._create_items()
 
     # -----------------------------------------------------
 
-    def _criar_itens(self):
+    def _create_items(self):
         from .result_item import ResultItem
 
         # evita recriar itens se já existirem
@@ -74,6 +74,8 @@ class Result(NoNameCoreModel):
 
         if itens:
             ResultItem.objects.bulk_create(itens)
+
+    _criar_itens = _create_items
 
     # -----------------------------------------------------
 

@@ -88,7 +88,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     # =====================================================
 
     @property
-    def referencia(self):
+    def reference(self):
         """
         Retorna o intervalo de referência formatado.
         Exemplo:
@@ -113,7 +113,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     # INTERPRETAÇÃO BÁSICA
     # =====================================================
 
-    def interpretar_resultado(self, valor):
+    def interpret_result(self, valor):
         if valor is None:
             return None
 
@@ -137,3 +137,6 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
             return "↑"
 
         return "N"
+
+    referencia = reference
+    interpretar_resultado = interpret_result

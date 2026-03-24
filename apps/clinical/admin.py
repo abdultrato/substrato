@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .forms_admin import ResultadoItemInlineFormSet
+from .forms_admin import ResultItemInlineFormSet
 from .models.lab_exam import LabExam
 from .models.lab_exam_field import LabExamField
 from .models.medical_exam import MedicalExam, MedicalExamField
@@ -59,7 +59,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 @admin.register(Patient)
-class PacienteAdmin(admin.ModelAdmin):
+class PatientAdmin(admin.ModelAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -179,7 +179,7 @@ class PacienteAdmin(admin.ModelAdmin):
 
 
 @admin.register(LabExamField)
-class ExameCampoAdmin(CoreAdmin):
+class LabExamFieldAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -276,7 +276,7 @@ class ExameCampoAdmin(CoreAdmin):
     # REFERÊNCIA FORMATADA
     # =====================================================
 
-    def referencia(self, obj):
+    def reference(self, obj):
 
         min_ref = obj.referencia_min
         max_ref = obj.referencia_max
@@ -292,7 +292,8 @@ class ExameCampoAdmin(CoreAdmin):
 
         return "-"
 
-    referencia.short_description = "Referência"
+    reference.short_description = "Referência"
+    referencia = reference
 
 
 # =========================================================
@@ -300,7 +301,7 @@ class ExameCampoAdmin(CoreAdmin):
 # =========================================================
 
 
-class ExameCampoInline(admin.TabularInline):
+class LabExamFieldInline(admin.TabularInline):
     model = LabExamField
 
     extra = 0
@@ -331,7 +332,7 @@ class ExameCampoInline(admin.TabularInline):
 
 
 @admin.register(LabExam)
-class ExameAdmin(CoreAdmin):
+class LabExamAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -357,7 +358,7 @@ class ExameAdmin(CoreAdmin):
 
     list_per_page = 50
 
-    inlines = (ExameCampoInline,)
+    inlines = (LabExamFieldInline,)
 
     readonly_fields = (
         "id_custom",
@@ -421,7 +422,7 @@ class ExameAdmin(CoreAdmin):
 # =========================================================
 
 
-class ExameMedicoCampoInline(admin.TabularInline):
+class MedicalExamFieldInline(admin.TabularInline):
     model = MedicalExamField
     extra = 0
     fields = (
@@ -436,7 +437,7 @@ class ExameMedicoCampoInline(admin.TabularInline):
 
 
 @admin.register(MedicalExam)
-class ExameMedicoAdmin(CoreAdmin):
+class MedicalExamAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "nome",
@@ -462,7 +463,7 @@ class ExameMedicoAdmin(CoreAdmin):
 
     list_per_page = 50
 
-    inlines = (ExameMedicoCampoInline,)
+    inlines = (MedicalExamFieldInline,)
 
     readonly_fields = (
         "id_custom",
@@ -526,7 +527,7 @@ class ExameMedicoAdmin(CoreAdmin):
 # =========================================================
 
 
-class RequisicaoItemLabInline(admin.TabularInline):
+class RequestLabItemInline(admin.TabularInline):
     model = LabRequestItem
     extra = 1
 
@@ -538,7 +539,7 @@ class RequisicaoItemLabInline(admin.TabularInline):
         return super().get_queryset(request).filter(exame__isnull=False)
 
 
-class RequisicaoItemMedInline(admin.TabularInline):
+class RequestMedicalItemInline(admin.TabularInline):
     model = LabRequestItem
     extra = 1
 
@@ -556,7 +557,7 @@ class RequisicaoItemMedInline(admin.TabularInline):
 
 
 @admin.register(LabRequest)
-class RequisicaoAnaliseAdmin(CoreAdmin):
+class LabRequestAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "paciente",
@@ -682,12 +683,12 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
         inline_classes = []
         if obj is None:
             # No add form mostramos ambos para permitir escolher o tipo antes de salvar.
-            inline_classes = [RequisicaoItemLabInline, RequisicaoItemMedInline]
+            inline_classes = [RequestLabItemInline, RequestMedicalItemInline]
         else:
             if obj.tipo == LabRequest.Tipo.EXAME_MEDICO:
-                inline_classes = [RequisicaoItemMedInline]
+                inline_classes = [RequestMedicalItemInline]
             else:
-                inline_classes = [RequisicaoItemLabInline]
+                inline_classes = [RequestLabItemInline]
 
         return [inline_class(self.model, self.admin_site) for inline_class in inline_classes]
 
@@ -695,7 +696,7 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
     # LANÇAR RESULTADO
     # -----------------------------------------------------
 
-    def lancar_resultado(self, obj):
+    def launch_result(self, obj):
 
         resultado = obj.obter_resultado()
 
@@ -712,13 +713,14 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             url,
         )
 
-    lancar_resultado.short_description = "Lançar resultado"
+    launch_result.short_description = "Lançar resultado"
+    lancar_resultado = launch_result
 
     # -----------------------------------------------------
     # PDF RESULTADO
     # -----------------------------------------------------
 
-    def ver_pdf_resultado(self, obj):
+    def view_result_pdf(self, obj):
 
         if not hasattr(obj, "resultado"):
             return mark_safe('<span style="color:gray;">Ainda sem resultados</span>')
@@ -753,7 +755,8 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
             texto,
         )
 
-    ver_pdf_resultado.short_description = "Resultado PDF"
+    view_result_pdf.short_description = "Resultado PDF"
+    ver_pdf_resultado = view_result_pdf
 
 
 # =========================================================
@@ -761,30 +764,30 @@ class RequisicaoAnaliseAdmin(CoreAdmin):
 # =========================================================
 
 
-class ResultadoItemInline(admin.TabularInline):
+class ResultItemInlineAdmin(admin.TabularInline):
     model = ResultItem
-    formset = ResultadoItemInlineFormSet
+    formset = ResultItemInlineFormSet
 
     extra = 0
     can_delete = False
 
     fields = (
         "inquilino",
-        "exame_nome",
+        "exam_name",
         "exame_campo",
-        "referencia",
+        "reference",
         "resultado_valor",
-        "resultado_colorido",
+        "colored_result",
         "estado",
-        "interpretacao",
+        "interpretation",
     )
 
     readonly_fields = (
-        "exame_nome",
+        "exam_name",
         "exame_campo",
-        "referencia",
-        "resultado_colorido",
-        "interpretacao",
+        "reference",
+        "colored_result",
+        "interpretation",
     )
 
     autocomplete_fields = ("exame_campo",)
@@ -809,7 +812,7 @@ class ResultadoItemInline(admin.TabularInline):
     # EXAME
     # -----------------------------------------------------
 
-    def exame_nome(self, obj):
+    def exam_name(self, obj):
 
         campo = getattr(obj, "exame_campo", None)
 
@@ -818,13 +821,14 @@ class ResultadoItemInline(admin.TabularInline):
 
         return "-"
 
-    exame_nome.short_description = "Exame"
+    exam_name.short_description = "Exame"
+    exame_nome = exam_name
 
     # -----------------------------------------------------
     # REFERÊNCIA
     # -----------------------------------------------------
 
-    def referencia(self, obj):
+    def reference(self, obj):
 
         campo = getattr(obj, "exame_campo", None)
 
@@ -833,13 +837,14 @@ class ResultadoItemInline(admin.TabularInline):
 
         return campo.referencia or "-"
 
-    referencia.short_description = "Referência"
+    reference.short_description = "Referência"
+    referencia = reference
 
     # -----------------------------------------------------
     # RESULTADO COLORIDO
     # -----------------------------------------------------
 
-    def resultado_colorido(self, obj):
+    def colored_result(self, obj):
 
         cor = obj.cor_laudo or "#2c3e50"
 
@@ -849,13 +854,14 @@ class ResultadoItemInline(admin.TabularInline):
             obj.resultado_valor_formatado,
         )
 
-    resultado_colorido.short_description = "Resultado"
+    colored_result.short_description = "Resultado"
+    resultado_colorido = colored_result
 
     # -----------------------------------------------------
     # INTERPRETAÇÃO
     # -----------------------------------------------------
 
-    def interpretacao(self, obj):
+    def interpretation(self, obj):
 
         if not obj.status_clinico:
             return "-"
@@ -876,7 +882,8 @@ class ResultadoItemInline(admin.TabularInline):
             obj.status_clinico,
         )
 
-    interpretacao.short_description = "Interpretação"
+    interpretation.short_description = "Interpretação"
+    interpretacao = interpretation
 
 
 # =========================================================
@@ -885,7 +892,7 @@ class ResultadoItemInline(admin.TabularInline):
 
 
 @admin.register(Result)
-class ResultadoAdmin(CoreAdmin):
+class ResultAdmin(CoreAdmin):
     list_display = (
         "id_custom",
         "requisicao",
@@ -933,7 +940,7 @@ class ResultadoAdmin(CoreAdmin):
         "versao",
     )
 
-    inlines = (ResultadoItemInline,)
+    inlines = (ResultItemInlineAdmin,)
 
     # =====================================================
     # FIELDSETS

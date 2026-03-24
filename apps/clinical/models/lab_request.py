@@ -16,9 +16,11 @@ User = settings.AUTH_USER_MODEL
 class LabRequest(NoNameCoreModel):
     prefixo = "REQ"
 
-    class Tipo(models.TextChoices):
+    class Type(models.TextChoices):
         LABORATORIO = "LAB", "Laboratório"
         EXAME_MEDICO = "MED", "Exame médico"
+
+    Tipo = Type
 
     paciente = models.ForeignKey(
         Patient,
@@ -48,8 +50,8 @@ class LabRequest(NoNameCoreModel):
 
     tipo = models.CharField(
         max_length=3,
-        choices=Tipo.choices,
-        default=Tipo.LABORATORIO,
+        choices=Type.choices,
+        default=Type.LABORATORIO,
         db_index=True,
     )
 
@@ -98,7 +100,7 @@ class LabRequest(NoNameCoreModel):
     def _esta_editavel(self):
         return self.estado == EstadoResultado.PENDENTE
 
-    def _verificar_estado_terminal(self):
+    def _verify_terminal_state(self):
         if not self.pk:
             return
 
@@ -125,7 +127,7 @@ class LabRequest(NoNameCoreModel):
             if original and original.tipo != self.tipo:
                 raise ValidationError("Tipo/setor da requisição é imutável.")
 
-        self._verificar_estado_terminal()
+        self._verify_terminal_state()
 
         super().save(*args, **kwargs)
 
@@ -133,7 +135,7 @@ class LabRequest(NoNameCoreModel):
     # AGGREGATE ROOT
     # =====================================================
 
-    def adicionar_exame(self, exame: LabExam):
+    def add_exam(self, exame: LabExam):
         if self.tipo != self.Tipo.LABORATORIO:
             raise ValidationError("Esta requisição é de exames médicos e não aceita exames laboratoriais.")
 
@@ -152,7 +154,7 @@ class LabRequest(NoNameCoreModel):
             except IntegrityError as err:
                 raise ValidationError("Exame já adicionado à requisição.") from err
 
-    def adicionar_exame_medico(self, exame_medico):
+    def add_medical_exam(self, exame_medico):
         if self.tipo != self.Tipo.EXAME_MEDICO:
             raise ValidationError("Esta requisição é laboratorial e não aceita exames médicos.")
 
@@ -191,12 +193,12 @@ class LabRequest(NoNameCoreModel):
     # RESULTADO
     # =====================================================
 
-    def obter_resultado(self):
+    def get_result(self):
         from .result import Result
 
         return Result.objects.filter(requisicao=self).first()
 
-    def criar_resultado(self):
+    def create_result(self):
         from .result import Result
 
         return Result.objects.create(
@@ -209,7 +211,7 @@ class LabRequest(NoNameCoreModel):
     # =====================================================
 
     @property
-    def exames_medicos(self):
+    def medical_exams(self):
         """
         Exames médicos associados via RequisicaoItem.
 
@@ -225,7 +227,7 @@ class LabRequest(NoNameCoreModel):
     # SINCRONIZAÇÃO CLÍNICA
     # =====================================================
 
-    def atualizar_status_clinico(self):
+    def update_clinical_status(self):
         # Não recalcula nem altera requisição já finalizada (imutável).
         if self.estado in EstadoResultado.TERMINAIS:
             try:
@@ -313,10 +315,19 @@ class LabRequest(NoNameCoreModel):
             self.save(update_fields=update_fields)
 
     @property
-    def inquilino_do_paciente(self):
+    def patient_tenant(self):
         if self.paciente:
             return getattr(self.paciente, "inquilino", None)
         return None
+
+    _verificar_estado_terminal = _verify_terminal_state
+    adicionar_exame = add_exam
+    adicionar_exame_medico = add_medical_exam
+    obter_resultado = get_result
+    criar_resultado = create_result
+    exames_medicos = medical_exams
+    atualizar_status_clinico = update_clinical_status
+    inquilino_do_paciente = patient_tenant
 
     def __str__(self):
         return f"{self.id_custom} - {self.paciente.nome}"

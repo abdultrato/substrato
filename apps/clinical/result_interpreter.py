@@ -1,4 +1,4 @@
-class InterpretadorResultado:
+class ResultInterpreter:
     @staticmethod
     def interpretar(resultado_item):
         """
@@ -17,3 +17,6 @@ class InterpretadorResultado:
             "tendencia": "",
             "interpretacao": "",
         }
+
+
+InterpretadorResultado = ResultInterpreter

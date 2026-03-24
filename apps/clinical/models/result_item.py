@@ -72,7 +72,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # =====================================================
 
     @staticmethod
-    def _servico_resultado():
+    def _result_service():
         from domain.clinical.servico_resultado import ServicoResultado
 
         return ServicoResultado
@@ -102,12 +102,12 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
             except (InvalidOperation, TypeError) as err:
                 raise ValidationError("Valor do resultado inválido.") from err
 
-            self._servico_resultado().interpretar(self)
+            self._result_service().interpretar(self)
 
         super().save(*args, **kwargs)
 
         if self.resultado:
-            self.resultado.requisicao.atualizar_status_clinico()
+            self.resultado.requisicao.update_clinical_status()
 
     # =====================================================
     # DELETE PROTEGIDO
@@ -139,7 +139,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
                 resultado.validado_por = usuario
                 resultado.data_validacao = timezone.now()
 
-                self._servico_resultado().interpretar(resultado)
+                self._result_service().interpretar(resultado)
 
             resultado.estado = novo_estado
 
@@ -166,7 +166,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # =====================================================
 
     @property
-    def resultado_valor_formatado(self):
+    def formatted_result_value(self):
         """
         Retorna o valor do resultado acompanhado do símbolo clínico.
 
@@ -185,3 +185,6 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
             return f"{self.resultado_valor} {simbolo}"
 
         return str(self.resultado_valor)
+
+    _servico_resultado = _result_service
+    resultado_valor_formatado = formatted_result_value

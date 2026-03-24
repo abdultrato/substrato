@@ -1,7 +1,7 @@
 from django.forms.models import BaseInlineFormSet
 
 
-class ResultadoItemInlineFormSet(BaseInlineFormSet):
+class ResultItemInlineFormSet(BaseInlineFormSet):
     def get_queryset(self):
         qs = super().get_queryset()
 
@@ -10,7 +10,7 @@ class ResultadoItemInlineFormSet(BaseInlineFormSet):
         )
 
     # usado para agrupar no template
-    def itens_por_exame(self):
+    def items_by_exam(self):
         grupos = {}
 
         for form in self.forms:
@@ -19,3 +19,7 @@ class ResultadoItemInlineFormSet(BaseInlineFormSet):
             grupos.setdefault(exame, []).append(form)
 
         return grupos
+
+
+ResultadoItemInlineFormSet = ResultItemInlineFormSet
+itens_por_exame = ResultItemInlineFormSet.items_by_exam
