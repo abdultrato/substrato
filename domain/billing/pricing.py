@@ -47,8 +47,8 @@ def apply_contract_price(base_price, contract_price=None):
 
 
 __all__ = [
+    "apply_contract_price",
     "apply_percentage_discount",
     "apply_percentage_surcharge",
     "calculate_item_price",
-    "apply_contract_price",
 ]

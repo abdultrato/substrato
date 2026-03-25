@@ -1,4 +1,3 @@
-from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -22,6 +21,7 @@ from apps.nursing.models import (
     WardAdmission,
     WardBed,
 )
+from drf_spectacular.utils import extend_schema
 
 from ..filters import (
     NursingEvolutionFilter,

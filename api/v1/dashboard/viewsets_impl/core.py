@@ -10,12 +10,6 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiResponse,
-    OpenApiTypes,
-    extend_schema,
-)
 from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -34,6 +28,12 @@ from apps.payments.models.payment import Payment
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale_item import SaleItem
 from domain.clinical.request_state import RequestState
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    OpenApiTypes,
+    extend_schema,
+)
 
 
 def _aware_or_none(value):

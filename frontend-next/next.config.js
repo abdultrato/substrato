@@ -1,3 +1,4 @@
+const path = require("path")
 const { PHASE_DEVELOPMENT_SERVER } = require("next/constants")
 
 /** @type {(phase: string) => import('next').NextConfig} */
@@ -13,6 +14,9 @@ module.exports = (phase) => ({
   // Keep dev and production build artifacts separate so running `next build`
   // doesn't break an active `next dev` (common when using Docker bind mounts).
   distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next",
+
+  // Pin the tracing root to this app to avoid monorepo lockfile inference warnings.
+  outputFileTracingRoot: path.resolve(__dirname),
 
   async rewrites() {
     const backend =

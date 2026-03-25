@@ -1,4 +1,3 @@
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
 from ..filters import PatientFilter
 from ..serializers import LabRequestSerializer, PatientSerializer
@@ -206,8 +206,8 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         # Enfermagem: procedures + internamentos
         from api.v1.nursing.serializers import (
-            WardAdmissionSerializer,
             ProcedureSerializer,
+            WardAdmissionSerializer,
         )
         from apps.nursing.models.procedure import Procedure
         from apps.nursing.models.ward import WardAdmission

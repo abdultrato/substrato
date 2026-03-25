@@ -21,7 +21,7 @@ class Receipt(models.Model):
         db_index=True,
     )
 
-    number = models.CharField("Número do recibo", 
+    number = models.CharField("Número do recibo",
 
         db_column="number",
 

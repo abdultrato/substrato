@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +11,7 @@ from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
 from domain.clinical.result_state import ResultState
+from drf_spectacular.utils import extend_schema
 from security.permissions.groups import IsAdminOrContabilidade
 
 

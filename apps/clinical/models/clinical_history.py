@@ -4,7 +4,7 @@ from .patient import Patient
 
 
 class ClinicalHistory(models.Model):
-    patient = models.ForeignKey(Patient, 
+    patient = models.ForeignKey(Patient,
         db_column="patient_id",
          on_delete=models.CASCADE)
     description = models.TextField(

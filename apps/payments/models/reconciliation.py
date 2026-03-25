@@ -12,12 +12,12 @@ class Reconciliation(models.Model):
         db_index=True,
     )
 
-    confirmed = models.BooleanField("Confirmado", 
+    confirmed = models.BooleanField("Confirmado",
 
         db_column="confirmed",
 
          default=False, db_index=True)
-    confirmation_date = models.DateTimeField("Data de confirmação", 
+    confirmation_date = models.DateTimeField("Data de confirmação",
         db_column="confirmation_date",
          blank=True, null=True)
 

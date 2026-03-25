@@ -4,7 +4,6 @@ import pytest
 @pytest.mark.django_db
 def test_all_viewsets_have_validated_search_and_ordering_fields():
     from api.v1.routing.rotas import VIEWSET_GROUPS
-
     from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
 
     invalid = {}
@@ -30,10 +29,11 @@ def test_all_viewsets_have_validated_search_and_ordering_fields():
 
 @pytest.mark.django_db
 def test_all_model_viewsets_do_not_raise_on_search_or_invalid_ordering():
-    from api.v1.routing.rotas import VIEWSET_GROUPS
     from rest_framework.filters import OrderingFilter, SearchFilter
     from rest_framework.request import Request
     from rest_framework.test import APIRequestFactory
+
+    from api.v1.routing.rotas import VIEWSET_GROUPS
 
     factory = APIRequestFactory()
     sf = SearchFilter()

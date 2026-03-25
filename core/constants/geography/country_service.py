@@ -19,4 +19,4 @@ def get_country_name(iso_code):
         return None
 
 
-__all__ = ["list_iso_countries", "get_country_name"]
+__all__ = ["get_country_name", "list_iso_countries"]

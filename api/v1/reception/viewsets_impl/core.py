@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -21,6 +20,7 @@ from application.reception.get_workspace import execute as get_workspace_date
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.reception.models.reception_checkin import ReceptionCheckin
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
 from ..filters import ReceptionCheckinFilter
 from ..serializers import (

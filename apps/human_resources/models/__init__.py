@@ -19,8 +19,8 @@ HoraExtra = Overtime
 HorarioTrabalho = WorkSchedule
 
 __all__ = [
-    "AgregadoFamiliar",
     "Absence",
+    "AgregadoFamiliar",
     "Cargo",
     "Dispensa",
     "Employee",

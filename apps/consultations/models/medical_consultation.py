@@ -73,16 +73,16 @@ class MedicalConsultation(NoNameCoreModel):
         db_index=True,
     )
 
-    type = models.CharField("Tipo de consultation", 
+    type = models.CharField("Tipo de consultation",
 
         db_column="type",
 
          max_length=120, db_index=True)
-    description = models.TextField("Descrição", 
+    description = models.TextField("Descrição",
         db_column="description",
          blank=True, default="")
 
-    scheduled_for = models.DateTimeField("Agendada para", 
+    scheduled_for = models.DateTimeField("Agendada para",
 
         db_column="scheduled_for",
 
@@ -96,7 +96,7 @@ class MedicalConsultation(NoNameCoreModel):
         db_index=True,
     )
 
-    price = MoneyField("Preço", 
+    price = MoneyField("Preço",
 
         db_column="price",
 
@@ -124,12 +124,12 @@ class MedicalConsultation(NoNameCoreModel):
         help_text="Marque se a date for feriado mesmo não sendo fim de semana.",
     )
 
-    completed_at = models.DateTimeField("Concluída em", 
+    completed_at = models.DateTimeField("Concluída em",
 
         db_column="completed_at",
 
          null=True, blank=True)
-    canceled_at = models.DateTimeField("Cancelada em", 
+    canceled_at = models.DateTimeField("Cancelada em",
         db_column="canceled_at",
          null=True, blank=True)
 

@@ -23,10 +23,6 @@ equipamento = equipment = __import__(__name__, fromlist=["equipment"]).equipment
 message = message
 
 __all__ = [
-    "credencial",
-    "credential",
-    "equipamento",
-    "equipment",
     "IntegracaoCredencial",
     "IntegracaoDocumento",
     "IntegracaoEquipamento",
@@ -43,10 +39,14 @@ __all__ = [
     "IntegrationOrder",
     "IntegrationOrderItem",
     "IntegrationRouting",
+    "credencial",
+    "credential",
+    "equipamento",
+    "equipment",
     "mapeamento",
     "mapping",
-    "message",
     "mensagem",
+    "message",
     "ordem",
     "order",
     "roteamento",

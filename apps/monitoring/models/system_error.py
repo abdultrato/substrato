@@ -28,20 +28,20 @@ class SystemError(NoNameCoreModel):
         db_index=True,
     )
 
-    method = models.CharField("Método HTTP", 
+    method = models.CharField("Método HTTP",
 
         db_column="method",
 
          max_length=10, db_index=True)
-    path = models.CharField("Rota curta", 
+    path = models.CharField("Rota curta",
         db_column="path",
          max_length=255, db_index=True)
-    full_path = models.TextField("URL completa", 
+    full_path = models.TextField("URL completa",
         db_column="full_path",
          blank=True, default="")
 
     status_code = models.PositiveSmallIntegerField("Status HTTP", default=500, db_index=True)
-    duration_ms = models.PositiveIntegerField("Duração (ms)", 
+    duration_ms = models.PositiveIntegerField("Duração (ms)",
         db_column="duration_ms",
          null=True, blank=True)
 
@@ -62,12 +62,12 @@ class SystemError(NoNameCoreModel):
         default="",
         db_index=True,
     )
-    object_id = models.CharField("Objeto (ID)", 
+    object_id = models.CharField("Objeto (ID)",
         db_column="object_id",
          max_length=80, blank=True, default="", db_index=True)
 
     exception_class = models.CharField("Classe da exceção", max_length=120, blank=True, default="", db_index=True)
-    message = models.CharField("Mensagem", 
+    message = models.CharField("Mensagem",
         db_column="message",
          max_length=500, blank=True, default="")
     traceback = models.TextField("Traceback", blank=True, default="")

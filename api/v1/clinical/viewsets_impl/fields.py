@@ -1,10 +1,10 @@
-from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.lab_exam_field import LabExamField
 from apps.clinical.models.medical_exam import MedicalExamField
+from drf_spectacular.utils import extend_schema
 
 from ..filters import LabExamFieldFilter, MedicalExamFieldFilter
 from ..serializers import LabExamFieldSerializer, MedicalExamFieldSerializer

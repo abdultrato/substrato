@@ -50,7 +50,7 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         db_column="description",
 
         blank=True, default="")
-    technician = models.CharField("Técnico", 
+    technician = models.CharField("Técnico",
         db_column="technician",
          max_length=120, blank=True, default="")
 

@@ -2,12 +2,12 @@ from django.db import models
 
 
 class Transaction(models.Model):
-    external_reference = models.CharField("Referência externa", 
+    external_reference = models.CharField("Referência externa",
         db_column="external_reference",
          max_length=120, db_index=True)
     gateway = models.CharField("Gateway", max_length=80, db_index=True)
     status = models.CharField("Status do gateway", max_length=40, db_index=True)
-    gateway_response = models.TextField("Resposta do gateway", 
+    gateway_response = models.TextField("Resposta do gateway",
         db_column="gateway_response",
          blank=True, default="")
 

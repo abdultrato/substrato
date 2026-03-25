@@ -11,18 +11,18 @@ class LegacyEntry(CoreModel):
 
     prefix = "LAN"
 
-    description = models.TextField("Descrição", 
+    description = models.TextField("Descrição",
 
         db_column="description",
 
          blank=True, default="")
-    date = models.DateField("Data", 
+    date = models.DateField("Data",
         db_column="date",
          default=timezone.localdate, db_index=True)
-    external_reference = models.CharField("Referência externa", 
+    external_reference = models.CharField("Referência externa",
         db_column="external_reference",
          max_length=120, blank=True, default="", db_index=True)
-    confirmed = models.BooleanField("Confirmado", 
+    confirmed = models.BooleanField("Confirmado",
         db_column="confirmed",
          default=False, db_index=True)
 

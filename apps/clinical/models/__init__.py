@@ -1,4 +1,13 @@
-from . import medical_result_file
+from . import (
+    lab_exam as lab_exam,
+    lab_exam_field as lab_exam_field,
+    lab_request as lab_request,
+    lab_request_item as lab_request_item,
+    medical_result_file,
+    patient as patient,
+    result as result,
+    result_item as result_item,
+)
 from .clinical_reference import ClinicalReference
 from .lab_exam import LabExam
 from .lab_exam_field import LabExamField
@@ -9,14 +18,6 @@ from .medical_result_file import MedicalResultFile
 from .patient import Patient
 from .result import Result
 from .result_item import ResultItem
-
-from . import lab_exam as lab_exam
-from . import lab_exam_field as lab_exam_field
-from . import lab_request as lab_request
-from . import lab_request_item as lab_request_item
-from . import patient as patient
-from . import result as result
-from . import result_item as result_item
 
 requisicao_analise = request_analise = lab_request
 requisicao_item = request_item = lab_request_item
@@ -57,11 +58,11 @@ __all__ = [
     "ResultadoItem",
     "ResultadoMedicoArquivo",
     "exam",
+    "exam",
+    "exam_field",
     "exam_field",
     "exame",
     "exame_campo",
-    "exam",
-    "exam_field",
     "lab_exam",
     "lab_exam_field",
     "lab_request",
@@ -69,14 +70,14 @@ __all__ = [
     "medical_result_file",
     "paciente",
     "patient",
-    "requisicao_analise",
-    "requisicao_item",
     "request_analise",
     "request_item",
+    "requisicao_analise",
+    "requisicao_item",
     "result",
+    "result_doctor_file",
+    "result_item",
     "resultado",
     "resultado_item",
     "resultado_medico_arquivo",
-    "result_item",
-    "result_doctor_file",
 ]

@@ -33,10 +33,10 @@ class Procedure(NoNameCoreModel):
         blank=True,
         related_name="procedures_realizados",
     )
-    performed_date = models.DateTimeField("Data de realização", 
+    performed_date = models.DateTimeField("Data de realização",
         db_column="performed_date",
          default=timezone.now, db_index=True)
-    notes = models.TextField("Observações", 
+    notes = models.TextField("Observações",
         db_column="notes",
          blank=True, default="")
     services_subtotal = models.DecimalField(

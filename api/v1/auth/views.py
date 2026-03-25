@@ -10,7 +10,6 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import serializers, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -25,6 +24,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.notifications.models.notification import Notification
 from apps.notifications.services import NotificationService
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from security.permissions.rbac import RBACPermission
 
 User = get_user_model()

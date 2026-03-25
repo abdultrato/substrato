@@ -39,7 +39,7 @@ class Incident(TenantPropagationMixin, NoNameCoreModel):
     description = models.TextField(
         db_column="description",
         )
-    support_contact = models.CharField("Contacto de assistência", 
+    support_contact = models.CharField("Contacto de assistência",
         db_column="support_contact",
          max_length=120, blank=True, default="")
     resolved = models.BooleanField(

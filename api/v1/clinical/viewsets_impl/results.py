@@ -1,7 +1,6 @@
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.result_item import ResultItem
 from domain.clinical.result_state import ResultState
+from drf_spectacular.utils import extend_schema
 
 from ..filters import ResultItemFilter
 from ..serializers import LaboratoryResultItemSerializer, ResultItemSerializer

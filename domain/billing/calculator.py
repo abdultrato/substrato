@@ -46,4 +46,4 @@ def calculate_totals(items, vat_exempt: bool = False, insurance_coverage: Decima
     }
 
 
-__all__ = ["calculate_totals", "VAT_PERCENT"]
+__all__ = ["VAT_PERCENT", "calculate_totals"]

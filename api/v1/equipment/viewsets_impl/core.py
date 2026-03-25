@@ -7,12 +7,12 @@ from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
 
-from ..filters import EquipmentFilter, DailyInspectionFilter, MaintenanceFilter, IncidentFilter
+from ..filters import DailyInspectionFilter, EquipmentFilter, IncidentFilter, MaintenanceFilter
 from ..serializers import (
-    EquipmentSerializer,
     DailyInspectionSerializer,
-    MaintenanceSerializer,
+    EquipmentSerializer,
     IncidentSerializer,
+    MaintenanceSerializer,
 )
 
 
@@ -120,8 +120,8 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "EquipmentViewSet",
     "DailyInspectionViewSet",
-    "MaintenanceViewSet",
+    "EquipmentViewSet",
     "IncidentViewSet",
+    "MaintenanceViewSet",
 ]

@@ -3,7 +3,6 @@
 from .viewsets_impl import (
     VIEWSET_MAP,
     SystemErrorViewSet,
-    SystemErrorViewSet,
 )
 
 __all__ = [

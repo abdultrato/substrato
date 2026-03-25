@@ -123,10 +123,7 @@ class BaseModel(models.Model):
 
             normalized_parts.append(field.name)
             related_model = getattr(field, "related_model", None)
-            if related_model is not None and getattr(field, "is_relation", False):
-                model = related_model
-            else:
-                model = None
+            model = related_model if related_model is not None and getattr(field, "is_relation", False) else None
 
         return prefix + "__".join(normalized_parts)
 

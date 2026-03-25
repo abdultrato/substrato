@@ -12,12 +12,12 @@ Transacao = Transaction
 
 __all__ = [
     "HistoricoPagamento",
+    "Pagamento",
     "Payment",
     "PaymentHistory",
-    "Pagamento",
-    "Reconciliacao",
-    "Recibo",
     "Receipt",
+    "Recibo",
+    "Reconciliacao",
     "Reconciliation",
     "Transacao",
     "Transaction",

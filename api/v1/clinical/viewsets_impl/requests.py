@@ -1,5 +1,4 @@
 from django.http import HttpResponse
-from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -10,6 +9,7 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from domain.clinical.result_state import ResultState
+from drf_spectacular.utils import extend_schema
 
 from ..filters import LabRequestFilter, LabRequestItemFilter
 from ..serializers import (

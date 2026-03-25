@@ -13,10 +13,10 @@ Movimento = LegacyMovement
 SaldoConta = AccountBalance
 
 __all__ = [
-    "ConciliacaoFinanceira",
-    "Conta",
     "Account",
     "AccountBalance",
+    "ConciliacaoFinanceira",
+    "Conta",
     "FinancialReconciliation",
     "Lancamento",
     "LedgerEntry",

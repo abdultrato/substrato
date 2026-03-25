@@ -3,12 +3,8 @@
 from .viewsets_impl import (
     VIEWSET_MAP,
     PaymentViewSet,
-    PaymentViewSet,
-    ReceiptViewSet,
     ReceiptViewSet,
     ReconciliationViewSet,
-    ReconciliationViewSet,
-    TransactionViewSet,
     TransactionViewSet,
 )
 

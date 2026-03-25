@@ -8,8 +8,8 @@ FaturaItem = InvoiceItem
 
 __all__ = [
     "Fatura",
-    "HistoricoFatura",
     "FaturaItem",
+    "HistoricoFatura",
     "Invoice",
     "InvoiceHistory",
     "InvoiceItem",

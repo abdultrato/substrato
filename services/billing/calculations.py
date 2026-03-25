@@ -59,4 +59,4 @@ def calculate_totals(invoice):
     )
 
 
-__all__ = ["calculate_totals", "VAT_PERCENT"]
+__all__ = ["VAT_PERCENT", "calculate_totals"]

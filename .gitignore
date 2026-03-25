@@ -198,6 +198,7 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 # pytest
+tests/tmp*/
 # Coverage
 .coverage/
 # IDE & Editor

@@ -9,7 +9,6 @@ import hashlib
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
@@ -27,6 +26,7 @@ from apps.equipment_integrations.models import (
     IntegrationOrder,
     IntegrationOrderItem,
 )
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
 
 def _sha256_bytes(data: bytes) -> str:

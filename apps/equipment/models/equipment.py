@@ -29,7 +29,7 @@ class Equipment(CoreModel):
         max_length=120,
         db_index=True,
     )
-    acquisition_date = models.DateField("Data de aquisição", 
+    acquisition_date = models.DateField("Data de aquisição",
         db_column="acquisition_date",
          null=True, blank=True)
 
@@ -71,12 +71,12 @@ class Equipment(CoreModel):
         db_column="model",
         max_length=120, blank=True, default="")
 
-    location = models.CharField("Localização", 
+    location = models.CharField("Localização",
 
         db_column="location",
 
          max_length=255, blank=True, default="")
-    responsible = models.CharField("Responsável", 
+    responsible = models.CharField("Responsável",
         db_column="responsible",
          max_length=120, blank=True, default="")
 

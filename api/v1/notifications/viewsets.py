@@ -3,8 +3,6 @@
 from .viewsets_impl import (
     VIEWSET_MAP,
     DeliveryLogViewSet,
-    DeliveryLogViewSet,
-    NotificationViewSet,
     NotificationViewSet,
 )
 
