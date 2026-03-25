@@ -16,8 +16,8 @@ def financial_summary_by_period(start_date, end_date):
         created_at__date__lte=end_date,
         deleted=False,
         status__in=[
-            Invoice.Estado.EMITIDA,
-            Invoice.Estado.PAGA,
+            Invoice.Status.ISSUED,
+            Invoice.Status.PAID,
         ],
     )
 
@@ -63,11 +63,7 @@ def open_invoices():
     return Invoice.objects.filter(
         deleted=False,
         active=True,
-        status=Invoice.Estado.EMITIDA,
+        status=Invoice.Status.ISSUED,
         patient_amount__gt=Decimal("0.00"),
     )
 
-
-resumo_financeiro_periodo = financial_summary_by_period
-faturamento_por_status = billing_by_status
-faturas_em_aberto = open_invoices

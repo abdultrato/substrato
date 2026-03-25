@@ -46,7 +46,3 @@ FILTER_MAP = {
 }
 
 # Backwards-compatible aliases while the rest of the codebase is still migrating.
-ConsultaMedicaFilter = MedicalConsultationFilter
-MedicoFilter = DoctorFilter
-EspecialidadeConsultaFilter = ConsultationSpecialtyFilter
-FeriadoFilter = HolidayFilter

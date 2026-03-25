@@ -18,7 +18,7 @@ class Absence(NoNameCoreModel):
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="faltas",
         db_index=True,
@@ -26,14 +26,14 @@ class Absence(NoNameCoreModel):
 
     date = models.DateField(
 
-        db_column="data",
+        db_column="date",
 
         default=timezone.now, db_index=True)
     reason = models.CharField(
-        db_column="motivo",
+        db_column="reason",
         max_length=255, blank=True, default="")
     justified = models.BooleanField(
-        db_column="justificada",
+        db_column="justified",
         default=False, db_index=True)
 
     class Meta:

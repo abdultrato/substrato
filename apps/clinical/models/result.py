@@ -15,7 +15,7 @@ class Result(NoNameCoreModel):
 
         LabRequest,
 
-        db_column="requisicao_id",
+        db_column="request_id",
         on_delete=models.CASCADE,
         related_name="result",
     )
@@ -24,7 +24,7 @@ class Result(NoNameCoreModel):
 
         User,
 
-        db_column="analista_id",
+        db_column="analyst_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -32,7 +32,7 @@ class Result(NoNameCoreModel):
 
     finalized = models.BooleanField(
 
-        db_column="finalizado",
+        db_column="finalized",
 
         default=False)
 

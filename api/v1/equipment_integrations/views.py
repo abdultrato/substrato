@@ -226,7 +226,7 @@ class EquipmentWorklistView(APIView):
 
         estados = request.query_params.getlist("status")
         if not estados:
-            estados = [IntegrationOrder.Estado.PENDENTE, IntegrationOrder.Estado.EM_EXECUCAO]
+            estados = [IntegrationOrder.Status.PENDING, IntegrationOrder.Status.IN_PROGRESS]
 
         ordens = (
             IntegrationOrder.objects.filter(
@@ -427,7 +427,7 @@ class EquipmentResultsInboxView(APIView):
         msg = IntegrationMessage.create_from_payload(
             equipment=equipment,
             order=order,
-            direction=IntegrationMessage.Direction.ENTRADA,
+            direction=IntegrationMessage.Direction.INBOUND,
             protocol=equipment.protocol,
             message_id=message_id,
             content_type=content_type,
@@ -547,9 +547,9 @@ class EquipmentResultsInboxView(APIView):
             # Atualiza status da order de forma simples:
             # se houver erros, marca ERRO; senão, EXEC/DONE dependendo de completude.
             if errors:
-                order.status = IntegrationOrder.Estado.ERRO
+                order.status = IntegrationOrder.Status.ERROR
                 order.save(update_fields=["status", "updated_at"])
-                msg.status = IntegrationMessage.Estado.ERRO
+                msg.status = IntegrationMessage.Status.ERROR
                 msg.error = "\n".join(errors)[:8000]
             else:
                 # Completa se todos os campos dos exams (LAB) tiverem value preenchido.
@@ -573,16 +573,16 @@ class EquipmentResultsInboxView(APIView):
                     if not completo:
                         break
 
-                order.status = IntegrationOrder.Estado.CONCLUIDA if completo else IntegrationOrder.Estado.EM_EXECUCAO
+                order.status = IntegrationOrder.Status.DONE if completo else IntegrationOrder.Status.IN_PROGRESS
                 order.save(update_fields=["status", "updated_at"])
 
-                msg.status = IntegrationMessage.Estado.PROCESSADA
+                msg.status = IntegrationMessage.Status.PROCESSED
 
             msg.processed_at = timezone.now()
             msg.save(update_fields=["status", "error", "processed_at", "updated_at"])
 
         except ValidationError as e:
-            msg.status = IntegrationMessage.Estado.ERRO
+            msg.status = IntegrationMessage.Status.ERROR
             msg.error = str(e)
             msg.processed_at = timezone.now()
             msg.save(update_fields=["status", "error", "processed_at", "updated_at"])
@@ -601,15 +601,5 @@ class EquipmentResultsInboxView(APIView):
         )
 
 
-IntegracaoDetailSerializer = IntegrationDetailSerializer
-WorklistEquipamentoSerializer = WorklistEquipmentSerializer
-WorklistPacienteSerializer = WorklistPatientSerializer
-WorklistExameItemSerializer = WorklistExamItemSerializer
-WorklistOrdemSerializer = WorklistOrderSerializer
-ResultadosInboxResultadoSerializer = ResultsInboxResultSerializer
-ResultadosInboxDocumentoSerializer = ResultsInboxDocumentSerializer
-ResultadosInboxRequestSerializer = ResultsInboxRequestSerializer
-ResultadosInboxAplicadoSerializer = ResultsInboxAppliedSerializer
-ResultadosInboxResponseSerializer = ResultsInboxResponseSerializer
 EquipamentoWorklistView = EquipmentWorklistView
 EquipamentoResultadosInboxView = EquipmentResultsInboxView

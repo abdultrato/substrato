@@ -5,7 +5,7 @@ from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
 
 
-class EquipamentoFilter(SafeFilterSet):
+class EquipmentFilter(SafeFilterSet):
     class Meta:
         model = Equipment
         fields = [
@@ -28,7 +28,7 @@ class EquipamentoFilter(SafeFilterSet):
         ]
 
 
-class InspecaoDiariaFilter(SafeFilterSet):
+class DailyInspectionFilter(SafeFilterSet):
     class Meta:
         model = DailyInspection
         fields = [
@@ -44,7 +44,7 @@ class InspecaoDiariaFilter(SafeFilterSet):
         ]
 
 
-class ManutencaoFilter(SafeFilterSet):
+class MaintenanceFilter(SafeFilterSet):
     class Meta:
         model = Maintenance
         fields = [
@@ -61,7 +61,7 @@ class ManutencaoFilter(SafeFilterSet):
         ]
 
 
-class OcorrenciaFilter(SafeFilterSet):
+class IncidentFilter(SafeFilterSet):
     class Meta:
         model = Incident
         fields = [
@@ -78,8 +78,11 @@ class OcorrenciaFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "equipment": EquipamentoFilter,
-    "inspecaodiaria": InspecaoDiariaFilter,
-    "manutencao": ManutencaoFilter,
-    "ocorrencia": OcorrenciaFilter,
+    "equipment": EquipmentFilter,
+    "daily_inspection": DailyInspectionFilter,
+    "maintenance": MaintenanceFilter,
+    "incident": IncidentFilter,
+    "inspecaodiaria": DailyInspectionFilter,
+    "manutencao": MaintenanceFilter,
+    "ocorrencia": IncidentFilter,
 }

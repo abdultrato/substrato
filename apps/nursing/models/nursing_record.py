@@ -21,14 +21,14 @@ class NursingRecord(PropagarInquilinoMixin, CoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="registros_enfermagem",
     )
 
     priority = models.CharField(
 
-        db_column="prioridade",
+        db_column="priority",
 
         max_length=3,
         choices=Prioridade.choices,
@@ -38,13 +38,13 @@ class NursingRecord(PropagarInquilinoMixin, CoreModel):
 
     observation = models.TextField(
 
-        db_column="observacao",
+        db_column="observation",
 
         blank=True, default="")
 
     record_date = models.DateTimeField(
 
-        db_column="data_registro",
+        db_column="record_date",
 
         auto_now_add=True, verbose_name="Data do record")
 

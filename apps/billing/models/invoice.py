@@ -14,28 +14,28 @@ from core.models.base import NoNameCoreModel
 class Invoice(NoNameCoreModel):
     prefix = "FAT"
 
-    class Estado(models.TextChoices):
-        RASCUNHO = "RASC", "Rascunho"
-        EMITIDA = "EMIT", "Emitida"
-        PAGA = "PAGA", "Paga"
-        CANCELADA = "CANC", "Cancelada"
+    class Status(models.TextChoices):
+        DRAFT = "RASC", "Rascunho"
+        ISSUED = "EMIT", "Emitida"
+        PAID = "PAGA", "Paga"
+        CANCELED = "CANC", "Cancelada"
 
-    class Origem(models.TextChoices):
-        CLINICO = "CLI", "Clínico"
-        FARMACIA = "FAR", "Farmácia"
-        ENFERMAGEM = "ENF", "Enfermagem"
-        CONSULTA = "CON", "Consulta"
-        CIRURGIA = "CIR", "Cirurgia"
-        MISTA = "MIX", "Mista"
+    class Origin(models.TextChoices):
+        CLINICAL = "CLI", "Clínico"
+        PHARMACY = "FAR", "Farmácia"
+        NURSING = "ENF", "Enfermagem"
+        CONSULTATION = "CON", "Consulta"
+        SURGERY = "CIR", "Cirurgia"
+        MIXED = "MIX", "Mista"
 
     origin = models.CharField(
 
-        db_column="origem",
+        db_column="origin",
 
         verbose_name="Origem",
         max_length=3,
-        choices=Origem.choices,
-        default=Origem.CLINICO,
+        choices=Origin.choices,
+        default=Origin.CLINICAL,
         db_index=True,
     )
 
@@ -43,7 +43,7 @@ class Invoice(NoNameCoreModel):
 
         LabRequest,
 
-        db_column="requisicao_id",
+        db_column="request_id",
         verbose_name="Requisição",
         on_delete=models.CASCADE,
         related_name="invoice",
@@ -52,7 +52,7 @@ class Invoice(NoNameCoreModel):
     )
     sale = models.OneToOneField(
         "farmacia.Sale",
-        db_column="venda_id",
+        db_column="sale_id",
         verbose_name="Venda",
         on_delete=models.PROTECT,
         related_name="invoice",
@@ -61,7 +61,7 @@ class Invoice(NoNameCoreModel):
     )
     procedure = models.OneToOneField(
         "enfermagem.Procedure",
-        db_column="procedimento_id",
+        db_column="procedure_id",
         verbose_name="Procedimento (legado)",
         on_delete=models.PROTECT,
         related_name="invoice",
@@ -79,7 +79,7 @@ class Invoice(NoNameCoreModel):
     )
     consultation = models.OneToOneField(
         "consultas.MedicalConsultation",
-        db_column="consulta_id",
+        db_column="consultation_id",
         verbose_name="Consulta",
         on_delete=models.PROTECT,
         related_name="invoice",
@@ -88,7 +88,7 @@ class Invoice(NoNameCoreModel):
     )
     surgery = models.OneToOneField(
         "cirurgia.Surgery",
-        db_column="cirurgia_id",
+        db_column="surgery_id",
         verbose_name="Cirurgia",
         on_delete=models.PROTECT,
         related_name="invoice",
@@ -100,7 +100,7 @@ class Invoice(NoNameCoreModel):
 
         Patient,
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="faturas",
@@ -110,27 +110,27 @@ class Invoice(NoNameCoreModel):
 
     subtotal = models.DecimalField(verbose_name="Total sem IVA", max_digits=12, decimal_places=2, default=0)
     vat_amount = models.DecimalField(
-        db_column="iva_valor",
+        db_column="vat_amount",
         verbose_name="Total de IVA", max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(verbose_name="Total com IVA", max_digits=12, decimal_places=2, default=0)
 
     insurance_amount = models.DecimalField(
 
-        db_column="valor_seguro",
+        db_column="insurance_amount",
 
         verbose_name="Valor do seguro", max_digits=12, decimal_places=2, default=0)
     patient_amount = models.DecimalField(
-        db_column="valor_paciente",
+        db_column="patient_amount",
         verbose_name="Valor do patient", max_digits=12, decimal_places=2, default=0)
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         verbose_name="Estado",
         max_length=5,
-        choices=Estado.choices,
-        default=Estado.RASCUNHO,
+        choices=Status.choices,
+        default=Status.DRAFT,
         db_index=True,
     )
 
@@ -206,7 +206,7 @@ class Invoice(NoNameCoreModel):
         self.total = total
         self.patient_amount = total - (self.insurance_amount or Decimal("0.00"))
 
-    def persistir_totais(self):
+    def persist_totals(self):
         self.recalculate_totals()
         if not self.pk:
             return
@@ -221,7 +221,7 @@ class Invoice(NoNameCoreModel):
         from apps.payments.models.payment import Payment
 
         return self.pagamentos.filter(
-            status=Payment.Status.CONFIRMADO,
+            status=Payment.Status.CONFIRMED,
             deleted=False,
         ).aggregate(
             total=Coalesce(
@@ -288,16 +288,16 @@ class Invoice(NoNameCoreModel):
         )
 
     def update_payment_status(self, payment=None):
-        if self.status in {self.Estado.RASCUNHO, self.Estado.CANCELADA}:
+        if self.status in {self.Status.DRAFT, self.Status.CANCELED}:
             return
 
         total_paid = self.confirmed_paid_amount() or Decimal("0.00")
         total_invoice = self.total or Decimal("0.00")
         novo_status = (
-            self.Estado.PAGA if total_paid >= total_invoice and total_invoice > Decimal("0.00") else self.Estado.EMITIDA
+            self.Status.PAID if total_paid >= total_invoice and total_invoice > Decimal("0.00") else self.Status.ISSUED
         )
 
-        if novo_status == self.Estado.PAGA and payment is not None:
+        if novo_status == self.Status.PAID and payment is not None:
             self.generate_automatic_receipt(payment)
 
         if self.status != novo_status:
@@ -319,24 +319,24 @@ class Invoice(NoNameCoreModel):
 
     @property
     def source_reference(self):
-        if self.origin == self.Origem.CLINICO:
+        if self.origin == self.Origin.CLINICAL:
             return self.request
-        if self.origin == self.Origem.FARMACIA:
+        if self.origin == self.Origin.PHARMACY:
             return self.sale
-        if self.origin == self.Origem.ENFERMAGEM:
+        if self.origin == self.Origin.NURSING:
             if self.pk and self.procedures.exists():
                 return f"{self.procedures.count()} procedure(s)"
             return self.procedure
-        if self.origin == self.Origem.CONSULTA:
+        if self.origin == self.Origin.CONSULTATION:
             return self.consultation
-        if self.origin == self.Origem.CIRURGIA:
+        if self.origin == self.Origin.SURGERY:
             return self.surgery
-        if self.origin == self.Origem.MISTA:
+        if self.origin == self.Origin.MIXED:
             return None
         return None
 
     def _validate_source(self):
-        if self.origin == self.Origem.MISTA:
+        if self.origin == self.Origin.MIXED:
             refs = []
             if self.request_id:
                 refs.append(self.request)
@@ -372,7 +372,7 @@ class Invoice(NoNameCoreModel):
                 raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
             return
 
-        if self.origin == self.Origem.ENFERMAGEM:
+        if self.origin == self.Origin.NURSING:
             # Enfermagem: pode usar legado (procedure) OU múltiplos (procedures).
             if self.procedure_id and self.pk and self.procedures.exists():
                 raise ValidationError(
@@ -412,11 +412,11 @@ class Invoice(NoNameCoreModel):
         else:
             # Demais origens (mantém regra: exatamente uma referência)
             campos_origin = {
-                self.Origem.CLINICO: "request",
-                self.Origem.FARMACIA: "sale",
-                self.Origem.ENFERMAGEM: "procedure",
-                self.Origem.CONSULTA: "consultation",
-                self.Origem.CIRURGIA: "surgery",
+                self.Origin.CLINICAL: "request",
+                self.Origin.PHARMACY: "sale",
+                self.Origin.NURSING: "procedure",
+                self.Origin.CONSULTATION: "consultation",
+                self.Origin.SURGERY: "surgery",
             }
             campo_esperado = campos_origin[self.origin]
 
@@ -442,23 +442,23 @@ class Invoice(NoNameCoreModel):
                     {"procedures": "Remova os procedures, não correspondem à origin selecionada."}
                 )
 
-            if self.origin == self.Origem.CLINICO and self.request_id:
+            if self.origin == self.Origin.CLINICAL and self.request_id:
                 self.patient = self.request.patient
                 if self.request.tenant_id != self.tenant_id:
                     raise ValidationError({"request": "Requisição e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origin == self.Origem.FARMACIA and self.sale_id:
+        if self.origin == self.Origin.PHARMACY and self.sale_id:
             if getattr(self.sale, "patient_id", None):
                 self.patient = self.sale.patient
             if self.sale.tenant_id != self.tenant_id:
                 raise ValidationError({"sale": "Venda e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origin == self.Origem.CONSULTA and self.consultation_id:
+        if self.origin == self.Origin.CONSULTATION and self.consultation_id:
             self.patient = self.consultation.patient
             if self.consultation.tenant_id != self.tenant_id:
                 raise ValidationError({"consultation": "Consulta e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origin == self.Origem.CIRURGIA and self.surgery_id:
+        if self.origin == self.Origin.SURGERY and self.surgery_id:
             self.patient = self.surgery.patient
             if self.surgery.tenant_id != self.tenant_id:
                 raise ValidationError({"surgery": "Cirurgia e invoice devem pertencer ao mesmo tenant."})
@@ -466,13 +466,13 @@ class Invoice(NoNameCoreModel):
         if self.patient_id and self.patient.tenant_id != self.tenant_id:
             raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
 
-    def sincronizar_itens_da_origin(self):
-        if self.status != self.Estado.RASCUNHO:
+    def sync_items_from_origin(self):
+        if self.status != self.Status.DRAFT:
             raise ValidationError("Somente faturas em rascunho podem sincronizar itens.")
 
-        if self.origin == self.Origem.MISTA:
+        if self.origin == self.Origin.MIXED:
             # Fatura mista não sincroniza itens automaticamente.
-            self.persistir_totais()
+            self.persist_totals()
             return
 
         from apps.billing.models.invoice_items import InvoiceItem
@@ -480,7 +480,7 @@ class Invoice(NoNameCoreModel):
         for item in self.itens.filter(deleted=False):
             item.delete()
 
-        if self.origin == self.Origem.CLINICO:
+        if self.origin == self.Origin.CLINICAL:
             itens_request = self.request.itens.select_related(
                 "exam",
                 "medical_exam",
@@ -502,7 +502,7 @@ class Invoice(NoNameCoreModel):
                         medical_exam=item.medical_exam,
                     )
 
-        elif self.origin == self.Origem.FARMACIA:
+        elif self.origin == self.Origin.PHARMACY:
             itens_sale = self.sale.itens.select_related("product")
             for item in itens_sale:
                 InvoiceItem.objects.create(
@@ -512,7 +512,7 @@ class Invoice(NoNameCoreModel):
                     sale_item=item,
                 )
 
-        elif self.origin == self.Origem.ENFERMAGEM:
+        elif self.origin == self.Origin.NURSING:
             procedures = []
             if self.procedure_id:
                 procedures = [self.procedure]
@@ -543,7 +543,7 @@ class Invoice(NoNameCoreModel):
                         procedure_material=material,
                     )
 
-        elif self.origin == self.Origem.CONSULTA:
+        elif self.origin == self.Origin.CONSULTATION:
             description = f"Consulta: {getattr(self.consultation, 'type', '')}".strip()
             if not description:
                 description = "Consulta"
@@ -557,7 +557,7 @@ class Invoice(NoNameCoreModel):
                 unit_price=getattr(self.consultation, "price", Decimal("0.00")) or Decimal("0.00"),
                 vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
             )
-        elif self.origin == self.Origem.CIRURGIA:
+        elif self.origin == self.Origin.SURGERY:
             description = "Cirurgia"
             nomes = []
             with suppress(Exception):
@@ -582,7 +582,7 @@ class Invoice(NoNameCoreModel):
                 applies_vat=applies_vat,
             )
 
-        self.persistir_totais()
+        self.persist_totals()
         try:
             linhas = [
                 f"Origem: {self.get_origin_display()}",
@@ -602,13 +602,13 @@ class Invoice(NoNameCoreModel):
 
     @transaction.atomic
     def issue(self):
-        if self.status != self.Estado.RASCUNHO:
+        if self.status != self.Status.DRAFT:
             raise ValidationError("Somente faturas em rascunho podem ser emitidas.")
 
         if not self.itens.filter(deleted=False).exists():
             raise ValidationError("Fatura sem itens.")
 
-        if self.origin == self.Origem.ENFERMAGEM:
+        if self.origin == self.Origin.NURSING:
             from apps.pharmacy.models.lot import Lot
 
             procedures = []
@@ -655,8 +655,8 @@ class Invoice(NoNameCoreModel):
             for material in pendentes:
                 material.save(alocar_estoque=True)
 
-        self.persistir_totais()
-        self.status = self.Estado.EMITIDA
+        self.persist_totals()
+        self.status = self.Status.ISSUED
         self.save(update_fields=["status", "subtotal", "vat_amount", "total", "patient_amount"])
         try:
             linhas = [
@@ -682,7 +682,7 @@ class Invoice(NoNameCoreModel):
 
         if self.pk:
             original = Invoice.all_objects.get(pk=self.pk)
-            if original.status != self.Estado.RASCUNHO:
+            if original.status != self.Status.DRAFT:
                 raise ValidationError("Fatura já emitida não pode ser alterada.")
 
     def __str__(self):

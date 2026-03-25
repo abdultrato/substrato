@@ -8,11 +8,11 @@ class TenantFeatureFlag(NoNameCoreModel):
 
     key = models.CharField(
 
-        db_column="chave",
+        db_column="key",
 
         max_length=120, db_index=True)
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

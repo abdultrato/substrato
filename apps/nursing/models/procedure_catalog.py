@@ -20,13 +20,13 @@ class ProcedureCatalog(CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição", blank=True, default="")
 
     default_price = MoneyField(
 
-        db_column="preco_padrao",
+        db_column="default_price",
 
         verbose_name="Preço padrão",
         default=Decimal("0.00"),
@@ -34,7 +34,7 @@ class ProcedureCatalog(CoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -49,7 +49,7 @@ class ProcedureCatalog(CoreModel):
 
     applies_vat_by_default = models.BooleanField(
 
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
 
         verbose_name="Aplicar IVA por padrão",
         default=True,

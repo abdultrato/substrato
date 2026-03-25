@@ -228,12 +228,3 @@ FILTER_MAP = {
 }
 
 # Backwards-compatible aliases while callers are migrated incrementally.
-ExameFilter = LabExamFilter
-ExameMedicoFilter = MedicalExamFilter
-ExameCampoFilter = LabExamFieldFilter
-ExameMedicoCampoFilter = MedicalExamFieldFilter
-PacienteFilter = PatientFilter
-RequisicaoAnaliseFilter = LabRequestFilter
-RequisicaoItemFilter = LabRequestItemFilter
-ResultadoItemFilter = ResultItemFilter
-ResultadoMedicoArquivoFilter = MedicalResultFileFilter

@@ -40,4 +40,3 @@ SERIALIZER_MAP = {
     "error": SystemErrorSerializer,
 }
 
-ErroSistemaSerializer = SystemErrorSerializer

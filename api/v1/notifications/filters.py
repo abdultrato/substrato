@@ -21,5 +21,3 @@ FILTER_MAP = {
     "notification": NotificationFilter,
 }
 
-LogEnvioFilter = DeliveryLogFilter
-NotificacaoFilter = NotificationFilter

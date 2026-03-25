@@ -46,6 +46,3 @@ class HolidayAdmin(CoreAdmin):
     ordering = ("-date", "-created_at")
 
 
-ConsultaMedicaAdmin = MedicalConsultationAdmin
-EspecialidadeConsultaAdmin = ConsultationSpecialtyAdmin
-FeriadoAdmin = HolidayAdmin

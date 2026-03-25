@@ -24,4 +24,3 @@ class PregnancyAdmin(CoreAdmin):
     ordering = ("-created_at", "-id")
 
 
-GestacaoAdmin = PregnancyAdmin

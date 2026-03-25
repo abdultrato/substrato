@@ -13,4 +13,4 @@
  * * `URGENTISSIMO` - Urgentíssimo
  * * `EMERGENCIA` - Emergência
  */
-export type StatusClinicoEnum = 'NAO_URGENTE' | 'NORMAL' | 'ROTINA' | 'POUCO_URGENTE' | 'PRIORITARIO' | 'URGENTE' | 'MUITO_URGENTE' | 'URGENTISSIMO' | 'EMERGENCIA';
+export type ClinicalStatusEnum = 'NAO_URGENTE' | 'NORMAL' | 'ROTINA' | 'POUCO_URGENTE' | 'PRIORITARIO' | 'URGENTE' | 'MUITO_URGENTE' | 'URGENTISSIMO' | 'EMERGENCIA';

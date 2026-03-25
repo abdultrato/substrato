@@ -16,7 +16,7 @@ class IntegrationAnalyteMapping(CoreModel):
 
         "integracoes_equipamentos.IntegrationEquipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="mapeamentos_analitos",
         db_index=True,
@@ -24,7 +24,7 @@ class IntegrationAnalyteMapping(CoreModel):
 
     code = models.CharField(
 
-        db_column="codigo",
+        db_column="code",
 
         max_length=80, db_index=True)
 
@@ -32,7 +32,7 @@ class IntegrationAnalyteMapping(CoreModel):
 
         "clinico.LabExamField",
 
-        db_column="exame_campo_id",
+        db_column="exam_field_id",
         on_delete=models.PROTECT,
         related_name="mapeamentos_integracao",
         db_index=True,
@@ -40,13 +40,13 @@ class IntegrationAnalyteMapping(CoreModel):
 
     unit_override = models.CharField(
 
-        db_column="unidade_override",
+        db_column="unit_override",
 
         max_length=30, blank=True, default="")
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, db_index=True)
 

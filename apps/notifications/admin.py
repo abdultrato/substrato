@@ -47,6 +47,3 @@ class DeliveryLogAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-NotificacaoAdmin = NotificationAdmin
-TemplateNotificacaoAdmin = NotificationTemplateAdmin
-LogEnvioAdmin = DeliveryLogAdmin

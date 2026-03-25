@@ -30,5 +30,3 @@ FILTER_MAP = {
     "procedimentocirurgico": SurgicalProcedureFilter,
 }
 
-CirurgiaFilter = SurgeryFilter
-ProcedimentoCirurgicoFilter = SurgicalProcedureFilter

@@ -49,8 +49,8 @@ class TenantService:
             tenant=tenant,
             plan=free_plan,
             start_date=today,
-            status=TenantSubscription.Status.ATIVA,
-            cycle=TenantSubscription.Ciclo.MENSAL,
+            status=TenantSubscription.Status.ACTIVE,
+            cycle=TenantSubscription.BillingCycle.MONTHLY,
         )
         TenantConfiguration.objects.create(tenant=tenant)
         TenantUsage.objects.create(tenant=tenant)
@@ -58,6 +58,3 @@ class TenantService:
         return tenant
 
 
-ServicoInquilino = TenantService
-TenantService.criar = TenantService.create
-TenantService.TRIAL_DIAS = TenantService.TRIAL_DAYS

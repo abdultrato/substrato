@@ -1,3 +1,3 @@
-class ArmazenamentoS3:
-    def enviar_file(self, file):
+class S3Storage:
+    def upload_file(self, file):
         pass

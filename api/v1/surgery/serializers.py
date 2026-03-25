@@ -89,5 +89,3 @@ SERIALIZER_MAP = {
     "procedimentocirurgico": SurgicalProcedureSerializer,
 }
 
-CirurgiaSerializer = SurgerySerializer
-ProcedimentoCirurgicoSerializer = SurgicalProcedureSerializer

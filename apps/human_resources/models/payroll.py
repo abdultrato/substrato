@@ -21,7 +21,7 @@ class Payroll(NoNameCoreModel):
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="folhas_payment",
         db_index=True,
@@ -29,43 +29,43 @@ class Payroll(NoNameCoreModel):
 
     year = models.PositiveSmallIntegerField(
 
-        db_column="ano",
+        db_column="year",
 
         db_index=True)
     month = models.PositiveSmallIntegerField(
-        db_column="mes",
+        db_column="month",
         db_index=True)
 
     nominal_salary = MoneyField(
 
-        db_column="salario_nominal",
+        db_column="nominal_salary",
 
         default=Decimal("0.00"))
     base_month_hours = models.PositiveSmallIntegerField(
-        db_column="horas_base_mes",
+        db_column="base_month_hours",
         default=176)
     overtime_hour_multiplier = models.DecimalField(
-        db_column="multiplicador_hora_extra",
+        db_column="overtime_hour_multiplier",
         max_digits=4, decimal_places=2, default=Decimal("1.50"))
 
     calculated_overtime_hours = models.DecimalField(
 
-        db_column="horas_extras_apuradas",
+        db_column="calculated_overtime_hours",
 
         max_digits=8, decimal_places=2, default=Decimal("0.00"))
     hourly_value = models.DecimalField(
-        db_column="valor_hora",
+        db_column="hourly_value",
         max_digits=12, decimal_places=4, default=Decimal("0.0000"))
     overtime_value = MoneyField(
-        db_column="valor_horas_extras",
+        db_column="overtime_value",
         default=Decimal("0.00"))
     total_salary = MoneyField(
-        db_column="salario_total",
+        db_column="total_salary",
         default=Decimal("0.00"))
 
     closed = models.BooleanField(
 
-        db_column="fechado",
+        db_column="closed",
 
         default=False, db_index=True)
 
@@ -121,8 +121,10 @@ class Payroll(NoNameCoreModel):
         if self.employee_id:
             if self.nominal_salary is None:
                 # Includes promotions and salary increases in the effective salary.
-                salario_atual = getattr(self.employee, "salario_atual", None)
-                self.nominal_salary = salario_atual if salario_atual is not None else self.employee.nominal_salary
+                current_salary = getattr(self.employee, "current_salary", None)
+                self.nominal_salary = (
+                    current_salary if current_salary is not None else self.employee.nominal_salary
+                )
             if not self.base_month_hours:
                 self.base_month_hours = self.employee.base_month_hours or 176
 
@@ -151,4 +153,3 @@ class Payroll(NoNameCoreModel):
 
 Payroll._apuracao_hours_extras = Payroll._calculate_overtime_hours
 Payroll.recalcular = Payroll.recalculate
-

@@ -40,5 +40,3 @@ __all__ = [
     "NotificationViewSet",
 ]
 
-LogEnvioViewSet = DeliveryLogViewSet
-NotificacaoViewSet = NotificationViewSet

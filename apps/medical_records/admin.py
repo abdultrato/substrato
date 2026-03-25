@@ -62,4 +62,3 @@ class PrescricaoItemAdmin(CoreAdmin):
     autocomplete_fields = ("record", "medication")
 
 
-RegistroProntuarioAdmin = MedicalRecordEntryAdmin

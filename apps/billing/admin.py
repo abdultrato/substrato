@@ -156,7 +156,7 @@ class InvoiceAdmin(CoreAdmin):
     )
 
     inlines = [InvoiceItemInline]
-    actions = ("sincronizar_itens_origin",)
+    actions = ("sync_origin_items",)
     filter_horizontal = ("procedures",)
 
     def source_reference(self, obj):
@@ -171,25 +171,25 @@ class InvoiceAdmin(CoreAdmin):
         super().save_related(request, form, formsets, change)
         invoice = form.instance
 
-        if invoice.status != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Status.DRAFT:
             return
 
         if invoice.itens.filter(deleted=False).exists():
             return
 
         try:
-            invoice.sincronizar_itens_da_origin()
+            invoice.sync_items_from_origin()
         except ValidationError as exc:
             messages.error(request, str(exc))
 
     @admin.action(description="Sincronizar itens com base na origin")
-    def sincronizar_itens_origin(self, request, queryset):
+    def sync_origin_items(self, request, queryset):
         processadas = 0
         erros = 0
 
         for invoice in queryset:
             try:
-                invoice.sincronizar_itens_da_origin()
+                invoice.sync_items_from_origin()
                 processadas += 1
             except ValidationError as exc:
                 erros += 1

@@ -9,7 +9,7 @@ class CodeMixin(models.Model):
     """
 
     custom_id = models.CharField(
-        db_column="id_custom",
+        db_column="custom_id",
         max_length=30,
         unique=True,
         db_index=True,

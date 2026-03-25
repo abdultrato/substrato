@@ -56,8 +56,8 @@ class CreateTenantUseCase:
             tenant=tenant,
             plan=plan_free,
             start_date=hoje,
-            status=TenantSubscription.Status.ATIVA,
-            cycle=TenantSubscription.Ciclo.MENSAL,
+            status=TenantSubscription.Status.ACTIVE,
+            cycle=TenantSubscription.BillingCycle.MONTHLY,
         )
 
         return tenant

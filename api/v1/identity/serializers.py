@@ -64,5 +64,3 @@ SERIALIZER_MAP = {
     "user": UserSerializer,
 }
 
-PerfilProfissionalSerializer = ProfessionalProfileSerializer
-UsuarioSerializer = UserSerializer

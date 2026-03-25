@@ -5,7 +5,7 @@ from apps.payments.models.payment import Payment
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from core.constants.document_types import DocumentType
 from core.constants.gender import Gender
-from core.constants.laboratory.clinical_status import StatusClinico
+from core.constants.laboratory.clinical_status import ClinicalStatus
 from core.constants.provenance import Provenance
 from core.constants.race_origin import RaceOrigin
 
@@ -72,7 +72,7 @@ class CreateReceptionRequestSerializer(serializers.Serializer):
         allow_empty=False,
     )
     clinical_status = serializers.ChoiceField(
-        choices=StatusClinico.choices,
+        choices=ClinicalStatus.choices,
         required=False,
     )
 
@@ -91,7 +91,7 @@ class RegisterReceptionPaymentSerializer(LegacyAliasSerializerMixin, serializers
     )
     method = serializers.ChoiceField(
         choices=Payment.Method.choices,
-        default=Payment.Method.DINHEIRO,
+        default=Payment.Method.CASH,
     )
     external_reference = serializers.CharField(
         max_length=120,
@@ -111,8 +111,8 @@ class RegisterReceptionPaymentSerializer(LegacyAliasSerializerMixin, serializers
     legacy_output_aliases = {"confirmar": "confirm"}
 
     def validate(self, attrs):
-        method = attrs.get("method") or Payment.Method.DINHEIRO
-        if method == Payment.Method.SEGURO_SAUDE:
+        method = attrs.get("method") or Payment.Method.CASH
+        if method == Payment.Method.HEALTH_INSURANCE:
             if not attrs.get("insurer_id"):
                 raise serializers.ValidationError(
                     {"insurer_id": "Informe a insurer para payment via seguro de saúde."}

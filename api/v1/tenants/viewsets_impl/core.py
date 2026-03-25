@@ -166,7 +166,3 @@ __all__ = [
     "TenantViewSet",
 ]
 
-ConfiguracaoInquilinoViewSet = TenantConfigurationViewSet
-InquilinoViewSet = TenantViewSet
-PlanoAssinaturaViewSet = SubscriptionPlanViewSet
-UsoTenantViewSet = TenantUsageViewSet

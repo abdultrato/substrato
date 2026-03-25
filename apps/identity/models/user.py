@@ -24,13 +24,13 @@ class User(AbstractUser, CoreModel):
 
     phone = models.CharField(
 
-        db_column="telefone",
+        db_column="phone",
 
         max_length=20, blank=True, null=True, verbose_name="Telefone")
 
     photo = models.ImageField(
 
-        db_column="foto",
+        db_column="photo",
 
         upload_to="users/fotos/",
         blank=True,

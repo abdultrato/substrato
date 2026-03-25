@@ -97,6 +97,3 @@ FILTER_MAP = {
     "insurer": InsurerFilter,
 }
 
-AutorizacaoProcedimentoFilter = ProcedureAuthorizationFilter
-PlanoCoberturaFilter = CoveragePlanFilter
-SeguradoraFilter = InsurerFilter

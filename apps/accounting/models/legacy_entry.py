@@ -13,17 +13,17 @@ class LegacyEntry(CoreModel):
 
     description = models.TextField("Descrição", 
 
-        db_column="descricao",
+        db_column="description",
 
          blank=True, default="")
     date = models.DateField("Data", 
-        db_column="data",
+        db_column="date",
          default=timezone.localdate, db_index=True)
     external_reference = models.CharField("Referência externa", 
-        db_column="referencia_externa",
+        db_column="external_reference",
          max_length=120, blank=True, default="", db_index=True)
     confirmed = models.BooleanField("Confirmado", 
-        db_column="confirmado",
+        db_column="confirmed",
          default=False, db_index=True)
 
     class Meta:

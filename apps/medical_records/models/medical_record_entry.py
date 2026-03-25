@@ -22,16 +22,16 @@ class MedicalRecordEntry(NoNameCoreModel):
 
     prefix = "PRT"
 
-    class Estado(models.TextChoices):
-        RASCUNHO = "RASCUNHO", "Rascunho"
-        FINALIZADO = "FINALIZADO", "Finalizado"
-        CANCELADO = "CANCELADO", "Cancelado"
+    class Status(models.TextChoices):
+        DRAFT = "RASCUNHO", "Rascunho"
+        FINALIZED = "FINALIZADO", "Finalizado"
+        CANCELED = "CANCELADO", "Cancelado"
 
     patient = models.ForeignKey(
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="registros_prontuario",
@@ -39,7 +39,7 @@ class MedicalRecordEntry(NoNameCoreModel):
     )
     doctor = models.ForeignKey(
         "recursos_humanos.Employee",
-        db_column="medico_id",
+        db_column="doctor_id",
         verbose_name="Médico",
         on_delete=models.SET_NULL,
         null=True,
@@ -60,45 +60,45 @@ class MedicalRecordEntry(NoNameCoreModel):
 
     care_start_at = models.DateTimeField(
 
-        db_column="inicio_atendimento",
+        db_column="care_start_at",
 
         verbose_name="Início do atendimento",
         default=timezone.now,
         db_index=True,
     )
     care_end_at = models.DateTimeField(
-        db_column="fim_atendimento",
+        db_column="care_end_at",
         verbose_name="Fim do atendimento",
         null=True,
         blank=True,
         db_index=True,
     )
     status = models.CharField(
-        db_column="estado",
+        db_column="status",
         verbose_name="Estado",
         max_length=20,
-        choices=Estado.choices,
-        default=Estado.RASCUNHO,
+        choices=Status.choices,
+        default=Status.DRAFT,
         db_index=True,
     )
 
     symptoms = models.TextField(
 
-        db_column="sintomas",
+        db_column="symptoms",
 
         verbose_name="Sintomas", blank=True, default="")
     diagnosis = models.TextField(
-        db_column="diagnostico",
+        db_column="diagnosis",
         verbose_name="Diagnóstico", blank=True, default="")
     prescription = models.TextField(
-        db_column="prescricao",
+        db_column="prescription",
         verbose_name="Observações da prescrição",
         blank=True,
         default="",
         help_text="Texto livre opcional. A prescrição estruturada fica nos itens de prescrição.",
     )
     medical_report = models.TextField(
-        db_column="relatorio_medico",
+        db_column="medical_report",
         verbose_name="Relatório médico", blank=True, default="")
 
     class Meta:

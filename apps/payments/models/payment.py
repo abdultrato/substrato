@@ -17,27 +17,27 @@ class Payment(CoreModel):
     """
 
     class Method(models.TextChoices):
-        DINHEIRO = "DIN", "Dinheiro"
-        CARTAO = "CAR", "Cartão"
-        TRANSFERENCIA = "TRF", "Transferência"
+        CASH = "DIN", "Dinheiro"
+        CARD = "CAR", "Cartão"
+        TRANSFER = "TRF", "Transferência"
         MOBILE_MONEY = "MOB", "Mobile Money"
         POS = "POS", "POS"
-        CHEQUE = "CHQ", "Cheque"
-        SEGURO_SAUDE = "SEG", "Seguro de Saúde"
-        OUTRO = "OUT", "Outro"
+        CHECK = "CHQ", "Cheque"
+        HEALTH_INSURANCE = "SEG", "Seguro de Saúde"
+        OTHER = "OUT", "Outro"
 
     class Status(models.TextChoices):
-        PENDENTE = "PEN", "Pendente"
-        CONFIRMADO = "CON", "Confirmado"
-        FALHOU = "FAL", "Falhou"
-        ESTORNADO = "EST", "Estornado"
-        CANCELADO = "CAN", "Cancelado"
+        PENDING = "PEN", "Pendente"
+        CONFIRMED = "CON", "Confirmado"
+        FAILED = "FAL", "Falhou"
+        REFUNDED = "EST", "Estornado"
+        CANCELED = "CAN", "Cancelado"
 
     invoice = models.ForeignKey(
 
         "faturamento.Invoice",
 
-        db_column="fatura_id",
+        db_column="invoice_id",
         verbose_name="Fatura",
         on_delete=models.PROTECT,
         related_name="pagamentos",
@@ -45,13 +45,13 @@ class Payment(CoreModel):
 
     value = MoneyField(
 
-        db_column="valor",
+        db_column="value",
 
         verbose_name="Valor")
 
     method = models.CharField(
 
-        db_column="metodo",
+        db_column="method",
 
         verbose_name="Método",
         max_length=4,
@@ -62,13 +62,13 @@ class Payment(CoreModel):
         verbose_name="Estado",
         max_length=3,
         choices=Status.choices,
-        default=Status.PENDENTE,
+        default=Status.PENDING,
         db_index=True,
     )
 
     external_reference = models.CharField(
 
-        db_column="referencia_externa",
+        db_column="external_reference",
 
         verbose_name="Referência externa",
         max_length=120,
@@ -80,7 +80,7 @@ class Payment(CoreModel):
 
         "seguradora.Insurer",
 
-        db_column="seguradora_id",
+        db_column="insurer_id",
         verbose_name="Seguradora",
         on_delete=models.PROTECT,
         related_name="pagamentos",
@@ -92,7 +92,7 @@ class Payment(CoreModel):
 
         "seguradora.CoveragePlan",
 
-        db_column="plano_cobertura_id",
+        db_column="coverage_plan_id",
         verbose_name="Plano de cobertura",
         on_delete=models.PROTECT,
         related_name="pagamentos",
@@ -102,7 +102,7 @@ class Payment(CoreModel):
 
     authorization_number = models.CharField(
 
-        db_column="numero_autorizacao",
+        db_column="authorization_number",
 
         verbose_name="Número de autorização",
         max_length=80,
@@ -113,7 +113,7 @@ class Payment(CoreModel):
 
     insurance_date = models.JSONField(
 
-        db_column="dados_seguro",
+        db_column="insurance_date",
 
         verbose_name="Dados do seguro",
         blank=True,
@@ -123,7 +123,7 @@ class Payment(CoreModel):
 
     paid_at = models.DateTimeField(
 
-        db_column="pago_em",
+        db_column="paid_at",
 
         verbose_name="Pago em",
         null=True,
@@ -144,7 +144,7 @@ class Payment(CoreModel):
 
     def clean(self):
         super().clean()
-        if self.method != self.Method.SEGURO_SAUDE:
+        if self.method != self.Method.HEALTH_INSURANCE:
             return
 
         erros = {}
@@ -172,35 +172,35 @@ class Payment(CoreModel):
     # =========================
 
     def confirm(self):
-        if self.status != self.Status.PENDENTE:
+        if self.status != self.Status.PENDING:
             raise ValidationError("Pagamentos pendentes podem ser confirmados.")
 
-        self.status = self.Status.CONFIRMADO
+        self.status = self.Status.CONFIRMED
         if not self.paid_at:
             self.paid_at = timezone.now()
         self.save(update_fields=["status", "paid_at"])
         self._update_invoice(payment=self)
 
-    def falhar(self):
-        if self.status != self.Status.PENDENTE:
+    def fail(self):
+        if self.status != self.Status.PENDING:
             raise ValidationError("Pagamentos pendentes podem falhar.")
 
-        self.status = self.Status.FALHOU
+        self.status = self.Status.FAILED
         self.save(update_fields=["status"])
 
-    def estornar(self):
-        if self.status != self.Status.CONFIRMADO:
+    def refund(self):
+        if self.status != self.Status.CONFIRMED:
             raise ValidationError("Pagamentos confirmados podem ser estornados.")
 
-        self.status = self.Status.ESTORNADO
+        self.status = self.Status.REFUNDED
         self.save(update_fields=["status"])
         self._update_invoice()
 
-    def cancelar(self):
-        if self.status != self.Status.PENDENTE:
+    def cancel(self):
+        if self.status != self.Status.PENDING:
             raise ValidationError("Pagamentos pendentes podem ser cancelados.")
 
-        self.status = self.Status.CANCELADO
+        self.status = self.Status.CANCELED
         self.save(update_fields=["status"])
 
     # =========================
@@ -211,5 +211,3 @@ class Payment(CoreModel):
         if self.invoice_id:
             self.invoice.update_payment_status(payment=payment)
 
-
-Payment._atualizar_invoice = Payment._update_invoice

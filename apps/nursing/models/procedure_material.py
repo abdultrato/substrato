@@ -20,14 +20,14 @@ class ProcedureMaterial(NoNameCoreModel):
 
         "enfermagem.Procedure",
 
-        db_column="procedimento_id",
+        db_column="procedure_id",
         on_delete=models.CASCADE,
         related_name="materiais",
         db_index=True,
     )
     procedure_item = models.ForeignKey(
         "enfermagem.ProcedureItem",
-        db_column="procedimento_item_id",
+        db_column="procedure_item_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -36,14 +36,14 @@ class ProcedureMaterial(NoNameCoreModel):
     )
     product = models.ForeignKey(
         "farmacia.Product",
-        db_column="produto_id",
+        db_column="product_id",
         on_delete=models.PROTECT,
         related_name="consumos_procedure",
         db_index=True,
     )
     lot = models.ForeignKey(
         "farmacia.Lot",
-        db_column="lote_id",
+        db_column="lot_id",
         on_delete=models.PROTECT,
         related_name="consumos_procedure",
         db_index=True,
@@ -51,11 +51,11 @@ class ProcedureMaterial(NoNameCoreModel):
         blank=True,
     )
     quantity = models.PositiveIntegerField(
-        db_column="quantidade",
+        db_column="quantity",
         validators=[MinValueValidator(1)],
     )
     unit_cost = models.DecimalField(
-        db_column="custo_unitario",
+        db_column="unit_cost",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -63,14 +63,14 @@ class ProcedureMaterial(NoNameCoreModel):
     )
     inventory_movement = models.OneToOneField(
         "farmacia.InventoryMovement",
-        db_column="movimento_estoque_id",
+        db_column="inventory_movement_id",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="consumo_procedure",
     )
     observation = models.TextField(
-        db_column="observacao",
+        db_column="observation",
         blank=True, default="")
 
     class Meta:

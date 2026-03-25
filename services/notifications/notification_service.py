@@ -13,5 +13,3 @@ class CommunicationService:
         )
 
 
-ServicoComunicacao = CommunicationService
-CommunicationService.avisar_result_pronto = CommunicationService.notify_result_ready

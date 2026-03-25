@@ -65,8 +65,8 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
     def void(self, request, pk=None):
         invoice = self.get_object()
-        if invoice.status != Invoice.Estado.CANCELADA:
-            invoice.status = Invoice.Estado.CANCELADA
+        if invoice.status != Invoice.Status.CANCELED:
+            invoice.status = Invoice.Status.CANCELED
             invoice.save(update_fields=["status"])
             try:
                 history_lines = [
@@ -88,7 +88,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     def confirm_payment(self, request, pk=None):
         invoice = self.get_object()
         payment = (
-            invoice.pagamentos.filter(status=Payment.Status.PENDENTE, deleted=False)
+            invoice.pagamentos.filter(status=Payment.Status.PENDING, deleted=False)
             .order_by("-created_at")
             .first()
         )

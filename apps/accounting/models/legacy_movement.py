@@ -18,7 +18,7 @@ class LegacyMovement(CoreModel):
 
         "contabilidade.LegacyEntry",
 
-        db_column="lancamento_id",
+        db_column="entry_id",
         verbose_name="Lançamento",
         on_delete=models.CASCADE,
         related_name="movimentos",
@@ -26,7 +26,7 @@ class LegacyMovement(CoreModel):
     )
     account = models.ForeignKey(
         "contabilidade.Account",
-        db_column="conta_id",
+        db_column="account_id",
         verbose_name="Conta",
         on_delete=models.PROTECT,
         related_name="movimentos",
@@ -37,7 +37,7 @@ class LegacyMovement(CoreModel):
 
         "Débito",
 
-        db_column="debito",
+        db_column="debit",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -45,7 +45,7 @@ class LegacyMovement(CoreModel):
     )
     credit = models.DecimalField(
         "Crédito",
-        db_column="credito",
+        db_column="credit",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),

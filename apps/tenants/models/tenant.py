@@ -26,19 +26,19 @@ class Tenant(
 
     identifier = models.SlugField(
 
-        db_column="identificador",
+        db_column="identifier",
 
         max_length=80, unique=True, db_index=True)
     domain = models.CharField(
-        db_column="dominio",
+        db_column="domain",
         max_length=255, blank=True, null=True, db_index=True)
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     commercial_status = models.CharField(
 
-        db_column="status_comercial",
+        db_column="commercial_status",
 
         max_length=10,
         choices=StatusComercial.choices,
@@ -46,10 +46,10 @@ class Tenant(
         db_index=True,
     )
     trial_until = models.DateField(
-        db_column="trial_ate",
+        db_column="trial_until",
         blank=True, null=True)
     blocked_at = models.DateTimeField(
-        db_column="bloqueado_em",
+        db_column="blocked_at",
         blank=True, null=True)
 
     class Meta:

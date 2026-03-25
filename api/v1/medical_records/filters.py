@@ -34,5 +34,3 @@ FILTER_MAP = {
     "prescricaoitem": PrescriptionItemFilter,
 }
 
-RegistroProntuarioFilter = MedicalRecordEntryFilter
-PrescricaoItemFilter = PrescriptionItemFilter

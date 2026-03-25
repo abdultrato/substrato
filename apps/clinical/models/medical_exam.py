@@ -101,7 +101,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
 
     turnaround_hours = models.PositiveIntegerField(
 
-        db_column="trl_horas",
+        db_column="turnaround_hours",
 
         verbose_name="Tempo de response (em hours)",
         default=24,
@@ -110,7 +110,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
 
     price = MoneyField(
 
-        db_column="preco",
+        db_column="price",
 
         verbose_name="Preço do exam médico",
         default=Decimal("0.00"),
@@ -120,7 +120,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -135,7 +135,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
 
     applies_vat_by_default = models.BooleanField(
 
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
 
         verbose_name="Aplicar IVA por padrão",
         default=True,
@@ -216,7 +216,7 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
 
         "clinico.MedicalExam",
 
-        db_column="exame_id",
+        db_column="exam_id",
         on_delete=models.CASCADE,
         related_name="campos",
         verbose_name="Exame médico",
@@ -224,7 +224,7 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         max_length=20,
         choices=MedicalExamResultType.choices,

@@ -1,9 +1,9 @@
-from .core import VIEWSET_MAP, DeliveryLogViewSet, LogEnvioViewSet, NotificacaoViewSet, NotificationViewSet
+from .core import VIEWSET_MAP, DeliveryLogViewSet, DeliveryLogViewSet, NotificationViewSet, NotificationViewSet
 
 __all__ = [
     "VIEWSET_MAP",
     "DeliveryLogViewSet",
-    "LogEnvioViewSet",
-    "NotificacaoViewSet",
+    "DeliveryLogViewSet",
+    "NotificationViewSet",
     "NotificationViewSet",
 ]

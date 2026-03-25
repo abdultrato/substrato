@@ -18,4 +18,3 @@ FILTER_MAP = {
     "gestacao": PregnancyFilter,
 }
 
-GestacaoFilter = PregnancyFilter

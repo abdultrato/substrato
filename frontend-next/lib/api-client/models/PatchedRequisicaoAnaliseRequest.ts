@@ -4,7 +4,7 @@
 /* eslint-disable */
 import type { EstadoResultadoEnum } from './EstadoResultadoEnum';
 import type { RequisicaoAnaliseTipoEnum } from './RequisicaoAnaliseTipoEnum';
-import type { StatusClinicoEnum } from './StatusClinicoEnum';
+import type { ClinicalStatusEnum } from './ClinicalStatusEnum';
 /**
  * Serializer para requisições (por setor).
  *
@@ -22,7 +22,7 @@ export type PatchedRequisicaoAnaliseRequest = {
      */
     tipo?: RequisicaoAnaliseTipoEnum;
     estado?: EstadoResultadoEnum;
-    status_clinico?: StatusClinicoEnum;
+    status_clinico?: ClinicalStatusEnum;
     /**
      * Paciente para o qual a análise foi requisitada
      */

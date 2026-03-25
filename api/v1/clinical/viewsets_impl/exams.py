@@ -134,5 +134,3 @@ class MedicalExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     ordering = ["-created_at"]
 
 
-ExameViewSet = LabExamViewSet
-ExameMedicoViewSet = MedicalExamViewSet

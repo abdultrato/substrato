@@ -26,7 +26,7 @@ class WorkSchedule(NoNameCoreModel):
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="horarios",
         db_index=True,
@@ -34,17 +34,17 @@ class WorkSchedule(NoNameCoreModel):
 
     weekday = models.IntegerField(
 
-        db_column="dia_semana",
+        db_column="weekday",
 
         choices=DiaSemana.choices, db_index=True)
     start_time = models.TimeField(
-        db_column="hora_inicio",
+        db_column="start_time",
         )
     end_time = models.TimeField(
-        db_column="hora_fim",
+        db_column="end_time",
         )
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

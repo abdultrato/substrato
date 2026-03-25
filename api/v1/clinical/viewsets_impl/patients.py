@@ -161,7 +161,7 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             patient_ids = list(qs_pacs.values_list("id", flat=True))
 
         # Prontuário (Cardex)
-        from api.v1.medical_records.serializers import RegistroProntuarioSerializer
+        from api.v1.medical_records.serializers import MedicalRecordEntrySerializer
         from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 
         qs_prontuario = (
@@ -206,8 +206,8 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         # Enfermagem: procedures + internamentos
         from api.v1.nursing.serializers import (
-            InternamentoEnfermariaSerializer,
-            ProcedimentoSerializer,
+            WardAdmissionSerializer,
+            ProcedureSerializer,
         )
         from apps.nursing.models.procedure import Procedure
         from apps.nursing.models.ward import WardAdmission
@@ -235,7 +235,7 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             qs_internamentos = qs_internamentos.filter(tenant=tenant)
 
         # Farmácia: vendas
-        from api.v1.pharmacy.serializers import VendaSerializer
+        from api.v1.pharmacy.serializers import SaleSerializer
         from apps.pharmacy.models.sale import Sale
 
         qs_vendas = (
@@ -280,14 +280,14 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 "document_number": document_number or None,
                 "pacientes_vinculados": len(set(patient_ids)),
             },
-            "cardex": RegistroProntuarioSerializer(qs_prontuario[:limit], many=True).data,
+            "cardex": MedicalRecordEntrySerializer(qs_prontuario[:limit], many=True).data,
             "consultations": MedicalConsultationSerializer(qs_consultations[:limit], many=True).data,
             "requisicoes": LabRequestSerializer(
                 qs_requisicoes[:limit], many=True, context={"request": request}
             ).data,
-            "procedures_enfermagem": ProcedimentoSerializer(qs_procedures[:limit], many=True).data,
-            "internamentos_ward": InternamentoEnfermariaSerializer(qs_internamentos[:limit], many=True).data,
-            "vendas_farmacia": VendaSerializer(qs_vendas[:limit], many=True).data,
+            "procedures_enfermagem": ProcedureSerializer(qs_procedures[:limit], many=True).data,
+            "internamentos_ward": WardAdmissionSerializer(qs_internamentos[:limit], many=True).data,
+            "vendas_farmacia": SaleSerializer(qs_vendas[:limit], many=True).data,
             "faturas": InvoiceSerializer(qs_faturas[:limit], many=True).data,
             "recibos": ReceiptSerializer(qs_recibos[:limit], many=True).data,
         }
@@ -327,4 +327,3 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         return Response(self._montar_historia_clinica(request, patient))
 
 
-PacienteViewSet = PatientViewSet

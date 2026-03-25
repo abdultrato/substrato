@@ -191,8 +191,8 @@ def ensure_assinaturas(n: int, tenants: list[Tenant], planos: list[SubscriptionP
             TenantSubscription.objects.create(
                 tenant=tenant,
                 plan=plan,
-                status=TenantSubscription.Status.ATIVA,
-                cycle=TenantSubscription.Ciclo.MENSAL,
+                status=TenantSubscription.Status.ACTIVE,
+                cycle=TenantSubscription.BillingCycle.MONTHLY,
                 start_date=timezone.localdate() - timedelta(days=10 * idx),
             )
 
@@ -203,8 +203,8 @@ def ensure_assinaturas(n: int, tenants: list[Tenant], planos: list[SubscriptionP
         TenantSubscription.objects.create(
             tenant=tenant,
             plan=plan,
-            status=TenantSubscription.Status.ATIVA,
-            cycle=TenantSubscription.Ciclo.MENSAL,
+            status=TenantSubscription.Status.ACTIVE,
+            cycle=TenantSubscription.BillingCycle.MONTHLY,
             start_date=timezone.localdate() - timedelta(days=idx),
         )
 
@@ -783,7 +783,7 @@ def ensure_invoices(
             request=req,
             defaults={
                 "tenant": req.tenant,
-                "origin": Invoice.Origem.CLINICO,
+                "origin": Invoice.Origin.CLINICAL,
                 "patient": req.patient,
             },
         )
@@ -796,7 +796,7 @@ def ensure_invoices(
             sale=sale,
             defaults={
                 "tenant": sale.tenant,
-                "origin": Invoice.Origem.FARMACIA,
+                "origin": Invoice.Origin.PHARMACY,
             },
         )
 
@@ -807,16 +807,16 @@ def ensure_invoices(
             procedure=proc,
             defaults={
                 "tenant": proc.tenant,
-                "origin": Invoice.Origem.ENFERMAGEM,
+                "origin": Invoice.Origin.NURSING,
                 "patient": proc.patient,
             },
         )
 
     # Sincroniza itens para todas as faturas em rascunho
     for invoice in Invoice.objects.order_by("id")[:n]:
-        if invoice.status == invoice.Estado.RASCUNHO:
+        if invoice.status == invoice.Status.DRAFT:
             try:
-                invoice.sincronizar_itens_da_origin()
+                invoice.sync_items_from_origin()
             except Exception:
                 # Se alguma origin nao estiver pronta (ex.: sale sem itens), segue adiante.
                 continue
@@ -855,7 +855,7 @@ def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
                 external_reference=f"PG-SEED-{idx:06d}",
             )
             # Emite e confirma alguns pagamentos para gerar recibos automaticamente.
-            if idx % 2 == 0 and invoice.status == invoice.Estado.RASCUNHO:
+            if idx % 2 == 0 and invoice.status == invoice.Status.DRAFT:
                 with suppress(Exception):
                     invoice.issue()
             if idx % 3 == 0 and payment.status == payment.Status.PENDENTE:

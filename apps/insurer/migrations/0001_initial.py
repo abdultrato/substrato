@@ -32,18 +32,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -54,27 +54,27 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 ("description", models.TextField(blank=True, null=True)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 ("order", models.PositiveIntegerField(db_index=True, default=1)),
                 (
                     "external_code",
                     models.CharField(
                         blank=True,
-                        db_column="codigo_externo",
+                        db_column="external_code",
                         db_index=True,
                         max_length=60,
                         null=True,
@@ -84,18 +84,18 @@ class Migration(migrations.Migration):
                 (
                     "phone",
                     models.CharField(
-                        blank=True, db_column="telefone", max_length=30, null=True
+                        blank=True, db_column="phone", max_length=30, null=True
                     ),
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -106,7 +106,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -116,7 +116,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -126,7 +126,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -155,18 +155,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -177,26 +177,26 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 ("description", models.TextField(blank=True, null=True)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 ("order", models.PositiveIntegerField(db_index=True, default=1)),
                 (
                     "coverage_percentage",
                     models.DecimalField(
-                        db_column="percentual_cobertura",
+                        db_column="coverage_percentage",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         help_text="Percentual de cobertura (0-100).",
@@ -210,18 +210,18 @@ class Migration(migrations.Migration):
                 (
                     "requires_authorization",
                     models.BooleanField(
-                        db_column="exige_autorizacao", db_index=True, default=False
+                        db_column="requires_authorization", db_index=True, default=False
                     ),
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -232,7 +232,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -242,7 +242,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -252,7 +252,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -262,7 +262,7 @@ class Migration(migrations.Migration):
                 (
                     "insurer",
                     models.ForeignKey(
-                        db_column="seguradora_id",
+                        db_column="insurer_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="planos",
                         to="seguradora.insurer",
@@ -290,18 +290,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -312,22 +312,22 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 ("description", models.TextField(blank=True, null=True)),
                 ("order", models.PositiveIntegerField(db_index=True, default=1)),
                 (
                     "request_id",
                     models.CharField(
-                        db_column="requisicao_id", db_index=True, max_length=60
+                        db_column="request_id", db_index=True, max_length=60
                     ),
                 ),
                 (
@@ -347,7 +347,7 @@ class Migration(migrations.Migration):
                     "authorization_code",
                     models.CharField(
                         blank=True,
-                        db_column="codigo_autorizacao",
+                        db_column="authorization_code",
                         db_index=True,
                         max_length=80,
                         null=True,
@@ -356,14 +356,14 @@ class Migration(migrations.Migration):
                 (
                     "response_date",
                     models.DateTimeField(
-                        blank=True, db_column="data_resposta", null=True
+                        blank=True, db_column="response_date", null=True
                     ),
                 ),
                 (
                     "name",
                     models.CharField(
                         blank=True,
-                        db_column="nome",
+                        db_column="name",
                         db_index=True,
                         max_length=120,
                         null=True,
@@ -371,13 +371,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -388,7 +388,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -398,7 +398,7 @@ class Migration(migrations.Migration):
                 (
                     "plan",
                     models.ForeignKey(
-                        db_column="plano_id",
+                        db_column="plan_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="autorizacoes",
                         to="seguradora.coverageplan",
@@ -407,7 +407,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -417,7 +417,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -446,18 +446,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -468,27 +468,27 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 ("description", models.TextField(blank=True, null=True)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 ("order", models.PositiveIntegerField(db_index=True, default=1)),
                 (
                     "override_percentage",
                     models.DecimalField(
                         blank=True,
-                        db_column="percentual_override",
+                        db_column="override_percentage",
                         decimal_places=2,
                         help_text="Se vazio, usa o percentual do plan global.",
                         max_digits=5,
@@ -501,13 +501,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -518,7 +518,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -528,7 +528,7 @@ class Migration(migrations.Migration):
                 (
                     "global_plan",
                     models.ForeignKey(
-                        db_column="plano_global_id",
+                        db_column="global_plan_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="overrides_por_tenant",
                         to="seguradora.coverageplan",
@@ -537,7 +537,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -547,7 +547,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",

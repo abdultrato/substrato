@@ -61,7 +61,7 @@ def test_reception_flow_billing_payment():
     assert invoice.pk
     assert payment.pk
     assert receipt is not None
-    assert invoice.status in {invoice.Estado.EMITIDA, invoice.Estado.PAGA}
+    assert invoice.status in {invoice.Status.ISSUED, invoice.Status.PAID}
     assert invoice.pagamentos.exists()
     assert invoice.recibos.exists()
     assert checkin.invoice_id == invoice.id

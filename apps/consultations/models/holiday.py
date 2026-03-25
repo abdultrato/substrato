@@ -17,14 +17,14 @@ class Holiday(NoNameCoreModel):
 
     date = models.DateField(
 
-        db_column="data",
+        db_column="date",
 
         db_index=True)
     description = models.CharField(
-        db_column="descricao",
+        db_column="description",
         max_length=255, blank=True, default="")
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

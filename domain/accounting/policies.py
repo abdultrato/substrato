@@ -84,15 +84,3 @@ class LedgerPolicy:
             raise ValidationError("Operação não autorizada para este tenant.")
 
         return True
-
-
-PoliticaLedger = LedgerPolicy
-LedgerPolicy.pode_reverter = staticmethod(LedgerPolicy.can_reverse)
-LedgerPolicy.pode_alterar = staticmethod(LedgerPolicy.can_change)
-LedgerPolicy.pode_deletar = staticmethod(LedgerPolicy.can_delete)
-LedgerPolicy.pode_alterar_type_account = staticmethod(LedgerPolicy.can_change_account_type)
-LedgerPolicy.pode_desativar_account = staticmethod(LedgerPolicy.can_deactivate_account)
-LedgerPolicy.validar_partidas_balanceadas = staticmethod(LedgerPolicy.validate_balanced_entries)
-LedgerPolicy.validar_minimo_linhas = staticmethod(LedgerPolicy.validate_minimum_lines)
-LedgerPolicy.validar_tenant = staticmethod(LedgerPolicy.validate_tenant)
-LedgerPolicy._periodo_closed = staticmethod(LedgerPolicy._is_closed_period)

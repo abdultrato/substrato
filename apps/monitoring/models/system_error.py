@@ -19,7 +19,7 @@ class SystemError(NoNameCoreModel):
 
         User,
 
-        db_column="usuario_id",
+        db_column="user_id",
         verbose_name="Utilizador",
         on_delete=models.SET_NULL,
         null=True,
@@ -30,19 +30,19 @@ class SystemError(NoNameCoreModel):
 
     method = models.CharField("Método HTTP", 
 
-        db_column="metodo",
+        db_column="method",
 
          max_length=10, db_index=True)
     path = models.CharField("Rota curta", 
-        db_column="caminho",
+        db_column="path",
          max_length=255, db_index=True)
     full_path = models.TextField("URL completa", 
-        db_column="path_completo",
+        db_column="full_path",
          blank=True, default="")
 
     status_code = models.PositiveSmallIntegerField("Status HTTP", default=500, db_index=True)
     duration_ms = models.PositiveIntegerField("Duração (ms)", 
-        db_column="duracao_ms",
+        db_column="duration_ms",
          null=True, blank=True)
 
     ip = models.GenericIPAddressField("IP de origin", null=True, blank=True)
@@ -63,12 +63,12 @@ class SystemError(NoNameCoreModel):
         db_index=True,
     )
     object_id = models.CharField("Objeto (ID)", 
-        db_column="objeto_id",
+        db_column="object_id",
          max_length=80, blank=True, default="", db_index=True)
 
     exception_class = models.CharField("Classe da exceção", max_length=120, blank=True, default="", db_index=True)
     message = models.CharField("Mensagem", 
-        db_column="mensagem",
+        db_column="message",
          max_length=500, blank=True, default="")
     traceback = models.TextField("Traceback", blank=True, default="")
     metadata = models.JSONField("Metadados", default=dict, blank=True)

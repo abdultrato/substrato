@@ -293,7 +293,6 @@ class LabExamFieldAdmin(CoreAdmin):
         return "-"
 
     reference.short_description = "Referência"
-    referencia = reference
 
 
 # =========================================================
@@ -685,7 +684,7 @@ class LabRequestAdmin(CoreAdmin):
             # No add form mostramos ambos para permitir escolher o type antes de salvar.
             inline_classes = [RequestLabItemInline, RequestMedicalItemInline]
         else:
-            if obj.type == LabRequest.Tipo.EXAME_MEDICO:
+            if obj.type == LabRequest.Type.MEDICAL_EXAM:
                 inline_classes = [RequestMedicalItemInline]
             else:
                 inline_classes = [RequestLabItemInline]
@@ -822,7 +821,6 @@ class ResultItemInlineAdmin(admin.TabularInline):
         return "-"
 
     exam_name.short_description = "Exame"
-    exam_name = exam_name
 
     # -----------------------------------------------------
     # REFERÊNCIA
@@ -838,7 +836,6 @@ class ResultItemInlineAdmin(admin.TabularInline):
         return campo.referencia or "-"
 
     reference.short_description = "Referência"
-    referencia = reference
 
     # -----------------------------------------------------
     # RESULTADO COLORIDO
@@ -855,7 +852,6 @@ class ResultItemInlineAdmin(admin.TabularInline):
         )
 
     colored_result.short_description = "Resultado"
-    result_colorido = colored_result
 
     # -----------------------------------------------------
     # INTERPRETAÇÃO

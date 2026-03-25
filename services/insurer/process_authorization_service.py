@@ -27,5 +27,3 @@ class ProcessAuthorizationService:
         return "processed"
 
 
-ProcessarAutorizacaoService = ProcessAuthorizationService
-ProcessAuthorizationService.executar = ProcessAuthorizationService.execute

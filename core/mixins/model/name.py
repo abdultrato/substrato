@@ -10,7 +10,7 @@ class NameMixin(models.Model):
     ✔ indexado para busca rápida
     """
 
-    name = models.CharField(db_column="nome", max_length=120, db_index=True)
+    name = models.CharField(db_column="name", max_length=120, db_index=True)
 
     class Meta:
         abstract = True

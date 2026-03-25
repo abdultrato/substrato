@@ -19,7 +19,7 @@ class Account(
 
         "Tipo de account",
 
-        db_column="tipo",
+        db_column="type",
         max_length=3,
         choices=TipoConta.choices,
         default=TipoConta.DESPESA,

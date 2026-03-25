@@ -16,26 +16,26 @@ class NursingPrescription(PropagarInquilinoMixin, CoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="prescricoes_enfermagem",
     )
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição da prescrição")
 
     prescription_date = models.DateTimeField(
 
-        db_column="data_prescricao",
+        db_column="prescription_date",
 
         auto_now_add=True, verbose_name="Data da prescrição")
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, verbose_name="Prescrição active")
 

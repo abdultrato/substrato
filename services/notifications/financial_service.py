@@ -22,7 +22,3 @@ class FinancialService:
             external_reference=reference,
             tenant=getattr(payment, "tenant", None),
         )
-
-
-ServicoFinanceiro = FinancialService
-FinancialService.registrar_receita = FinancialService.register_revenue

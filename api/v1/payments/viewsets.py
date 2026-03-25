@@ -2,24 +2,24 @@
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    PagamentoViewSet,
+    PaymentViewSet,
     PaymentViewSet,
     ReceiptViewSet,
-    ReciboViewSet,
-    ReconciliacaoViewSet,
+    ReceiptViewSet,
     ReconciliationViewSet,
-    TransacaoViewSet,
+    ReconciliationViewSet,
+    TransactionViewSet,
     TransactionViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "PagamentoViewSet",
+    "PaymentViewSet",
     "PaymentViewSet",
     "ReceiptViewSet",
-    "ReciboViewSet",
-    "ReconciliacaoViewSet",
+    "ReceiptViewSet",
     "ReconciliationViewSet",
-    "TransacaoViewSet",
+    "ReconciliationViewSet",
+    "TransactionViewSet",
     "TransactionViewSet",
 ]

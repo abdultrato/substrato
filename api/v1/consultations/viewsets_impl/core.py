@@ -209,7 +209,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         else:
             invoice = Invoice(
                 tenant=consultation.tenant,
-                origin=Invoice.Origem.CONSULTA,
+                origin=Invoice.Origin.CONSULTATION,
                 consultation=consultation,
                 patient=consultation.patient,
             )
@@ -217,11 +217,11 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             invoice.save()
 
         # Keep the invoice draft aligned with the consultation pricing.
-        if invoice.status != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Status.DRAFT:
             raise ValidationError("A invoice vinculada já foi emitida/paga/cancelada.")
 
         # Replace draft items from the current consultation state.
-        invoice.sincronizar_itens_da_origin()
+        invoice.sync_items_from_origin()
 
         if should_issue:
             invoice.issue()
@@ -242,7 +242,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def reschedule(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.status in {MedicalConsultation.Estado.CANCELADA, MedicalConsultation.Estado.CONCLUIDA}:
+        if consultation.status in {MedicalConsultation.Status.CANCELED, MedicalConsultation.Status.COMPLETED}:
             raise ValidationError("Consulta não pode ser remarcada (já finalizada).")
 
         payload = RescheduleConsultationSerializer(data=request.data or {})
@@ -261,14 +261,14 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def cancel(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.status == MedicalConsultation.Estado.CONCLUIDA:
+        if consultation.status == MedicalConsultation.Status.COMPLETED:
             raise ValidationError("Consulta concluída não pode ser cancelada.")
 
         # Keep accepting a payload for future extensions (reason, actor, etc).
         payload = CancelConsultationSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
 
-        consultation.status = MedicalConsultation.Estado.CANCELADA
+        consultation.status = MedicalConsultation.Status.CANCELED
         consultation.canceled_at = timezone.now()
         consultation.save(update_fields=["status", "canceled_at"])
 
@@ -282,10 +282,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def complete(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.status == MedicalConsultation.Estado.CANCELADA:
+        if consultation.status == MedicalConsultation.Status.CANCELED:
             raise ValidationError("Consulta cancelada não pode ser concluída.")
 
-        consultation.status = MedicalConsultation.Estado.CONCLUIDA
+        consultation.status = MedicalConsultation.Status.COMPLETED
         consultation.completed_at = timezone.now()
         consultation.save(update_fields=["status", "completed_at"])
 
@@ -309,7 +309,3 @@ __all__ = [
 ]
 
 # Backwards-compatible aliases while imports are migrated module by module.
-MedicosViewSet = DoctorsViewSet
-EspecialidadeConsultaViewSet = ConsultationSpecialtyViewSet
-FeriadoViewSet = HolidayViewSet
-ConsultaMedicaViewSet = MedicalConsultationViewSet

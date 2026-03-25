@@ -1,9 +1,9 @@
-from .exams import ExameMedicoViewSet, ExameViewSet, LabExamViewSet, MedicalExamViewSet
-from .fields import ExameCampoViewSet, ExameMedicoCampoViewSet, LabExamFieldViewSet, MedicalExamFieldViewSet
-from .medical_results import MedicalResultFileViewSet, ResultadoMedicoArquivoViewSet
-from .patients import PacienteViewSet, PatientViewSet
-from .requests import LabRequestItemViewSet, LabRequestViewSet, RequisicaoAnaliseViewSet, RequisicaoItemViewSet
-from .results import ResultadoItemViewSet, ResultItemViewSet
+from .exams import MedicalExamViewSet, LabExamViewSet, LabExamViewSet, MedicalExamViewSet
+from .fields import LabExamFieldViewSet, MedicalExamFieldViewSet, LabExamFieldViewSet, MedicalExamFieldViewSet
+from .medical_results import MedicalResultFileViewSet, MedicalResultFileViewSet
+from .patients import PatientViewSet, PatientViewSet
+from .requests import LabRequestItemViewSet, LabRequestViewSet, LabRequestViewSet, LabRequestItemViewSet
+from .results import ResultItemViewSet, ResultItemViewSet
 
 VIEWSET_MAP = {
     "exam": LabExamViewSet,
@@ -19,10 +19,10 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "ExameCampoViewSet",
-    "ExameMedicoCampoViewSet",
-    "ExameMedicoViewSet",
-    "ExameViewSet",
+    "LabExamFieldViewSet",
+    "MedicalExamFieldViewSet",
+    "MedicalExamViewSet",
+    "LabExamViewSet",
     "LabExamFieldViewSet",
     "LabExamViewSet",
     "LabRequestItemViewSet",
@@ -30,11 +30,11 @@ __all__ = [
     "MedicalExamFieldViewSet",
     "MedicalExamViewSet",
     "MedicalResultFileViewSet",
-    "PacienteViewSet",
     "PatientViewSet",
-    "RequisicaoAnaliseViewSet",
-    "RequisicaoItemViewSet",
+    "PatientViewSet",
+    "LabRequestViewSet",
+    "LabRequestItemViewSet",
     "ResultItemViewSet",
-    "ResultadoItemViewSet",
-    "ResultadoMedicoArquivoViewSet",
+    "ResultItemViewSet",
+    "MedicalResultFileViewSet",
 ]

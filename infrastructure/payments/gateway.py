@@ -7,13 +7,13 @@ class PaymentGateway:
     (Mobile Money, POS, bancos, gateways online).
     """
 
-    def cobrar(self, value, referencia, **kwargs):
+    def charge(self, value, reference, **kwargs):
         """
-        Realisa uma cobrança no provedor externo.
+        Realiza uma cobrança no provedor externo.
 
         Deve retornar:
         {
-            "sucesso": bool,
+            "success": bool,
             "transaction_id": str,
             "message": str,
         }
@@ -26,12 +26,12 @@ class SimulatedGateway(PaymentGateway):
     Gateway de teste para desenvolvimento.
     """
 
-    def cobrar(self, value, referencia, **kwargs):
+    def charge(self, value, reference, **kwargs):
         value = Decimal(value).quantize(Decimal("0.01"))
 
         return {
-            "sucesso": True,
-            "transaction_id": f"SIM-{referencia}",
+            "success": True,
+            "transaction_id": f"SIM-{reference}",
             "message": f"Pagamento simulado aprovado ({value})",
         }
 
@@ -41,22 +41,16 @@ def process_payment_gateway(payment, gateway: PaymentGateway):
     Processa payment usando gateway externo.
     """
 
-    response = gateway.cobrar(
+    response = gateway.charge(
         value=payment.value,
-        referencia=payment.custom_id,
+        reference=payment.custom_id,
     )
 
-    if response.get("sucesso"):
-        payment.referencia = response.get("transaction_id", "")
-        payment.confirmed = True
-        payment.save(update_fields=["referencia", "confirmed", "updated_at"])
+    if response.get("success"):
+        payment.external_reference = response.get("transaction_id", "") or ""
+        payment.save(update_fields=["external_reference", "updated_at"])
+        payment.confirm()
     else:
-        payment.confirmed = False
-        payment.save(update_fields=["confirmed", "updated_at"])
+        payment.fail()
 
     return response
-
-
-PagamentoGateway = PaymentGateway
-GatewaySimulado = SimulatedGateway
-processar_payment_gateway = process_payment_gateway

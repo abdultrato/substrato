@@ -2,24 +2,24 @@
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    ConsultaMedicaViewSet,
+    MedicalConsultationViewSet,
     ConsultationSpecialtyViewSet,
     DoctorsViewSet,
-    EspecialidadeConsultaViewSet,
-    FeriadoViewSet,
+    ConsultationSpecialtyViewSet,
+    HolidayViewSet,
     HolidayViewSet,
     MedicalConsultationViewSet,
-    MedicosViewSet,
+    DoctorsViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "ConsultaMedicaViewSet",
+    "MedicalConsultationViewSet",
     "ConsultationSpecialtyViewSet",
     "DoctorsViewSet",
-    "EspecialidadeConsultaViewSet",
-    "FeriadoViewSet",
+    "ConsultationSpecialtyViewSet",
+    "HolidayViewSet",
     "HolidayViewSet",
     "MedicalConsultationViewSet",
-    "MedicosViewSet",
+    "DoctorsViewSet",
 ]

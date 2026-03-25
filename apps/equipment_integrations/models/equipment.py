@@ -31,7 +31,7 @@ class IntegrationEquipment(CoreModel):
 
     modality = models.CharField(
 
-        db_column="modalidade",
+        db_column="modality",
 
         max_length=20,
         choices=Modalidade.choices,
@@ -39,7 +39,7 @@ class IntegrationEquipment(CoreModel):
         db_index=True,
     )
     protocol = models.CharField(
-        db_column="protocolo",
+        db_column="protocol",
         max_length=20,
         choices=Protocolo.choices,
         default=Protocolo.HTTP_JSON,
@@ -48,19 +48,19 @@ class IntegrationEquipment(CoreModel):
 
     manufacturer = models.CharField(
 
-        db_column="fabricante",
+        db_column="manufacturer",
 
         max_length=120, blank=True, default="")
     model = models.CharField(
-        db_column="modelo",
+        db_column="model",
         max_length=120, blank=True, default="")
     serial_number = models.CharField(
-        db_column="numero_serie",
+        db_column="serial_number",
         max_length=120, blank=True, default="", db_index=True)
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, db_index=True)
 

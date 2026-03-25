@@ -4,5 +4,3 @@ class AuthorizationService:
         return plan.requires_authorization
 
 
-ServicoAutorizacao = AuthorizationService
-AuthorizationService.necessita_autorizacao = AuthorizationService.requires_authorization

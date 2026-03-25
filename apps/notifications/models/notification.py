@@ -21,7 +21,7 @@ class Notification(models.Model):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -30,46 +30,46 @@ class Notification(models.Model):
 
     recipient = models.CharField(
 
-        db_column="destinatario",
+        db_column="recipient",
 
         max_length=255)
     channel = models.CharField(
-        db_column="canal",
+        db_column="channel",
         max_length=50,
         choices=Channel.choices,
     )
     subject = models.CharField(
-        db_column="assunto",
+        db_column="subject",
         max_length=160, blank=True, default="")
     event_type = models.CharField(
-        db_column="tipo_evento",
+        db_column="event_type",
         max_length=40,
         choices=EventType.choices,
         default=EventType.GENERICA,
     )
     external_reference = models.CharField(
-        db_column="referencia_externa",
+        db_column="external_reference",
         max_length=120, blank=True)
 
     message = models.TextField(
 
-        db_column="mensagem",
+        db_column="message",
 
         )
 
     sent = models.BooleanField(
 
-        db_column="enviada",
+        db_column="sent",
 
         default=False)
     send_error = models.TextField(
-        db_column="erro_envio",
+        db_column="send_error",
         blank=True, default="")
     sent_at = models.DateTimeField(
-        db_column="enviado_em",
+        db_column="sent_at",
         null=True, blank=True)
 
-    created_at = models.DateTimeField(db_column="criado_em", auto_now_add=True)
+    created_at = models.DateTimeField(db_column="created_at", auto_now_add=True)
 
     class Meta:
         db_table = "notificacoes_notificacao"

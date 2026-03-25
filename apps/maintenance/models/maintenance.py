@@ -17,19 +17,17 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
     prefix = "MNT"
 
     class Type(models.TextChoices):
-        DIARIA = "DIARIA", "Diária"
-        SEMANAL = "SEMANAL", "Semanal"
-        MENSAL = "MENSAL", "Mensal"
-        SEMESTRAL = "SEMESTRAL", "Semestral"
-        ANUAL = "ANUAL", "Anual"
-
-    Tipo = Type
+        DAILY = "DIARIA", "Diária"
+        WEEKLY = "SEMANAL", "Semanal"
+        MONTHLY = "MENSAL", "Mensal"
+        SEMIANNUAL = "SEMESTRAL", "Semestral"
+        YEARLY = "ANUAL", "Anual"
 
     equipment = models.ForeignKey(
 
         "equipamentos.Equipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="manutencoes",
         db_index=True,
@@ -37,23 +35,23 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
-        max_length=20, choices=Type.choices, default=Type.MENSAL, db_index=True)
+        max_length=20, choices=Type.choices, default=Type.MONTHLY, db_index=True)
     scheduled_date = models.DateField(
-        db_column="data_programada",
+        db_column="scheduled_date",
         default=timezone.localdate, db_index=True)
     performed_date = models.DateField(
-        db_column="data_realizada",
+        db_column="performed_date",
         null=True, blank=True, db_index=True)
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         blank=True, default="")
     technician = models.CharField("Técnico", 
-        db_column="tecnico",
+        db_column="technician",
          max_length=120, blank=True, default="")
 
     class Meta:
@@ -71,7 +69,7 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
         return f"Manutencao {self.equipment} - {self.scheduled_date}"
 
     @property
-    def executada(self) -> bool:
+    def performed(self) -> bool:
         return bool(self.performed_date)
 
     def clean(self):

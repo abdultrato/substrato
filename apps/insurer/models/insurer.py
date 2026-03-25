@@ -14,7 +14,7 @@ class Insurer(DescricaoMixin, OrdemMixin, CoreModel):
 
     external_code = models.CharField(
 
-        db_column="codigo_externo",
+        db_column="external_code",
 
         max_length=60,
         blank=True,
@@ -23,17 +23,17 @@ class Insurer(DescricaoMixin, OrdemMixin, CoreModel):
     )
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(
-        db_column="telefone",
+        db_column="phone",
         max_length=30, blank=True, null=True)
 
     # `active` e um atributo de negocio (diferente do soft delete)
     active = models.BooleanField(
-        db_column="ativa",
+        db_column="active",
         default=True, db_index=True)
 
     # Compatibilidade com filtros/viewsets gerados
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

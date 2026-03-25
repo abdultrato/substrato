@@ -180,7 +180,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         faturas_pagas = qs_faturas.filter(
             created_at__gte=inicio,
             created_at__lte=fim,
-            status=Invoice.Estado.PAGA,
+            status=Invoice.Status.PAID,
         ).count()
 
         value_faturado = (
@@ -188,7 +188,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
                 created_at__gte=inicio,
                 created_at__lte=fim,
             )
-            .exclude(status=Invoice.Estado.CANCELADA)
+            .exclude(status=Invoice.Status.CANCELED)
             .aggregate(
                 total=Coalesce(
                     Sum(
@@ -201,7 +201,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         )
 
         confirmed_paid_value = qs_pagamentos.filter(
-            status=Payment.Status.CONFIRMADO,
+            status=Payment.Status.CONFIRMED,
             paid_at__isnull=False,
             paid_at__gte=inicio,
             paid_at__lte=fim,

@@ -7,7 +7,7 @@ from django.db import models
 class AccountBalance(models.Model):
     account = models.OneToOneField(
         "contabilidade.Account",
-        db_column="conta_id",
+        db_column="account_id",
         on_delete=models.CASCADE,
         related_name="saldo",
         db_index=True,
@@ -15,7 +15,7 @@ class AccountBalance(models.Model):
 
     current_balance = models.DecimalField(
 
-        db_column="saldo_atual",
+        db_column="current_balance",
 
         max_digits=18,
         decimal_places=2,
@@ -23,7 +23,7 @@ class AccountBalance(models.Model):
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    updated_at = models.DateTimeField(db_column="atualizado_em", auto_now=True, db_index=True)
+    updated_at = models.DateTimeField(db_column="updated_at", auto_now=True, db_index=True)
 
     class Meta:
         db_table = "contabilidade_saldoconta"

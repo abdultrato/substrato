@@ -24,7 +24,7 @@ class PaymentHistory(CoreModel):
 
         "pagamentos.Payment",
 
-        db_column="pagamento_id",
+        db_column="payment_id",
         on_delete=models.CASCADE,
         related_name="historico",
         verbose_name="Pagamento",
@@ -32,7 +32,7 @@ class PaymentHistory(CoreModel):
 
     event_type = models.CharField(
 
-        db_column="tipo_evento",
+        db_column="event_type",
 
         verbose_name="Tipo de evento",
         max_length=15,
@@ -42,7 +42,7 @@ class PaymentHistory(CoreModel):
 
     value = MoneyField(
 
-        db_column="valor",
+        db_column="value",
 
         verbose_name="Valor",
         null=True,
@@ -51,7 +51,7 @@ class PaymentHistory(CoreModel):
 
     description = models.CharField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição",
         max_length=255,
@@ -60,7 +60,7 @@ class PaymentHistory(CoreModel):
 
     external_reference = models.CharField(
 
-        db_column="referencia_externa",
+        db_column="external_reference",
 
         verbose_name="Referência externa",
         max_length=120,

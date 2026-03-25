@@ -17,5 +17,3 @@ class SaleService:
         )
 
 
-VendaService = SaleService
-SaleService.adicionar_item = SaleService.add_item

@@ -32,6 +32,3 @@ class RequestService:
         return request
 
 
-ServicoRequisicao = RequestService
-RequestService.criar_request = RequestService.create_request
-RequestService.finalizar_request = RequestService.finalize_request

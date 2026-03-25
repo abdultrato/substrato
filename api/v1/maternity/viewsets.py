@@ -2,12 +2,12 @@
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    GestacaoViewSet,
+    PregnancyViewSet,
     PregnancyViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "GestacaoViewSet",
+    "PregnancyViewSet",
     "PregnancyViewSet",
 ]

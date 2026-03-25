@@ -62,12 +62,3 @@ class LedgerEntryRules:
 
         if total_debit != total_credit:
             raise UnbalancedEntriesError(f"Débitos ({total_debit}) diferem de créditos ({total_credit}).")
-
-
-LinhaDominio = DomainLine
-RegrasLancamento = LedgerEntryRules
-LedgerEntryRules.validar = staticmethod(LedgerEntryRules.validate)
-LedgerEntryRules._validar_minimo_linhas = staticmethod(LedgerEntryRules._validate_minimum_lines)
-LedgerEntryRules._validar_contas_ativas = staticmethod(LedgerEntryRules._validate_active_accounts)
-LedgerEntryRules._validar_valores_positivos = staticmethod(LedgerEntryRules._validate_positive_values)
-LedgerEntryRules._validar_balanceamento = staticmethod(LedgerEntryRules._validate_balance)

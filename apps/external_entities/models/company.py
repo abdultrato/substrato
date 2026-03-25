@@ -21,7 +21,7 @@ class Company(CoreModel):
 
     headquarters_address = models.CharField(
 
-        db_column="endereco_sede",
+        db_column="headquarters_address",
 
         verbose_name="Local / Sede",
         max_length=255,
@@ -31,7 +31,7 @@ class Company(CoreModel):
 
     contacts = models.CharField(
 
-        db_column="contactos",
+        db_column="contacts",
 
         verbose_name="Contactos",
         max_length=255,
@@ -48,7 +48,7 @@ class Company(CoreModel):
 
     phone1 = models.CharField(
 
-        db_column="telefone1",
+        db_column="phone1",
 
         verbose_name="Telefone",
         max_length=30,
@@ -58,7 +58,7 @@ class Company(CoreModel):
 
     phone2 = models.CharField(
 
-        db_column="telefone2",
+        db_column="phone2",
 
         verbose_name="Telefone (alternativo)",
         max_length=30,
@@ -75,7 +75,7 @@ class Company(CoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         verbose_name="Ativo",
         default=True,
@@ -84,7 +84,7 @@ class Company(CoreModel):
 
     notes = models.TextField(
 
-        db_column="observacoes",
+        db_column="notes",
 
         verbose_name="Observações",
         blank=True,

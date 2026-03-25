@@ -75,5 +75,3 @@ class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     ordering = ["-created_at"]
 
 
-ExameCampoViewSet = LabExamFieldViewSet
-ExameMedicoCampoViewSet = MedicalExamFieldViewSet

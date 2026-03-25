@@ -58,7 +58,7 @@ def _invoice_with_exam(tenant, patient, exam):
         tenant=tenant,
         patient=patient,
         request=req,
-        origin=Invoice.Origem.CLINICO,
+        origin=Invoice.Origin.CLINICAL,
     )
     item = InvoiceItem.objects.create(
         tenant=tenant,
@@ -68,7 +68,7 @@ def _invoice_with_exam(tenant, patient, exam):
     )
     item._preencher_de_referencia()
     item.save(update_fields=["description", "unit_price", "quantity"])
-    fat.persistir_totais()
+    fat.persist_totals()
     return fat
 
 
@@ -80,14 +80,14 @@ def test_payment_confirm_generates_receipt():
     invoice = _invoice_with_exam(tenant, patient, exam)
 
     # Emite invoice para permitir atualização de status/payment
-    invoice.status = Invoice.Estado.EMITIDA
+    invoice.status = Invoice.Status.ISSUED
     invoice.save(update_fields=["status"])
 
     payment = Payment.objects.create(
         tenant=tenant,
         invoice=invoice,
         value=invoice.total,
-        method=Payment.Method.DINHEIRO,
+        method=Payment.Method.CASH,
     )
 
     payment.confirm()
@@ -97,11 +97,11 @@ def test_payment_confirm_generates_receipt():
     invoice.refresh_from_db()
     recibo = Receipt.objects.filter(payment=payment).first()
 
-    assert payment.status == Payment.Status.CONFIRMADO
+    assert payment.status == Payment.Status.CONFIRMED
     assert payment.paid_at is not None
     assert recibo is not None
     assert recibo.invoice == invoice
-    assert invoice.status in {Invoice.Estado.EMITIDA, Invoice.Estado.PAGA}
+    assert invoice.status in {Invoice.Status.ISSUED, Invoice.Status.PAID}
 
 
 @pytest.mark.django_db
@@ -115,15 +115,15 @@ def test_payment_refund_requires_confirmed_status():
         tenant=tenant,
         invoice=invoice,
         value=invoice.total,
-        method=Payment.Method.DINHEIRO,
+        method=Payment.Method.CASH,
     )
 
     with pytest.raises(ValidationError):
-        payment.estornar()
+        payment.refund()
 
     payment.confirm()
-    payment.estornar()
-    assert payment.status == Payment.Status.ESTORNADO
+    payment.refund()
+    assert payment.status == Payment.Status.REFUNDED
 
 
 @pytest.mark.django_db
@@ -138,7 +138,7 @@ def test_insurance_payment_requires_insurer_and_authorization():
         name="Pagamento Seguro",
         invoice=invoice,
         value=invoice.total,
-        method=Payment.Method.SEGURO_SAUDE,
+        method=Payment.Method.HEALTH_INSURANCE,
     )
 
     with pytest.raises(ValidationError):
@@ -166,11 +166,3 @@ def test_transaction_and_reconciliation():
     assert rec.confirmed is True
     assert rec.confirmation_date is not None
 
-
-_patient = _patient
-_exam = _exam
-_invoice_com_exam = _invoice_with_exam
-test_payment_confirma_gera_recibo = test_payment_confirm_generates_receipt
-test_payment_estorno_exige_confirmed = test_payment_refund_requires_confirmed_status
-test_payment_seguro_exige_insurer_e_autorizacao = test_insurance_payment_requires_insurer_and_authorization
-test_transaction_e_reconciliacao = test_transaction_and_reconciliation

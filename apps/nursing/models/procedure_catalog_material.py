@@ -21,7 +21,7 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
 
         "enfermagem.ProcedureCatalog",
 
-        db_column="catalogo_id",
+        db_column="catalog_id",
         on_delete=models.CASCADE,
         related_name="materiais_padrao",
         db_index=True,
@@ -31,7 +31,7 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
 
         "farmacia.Product",
 
-        db_column="produto_id",
+        db_column="product_id",
         on_delete=models.PROTECT,
         related_name="materiais_padrao_procedure",
         db_index=True,
@@ -39,7 +39,7 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
 
     default_quantity = models.DecimalField(
 
-        db_column="quantidade_padrao",
+        db_column="default_quantity",
 
         max_digits=10,
         decimal_places=2,
@@ -49,14 +49,14 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
 
     default_unit_cost = MoneyField(
 
-        db_column="custo_unitario_padrao",
+        db_column="default_unit_cost",
 
         default=Decimal("0.00"),
     )
 
     observation = models.TextField(
 
-        db_column="observacao",
+        db_column="observation",
 
         blank=True, default="")
 

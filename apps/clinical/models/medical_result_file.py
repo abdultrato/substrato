@@ -100,7 +100,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
         Result,
 
-        db_column="resultado_id",
+        db_column="result_id",
         on_delete=models.CASCADE,
         related_name="arquivos_medicos",
     )
@@ -109,7 +109,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
         LabRequestItem,
 
-        db_column="requisicao_item_id",
+        db_column="request_item_id",
         on_delete=models.SET_NULL,
         related_name="arquivos_medicos",
         null=True,
@@ -120,14 +120,14 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
         MedicalExam,
 
-        db_column="exame_medico_id",
+        db_column="medical_exam_id",
         on_delete=models.PROTECT,
         related_name="arquivos",
     )
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         max_length=20,
         choices=MedicalExamResultType.choices,
@@ -137,7 +137,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
     description = models.CharField(
 
-        db_column="descricao",
+        db_column="description",
 
         max_length=255,
         blank=True,
@@ -146,7 +146,7 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
     file = models.FileField(
 
-        db_column="arquivo",
+        db_column="file",
 
         upload_to=_medical_result_upload_to,
         verbose_name="Arquivo (PDF/Imagem/DICOM)",
@@ -183,11 +183,3 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
 
     def __str__(self):
         return f"{self.medical_exam.name or 'exam médico'} · {self.type}"
-
-
-_resultado_medico_upload_to = _medical_result_upload_to
-_result_doctor_upload_to = _medical_result_upload_to
-_validar_imagem = _validate_image
-_validar_pdf = _validate_pdf
-validar_arquivo_medico_por_tipo = validate_medical_file_for_type
-validar_file_doctor_por_type = validate_medical_file_for_type

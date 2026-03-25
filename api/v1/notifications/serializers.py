@@ -21,5 +21,3 @@ SERIALIZER_MAP = {
     "notification": NotificationSerializer,
 }
 
-LogEnvioSerializer = DeliveryLogSerializer
-NotificacaoSerializer = NotificationSerializer

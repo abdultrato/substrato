@@ -12,43 +12,43 @@ class Equipment(CoreModel):
 
     prefix = "EQP"
 
-    class EstadoAquisicao(models.TextChoices):
-        NOVO = "NOVO", "Novo"
-        USADO = "USADO", "Usado"
+    class AcquisitionStatus(models.TextChoices):
+        NEW = "NOVO", "Novo"
+        USED = "USADO", "Usado"
 
-    class EstadoOperacional(models.TextChoices):
-        FUNCIONANDO = "FUNCIONANDO", "A funcionar"
-        AVARIADO = "AVARIADO", "Avariado"
-        DESLIGADO = "DESLIGADO", "Desligado"
+    class OperationalStatus(models.TextChoices):
+        WORKING = "FUNCIONANDO", "A funcionar"
+        BROKEN = "AVARIADO", "Avariado"
+        OFFLINE = "DESLIGADO", "Desligado"
 
     serial_number = models.CharField(
 
         "Número de série",
 
-        db_column="numero_serie",
+        db_column="serial_number",
         max_length=120,
         db_index=True,
     )
     acquisition_date = models.DateField("Data de aquisição", 
-        db_column="data_aquisicao",
+        db_column="acquisition_date",
          null=True, blank=True)
 
     acquisition_status = models.CharField(
 
         "Estado na aquisição",
 
-        db_column="estado_aquisicao",
+        db_column="acquisition_status",
         max_length=20,
-        choices=EstadoAquisicao.choices,
-        default=EstadoAquisicao.NOVO,
+        choices=AcquisitionStatus.choices,
+        default=AcquisitionStatus.NEW,
         db_index=True,
     )
     initial_operational_status = models.CharField(
         "Estado operacional inicial",
-        db_column="estado_operacional_inicial",
+        db_column="initial_operational_status",
         max_length=20,
-        choices=EstadoOperacional.choices,
-        default=EstadoOperacional.FUNCIONANDO,
+        choices=OperationalStatus.choices,
+        default=OperationalStatus.WORKING,
         db_index=True,
     )
 
@@ -56,7 +56,7 @@ class Equipment(CoreModel):
 
         "Tipo de avaria inicial",
 
-        db_column="tipo_avaria_inicial",
+        db_column="initial_failure_type",
         max_length=120,
         blank=True,
         default="",
@@ -64,25 +64,25 @@ class Equipment(CoreModel):
 
     manufacturer = models.CharField(
 
-        db_column="fabricante",
+        db_column="manufacturer",
 
         max_length=120, blank=True, default="")
     model = models.CharField(
-        db_column="modelo",
+        db_column="model",
         max_length=120, blank=True, default="")
 
     location = models.CharField("Localização", 
 
-        db_column="localizacao",
+        db_column="location",
 
          max_length=255, blank=True, default="")
     responsible = models.CharField("Responsável", 
-        db_column="responsavel",
+        db_column="responsible",
          max_length=120, blank=True, default="")
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, db_index=True)
 
@@ -106,11 +106,11 @@ class Equipment(CoreModel):
     def __str__(self) -> str:
         return self.name or f"Equipamento {self.pk}"
 
-    def ultima_inspecao(self):
+    def last_inspection(self):
         if not self.pk:
             return None
-        if hasattr(self, "_ultima_inspecao_cache"):
-            return self._ultima_inspecao_cache
+        if hasattr(self, "_last_inspection_cache"):
+            return self._last_inspection_cache
         from apps.inspections.models.daily_inspection import DailyInspection
 
         ultima = (
@@ -118,25 +118,25 @@ class Equipment(CoreModel):
             .order_by("-date", "-created_at")
             .first()
         )
-        self._ultima_inspecao_cache = ultima
+        self._last_inspection_cache = ultima
         return ultima
 
     @property
-    def status_atual(self) -> str:
+    def current_status(self) -> str:
         """
         Estado operacional atual calculado a partir da última inspeção.
         """
-        ultima = self.ultima_inspecao()
+        ultima = self.last_inspection()
         if ultima and ultima.operation_status:
             return ultima.operation_status
         return self.initial_operational_status
 
     @property
-    def status_atual_label(self) -> str:
-        value = self.status_atual
+    def current_status_label(self) -> str:
+        value = self.current_status
         if not value:
             return ""
         try:
-            return self.EstadoOperacional(value).label
+            return self.OperationalStatus(value).label
         except Exception:
             return str(value)

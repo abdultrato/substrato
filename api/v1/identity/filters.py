@@ -41,5 +41,3 @@ FILTER_MAP = {
     "user": UserFilter,
 }
 
-PerfilProfissionalFilter = ProfessionalProfileFilter
-UsuarioFilter = UserFilter

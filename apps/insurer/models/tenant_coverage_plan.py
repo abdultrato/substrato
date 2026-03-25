@@ -22,14 +22,14 @@ class TenantCoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
 
         "seguradora.CoveragePlan",
 
-        db_column="plano_global_id",
+        db_column="global_plan_id",
         on_delete=models.CASCADE,
         related_name="overrides_por_tenant",
     )
 
     override_percentage = models.DecimalField(
 
-        db_column="percentual_override",
+        db_column="override_percentage",
 
         max_digits=5,
         decimal_places=2,
@@ -44,7 +44,7 @@ class TenantCoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
 
     # Compatibilidade com servicos/filters gerados
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

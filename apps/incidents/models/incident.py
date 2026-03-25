@@ -17,35 +17,33 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
     prefix = "OCR"
 
     class Type(models.TextChoices):
-        AVARIA = "AVARIA", "Avaria"
-        INCIDENTE = "INCIDENTE", "Incidente"
-        OUTRO = "OUTRO", "Outro"
-
-    Tipo = Type
+        BREAKDOWN = "AVARIA", "Avaria"
+        INCIDENT = "INCIDENTE", "Incidente"
+        OTHER = "OUTRO", "Outro"
 
     equipment = models.ForeignKey(
 
         "equipamentos.Equipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="ocorrencias",
         db_index=True,
     )
     date = models.DateTimeField(
-        db_column="data",
+        db_column="date",
         default=timezone.now, db_index=True)
     type = models.CharField(
-        db_column="tipo",
-        max_length=20, choices=Type.choices, default=Type.AVARIA, db_index=True)
+        db_column="type",
+        max_length=20, choices=Type.choices, default=Type.BREAKDOWN, db_index=True)
     description = models.TextField(
-        db_column="descricao",
+        db_column="description",
         )
     support_contact = models.CharField("Contacto de assistência", 
-        db_column="contacto_assistencia",
+        db_column="support_contact",
          max_length=120, blank=True, default="")
     resolved = models.BooleanField(
-        db_column="resolvido",
+        db_column="resolved",
         default=False, db_index=True)
 
     class Meta:

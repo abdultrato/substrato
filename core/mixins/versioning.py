@@ -5,7 +5,7 @@ from django.db.models import F
 
 
 class VersioningMixin(models.Model):
-    version = models.PositiveIntegerField(db_column="versao", default=1)
+    version = models.PositiveIntegerField(db_column="version", default=1)
 
     class Meta:
         abstract = True

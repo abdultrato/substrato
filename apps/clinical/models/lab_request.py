@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
-from core.constants.laboratory.clinical_status import StatusClinico
+from core.constants.laboratory.clinical_status import ClinicalStatus
 from core.models.base import NoNameCoreModel
 from domain.clinical.result_state import ResultState
 from domain.clinical.result_state_machine import ResultStateMachine
@@ -17,16 +17,14 @@ class LabRequest(NoNameCoreModel):
     prefix = "REQ"
 
     class Type(models.TextChoices):
-        LABORATORIO = "LAB", "Laboratório"
-        EXAME_MEDICO = "MED", "Exame médico"
-
-    Tipo = Type
+        LABORATORY = "LAB", "Laboratório"
+        MEDICAL_EXAM = "MED", "Exame médico"
 
     patient = models.ForeignKey(
 
         Patient,
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="requisicoes",
     )
@@ -35,7 +33,7 @@ class LabRequest(NoNameCoreModel):
 
         "entidades.Company",
 
-        db_column="empresa_solicitante_id",
+        db_column="requesting_company_id",
         verbose_name="Empresa solicitante",
         help_text="Empresa que subcontrata os serviços (ex.: medicina ocupacional).",
         on_delete=models.SET_NULL,
@@ -48,7 +46,7 @@ class LabRequest(NoNameCoreModel):
 
         "entidades.Company",
 
-        db_column="empresa_executora_externa_id",
+        db_column="external_executing_company_id",
         verbose_name="Empresa executora externa",
         help_text="Quando a clínica terceiriza a execução para outra empresa.",
         on_delete=models.SET_NULL,
@@ -59,11 +57,11 @@ class LabRequest(NoNameCoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         max_length=3,
         choices=Type.choices,
-        default=Type.LABORATORIO,
+        default=Type.LABORATORY,
         db_index=True,
     )
 
@@ -76,7 +74,7 @@ class LabRequest(NoNameCoreModel):
 
         User,
 
-        db_column="analista_id",
+        db_column="analyst_id",
         verbose_name="O Usuario",
         on_delete=models.SET_NULL,
         null=True,
@@ -86,7 +84,7 @@ class LabRequest(NoNameCoreModel):
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         max_length=30,
         choices=ResultState.CHOICES,
@@ -96,17 +94,17 @@ class LabRequest(NoNameCoreModel):
 
     clinical_status = models.CharField(
 
-        db_column="status_clinico",
+        db_column="clinical_status",
 
         max_length=50,
-        choices=StatusClinico.choices,
-        default=StatusClinico.NAO_URGENTE,
+        choices=ClinicalStatus.choices,
+        default=ClinicalStatus.NON_URGENT,
         db_index=True,
     )
 
     has_critical_result = models.BooleanField(
 
-        db_column="possui_resultado_critico",
+        db_column="has_critical_result",
 
         default=False,
         db_index=True,
@@ -161,7 +159,7 @@ class LabRequest(NoNameCoreModel):
     # =====================================================
 
     def add_exam(self, exam: LabExam):
-        if self.type != self.Tipo.LABORATORIO:
+        if self.type != self.Type.LABORATORY:
             raise ValidationError("Esta requisição é de exams médicos e não aceita exams laboratoriais.")
 
         if not self._esta_editavel():
@@ -263,7 +261,7 @@ class LabRequest(NoNameCoreModel):
                 pass
             return
 
-        novo_status = StatusClinico.NAO_URGENTE
+        novo_status = ClinicalStatus.NON_URGENT
         possui_critico = False
         novo_status = ResultState.PENDING
         result_finalized = False
@@ -275,8 +273,8 @@ class LabRequest(NoNameCoreModel):
             stats = itens.aggregate(
                 total=models.Count("id"),
                 criticos=models.Count("id", filter=models.Q(critical_alert=True)),
-                urgentes=models.Count("id", filter=models.Q(clinical_status=StatusClinico.URGENTE)),
-                muito_urgentes=models.Count("id", filter=models.Q(clinical_status=StatusClinico.MUITO_URGENTE)),
+                urgentes=models.Count("id", filter=models.Q(clinical_status=ClinicalStatus.URGENT)),
+                muito_urgentes=models.Count("id", filter=models.Q(clinical_status=ClinicalStatus.VERY_URGENT)),
                 pendentes=models.Count("id", filter=models.Q(status=ResultState.PENDING)),
                 aguardando=models.Count("id", filter=models.Q(status=ResultState.AWAITING_VALIDATION)),
                 validados=models.Count("id", filter=models.Q(status=ResultState.VALIDATED)),
@@ -290,17 +288,17 @@ class LabRequest(NoNameCoreModel):
             possui_critico = criticos > 0
 
             if total == 0:
-                novo_status = StatusClinico.NAO_URGENTE
+                novo_status = ClinicalStatus.NON_URGENT
                 novo_status = ResultState.PENDING
             else:
                 if possui_critico:
-                    novo_status = StatusClinico.URGENTISSIMO
+                    novo_status = ClinicalStatus.EXTREMELY_URGENT
                 elif muito_urgentes > 0:
-                    novo_status = StatusClinico.MUITO_URGENTE
+                    novo_status = ClinicalStatus.VERY_URGENT
                 elif urgentes > 0:
-                    novo_status = StatusClinico.URGENTE
+                    novo_status = ClinicalStatus.URGENT
                 else:
-                    novo_status = StatusClinico.NAO_URGENTE
+                    novo_status = ClinicalStatus.NON_URGENT
 
                 pendentes = int(stats.get("pendentes") or 0)
                 aguardando = int(stats.get("aguardando") or 0)

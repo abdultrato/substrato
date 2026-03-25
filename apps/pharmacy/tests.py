@@ -110,5 +110,3 @@ def test_sale_itens_e_total():
 
 
 _product = _product
-test_product_campos_obrigatorios = test_product_required_fields
-test_inventory_movement_saida_reduz_lot = test_inventory_movement_output_reduces_lot

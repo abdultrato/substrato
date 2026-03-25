@@ -8,6 +8,3 @@ __all__ = [
 ]
 
 
-AtendimentoRecepcaoViewSet = ReceptionCareViewSet
-CheckinRecepcaoViewSet = ReceptionCheckinViewSet
-WorkspaceRecepcaoViewSet = ReceptionWorkspaceViewSet

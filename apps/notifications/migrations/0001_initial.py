@@ -28,14 +28,14 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        db_column="nome", db_index=True, max_length=120, unique=True
+                        db_column="name", db_index=True, max_length=120, unique=True
                     ),
                 ),
-                ("content", models.TextField(db_column="conteudo")),
+                ("content", models.TextField(db_column="content")),
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
             ],
@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "recipient",
-                    models.CharField(db_column="destinatario", max_length=255),
+                    models.CharField(db_column="recipient", max_length=255),
                 ),
                 (
                     "channel",
@@ -70,14 +70,14 @@ class Migration(migrations.Migration):
                             ("sms", "SMS"),
                             ("whatsapp", "WhatsApp"),
                         ],
-                        db_column="canal",
+                        db_column="channel",
                         max_length=50,
                     ),
                 ),
                 (
                     "subject",
                     models.CharField(
-                        blank=True, db_column="assunto", default="", max_length=160
+                        blank=True, db_column="subject", default="", max_length=160
                     ),
                 ),
                 (
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
                             ("FATURA", "Fatura emitida"),
                             ("RECIBO", "Recibo gerado"),
                         ],
-                        db_column="tipo_evento",
+                        db_column="event_type",
                         default="GERAL",
                         max_length=40,
                     ),
@@ -98,28 +98,28 @@ class Migration(migrations.Migration):
                 (
                     "external_reference",
                     models.CharField(
-                        blank=True, db_column="referencia_externa", max_length=120
+                        blank=True, db_column="external_reference", max_length=120
                     ),
                 ),
-                ("message", models.TextField(db_column="mensagem")),
-                ("sent", models.BooleanField(db_column="enviada", default=False)),
+                ("message", models.TextField(db_column="message")),
+                ("sent", models.BooleanField(db_column="sent", default=False)),
                 (
                     "send_error",
-                    models.TextField(blank=True, db_column="erro_envio", default=""),
+                    models.TextField(blank=True, db_column="send_error", default=""),
                 ),
                 (
                     "sent_at",
-                    models.DateTimeField(blank=True, db_column="enviado_em", null=True),
+                    models.DateTimeField(blank=True, db_column="sent_at", null=True),
                 ),
                 (
                     "created_at",
-                    models.DateTimeField(auto_now_add=True, db_column="criado_em"),
+                    models.DateTimeField(auto_now_add=True, db_column="created_at"),
                 ),
                 (
                     "patient",
                     models.ForeignKey(
                         blank=True,
-                        db_column="paciente_id",
+                        db_column="patient_id",
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="notificacoes",
@@ -147,18 +147,18 @@ class Migration(migrations.Migration):
                 ("status", models.CharField(db_index=True, max_length=40)),
                 (
                     "response",
-                    models.TextField(blank=True, db_column="resposta", default=""),
+                    models.TextField(blank=True, db_column="response", default=""),
                 ),
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "notification",
                     models.ForeignKey(
-                        db_column="notificacao_id",
+                        db_column="notification_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="logs_envio",
                         to="notificacoes.notification",

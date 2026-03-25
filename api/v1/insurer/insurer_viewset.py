@@ -9,4 +9,3 @@ class InsurerViewSet(ModelViewSet):
     serializer_class = BaseSerializer
 
 
-SeguradoraViewSet = InsurerViewSet

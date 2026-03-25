@@ -8,7 +8,7 @@ from apps.accounting.services.reverter_ledger_entry import executar as reverter_
 
 @transaction.atomic
 def cancel_invoice(invoice):
-    if invoice.status != invoice.Estado.EMITIDA:
+    if invoice.status != invoice.Status.ISSUED:
         raise ValidationError("Somente faturas emitidas podem ser canceladas.")
 
     ledger_entry = invoice.ledger_entry
@@ -18,7 +18,7 @@ def cancel_invoice(invoice):
         reason=f"Cancelamento da invoice {invoice.custom_id}",
     )
 
-    invoice.status = invoice.Estado.CANCELADA
+    invoice.status = invoice.Status.CANCELED
     invoice.save(update_fields=["status"])
 
     return invoice

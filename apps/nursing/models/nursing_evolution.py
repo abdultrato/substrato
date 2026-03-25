@@ -16,20 +16,20 @@ class NursingEvolution(PropagarInquilinoMixin, CoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="evolucoes_enfermagem",
     )
 
     observation = models.TextField(
 
-        db_column="observacao",
+        db_column="observation",
 
         verbose_name="Evolução clínica")
 
     evolution_date = models.DateTimeField(
 
-        db_column="data_evolucao",
+        db_column="evolution_date",
 
         auto_now_add=True, verbose_name="Data da evolução")
 

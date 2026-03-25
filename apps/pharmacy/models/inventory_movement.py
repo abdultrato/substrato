@@ -28,7 +28,7 @@ class InventoryMovement(CoreModel):
 
         "farmacia.Lot",
 
-        db_column="lote_id",
+        db_column="lot_id",
         on_delete=models.PROTECT,
         related_name="movimentos",
         db_index=True,
@@ -36,14 +36,14 @@ class InventoryMovement(CoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         max_length=3,
         choices=MovementType.choices,
         db_index=True,
     )
     origin = models.CharField(
-        db_column="origem",
+        db_column="origin",
         max_length=4,
         choices=MovementOrigin.choices,
         default=MovementOrigin.AJUSTE,
@@ -54,7 +54,7 @@ class InventoryMovement(CoreModel):
 
         "farmacia.SaleItem",
 
-        db_column="item_venda_id",
+        db_column="sale_item_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -64,7 +64,7 @@ class InventoryMovement(CoreModel):
 
     quantity = models.PositiveIntegerField(
 
-        db_column="quantidade",
+        db_column="quantity",
 
         validators=[MinValueValidator(1)])
 

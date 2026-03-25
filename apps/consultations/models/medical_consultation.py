@@ -28,22 +28,22 @@ class MedicalConsultation(NoNameCoreModel):
 
     prefix = "CONS"
 
-    class Estado(models.TextChoices):
-        MARCADA = "MARCADA", "Marcada"
-        CONCLUIDA = "CONCLUIDA", "Concluída"
-        CANCELADA = "CANCELADA", "Cancelada"
+    class Status(models.TextChoices):
+        SCHEDULED = "MARCADA", "Marcada"
+        COMPLETED = "CONCLUIDA", "Concluída"
+        CANCELED = "CANCELADA", "Cancelada"
 
-    class Horario(models.TextChoices):
+    class ScheduleType(models.TextChoices):
         NORMAL = "NORMAL", "Normal (08h-18h)"
-        FORA_EXPEDIENTE = "FORA_EXPEDIENTE", "Fora de expediente (19h-07h)"
-        FIM_SEMANA = "FIM_SEMANA", "Fim de semana"
-        FERIADO_MANUAL = "FERIADO_MANUAL", "Feriado (marcado)"
+        AFTER_HOURS = "FORA_EXPEDIENTE", "Fora de expediente (19h-07h)"
+        WEEKEND = "FIM_SEMANA", "Fim de semana"
+        MANUAL_HOLIDAY = "FERIADO_MANUAL", "Feriado (marcado)"
 
     patient = models.ForeignKey(
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="consultations_medicas",
@@ -51,7 +51,7 @@ class MedicalConsultation(NoNameCoreModel):
     )
     doctor = models.ForeignKey(
         "recursos_humanos.Employee",
-        db_column="medico_id",
+        db_column="doctor_id",
         verbose_name="Médico",
         on_delete=models.SET_NULL,
         null=True,
@@ -64,7 +64,7 @@ class MedicalConsultation(NoNameCoreModel):
 
         "consultas.ConsultationSpecialty",
 
-        db_column="especialidade_id",
+        db_column="specialty_id",
         verbose_name="Especialidade",
         on_delete=models.PROTECT,
         null=True,
@@ -75,35 +75,35 @@ class MedicalConsultation(NoNameCoreModel):
 
     type = models.CharField("Tipo de consultation", 
 
-        db_column="tipo",
+        db_column="type",
 
          max_length=120, db_index=True)
     description = models.TextField("Descrição", 
-        db_column="descricao",
+        db_column="description",
          blank=True, default="")
 
     scheduled_for = models.DateTimeField("Agendada para", 
 
-        db_column="agendada_para",
+        db_column="scheduled_for",
 
          default=timezone.now, db_index=True)
     status = models.CharField(
         "Estado",
-        db_column="estado",
+        db_column="status",
         max_length=20,
-        choices=Estado.choices,
-        default=Estado.MARCADA,
+        choices=Status.choices,
+        default=Status.SCHEDULED,
         db_index=True,
     )
 
     price = MoneyField("Preço", 
 
-        db_column="preco",
+        db_column="price",
 
          default=Decimal("0.00"))
     price_multiplier = models.DecimalField(
         "Multiplicador de preço",
-        db_column="multiplicador_preco",
+        db_column="price_multiplier",
         max_digits=5,
         decimal_places=2,
         default=Decimal("1.00"),
@@ -111,26 +111,26 @@ class MedicalConsultation(NoNameCoreModel):
     )
     schedule_type = models.CharField(
         "Tipo de horário",
-        db_column="tipo_horario",
+        db_column="schedule_type",
         max_length=32,
-        choices=Horario.choices,
-        default=Horario.NORMAL,
+        choices=ScheduleType.choices,
+        default=ScheduleType.NORMAL,
         db_index=True,
     )
     manual_holiday = models.BooleanField(
         "Feriado (manual)",
-        db_column="feriado_manual",
+        db_column="manual_holiday",
         default=False,
         help_text="Marque se a date for feriado mesmo não sendo fim de semana.",
     )
 
     completed_at = models.DateTimeField("Concluída em", 
 
-        db_column="concluida_em",
+        db_column="completed_at",
 
          null=True, blank=True)
     canceled_at = models.DateTimeField("Cancelada em", 
-        db_column="cancelada_em",
+        db_column="canceled_at",
          null=True, blank=True)
 
     class Meta:
@@ -234,5 +234,4 @@ class MedicalConsultation(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.custom_id} - {self.patient.name} ({self.type})"
-
 

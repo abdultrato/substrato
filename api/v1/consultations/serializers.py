@@ -126,10 +126,3 @@ SERIALIZER_MAP = {
 }
 
 # Backwards-compatible aliases while callers are updated incrementally.
-MedicoSerializer = DoctorSerializer
-ConsultaMedicaSerializer = MedicalConsultationSerializer
-EspecialidadeConsultaSerializer = ConsultationSpecialtySerializer
-FeriadoSerializer = HolidaySerializer
-CriarFaturaConsultaSerializer = CreateConsultationInvoiceSerializer
-RemarcarConsultaSerializer = RescheduleConsultationSerializer
-CancelarConsultaSerializer = CancelConsultationSerializer

@@ -29,6 +29,3 @@ SERIALIZER_MAP = {
     "insurer": InsurerSerializer,
 }
 
-AutorizacaoProcedimentoSerializer = ProcedureAuthorizationSerializer
-PlanoCoberturaSerializer = CoveragePlanSerializer
-SeguradoraSerializer = InsurerSerializer

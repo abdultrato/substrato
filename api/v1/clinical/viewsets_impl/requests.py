@@ -201,5 +201,3 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     ordering = ["-created_at"]
 
 
-RequisicaoAnaliseViewSet = LabRequestViewSet
-RequisicaoItemViewSet = LabRequestItemViewSet

@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.result_item import ResultItem
-from domain.clinical.status_result import EstadoResultado
+from domain.clinical.result_state import ResultState
 
 from ..filters import ResultItemFilter
 from ..serializers import LaboratoryResultItemSerializer, ResultItemSerializer
@@ -93,11 +93,11 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     def start_analysis(self, request, pk=None):
         """Move the result item to EM_ANALISE."""
         item = self.get_object()
-        if item.status == EstadoResultado.EM_ANALISE:
+        if item.status == ResultState.IN_ANALYSIS:
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(EstadoResultado.EM_ANALISE, user=getattr(request, "user", None))
+            item.transicionar(ResultState.IN_ANALYSIS, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 
@@ -141,13 +141,13 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             try:
                 ResultadoStateMachine.validar_transicao(
                     locked.status,
-                    EstadoResultado.AGUARDANDO_VALIDACAO,
+                    ResultState.AWAITING_VALIDATION,
                 )
             except TransicaoInvalidaError as err:
                 raise ValidationError(str(err)) from err
 
             locked.result_value = value
-            locked.status = EstadoResultado.AGUARDANDO_VALIDACAO
+            locked.status = ResultState.AWAITING_VALIDATION
             locked.save()
 
         locked.refresh_from_db()
@@ -157,16 +157,14 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     def validate_result(self, request, pk=None):
         """Move the result item to VALIDADO."""
         item = self.get_object()
-        if item.status == EstadoResultado.VALIDADO:
+        if item.status == ResultState.VALIDATED:
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(EstadoResultado.VALIDADO, user=getattr(request, "user", None))
+            item.transicionar(ResultState.VALIDATED, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 
         item.refresh_from_db()
         return Response(LaboratoryResultItemSerializer(item).data)
 
-
-ResultadoItemViewSet = ResultItemViewSet

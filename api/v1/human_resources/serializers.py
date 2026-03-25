@@ -180,12 +180,3 @@ SERIALIZER_MAP = {
     "folhapagamento": PayrollSerializer,
 }
 
-CargoSerializer = JobTitleSerializer
-FuncionarioSerializer = EmployeeSerializer
-AgregadoFamiliarSerializer = FamilyDependentSerializer
-HorarioTrabalhoSerializer = WorkScheduleSerializer
-FaltaSerializer = AbsenceSerializer
-FeriasSerializer = VacationSerializer
-DispensaSerializer = TerminationSerializer
-HoraExtraSerializer = OvertimeSerializer
-FolhaPagamentoSerializer = PayrollSerializer

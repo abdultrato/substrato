@@ -2,9 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { StatusClinicoEnum } from './StatusClinicoEnum';
+import type { ClinicalStatusEnum } from './ClinicalStatusEnum';
 export type CriarRequisicaoRecepcaoRequest = {
     exames_ids: Array<number>;
-    status_clinico?: StatusClinicoEnum;
+    status_clinico?: ClinicalStatusEnum;
 };
 

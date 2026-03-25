@@ -4,5 +4,3 @@ __all__ = [
     "ReceptionCheckin",
 ]
 
-
-CheckinRecepcao = ReceptionCheckin

@@ -29,7 +29,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         Result,
 
-        db_column="resultado_id",
+        db_column="result_id",
         on_delete=models.CASCADE,
         related_name="itens",
     )
@@ -38,37 +38,37 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         LabExamField,
 
-        db_column="exame_campo_id",
+        db_column="exam_field_id",
         on_delete=models.CASCADE,
         related_name="resultados",
     )
 
     # value numérico do result
     result_value = models.DecimalField(
-        db_column="resultado_valor",
+        db_column="result_value",
         max_digits=12, decimal_places=2, null=True, blank=True)
 
     clinical_status = models.CharField(
 
-        db_column="status_clinico",
+        db_column="clinical_status",
 
         max_length=20, blank=True)
 
     report_color = models.CharField(
 
-        db_column="cor_laudo",
+        db_column="report_color",
 
         max_length=20, blank=True, null=True)
 
     critical_alert = models.BooleanField(
 
-        db_column="alerta_critico",
+        db_column="critical_alert",
 
         default=False)
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         max_length=30,
         choices=ResultState.CHOICES,
@@ -80,7 +80,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         User,
 
-        db_column="validado_por_id",
+        db_column="validated_by_id",
         on_delete=models.SET_NULL,
         verbose_name="Resultado",
         null=True,
@@ -90,7 +90,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
     validation_date = models.DateTimeField(
 
-        db_column="data_validacao",
+        db_column="validation_date",
 
         null=True, blank=True)
 
@@ -133,7 +133,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
             except (InvalidOperation, TypeError) as err:
                 raise ValidationError("Valor do result inválido.") from err
 
-            self._result_service().interpretar(self)
+            self._result_service().interpret(self)
 
         super().save(*args, **kwargs)
 
@@ -170,7 +170,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
                 result.validated_by = user
                 result.validation_date = timezone.now()
 
-                self._result_service().interpretar(result)
+                self._result_service().interpret(result)
 
             result.status = novo_status
 

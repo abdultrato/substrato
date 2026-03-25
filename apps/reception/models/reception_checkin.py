@@ -9,26 +9,23 @@ class ReceptionCheckin(NoNameCoreModel):
     prefix = "CHK"
 
     class Priority(models.TextChoices):
-        URGENTE = "URG", "Urgente"
-        PREFERENCIAL = "PREF", "Preferencial"
+        URGENT = "URG", "Urgente"
+        PREFERRED = "PREF", "Preferencial"
         NORMAL = "NOR", "Normal"
 
     class Status(models.TextChoices):
-        AGUARDANDO = "AGUARD", "Aguardando"
-        EM_ATENDIMENTO = "ATEND", "Em atendimento"
-        REQUISICAO_CRIADA = "REQ", "Requisição criada"
-        FATURA_VINCULADA = "FAT", "Fatura vinculada"
-        CONCLUIDO = "CONC", "Concluído"
-        CANCELADO = "CANC", "Cancelado"
-
-    Prioridade = Priority
-    Estado = Status
+        WAITING = "AGUARD", "Aguardando"
+        IN_CARE = "ATEND", "Em atendimento"
+        REQUEST_CREATED = "REQ", "Requisição criada"
+        INVOICE_LINKED = "FAT", "Fatura vinculada"
+        COMPLETED = "CONC", "Concluído"
+        CANCELED = "CANC", "Cancelado"
 
     patient = models.ForeignKey(
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.PROTECT,
         related_name="checkins",
         db_index=True,
@@ -38,7 +35,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
         "clinico.LabRequest",
 
-        db_column="requisicao_id",
+        db_column="request_id",
         on_delete=models.PROTECT,
         related_name="checkin",
         null=True,
@@ -49,7 +46,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
         "faturamento.Invoice",
 
-        db_column="fatura_id",
+        db_column="invoice_id",
         on_delete=models.PROTECT,
         related_name="checkin",
         null=True,
@@ -60,7 +57,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
         "identidade.User",
 
-        db_column="atendente_id",
+        db_column="attendant_id",
         on_delete=models.SET_NULL,
         related_name="checkins_recepcao",
         null=True,
@@ -70,7 +67,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
     priority = models.CharField(
 
-        db_column="prioridade",
+        db_column="priority",
 
         max_length=5,
         choices=Priority.choices,
@@ -78,32 +75,32 @@ class ReceptionCheckin(NoNameCoreModel):
         db_index=True,
     )
     status = models.CharField(
-        db_column="estado",
+        db_column="status",
         max_length=6,
         choices=Status.choices,
-        default=Status.AGUARDANDO,
+        default=Status.WAITING,
         db_index=True,
     )
 
     reason = models.CharField(
 
-        db_column="motivo",
+        db_column="reason",
 
         max_length=255, blank=True, default="")
     notes = models.TextField(
-        db_column="observacoes",
+        db_column="notes",
         blank=True, default="")
 
     arrived_at = models.DateTimeField(
 
-        db_column="chegou_em",
+        db_column="arrived_at",
 
         default=timezone.now, db_index=True)
     called_at = models.DateTimeField(
-        db_column="chamado_em",
+        db_column="called_at",
         null=True, blank=True)
     completed_at = models.DateTimeField(
-        db_column="concluido_em",
+        db_column="completed_at",
         null=True, blank=True)
 
     class Meta:
@@ -122,13 +119,13 @@ class ReceptionCheckin(NoNameCoreModel):
     # =====================================================
 
     def start_care(self, attendant=None):
-        if self.status in {self.Status.CONCLUIDO, self.Status.CANCELADO}:
+        if self.status in {self.Status.COMPLETED, self.Status.CANCELED}:
             raise ValidationError("Check-in já foi finalized.")
 
         if attendant is not None:
             self.attendant = attendant
 
-        self.status = self.Status.EM_ATENDIMENTO
+        self.status = self.Status.IN_CARE
         if not self.called_at:
             self.called_at = timezone.now()
 
@@ -138,34 +135,29 @@ class ReceptionCheckin(NoNameCoreModel):
         if self.request_id:
             return
         self.request = request
-        self.status = self.Status.REQUISICAO_CRIADA
+        self.status = self.Status.REQUEST_CREATED
         self.save(update_fields=["request", "status"])
 
     def register_invoice(self, invoice):
         if self.invoice_id:
             return
         self.invoice = invoice
-        self.status = self.Status.FATURA_VINCULADA
+        self.status = self.Status.INVOICE_LINKED
         self.save(update_fields=["invoice", "status"])
 
-    def concluir(self):
-        if self.status == self.Status.CANCELADO:
+    def complete(self):
+        if self.status == self.Status.CANCELED:
             raise ValidationError("Check-in cancelado não pode ser concluído.")
-        self.status = self.Status.CONCLUIDO
+        self.status = self.Status.COMPLETED
         self.completed_at = timezone.now()
         self.save(update_fields=["status", "completed_at"])
 
-    def cancelar(self):
-        if self.status == self.Status.CONCLUIDO:
+    def cancel(self):
+        if self.status == self.Status.COMPLETED:
             raise ValidationError("Check-in concluído não pode ser cancelado.")
-        self.status = self.Status.CANCELADO
+        self.status = self.Status.CANCELED
         self.completed_at = timezone.now()
         self.save(update_fields=["status", "completed_at"])
 
     def __str__(self) -> str:
         return self.custom_id or f"Checkin {self.pk}"
-
-
-ReceptionCheckin.iniciar_atendimento = ReceptionCheckin.start_care
-ReceptionCheckin.registrar_invoice = ReceptionCheckin.register_invoice
-CheckinRecepcao = ReceptionCheckin

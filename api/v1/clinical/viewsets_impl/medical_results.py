@@ -44,4 +44,3 @@ class MedicalResultFileViewSet(
         return super().list(request, *args, **kwargs)
 
 
-ResultadoMedicoArquivoViewSet = MedicalResultFileViewSet

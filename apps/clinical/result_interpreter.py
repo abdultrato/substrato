@@ -1,6 +1,6 @@
 class ResultInterpreter:
     @staticmethod
-    def interpretar(result_item):
+    def interpret(result_item):
         """
         Recebe um ResultadoItem
         Retorna dict com interpretação clínica
@@ -17,6 +17,3 @@ class ResultInterpreter:
             "tendencia": "",
             "interpretacao": "",
         }
-
-
-InterpretadorResultado = ResultInterpreter

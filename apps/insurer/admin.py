@@ -204,6 +204,3 @@ class ProcedureAuthorizationAdmin(admin.ModelAdmin):
     status_colorido.short_description = "Status"
 
 
-SeguradoraAdmin = InsurerAdmin
-PlanoCoberturaAdmin = CoveragePlanAdmin
-AutorizacaoProcedimentoAdmin = ProcedureAuthorizationAdmin

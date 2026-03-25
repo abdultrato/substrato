@@ -54,8 +54,3 @@ def validate_age(date_of_birth: date | None) -> None:
 
     if date_of_birth > timezone.localdate():
         raise ValueError("Data de nascimento não pode estar no futuro.")
-
-
-InterpretadorResultado = ResultInterpreter
-validar_idade = validate_age
-ResultInterpreter.interpretar = staticmethod(ResultInterpreter.interpret)

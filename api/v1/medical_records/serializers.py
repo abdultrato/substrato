@@ -68,5 +68,3 @@ SERIALIZER_MAP = {
     "prescricaoitem": PrescriptionItemSerializer,
 }
 
-PrescricaoItemSerializer = PrescriptionItemSerializer
-RegistroProntuarioSerializer = MedicalRecordEntrySerializer

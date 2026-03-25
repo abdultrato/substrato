@@ -17,7 +17,7 @@ class NursingVitalSign(PropagarInquilinoMixin, CoreModel):
 
         "enfermagem.NursingRecord",
 
-        db_column="registro_id",
+        db_column="record_id",
         on_delete=models.CASCADE,
         related_name="signals_vitais",
         db_index=True,
@@ -25,35 +25,35 @@ class NursingVitalSign(PropagarInquilinoMixin, CoreModel):
 
     temperature_c = models.DecimalField(
 
-        db_column="temperatura_c",
+        db_column="temperature_c",
 
         max_digits=4, decimal_places=1, null=True, blank=True, verbose_name="Temperatura (°C)"
     )
     blood_pressure = models.CharField(
-        db_column="pressao_arterial",
+        db_column="blood_pressure",
         max_length=20, blank=True, default="")
 
     heart_rate = models.PositiveIntegerField(
 
-        db_column="frequencia_cardiaca",
+        db_column="heart_rate",
 
         null=True, blank=True, verbose_name="Frequência cardíaca")
 
     respiratory_rate = models.PositiveIntegerField(
 
-        db_column="frequencia_respiratoria",
+        db_column="respiratory_rate",
 
         null=True, blank=True, verbose_name="Frequência respiratória")
 
     oxygen_saturation = models.PositiveIntegerField(
 
-        db_column="saturacao_oxigenio",
+        db_column="oxygen_saturation",
 
         null=True, blank=True, verbose_name="Saturação de O₂ (%)")
 
     collected_at = models.DateTimeField(
 
-        db_column="coletado_em",
+        db_column="collected_at",
 
         default=timezone.now, db_index=True)
 

@@ -37,18 +37,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -59,20 +59,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "care_start_at",
                     models.DateTimeField(
-                        db_column="inicio_atendimento",
+                        db_column="care_start_at",
                         db_index=True,
                         default=django.utils.timezone.now,
                         verbose_name="Início do atendimento",
@@ -82,7 +82,7 @@ class Migration(migrations.Migration):
                     "care_end_at",
                     models.DateTimeField(
                         blank=True,
-                        db_column="fim_atendimento",
+                        db_column="care_end_at",
                         db_index=True,
                         null=True,
                         verbose_name="Fim do atendimento",
@@ -96,7 +96,7 @@ class Migration(migrations.Migration):
                             ("FINALIZADO", "Finalizado"),
                             ("CANCELADO", "Cancelado"),
                         ],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="RASCUNHO",
                         max_length=20,
@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
                     "symptoms",
                     models.TextField(
                         blank=True,
-                        db_column="sintomas",
+                        db_column="symptoms",
                         default="",
                         verbose_name="Sintomas",
                     ),
@@ -116,7 +116,7 @@ class Migration(migrations.Migration):
                     "diagnosis",
                     models.TextField(
                         blank=True,
-                        db_column="diagnostico",
+                        db_column="diagnosis",
                         default="",
                         verbose_name="Diagnóstico",
                     ),
@@ -125,7 +125,7 @@ class Migration(migrations.Migration):
                     "prescription",
                     models.TextField(
                         blank=True,
-                        db_column="prescricao",
+                        db_column="prescription",
                         default="",
                         help_text="Texto livre opcional. A prescrição estruturada fica nos itens de prescrição.",
                         verbose_name="Observações da prescrição",
@@ -135,7 +135,7 @@ class Migration(migrations.Migration):
                     "medical_report",
                     models.TextField(
                         blank=True,
-                        db_column="relatorio_medico",
+                        db_column="medical_report",
                         default="",
                         verbose_name="Relatório médico",
                     ),
@@ -154,7 +154,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -176,7 +176,7 @@ class Migration(migrations.Migration):
                     "doctor",
                     models.ForeignKey(
                         blank=True,
-                        db_column="medico_id",
+                        db_column="doctor_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="registros_prontuario",
@@ -187,7 +187,7 @@ class Migration(migrations.Migration):
                 (
                     "patient",
                     models.ForeignKey(
-                        db_column="paciente_id",
+                        db_column="patient_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="registros_prontuario",
                         to="clinico.patient",
@@ -197,7 +197,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -207,7 +207,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -237,18 +237,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -259,20 +259,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "dosage_value",
                     models.DecimalField(
-                        db_column="dosagem_valor",
+                        db_column="dosage_value",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         help_text="Quantidade da dose (ex.: 500).",
@@ -293,7 +293,7 @@ class Migration(migrations.Migration):
                             ("L", "L"),
                             ("KG", "kg"),
                         ],
-                        db_column="dosagem_unidade",
+                        db_column="dosage_unit",
                         db_index=True,
                         default="MG",
                         max_length=3,
@@ -304,7 +304,7 @@ class Migration(migrations.Migration):
                     "interval_hours",
                     models.PositiveSmallIntegerField(
                         blank=True,
-                        db_column="intervalo_horas",
+                        db_column="interval_hours",
                         help_text="Intervalo entre doses. Obrigatório quando houver mais de uma dose.",
                         null=True,
                         verbose_name="Intervalo (hours)",
@@ -313,7 +313,7 @@ class Migration(migrations.Migration):
                 (
                     "dose_count",
                     models.PositiveSmallIntegerField(
-                        db_column="numero_doses",
+                        db_column="dose_count",
                         default=1,
                         help_text="Quantidade total de doses. Para dose única, informe 1.",
                         verbose_name="Número de doses",
@@ -323,7 +323,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         default="",
                         verbose_name="Observações",
                     ),
@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -343,7 +343,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -353,7 +353,7 @@ class Migration(migrations.Migration):
                 (
                     "medication",
                     models.ForeignKey(
-                        db_column="medicacao_id",
+                        db_column="medication_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="prescricoes_prontuario",
                         to="farmacia.product",
@@ -363,7 +363,7 @@ class Migration(migrations.Migration):
                 (
                     "record",
                     models.ForeignKey(
-                        db_column="registro_id",
+                        db_column="record_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="itens_prescription",
                         to="prontuario.medicalrecordentry",
@@ -373,7 +373,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -383,7 +383,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",

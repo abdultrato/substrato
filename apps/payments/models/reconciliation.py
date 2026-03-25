@@ -5,7 +5,7 @@ from django.utils import timezone
 class Reconciliation(models.Model):
     transaction = models.OneToOneField(
         "pagamentos.Transaction",
-        db_column="transacao_id",
+        db_column="transaction_id",
         verbose_name="Transação",
         on_delete=models.CASCADE,
         related_name="reconciliacao",
@@ -14,14 +14,14 @@ class Reconciliation(models.Model):
 
     confirmed = models.BooleanField("Confirmado", 
 
-        db_column="confirmado",
+        db_column="confirmed",
 
          default=False, db_index=True)
     confirmation_date = models.DateTimeField("Data de confirmação", 
-        db_column="data_confirmacao",
+        db_column="confirmation_date",
          blank=True, null=True)
 
-    created_at = models.DateTimeField("Criado em", db_column="criado_em", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField("Criado em", db_column="created_at", auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "pagamentos_reconciliacao"

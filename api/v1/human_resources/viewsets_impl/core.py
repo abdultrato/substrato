@@ -140,12 +140,3 @@ __all__ = [
     "WorkScheduleViewSet",
 ]
 
-CargoViewSet = JobTitleViewSet
-FuncionarioViewSet = EmployeeViewSet
-AgregadoFamiliarViewSet = FamilyDependentViewSet
-HorarioTrabalhoViewSet = WorkScheduleViewSet
-FaltaViewSet = AbsenceViewSet
-FeriasViewSet = VacationViewSet
-DispensaViewSet = TerminationViewSet
-HoraExtraViewSet = OvertimeViewSet
-FolhaPagamentoViewSet = PayrollViewSet

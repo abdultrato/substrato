@@ -32,13 +32,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -49,21 +49,21 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "last_menstrual_period_date",
                     models.DateField(
                         blank=True,
-                        db_column="data_ultima_menstruacao",
+                        db_column="last_menstrual_period_date",
                         null=True,
                         verbose_name="Data da última menstruação",
                     ),
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                     "expected_delivery_date",
                     models.DateField(
                         blank=True,
-                        db_column="data_prevista_parto",
+                        db_column="expected_delivery_date",
                         null=True,
                         verbose_name="Data prevista do parto",
                     ),
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                     "nursery",
                     models.CharField(
                         blank=True,
-                        db_column="bercario",
+                        db_column="nursery",
                         default="",
                         help_text="Identificação do berçário/ala/sala (quando aplicável).",
                         max_length=80,
@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
                     "maternity_bed",
                     models.CharField(
                         blank=True,
-                        db_column="cama_maternidade",
+                        db_column="maternity_bed",
                         default="",
                         help_text="Número/identificação da bed (quando aplicável).",
                         max_length=40,
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                 (
                     "total_deliveries",
                     models.PositiveSmallIntegerField(
-                        db_column="partos_totais",
+                        db_column="total_deliveries",
                         default=0,
                         help_text="Histórico obstétrico: total de partos já realizados.",
                         verbose_name="Partos totais",
@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
                 (
                     "normal_deliveries",
                     models.PositiveSmallIntegerField(
-                        db_column="partos_normais",
+                        db_column="normal_deliveries",
                         default=0,
                         help_text="Histórico obstétrico: total de partos vaginais.",
                         verbose_name="Partos normais",
@@ -120,7 +120,7 @@ class Migration(migrations.Migration):
                 (
                     "cesareans",
                     models.PositiveSmallIntegerField(
-                        db_column="cesarianas",
+                        db_column="cesareans",
                         default=0,
                         help_text="Histórico obstétrico: total de partos por cesariana.",
                         verbose_name="Cesarianas",
@@ -135,7 +135,7 @@ class Migration(migrations.Migration):
                             ("ENCERR", "Encerrada"),
                             ("CANCEL", "Cancelada"),
                         ],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="ACOMP",
                         max_length=10,
@@ -146,7 +146,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         default="",
                         verbose_name="Observações",
                     ),
@@ -154,7 +154,7 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        db_column="criado_em",
+                        db_column="created_at",
                         db_index=True,
                         default=django.utils.timezone.now,
                         verbose_name="Criado em",
@@ -164,7 +164,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -175,7 +175,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -185,7 +185,7 @@ class Migration(migrations.Migration):
                 (
                     "patient",
                     models.ForeignKey(
-                        db_column="paciente_id",
+                        db_column="patient_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="gestacoes",
                         to="clinico.patient",
@@ -196,7 +196,7 @@ class Migration(migrations.Migration):
                     "responsible_doctor",
                     models.ForeignKey(
                         blank=True,
-                        db_column="medico_responsavel_id",
+                        db_column="responsible_doctor_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="gestacoes_responsible",
@@ -207,7 +207,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -217,7 +217,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",

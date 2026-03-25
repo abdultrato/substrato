@@ -99,12 +99,3 @@ class PayrollAdmin(CoreAdmin):
 
 
 AgregadoFamiliarInline = FamilyDependentInline
-CargoAdmin = JobTitleAdmin
-FuncionarioAdmin = EmployeeAdmin
-AgregadoFamiliarAdmin = FamilyDependentAdmin
-HorarioTrabalhoAdmin = WorkScheduleAdmin
-FaltaAdmin = AbsenceAdmin
-FeriasAdmin = VacationAdmin
-DispensaAdmin = TerminationAdmin
-HoraExtraAdmin = OvertimeAdmin
-FolhaPagamentoAdmin = PayrollAdmin

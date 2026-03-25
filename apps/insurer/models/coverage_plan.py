@@ -19,14 +19,14 @@ class CoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
 
         "seguradora.Insurer",
 
-        db_column="seguradora_id",
+        db_column="insurer_id",
         on_delete=models.PROTECT,
         related_name="planos",
     )
 
     coverage_percentage = models.DecimalField(
 
-        db_column="percentual_cobertura",
+        db_column="coverage_percentage",
 
         max_digits=5,
         decimal_places=2,
@@ -40,13 +40,13 @@ class CoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
 
     requires_authorization = models.BooleanField(
 
-        db_column="exige_autorizacao",
+        db_column="requires_authorization",
 
         default=False, db_index=True)
 
     # Compatibilidade com filtros/viewsets gerados
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

@@ -7,19 +7,19 @@ from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
 
-from ..filters import EquipamentoFilter, InspecaoDiariaFilter, ManutencaoFilter, OcorrenciaFilter
+from ..filters import EquipmentFilter, DailyInspectionFilter, MaintenanceFilter, IncidentFilter
 from ..serializers import (
-    EquipamentoSerializer,
-    InspecaoDiariaSerializer,
-    ManutencaoSerializer,
-    OcorrenciaSerializer,
+    EquipmentSerializer,
+    DailyInspectionSerializer,
+    MaintenanceSerializer,
+    IncidentSerializer,
 )
 
 
-class EquipamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class EquipmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Equipment.objects.all()
-    serializer_class = EquipamentoSerializer
-    filterset_class = EquipamentoFilter
+    serializer_class = EquipmentSerializer
+    filterset_class = EquipmentFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "custom_id",
@@ -42,10 +42,10 @@ class EquipamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     ordering = ["name"]
 
 
-class InspecaoDiariaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class DailyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DailyInspection.objects.select_related("equipment")
-    serializer_class = InspecaoDiariaSerializer
-    filterset_class = InspecaoDiariaFilter
+    serializer_class = DailyInspectionSerializer
+    filterset_class = DailyInspectionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "custom_id",
@@ -64,10 +64,10 @@ class InspecaoDiariaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     ordering = ["-date", "-created_at"]
 
 
-class ManutencaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class MaintenanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Maintenance.objects.select_related("equipment")
-    serializer_class = ManutencaoSerializer
-    filterset_class = ManutencaoFilter
+    serializer_class = MaintenanceSerializer
+    filterset_class = MaintenanceFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "custom_id",
@@ -86,10 +86,10 @@ class ManutencaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     ordering = ["-scheduled_date", "-created_at"]
 
 
-class OcorrenciaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Incident.objects.select_related("equipment")
-    serializer_class = OcorrenciaSerializer
-    filterset_class = OcorrenciaFilter
+    serializer_class = IncidentSerializer
+    filterset_class = IncidentFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "custom_id",
@@ -109,16 +109,19 @@ class OcorrenciaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
 
 VIEWSET_MAP = {
-    "equipment": EquipamentoViewSet,
-    "inspecaodiaria": InspecaoDiariaViewSet,
-    "manutencao": ManutencaoViewSet,
-    "ocorrencia": OcorrenciaViewSet,
+    "equipment": EquipmentViewSet,
+    "daily_inspection": DailyInspectionViewSet,
+    "maintenance": MaintenanceViewSet,
+    "incident": IncidentViewSet,
+    "inspecaodiaria": DailyInspectionViewSet,
+    "manutencao": MaintenanceViewSet,
+    "ocorrencia": IncidentViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "EquipamentoViewSet",
-    "InspecaoDiariaViewSet",
-    "ManutencaoViewSet",
-    "OcorrenciaViewSet",
+    "EquipmentViewSet",
+    "DailyInspectionViewSet",
+    "MaintenanceViewSet",
+    "IncidentViewSet",
 ]

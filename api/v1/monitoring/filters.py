@@ -20,4 +20,3 @@ FILTER_MAP = {
     "error": SystemErrorFilter,
 }
 
-ErroSistemaFilter = SystemErrorFilter

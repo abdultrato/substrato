@@ -14,17 +14,17 @@ class Vacation(NoNameCoreModel):
 
     prefix = "FER"
 
-    class Estado(models.TextChoices):
-        SOLICITADA = "SOLIC", "Solicitada"
-        APROVADA = "APROV", "Aprovada"
-        GOZADA = "GOZADA", "Gozada"
-        CANCELADA = "CANCEL", "Cancelada"
+    class Status(models.TextChoices):
+        REQUESTED = "SOLIC", "Solicitada"
+        APPROVED = "APROV", "Aprovada"
+        TAKEN = "GOZADA", "Gozada"
+        CANCELED = "CANCEL", "Cancelada"
 
     employee = models.ForeignKey(
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="ferias",
         db_index=True,
@@ -32,21 +32,21 @@ class Vacation(NoNameCoreModel):
 
     start_date = models.DateField(
 
-        db_column="data_inicio",
+        db_column="start_date",
 
         default=timezone.now, db_index=True)
     end_date = models.DateField(
-        db_column="data_fim",
+        db_column="end_date",
         default=timezone.now, db_index=True)
     status = models.CharField(
-        db_column="estado",
+        db_column="status",
         max_length=10,
-        choices=Estado.choices,
-        default=Estado.SOLICITADA,
+        choices=Status.choices,
+        default=Status.REQUESTED,
         db_index=True,
     )
     notes = models.TextField(
-        db_column="observacoes",
+        db_column="notes",
         blank=True, default="")
 
     class Meta:

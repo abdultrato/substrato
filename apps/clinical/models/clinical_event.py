@@ -28,7 +28,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
 
         Patient,
 
-        db_column="paciente_id",
+        db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="eventos_clinicos",
     )
@@ -37,7 +37,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
 
         LabRequest,
 
-        db_column="requisicao_id",
+        db_column="request_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -48,7 +48,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
 
         ResultItem,
 
-        db_column="resultado_id",
+        db_column="result_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -57,7 +57,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
 
     event_type = models.CharField(
 
-        db_column="tipo_evento",
+        db_column="event_type",
 
         max_length=50,
         choices=ClinicalEventType.choices,
@@ -66,7 +66,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         )
 

@@ -142,13 +142,13 @@ def create_invoice_for_checkin(
 
     invoice = Invoice(
         tenant=checkin.tenant,
-        origin=Invoice.Origem.CLINICO,
+        origin=Invoice.Origin.CLINICAL,
         request=checkin.request,
         patient=checkin.patient,
     )
     invoice.full_clean()
     invoice.save()
-    invoice.sincronizar_itens_da_origin()
+    invoice.sync_items_from_origin()
 
     if issue:
         invoice.issue()
@@ -162,7 +162,7 @@ def register_payment_for_checkin(
     *,
     checkin,
     value=None,
-    method=Payment.Method.DINHEIRO,
+    method=Payment.Method.CASH,
     external_reference="",
     insurer_id=None,
     coverage_plan_id=None,
@@ -178,7 +178,7 @@ def register_payment_for_checkin(
         raise ValidationError("Check-in não possui invoice vinculada.")
 
     invoice = checkin.invoice
-    if invoice.status == Invoice.Estado.RASCUNHO:
+    if invoice.status == Invoice.Status.DRAFT:
         raise ValidationError("Emita a invoice antes de registrar payment.")
 
     value_payment = _quantize_value(value or invoice.total)
@@ -189,7 +189,7 @@ def register_payment_for_checkin(
     coverage_plan = None
     authorization_number = (authorization_number or "").strip()
 
-    if method == Payment.Method.SEGURO_SAUDE:
+    if method == Payment.Method.HEALTH_INSURANCE:
         if not insurer_id:
             raise ValidationError({"payment": {"insurer_id": "Informe a insurer do seguro de saúde."}})
 
@@ -461,7 +461,7 @@ def execute_full_flow(
         register_payment_for_checkin(
             checkin=checkin_obj,
             value=dados_payment.get("value"),
-            method=dados_payment.get("method", Payment.Method.DINHEIRO),
+            method=dados_payment.get("method", Payment.Method.CASH),
             external_reference=dados_payment.get("external_reference", ""),
             insurer_id=dados_payment.get("insurer_id"),
             coverage_plan_id=dados_payment.get("coverage_plan_id"),
@@ -471,7 +471,7 @@ def execute_full_flow(
         )
 
     if complete_checkin:
-        checkin_obj.concluir()
+        checkin_obj.complete()
 
     return get_care_summary(checkin_obj)
 

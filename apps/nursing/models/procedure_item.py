@@ -15,14 +15,14 @@ class ProcedureItem(NoNameCoreModel):
 
         "enfermagem.Procedure",
 
-        db_column="procedimento_id",
+        db_column="procedure_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
     )
     catalog = models.ForeignKey(
         "enfermagem.ProcedureCatalog",
-        db_column="catalogo_id",
+        db_column="catalog_id",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -30,23 +30,23 @@ class ProcedureItem(NoNameCoreModel):
         db_index=True,
     )
     description = models.CharField(
-        db_column="descricao",
+        db_column="description",
         max_length=255, blank=True, default="", db_index=True)
     quantity = models.PositiveIntegerField(
-        db_column="quantidade",
+        db_column="quantity",
         default=1)
     unit_price = models.DecimalField(
-        db_column="preco_unitario",
+        db_column="unit_price",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     performed = models.BooleanField(
-        db_column="realizado",
+        db_column="performed",
         default=True, db_index=True)
     observation = models.TextField(
-        db_column="observacao",
+        db_column="observation",
         blank=True, default="")
 
     class Meta:

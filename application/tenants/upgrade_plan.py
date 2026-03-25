@@ -40,26 +40,26 @@ class UpgradePlanUseCase:
 
         if imediato:
             # Cancela imediatamente
-            assinatura_atual.cancelar(end_date=hoje)
+            assinatura_atual.cancel(end_date=hoje)
 
             return TenantSubscription.objects.create(
                 tenant=tenant,
                 plan=novo_plan,
                 start_date=hoje,
-                status=TenantSubscription.Status.ATIVA,
+                status=TenantSubscription.Status.ACTIVE,
                 cycle=assinatura_atual.cycle,
             )
 
         # Upgrade programado no fim do cycle
         end_date_atual = assinatura_atual.end_date or hoje
 
-        assinatura_atual.cancelar(end_date=end_date_atual)
+        assinatura_atual.cancel(end_date=end_date_atual)
 
         return TenantSubscription.objects.create(
             tenant=tenant,
             plan=novo_plan,
             start_date=end_date_atual,
-            status=TenantSubscription.Status.ATIVA,
+            status=TenantSubscription.Status.ACTIVE,
             cycle=assinatura_atual.cycle,
         )
 

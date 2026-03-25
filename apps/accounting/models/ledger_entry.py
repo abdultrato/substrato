@@ -15,7 +15,7 @@ class LedgerEntry(
 
     external_reference = models.CharField(
 
-        db_column="referencia_externa",
+        db_column="external_reference",
 
         max_length=120,
         db_index=True,
@@ -33,14 +33,14 @@ class LedgerEntry(
 
     accounting_date = models.DateField(
 
-        db_column="data_contabil",
+        db_column="accounting_date",
 
         db_index=True,
     )
 
     description = models.CharField(
 
-        db_column="descricao",
+        db_column="description",
 
         max_length=255,
     )
@@ -51,7 +51,7 @@ class LedgerEntry(
 
     reversed = models.BooleanField(
 
-        db_column="revertido",
+        db_column="reversed",
 
         default=False,
         db_index=True,
@@ -61,7 +61,7 @@ class LedgerEntry(
 
         "self",
 
-        db_column="reverso_de_id",
+        db_column="reversal_of_id",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
@@ -70,7 +70,7 @@ class LedgerEntry(
 
     reversal_reason = models.TextField(
 
-        db_column="motivo_reversao",
+        db_column="reversal_reason",
 
         null=True,
         blank=True,
@@ -81,7 +81,7 @@ class LedgerEntry(
     # ===============================
 
     created_at = models.DateTimeField(
-        db_column="criado_em",
+        db_column="created_at",
         auto_now_add=True,
         db_index=True,
     )
@@ -92,7 +92,7 @@ class LedgerEntry(
 
     previous_hash = models.CharField(
 
-        db_column="hash_anterior",
+        db_column="previous_hash",
 
         max_length=64,
         null=True,
@@ -102,7 +102,7 @@ class LedgerEntry(
 
     current_hash = models.CharField(
 
-        db_column="hash_atual",
+        db_column="current_hash",
 
         max_length=64,
         null=True,

@@ -19,5 +19,3 @@ class CoverageService:
         }
 
 
-ServicoCobertura = CoverageService
-CoverageService.resolver = CoverageService.resolve

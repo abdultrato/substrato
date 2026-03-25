@@ -93,9 +93,11 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 VIEWSET_MAP = {
     "payment": PaymentViewSet,
+    "receipt": ReceiptViewSet,
+    "reconciliation": ReconciliationViewSet,
+    "transaction": TransactionViewSet,
     "recibo": ReceiptViewSet,
     "reconciliacao": ReconciliationViewSet,
-    "transaction": TransactionViewSet,
 }
 
 __all__ = [
@@ -105,8 +107,3 @@ __all__ = [
     "ReconciliationViewSet",
     "TransactionViewSet",
 ]
-
-PagamentoViewSet = PaymentViewSet
-ReciboViewSet = ReceiptViewSet
-ReconciliacaoViewSet = ReconciliationViewSet
-TransacaoViewSet = TransactionViewSet

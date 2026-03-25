@@ -22,7 +22,7 @@ class IntegrationRouting(NoNameCoreModel):
 
         "integracoes_equipamentos.IntegrationEquipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="roteamentos",
         db_index=True,
@@ -30,7 +30,7 @@ class IntegrationRouting(NoNameCoreModel):
 
     exam_type = models.CharField(
 
-        db_column="tipo_exame",
+        db_column="exam_type",
 
         max_length=3,
         choices=ExamType.choices,
@@ -40,7 +40,7 @@ class IntegrationRouting(NoNameCoreModel):
 
     sector = models.CharField(
 
-        db_column="setor",
+        db_column="sector",
 
         max_length=40,
         choices=Sector.choices,
@@ -49,7 +49,7 @@ class IntegrationRouting(NoNameCoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, db_index=True)
 

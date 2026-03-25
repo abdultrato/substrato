@@ -42,9 +42,3 @@ class InventoryService:
             sale_item=sale_item,
             tenant=getattr(locked_lot, "tenant", None),
         )
-
-
-EstoqueService = InventoryService
-InventoryService.saldo_lot = InventoryService.lot_balance
-InventoryService.registrar_entrada = InventoryService.register_input
-InventoryService.registrar_saida = InventoryService.register_output

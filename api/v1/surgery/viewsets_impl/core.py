@@ -32,17 +32,17 @@ class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         else:
             invoice = Invoice(
                 tenant=surgery.tenant,
-                origin=Invoice.Origem.CIRURGIA,
+                origin=Invoice.Origin.SURGERY,
                 surgery=surgery,
                 patient=surgery.patient,
             )
             invoice.full_clean()
             invoice.save()
 
-        if invoice.status != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Status.DRAFT:
             raise ValidationError("A invoice vinculada já foi emitida/paga/cancelada.")
 
-        invoice.sincronizar_itens_da_origin()
+        invoice.sync_items_from_origin()
 
         emit = (request.data or {}).get("emitir", True)
         if emit:
@@ -81,5 +81,3 @@ __all__ = [
     "SurgicalProcedureViewSet",
 ]
 
-CirurgiaViewSet = SurgeryViewSet
-ProcedimentoCirurgicoViewSet = SurgicalProcedureViewSet

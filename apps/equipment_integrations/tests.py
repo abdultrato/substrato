@@ -73,7 +73,7 @@ def test_request_item_creates_integration_order_by_sector():
     item = LabRequestItem.objects.create(tenant=tenant, request=req, exam=exam)
 
     order = IntegrationOrder.objects.get(equipment=equipment, request=req, deleted=False)
-    assert order.status == IntegrationOrder.Estado.PENDENTE
+    assert order.status == IntegrationOrder.Status.PENDING
     assert order.itens.filter(request_item=item, deleted=False).exists()
 
 
@@ -143,7 +143,7 @@ def test_http_inbox_applies_result_by_mapping():
         HTTP_X_INTEGRATION_KEY=key,
     )
     assert resp.status_code == 200
-    assert resp.data["order_status"] in {IntegrationOrder.Estado.EM_EXECUCAO, IntegrationOrder.Estado.CONCLUIDA}
+    assert resp.data["order_status"] in {IntegrationOrder.Status.IN_PROGRESS, IntegrationOrder.Status.DONE}
 
     result = Result.objects.get(request=req)
     item = ResultItem.objects.get(result=result, exam_field=campo)
@@ -152,5 +152,3 @@ def test_http_inbox_applies_result_by_mapping():
 
 _patient = _patient
 _exam = _exam
-test_request_item_cria_order_integracao_por_sector = test_request_item_creates_integration_order_by_sector
-test_inbox_http_aplica_result_por_mapeamento = test_http_inbox_applies_result_by_mapping

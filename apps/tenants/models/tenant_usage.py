@@ -8,7 +8,7 @@ class TenantUsage(NoNameCoreModel):
 
     tenant = models.OneToOneField(
         "inquilinos.Tenant",
-        db_column="inquilino_id",
+        db_column="tenant_id",
         on_delete=models.CASCADE,
         related_name="uso",
         db_index=True,
@@ -16,11 +16,11 @@ class TenantUsage(NoNameCoreModel):
 
     active_users = models.PositiveIntegerField(
 
-        db_column="usuarios_ativos",
+        db_column="active_users",
 
         default=0)
     current_month_requests = models.PositiveIntegerField(
-        db_column="requisicoes_mes_atual",
+        db_column="current_month_requests",
         default=0)
 
     class Meta:

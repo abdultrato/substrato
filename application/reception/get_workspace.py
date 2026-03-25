@@ -24,23 +24,23 @@ def execute(tenant):
     queue = (
         today_checkins.exclude(
             status__in=[
-                ReceptionCheckin.Status.CONCLUIDO,
-                ReceptionCheckin.Status.CANCELADO,
+                ReceptionCheckin.Status.COMPLETED,
+                ReceptionCheckin.Status.CANCELED,
             ]
         )
         .select_related("patient", "request", "invoice", "attendant")
         .annotate(
             priority_order=Case(
-                When(priority=ReceptionCheckin.Priority.URGENTE, then=Value(0)),
-                When(priority=ReceptionCheckin.Priority.PREFERENCIAL, then=Value(1)),
+                When(priority=ReceptionCheckin.Priority.URGENT, then=Value(0)),
+                When(priority=ReceptionCheckin.Priority.PREFERRED, then=Value(1)),
                 default=Value(2),
                 output_field=IntegerField(),
             ),
             status_order=Case(
-                When(status=ReceptionCheckin.Status.AGUARDANDO, then=Value(0)),
-                When(status=ReceptionCheckin.Status.EM_ATENDIMENTO, then=Value(1)),
-                When(status=ReceptionCheckin.Status.REQUISICAO_CRIADA, then=Value(2)),
-                When(status=ReceptionCheckin.Status.FATURA_VINCULADA, then=Value(3)),
+                When(status=ReceptionCheckin.Status.WAITING, then=Value(0)),
+                When(status=ReceptionCheckin.Status.IN_CARE, then=Value(1)),
+                When(status=ReceptionCheckin.Status.REQUEST_CREATED, then=Value(2)),
+                When(status=ReceptionCheckin.Status.INVOICE_LINKED, then=Value(3)),
                 default=Value(4),
                 output_field=IntegerField(),
             ),
@@ -51,15 +51,15 @@ def execute(tenant):
     received_today = (
         Payment.objects.filter(
             invoice__tenant=tenant,
-            status=Payment.Status.CONFIRMADO,
+            status=Payment.Status.CONFIRMED,
             paid_at__date=today,
         ).aggregate(total=Coalesce(Sum("value"), Decimal("0.00")))
     )["total"]
 
     summary = {
         "checkins_today": today_checkins.count(),
-        "queue_size": today_checkins.filter(status=ReceptionCheckin.Status.AGUARDANDO).count(),
-        "in_care": today_checkins.filter(status=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
+        "queue_size": today_checkins.filter(status=ReceptionCheckin.Status.WAITING).count(),
+        "in_care": today_checkins.filter(status=ReceptionCheckin.Status.IN_CARE).count(),
         "new_patients": Patient.objects.filter(tenant=tenant, created_at__date=today).count(),
         "pending_requests": LabRequest.objects.filter(
             tenant=tenant,
@@ -67,7 +67,7 @@ def execute(tenant):
         ).count(),
         "open_invoices": Invoice.objects.filter(
             tenant=tenant,
-            status=Invoice.Estado.EMITIDA,
+            status=Invoice.Status.ISSUED,
         ).count(),
         "receipts_generated_today": Receipt.objects.filter(
             invoice__tenant=tenant,

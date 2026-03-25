@@ -5,4 +5,3 @@ def test_integrations_placeholder():
     assert True
 
 
-test_integracoes_placeholder = test_integrations_placeholder

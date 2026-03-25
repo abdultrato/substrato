@@ -37,4 +37,3 @@ SERIALIZER_MAP = {
     "gestacao": PregnancySerializer,
 }
 
-GestacaoSerializer = PregnancySerializer

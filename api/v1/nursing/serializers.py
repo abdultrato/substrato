@@ -140,17 +140,3 @@ SERIALIZER_MAP = {
 }
 
 
-RegistroEnfermagemSerializer = NursingRecordSerializer
-ProcedimentoCatalogoSerializer = ProcedureCatalogSerializer
-ProcedimentoCatalogoMaterialSerializer = ProcedureCatalogMaterialSerializer
-ProcedimentoSerializer = ProcedureSerializer
-ProcedimentoItemSerializer = ProcedureItemSerializer
-ProcedimentoMaterialSerializer = ProcedureMaterialSerializer
-ProcedimentoItemValorSerializer = ProcedureItemValueSerializer
-ProcedimentoMaterialValorSerializer = ProcedureMaterialValueSerializer
-SinalVitalEnfermagemSerializer = NursingVitalSignSerializer
-PrescricaoEnfermagemSerializer = NursingPrescriptionSerializer
-EvolucaoEnfermagemSerializer = NursingEvolutionSerializer
-EnfermariaSerializer = WardSerializer
-CamaEnfermariaSerializer = WardBedSerializer
-InternamentoEnfermariaSerializer = WardAdmissionSerializer

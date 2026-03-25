@@ -15,19 +15,19 @@ CHANNELS = {
 
 
 @transaction.atomic
-def send_notification(destino: str, message: str, channel: str):
+def send_notification(destination: str, message: str, channel: str):
 
     if channel not in CHANNELS:
         raise ValueError(f"Canal inválido: {channel}")
 
     notification = Notification.objects.create(
-        recipient=destino,
+        recipient=destination,
         message=message,
         channel=channel,
     )
 
     try:
-        response = CHANNELS[channel].enviar(destino, message)
+        response = CHANNELS[channel].send(destination, message)
 
         DeliveryLog.objects.create(
             notification=notification,
@@ -48,7 +48,3 @@ def send_notification(destino: str, message: str, channel: str):
         raise DeliveryFailure(str(error)) from error
 
     return notification
-
-
-CANAIS = CHANNELS
-enviar_notification = send_notification

@@ -20,7 +20,7 @@ class SurgicalProcedure(CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição",
         blank=True,
@@ -29,7 +29,7 @@ class SurgicalProcedure(CoreModel):
 
     base_price = MoneyField(
 
-        db_column="preco_base",
+        db_column="base_price",
 
         verbose_name="Preço base",
         default=Decimal("0.00"),
@@ -37,7 +37,7 @@ class SurgicalProcedure(CoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -47,7 +47,7 @@ class SurgicalProcedure(CoreModel):
 
     applies_vat_by_default = models.BooleanField(
 
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
 
         verbose_name="Aplicar IVA por padrão",
         default=True,
@@ -55,7 +55,7 @@ class SurgicalProcedure(CoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         verbose_name="Ativo",
         default=True,

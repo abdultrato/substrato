@@ -79,7 +79,7 @@ def test_clinical_invoice_recalculates_totals():
         tenant=tenant,
         patient=patient,
         request=req,
-        origin=Invoice.Origem.CLINICO,
+        origin=Invoice.Origin.CLINICAL,
     )
 
     item = InvoiceItem.objects.create(
@@ -91,7 +91,7 @@ def test_clinical_invoice_recalculates_totals():
     item._fill_from_reference()
     item.save(update_fields=["description", "unit_price", "quantity"])
 
-    invoice.persistir_totais()
+    invoice.persist_totals()
     invoice.refresh_from_db()
 
     assert invoice.subtotal == exam.price
@@ -108,7 +108,7 @@ def test_clinical_invoice_syncs_medical_exam():
     req = LabRequest.objects.create(
         tenant=tenant,
         patient=patient,
-        type=LabRequest.Tipo.EXAME_MEDICO,
+        type=LabRequest.Type.MEDICAL_EXAM,
     )
     req.created_at = _horario_normal()
     req.save(update_fields=["created_at"])
@@ -122,10 +122,10 @@ def test_clinical_invoice_syncs_medical_exam():
         tenant=tenant,
         patient=patient,
         request=req,
-        origin=Invoice.Origem.CLINICO,
+        origin=Invoice.Origin.CLINICAL,
     )
 
-    invoice.sincronizar_itens_da_origin()
+    invoice.sync_items_from_origin()
     invoice.refresh_from_db()
 
     itens = list(invoice.itens.filter(deleted=False))
@@ -144,7 +144,7 @@ def test_clinical_invoice_syncs_medical_exam():
 def test_manual_adjustment_item_requires_description():
     tenant = _tenant()
     patient = _patient(tenant)
-    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origem.CLINICO)
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.CLINICAL)
 
     item = InvoiceItem(
         tenant=tenant,
@@ -163,7 +163,7 @@ def test_exam_item_has_incompatible_source():
     tenant = _tenant()
     patient = _patient(tenant)
     exam = _exam(tenant)
-    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origem.FARMACIA)
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.PHARMACY)
 
     item = InvoiceItem(
         tenant=tenant,
@@ -215,10 +215,10 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
 
     invoice = Invoice.objects.create(
         tenant=tenant,
-        origin=Invoice.Origem.ENFERMAGEM,
+        origin=Invoice.Origin.NURSING,
         procedure=proc,
     )
-    invoice.sincronizar_itens_da_origin()
+    invoice.sync_items_from_origin()
 
     with pytest.raises(ValidationError) as exc:
         invoice.issue()
@@ -236,7 +236,7 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
 
     invoice.issue()
     invoice.refresh_from_db()
-    assert invoice.status == Invoice.Estado.EMITIDA
+    assert invoice.status == Invoice.Status.ISSUED
 
     material = proc.materiais.get(product=product)
     material.refresh_from_db()

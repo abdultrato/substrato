@@ -17,7 +17,3 @@ class PaymentService:
             payment.confirm()
 
         return payment
-
-
-ServicoPagamento = PaymentService
-PaymentService.registrar = PaymentService.register

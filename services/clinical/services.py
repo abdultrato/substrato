@@ -8,8 +8,3 @@ class ClinicalService:
     def update_request_status(self, request, status):
         request.status = status
         request.save()
-
-
-ServicoClinico = ClinicalService
-ClinicalService.registrar_patient = ClinicalService.register_patient
-ClinicalService.atualizar_status_request = ClinicalService.update_request_status

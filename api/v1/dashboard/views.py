@@ -11,7 +11,7 @@ from api.v1.compat import LegacyAliasSerializerMixin
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
-from domain.clinical.status_result import EstadoResultado
+from domain.clinical.result_state import ResultState
 from security.permissions.groups import IsAdminOrContabilidade
 
 
@@ -47,7 +47,7 @@ class DashboardStatsView(APIView):
         today = timezone.localdate()
 
         patients = patients_qs.count()
-        pending_requests = requests_qs.filter(status=EstadoResultado.PENDENTE).count()
+        pending_requests = requests_qs.filter(status=ResultState.PENDING).count()
         exams_today = requests_qs.filter(created_at__date=today).count()
 
         billing_today = invoices_qs.filter(created_at__date=today).aggregate(total=Sum("total"))["total"] or Decimal(

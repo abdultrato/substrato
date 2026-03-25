@@ -3,17 +3,17 @@
 from .viewsets_impl import (
     VIEWSET_MAP,
     PasswordResetTokenViewSet,
-    PerfilProfissionalViewSet,
+    ProfessionalProfileViewSet,
     ProfessionalProfileViewSet,
     UserViewSet,
-    UsuarioViewSet,
+    UserViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
     "PasswordResetTokenViewSet",
-    "PerfilProfissionalViewSet",
+    "ProfessionalProfileViewSet",
     "ProfessionalProfileViewSet",
     "UserViewSet",
-    "UsuarioViewSet",
+    "UserViewSet",
 ]

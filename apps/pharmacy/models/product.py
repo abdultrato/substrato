@@ -18,7 +18,7 @@ class Product(CoreModel):
 
         "farmacia.ProductCategory",
 
-        db_column="categoria_id",
+        db_column="category_id",
         verbose_name="Categoria",
         on_delete=models.PROTECT,
         related_name="produtos",
@@ -29,7 +29,7 @@ class Product(CoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         verbose_name="Tipo",
         max_length=3,
@@ -40,7 +40,7 @@ class Product(CoreModel):
 
     sale_price = models.DecimalField(
 
-        db_column="preco_venda",
+        db_column="sale_price",
 
         verbose_name="Preço de sale",
         max_digits=14,
@@ -51,7 +51,7 @@ class Product(CoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -66,7 +66,7 @@ class Product(CoreModel):
 
     applies_vat_by_default = models.BooleanField(
 
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
 
         verbose_name="Aplicar IVA por padrão",
         default=True,

@@ -13,17 +13,17 @@ class TaskBase:
     name = "task"
 
     @classmethod
-    def log_inicio(cls):
+    def log_start(cls):
         logger.info("[%s] iniciado em %s", cls.name, timezone.now())
 
     @classmethod
-    def log_fim(cls):
+    def log_end(cls):
         logger.info("[%s] finalized em %s", cls.name, timezone.now())
 
     @classmethod
-    def executar(cls, func, *args, **kwargs):
-        cls.log_inicio()
+    def execute(cls, func, *args, **kwargs):
+        cls.log_start()
         try:
             return func(*args, **kwargs)
         finally:
-            cls.log_fim()
+            cls.log_end()

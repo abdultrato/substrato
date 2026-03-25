@@ -155,7 +155,3 @@ FILTER_MAP = {
     "usotenant": TenantUsageFilter,
 }
 
-ConfiguracaoInquilinoFilter = TenantConfigurationFilter
-InquilinoFilter = TenantFilter
-PlanoAssinaturaFilter = SubscriptionPlanFilter
-UsoTenantFilter = TenantUsageFilter

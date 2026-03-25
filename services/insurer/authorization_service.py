@@ -24,5 +24,3 @@ class AuthorizationService:
         return authorization
 
 
-ServicoAutorizacao = AuthorizationService
-AuthorizationService.solicitar = AuthorizationService.request

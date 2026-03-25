@@ -1,7 +1,7 @@
-from .core import VIEWSET_MAP, ErroSistemaViewSet, SystemErrorViewSet
+from .core import VIEWSET_MAP, SystemErrorViewSet, SystemErrorViewSet
 
 __all__ = [
     "VIEWSET_MAP",
-    "ErroSistemaViewSet",
+    "SystemErrorViewSet",
     "SystemErrorViewSet",
 ]

@@ -31,6 +31,3 @@ def register_entry(description: str, movimentos: list[dict]):
         raise ValidationError("Lançamento contábil desbalanceado.")
 
     return entry
-
-
-registrar_entry = register_entry

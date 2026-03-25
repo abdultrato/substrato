@@ -23,7 +23,7 @@ class InvoiceBuilderService:
             quantity=quantity,
             unit_price=unit_price,
         )
-        invoice.persistir_totais()
+        invoice.persist_totals()
         return item
 
     @staticmethod
@@ -34,13 +34,13 @@ class InvoiceBuilderService:
 
         invoice = Invoice(
             tenant=lab_request.tenant,
-            origin=Invoice.Origem.CLINICO,
+            origin=Invoice.Origin.CLINICAL,
             request=lab_request,
             patient=lab_request.patient,
         )
         invoice.full_clean()
         invoice.save()
-        invoice.sincronizar_itens_da_origin()
+        invoice.sync_items_from_origin()
 
         if issue:
             invoice.issue()

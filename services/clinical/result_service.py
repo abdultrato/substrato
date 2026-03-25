@@ -41,5 +41,3 @@ class ResultService:
         result_item.save(update_fields=["clinical_status", "report_color", "critical_alert"])
 
 
-ServicoResultado = ResultService
-ResultService.interpretar = ResultService.interpret

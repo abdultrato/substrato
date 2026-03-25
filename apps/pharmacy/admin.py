@@ -542,11 +542,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     parent_category_references.short_description = "Categorias sugeridas"
 
 
-ProdutoAdmin = ProductAdmin
 ProductAdmin.estoque_total = ProductAdmin.inventory_total
-LoteAdmin = LotAdmin
 LotAdmin.current_balance = LotAdmin.current_balance
-MovimentoEstoqueAdmin = InventoryMovementAdmin
-CategoriaProdutoAdmin = ProductCategoryAdmin
 ProductCategoryAdmin.nivel_category = ProductCategoryAdmin.category_level
 ProductCategoryAdmin.categorias_pai_referencia = ProductCategoryAdmin.parent_category_references

@@ -2,11 +2,11 @@ from django.db import models
 
 
 class NotificationTemplate(models.Model):
-    name = models.CharField(db_column="nome", max_length=120, unique=True, db_index=True)
+    name = models.CharField(db_column="name", max_length=120, unique=True, db_index=True)
     content = models.TextField(
-        db_column="conteudo",
+        db_column="content",
         )
-    created_at = models.DateTimeField(db_column="criado_em", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField(db_column="created_at", auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "notificacoes_templatenotificacao"

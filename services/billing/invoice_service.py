@@ -19,7 +19,7 @@ class InvoiceService(BaseService):
         invoice = Invoice.objects.create(
             tenant=getattr(patient, "tenant", None),
             patient=patient,
-            status=Invoice.Estado.RASCUNHO,
+            status=Invoice.Status.DRAFT,
         )
         return cls.ok(invoice)
 
@@ -35,7 +35,7 @@ class InvoiceService(BaseService):
         surcharge_percent: Decimal = 0,
         exempt_vat: bool = False,
     ):
-        if invoice.status != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Status.DRAFT:
             return cls.fail("Issued invoices cannot be changed.")
 
         line_total = calculate_item_price(
@@ -64,7 +64,7 @@ class InvoiceService(BaseService):
     @classmethod
     @transaction.atomic
     def issue(cls, invoice: Invoice):
-        if invoice.status != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Status.DRAFT:
             return cls.fail("Only draft invoices can be issued.")
 
         cls._refresh_totals(invoice)
@@ -74,21 +74,21 @@ class InvoiceService(BaseService):
     @classmethod
     @transaction.atomic
     def register_payment(cls, invoice: Invoice):
-        if invoice.status != Invoice.Estado.EMITIDA:
+        if invoice.status != Invoice.Status.ISSUED:
             return cls.fail("Invoice must be issued before registering payment.")
 
-        invoice.status = Invoice.Estado.PAGA
+        invoice.status = Invoice.Status.PAID
         invoice.save(update_fields=["status"])
         return cls.ok(invoice)
 
     @classmethod
     @transaction.atomic
     def cancel(cls, invoice: Invoice):
-        invoice.status = Invoice.Estado.CANCELADA
+        invoice.status = Invoice.Status.CANCELED
         invoice.save(update_fields=["status"])
         return cls.ok(invoice)
 
     @staticmethod
     def _refresh_totals(invoice: Invoice):
-        invoice.persistir_totais()
+        invoice.persist_totals()
 

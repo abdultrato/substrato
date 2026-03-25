@@ -24,14 +24,14 @@ class ProcedureItemValue(PropagarInquilinoMixin, NoNameCoreModel):
 
     unit_price = MoneyField(
 
-        db_column="preco_unitario",
+        db_column="unit_price",
 
         default=Decimal("0.00"),
     )
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True,
         db_index=True,

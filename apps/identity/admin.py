@@ -9,4 +9,3 @@ class UserModelAdmin(UserAdmin):
     pass
 
 
-UsuarioAdmin = UserModelAdmin

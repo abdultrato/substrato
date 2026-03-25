@@ -7,6 +7,3 @@ def register_invoice_event(invoice, description, type=None):
         description=description,
         event_type=type,
     )
-
-
-registrar_evento_invoice = register_invoice_event

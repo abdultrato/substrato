@@ -20,7 +20,7 @@ class Patient(CoreModel):
 
     pregnant = models.BooleanField(
 
-        db_column="gestante",
+        db_column="pregnant",
 
         verbose_name="Gestante",
         default=False,
@@ -28,7 +28,7 @@ class Patient(CoreModel):
 
     gestational_age_weeks = models.PositiveIntegerField(
 
-        db_column="idade_gestacional_semanas",
+        db_column="gestational_age_weeks",
 
         verbose_name="Idade gestacional (semanas)",
         null=True,
@@ -38,7 +38,7 @@ class Patient(CoreModel):
 
     birth_date = models.DateField(
 
-        db_column="data_nascimento",
+        db_column="birth_date",
 
         verbose_name="Data de nascimento",
         null=True,
@@ -47,7 +47,7 @@ class Patient(CoreModel):
 
     gender = models.CharField(
 
-        db_column="genero",
+        db_column="gender",
 
         verbose_name="Gênero",
         max_length=10,
@@ -58,7 +58,7 @@ class Patient(CoreModel):
 
     race_origin = models.CharField(
 
-        db_column="raca_origem",
+        db_column="race_origin",
 
         verbose_name="Raça / Origem",
         max_length=20,
@@ -68,7 +68,7 @@ class Patient(CoreModel):
 
     document_type = models.CharField(
 
-        db_column="tipo_documento",
+        db_column="document_type",
 
         verbose_name="Tipo de documento",
         max_length=50,
@@ -78,7 +78,7 @@ class Patient(CoreModel):
 
     document_number = models.CharField(
 
-        db_column="numero_id",
+        db_column="document_number",
 
         verbose_name="Número do documento",
         max_length=50,
@@ -90,55 +90,55 @@ class Patient(CoreModel):
     # Endereço (campos reais) para evitar JSON no admin/frontend e permitir
     # preenchimento estruturado.
     address_street = models.CharField(
-        db_column="endereco_rua",
+        db_column="address_street",
         verbose_name="Rua",
         max_length=120,
         blank=True,
         default="",
     )
     address_number = models.CharField(
-        db_column="endereco_numero",
+        db_column="address_number",
         verbose_name="Número",
         max_length=30,
         blank=True,
         default="",
     )
     address_neighborhood = models.CharField(
-        db_column="endereco_bairro",
+        db_column="address_neighborhood",
         verbose_name="Bairro",
         max_length=120,
         blank=True,
         default="",
     )
     address_city = models.CharField(
-        db_column="endereco_cidade",
+        db_column="address_city",
         verbose_name="Cidade",
         max_length=120,
         blank=True,
         default="",
     )
     address_province = models.CharField(
-        db_column="endereco_provincia",
+        db_column="address_province",
         verbose_name="Província",
         max_length=120,
         blank=True,
         default="",
     )
     address_postal_code = models.CharField(
-        db_column="endereco_codigo_postal",
+        db_column="address_postal_code",
         verbose_name="Código postal",
         max_length=30,
         blank=True,
         default="",
     )
     address_country = CountryField(
-        db_column="endereco_pais",
+        db_column="address_country",
         verbose_name="País",
         blank=True,
         default="MZ",
     )
     address_complement = models.CharField(
-        db_column="endereco_complemento",
+        db_column="address_complement",
         verbose_name="Complemento",
         max_length=255,
         blank=True,
@@ -149,7 +149,7 @@ class Patient(CoreModel):
     # Quando os campos de endereço acima são preenchidos, este campo é
     # atualizado automaticamente.
     address = models.CharField(
-        db_column="morada",
+        db_column="address",
         verbose_name="Morada",
         max_length=255,
         blank=True,
@@ -159,7 +159,7 @@ class Patient(CoreModel):
 
     contact = PhoneField(
 
-        db_column="contacto",
+        db_column="contact",
 
         verbose_name="Contacto",
         blank=True,
@@ -175,7 +175,7 @@ class Patient(CoreModel):
 
     provenance = models.CharField(
 
-        db_column="proveniencia",
+        db_column="provenance",
 
         verbose_name="Proveniência",
         max_length=50,
@@ -188,7 +188,7 @@ class Patient(CoreModel):
 
         "entidades.Company",
 
-        db_column="empresa_origem_id",
+        db_column="origin_company_id",
         verbose_name="Empresa (origin)",
         help_text="Para medicina ocupacional, indique a empresa de origin do patient.",
         on_delete=models.SET_NULL,

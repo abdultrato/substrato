@@ -15,7 +15,7 @@ class Lot(CoreModel):
 
         "farmacia.Product",
 
-        db_column="produto_id",
+        db_column="product_id",
         on_delete=models.PROTECT,
         related_name="lotes",
         db_index=True,
@@ -23,7 +23,7 @@ class Lot(CoreModel):
 
     lot_number = models.CharField(
 
-        db_column="numero_lote",
+        db_column="lot_number",
 
         max_length=100,
         db_index=True,
@@ -31,14 +31,14 @@ class Lot(CoreModel):
 
     expiration_date = models.DateField(
 
-        db_column="validade",
+        db_column="expiration_date",
 
         db_index=True,
     )
 
     initial_quantity = models.PositiveIntegerField(
 
-        db_column="quantidade_inicial",
+        db_column="initial_quantity",
 
         validators=[MinValueValidator(1)],
         help_text="Quantidade inicial do lot.",

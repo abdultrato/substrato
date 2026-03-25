@@ -155,8 +155,3 @@ FILTER_MAP = {
     "sale": SaleFilter,
 }
 
-ItemVendaFilter = SaleItemFilter
-LoteFilter = LotFilter
-MovimentoEstoqueFilter = InventoryMovementFilter
-ProdutoFilter = ProductFilter
-VendaFilter = SaleFilter

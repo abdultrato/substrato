@@ -1,15 +1,15 @@
 from .core import (
     VIEWSET_MAP,
-    EquipamentoViewSet,
-    InspecaoDiariaViewSet,
-    ManutencaoViewSet,
-    OcorrenciaViewSet,
+    EquipmentViewSet,
+    DailyInspectionViewSet,
+    MaintenanceViewSet,
+    IncidentViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "EquipamentoViewSet",
-    "InspecaoDiariaViewSet",
-    "ManutencaoViewSet",
-    "OcorrenciaViewSet",
+    "EquipmentViewSet",
+    "DailyInspectionViewSet",
+    "MaintenanceViewSet",
+    "IncidentViewSet",
 ]

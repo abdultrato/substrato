@@ -20,7 +20,7 @@ class ProductCategory(CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         blank=True,
     )
@@ -29,7 +29,7 @@ class ProductCategory(CoreModel):
 
         "self",
 
-        db_column="categoria_pai_id",
+        db_column="parent_category_id",
         null=True,
         blank=True,
         on_delete=models.PROTECT,

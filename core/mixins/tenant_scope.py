@@ -8,7 +8,7 @@ from infrastructure.context.tenant import get_tenant
 class TenantMixin(models.Model):
     tenant = models.ForeignKey(
         "inquilinos.Tenant",
-        db_column="inquilino_id",
+        db_column="tenant_id",
         on_delete=models.PROTECT,
         related_name="%(class)ss",
         db_index=True,

@@ -20,7 +20,7 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
 
     request_id = models.CharField(
 
-        db_column="requisicao_id",
+        db_column="request_id",
 
         max_length=60, db_index=True)
 
@@ -28,7 +28,7 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
 
         "seguradora.CoveragePlan",
 
-        db_column="plano_id",
+        db_column="plan_id",
         on_delete=models.PROTECT,
         related_name="autorizacoes",
     )
@@ -42,7 +42,7 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
 
     authorization_code = models.CharField(
 
-        db_column="codigo_autorizacao",
+        db_column="authorization_code",
 
         max_length=80,
         blank=True,
@@ -52,14 +52,14 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
 
     response_date = models.DateTimeField(
 
-        db_column="data_resposta",
+        db_column="response_date",
 
         blank=True, null=True)
 
     # Compatibilidade com filtros/viewsets gerados
-    name = models.CharField(db_column="nome", max_length=120, blank=True, null=True, db_index=True)
+    name = models.CharField(db_column="name", max_length=120, blank=True, null=True, db_index=True)
     active = models.BooleanField(
-        db_column="ativo",
+        db_column="active",
         default=True, db_index=True)
 
     class Meta:

@@ -33,18 +33,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -55,35 +55,35 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "description",
-                    models.TextField(blank=True, db_column="descricao", default=""),
+                    models.TextField(blank=True, db_column="description", default=""),
                 ),
                 (
                     "is_doctor",
                     models.BooleanField(
-                        db_column="eh_medico", db_index=True, default=False
+                        db_column="is_doctor", db_index=True, default=False
                     ),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -94,7 +94,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -104,7 +104,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -114,7 +114,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -144,18 +144,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -166,25 +166,25 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "profession",
                     models.CharField(
                         blank=True,
-                        db_column="profissao",
+                        db_column="profession",
                         db_index=True,
                         default="",
                         max_length=120,
@@ -214,7 +214,7 @@ class Migration(migrations.Migration):
                     "document_number",
                     models.CharField(
                         blank=True,
-                        db_column="numero_documento",
+                        db_column="document_number",
                         db_index=True,
                         default="",
                         max_length=60,
@@ -231,7 +231,7 @@ class Migration(migrations.Migration):
                     "phone",
                     models.CharField(
                         blank=True,
-                        db_column="telefone",
+                        db_column="phone",
                         default="",
                         max_length=30,
                         verbose_name="Telefone",
@@ -240,7 +240,7 @@ class Migration(migrations.Migration):
                 (
                     "admission_date",
                     models.DateField(
-                        db_column="data_admissao",
+                        db_column="admission_date",
                         default=django.utils.timezone.now,
                         verbose_name="Data de admissão",
                     ),
@@ -249,7 +249,7 @@ class Migration(migrations.Migration):
                     "status",
                     models.CharField(
                         choices=[("ATIVO", "Ativo"), ("INATIVO", "Inativo")],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="ATIVO",
                         max_length=10,
@@ -259,7 +259,7 @@ class Migration(migrations.Migration):
                 (
                     "nominal_salary",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="salario_nominal",
+                        db_column="nominal_salary",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -269,7 +269,7 @@ class Migration(migrations.Migration):
                 (
                     "salary_increase",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="aumento_salarial",
+                        db_column="salary_increase",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         help_text="Valor adicional por promoção/aumento (somado ao salário nominal).",
@@ -280,7 +280,7 @@ class Migration(migrations.Migration):
                 (
                     "base_month_hours",
                     models.PositiveSmallIntegerField(
-                        db_column="horas_base_mes",
+                        db_column="base_month_hours",
                         default=176,
                         help_text="Horas contratuais base por mês (ex.: 176).",
                         verbose_name="Horas base (mês)",
@@ -290,7 +290,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -301,7 +301,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -311,7 +311,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -321,7 +321,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                     "role",
                     models.ForeignKey(
                         blank=True,
-                        db_column="cargo_id",
+                        db_column="role_id",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="funcionarios",
@@ -363,18 +363,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -385,20 +385,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "date",
                     models.DateField(
-                        db_column="data",
+                        db_column="date",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -406,7 +406,7 @@ class Migration(migrations.Migration):
                 (
                     "hours",
                     models.DecimalField(
-                        db_column="horas",
+                        db_column="hours",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=6,
@@ -415,7 +415,7 @@ class Migration(migrations.Migration):
                 (
                     "multiplier",
                     models.DecimalField(
-                        db_column="multiplicador",
+                        db_column="multiplier",
                         decimal_places=2,
                         default=Decimal("1.50"),
                         max_digits=4,
@@ -424,14 +424,14 @@ class Migration(migrations.Migration):
                 (
                     "notes",
                     models.CharField(
-                        blank=True, db_column="observacoes", default="", max_length=255
+                        blank=True, db_column="notes", default="", max_length=255
                     ),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -442,7 +442,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -452,7 +452,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="hours_extras",
                         to="recursos_humanos.employee",
@@ -461,7 +461,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -471,7 +471,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -501,18 +501,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -523,28 +523,28 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "year",
-                    models.PositiveSmallIntegerField(db_column="ano", db_index=True),
+                    models.PositiveSmallIntegerField(db_column="year", db_index=True),
                 ),
                 (
                     "month",
-                    models.PositiveSmallIntegerField(db_column="mes", db_index=True),
+                    models.PositiveSmallIntegerField(db_column="month", db_index=True),
                 ),
                 (
                     "nominal_salary",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="salario_nominal",
+                        db_column="nominal_salary",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -553,13 +553,13 @@ class Migration(migrations.Migration):
                 (
                     "base_month_hours",
                     models.PositiveSmallIntegerField(
-                        db_column="horas_base_mes", default=176
+                        db_column="base_month_hours", default=176
                     ),
                 ),
                 (
                     "overtime_hour_multiplier",
                     models.DecimalField(
-                        db_column="multiplicador_hora_extra",
+                        db_column="overtime_hour_multiplier",
                         decimal_places=2,
                         default=Decimal("1.50"),
                         max_digits=4,
@@ -568,7 +568,7 @@ class Migration(migrations.Migration):
                 (
                     "calculated_overtime_hours",
                     models.DecimalField(
-                        db_column="horas_extras_apuradas",
+                        db_column="calculated_overtime_hours",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=8,
@@ -577,7 +577,7 @@ class Migration(migrations.Migration):
                 (
                     "hourly_value",
                     models.DecimalField(
-                        db_column="valor_hora",
+                        db_column="hourly_value",
                         decimal_places=4,
                         default=Decimal("0.0000"),
                         max_digits=12,
@@ -586,7 +586,7 @@ class Migration(migrations.Migration):
                 (
                     "overtime_value",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="valor_horas_extras",
+                        db_column="overtime_value",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -595,7 +595,7 @@ class Migration(migrations.Migration):
                 (
                     "total_salary",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="salario_total",
+                        db_column="total_salary",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -604,14 +604,14 @@ class Migration(migrations.Migration):
                 (
                     "closed",
                     models.BooleanField(
-                        db_column="fechado", db_index=True, default=False
+                        db_column="closed", db_index=True, default=False
                     ),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -622,7 +622,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -632,7 +632,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="folhas_payment",
                         to="recursos_humanos.employee",
@@ -641,7 +641,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -651,7 +651,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -681,18 +681,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -703,20 +703,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "date",
                     models.DateField(
-                        db_column="data",
+                        db_column="date",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -730,7 +730,7 @@ class Migration(migrations.Migration):
                             ("FIM_CONTRATO", "Fim de contrato"),
                             ("OUTRO", "Outro"),
                         ],
-                        db_column="tipo",
+                        db_column="type",
                         db_index=True,
                         default="DEMISSAO",
                         max_length=20,
@@ -738,13 +738,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "reason",
-                    models.TextField(blank=True, db_column="motivo", default=""),
+                    models.TextField(blank=True, db_column="reason", default=""),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -755,7 +755,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -765,7 +765,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="dispensas",
                         to="recursos_humanos.employee",
@@ -774,7 +774,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -784,7 +784,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -814,18 +814,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -836,20 +836,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "start_date",
                     models.DateField(
-                        db_column="data_inicio",
+                        db_column="start_date",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -857,7 +857,7 @@ class Migration(migrations.Migration):
                 (
                     "end_date",
                     models.DateField(
-                        db_column="data_fim",
+                        db_column="end_date",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -871,7 +871,7 @@ class Migration(migrations.Migration):
                             ("GOZADA", "Gozada"),
                             ("CANCEL", "Cancelada"),
                         ],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="SOLIC",
                         max_length=10,
@@ -879,13 +879,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "notes",
-                    models.TextField(blank=True, db_column="observacoes", default=""),
+                    models.TextField(blank=True, db_column="notes", default=""),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -896,7 +896,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -906,7 +906,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="ferias",
                         to="recursos_humanos.employee",
@@ -915,7 +915,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -925,7 +925,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -955,18 +955,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -977,16 +977,16 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "weekday",
                     models.IntegerField(
@@ -999,21 +999,21 @@ class Migration(migrations.Migration):
                             (5, "Sábado"),
                             (6, "Domingo"),
                         ],
-                        db_column="dia_semana",
+                        db_column="weekday",
                         db_index=True,
                     ),
                 ),
-                ("start_time", models.TimeField(db_column="hora_inicio")),
-                ("end_time", models.TimeField(db_column="hora_fim")),
+                ("start_time", models.TimeField(db_column="start_time")),
+                ("end_time", models.TimeField(db_column="end_time")),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -1024,7 +1024,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -1034,7 +1034,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="horarios",
                         to="recursos_humanos.employee",
@@ -1043,7 +1043,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -1053,7 +1053,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -1083,18 +1083,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -1105,20 +1105,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "date",
                     models.DateField(
-                        db_column="data",
+                        db_column="date",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -1126,20 +1126,20 @@ class Migration(migrations.Migration):
                 (
                     "reason",
                     models.CharField(
-                        blank=True, db_column="motivo", default="", max_length=255
+                        blank=True, db_column="reason", default="", max_length=255
                     ),
                 ),
                 (
                     "justified",
                     models.BooleanField(
-                        db_column="justificada", db_index=True, default=False
+                        db_column="justified", db_index=True, default=False
                     ),
                 ),
                 (
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -1150,7 +1150,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -1160,7 +1160,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -1170,7 +1170,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",
@@ -1180,7 +1180,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="faltas",
                         to="recursos_humanos.employee",
@@ -1219,18 +1219,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -1241,19 +1241,19 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "relationship",
@@ -1265,7 +1265,7 @@ class Migration(migrations.Migration):
                             ("IRMAO", "Irmão(ã)"),
                             ("OUTRO", "Outro"),
                         ],
-                        db_column="parentesco",
+                        db_column="relationship",
                         db_index=True,
                         default="OUTRO",
                         max_length=20,
@@ -1276,7 +1276,7 @@ class Migration(migrations.Migration):
                     "birth_date",
                     models.DateField(
                         blank=True,
-                        db_column="data_nascimento",
+                        db_column="birth_date",
                         null=True,
                         verbose_name="Data de nascimento",
                     ),
@@ -1285,7 +1285,7 @@ class Migration(migrations.Migration):
                     "phone",
                     models.CharField(
                         blank=True,
-                        db_column="telefone",
+                        db_column="phone",
                         default="",
                         max_length=30,
                         verbose_name="Telefone",
@@ -1294,7 +1294,7 @@ class Migration(migrations.Migration):
                 (
                     "lives_with_employee",
                     models.BooleanField(
-                        db_column="vive_com_funcionario",
+                        db_column="lives_with_employee",
                         db_index=True,
                         default=True,
                         verbose_name="Vive com o funcionário",
@@ -1304,7 +1304,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         default="",
                         verbose_name="Observações",
                     ),
@@ -1313,7 +1313,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -1324,7 +1324,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -1334,7 +1334,7 @@ class Migration(migrations.Migration):
                 (
                     "employee",
                     models.ForeignKey(
-                        db_column="funcionario_id",
+                        db_column="employee_id",
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="agregados_familiares",
                         to="recursos_humanos.employee",
@@ -1344,7 +1344,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -1354,7 +1354,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",

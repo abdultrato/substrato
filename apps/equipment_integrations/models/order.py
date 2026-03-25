@@ -12,26 +12,26 @@ class IntegrationOrder(NoNameCoreModel):
 
     prefix = "ORD"
 
-    class Estado(models.TextChoices):
-        PENDENTE = "PEND", "Pendente"
-        ENVIADA = "SEND", "Enviada"
-        EM_EXECUCAO = "EXEC", "Em execução"
-        CONCLUIDA = "DONE", "Concluída"
-        ERRO = "ERRO", "Erro"
-        CANCELADA = "CANC", "Cancelada"
+    class Status(models.TextChoices):
+        PENDING = "PEND", "Pendente"
+        SENT = "SEND", "Enviada"
+        IN_PROGRESS = "EXEC", "Em execução"
+        DONE = "DONE", "Concluída"
+        ERROR = "ERRO", "Erro"
+        CANCELED = "CANC", "Cancelada"
 
     equipment = models.ForeignKey(
 
         "integracoes_equipamentos.IntegrationEquipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.PROTECT,
         related_name="ordens",
         db_index=True,
     )
     request = models.ForeignKey(
         "clinico.LabRequest",
-        db_column="requisicao_id",
+        db_column="request_id",
         on_delete=models.PROTECT,
         related_name="ordens_integracao",
         db_index=True,
@@ -39,17 +39,17 @@ class IntegrationOrder(NoNameCoreModel):
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         max_length=4,
-        choices=Estado.choices,
-        default=Estado.PENDENTE,
+        choices=Status.choices,
+        default=Status.PENDING,
         db_index=True,
     )
 
     observation = models.TextField(
 
-        db_column="observacao",
+        db_column="observation",
 
         blank=True, default="")
 
@@ -82,25 +82,25 @@ class IntegrationOrder(NoNameCoreModel):
 class IntegrationOrderItem(NoNameCoreModel):
     prefix = "ORDIT"
 
-    class Estado(models.TextChoices):
-        PENDENTE = "PEND", "Pendente"
-        EM_EXECUCAO = "EXEC", "Em execução"
-        CONCLUIDO = "DONE", "Concluído"
-        ERRO = "ERRO", "Erro"
-        CANCELADO = "CANC", "Cancelado"
+    class Status(models.TextChoices):
+        PENDING = "PEND", "Pendente"
+        IN_PROGRESS = "EXEC", "Em execução"
+        DONE = "DONE", "Concluído"
+        ERROR = "ERRO", "Erro"
+        CANCELED = "CANC", "Cancelado"
 
     order = models.ForeignKey(
 
         IntegrationOrder,
 
-        db_column="ordem_id",
+        db_column="order_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
     )
     request_item = models.ForeignKey(
         "clinico.LabRequestItem",
-        db_column="requisicao_item_id",
+        db_column="request_item_id",
         on_delete=models.PROTECT,
         related_name="ordens_integracao_itens",
         db_index=True,
@@ -108,11 +108,11 @@ class IntegrationOrderItem(NoNameCoreModel):
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         max_length=4,
-        choices=Estado.choices,
-        default=Estado.PENDENTE,
+        choices=Status.choices,
+        default=Status.PENDING,
         db_index=True,
     )
 

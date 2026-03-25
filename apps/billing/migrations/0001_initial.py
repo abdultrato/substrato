@@ -30,18 +30,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -52,24 +52,24 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "event_type",
                     models.CharField(
-                        db_column="tipo_evento",
+                        db_column="event_type",
                         db_index=True,
                         max_length=40,
                         verbose_name="Tipo de evento",
@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
                     "description",
                     models.TextField(
                         blank=True,
-                        db_column="descricao",
+                        db_column="description",
                         default="",
                         verbose_name="Descrição",
                     ),
@@ -107,18 +107,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -129,16 +129,16 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "item_type",
                     models.CharField(
@@ -150,7 +150,7 @@ class Migration(migrations.Migration):
                             ("MAT", "Material de enfermagem"),
                             ("AJU", "Ajuste manual"),
                         ],
-                        db_column="tipo_item",
+                        db_column="item_type",
                         db_index=True,
                         default="EXA",
                         max_length=3,
@@ -161,7 +161,7 @@ class Migration(migrations.Migration):
                     "description",
                     models.CharField(
                         blank=True,
-                        db_column="descricao",
+                        db_column="description",
                         default="",
                         max_length=255,
                         verbose_name="Descrição",
@@ -170,7 +170,7 @@ class Migration(migrations.Migration):
                 (
                     "quantity",
                     models.DecimalField(
-                        db_column="quantidade",
+                        db_column="quantity",
                         decimal_places=2,
                         default=Decimal("1.00"),
                         max_digits=10,
@@ -180,7 +180,7 @@ class Migration(migrations.Migration):
                 (
                     "unit_price",
                     models.DecimalField(
-                        db_column="preco_unitario",
+                        db_column="unit_price",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -190,7 +190,7 @@ class Migration(migrations.Migration):
                 (
                     "applies_vat",
                     models.BooleanField(
-                        db_column="aplica_iva",
+                        db_column="applies_vat",
                         default=True,
                         help_text="Desmarque para não aplicar IVA neste item.",
                         verbose_name="Aplicar IVA?",
@@ -200,7 +200,7 @@ class Migration(migrations.Migration):
                     "vat_percentage",
                     models.DecimalField(
                         blank=True,
-                        db_column="iva_percentual",
+                        db_column="vat_percentage",
                         decimal_places=2,
                         default=None,
                         help_text="Deixe em branco para herdar do item (exam/product/procedure).",
@@ -235,18 +235,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -257,16 +257,16 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "origin",
                     models.CharField(
@@ -278,7 +278,7 @@ class Migration(migrations.Migration):
                             ("CIR", "Cirurgia"),
                             ("MIX", "Mista"),
                         ],
-                        db_column="origem",
+                        db_column="origin",
                         db_index=True,
                         default="CLI",
                         max_length=3,
@@ -297,7 +297,7 @@ class Migration(migrations.Migration):
                 (
                     "vat_amount",
                     models.DecimalField(
-                        db_column="iva_valor",
+                        db_column="vat_amount",
                         decimal_places=2,
                         default=0,
                         max_digits=12,
@@ -316,7 +316,7 @@ class Migration(migrations.Migration):
                 (
                     "insurance_amount",
                     models.DecimalField(
-                        db_column="valor_seguro",
+                        db_column="insurance_amount",
                         decimal_places=2,
                         default=0,
                         max_digits=12,
@@ -326,7 +326,7 @@ class Migration(migrations.Migration):
                 (
                     "patient_amount",
                     models.DecimalField(
-                        db_column="valor_paciente",
+                        db_column="patient_amount",
                         decimal_places=2,
                         default=0,
                         max_digits=12,
@@ -342,7 +342,7 @@ class Migration(migrations.Migration):
                             ("PAGA", "Paga"),
                             ("CANC", "Cancelada"),
                         ],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="RASC",
                         max_length=5,
@@ -353,7 +353,7 @@ class Migration(migrations.Migration):
                     "consultation",
                     models.OneToOneField(
                         blank=True,
-                        db_column="consulta_id",
+                        db_column="consultation_id",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="invoice",

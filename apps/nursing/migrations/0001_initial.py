@@ -30,18 +30,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -52,31 +52,31 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "observation",
                     models.TextField(
-                        db_column="observacao", verbose_name="Evolução clínica"
+                        db_column="observation", verbose_name="Evolução clínica"
                     ),
                 ),
                 (
                     "evolution_date",
                     models.DateTimeField(
                         auto_now_add=True,
-                        db_column="data_evolucao",
+                        db_column="evolution_date",
                         verbose_name="Data da evolução",
                     ),
                 ),
@@ -104,18 +104,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -126,38 +126,38 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "description",
                     models.TextField(
-                        db_column="descricao", verbose_name="Descrição da prescrição"
+                        db_column="description", verbose_name="Descrição da prescrição"
                     ),
                 ),
                 (
                     "prescription_date",
                     models.DateTimeField(
                         auto_now_add=True,
-                        db_column="data_prescricao",
+                        db_column="prescription_date",
                         verbose_name="Data da prescrição",
                     ),
                 ),
                 (
                     "active",
                     models.BooleanField(
-                        db_column="ativo",
+                        db_column="active",
                         default=True,
                         verbose_name="Prescrição active",
                     ),
@@ -186,18 +186,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -208,19 +208,19 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "priority",
@@ -230,7 +230,7 @@ class Migration(migrations.Migration):
                             ("NOR", "Normal"),
                             ("BAI", "Baixa"),
                         ],
-                        db_column="prioridade",
+                        db_column="priority",
                         db_index=True,
                         default="NOR",
                         max_length=3,
@@ -238,13 +238,13 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "observation",
-                    models.TextField(blank=True, db_column="observacao", default=""),
+                    models.TextField(blank=True, db_column="observation", default=""),
                 ),
                 (
                     "record_date",
                     models.DateTimeField(
                         auto_now_add=True,
-                        db_column="data_registro",
+                        db_column="record_date",
                         verbose_name="Data do record",
                     ),
                 ),
@@ -272,18 +272,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -294,25 +294,25 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "temperature_c",
                     models.DecimalField(
                         blank=True,
-                        db_column="temperatura_c",
+                        db_column="temperature_c",
                         decimal_places=1,
                         max_digits=4,
                         null=True,
@@ -323,7 +323,7 @@ class Migration(migrations.Migration):
                     "blood_pressure",
                     models.CharField(
                         blank=True,
-                        db_column="pressao_arterial",
+                        db_column="blood_pressure",
                         default="",
                         max_length=20,
                     ),
@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                     "heart_rate",
                     models.PositiveIntegerField(
                         blank=True,
-                        db_column="frequencia_cardiaca",
+                        db_column="heart_rate",
                         null=True,
                         verbose_name="Frequência cardíaca",
                     ),
@@ -341,7 +341,7 @@ class Migration(migrations.Migration):
                     "respiratory_rate",
                     models.PositiveIntegerField(
                         blank=True,
-                        db_column="frequencia_respiratoria",
+                        db_column="respiratory_rate",
                         null=True,
                         verbose_name="Frequência respiratória",
                     ),
@@ -350,7 +350,7 @@ class Migration(migrations.Migration):
                     "oxygen_saturation",
                     models.PositiveIntegerField(
                         blank=True,
-                        db_column="saturacao_oxigenio",
+                        db_column="oxygen_saturation",
                         null=True,
                         verbose_name="Saturação de O₂ (%)",
                     ),
@@ -358,7 +358,7 @@ class Migration(migrations.Migration):
                 (
                     "collected_at",
                     models.DateTimeField(
-                        db_column="coletado_em",
+                        db_column="collected_at",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
@@ -387,18 +387,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -409,20 +409,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "performed_date",
                     models.DateTimeField(
-                        db_column="data_realizacao",
+                        db_column="performed_date",
                         db_index=True,
                         default=django.utils.timezone.now,
                         verbose_name="Data de realização",
@@ -432,7 +432,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         default="",
                         verbose_name="Observações",
                     ),
@@ -440,7 +440,7 @@ class Migration(migrations.Migration):
                 (
                     "services_subtotal",
                     models.DecimalField(
-                        db_column="subtotal_servicos",
+                        db_column="services_subtotal",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=14,
@@ -450,7 +450,7 @@ class Migration(migrations.Migration):
                 (
                     "materials_subtotal",
                     models.DecimalField(
-                        db_column="subtotal_materiais",
+                        db_column="materials_subtotal",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=14,
@@ -489,18 +489,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -511,25 +511,25 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "description",
                     models.TextField(
                         blank=True,
-                        db_column="descricao",
+                        db_column="description",
                         default="",
                         verbose_name="Descrição",
                     ),
@@ -537,7 +537,7 @@ class Migration(migrations.Migration):
                 (
                     "default_price",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="preco_padrao",
+                        db_column="default_price",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -547,7 +547,7 @@ class Migration(migrations.Migration):
                 (
                     "vat_percentage",
                     models.DecimalField(
-                        db_column="iva_percentual",
+                        db_column="vat_percentage",
                         decimal_places=2,
                         default=Decimal("16.00"),
                         help_text="Taxa de IVA aplicada ao procedure (0 a 100).",
@@ -562,7 +562,7 @@ class Migration(migrations.Migration):
                 (
                     "applies_vat_by_default",
                     models.BooleanField(
-                        db_column="aplica_iva_por_padrao",
+                        db_column="applies_vat_by_default",
                         default=True,
                         help_text="Desmarque se este procedure normalmente não deve ter IVA.",
                         verbose_name="Aplicar IVA por padrão",
@@ -591,18 +591,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -613,20 +613,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "default_quantity",
                     models.DecimalField(
-                        db_column="quantidade_padrao",
+                        db_column="default_quantity",
                         decimal_places=2,
                         default=Decimal("1.00"),
                         max_digits=10,
@@ -638,7 +638,7 @@ class Migration(migrations.Migration):
                 (
                     "default_unit_cost",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="custo_unitario_padrao",
+                        db_column="default_unit_cost",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -646,7 +646,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "observation",
-                    models.TextField(blank=True, db_column="observacao", default=""),
+                    models.TextField(blank=True, db_column="observation", default=""),
                 ),
             ],
             options={
@@ -672,18 +672,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -694,21 +694,21 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "description",
                     models.CharField(
                         blank=True,
-                        db_column="descricao",
+                        db_column="description",
                         db_index=True,
                         default="",
                         max_length=255,
@@ -716,12 +716,12 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "quantity",
-                    models.PositiveIntegerField(db_column="quantidade", default=1),
+                    models.PositiveIntegerField(db_column="quantity", default=1),
                 ),
                 (
                     "unit_price",
                     models.DecimalField(
-                        db_column="preco_unitario",
+                        db_column="unit_price",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=14,
@@ -733,12 +733,12 @@ class Migration(migrations.Migration):
                 (
                     "performed",
                     models.BooleanField(
-                        db_column="realizado", db_index=True, default=True
+                        db_column="performed", db_index=True, default=True
                     ),
                 ),
                 (
                     "observation",
-                    models.TextField(blank=True, db_column="observacao", default=""),
+                    models.TextField(blank=True, db_column="observation", default=""),
                 ),
             ],
             options={
@@ -763,18 +763,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -785,20 +785,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "unit_price",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="preco_unitario",
+                        db_column="unit_price",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -806,7 +806,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
             ],
             options={
@@ -832,18 +832,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -854,27 +854,27 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "quantity",
                     models.PositiveIntegerField(
-                        db_column="quantidade",
+                        db_column="quantity",
                         validators=[django.core.validators.MinValueValidator(1)],
                     ),
                 ),
                 (
                     "unit_cost",
                     models.DecimalField(
-                        db_column="custo_unitario",
+                        db_column="unit_cost",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=14,
@@ -885,7 +885,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "observation",
-                    models.TextField(blank=True, db_column="observacao", default=""),
+                    models.TextField(blank=True, db_column="observation", default=""),
                 ),
             ],
             options={
@@ -910,18 +910,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -932,20 +932,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "unit_cost",
                     infrastructure.orm.fields.money_field.MoneyField(
-                        db_column="custo_unitario",
+                        db_column="unit_cost",
                         decimal_places=2,
                         default=Decimal("0.00"),
                         max_digits=12,
@@ -953,7 +953,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "active",
-                    models.BooleanField(db_column="ativo", db_index=True, default=True),
+                    models.BooleanField(db_column="active", db_index=True, default=True),
                 ),
             ],
             options={
@@ -979,18 +979,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -1001,25 +1001,25 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "description",
                     models.TextField(
                         blank=True,
-                        db_column="descricao",
+                        db_column="description",
                         default="",
                         verbose_name="Descrição",
                     ),
@@ -1027,7 +1027,7 @@ class Migration(migrations.Migration):
                 (
                     "active",
                     models.BooleanField(
-                        db_column="ativa",
+                        db_column="active",
                         db_index=True,
                         default=True,
                         verbose_name="Ativa",
@@ -1056,18 +1056,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -1078,21 +1078,21 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "estimated_observation_hours",
                     models.PositiveSmallIntegerField(
                         blank=True,
-                        db_column="tempo_estimado_observacao_horas",
+                        db_column="estimated_observation_hours",
                         help_text="Tempo estimado de observação em hours (quando aplicável).",
                         null=True,
                         verbose_name="Tempo estimado de observação (hours)",
@@ -1101,7 +1101,7 @@ class Migration(migrations.Migration):
                 (
                     "admission_date",
                     models.DateTimeField(
-                        db_column="data_internamento",
+                        db_column="admission_date",
                         db_index=True,
                         default=django.utils.timezone.now,
                         verbose_name="Data de internamento",
@@ -1111,7 +1111,7 @@ class Migration(migrations.Migration):
                     "expected_discharge_date",
                     models.DateTimeField(
                         blank=True,
-                        db_column="data_prevista_alta",
+                        db_column="expected_discharge_date",
                         db_index=True,
                         null=True,
                         verbose_name="Data prevista para alta",
@@ -1121,7 +1121,7 @@ class Migration(migrations.Migration):
                     "discharged_at",
                     models.DateTimeField(
                         blank=True,
-                        db_column="alta_em",
+                        db_column="discharged_at",
                         db_index=True,
                         null=True,
                         verbose_name="Data de alta",
@@ -1131,7 +1131,7 @@ class Migration(migrations.Migration):
                     "next_medication_at",
                     models.DateTimeField(
                         blank=True,
-                        db_column="proxima_medicacao_em",
+                        db_column="next_medication_at",
                         db_index=True,
                         null=True,
                         verbose_name="Horário da próxima medicação",
@@ -1141,7 +1141,7 @@ class Migration(migrations.Migration):
                     "next_medication_description",
                     models.CharField(
                         blank=True,
-                        db_column="proxima_medicacao_descricao",
+                        db_column="next_medication_description",
                         default="",
                         max_length=160,
                         verbose_name="Descrição da próxima medicação",
@@ -1150,7 +1150,7 @@ class Migration(migrations.Migration):
                 (
                     "active",
                     models.BooleanField(
-                        db_column="ativo",
+                        db_column="active",
                         db_index=True,
                         default=True,
                         verbose_name="Internamento active",
@@ -1160,7 +1160,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         default="",
                         verbose_name="Observações",
                     ),
@@ -1188,18 +1188,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -1210,20 +1210,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "number",
                     models.CharField(
-                        db_column="numero",
+                        db_column="number",
                         db_index=True,
                         max_length=20,
                         verbose_name="Número da bed",
@@ -1232,7 +1232,7 @@ class Migration(migrations.Migration):
                 (
                     "active",
                     models.BooleanField(
-                        db_column="ativa",
+                        db_column="active",
                         db_index=True,
                         default=True,
                         verbose_name="Ativa",

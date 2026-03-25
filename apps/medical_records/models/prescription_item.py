@@ -31,7 +31,7 @@ class PrescriptionItem(NoNameCoreModel):
 
         "prontuario.MedicalRecordEntry",
 
-        db_column="registro_id",
+        db_column="record_id",
         verbose_name="Cardex",
         on_delete=models.CASCADE,
         related_name="itens_prescription",
@@ -42,7 +42,7 @@ class PrescriptionItem(NoNameCoreModel):
 
         "farmacia.Product",
 
-        db_column="medicacao_id",
+        db_column="medication_id",
         verbose_name="Medicação",
         on_delete=models.PROTECT,
         related_name="prescricoes_prontuario",
@@ -51,7 +51,7 @@ class PrescriptionItem(NoNameCoreModel):
 
     dosage_value = models.DecimalField(
 
-        db_column="dosagem_valor",
+        db_column="dosage_value",
 
         verbose_name="Dosagem",
         max_digits=10,
@@ -63,7 +63,7 @@ class PrescriptionItem(NoNameCoreModel):
 
     dosage_unit = models.CharField(
 
-        db_column="dosagem_unidade",
+        db_column="dosage_unit",
 
         verbose_name="Unidade da dosagem",
         max_length=3,
@@ -74,7 +74,7 @@ class PrescriptionItem(NoNameCoreModel):
 
     interval_hours = models.PositiveSmallIntegerField(
 
-        db_column="intervalo_horas",
+        db_column="interval_hours",
 
         verbose_name="Intervalo (hours)",
         null=True,
@@ -84,7 +84,7 @@ class PrescriptionItem(NoNameCoreModel):
 
     dose_count = models.PositiveSmallIntegerField(
 
-        db_column="numero_doses",
+        db_column="dose_count",
 
         verbose_name="Número de doses",
         default=1,
@@ -93,7 +93,7 @@ class PrescriptionItem(NoNameCoreModel):
 
     notes = models.TextField(
 
-        db_column="observacoes",
+        db_column="notes",
 
         verbose_name="Observações",
         blank=True,

@@ -25,7 +25,7 @@ def _admin_group_name() -> str:
 
 
 @receiver(m2m_changed, sender=User.groups.through)
-def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, pk_set=None, **kwargs):
+def sync_admin_staff_superuser(sender, instance, action, reverse, model, pk_set=None, **kwargs):
     """
     Política do projeto:
     - Membros do grupo "Administrador" devem ter acesso total ao Django Admin.
@@ -40,7 +40,7 @@ def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, 
     admin_group = _admin_group_name()
     allowlist = _superuser_allowlist()
 
-    def _promover(u: User) -> None:
+    def _promote(u: User) -> None:
         fields: list[str] = []
         if getattr(u, "is_active", True) is False:
             u.is_active = True
@@ -54,7 +54,7 @@ def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, 
         if fields:
             u.save(update_fields=fields)
 
-    def _rebaixar(u: User) -> None:
+    def _demote(u: User) -> None:
         # Não rebaixa superusers "explicitamente" allowlisted (ex.: break-glass accounts).
         if getattr(u, "username", "") in allowlist:
             return
@@ -81,11 +81,11 @@ def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, 
             return
 
         if is_admin:
-            _promover(user)
+            _promote(user)
             return
 
         if action in {"post_remove", "post_clear"}:
-            _rebaixar(user)
+            _demote(user)
 
         return
 
@@ -101,7 +101,7 @@ def sincronizar_admin_staff_superuser(sender, instance, action, reverse, model, 
     qs = model.objects.filter(pk__in=list(pk_set))
     if action == "post_add":
         for u in qs:
-            _promover(u)
+            _promote(u)
     elif action == "post_remove":
         for u in qs:
-            _rebaixar(u)
+            _demote(u)

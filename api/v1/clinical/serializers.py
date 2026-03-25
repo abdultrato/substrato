@@ -580,7 +580,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     def validate(self, attrs):
         # Normaliza para permitir "default LAB" quando não informado.
-        type = attrs.get("type") or getattr(self.instance, "type", None) or LabRequest.Tipo.LABORATORIO
+        type = attrs.get("type") or getattr(self.instance, "type", None) or LabRequest.Type.LABORATORY
 
         exams = attrs.get("exams", None)
         medical_exams = attrs.get("medical_exams", None)
@@ -602,10 +602,10 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 raise serializers.ValidationError({field_name: "Empresa fora do escopo do tenant."})
 
         # Regra: requisição por sector, sem mistura.
-        if type == LabRequest.Tipo.LABORATORIO:
+        if type == LabRequest.Type.LABORATORY:
             if medical_exams:
                 raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
-        elif type == LabRequest.Tipo.EXAME_MEDICO:
+        elif type == LabRequest.Type.MEDICAL_EXAM:
             if exams:
                 raise serializers.ValidationError({"exams": "Requisição MED não aceita exams laboratoriais."})
         else:
@@ -613,9 +613,9 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         # No create: exigir pelo menos um item.
         if self.instance is None:
-            if type == LabRequest.Tipo.LABORATORIO and not exams:
+            if type == LabRequest.Type.LABORATORY and not exams:
                 raise serializers.ValidationError({"exams": "Informe ao menos um exam laboratorial."})
-            if type == LabRequest.Tipo.EXAME_MEDICO and not medical_exams:
+            if type == LabRequest.Type.MEDICAL_EXAM and not medical_exams:
                 raise serializers.ValidationError({"medical_exams": "Informe ao menos um exam médico."})
 
         return attrs
@@ -625,7 +625,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         exams = validated_date.pop("exams", [])
         medical_exams = validated_date.pop("medical_exams", [])
 
-        type = validated_date.get("type") or LabRequest.Tipo.LABORATORIO
+        type = validated_date.get("type") or LabRequest.Type.LABORATORY
 
         # Auto-associar empresa solicitante pela empresa do patient (quando não fornecida).
         if not validated_date.get("requesting_company") and validated_date.get("patient"):
@@ -638,10 +638,10 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         request = LabRequest.objects.create(**validated_date)
 
-        if type == LabRequest.Tipo.LABORATORIO:
+        if type == LabRequest.Type.LABORATORY:
             for exam in exams:
                 request.add_exam(exam)
-        elif type == LabRequest.Tipo.EXAME_MEDICO:
+        elif type == LabRequest.Type.MEDICAL_EXAM:
             for medical_exam in medical_exams:
                 request.add_medical_exam(medical_exam)
 
@@ -658,7 +658,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         instance = super().update(instance, validated_date)
 
-        if instance.type == LabRequest.Tipo.LABORATORIO:
+        if instance.type == LabRequest.Type.LABORATORY:
             if medical_exams is not None:
                 raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
             if exams is not None:
@@ -674,7 +674,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 for exam in LabExam.objects.filter(id__in=adicionar):
                     instance.add_exam(exam)
 
-        elif instance.type == LabRequest.Tipo.EXAME_MEDICO:
+        elif instance.type == LabRequest.Type.MEDICAL_EXAM:
             if exams is not None:
                 raise serializers.ValidationError({"exams": "Requisição MED não aceita exams laboratoriais."})
             if medical_exams is not None:
@@ -884,13 +884,3 @@ SERIALIZER_MAP = {
 }
 
 # Backwards-compatible aliases while imports are migrated incrementally.
-PacienteSerializer = PatientSerializer
-ExameSerializer = LabExamSerializer
-ExameMedicoSerializer = MedicalExamSerializer
-ExameCampoSerializer = LabExamFieldSerializer
-ExameMedicoCampoSerializer = MedicalExamFieldSerializer
-RequisicaoAnaliseSerializer = LabRequestSerializer
-RequisicaoItemSerializer = LabRequestItemSerializer
-ResultadoItemSerializer = ResultItemSerializer
-ResultadoItemLaboratorioSerializer = LaboratoryResultItemSerializer
-ResultadoMedicoArquivoSerializer = MedicalResultFileSerializer

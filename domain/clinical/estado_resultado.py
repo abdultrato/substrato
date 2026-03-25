@@ -1,3 +1,3 @@
-from domain.clinical.result_state import EstadoResultado, ResultState
+from domain.clinical.result_state import ResultState
 
-__all__ = ["EstadoResultado", "ResultState"]
+__all__ = ["ResultState"]

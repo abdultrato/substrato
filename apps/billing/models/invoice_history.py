@@ -10,7 +10,7 @@ class InvoiceHistory(CoreModel):
 
         "faturamento.Invoice",
 
-        db_column="fatura_id",
+        db_column="invoice_id",
         verbose_name="Fatura",
         on_delete=models.CASCADE,
         related_name="historico",
@@ -19,11 +19,11 @@ class InvoiceHistory(CoreModel):
 
     event_type = models.CharField(
 
-        db_column="tipo_evento",
+        db_column="event_type",
 
         verbose_name="Tipo de evento", max_length=40, db_index=True)
     description = models.TextField(
-        db_column="descricao",
+        db_column="description",
         verbose_name="Descrição", blank=True, default="")
 
     class Meta:

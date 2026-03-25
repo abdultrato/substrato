@@ -17,7 +17,7 @@ def _resolve_single_doctor(consultations_qs):
 
 
 @receiver(m2m_changed, sender=MedicalRecordEntry.consultations.through)
-def sincronizar_cardex_consultations(sender, instance, action, pk_set=None, **kwargs):
+def sync_cardex_consultations(sender, instance, action, pk_set=None, **kwargs):
     """
     Garante consistência:
     - consultations do Cardex devem ser do mesmo patient e tenant
@@ -58,6 +58,3 @@ def sincronizar_cardex_consultations(sender, instance, action, pk_set=None, **kw
         if instance.doctor_id != doctor_id:
             instance.doctor_id = doctor_id
             instance.save(update_fields=["doctor"])
-
-
-_resolver_doctor_unico = _resolve_single_doctor

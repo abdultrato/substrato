@@ -24,7 +24,7 @@ def recalculate_invoice_task(invoice_id: int) -> None:
 
     with transaction.atomic():
         invoice.recalcular_totais()
-        invoice.persistir_totais()
+        invoice.persist_totals()
 
     duration = time.perf_counter() - start
     tenant_id = getattr(invoice, "tenant_id", None)

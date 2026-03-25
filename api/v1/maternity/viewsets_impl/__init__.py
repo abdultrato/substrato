@@ -1,7 +1,7 @@
-from .core import VIEWSET_MAP, GestacaoViewSet, PregnancyViewSet
+from .core import VIEWSET_MAP, PregnancyViewSet, PregnancyViewSet
 
 __all__ = [
     "VIEWSET_MAP",
-    "GestacaoViewSet",
+    "PregnancyViewSet",
     "PregnancyViewSet",
 ]

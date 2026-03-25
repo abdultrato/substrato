@@ -41,7 +41,3 @@ def interpret(value: float | None, reference: ReferenceRange | None) -> str:
 
     return ClinicalStatus.NORMAL
 
-
-StatusClinico = ClinicalStatus
-IntervaloReferencia = ReferenceRange
-interpretar = interpret

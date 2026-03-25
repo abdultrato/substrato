@@ -558,18 +558,3 @@ __all__ = [
 ]
 
 
-RegistroEnfermagemViewSet = NursingRecordViewSet
-ProcedimentoCatalogoViewSet = ProcedureCatalogViewSet
-ProcedimentoCatalogoMaterialViewSet = ProcedureCatalogMaterialViewSet
-ProcedimentoViewSet = ProcedureViewSet
-ProcedimentoItemViewSet = ProcedureItemViewSet
-ProcedimentoItemValorViewSet = ProcedureItemValueViewSet
-ProcedimentoMaterialViewSet = ProcedureMaterialViewSet
-ProcedimentoMaterialValorViewSet = ProcedureMaterialValueViewSet
-SinalVitalEnfermagemViewSet = NursingVitalSignViewSet
-PrescricaoEnfermagemViewSet = NursingPrescriptionViewSet
-EvolucaoEnfermagemViewSet = NursingEvolutionViewSet
-EnfermariaViewSet = WardViewSet
-CamaEnfermariaViewSet = WardBedViewSet
-InternamentoEnfermariaViewSet = WardAdmissionViewSet
-EnfermariaDashboardViewSet = WardDashboardViewSet

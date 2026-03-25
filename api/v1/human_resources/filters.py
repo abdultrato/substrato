@@ -76,12 +76,3 @@ FILTER_MAP = {
     "folhapagamento": PayrollFilter,
 }
 
-CargoFilter = JobTitleFilter
-FuncionarioFilter = EmployeeFilter
-AgregadoFamiliarFilter = FamilyDependentFilter
-HorarioTrabalhoFilter = WorkScheduleFilter
-FaltaFilter = AbsenceFilter
-FeriasFilter = VacationFilter
-DispensaFilter = TerminationFilter
-HoraExtraFilter = OvertimeFilter
-FolhaPagamentoFilter = PayrollFilter

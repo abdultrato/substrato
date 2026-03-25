@@ -1,19 +1,19 @@
 """
-Facade module for Equipamentos ViewSets.
+Facade module for equipment ViewSets.
 """
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    EquipamentoViewSet,
-    InspecaoDiariaViewSet,
-    ManutencaoViewSet,
-    OcorrenciaViewSet,
+    EquipmentViewSet,
+    DailyInspectionViewSet,
+    MaintenanceViewSet,
+    IncidentViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "EquipamentoViewSet",
-    "InspecaoDiariaViewSet",
-    "ManutencaoViewSet",
-    "OcorrenciaViewSet",
+    "EquipmentViewSet",
+    "DailyInspectionViewSet",
+    "MaintenanceViewSet",
+    "IncidentViewSet",
 ]

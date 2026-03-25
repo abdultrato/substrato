@@ -5,4 +5,3 @@ def test_events_placeholder():
     assert True
 
 
-test_eventos_placeholder = test_events_placeholder

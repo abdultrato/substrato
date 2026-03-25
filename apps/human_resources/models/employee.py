@@ -19,15 +19,15 @@ class Employee(CoreModel):
 
     prefix = "FUN"
 
-    class Estado(models.TextChoices):
-        ATIVO = "ATIVO", "Ativo"
-        INATIVO = "INATIVO", "Inativo"
+    class Status(models.TextChoices):
+        ACTIVE = "ATIVO", "Ativo"
+        INACTIVE = "INATIVO", "Inativo"
 
     role = models.ForeignKey(
 
         "recursos_humanos.JobTitle",
 
-        db_column="cargo_id",
+        db_column="role_id",
         verbose_name="Cargo",
         on_delete=models.PROTECT,
         related_name="funcionarios",
@@ -38,7 +38,7 @@ class Employee(CoreModel):
 
     profession = models.CharField(
 
-        db_column="profissao",
+        db_column="profession",
 
         verbose_name="Profissão",
         max_length=120,
@@ -64,7 +64,7 @@ class Employee(CoreModel):
 
     document_number = models.CharField(
 
-        db_column="numero_documento",
+        db_column="document_number",
 
         verbose_name="Número do documento",
         max_length=60,
@@ -75,36 +75,36 @@ class Employee(CoreModel):
 
     email = models.EmailField(verbose_name="E-mail", blank=True, default="")
     phone = models.CharField(
-        db_column="telefone",
+        db_column="phone",
         verbose_name="Telefone", max_length=30, blank=True, default="")
 
     admission_date = models.DateField(
 
-        db_column="data_admissao",
+        db_column="admission_date",
 
         verbose_name="Data de admissão", default=timezone.now)
     status = models.CharField(
-        db_column="estado",
+        db_column="status",
         verbose_name="Estado",
         max_length=10,
-        choices=Estado.choices,
-        default=Estado.ATIVO,
+        choices=Status.choices,
+        default=Status.ACTIVE,
         db_index=True,
     )
 
     nominal_salary = MoneyField(
 
-        db_column="salario_nominal",
+        db_column="nominal_salary",
 
         verbose_name="Salário nominal", default=Decimal("0.00"))
     salary_increase = MoneyField(
-        db_column="aumento_salarial",
+        db_column="salary_increase",
         verbose_name="Aumento salarial",
         default=Decimal("0.00"),
         help_text="Valor adicional por promoção/aumento (somado ao salário nominal).",
     )
     base_month_hours = models.PositiveSmallIntegerField(
-        db_column="horas_base_mes",
+        db_column="base_month_hours",
         verbose_name="Horas base (mês)",
         default=176,
         help_text="Horas contratuais base por mês (ex.: 176).",
@@ -123,7 +123,7 @@ class Employee(CoreModel):
         ]
 
     @property
-    def salario_atual(self) -> Decimal:
+    def current_salary(self) -> Decimal:
         """Salário nominal + aumento salarial."""
         base = self.nominal_salary or Decimal("0.00")
         aumento = self.salary_increase or Decimal("0.00")
@@ -143,4 +143,3 @@ class Employee(CoreModel):
 
         if self.role_id and self.tenant_id and self.role.tenant_id != self.tenant_id:
             raise ValidationError({"role": "Cargo e funcionário devem pertencer ao mesmo tenant."})
-

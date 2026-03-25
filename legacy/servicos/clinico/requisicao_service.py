@@ -28,7 +28,7 @@ class RequisicaoService(BaseService):
 
     @classmethod
     @transaction.atomic
-    def cancelar(cls, requisicao: LabRequest):
+    def cancel(cls, requisicao: LabRequest):
         requisicao.status = LabRequest.Status.CANCELADA
         requisicao.save(update_fields=["status"])
         return cls.ok(requisicao)

@@ -33,18 +33,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -55,16 +55,16 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "priority",
                     models.CharField(
@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
                             ("PREF", "Preferencial"),
                             ("NOR", "Normal"),
                         ],
-                        db_column="prioridade",
+                        db_column="priority",
                         db_index=True,
                         default="NOR",
                         max_length=5,
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
                             ("CONC", "Concluído"),
                             ("CANC", "Cancelado"),
                         ],
-                        db_column="estado",
+                        db_column="status",
                         db_index=True,
                         default="AGUARD",
                         max_length=6,
@@ -99,36 +99,36 @@ class Migration(migrations.Migration):
                 (
                     "reason",
                     models.CharField(
-                        blank=True, db_column="motivo", default="", max_length=255
+                        blank=True, db_column="reason", default="", max_length=255
                     ),
                 ),
                 (
                     "notes",
-                    models.TextField(blank=True, db_column="observacoes", default=""),
+                    models.TextField(blank=True, db_column="notes", default=""),
                 ),
                 (
                     "arrived_at",
                     models.DateTimeField(
-                        db_column="chegou_em",
+                        db_column="arrived_at",
                         db_index=True,
                         default=django.utils.timezone.now,
                     ),
                 ),
                 (
                     "called_at",
-                    models.DateTimeField(blank=True, db_column="chamado_em", null=True),
+                    models.DateTimeField(blank=True, db_column="called_at", null=True),
                 ),
                 (
                     "completed_at",
                     models.DateTimeField(
-                        blank=True, db_column="concluido_em", null=True
+                        blank=True, db_column="completed_at", null=True
                     ),
                 ),
                 (
                     "attendant",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atendente_id",
+                        db_column="attendant_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="checkins_recepcao",
@@ -139,7 +139,7 @@ class Migration(migrations.Migration):
                     "created_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="criado_por_id",
+                        db_column="created_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_criado",
@@ -150,7 +150,7 @@ class Migration(migrations.Migration):
                     "deleted_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="deletado_por_id",
+                        db_column="deleted_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_deleted",
@@ -161,7 +161,7 @@ class Migration(migrations.Migration):
                     "invoice",
                     models.OneToOneField(
                         blank=True,
-                        db_column="fatura_id",
+                        db_column="invoice_id",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="checkin",
@@ -171,7 +171,7 @@ class Migration(migrations.Migration):
                 (
                     "patient",
                     models.ForeignKey(
-                        db_column="paciente_id",
+                        db_column="patient_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="checkins",
                         to="clinico.patient",
@@ -181,7 +181,7 @@ class Migration(migrations.Migration):
                     "request",
                     models.OneToOneField(
                         blank=True,
-                        db_column="requisicao_id",
+                        db_column="request_id",
                         null=True,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="checkin",
@@ -191,7 +191,7 @@ class Migration(migrations.Migration):
                 (
                     "tenant",
                     models.ForeignKey(
-                        db_column="inquilino_id",
+                        db_column="tenant_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="%(class)ss",
                         to="inquilinos.tenant",
@@ -201,7 +201,7 @@ class Migration(migrations.Migration):
                     "updated_by",
                     models.ForeignKey(
                         blank=True,
-                        db_column="atualizado_por_id",
+                        db_column="updated_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="%(class)s_atualizado",

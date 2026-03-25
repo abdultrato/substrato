@@ -16,7 +16,7 @@ class SaleItem(CoreModel):
 
         "farmacia.Sale",
 
-        db_column="venda_id",
+        db_column="sale_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
@@ -26,20 +26,20 @@ class SaleItem(CoreModel):
 
         "farmacia.Product",
 
-        db_column="produto_id",
+        db_column="product_id",
         on_delete=models.PROTECT,
         db_index=True,
     )
 
     quantity = models.PositiveIntegerField(
 
-        db_column="quantidade",
+        db_column="quantity",
 
         validators=[MinValueValidator(1)])
 
     unit_price = models.DecimalField(
 
-        db_column="preco_unitario",
+        db_column="unit_price",
 
         max_digits=14,
         decimal_places=2,

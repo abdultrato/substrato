@@ -25,18 +25,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -47,19 +47,19 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "name",
-                    models.CharField(db_column="nome", db_index=True, max_length=120),
+                    models.CharField(db_column="name", db_index=True, max_length=120),
                 ),
                 (
                     "nuit",
@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                     "headquarters_address",
                     models.CharField(
                         blank=True,
-                        db_column="endereco_sede",
+                        db_column="headquarters_address",
                         max_length=255,
                         null=True,
                         verbose_name="Local / Sede",
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                     "contacts",
                     models.CharField(
                         blank=True,
-                        db_column="contactos",
+                        db_column="contacts",
                         help_text="Pessoa, department ou referência de contact.",
                         max_length=255,
                         null=True,
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
                     "phone1",
                     models.CharField(
                         blank=True,
-                        db_column="telefone1",
+                        db_column="phone1",
                         max_length=30,
                         null=True,
                         verbose_name="Telefone",
@@ -112,7 +112,7 @@ class Migration(migrations.Migration):
                     "phone2",
                     models.CharField(
                         blank=True,
-                        db_column="telefone2",
+                        db_column="phone2",
                         max_length=30,
                         null=True,
                         verbose_name="Telefone (alternativo)",
@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
                 (
                     "active",
                     models.BooleanField(
-                        db_column="ativo",
+                        db_column="active",
                         db_index=True,
                         default=True,
                         verbose_name="Ativo",
@@ -140,7 +140,7 @@ class Migration(migrations.Migration):
                     "notes",
                     models.TextField(
                         blank=True,
-                        db_column="observacoes",
+                        db_column="notes",
                         null=True,
                         verbose_name="Observações",
                     ),

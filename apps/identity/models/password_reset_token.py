@@ -13,9 +13,9 @@ class PasswordResetToken(models.Model):
 
     token = models.CharField(max_length=128, unique=True, db_index=True, blank=True)
     used = models.BooleanField(
-        db_column="usado",
+        db_column="used",
         default=False, db_index=True)
-    created_at = models.DateTimeField(db_column="criado_em", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField(db_column="created_at", auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["-created_at"]

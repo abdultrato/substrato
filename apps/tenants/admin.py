@@ -32,5 +32,3 @@ class TenantConfigurationAdmin(CoreAdmin):
     search_fields = ("tenant__name", "tenant__identifier")
 
 
-InquilinoAdmin = TenantAdmin
-ConfiguracaoInquilinoAdmin = TenantConfigurationAdmin

@@ -18,7 +18,7 @@ class Procedure(NoNameCoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="procedures_enfermagem",
@@ -26,7 +26,7 @@ class Procedure(NoNameCoreModel):
     )
     professional = models.ForeignKey(
         User,
-        db_column="profissional_id",
+        db_column="professional_id",
         verbose_name="Profissional",
         on_delete=models.SET_NULL,
         null=True,
@@ -34,21 +34,21 @@ class Procedure(NoNameCoreModel):
         related_name="procedures_realizados",
     )
     performed_date = models.DateTimeField("Data de realização", 
-        db_column="data_realizacao",
+        db_column="performed_date",
          default=timezone.now, db_index=True)
     notes = models.TextField("Observações", 
-        db_column="observacoes",
+        db_column="notes",
          blank=True, default="")
     services_subtotal = models.DecimalField(
         "Subtotal (serviços)",
-        db_column="subtotal_servicos",
+        db_column="services_subtotal",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     materials_subtotal = models.DecimalField(
         "Subtotal (materiais)",
-        db_column="subtotal_materiais",
+        db_column="materials_subtotal",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),

@@ -5,7 +5,7 @@
 import type { EstadoResultadoEnum } from './EstadoResultadoEnum';
 import type { RequisicaoAnaliseTipoEnum } from './RequisicaoAnaliseTipoEnum';
 import type { RequisicaoItemResumo } from './RequisicaoItemResumo';
-import type { StatusClinicoEnum } from './StatusClinicoEnum';
+import type { ClinicalStatusEnum } from './ClinicalStatusEnum';
 /**
  * Serializer para requisições (por setor).
  *
@@ -35,7 +35,7 @@ export type RequisicaoAnalise = {
      */
     tipo?: RequisicaoAnaliseTipoEnum;
     estado?: EstadoResultadoEnum;
-    status_clinico?: StatusClinicoEnum;
+    status_clinico?: ClinicalStatusEnum;
     readonly possui_resultado_critico?: boolean;
     readonly criado_por?: number | null;
     readonly atualizado_por?: number | null;

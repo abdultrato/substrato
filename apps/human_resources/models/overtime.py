@@ -20,7 +20,7 @@ class Overtime(NoNameCoreModel):
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="hours_extras",
         db_index=True,
@@ -28,17 +28,17 @@ class Overtime(NoNameCoreModel):
 
     date = models.DateField(
 
-        db_column="data",
+        db_column="date",
 
         default=timezone.now, db_index=True)
     hours = models.DecimalField(
-        db_column="horas",
+        db_column="hours",
         max_digits=6, decimal_places=2, default=Decimal("0.00"))
     multiplier = models.DecimalField(
-        db_column="multiplicador",
+        db_column="multiplier",
         max_digits=4, decimal_places=2, default=Decimal("1.50"))
     notes = models.CharField(
-        db_column="observacoes",
+        db_column="notes",
         max_length=255, blank=True, default="")
 
     class Meta:

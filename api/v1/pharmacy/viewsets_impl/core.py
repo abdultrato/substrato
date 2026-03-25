@@ -160,8 +160,3 @@ __all__ = [
     "SaleViewSet",
 ]
 
-ItemVendaViewSet = SaleItemViewSet
-LoteViewSet = LotViewSet
-MovimentoEstoqueViewSet = InventoryMovementViewSet
-ProdutoViewSet = ProductViewSet
-VendaViewSet = SaleViewSet

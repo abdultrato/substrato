@@ -27,4 +27,3 @@ class UserActivityAdmin(CoreAdmin):
     ordering = ("-created_at", "-id")
 
 
-AtividadeUsuarioAdmin = UserActivityAdmin

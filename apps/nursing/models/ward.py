@@ -16,11 +16,11 @@ class Ward(CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição", blank=True, default="")
     active = models.BooleanField(
-        db_column="ativa",
+        db_column="active",
         verbose_name="Ativa", default=True, db_index=True)
 
     class Meta:
@@ -47,7 +47,7 @@ class WardBed(NoNameCoreModel):
 
         Ward,
 
-        db_column="enfermaria_id",
+        db_column="ward_id",
         verbose_name="Enfermaria",
         on_delete=models.PROTECT,
         related_name="camas",
@@ -56,7 +56,7 @@ class WardBed(NoNameCoreModel):
 
     number = models.CharField(
 
-        db_column="numero",
+        db_column="number",
 
         verbose_name="Número da bed",
         max_length=20,
@@ -65,7 +65,7 @@ class WardBed(NoNameCoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativa",
+        db_column="active",
 
         verbose_name="Ativa", default=True, db_index=True)
 
@@ -113,7 +113,7 @@ class WardAdmission(NoNameCoreModel):
 
         WardBed,
 
-        db_column="cama_id",
+        db_column="bed_id",
         verbose_name="Cama",
         on_delete=models.PROTECT,
         related_name="internamentos",
@@ -124,7 +124,7 @@ class WardAdmission(NoNameCoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="internamentos_ward",
@@ -133,7 +133,7 @@ class WardAdmission(NoNameCoreModel):
 
     estimated_observation_hours = models.PositiveSmallIntegerField(
 
-        db_column="tempo_estimado_observacao_horas",
+        db_column="estimated_observation_hours",
 
         verbose_name="Tempo estimado de observação (hours)",
         null=True,
@@ -143,7 +143,7 @@ class WardAdmission(NoNameCoreModel):
 
     admission_date = models.DateTimeField(
 
-        db_column="data_internamento",
+        db_column="admission_date",
 
         verbose_name="Data de internamento",
         default=timezone.now,
@@ -152,7 +152,7 @@ class WardAdmission(NoNameCoreModel):
 
     expected_discharge_date = models.DateTimeField(
 
-        db_column="data_prevista_alta",
+        db_column="expected_discharge_date",
 
         verbose_name="Data prevista para alta",
         null=True,
@@ -162,7 +162,7 @@ class WardAdmission(NoNameCoreModel):
 
     discharged_at = models.DateTimeField(
 
-        db_column="alta_em",
+        db_column="discharged_at",
 
         verbose_name="Data de alta",
         null=True,
@@ -172,7 +172,7 @@ class WardAdmission(NoNameCoreModel):
 
     next_medication_at = models.DateTimeField(
 
-        db_column="proxima_medicacao_em",
+        db_column="next_medication_at",
 
         verbose_name="Horário da próxima medicação",
         null=True,
@@ -182,7 +182,7 @@ class WardAdmission(NoNameCoreModel):
 
     next_medication_description = models.CharField(
 
-        db_column="proxima_medicacao_descricao",
+        db_column="next_medication_description",
 
         verbose_name="Descrição da próxima medicação",
         max_length=160,
@@ -192,7 +192,7 @@ class WardAdmission(NoNameCoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         verbose_name="Internamento active",
         default=True,
@@ -201,7 +201,7 @@ class WardAdmission(NoNameCoreModel):
 
     notes = models.TextField(
 
-        db_column="observacoes",
+        db_column="notes",
 
         verbose_name="Observações", blank=True, default="")
 

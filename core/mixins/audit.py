@@ -8,19 +8,19 @@ from infrastructure.context.request_user import get_current_user
 
 class AuditMixin(models.Model):
     created_at = models.DateTimeField(
-        db_column="criado_em",
+        db_column="created_at",
         auto_now_add=True,
         db_index=True,
     )
 
     updated_at = models.DateTimeField(
-        db_column="atualizado_em",
+        db_column="updated_at",
         auto_now=True,
     )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        db_column="criado_por_id",
+        db_column="created_by_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -29,7 +29,7 @@ class AuditMixin(models.Model):
 
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        db_column="atualizado_por_id",
+        db_column="updated_by_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -18,7 +18,7 @@ class StubChannel:
 
 
 @pytest.mark.django_db
-def test_enviar_email_sucesso_cria_log(monkeypatch, settings):
+def test_send_email_success_creates_log(monkeypatch, settings):
     stub_email = StubChannel()
     monkeypatch.setattr(
         "apps.notifications.services.CHANNELS",
@@ -44,7 +44,7 @@ def test_enviar_email_sucesso_cria_log(monkeypatch, settings):
 
 
 @pytest.mark.django_db
-def test_enviar_sms_desativado_registra_ignore(monkeypatch, settings):
+def test_send_sms_disabled_logs_ignored(monkeypatch, settings):
     stub_sms = StubChannel()
     monkeypatch.setattr(
         "apps.notifications.services.CHANNELS",
@@ -151,8 +151,3 @@ def test_template_str_and_ordering():
     assert str(t1) == "B"
     assert str(t2) == "A"
 
-
-StubCanal = StubChannel
-test_enviar_nao_duplica_mesma_referencia = test_send_does_not_duplicate_same_reference
-test_enviar_validacoes_basicas = test_send_basic_validations
-test_enviar_para_patient_com_email_e_sms = test_send_to_patient_with_email_and_sms

@@ -17,7 +17,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         "LabRequest",
 
-        db_column="requisicao_id",
+        db_column="request_id",
         on_delete=models.CASCADE,
         related_name="itens",
     )
@@ -26,7 +26,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         LabExam,
 
-        db_column="exame_id",
+        db_column="exam_id",
         on_delete=models.PROTECT,
         related_name="requisicoes",
         null=True,
@@ -37,7 +37,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
 
         MedicalExam,
 
-        db_column="exame_medico_id",
+        db_column="medical_exam_id",
         on_delete=models.PROTECT,
         related_name="requisicoes",
         null=True,

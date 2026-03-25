@@ -25,29 +25,29 @@ class DailyInspection(PropagarInquilinoMixin, NoNameCoreModel):
 
         "equipamentos.Equipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="inspecoes_diarias",
         db_index=True,
     )
     date = models.DateField(
-        db_column="data",
+        db_column="date",
         default=timezone.localdate, db_index=True)
     operation_status = models.CharField(
-        db_column="funcionamento",
+        db_column="operation_status",
         max_length=20,
         choices=Funcionamento.choices,
         default=Funcionamento.FUNCIONANDO,
         db_index=True,
     )
     cleaning_performed = models.BooleanField(
-        db_column="limpeza_realizada",
+        db_column="cleaning_performed",
         default=False)
     assessment = models.TextField(
-        db_column="avaliacao",
+        db_column="assessment",
         blank=True, default="")
     notes = models.TextField(
-        db_column="observacoes",
+        db_column="notes",
         blank=True, default="")
 
     class Meta:

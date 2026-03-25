@@ -59,7 +59,3 @@ class TenantUsageService:
         return round((usage / limit) * 100, 2)
 
 
-TenantUsageService._key = TenantUsageService._cache_key
-TenantUsageService.incrementar_request = TenantUsageService.increment_request
-TenantUsageService.resetar_requisicoes = TenantUsageService.reset_requests
-TenantUsageService.percentual_uso = TenantUsageService.usage_percentage

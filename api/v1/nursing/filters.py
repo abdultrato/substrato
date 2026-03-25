@@ -257,17 +257,3 @@ FILTER_MAP = {
 }
 
 
-RegistroEnfermagemFilter = NursingRecordFilter
-ProcedimentoCatalogoFilter = ProcedureCatalogFilter
-ProcedimentoCatalogoMaterialFilter = ProcedureCatalogMaterialFilter
-ProcedimentoFilter = ProcedureFilter
-ProcedimentoItemFilter = ProcedureItemFilter
-ProcedimentoMaterialFilter = ProcedureMaterialFilter
-ProcedimentoItemValorFilter = ProcedureItemValueFilter
-ProcedimentoMaterialValorFilter = ProcedureMaterialValueFilter
-SinalVitalEnfermagemFilter = NursingVitalSignFilter
-PrescricaoEnfermagemFilter = NursingPrescriptionFilter
-EvolucaoEnfermagemFilter = NursingEvolutionFilter
-EnfermariaFilter = WardFilter
-CamaEnfermariaFilter = WardBedFilter
-InternamentoEnfermariaFilter = WardAdmissionFilter

@@ -26,7 +26,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
     turnaround_hours = models.PositiveIntegerField(
 
-        db_column="trl_horas",
+        db_column="turnaround_hours",
 
         verbose_name="Tempo de response (em hours)",
         default=24,
@@ -35,7 +35,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
     price = MoneyField(
 
-        db_column="preco",
+        db_column="price",
 
         verbose_name="Preço do exam",
         default=Decimal("0.00"),
@@ -45,7 +45,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -60,7 +60,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
     applies_vat_by_default = models.BooleanField(
 
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
 
         verbose_name="Aplicar IVA por padrão",
         default=True,

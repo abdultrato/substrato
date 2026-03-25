@@ -70,14 +70,14 @@ def create_integration_order_for_item(sender, instance: LabRequestItem, created:
         tenant_id=tenant_id,
         equipment=equipment,
         request=instance.request,
-        defaults={"status": IntegrationOrder.Estado.PENDENTE},
+        defaults={"status": IntegrationOrder.Status.PENDING},
     )
 
     IntegrationOrderItem.objects.get_or_create(
         tenant_id=tenant_id,
         order=order,
         request_item=instance,
-        defaults={"status": IntegrationOrderItem.Estado.PENDENTE},
+        defaults={"status": IntegrationOrderItem.Status.PENDING},
     )
 
 

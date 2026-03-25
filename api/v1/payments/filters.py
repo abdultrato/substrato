@@ -97,7 +97,3 @@ FILTER_MAP = {
     "transaction": TransactionFilter,
 }
 
-PagamentoFilter = PaymentFilter
-ReciboFilter = ReceiptFilter
-ReconciliacaoFilter = ReconciliationFilter
-TransacaoFilter = TransactionFilter

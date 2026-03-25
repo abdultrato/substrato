@@ -33,5 +33,3 @@ def test_user_email_is_unique():
         User.objects.create_user(username="u2", email="dup@example.com", password="y", tenant=tenant)
 
 
-test_user_criacao_campos_principais = test_user_creation_main_fields
-test_user_email_unico = test_user_email_is_unique

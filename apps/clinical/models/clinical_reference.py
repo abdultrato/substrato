@@ -29,14 +29,14 @@ class ClinicalReference(CoreModel):
 
         LabExamField,
 
-        db_column="exame_campo_id",
+        db_column="exam_field_id",
         on_delete=models.CASCADE,
         related_name="referencias",
     )
 
     sex = models.CharField(
 
-        db_column="sexo",
+        db_column="sex",
 
         max_length=10,
         choices=Gender.choices,
@@ -47,7 +47,7 @@ class ClinicalReference(CoreModel):
 
     minimum_age_days = models.PositiveIntegerField(
 
-        db_column="idade_minima_dias",
+        db_column="minimum_age_days",
 
         null=True,
         blank=True,
@@ -56,7 +56,7 @@ class ClinicalReference(CoreModel):
 
     maximum_age_days = models.PositiveIntegerField(
 
-        db_column="idade_maxima_dias",
+        db_column="maximum_age_days",
 
         null=True,
         blank=True,
@@ -65,7 +65,7 @@ class ClinicalReference(CoreModel):
 
     minimum_value = models.DecimalField(
 
-        db_column="valor_minimo",
+        db_column="minimum_value",
 
         max_digits=10,
         decimal_places=2,
@@ -75,7 +75,7 @@ class ClinicalReference(CoreModel):
 
     maximum_value = models.DecimalField(
 
-        db_column="valor_maximo",
+        db_column="maximum_value",
 
         max_digits=10,
         decimal_places=2,
@@ -85,7 +85,7 @@ class ClinicalReference(CoreModel):
 
     critical_low = models.DecimalField(
 
-        db_column="critico_baixo",
+        db_column="critical_low",
 
         max_digits=10,
         decimal_places=2,
@@ -95,7 +95,7 @@ class ClinicalReference(CoreModel):
 
     critical_high = models.DecimalField(
 
-        db_column="critico_alto",
+        db_column="critical_high",
 
         max_digits=10,
         decimal_places=2,

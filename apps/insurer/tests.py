@@ -55,6 +55,3 @@ def test_authorization_flow():
     assert aut.response_date is not None
 
 
-test_insurer_criacao = test_insurer_creation
-test_coverage_plan_percentual = test_coverage_plan_percentage
-test_autorizacao_fluxo = test_authorization_flow

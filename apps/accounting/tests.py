@@ -67,7 +67,7 @@ def test_financial_reconciliation_filters_by_invoice():
         value=Decimal("50.00"),
         debit=True,
     )
-    invoice = Invoice.objects.create(tenant=tenant, origin=Invoice.Origem.CLINICO)
+    invoice = Invoice.objects.create(tenant=tenant, origin=Invoice.Origin.CLINICAL)
 
     conciliacao = FinancialReconciliation.objects.create(
         tenant=tenant,

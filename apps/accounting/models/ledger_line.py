@@ -25,7 +25,7 @@ class LedgerLine(CoreModel):
 
         "contabilidade.Account",
 
-        db_column="conta_id",
+        db_column="account_id",
         on_delete=models.PROTECT,
         db_index=True,
     )
@@ -36,7 +36,7 @@ class LedgerLine(CoreModel):
 
     value = models.DecimalField(
 
-        db_column="valor",
+        db_column="value",
 
         max_digits=18,
         decimal_places=2,
@@ -44,7 +44,7 @@ class LedgerLine(CoreModel):
 
     nature = models.CharField(
 
-        db_column="natureza",
+        db_column="nature",
 
         max_length=1,
         choices=[
@@ -54,7 +54,7 @@ class LedgerLine(CoreModel):
     )
 
     created_at = models.DateTimeField(
-        db_column="criado_em",
+        db_column="created_at",
         auto_now_add=True,
         db_index=True,
     )

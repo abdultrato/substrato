@@ -18,11 +18,11 @@ def _resolve_invoice_patient(invoice):
         return patient
 
     origin = getattr(invoice, "origin", None)
-    if origin == Invoice.Origem.CLINICO:
+    if origin == Invoice.Origin.CLINICAL:
         request = getattr(invoice, "request", None)
         return getattr(request, "patient", None)
 
-    if origin == Invoice.Origem.ENFERMAGEM:
+    if origin == Invoice.Origin.NURSING:
         procedure = getattr(invoice, "procedure", None)
         return getattr(procedure, "patient", None)
 
@@ -66,7 +66,7 @@ def notify_result(sender, instance, created, **kwargs):
     dispatch_uid="notificacoes.invoice_emitida",
 )
 def notify_invoice_issued(sender, instance, created, **kwargs):
-    if instance.status != Invoice.Estado.EMITIDA:
+    if instance.status != Invoice.Status.ISSUED:
         return
 
     patient = _resolve_invoice_patient(instance)

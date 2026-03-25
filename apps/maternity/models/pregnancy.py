@@ -16,17 +16,17 @@ class Pregnancy(NoNameCoreModel):
 
     prefix = "MAT"
 
-    class Estado(models.TextChoices):
-        ACOMPANHAMENTO = "ACOMP", "Em acompanhamento"
-        PARTO = "PARTO", "Parto performed"
-        ENCERRADA = "ENCERR", "Encerrada"
-        CANCELADA = "CANCEL", "Cancelada"
+    class Status(models.TextChoices):
+        FOLLOW_UP = "ACOMP", "Em acompanhamento"
+        DELIVERY = "PARTO", "Parto performed"
+        CLOSED = "ENCERR", "Encerrada"
+        CANCELED = "CANCEL", "Cancelada"
 
     patient = models.ForeignKey(
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="gestacoes",
@@ -34,7 +34,7 @@ class Pregnancy(NoNameCoreModel):
     )
     responsible_doctor = models.ForeignKey(
         "recursos_humanos.Employee",
-        db_column="medico_responsavel_id",
+        db_column="responsible_doctor_id",
         verbose_name="Médico/Ginecologista responsável",
         on_delete=models.SET_NULL,
         null=True,
@@ -45,14 +45,14 @@ class Pregnancy(NoNameCoreModel):
 
     last_menstrual_period_date = models.DateField(
 
-        db_column="data_ultima_menstruacao",
+        db_column="last_menstrual_period_date",
 
         verbose_name="Data da última menstruação",
         null=True,
         blank=True,
     )
     expected_delivery_date = models.DateField(
-        db_column="data_prevista_parto",
+        db_column="expected_delivery_date",
         verbose_name="Data prevista do parto",
         null=True,
         blank=True,
@@ -60,7 +60,7 @@ class Pregnancy(NoNameCoreModel):
 
     nursery = models.CharField(
 
-        db_column="bercario",
+        db_column="nursery",
 
         verbose_name="Berçário",
         max_length=80,
@@ -69,7 +69,7 @@ class Pregnancy(NoNameCoreModel):
         help_text="Identificação do berçário/ala/sala (quando aplicável).",
     )
     maternity_bed = models.CharField(
-        db_column="cama_maternidade",
+        db_column="maternity_bed",
         verbose_name="Cama na maternidade",
         max_length=40,
         blank=True,
@@ -79,20 +79,20 @@ class Pregnancy(NoNameCoreModel):
 
     total_deliveries = models.PositiveSmallIntegerField(
 
-        db_column="partos_totais",
+        db_column="total_deliveries",
 
         verbose_name="Partos totais",
         default=0,
         help_text="Histórico obstétrico: total de partos já realizados.",
     )
     normal_deliveries = models.PositiveSmallIntegerField(
-        db_column="partos_normais",
+        db_column="normal_deliveries",
         verbose_name="Partos normais",
         default=0,
         help_text="Histórico obstétrico: total de partos vaginais.",
     )
     cesareans = models.PositiveSmallIntegerField(
-        db_column="cesarianas",
+        db_column="cesareans",
         verbose_name="Cesarianas",
         default=0,
         help_text="Histórico obstétrico: total de partos por cesariana.",
@@ -100,23 +100,23 @@ class Pregnancy(NoNameCoreModel):
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         verbose_name="Estado",
         max_length=10,
-        choices=Estado.choices,
-        default=Estado.ACOMPANHAMENTO,
+        choices=Status.choices,
+        default=Status.FOLLOW_UP,
         db_index=True,
     )
 
     notes = models.TextField(
 
-        db_column="observacoes",
+        db_column="notes",
 
         verbose_name="Observações", blank=True, default="")
     created_at = models.DateTimeField(
         verbose_name="Criado em",
-        db_column="criado_em",
+        db_column="created_at",
         default=timezone.now,
         db_index=True,
     )

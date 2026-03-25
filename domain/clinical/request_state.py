@@ -14,11 +14,3 @@ class RequestState:
         (VALIDATED, "Validada"),
         (CANCELED, "Cancelada"),
     ]
-
-
-EstadoRequisicao = RequestState
-RequestState.CRIADA = RequestState.CREATED
-RequestState.EM_PROCESSAMENTO = RequestState.IN_PROGRESS
-RequestState.AGUARDANDO_VALIDACAO = RequestState.AWAITING_VALIDATION
-RequestState.VALIDADA = RequestState.VALIDATED
-RequestState.CANCELADA = RequestState.CANCELED

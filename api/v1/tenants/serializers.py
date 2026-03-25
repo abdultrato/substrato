@@ -45,7 +45,3 @@ SERIALIZER_MAP = {
     "usotenant": TenantUsageSerializer,
 }
 
-ConfiguracaoInquilinoSerializer = TenantConfigurationSerializer
-InquilinoSerializer = TenantSerializer
-PlanoAssinaturaSerializer = SubscriptionPlanSerializer
-UsoTenantSerializer = TenantUsageSerializer

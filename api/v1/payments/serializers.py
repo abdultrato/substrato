@@ -34,17 +34,17 @@ class PaymentSerializer(serializers.ModelSerializer):
         if desired_status == instance.status:
             return instance
 
-        if desired_status == Payment.Status.CONFIRMADO:
+        if desired_status == Payment.Status.CONFIRMED:
             instance.confirm()
             return instance
-        if desired_status == Payment.Status.ESTORNADO:
-            instance.estornar()
+        if desired_status == Payment.Status.REFUNDED:
+            instance.refund()
             return instance
-        if desired_status == Payment.Status.CANCELADO:
-            instance.cancelar()
+        if desired_status == Payment.Status.CANCELED:
+            instance.cancel()
             return instance
-        if desired_status == Payment.Status.FALHOU:
-            instance.falhar()
+        if desired_status == Payment.Status.FAILED:
+            instance.fail()
             return instance
 
         # Voltar para pendente via API não é suportado (evita inconsistências).
@@ -53,12 +53,12 @@ class PaymentSerializer(serializers.ModelSerializer):
     def create(self, validated_date):
         # Se vier CONFIRMADO no payload, cria como PENDENTE e confirma via
         # Aggregate Root para atualizar invoice/recibo.
-        desired_status = validated_date.get("status") or Payment.Status.PENDENTE
-        validated_date["status"] = Payment.Status.PENDENTE
+        desired_status = validated_date.get("status") or Payment.Status.PENDING
+        validated_date["status"] = Payment.Status.PENDING
 
         instance = super().create(validated_date)
 
-        if desired_status != Payment.Status.PENDENTE:
+        if desired_status != Payment.Status.PENDING:
             instance = self._apply_status_transition(instance, desired_status)
 
         return instance
@@ -100,12 +100,9 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "payment": PaymentSerializer,
+    "receipt": ReceiptSerializer,
+    "reconciliation": ReconciliationSerializer,
+    "transaction": TransactionSerializer,
     "recibo": ReceiptSerializer,
     "reconciliacao": ReconciliationSerializer,
-    "transaction": TransactionSerializer,
 }
-
-PagamentoSerializer = PaymentSerializer
-ReciboSerializer = ReceiptSerializer
-ReconciliacaoSerializer = ReconciliationSerializer
-TransacaoSerializer = TransactionSerializer

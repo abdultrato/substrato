@@ -73,5 +73,3 @@ __all__ = [
     "UserViewSet",
 ]
 
-PerfilProfissionalViewSet = ProfessionalProfileViewSet
-UsuarioViewSet = UserViewSet

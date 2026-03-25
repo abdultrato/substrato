@@ -33,7 +33,7 @@ class IntegrationCredential(NoNameCoreModel):
 
         "integracoes_equipamentos.IntegrationEquipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="credenciais",
         db_index=True,
@@ -51,11 +51,11 @@ class IntegrationCredential(NoNameCoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         default=True, db_index=True)
     revoked_at = models.DateTimeField(
-        db_column="revogada_em",
+        db_column="revoked_at",
         null=True, blank=True)
 
     class Meta:

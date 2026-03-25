@@ -284,7 +284,7 @@ export type { SessionTokenRefresh } from './models/SessionTokenRefresh';
 export type { SessionTokenRefreshRequest } from './models/SessionTokenRefreshRequest';
 export type { SinalVitalEnfermagem } from './models/SinalVitalEnfermagem';
 export type { SinalVitalEnfermagemRequest } from './models/SinalVitalEnfermagemRequest';
-export type { StatusClinicoEnum } from './models/StatusClinicoEnum';
+export type { ClinicalStatusEnum } from './models/ClinicalStatusEnum';
 export type { StatusComercialEnum } from './models/StatusComercialEnum';
 export type { Tipo559Enum } from './models/Tipo559Enum';
 export type { TipoDocumentoEnum } from './models/TipoDocumentoEnum';

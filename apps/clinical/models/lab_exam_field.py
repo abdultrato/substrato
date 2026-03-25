@@ -17,7 +17,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
         "clinico.LabExam",
 
-        db_column="exame_id",
+        db_column="exam_id",
         on_delete=models.CASCADE,
         related_name="campos",
         verbose_name="Exame",
@@ -25,7 +25,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     type = models.CharField(
 
-        db_column="tipo",
+        db_column="type",
 
         max_length=20,
         choices=ResultType.choices,
@@ -34,7 +34,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     unit = models.CharField(
 
-        db_column="unidade",
+        db_column="unit",
 
         max_length=30,
         choices=DefaultUnit.choices,
@@ -44,7 +44,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     # intervalos normais
     reference_min = models.DecimalField(
-        db_column="referencia_min",
+        db_column="reference_min",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -54,7 +54,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     reference_max = models.DecimalField(
 
-        db_column="referencia_max",
+        db_column="reference_max",
 
         max_digits=10,
         decimal_places=2,
@@ -65,7 +65,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     # limites críticos
     critical_min = models.DecimalField(
-        db_column="critico_min",
+        db_column="critical_min",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -75,7 +75,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     critical_max = models.DecimalField(
 
-        db_column="critico_max",
+        db_column="critical_max",
 
         max_digits=10,
         decimal_places=2,
@@ -86,7 +86,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
 
     # delta check
     max_delta = models.DecimalField(
-        db_column="delta_max",
+        db_column="max_delta",
         max_digits=10,
         decimal_places=2,
         null=True,

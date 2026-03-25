@@ -24,4 +24,3 @@ class SystemErrorAdmin(CoreAdmin):
     ordering = ("-created_at", "-id")
 
 
-ErroSistemaAdmin = SystemErrorAdmin

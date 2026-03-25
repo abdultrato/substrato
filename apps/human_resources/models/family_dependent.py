@@ -24,7 +24,7 @@ class FamilyDependent(CoreModel):
 
         "recursos_humanos.Employee",
 
-        db_column="funcionario_id",
+        db_column="employee_id",
         verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="agregados_familiares",
@@ -33,7 +33,7 @@ class FamilyDependent(CoreModel):
 
     relationship = models.CharField(
 
-        db_column="parentesco",
+        db_column="relationship",
 
         verbose_name="Grau de relationship",
         max_length=20,
@@ -44,7 +44,7 @@ class FamilyDependent(CoreModel):
 
     birth_date = models.DateField(
 
-        db_column="data_nascimento",
+        db_column="birth_date",
 
         verbose_name="Data de nascimento",
         null=True,
@@ -53,7 +53,7 @@ class FamilyDependent(CoreModel):
 
     phone = models.CharField(
 
-        db_column="telefone",
+        db_column="phone",
 
         verbose_name="Telefone",
         max_length=30,
@@ -63,7 +63,7 @@ class FamilyDependent(CoreModel):
 
     lives_with_employee = models.BooleanField(
 
-        db_column="vive_com_funcionario",
+        db_column="lives_with_employee",
 
         verbose_name="Vive com o funcionário",
         default=True,
@@ -72,7 +72,7 @@ class FamilyDependent(CoreModel):
 
     notes = models.TextField(
 
-        db_column="observacoes",
+        db_column="notes",
 
         verbose_name="Observações",
         blank=True,

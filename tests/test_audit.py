@@ -5,4 +5,3 @@ def test_audit_placeholder():
     assert True
 
 
-test_auditoria_placeholder = test_audit_placeholder

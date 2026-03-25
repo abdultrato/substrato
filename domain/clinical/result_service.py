@@ -36,7 +36,7 @@ class ResultService:
                     new_alert = date.get("critical_alert")
 
         if indicator is None:
-            indicator = field.interpretar_result(result_item.result_value)
+            indicator = field.interpret_result(result_item.result_value)
 
         if indicator is None:
             return
@@ -101,8 +101,3 @@ class ResultService:
         """
 
         return
-
-
-ServicoResultado = ResultService
-ResultService.interpretar = staticmethod(ResultService.interpret)
-ResultService._auto_validar = staticmethod(ResultService._auto_validate)

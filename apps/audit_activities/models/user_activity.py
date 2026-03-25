@@ -22,7 +22,7 @@ class UserActivity(NoNameCoreModel):
 
         settings.AUTH_USER_MODEL,
 
-        db_column="usuario_id",
+        db_column="user_id",
         on_delete=models.PROTECT,
         related_name="auditoria_atividades",
         null=True,
@@ -33,14 +33,14 @@ class UserActivity(NoNameCoreModel):
 
     method = models.CharField(
 
-        db_column="metodo",
+        db_column="method",
 
         max_length=10, db_index=True, verbose_name="Método HTTP")
     path = models.CharField(
-        db_column="caminho",
+        db_column="path",
         max_length=255, db_index=True, verbose_name="Rota curta")
     full_path = models.TextField(
-        db_column="path_completo",
+        db_column="full_path",
         blank=True, default="", verbose_name="URL completa")
 
     status_code = models.PositiveSmallIntegerField(
@@ -50,7 +50,7 @@ class UserActivity(NoNameCoreModel):
         verbose_name="Status HTTP",
     )
     duration_ms = models.PositiveIntegerField(
-        db_column="duracao_ms",
+        db_column="duration_ms",
         null=True, blank=True, verbose_name="Duração (ms)")
 
     ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP de origin")
@@ -73,7 +73,7 @@ class UserActivity(NoNameCoreModel):
 
     object_id = models.CharField(
 
-        db_column="objeto_id",
+        db_column="object_id",
 
         max_length=80,
         blank=True,
@@ -82,7 +82,7 @@ class UserActivity(NoNameCoreModel):
         verbose_name="Objeto (ID)",
     )
     message = models.CharField(
-        db_column="mensagem",
+        db_column="message",
         max_length=255, blank=True, default="", verbose_name="Mensagem")
     metadata = models.JSONField(default=dict, blank=True, verbose_name="Metadados")
 

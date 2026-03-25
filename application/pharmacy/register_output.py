@@ -18,6 +18,3 @@ def register_output(lot, quantity):
         type="SAI",
         quantity=quantity,
     )
-
-
-registrar_saida = register_output

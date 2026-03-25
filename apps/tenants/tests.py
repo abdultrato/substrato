@@ -43,14 +43,14 @@ def test_active_plan_returns_from_subscription():
     TenantSubscription.objects.create(
         tenant=tenant,
         plan=plan_basic,
-        status=TenantSubscription.Status.CANCELADA,
+        status=TenantSubscription.Status.CANCELED,
         start_date=timezone.localdate() - timedelta(days=30),
         end_date=timezone.localdate() - timedelta(days=1),
     )
     assinatura_active = TenantSubscription.objects.create(
         tenant=tenant,
         plan=plan_pro,
-        status=TenantSubscription.Status.ATIVA,
+        status=TenantSubscription.Status.ACTIVE,
         start_date=timezone.localdate(),
     )
 
@@ -64,9 +64,9 @@ def test_assinatura_cancelar_define_status_e_end_date():
     plan = SubscriptionPlan.objects.create(name="Free", type=SubscriptionPlan.PlanType.FREE)
     assinatura = TenantSubscription.objects.create(tenant=tenant, plan=plan)
 
-    assinatura.cancelar()
+    assinatura.cancel()
 
-    assert assinatura.status == TenantSubscription.Status.CANCELADA
+    assert assinatura.status == TenantSubscription.Status.CANCELED
     assert assinatura.end_date == timezone.localdate()
 
 
@@ -102,7 +102,3 @@ def test_uso_tenant_repr():
     assert str(uso).endswith(str(tenant.id))
 
 
-test_tenant_trial_e_bloqueio = test_tenant_trial_and_blocking
-test_plan_active_retorna_da_assinatura = test_active_plan_returns_from_subscription
-test_feature_flag_unica_por_tenant = test_feature_flag_unique_per_tenant
-test_configuracao_tenant_defaults = test_tenant_configuration_defaults

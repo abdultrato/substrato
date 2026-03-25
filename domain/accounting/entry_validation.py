@@ -1,4 +1,3 @@
 from domain.accounting.entry_rules import DomainLine, LedgerEntryRules
 
-LinhaDominio = DomainLine
-RegrasLancamento = LedgerEntryRules
+__all__ = ["DomainLine", "LedgerEntryRules"]

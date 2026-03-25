@@ -4,7 +4,7 @@ from .models.equipment import Equipment
 
 
 @admin.register(Equipment)
-class EquipamentoAdmin(admin.ModelAdmin):
+class EquipmentAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "name",
@@ -13,7 +13,7 @@ class EquipamentoAdmin(admin.ModelAdmin):
         "model",
         "location",
         "responsible",
-        "status_atual",
+        "current_status",
         "active",
         "created_at",
     )
@@ -34,5 +34,5 @@ class EquipamentoAdmin(admin.ModelAdmin):
     ordering = ("name",)
 
     @admin.display(description="Estado atual")
-    def status_atual(self, obj: Equipment) -> str:
-        return obj.status_atual_label or obj.status_atual or ""
+    def current_status(self, obj: Equipment) -> str:
+        return obj.current_status_label or obj.current_status or ""

@@ -1,9 +1,9 @@
-from .core import VIEWSET_MAP, CirurgiaViewSet, ProcedimentoCirurgicoViewSet, SurgeryViewSet, SurgicalProcedureViewSet
+from .core import VIEWSET_MAP, SurgeryViewSet, SurgicalProcedureViewSet, SurgeryViewSet, SurgicalProcedureViewSet
 
 __all__ = [
     "VIEWSET_MAP",
-    "CirurgiaViewSet",
-    "ProcedimentoCirurgicoViewSet",
+    "SurgeryViewSet",
+    "SurgicalProcedureViewSet",
     "SurgeryViewSet",
     "SurgicalProcedureViewSet",
 ]

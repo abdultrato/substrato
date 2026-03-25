@@ -7,11 +7,11 @@ from infrastructure.context.request_user import get_current_user
 
 
 class SoftDeleteMixin(models.Model):
-    deleted = models.BooleanField(db_column="deletado", default=False, db_index=True)
-    deleted_at = models.DateTimeField(db_column="deletado_em", null=True, blank=True)
+    deleted = models.BooleanField(db_column="deleted", default=False, db_index=True)
+    deleted_at = models.DateTimeField(db_column="deleted_at", null=True, blank=True)
     deleted_by = models.ForeignKey(
         "identidade.User",
-        db_column="deletado_por_id",
+        db_column="deleted_by_id",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

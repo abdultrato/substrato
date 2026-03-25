@@ -21,19 +21,19 @@ class ConsultationSpecialty(CoreModel):
 
     description = models.TextField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição", blank=True, default="")
 
     base_price = MoneyField(
 
-        db_column="preco_base",
+        db_column="base_price",
 
         verbose_name="Preço base", default=Decimal("0.00"))
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -48,7 +48,7 @@ class ConsultationSpecialty(CoreModel):
 
     active = models.BooleanField(
 
-        db_column="ativo",
+        db_column="active",
 
         verbose_name="Ativo", default=True, db_index=True)
 

@@ -3,15 +3,15 @@ from django.db import models
 
 class Transaction(models.Model):
     external_reference = models.CharField("Referência externa", 
-        db_column="referencia_externa",
+        db_column="external_reference",
          max_length=120, db_index=True)
     gateway = models.CharField("Gateway", max_length=80, db_index=True)
     status = models.CharField("Status do gateway", max_length=40, db_index=True)
     gateway_response = models.TextField("Resposta do gateway", 
-        db_column="resposta_gateway",
+        db_column="gateway_response",
          blank=True, default="")
 
-    created_at = models.DateTimeField("Criado em", db_column="criado_em", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField("Criado em", db_column="created_at", auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "pagamentos_transacao"

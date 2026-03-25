@@ -6,7 +6,7 @@ from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 
 from ..filters import MedicalRecordEntryFilter, PrescriptionItemFilter
-from ..serializers import MedicalRecordEntrySerializer, PrescricaoItemSerializer
+from ..serializers import MedicalRecordEntrySerializer, PrescriptionItemSerializer
 
 
 class MedicalRecordEntryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -27,7 +27,7 @@ class MedicalRecordEntryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
 
 class PrescriptionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = PrescriptionItem.objects.select_related("record", "medication").all()
-    serializer_class = PrescricaoItemSerializer
+    serializer_class = PrescriptionItemSerializer
     filterset_class = PrescriptionItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["custom_id", "medication__name", "notes"]
@@ -46,5 +46,3 @@ __all__ = [
     "PrescriptionItemViewSet",
 ]
 
-RegistroProntuarioViewSet = MedicalRecordEntryViewSet
-PrescricaoItemViewSet = PrescriptionItemViewSet

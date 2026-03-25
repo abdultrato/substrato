@@ -26,13 +26,13 @@ class InvoiceItem(NoNameCoreModel):
 
         "faturamento.Invoice",
 
-        db_column="fatura_id",
+        db_column="invoice_id",
         verbose_name="Fatura",
         on_delete=models.CASCADE,
         related_name="itens",
     )
     item_type = models.CharField(
-        db_column="tipo_item",
+        db_column="item_type",
         verbose_name="Tipo de item",
         max_length=3,
         choices=ItemType.choices,
@@ -44,7 +44,7 @@ class InvoiceItem(NoNameCoreModel):
 
         "clinico.LabExam",
 
-        db_column="exame_id",
+        db_column="exam_id",
         verbose_name="Exame",
         on_delete=models.PROTECT,
         null=True,
@@ -52,7 +52,7 @@ class InvoiceItem(NoNameCoreModel):
     )
     medical_exam = models.ForeignKey(
         "clinico.MedicalExam",
-        db_column="exame_medico_id",
+        db_column="medical_exam_id",
         verbose_name="Exame médico",
         on_delete=models.PROTECT,
         null=True,
@@ -60,7 +60,7 @@ class InvoiceItem(NoNameCoreModel):
     )
     sale_item = models.ForeignKey(
         "farmacia.SaleItem",
-        db_column="item_venda_id",
+        db_column="sale_item_id",
         verbose_name="Item de sale",
         on_delete=models.PROTECT,
         null=True,
@@ -68,7 +68,7 @@ class InvoiceItem(NoNameCoreModel):
     )
     procedure_item = models.ForeignKey(
         "enfermagem.ProcedureItem",
-        db_column="procedimento_item_id",
+        db_column="procedure_item_id",
         verbose_name="Item de procedure",
         on_delete=models.PROTECT,
         null=True,
@@ -76,7 +76,7 @@ class InvoiceItem(NoNameCoreModel):
     )
     procedure_material = models.ForeignKey(
         "enfermagem.ProcedureMaterial",
-        db_column="procedimento_material_id",
+        db_column="procedure_material_id",
         verbose_name="Material de procedure",
         on_delete=models.PROTECT,
         null=True,
@@ -85,18 +85,18 @@ class InvoiceItem(NoNameCoreModel):
 
     description = models.CharField(
 
-        db_column="descricao",
+        db_column="description",
 
         verbose_name="Descrição", max_length=255, blank=True, default="")
     quantity = models.DecimalField(
-        db_column="quantidade",
+        db_column="quantity",
         verbose_name="Quantidade",
         max_digits=10,
         decimal_places=2,
         default=Decimal("1.00"),
     )
     unit_price = models.DecimalField(
-        db_column="preco_unitario",
+        db_column="unit_price",
         verbose_name="Preço unitário",
         max_digits=12,
         decimal_places=2,
@@ -105,7 +105,7 @@ class InvoiceItem(NoNameCoreModel):
 
     applies_vat = models.BooleanField(
 
-        db_column="aplica_iva",
+        db_column="applies_vat",
 
         verbose_name="Aplicar IVA?",
         default=True,
@@ -114,7 +114,7 @@ class InvoiceItem(NoNameCoreModel):
 
     vat_percentage = models.DecimalField(
 
-        db_column="iva_percentual",
+        db_column="vat_percentage",
 
         verbose_name="IVA (%)",
         max_digits=5,
@@ -208,7 +208,7 @@ class InvoiceItem(NoNameCoreModel):
 
                     invoice = Invoice.objects.filter(pk=invoice_id).first()
                     if invoice:
-                        invoice.persistir_totais()
+                        invoice.persist_totals()
                 except Exception:
                     pass
 
@@ -219,16 +219,16 @@ class InvoiceItem(NoNameCoreModel):
 
     def _origin_esperada(self):
         try:
-            if self.invoice_id and self.invoice.origin == self.invoice.Origem.MISTA:
+            if self.invoice_id and self.invoice.origin == self.invoice.Origin.MIXED:
                 return None
         except Exception:
             pass
         return {
-            self.TipoItem.EXAME: self.invoice.Origem.CLINICO,
-            self.TipoItem.EXAME_MEDICO: self.invoice.Origem.CLINICO,
-            self.TipoItem.ITEM_VENDA: self.invoice.Origem.FARMACIA,
-            self.TipoItem.PROCEDIMENTO_ITEM: self.invoice.Origem.ENFERMAGEM,
-            self.TipoItem.PROCEDIMENTO_MATERIAL: self.invoice.Origem.ENFERMAGEM,
+            self.TipoItem.EXAME: self.invoice.Origin.CLINICAL,
+            self.TipoItem.EXAME_MEDICO: self.invoice.Origin.CLINICAL,
+            self.TipoItem.ITEM_VENDA: self.invoice.Origin.PHARMACY,
+            self.TipoItem.PROCEDIMENTO_ITEM: self.invoice.Origin.NURSING,
+            self.TipoItem.PROCEDIMENTO_MATERIAL: self.invoice.Origin.NURSING,
             self.TipoItem.AJUSTE: None,
         }[self.item_type]
 
@@ -431,7 +431,7 @@ class InvoiceItem(NoNameCoreModel):
         if self.sale_item_id and self.invoice.sale_id and self.sale_item.sale_id != self.invoice.sale_id:
             raise ValidationError({"sale_item": "Item de sale não pertence à sale da invoice."})
 
-        if self.procedure_item_id and self.invoice.origin == self.invoice.Origem.ENFERMAGEM:
+        if self.procedure_item_id and self.invoice.origin == self.invoice.Origin.NURSING:
             permitido = False
             if self.invoice.procedure_id and self.procedure_item.procedure_id == self.invoice.procedure_id:
                 permitido = True
@@ -446,7 +446,7 @@ class InvoiceItem(NoNameCoreModel):
                     {"procedure_item": "Item de procedure não pertence aos procedures da invoice."}
                 )
 
-        if self.procedure_material_id and self.invoice.origin == self.invoice.Origem.ENFERMAGEM:
+        if self.procedure_material_id and self.invoice.origin == self.invoice.Origin.NURSING:
             permitido = False
             if (
                 self.invoice.procedure_id
@@ -463,7 +463,7 @@ class InvoiceItem(NoNameCoreModel):
                 raise ValidationError({"procedure_material": "Material não pertence aos procedures da invoice."})
 
     def save(self, *args, **kwargs):
-        if self.invoice.status != self.invoice.Estado.RASCUNHO:
+        if self.invoice.status != self.invoice.Status.DRAFT:
             raise ValidationError("Não é permitido alterar itens de invoice emitida.")
 
         if not self.tenant_id and self.invoice_id:
@@ -476,12 +476,12 @@ class InvoiceItem(NoNameCoreModel):
         self._schedule_recalculation()
 
     def delete(self, *args, **kwargs):
-        if self.invoice.status != self.invoice.Estado.RASCUNHO:
+        if self.invoice.status != self.invoice.Status.DRAFT:
             raise ValidationError("Não é permitido remover itens.")
 
         invoice = self.invoice
         super().delete(*args, **kwargs)
-        invoice.persistir_totais()  # manter status imediato para gravação local
+        invoice.persist_totals()  # manter status imediato para gravação local
         self._schedule_recalculation()
 
     vat_amount = vat_amount

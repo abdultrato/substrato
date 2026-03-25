@@ -13,7 +13,7 @@ def add_invoice_item(invoice, description, quantity, price):
         quantity=quantity,
         unit_price=price,
     )
-    invoice.persistir_totais()
+    invoice.persist_totals()
 
     return item
 

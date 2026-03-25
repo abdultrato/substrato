@@ -63,5 +63,3 @@ class AccountingService:
         return entry
 
 
-ServicoContabilidade = AccountingService
-AccountingService.criar_entry = AccountingService.create_entry

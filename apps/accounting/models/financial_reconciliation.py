@@ -13,7 +13,7 @@ class FinancialReconciliation(CoreModel):
 
         "faturamento.Invoice",
 
-        db_column="fatura_id",
+        db_column="invoice_id",
         on_delete=models.PROTECT,
         related_name="conciliacoes",
         db_index=True,
@@ -21,13 +21,13 @@ class FinancialReconciliation(CoreModel):
 
     external_reference = models.CharField(
 
-        db_column="referencia_externa",
+        db_column="external_reference",
 
         max_length=120, blank=True, default="", db_index=True)
 
     accounting_value = models.DecimalField(
 
-        db_column="valor_contabil",
+        db_column="accounting_value",
 
         max_digits=18,
         decimal_places=2,
@@ -35,20 +35,20 @@ class FinancialReconciliation(CoreModel):
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     received_amount = models.DecimalField(
-        db_column="valor_recebido",
+        db_column="received_amount",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     discrepancy = models.DecimalField(
-        db_column="divergencia",
+        db_column="discrepancy",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     reconciled = models.BooleanField(
-        db_column="conciliado",
+        db_column="reconciled",
         default=False, db_index=True)
 
     class Meta:

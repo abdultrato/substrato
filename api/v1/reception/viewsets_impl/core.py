@@ -116,13 +116,13 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
     @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
     def complete(self, request, pk=None):
         checkin = self.get_object()
-        self.execute_safely(checkin.concluir)
+        self.execute_safely(checkin.complete)
         return Response(self.get_serializer(checkin).data)
 
     @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
     def cancel(self, request, pk=None):
         checkin = self.get_object()
-        self.execute_safely(checkin.cancelar)
+        self.execute_safely(checkin.cancel)
         return Response(self.get_serializer(checkin).data)
 
     @action(detail=True, methods=["get"], url_path="atendimento", url_name="atendimento")
@@ -252,6 +252,3 @@ __all__ = [
 ]
 
 
-WorkspaceRecepcaoViewSet = ReceptionWorkspaceViewSet
-CheckinRecepcaoViewSet = ReceptionCheckinViewSet
-AtendimentoRecepcaoViewSet = ReceptionCareViewSet

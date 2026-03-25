@@ -69,11 +69,4 @@ class IntegrationAnalyteMappingAdmin(admin.ModelAdmin):
     search_fields = ("custom_id", "code", "exam_field__name", "equipment__name")
 
 
-IntegracaoEquipamentoAdmin = IntegrationEquipmentAdmin
-IntegracaoCredencialAdmin = IntegrationCredentialAdmin
-IntegracaoRoteamentoAdmin = IntegrationRoutingAdmin
 IntegracaoOrdemItemInline = IntegrationOrderItemInline
-IntegracaoOrdemAdmin = IntegrationOrderAdmin
-IntegracaoMensagemAdmin = IntegrationMessageAdmin
-IntegracaoDocumentoAdmin = IntegrationDocumentAdmin
-IntegracaoMapeamentoAnalitoAdmin = IntegrationAnalyteMappingAdmin

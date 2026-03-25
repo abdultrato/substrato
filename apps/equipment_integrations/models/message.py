@@ -20,29 +20,26 @@ class IntegrationMessage(NoNameCoreModel):
     prefix = "MSG"
 
     class Direction(models.TextChoices):
-        ENTRADA = "IN", "Entrada"
-        SAIDA = "OUT", "Saída"
+        INBOUND = "IN", "Entrada"
+        OUTBOUND = "OUT", "Saída"
 
     class Status(models.TextChoices):
-        RECEBIDA = "RECV", "Recebida"
-        PROCESSADA = "PROC", "Processada"
-        ERRO = "ERRO", "Erro"
-
-    Direcao = Direction
-    Estado = Status
+        RECEIVED = "RECV", "Recebida"
+        PROCESSED = "PROC", "Processada"
+        ERROR = "ERRO", "Erro"
 
     equipment = models.ForeignKey(
 
         "integracoes_equipamentos.IntegrationEquipment",
 
-        db_column="equipamento_id",
+        db_column="equipment_id",
         on_delete=models.PROTECT,
         related_name="mensagens",
         db_index=True,
     )
     order = models.ForeignKey(
         "integracoes_equipamentos.IntegrationOrder",
-        db_column="ordem_id",
+        db_column="order_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -52,15 +49,15 @@ class IntegrationMessage(NoNameCoreModel):
 
     direction = models.CharField(
 
-        db_column="direcao",
+        db_column="direction",
 
         max_length=3,
         choices=Direction.choices,
-        default=Direction.ENTRADA,
+        default=Direction.INBOUND,
         db_index=True,
     )
     protocol = models.CharField(
-        db_column="protocolo",
+        db_column="protocol",
         max_length=20, blank=True, default="", db_index=True)
     message_id = models.CharField(max_length=120, blank=True, default="", db_index=True)
     content_type = models.CharField(max_length=120, blank=True, default="")
@@ -71,20 +68,20 @@ class IntegrationMessage(NoNameCoreModel):
 
     status = models.CharField(
 
-        db_column="estado",
+        db_column="status",
 
         max_length=4,
         choices=Status.choices,
-        default=Status.RECEBIDA,
+        default=Status.RECEIVED,
         db_index=True,
     )
     error = models.TextField(
-        db_column="erro",
+        db_column="error",
         blank=True, default="")
 
     processed_at = models.DateTimeField(
 
-        db_column="processado_em",
+        db_column="processed_at",
 
         null=True, blank=True)
 
@@ -123,7 +120,7 @@ class IntegrationMessage(NoNameCoreModel):
             sha256=_sha256_bytes(raw_body),
             payload_raw=raw_body.decode("utf-8", errors="replace"),
             payload_json=payload_json or {},
-            status=cls.Status.RECEBIDA,
+            status=cls.Status.RECEIVED,
         )
 
 
@@ -137,14 +134,14 @@ class IntegrationDocument(NoNameCoreModel):
 
         IntegrationMessage,
 
-        db_column="mensagem_id",
+        db_column="message_id",
         on_delete=models.CASCADE,
         related_name="documentos",
         db_index=True,
     )
     order_item = models.ForeignKey(
         "integracoes_equipamentos.IntegrationOrderItem",
-        db_column="ordem_item_id",
+        db_column="order_item_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -154,7 +151,7 @@ class IntegrationDocument(NoNameCoreModel):
 
     file = models.FileField(
 
-        db_column="arquivo",
+        db_column="file",
 
         upload_to=_upload_path)
     filename = models.CharField(max_length=255, blank=True, default="")

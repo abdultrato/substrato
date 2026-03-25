@@ -12,7 +12,7 @@ class Sale(NoNameCoreModel):
 
     number = models.CharField(
 
-        db_column="numero",
+        db_column="number",
 
         verbose_name="Número", max_length=40, db_index=True)
 
@@ -20,7 +20,7 @@ class Sale(NoNameCoreModel):
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="vendas_farmacia",

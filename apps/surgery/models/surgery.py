@@ -23,17 +23,17 @@ class Surgery(NoNameCoreModel):
 
     prefix = "CIR"
 
-    class Estado(models.TextChoices):
-        AGENDADA = "AGENDADA", "Agendada"
-        EM_ANDAMENTO = "EM_ANDAMENTO", "Em andamento"
-        CONCLUIDA = "CONCLUIDA", "Concluída"
-        CANCELADA = "CANCELADA", "Cancelada"
+    class Status(models.TextChoices):
+        SCHEDULED = "AGENDADA", "Agendada"
+        IN_PROGRESS = "EM_ANDAMENTO", "Em andamento"
+        COMPLETED = "CONCLUIDA", "Concluída"
+        CANCELED = "CANCELADA", "Cancelada"
 
     patient = models.ForeignKey(
 
         "clinico.Patient",
 
-        db_column="paciente_id",
+        db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="cirurgias",
@@ -41,7 +41,7 @@ class Surgery(NoNameCoreModel):
     )
     surgeon = models.ForeignKey(
         User,
-        db_column="cirurgiao_id",
+        db_column="surgeon_id",
         verbose_name="Cirurgião",
         on_delete=models.SET_NULL,
         null=True,
@@ -62,7 +62,7 @@ class Surgery(NoNameCoreModel):
 
     procedure = models.CharField(
 
-        db_column="procedimento",
+        db_column="procedure",
 
         verbose_name="Procedimento (texto livre)",
         max_length=160,
@@ -72,42 +72,42 @@ class Surgery(NoNameCoreModel):
         help_text="Use quando o procedure não estiver no catálogo.",
     )
     description = models.TextField(
-        db_column="descricao",
+        db_column="description",
         verbose_name="Descrição", blank=True, default="")
 
     estimated_price = MoneyField(
 
-        db_column="preco_estimado",
+        db_column="estimated_price",
 
         verbose_name="Preço estimado", default=Decimal("0.00"))
     vat_percentage = models.DecimalField(
-        db_column="iva_percentual",
+        db_column="vat_percentage",
         verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
     applies_vat_by_default = models.BooleanField(
-        db_column="aplica_iva_por_padrao",
+        db_column="applies_vat_by_default",
         verbose_name="Aplicar IVA por padrão", default=True)
 
     scheduled_for = models.DateTimeField(
 
-        db_column="agendada_para",
+        db_column="scheduled_for",
 
         verbose_name="Agendada para", default=timezone.now, db_index=True)
     status = models.CharField(
-        db_column="estado",
+        db_column="status",
         verbose_name="Estado",
         max_length=20,
-        choices=Estado.choices,
-        default=Estado.AGENDADA,
+        choices=Status.choices,
+        default=Status.SCHEDULED,
         db_index=True,
     )
 
     completed_at = models.DateTimeField(
 
-        db_column="concluida_em",
+        db_column="completed_at",
 
         verbose_name="Concluída em", null=True, blank=True)
     canceled_at = models.DateTimeField(
-        db_column="cancelada_em",
+        db_column="canceled_at",
         verbose_name="Cancelada em", null=True, blank=True)
 
     class Meta:
@@ -143,4 +143,3 @@ class Surgery(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.custom_id or f"Cirurgia {self.pk}"
-

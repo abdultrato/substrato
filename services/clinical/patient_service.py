@@ -6,7 +6,3 @@ class PatientService:
     def register(self, date):
         validate_age(date["birth_date"])
         return Patient.objects.create(**date)
-
-
-ServicoPaciente = PatientService
-PatientService.registrar = PatientService.register

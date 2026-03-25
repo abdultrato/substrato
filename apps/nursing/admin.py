@@ -670,6 +670,3 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     )
 
 
-RegistroEnfermagemAdmin = NursingRecordAdmin
-ProcedimentoItemValorAdmin = ProcedureItemValueAdmin
-ProcedimentoMaterialValorAdmin = ProcedureMaterialValueAdmin

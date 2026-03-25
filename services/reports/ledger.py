@@ -29,5 +29,3 @@ class LedgerService:
         )
 
 
-RazaoService = LedgerService
-LedgerService.saldo_por_account = LedgerService.balance_by_account

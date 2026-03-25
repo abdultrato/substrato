@@ -25,18 +25,18 @@ class Migration(migrations.Migration):
                 (
                     "created_at",
                     models.DateTimeField(
-                        auto_now_add=True, db_column="criado_em", db_index=True
+                        auto_now_add=True, db_column="created_at", db_index=True
                     ),
                 ),
                 (
                     "updated_at",
-                    models.DateTimeField(auto_now=True, db_column="atualizado_em"),
+                    models.DateTimeField(auto_now=True, db_column="updated_at"),
                 ),
                 (
                     "custom_id",
                     models.CharField(
                         blank=True,
-                        db_column="id_custom",
+                        db_column="custom_id",
                         db_index=True,
                         editable=False,
                         max_length=40,
@@ -47,20 +47,20 @@ class Migration(migrations.Migration):
                 (
                     "deleted",
                     models.BooleanField(
-                        db_column="deletado", db_index=True, default=False
+                        db_column="deleted", db_index=True, default=False
                     ),
                 ),
                 (
                     "deleted_at",
                     models.DateTimeField(
-                        blank=True, db_column="deletado_em", null=True
+                        blank=True, db_column="deleted_at", null=True
                     ),
                 ),
-                ("version", models.PositiveIntegerField(db_column="versao", default=1)),
+                ("version", models.PositiveIntegerField(db_column="version", default=1)),
                 (
                     "method",
                     models.CharField(
-                        db_column="metodo",
+                        db_column="method",
                         db_index=True,
                         max_length=10,
                         verbose_name="Método HTTP",
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 (
                     "path",
                     models.CharField(
-                        db_column="caminho",
+                        db_column="path",
                         db_index=True,
                         max_length=255,
                         verbose_name="Rota curta",
@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
                     "full_path",
                     models.TextField(
                         blank=True,
-                        db_column="path_completo",
+                        db_column="full_path",
                         default="",
                         verbose_name="URL completa",
                     ),
@@ -94,7 +94,7 @@ class Migration(migrations.Migration):
                     "duration_ms",
                     models.PositiveIntegerField(
                         blank=True,
-                        db_column="duracao_ms",
+                        db_column="duration_ms",
                         null=True,
                         verbose_name="Duração (ms)",
                     ),
@@ -138,7 +138,7 @@ class Migration(migrations.Migration):
                     "object_id",
                     models.CharField(
                         blank=True,
-                        db_column="objeto_id",
+                        db_column="object_id",
                         db_index=True,
                         default="",
                         max_length=80,
@@ -149,7 +149,7 @@ class Migration(migrations.Migration):
                     "message",
                     models.CharField(
                         blank=True,
-                        db_column="mensagem",
+                        db_column="message",
                         default="",
                         max_length=255,
                         verbose_name="Mensagem",

@@ -20,32 +20,32 @@ CORE_READ_ONLY_FIELDS = [
 ]
 
 
-def _get_ultima_inspecao(obj: Equipment):
-    if hasattr(obj, "_ultima_inspecao_cache"):
-        return obj._ultima_inspecao_cache
-    ultima = obj.ultima_inspecao()
-    obj._ultima_inspecao_cache = ultima
-    return ultima
+def _get_last_inspection(obj: Equipment):
+    if hasattr(obj, "_last_inspection_cache"):
+        return obj._last_inspection_cache
+    last_inspection = obj.last_inspection()
+    obj._last_inspection_cache = last_inspection
+    return last_inspection
 
 
-class EquipamentoSerializer(serializers.ModelSerializer):
+class EquipmentSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
-    status_atual = serializers.SerializerMethodField()
-    status_atual_label = serializers.SerializerMethodField()
-    ultima_inspecao = serializers.SerializerMethodField()
+    current_status = serializers.SerializerMethodField()
+    current_status_label = serializers.SerializerMethodField()
+    last_inspection = serializers.SerializerMethodField()
 
     def get_status(self, obj: Equipment) -> str:
-        return obj.status_atual_label or obj.status_atual or ""
+        return obj.current_status_label or obj.current_status or ""
 
-    def get_status_atual(self, obj: Equipment) -> str:
-        return obj.status_atual
+    def get_current_status(self, obj: Equipment) -> str:
+        return obj.current_status
 
-    def get_status_atual_label(self, obj: Equipment) -> str:
-        return obj.status_atual_label
+    def get_current_status_label(self, obj: Equipment) -> str:
+        return obj.current_status_label
 
-    def get_ultima_inspecao(self, obj: Equipment):
-        ultima = _get_ultima_inspecao(obj)
-        return ultima.date if ultima else None
+    def get_last_inspection(self, obj: Equipment):
+        last_inspection = _get_last_inspection(obj)
+        return last_inspection.date if last_inspection else None
 
     class Meta:
         model = Equipment
@@ -53,9 +53,9 @@ class EquipamentoSerializer(serializers.ModelSerializer):
         read_only_fields = [
             *CORE_READ_ONLY_FIELDS,
             "status",
-            "status_atual",
-            "status_atual_label",
-            "ultima_inspecao",
+            "current_status",
+            "current_status_label",
+            "last_inspection",
         ]
         extra_kwargs = {
             "name": {"required": True},
@@ -63,7 +63,7 @@ class EquipamentoSerializer(serializers.ModelSerializer):
         }
 
 
-class InspecaoDiariaSerializer(serializers.ModelSerializer):
+class DailyInspectionSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField(method_name="get_description")
     status = serializers.SerializerMethodField()
 
@@ -86,11 +86,11 @@ class InspecaoDiariaSerializer(serializers.ModelSerializer):
         read_only_fields = [*CORE_READ_ONLY_FIELDS, "description", "status"]
 
 
-class ManutencaoSerializer(serializers.ModelSerializer):
+class MaintenanceSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
 
     def get_status(self, obj: Maintenance) -> str:
-        return "Executada" if obj.executada else "Programada"
+        return "Executada" if obj.performed else "Programada"
 
     class Meta:
         model = Maintenance
@@ -98,7 +98,7 @@ class ManutencaoSerializer(serializers.ModelSerializer):
         read_only_fields = [*CORE_READ_ONLY_FIELDS, "status"]
 
 
-class OcorrenciaSerializer(serializers.ModelSerializer):
+class IncidentSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
 
     def get_status(self, obj: Incident) -> str:
@@ -111,8 +111,11 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "equipment": EquipamentoSerializer,
-    "inspecaodiaria": InspecaoDiariaSerializer,
-    "manutencao": ManutencaoSerializer,
-    "ocorrencia": OcorrenciaSerializer,
+    "equipment": EquipmentSerializer,
+    "daily_inspection": DailyInspectionSerializer,
+    "maintenance": MaintenanceSerializer,
+    "incident": IncidentSerializer,
+    "inspecaodiaria": DailyInspectionSerializer,
+    "manutencao": MaintenanceSerializer,
+    "ocorrencia": IncidentSerializer,
 }

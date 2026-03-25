@@ -45,8 +45,3 @@ SERIALIZER_MAP = {
     "sale": SaleSerializer,
 }
 
-ItemVendaSerializer = SaleItemSerializer
-LoteSerializer = LotSerializer
-MovimentoEstoqueSerializer = InventoryMovementSerializer
-ProdutoSerializer = ProductSerializer
-VendaSerializer = SaleSerializer

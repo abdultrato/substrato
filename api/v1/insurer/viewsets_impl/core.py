@@ -104,6 +104,3 @@ __all__ = [
     "ProcedureAuthorizationViewSet",
 ]
 
-AutorizacaoProcedimentoViewSet = ProcedureAuthorizationViewSet
-PlanoCoberturaViewSet = CoveragePlanViewSet
-SeguradoraViewSet = InsurerViewSet

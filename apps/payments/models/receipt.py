@@ -6,7 +6,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 class Receipt(models.Model):
     invoice = models.ForeignKey(
         "faturamento.Invoice",
-        db_column="fatura_id",
+        db_column="invoice_id",
         verbose_name="Fatura",
         on_delete=models.PROTECT,
         related_name="recibos",
@@ -14,7 +14,7 @@ class Receipt(models.Model):
     )
     payment = models.OneToOneField(
         "pagamentos.Payment",
-        db_column="pagamento_id",
+        db_column="payment_id",
         verbose_name="Pagamento",
         on_delete=models.PROTECT,
         related_name="recibo",
@@ -23,14 +23,14 @@ class Receipt(models.Model):
 
     number = models.CharField("Número do recibo", 
 
-        db_column="numero",
+        db_column="number",
 
          max_length=60, db_index=True)
     value = MoneyField(
-        db_column="valor",
+        db_column="value",
         verbose_name="Valor")
 
-    created_at = models.DateTimeField("Criado em", db_column="criado_em", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField("Criado em", db_column="created_at", auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "pagamentos_recibo"

@@ -2,15 +2,12 @@ from django.db import models
 
 
 class ClinicalStatus(models.TextChoices):
-    NAO_URGENTE = "NAO_URGENTE", "Não urgente"
+    NON_URGENT = "NAO_URGENTE", "Não urgente"
     NORMAL = "NORMAL", "Normal"
-    ROTINA = "ROTINA", "Rotina"
-    POUCO_URGENTE = "POUCO_URGENTE", "Pouco urgente"
-    PRIORITARIO = "PRIORITARIO", "Prioritário"
-    URGENTE = "URGENTE", "Urgente"
-    MUITO_URGENTE = "MUITO_URGENTE", "Muito urgente"
-    URGENTISSIMO = "URGENTISSIMO", "Urgentíssimo"
-    EMERGENCIA = "EMERGENCIA", "Emergência"
-
-
-StatusClinico = ClinicalStatus
+    ROUTINE = "ROTINA", "Rotina"
+    LOW_URGENCY = "POUCO_URGENTE", "Pouco urgente"
+    PRIORITY = "PRIORITARIO", "Prioritário"
+    URGENT = "URGENTE", "Urgente"
+    VERY_URGENT = "MUITO_URGENTE", "Muito urgente"
+    EXTREMELY_URGENT = "URGENTISSIMO", "Urgentíssimo"
+    EMERGENCY = "EMERGENCIA", "Emergência"

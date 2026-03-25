@@ -25,4 +25,3 @@ FILTER_MAP = {
 }
 
 
-CheckinRecepcaoFilter = ReceptionCheckinFilter
