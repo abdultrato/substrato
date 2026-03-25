@@ -17,6 +17,3 @@ class OrderMixin(models.Model):
     class Meta:
         abstract = True
         ordering = ["order"]
-
-
-OrdemMixin = OrderMixin

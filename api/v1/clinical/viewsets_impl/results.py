@@ -97,7 +97,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(ResultState.IN_ANALYSIS, user=getattr(request, "user", None))
+            item.transition(ResultState.IN_ANALYSIS, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 
@@ -123,7 +123,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         except (InvalidOperation, TypeError, ValueError) as err:
             raise ValidationError({"result_value": "Valor inválido."}) from err
 
-        from domain.clinical.state_machine_result import ResultadoStateMachine, TransicaoInvalidaError
+        from domain.clinical.result_state_machine import InvalidTransitionError, ResultStateMachine
 
         with transaction.atomic():
             locked = (
@@ -139,11 +139,11 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             )
 
             try:
-                ResultadoStateMachine.validar_transicao(
+                ResultStateMachine.validate_transition(
                     locked.status,
                     ResultState.AWAITING_VALIDATION,
                 )
-            except TransicaoInvalidaError as err:
+            except InvalidTransitionError as err:
                 raise ValidationError(str(err)) from err
 
             locked.result_value = value
@@ -161,7 +161,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(ResultState.VALIDATED, user=getattr(request, "user", None))
+            item.transition(ResultState.VALIDATED, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 

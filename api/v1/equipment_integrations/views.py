@@ -452,7 +452,7 @@ class EquipmentResultsInboxView(APIView):
             # Garante que os itens de result existam para cada item do pedido.
             for oi in order.itens.select_related("request_item").all():
                 with suppress(Exception):
-                    oi.request_item._criar_resultados()
+                    oi.request_item._create_results()
 
             # Aplica resultados numéricos via mapeamento de analitos.
             for r in results if isinstance(results, list) else []:

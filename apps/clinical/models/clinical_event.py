@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Q
 
 from core.constants.clinical_event_type import ClinicalEventType
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 from .lab_request import LabRequest
@@ -11,7 +11,7 @@ from .patient import Patient
 from .result_item import ResultItem
 
 
-class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
+class ClinicalEvent(TenantPropagationMixin, CoreModel):
     """
     Registro imutável de eventos clínicos.
 
@@ -21,7 +21,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
     • rastreabilidade laboratorial
     """
 
-    fonte_tenant = "patient"
+    tenant_source = "patient"
     prefix = "EVT"
 
     patient = models.ForeignKey(

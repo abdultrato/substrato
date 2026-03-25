@@ -1,56 +1,56 @@
 import { useCallback, useEffect, useState } from "react"
 import {
-    listarResultados,
-    atualizarResultado,
-    validarResultado,
-} from "@/lib/api/resultado"
-import { ResultadoItem } from "@/lib/types/requisicao"
+    listResults,
+    saveResult,
+    validateResult,
+} from "@/lib/api/result"
+import { ResultItem } from "@/lib/types/request"
 
-export function useResultados ( requisicaoId?: number ) {
-    const [resultados, setResultados] = useState<ResultadoItem[]>( [] )
+export function useResults ( requestId?: number ) {
+    const [results, setResults] = useState<ResultItem[]>( [] )
     const [loading, setLoading] = useState( true )
     const [error, setError] = useState<string | null>( null )
 
-    const carregar = useCallback( async () => {
+    const loadResults = useCallback( async () => {
         try {
             setLoading( true )
-            const data = await listarResultados(
-                requisicaoId ? { requisicao: requisicaoId } : undefined
+            const data = await listResults(
+                requestId ? { requisicao: requestId } : undefined
             )
-            setResultados( data )
+            setResults( data )
         } catch ( err: any ) {
             setError( err.message )
         } finally {
             setLoading( false )
         }
-    }, [requisicaoId] )
+    }, [requestId] )
 
-    async function atualizar ( id: number, valor: string ) {
-        const atualizado = await atualizarResultado( id, valor )
-        setResultados( ( prev ) =>
-            prev.map( ( r ) => ( r.id === id ? atualizado : r ) )
+    async function updateResult ( id: number, value: string ) {
+        const updated = await saveResult( id, value )
+        setResults( ( prev ) =>
+            prev.map( ( result ) => ( result.id === id ? updated : result ) )
         )
     }
 
-    async function validar ( id: number ) {
-        await validarResultado( id )
-        setResultados( ( prev ) =>
-            prev.map( ( r ) =>
-                r.id === id ? { ...r, validado: true } : r
+    async function validateResultById ( id: number ) {
+        const updated = await validateResult( id )
+        setResults( ( prev ) =>
+            prev.map( ( result ) =>
+                result.id === id ? updated : result
             )
         )
     }
 
     useEffect( () => {
-        carregar()
-    }, [carregar] )
+        loadResults()
+    }, [loadResults] )
 
     return {
-        resultados,
+        results,
         loading,
         error,
-        carregar,
-        atualizar,
-        validar,
+        loadResults,
+        updateResult,
+        validateResult: validateResultById,
     }
 }

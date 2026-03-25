@@ -1,27 +1,27 @@
 import { useEffect, useState } from "react"
 import {
-    listarRequisicoes,
-    criarRequisicao,
-    atualizarRequisicao,
-    cancelarRequisicao,
-    validarResultados,
-} from "@/lib/api/requisicao"
+    cancelRequest,
+    createRequest,
+    listRequests,
+    updateRequest,
+    validateRequestResults,
+} from "@/lib/api/request"
 import {
-    Requisicao,
-    RequisicaoCreateDTO,
-    RequisicaoUpdateDTO,
-} from "@/lib/types/requisicao"
+    Request,
+    RequestCreateDTO,
+    RequestUpdateDTO,
+} from "@/lib/types/request"
 
-export function useRequisicoes () {
-    const [requisicoes, setRequisicoes] = useState<Requisicao[]>( [] )
+export function useRequests () {
+    const [requests, setRequests] = useState<Request[]>( [] )
     const [loading, setLoading] = useState( true )
     const [error, setError] = useState<string | null>( null )
 
-    async function carregar () {
+    async function loadRequests () {
         try {
             setLoading( true )
-            const data = await listarRequisicoes()
-            setRequisicoes( data as unknown as Requisicao[] )
+            const data = await listRequests()
+            setRequests( data as unknown as Request[] )
         } catch ( err: any ) {
             setError( err.message )
         } finally {
@@ -29,48 +29,48 @@ export function useRequisicoes () {
         }
     }
 
-    async function adicionar ( payload: RequisicaoCreateDTO ) {
-        const nova = await criarRequisicao( payload )
-        setRequisicoes( ( prev ) => [nova, ...prev] )
+    async function addRequest ( payload: RequestCreateDTO ) {
+        const created = await createRequest( payload )
+        setRequests( ( prev ) => [created, ...prev] )
     }
 
-    async function editar ( id: number, payload: RequisicaoUpdateDTO ) {
-        const atualizada = await atualizarRequisicao( id, payload )
-        setRequisicoes( ( prev ) =>
-            prev.map( ( r ) => ( r.id === id ? atualizada : r ) )
+    async function editRequest ( id: number, payload: RequestUpdateDTO ) {
+        const updated = await updateRequest( id, payload )
+        setRequests( ( prev ) =>
+            prev.map( ( request ) => ( request.id === id ? updated : request ) )
         )
     }
 
-    async function cancelar ( id: number ) {
-        await cancelarRequisicao( id )
-        setRequisicoes( ( prev ) =>
-            prev.map( ( r ) =>
-                r.id === id ? { ...r, status: "CANC" } : r
+    async function cancelRequestById ( id: number ) {
+        await cancelRequest( id )
+        setRequests( ( prev ) =>
+            prev.map( ( request ) =>
+                request.id === id ? { ...request, status: "CANC" } : request
             )
         )
     }
 
-    async function validar ( id: number ) {
-        await validarResultados( id )
-        setRequisicoes( ( prev ) =>
-            prev.map( ( r ) =>
-                r.id === id ? { ...r, status: "VAL" } : r
+    async function validateResults ( id: number ) {
+        await validateRequestResults( id )
+        setRequests( ( prev ) =>
+            prev.map( ( request ) =>
+                request.id === id ? { ...request, status: "VAL" } : request
             )
         )
     }
 
     useEffect( () => {
-        carregar()
+        loadRequests()
     }, [] )
 
     return {
-        requisicoes,
+        requests,
         loading,
         error,
-        carregar,
-        adicionar,
-        editar,
-        cancelar,
-        validar,
+        loadRequests,
+        addRequest,
+        editRequest,
+        cancelRequest: cancelRequestById,
+        validateResults,
     }
 }

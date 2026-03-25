@@ -14,26 +14,24 @@ class IdentifierMixin(models.Model):
     )
 
     prefix = None
-    prefixo = None
 
     class Meta:
         abstract = True
 
     def generate_identifier(self):
-        prefix = self.prefix or self.prefixo
-        if self.custom_id or not prefix:
+        if self.custom_id or not self.prefix:
             return
 
         timestamp = now().strftime("%Y%m%d-%H%M")
 
         number = self.pk or 0
 
-        self.custom_id = f"{prefix}-{timestamp}-{number:04d}"
+        self.custom_id = f"{self.prefix}-{timestamp}-{number:04d}"
 
     def save(self, *args, **kwargs):
-        criando = self._state.adding
+        is_creating = self._state.adding
 
-        if criando and not self.pk:
+        if is_creating and not self.pk:
             super().save(*args, **kwargs)
 
             self.generate_identifier()
@@ -49,6 +47,3 @@ class IdentifierMixin(models.Model):
     @id_custom.setter
     def id_custom(self, value):
         self.custom_id = value
-
-
-IdentificadorMixin = IdentifierMixin

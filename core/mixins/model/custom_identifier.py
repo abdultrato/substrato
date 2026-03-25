@@ -63,6 +63,3 @@ class CustomIdentifierMixin(models.Model):
             self.generate_identifier()
 
         super().save(*args, **kwargs)
-
-
-IdentificadorMixin = CustomIdentifierMixin

@@ -5,12 +5,8 @@ class UpdateRequestFlow:
     @staticmethod
     def execute(request):
 
-        novo_status = RequestFlow.determine_status(request)
+        new_status = RequestFlow.determine_status(request)
 
-        request.aplicar_status(novo_status)
+        request.aplicar_status(new_status)
 
         return request
-
-
-AtualizarFluxoRequisicao = UpdateRequestFlow
-UpdateRequestFlow.executar = UpdateRequestFlow.execute

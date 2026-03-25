@@ -72,7 +72,7 @@ def test_request_creates_result_and_items():
 
     # Result items are created by the request item helper.
     result = Result.objects.create(request=req, tenant=tenant)
-    item._criar_resultados()
+    item._create_results()
 
     assert req.tenant == tenant
     assert result.request == req

@@ -1,11 +1,11 @@
 from django.db import models
 
-from core.mixins.model.description import DescricaoMixin
-from core.mixins.model.order import OrdemMixin
+from core.mixins.model.description import DescriptionMixin
+from core.mixins.model.order import OrderMixin
 from core.models import CoreModel
 
 
-class Insurer(DescricaoMixin, OrdemMixin, CoreModel):
+class Insurer(DescriptionMixin, OrderMixin, CoreModel):
     """
     Cadastro de seguradoras/planos de saude.
     """

@@ -18,51 +18,47 @@ class UpgradePlanUseCase:
 
     @staticmethod
     @transaction.atomic
-    def execute(tenant, novo_type_plan: str, imediato: bool = True):
+    def execute(tenant, new_plan_type: str, immediate: bool = True):
 
-        assinatura_atual = tenant.get_active_subscription()
+        current_subscription = tenant.get_active_subscription()
 
-        if not assinatura_atual:
+        if not current_subscription:
             raise Exception("Tenant não possui assinatura active.")
 
-        if assinatura_atual.plan.type == novo_type_plan:
-            return assinatura_atual
+        if current_subscription.plan.type == new_plan_type:
+            return current_subscription
 
-        novo_plan = SubscriptionPlan.objects.filter(
-            type=novo_type_plan,
+        new_plan = SubscriptionPlan.objects.filter(
+            type=new_plan_type,
             active=True,
         ).first()
 
-        if not novo_plan:
+        if not new_plan:
             raise Exception("Plano inválido ou inativo.")
 
-        hoje = timezone.now().date()
+        today = timezone.now().date()
 
-        if imediato:
+        if immediate:
             # Cancela imediatamente
-            assinatura_atual.cancel(end_date=hoje)
+            current_subscription.cancel(end_date=today)
 
             return TenantSubscription.objects.create(
                 tenant=tenant,
-                plan=novo_plan,
-                start_date=hoje,
+                plan=new_plan,
+                start_date=today,
                 status=TenantSubscription.Status.ACTIVE,
-                cycle=assinatura_atual.cycle,
+                cycle=current_subscription.cycle,
             )
 
         # Upgrade programado no fim do cycle
-        end_date_atual = assinatura_atual.end_date or hoje
+        current_end_date = current_subscription.end_date or today
 
-        assinatura_atual.cancel(end_date=end_date_atual)
+        current_subscription.cancel(end_date=current_end_date)
 
         return TenantSubscription.objects.create(
             tenant=tenant,
-            plan=novo_plan,
-            start_date=end_date_atual,
+            plan=new_plan,
+            start_date=current_end_date,
             status=TenantSubscription.Status.ACTIVE,
-            cycle=assinatura_atual.cycle,
+            cycle=current_subscription.cycle,
         )
-
-
-UpgradePlanoUseCase = UpgradePlanUseCase
-UpgradePlanUseCase.executar = UpgradePlanUseCase.execute

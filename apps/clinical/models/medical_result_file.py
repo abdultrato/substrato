@@ -6,7 +6,7 @@ from django.db import models
 from PIL import Image
 
 from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
 from .lab_request_item import LabRequestItem
@@ -93,7 +93,7 @@ def validate_medical_file_for_type(file, type):
         _validate_pdf(file)
 
 
-class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
+class MedicalResultFile(TenantPropagationMixin, NoNameCoreModel):
     prefix = "RMA"
 
     result = models.ForeignKey(

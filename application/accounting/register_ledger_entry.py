@@ -129,5 +129,3 @@ def execute(
     return entry
 
 
-OperacaoDuplicadaErro = DuplicateOperationError
-executar = execute

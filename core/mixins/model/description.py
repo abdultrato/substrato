@@ -18,6 +18,3 @@ class DescriptionMixin(models.Model):
         if self.description:
             self.description = self.description.strip()
         super().save(*args, **kwargs)
-
-
-DescricaoMixin = DescriptionMixin

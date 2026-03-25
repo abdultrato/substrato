@@ -17,7 +17,3 @@ class AddRequestItem:
         total = RequestCalculator.calculate_total(request)
 
         return item, total
-
-
-AdicionarItemRequisicao = AddRequestItem
-AddRequestItem.executar = AddRequestItem.execute

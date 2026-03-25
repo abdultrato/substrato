@@ -2,17 +2,17 @@ from decimal import Decimal
 
 from django.db import models
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
 
 
-class ProcedureMaterialValue(PropagarInquilinoMixin, NoNameCoreModel):
+class ProcedureMaterialValue(TenantPropagationMixin, NoNameCoreModel):
     """
     Valor unitário efetivo de um material consumido em procedure.
     """
 
-    fonte_tenant = "material"
+    tenant_source = "material"
     prefix = "PMV"
 
     material = models.OneToOneField(

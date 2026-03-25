@@ -1,16 +1,16 @@
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 
-class NursingVitalSign(PropagarInquilinoMixin, CoreModel):
+class NursingVitalSign(TenantPropagationMixin, CoreModel):
     """
     Registro de sinais vitais do patient.
     """
 
-    fonte_tenant = "record"
+    tenant_source = "record"
     prefix = "SVI"
 
     record = models.ForeignKey(

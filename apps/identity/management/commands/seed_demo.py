@@ -112,7 +112,7 @@ def _ensure_local_tenant() -> Tenant:
         name="Tenant Local",
         domain="localhost",
         active=True,
-        commercial_status=Tenant.StatusComercial.TRIAL,
+        commercial_status=Tenant.CommercialStatus.TRIAL,
     )
 
 
@@ -129,7 +129,7 @@ def ensure_tenants(n: int, faker: Faker) -> list[Tenant]:
                 "name": f"Clínica {faker.city()} {idx}",
                 "domain": f"tenant{idx}.localhost",
                 "active": True,
-                "commercial_status": Tenant.StatusComercial.TRIAL,
+                "commercial_status": Tenant.CommercialStatus.TRIAL,
                 "trial_until": timezone.localdate() + timedelta(days=30),
             },
         )
@@ -163,10 +163,10 @@ def ensure_config_uso(tenants: Iterable[Tenant]) -> None:
 
 
 def ensure_subscription_plans(n: int) -> list[SubscriptionPlan]:
-    tipos = [c[0] for c in SubscriptionPlan.TipoPlano.choices]
+    plan_types = [choice[0] for choice in SubscriptionPlan.PlanType.choices]
     while _count(SubscriptionPlan) < n:
         idx = _count(SubscriptionPlan) + 1
-        type = tipos[(idx - 1) % len(tipos)]
+        type = plan_types[(idx - 1) % len(plan_types)]
         SubscriptionPlan.objects.create(
             name=f"Plano {type} {idx}",
             description=f"Plano de assinatura seed ({type})",
@@ -174,10 +174,10 @@ def ensure_subscription_plans(n: int) -> list[SubscriptionPlan]:
             type=type,
             user_limit=5 + idx,
             monthly_request_limit=1000 + 10 * idx,
-            monthly_price=Decimal("0.00") if type == SubscriptionPlan.TipoPlano.FREE else Decimal("1990.00"),
+            monthly_price=Decimal("0.00") if type == SubscriptionPlan.PlanType.FREE else Decimal("1990.00"),
             request_overage_price=Decimal("5.00"),
-            priority_support=type == SubscriptionPlan.TipoPlano.PRO,
-            allows_multi_unit=type != SubscriptionPlan.TipoPlano.FREE,
+            priority_support=type == SubscriptionPlan.PlanType.PRO,
+            allows_multi_unit=type != SubscriptionPlan.PlanType.FREE,
             active=True,
         )
     return list(SubscriptionPlan.objects.order_by("id")[:n])

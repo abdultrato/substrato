@@ -16,7 +16,7 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
 from apps.clinical.models.medical_result_file import (
     MedicalResultFile,
-    validar_file_doctor_por_type,
+    validate_medical_file_for_type,
 )
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
@@ -857,7 +857,7 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
 
         if file and type:
             try:
-                validar_file_doctor_por_type(file, type)
+                validate_medical_file_for_type(file, type)
             except ValidationError as err:
                 erros["file"] = err.messages[0] if err.messages else "Arquivo inválido."
 

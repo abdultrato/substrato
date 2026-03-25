@@ -3,18 +3,18 @@ class TenantPropagationMixin:
     Automatically propagates the tenant from a related object.
     """
 
-    fonte_tenant = None
+    tenant_source = None
 
     def resolve_tenant(self):
-        if not self.fonte_tenant:
+        if not self.tenant_source:
             return None
 
-        obj = getattr(self, self.fonte_tenant, None)
+        source_object = getattr(self, self.tenant_source, None)
 
-        if not obj:
+        if not source_object:
             return None
 
-        return getattr(obj, "tenant", None)
+        return getattr(source_object, "tenant", None)
 
     def save(self, *args, **kwargs):
         if not getattr(self, "tenant", None):
@@ -24,7 +24,3 @@ class TenantPropagationMixin:
                 self.tenant = tenant
 
         super().save(*args, **kwargs)
-
-
-PropagarInquilinoMixin = TenantPropagationMixin
-TenantPropagationMixin.resolver_tenant = TenantPropagationMixin.resolve_tenant

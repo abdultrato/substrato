@@ -1,15 +1,15 @@
 from django.db import models
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 
-class NursingRecord(PropagarInquilinoMixin, CoreModel):
+class NursingRecord(TenantPropagationMixin, CoreModel):
     """
     Registro de procedures ou observações realizadas pela enfermagem.
     """
 
-    fonte_tenant = "patient"
+    tenant_source = "patient"
     prefix = "REG"
 
     class Prioridade(models.TextChoices):

@@ -4,16 +4,16 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
 
-class DailyInspection(PropagarInquilinoMixin, NoNameCoreModel):
+class DailyInspection(TenantPropagationMixin, NoNameCoreModel):
     """
     Inspeção diária de operation_status e condições do equipment.
     """
 
-    fonte_tenant = "equipment"
+    tenant_source = "equipment"
     prefix = "INSP"
 
     class Funcionamento(models.TextChoices):

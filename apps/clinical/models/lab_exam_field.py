@@ -6,11 +6,11 @@ from django.db import models
 
 from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.units import DefaultUnit
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 
-class LabExamField(PropagarInquilinoMixin, CoreModel):
+class LabExamField(TenantPropagationMixin, CoreModel):
     prefix = "CMP"
 
     exam = models.ForeignKey(

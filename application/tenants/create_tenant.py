@@ -26,43 +26,38 @@ class CreateTenantUseCase:
     def execute(name: str, identifier: str, domain: str | None = None):
 
         # Evita duplicação
-        existente = Tenant.objects.filter(identifier=identifier).first()
+        existing_tenant = Tenant.objects.filter(identifier=identifier).first()
 
-        if existente:
-            return existente
+        if existing_tenant:
+            return existing_tenant
 
         # Obtém plan FREE global
         plan_free = SubscriptionPlan.objects.filter(
-            type=SubscriptionPlan.TipoPlano.FREE,
+            type=SubscriptionPlan.PlanType.FREE,
             active=True,
         ).first()
 
         if not plan_free:
             raise Exception("Plano FREE não configurado.")
 
-        hoje = timezone.now().date()
+        today = timezone.now().date()
 
         # Criação do tenant
         tenant = Tenant.objects.create(
             name=name,
             identifier=identifier,
             domain=domain,
-            commercial_status=Tenant.StatusComercial.TRIAL,
-            trial_until=hoje + timedelta(days=CreateTenantUseCase.TRIAL_DAYS),
+            commercial_status=Tenant.CommercialStatus.TRIAL,
+            trial_until=today + timedelta(days=CreateTenantUseCase.TRIAL_DAYS),
         )
 
         # Criação da assinatura inicial
         TenantSubscription.objects.create(
             tenant=tenant,
             plan=plan_free,
-            start_date=hoje,
+            start_date=today,
             status=TenantSubscription.Status.ACTIVE,
             cycle=TenantSubscription.BillingCycle.MONTHLY,
         )
 
         return tenant
-
-
-CriarInquilinoUseCase = CreateTenantUseCase
-CreateTenantUseCase.TRIAL_DIAS = CreateTenantUseCase.TRIAL_DAYS
-CreateTenantUseCase.executar = CreateTenantUseCase.execute

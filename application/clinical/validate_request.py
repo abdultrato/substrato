@@ -13,7 +13,3 @@ class ValidateRequest:
         request.save(update_fields=["status", "analyst"])
 
         return request
-
-
-ValidarRequisicao = ValidateRequest
-ValidateRequest.executar = ValidateRequest.execute

@@ -1,28 +1,28 @@
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.audit import AuditoriaMixin
-from core.mixins.identifier import IdentificadorMixin
-from core.mixins.model.name import NomeMixin
+from core.mixins.audit import AuditMixin
+from core.mixins.identifier import IdentifierMixin
+from core.mixins.model.name import NameMixin
 from core.mixins.soft_delete import SoftDeleteMixin
-from core.mixins.versioning import VersionamentoMixin
+from core.mixins.versioning import VersioningMixin
 from core.models.base import BaseModel
 
 
 class Tenant(
-    NomeMixin,
-    IdentificadorMixin,
-    AuditoriaMixin,
-    VersionamentoMixin,
+    NameMixin,
+    IdentifierMixin,
+    AuditMixin,
+    VersioningMixin,
     SoftDeleteMixin,
     BaseModel,
 ):
     prefix = "TN"
 
-    class StatusComercial(models.TextChoices):
+    class CommercialStatus(models.TextChoices):
         TRIAL = "TRIAL", "Trial"
-        ATIVO = "ATIVO", "Ativo"
-        SUSPENSO = "SUSPENSO", "Suspenso"
+        ACTIVE = "ATIVO", "Ativo"
+        SUSPENDED = "SUSPENSO", "Suspenso"
 
     identifier = models.SlugField(
 
@@ -41,8 +41,8 @@ class Tenant(
         db_column="commercial_status",
 
         max_length=10,
-        choices=StatusComercial.choices,
-        default=StatusComercial.TRIAL,
+        choices=CommercialStatus.choices,
+        default=CommercialStatus.TRIAL,
         db_index=True,
     )
     trial_until = models.DateField(
@@ -62,24 +62,24 @@ class Tenant(
             models.Index(fields=["active"]),
         ]
 
-    def esta_bloqueado(self) -> bool:
+    def is_blocked(self) -> bool:
         return self.blocked_at is not None
 
-    def esta_em_trial(self) -> bool:
-        if self.commercial_status != Tenant.StatusComercial.TRIAL:
+    def is_in_trial(self) -> bool:
+        if self.commercial_status != Tenant.CommercialStatus.TRIAL:
             return False
         if not self.trial_until:
             return True
-        hoje = timezone.localdate()
-        return self.trial_until >= hoje
+        today = timezone.localdate()
+        return self.trial_until >= today
 
     def get_active_subscription(self):
         return self.assinaturas.filter(status="ATIVA").order_by("-start_date").first()
 
     @property
     def plan(self):
-        assinatura = self.get_active_subscription()
-        return getattr(assinatura, "plan", None)
+        subscription = self.get_active_subscription()
+        return getattr(subscription, "plan", None)
 
     def __str__(self) -> str:
         return self.name or self.identifier

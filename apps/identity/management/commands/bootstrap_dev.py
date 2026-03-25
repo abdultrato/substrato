@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 identifier="local",
                 domain="localhost",
                 active=True,
-                commercial_status=Tenant.StatusComercial.TRIAL,
+                commercial_status=Tenant.CommercialStatus.TRIAL,
             )
 
         User = get_user_model()

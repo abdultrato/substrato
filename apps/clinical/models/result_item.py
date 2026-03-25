@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from domain.clinical.events import ResultValidatedEvent
 from domain.clinical.result_state import ResultState
@@ -20,8 +20,8 @@ from .result import Result
 User = settings.AUTH_USER_MODEL
 
 
-class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
-    fonte_tenant = "patient"
+class ResultItem(TenantPropagationMixin, NoNameCoreModel):
+    tenant_source = "patient"
 
     prefix = "RES"
 
@@ -116,17 +116,17 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         if not self.tenant and self.result:
             self.tenant = self.result.tenant
 
-        value_anterior = None
+        previous_value = None
 
         if self.pk:
-            value_anterior = (
+            previous_value = (
                 self.__class__.all_objects.filter(pk=self.pk).values_list("result_value", flat=True).first()
             )
 
-        value_alterado = value_anterior != self.result_value
+        value_changed = previous_value != self.result_value
 
         # interpretação automática
-        if value_alterado and self.status != ResultState.VALIDATED:
+        if value_changed and self.status != ResultState.VALIDATED:
             try:
                 if self.result_value is not None:
                     self.result_value = Decimal(self.result_value)
@@ -154,16 +154,16 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # TRANSIÇÃO DE ESTADO
     # =====================================================
 
-    def transicionar(self, novo_status, user=None):
+    def transition(self, new_status, user=None):
         with transaction.atomic():
             result = ResultItem.all_objects.select_for_update().get(pk=self.pk)
 
             ResultStateMachine.validate_transition(
                 result.status,
-                novo_status,
+                new_status,
             )
 
-            if novo_status == ResultState.VALIDATED:
+            if new_status == ResultState.VALIDATED:
                 if result.result_value is None:
                     raise ValidationError("Não é possível validar result vazio.")
 
@@ -172,7 +172,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
 
                 self._result_service().interpret(result)
 
-            result.status = novo_status
+            result.status = new_status
 
             result.save(
                 update_fields=[
@@ -186,7 +186,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
                 ]
             )
 
-        if novo_status == ResultState.VALIDATED:
+        if new_status == ResultState.VALIDATED:
             event_bus.publish_after_commit(ResultValidatedEvent(result_id=self.id))
 
     def __str__(self):
@@ -210,12 +210,9 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         if self.result_value is None:
             return "-"
 
-        simbolo = self.clinical_status or ""
+        symbol = self.clinical_status or ""
 
-        if simbolo and simbolo != "N":
-            return f"{self.result_value} {simbolo}"
+        if symbol and symbol != "N":
+            return f"{self.result_value} {symbol}"
 
         return str(self.result_value)
-
-    _servico_result = _result_service
-    result_value_formatado = formatted_result_value

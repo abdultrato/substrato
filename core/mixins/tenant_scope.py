@@ -27,22 +27,3 @@ class TenantMixin(models.Model):
                 self.tenant = tenant
 
         super().save(*args, **kwargs)
-
-    @property
-    def inquilino(self):
-        return self.tenant
-
-    @inquilino.setter
-    def inquilino(self, value):
-        self.tenant = value
-
-    @property
-    def inquilino_id(self):
-        return self.tenant_id
-
-    @inquilino_id.setter
-    def inquilino_id(self, value):
-        self.tenant_id = value
-
-
-InquilinoMixin = TenantMixin

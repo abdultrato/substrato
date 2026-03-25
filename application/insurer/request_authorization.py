@@ -8,7 +8,3 @@ class RequestAuthorizationUseCase:
             request_id=request.id,
             plan=plan,
         )
-
-
-SolicitarAutorizacaoUseCase = RequestAuthorizationUseCase
-RequestAuthorizationUseCase.executar = RequestAuthorizationUseCase.execute

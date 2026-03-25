@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
 from .lab_exam import LabExam
@@ -10,8 +10,8 @@ from .result import Result
 from .result_item import ResultItem
 
 
-class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
-    fonte_tenant = "patient"
+class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
+    tenant_source = "patient"
 
     request = models.ForeignKey(
 
@@ -103,35 +103,33 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
         if not exam_base:
             return
 
-        campos = getattr(exam_base, "campos", None)
-        if campos is None:
+        fields = getattr(exam_base, "campos", None)
+        if fields is None:
             return
-        campos_qs = campos.all()
+        fields_queryset = fields.all()
 
-        itens = []
+        items = []
 
-        for campo in campos_qs:
+        for field in fields_queryset:
             # evita duplicação
             # result para exam laboratorial usa ResultadoItem
             if self.exam:
                 if ResultItem.objects.filter(
                     result=result,
-                    exam_field=campo,
+                    exam_field=field,
                 ).exists():
                     continue
-                itens.append(
+                items.append(
                     ResultItem(
                         result=result,
-                        exam_field=campo,
+                        exam_field=field,
                         tenant=tenant,
                     )
                 )
             # exams médicos não geram itens específicos (imagem/laudo)
 
-        if itens:
-            ResultItem.objects.bulk_create(itens)
-
-    _criar_resultados = _create_results
+        if items:
+            ResultItem.objects.bulk_create(items)
 
     # -----------------------------------------------------
 

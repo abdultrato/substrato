@@ -23,15 +23,15 @@ def _tenant():
 @pytest.mark.django_db
 def test_tenant_trial_and_blocking():
     tenant = _tenant()
-    assert tenant.esta_em_trial() is True
-    assert tenant.esta_bloqueado() is False
+    assert tenant.is_in_trial() is True
+    assert tenant.is_blocked() is False
 
-    tenant.commercial_status = Tenant.StatusComercial.ATIVO
+    tenant.commercial_status = Tenant.CommercialStatus.ACTIVE
     tenant.blocked_at = timezone.now()
     tenant.save()
 
-    assert tenant.esta_em_trial() is False
-    assert tenant.esta_bloqueado() is True
+    assert tenant.is_in_trial() is False
+    assert tenant.is_blocked() is True
 
 
 @pytest.mark.django_db

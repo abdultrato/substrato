@@ -31,7 +31,7 @@ def _ensure_tenant() -> Tenant:
         identifier="local",
         domain="localhost",
         active=True,
-        commercial_status=Tenant.StatusComercial.TRIAL,
+        commercial_status=Tenant.CommercialStatus.TRIAL,
     )
 
 

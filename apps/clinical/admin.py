@@ -186,7 +186,7 @@ class LabExamFieldAdmin(CoreAdmin):
         "exam",
         "type",
         "unit",
-        "referencia",
+        "reference",
     )
 
     search_fields = (
@@ -665,8 +665,8 @@ class LabRequestAdmin(CoreAdmin):
 
         # "Lançar resultados" / PDF restrito a Administrador e Técnico de Laboratório.
         if _user_has_any_group(request.user, ["Administrador", "Técnico de Laboratório"]):
-            base.insert(5, "lancar_result")
-            base.insert(6, "ver_pdf_result")
+            base.insert(5, "launch_result")
+            base.insert(6, "view_result_pdf")
 
         return tuple(base)
 
@@ -713,8 +713,6 @@ class LabRequestAdmin(CoreAdmin):
         )
 
     launch_result.short_description = "Lançar result"
-    lancar_result = launch_result
-
     # -----------------------------------------------------
     # PDF RESULTADO
     # -----------------------------------------------------
@@ -755,8 +753,6 @@ class LabRequestAdmin(CoreAdmin):
         )
 
     view_result_pdf.short_description = "Resultado PDF"
-    ver_pdf_result = view_result_pdf
-
 
 # =========================================================
 # RESULTADO ITEM INLINE
@@ -848,7 +844,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
         return format_html(
             "<strong style='color:{}'>{}</strong>",
             cor,
-            obj.result_value_formatado,
+            obj.formatted_result_value,
         )
 
     colored_result.short_description = "Resultado"
@@ -879,7 +875,6 @@ class ResultItemInlineAdmin(admin.TabularInline):
         )
 
     interpretation.short_description = "Interpretação"
-    interpretacao = interpretation
 
 
 # =========================================================

@@ -93,5 +93,3 @@ def execute(
     return reverso
 
 
-LedgerJaRevertidoErro = LedgerAlreadyReversedError
-executar = execute

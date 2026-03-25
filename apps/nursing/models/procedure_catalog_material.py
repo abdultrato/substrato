@@ -4,17 +4,17 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
 
 
-class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
+class ProcedureCatalogMaterial(TenantPropagationMixin, NoNameCoreModel):
     """
     Materiais padrão utilizados por um item do catálogo.
     """
 
-    fonte_tenant = "catalog"
+    tenant_source = "catalog"
     prefix = "PCM"
 
     catalog = models.ForeignKey(

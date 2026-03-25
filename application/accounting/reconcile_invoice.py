@@ -59,4 +59,3 @@ def execute(
     )
 
 
-executar = execute

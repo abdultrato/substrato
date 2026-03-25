@@ -1,12 +1,12 @@
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.model.description import DescricaoMixin
-from core.mixins.model.order import OrdemMixin
+from core.mixins.model.description import DescriptionMixin
+from core.mixins.model.order import OrderMixin
 from core.models import CoreModel
 
 
-class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
+class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
     """
     Insurer authorization request for a procedure/request.
     """
@@ -75,6 +75,3 @@ class ProcedureAuthorization(DescricaoMixin, OrdemMixin, CoreModel):
 
     def __str__(self) -> str:
         return self.custom_id or f"Autorizacao {self.pk}"
-
-
-ProcedureAuthorization.marcar_response = ProcedureAuthorization.mark_response

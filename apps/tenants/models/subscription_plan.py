@@ -3,23 +3,23 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from core.mixins.audit import AuditoriaMixin
-from core.mixins.identifier import IdentificadorMixin
-from core.mixins.model.description import DescricaoMixin
-from core.mixins.model.name import NomeMixin
-from core.mixins.model.order import OrdemMixin
+from core.mixins.audit import AuditMixin
+from core.mixins.identifier import IdentifierMixin
+from core.mixins.model.description import DescriptionMixin
+from core.mixins.model.name import NameMixin
+from core.mixins.model.order import OrderMixin
 from core.mixins.soft_delete import SoftDeleteMixin
-from core.mixins.versioning import VersionamentoMixin
+from core.mixins.versioning import VersioningMixin
 from core.models.base import BaseModel
 
 
 class SubscriptionPlan(
-    NomeMixin,
-    DescricaoMixin,
-    OrdemMixin,
-    IdentificadorMixin,
-    AuditoriaMixin,
-    VersionamentoMixin,
+    NameMixin,
+    DescriptionMixin,
+    OrderMixin,
+    IdentifierMixin,
+    AuditMixin,
+    VersioningMixin,
     SoftDeleteMixin,
     BaseModel,
 ):
@@ -29,9 +29,6 @@ class SubscriptionPlan(
         FREE = "FREE", "Free"
         BASIC = "BASIC", "Basic"
         PRO = "PRO", "Pro"
-
-    TipoPlano = PlanType
-
     type = models.CharField(
 
         db_column="type",

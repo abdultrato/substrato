@@ -41,7 +41,7 @@ class TenantService:
             name=name,
             identifier=normalized_domain,
             domain=normalized_domain,
-            commercial_status=Tenant.StatusComercial.TRIAL,
+            commercial_status=Tenant.CommercialStatus.TRIAL,
             trial_until=today + timedelta(days=self.TRIAL_DAYS),
         )
 

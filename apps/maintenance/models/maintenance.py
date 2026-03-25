@@ -4,16 +4,16 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
 
-class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
+class Maintenance(TenantPropagationMixin, NoNameCoreModel):
     """
     Planeamento e execução de manutenção de equipamentos.
     """
 
-    fonte_tenant = "equipment"
+    tenant_source = "equipment"
     prefix = "MNT"
 
     class Type(models.TextChoices):

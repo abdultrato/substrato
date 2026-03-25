@@ -142,4 +142,3 @@ def execute(tenant):
     }
 
 
-executar = execute

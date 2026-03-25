@@ -24,14 +24,3 @@ class NameMixin(models.Model):
 
     def __str__(self):
         return self.name or ""
-
-    @property
-    def nome(self):
-        return self.name
-
-    @nome.setter
-    def nome(self, value):
-        self.name = value
-
-
-NomeMixin = NameMixin

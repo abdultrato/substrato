@@ -7,7 +7,7 @@ from django.db.models import Q
 
 from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
 from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
 from infrastructure.orm.fields.medical_exam_sector_field import MedicalExamSectorField
@@ -90,13 +90,13 @@ def allowed_result_types_for_method(method):
     return set(MedicalExamResultType.values)
 
 
-class MedicalExam(PropagarInquilinoMixin, CoreModel):
+class MedicalExam(TenantPropagationMixin, CoreModel):
     """
     Exames médicos de imagem/diagnóstico (ex.: ecografia, raios-x, ecocardiograma).
     Segue o mesmo formato de Exame.
     """
 
-    fonte_tenant = "patient"
+    tenant_source = "patient"
     prefix = "EXM"
 
     turnaround_hours = models.PositiveIntegerField(
@@ -209,7 +209,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
     tipos_result_cadastrados = registered_result_types
 
 
-class MedicalExamField(PropagarInquilinoMixin, CoreModel):
+class MedicalExamField(TenantPropagationMixin, CoreModel):
     prefix = "EMC"
 
     exam = models.ForeignKey(

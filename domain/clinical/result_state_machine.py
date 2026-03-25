@@ -30,8 +30,3 @@ class ResultStateMachine:
         allowed = cls.TRANSITIONS.get(current_state, set())
         if new_state not in allowed:
             raise InvalidTransitionError(f"Transição inválida de {current_state} para {new_state}.")
-
-
-TransicaoInvalidaError = InvalidTransitionError
-ResultadoStateMachine = ResultStateMachine
-ResultStateMachine.validar_transicao = classmethod(ResultStateMachine.validate_transition.__func__)

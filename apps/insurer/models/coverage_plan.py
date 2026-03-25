@@ -3,12 +3,12 @@ from decimal import Decimal
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from core.mixins.model.description import DescricaoMixin
-from core.mixins.model.order import OrdemMixin
+from core.mixins.model.description import DescriptionMixin
+from core.mixins.model.order import OrderMixin
 from core.models import CoreModel
 
 
-class CoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
+class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     """
     Plano de cobertura associado a uma insurer.
     """

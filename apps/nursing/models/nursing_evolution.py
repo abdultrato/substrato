@@ -1,15 +1,15 @@
 from django.db import models
 
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 
-class NursingEvolution(PropagarInquilinoMixin, CoreModel):
+class NursingEvolution(TenantPropagationMixin, CoreModel):
     """
     Evolução clínica observada pela enfermagem.
     """
 
-    fonte_tenant = "patient"
+    tenant_source = "patient"
     prefix = "EVO"
 
     patient = models.ForeignKey(
