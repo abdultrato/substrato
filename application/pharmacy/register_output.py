@@ -6,17 +6,17 @@ from .inventory_rules import validate_available_inventory
 
 
 @transaction.atomic
-def register_output(lote, quantidade):
-    validate_available_inventory(lote, quantidade)
+def register_output(lot, quantity):
+    validate_available_inventory(lot, quantity)
 
-    lote.quantidade_atual -= quantidade
-    lote.save(update_fields=["quantidade_atual"])
+    lot.quantity_atual -= quantity
+    lot.save(update_fields=["quantity_atual"])
 
     InventoryMovement.objects.create(
-        produto=lote.produto,
-        lote=lote,
-        tipo="SAI",
-        quantidade=quantidade,
+        product=lot.product,
+        lot=lot,
+        type="SAI",
+        quantity=quantity,
     )
 
 

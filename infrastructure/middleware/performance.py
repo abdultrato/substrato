@@ -37,7 +37,7 @@ class APILoggingMiddleware:
             duration_ms = round((time.perf_counter() - start) * 1000, 2)
             # Consumido por TenantAuditMiddleware para persistência em BD.
             try:
-                request.duracao_ms = duration_ms
+                request.duration_ms = duration_ms
                 request.status_code = status_code
             except Exception:
                 pass
@@ -59,18 +59,18 @@ class APILoggingMiddleware:
             )
 
     def _get_tenant_id(self, request):
-        inquilino = getattr(request, "inquilino", None)
-        return getattr(inquilino, "id", None)
+        tenant = getattr(request, "tenant", None)
+        return getattr(tenant, "id", None)
 
     def _build_extra(self, request, status_code, duration_ms):
-        inquilino = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
         user = getattr(request, "user", None)
 
         return {
-            "metodo": request.method,
+            "method": request.method,
             "path": request.get_full_path(),
             "status_code": status_code,
-            "duracao_ms": duration_ms,
-            "tenant_id": getattr(inquilino, "id", None),
+            "duration_ms": duration_ms,
+            "tenant_id": getattr(tenant, "id", None),
             "user_id": getattr(user, "id", None),
         }

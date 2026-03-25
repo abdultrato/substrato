@@ -3,8 +3,8 @@ from django.db import models
 
 class MedicalExamResultType(models.TextChoices):
     """
-    Tipos de saída esperados para exames médicos (imagem/diagnóstico).
-    Controla o tipo de campo exibido ao lançar resultado.
+    Tipos de saída esperados para exams médicos (imagem/diagnóstico).
+    Controla o type de campo exibido ao lançar result.
     """
 
     RELATORIO_PDF = "PDF", "Laudo/Relatório (PDF)"

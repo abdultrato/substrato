@@ -33,11 +33,11 @@ class EnglishNamingAuditTests(unittest.TestCase):
         try:
             module_dir = root / "usuarios"
             module_dir.mkdir()
-            source_file = module_dir / "perfil_usuario.py"
+            source_file = module_dir / "perfil_user.py"
             source_file.write_text(
                 """
 class PerfilUsuario:
-    def validar_usuario(self):
+    def validar_user(self):
         return True
 """.strip(),
                 encoding="utf-8",
@@ -47,9 +47,9 @@ class PerfilUsuario:
             formatted = [finding.format(root) for finding in findings]
 
             self.assertTrue(any("directory: usuarios" in line for line in formatted))
-            self.assertTrue(any("file: usuarios/perfil_usuario.py" in line for line in formatted))
-            self.assertTrue(any("class: usuarios/perfil_usuario.py:1 -> PerfilUsuario" in line for line in formatted))
-            self.assertTrue(any("function: usuarios/perfil_usuario.py:2 -> validar_usuario" in line for line in formatted))
+            self.assertTrue(any("file: usuarios/perfil_user.py" in line for line in formatted))
+            self.assertTrue(any("class: usuarios/perfil_user.py:1 -> PerfilUsuario" in line for line in formatted))
+            self.assertTrue(any("function: usuarios/perfil_user.py:2 -> validar_user" in line for line in formatted))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -62,7 +62,7 @@ class PerfilUsuario:
 class UserProfile:
     """Docstring em portugues."""
 
-    verbose_name = "Perfil do usuario"
+    verbose_name = "Perfil do user"
 
     def save_profile(self):
         return True
@@ -80,7 +80,7 @@ class UserProfile:
         try:
             portuguese_dir = root / "usuarios"
             portuguese_dir.mkdir()
-            (portuguese_dir / "perfil_usuario.py").write_text(
+            (portuguese_dir / "perfil_user.py").write_text(
                 """
 class PerfilUsuario:
     pass
@@ -104,7 +104,7 @@ class UserProfile:
             portuguese_findings = scan_repository(root, targets=(portuguese_dir,))
             formatted = [finding.format(root) for finding in portuguese_findings]
             self.assertTrue(any("directory: usuarios" in line for line in formatted))
-            self.assertTrue(any("class: usuarios/perfil_usuario.py:1 -> PerfilUsuario" in line for line in formatted))
+            self.assertTrue(any("class: usuarios/perfil_user.py:1 -> PerfilUsuario" in line for line in formatted))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

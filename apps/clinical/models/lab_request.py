@@ -14,7 +14,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class LabRequest(NoNameCoreModel):
-    prefixo = "REQ"
+    prefix = "REQ"
 
     class Type(models.TextChoices):
         LABORATORIO = "LAB", "Laboratório"
@@ -22,14 +22,20 @@ class LabRequest(NoNameCoreModel):
 
     Tipo = Type
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         Patient,
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         related_name="requisicoes",
     )
 
-    empresa_solicitante = models.ForeignKey(
+    requesting_company = models.ForeignKey(
+
         "entidades.Company",
+
+        db_column="empresa_solicitante_id",
         verbose_name="Empresa solicitante",
         help_text="Empresa que subcontrata os serviços (ex.: medicina ocupacional).",
         on_delete=models.SET_NULL,
@@ -38,8 +44,11 @@ class LabRequest(NoNameCoreModel):
         related_name="requisicoes_solicitadas",
     )
 
-    empresa_executora_externa = models.ForeignKey(
+    external_executing_company = models.ForeignKey(
+
         "entidades.Company",
+
+        db_column="empresa_executora_externa_id",
         verbose_name="Empresa executora externa",
         help_text="Quando a clínica terceiriza a execução para outra empresa.",
         on_delete=models.SET_NULL,
@@ -48,20 +57,26 @@ class LabRequest(NoNameCoreModel):
         related_name="requisicoes_terceirizadas",
     )
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         max_length=3,
         choices=Type.choices,
         default=Type.LABORATORIO,
         db_index=True,
     )
 
-    exames = models.ManyToManyField(
+    exams = models.ManyToManyField(
         LabExam,
         through="LabRequestItem",
     )
 
-    analista = models.ForeignKey(
+    analyst = models.ForeignKey(
+
         User,
+
+        db_column="analista_id",
         verbose_name="O Usuario",
         on_delete=models.SET_NULL,
         null=True,
@@ -69,45 +84,54 @@ class LabRequest(NoNameCoreModel):
         related_name="requisicoes_processadas",
     )
 
-    estado = models.CharField(
+    status = models.CharField(
+
+        db_column="estado",
+
         max_length=30,
         choices=ResultState.CHOICES,
         default=ResultState.PENDING,
         db_index=True,
     )
 
-    status_clinico = models.CharField(
+    clinical_status = models.CharField(
+
+        db_column="status_clinico",
+
         max_length=50,
         choices=StatusClinico.choices,
         default=StatusClinico.NAO_URGENTE,
         db_index=True,
     )
 
-    possui_resultado_critico = models.BooleanField(
+    has_critical_result = models.BooleanField(
+
+        db_column="possui_resultado_critico",
+
         default=False,
         db_index=True,
     )
 
     class Meta:
         db_table = "clinico_requisicaoanalise"
-        ordering = ["-criado_em"]
-        verbose_name = "Requisição de exame"
-        verbose_name_plural = "Requisições de exames"
+        ordering = ["-created_at"]
+        verbose_name = "Requisição de exam"
+        verbose_name_plural = "Requisições de exams"
 
     # =====================================================
     # INVARIANTES
     # =====================================================
 
     def _esta_editavel(self):
-        return self.estado == ResultState.PENDING
+        return self.status == ResultState.PENDING
 
     def _verify_terminal_state(self):
         if not self.pk:
             return
 
-        original = self.__class__.all_objects.filter(pk=self.pk).only("estado").first()
+        original = self.__class__.all_objects.filter(pk=self.pk).only("status").first()
 
-        if original and original.estado in ResultState.TERMINAL:
+        if original and original.status in ResultState.TERMINAL:
             raise ValidationError("Requisição finalizada é imutável.")
 
     # =====================================================
@@ -116,17 +140,17 @@ class LabRequest(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         # garantir propagação de tenant
-        if not self.inquilino_id and self.paciente_id:
-            self.inquilino_id = self.paciente.inquilino_id
+        if not self.tenant_id and self.patient_id:
+            self.tenant_id = self.patient.tenant_id
 
         if self.pk:
-            original = self.__class__.all_objects.filter(pk=self.pk).only("paciente", "tipo").first()
+            original = self.__class__.all_objects.filter(pk=self.pk).only("patient", "type").first()
 
-            if original and original.paciente_id != self.paciente_id:
+            if original and original.patient_id != self.patient_id:
                 raise ValidationError("Paciente da requisição é imutável.")
 
-            if original and original.tipo != self.tipo:
-                raise ValidationError("Tipo/setor da requisição é imutável.")
+            if original and original.type != self.type:
+                raise ValidationError("Tipo/sector da requisição é imutável.")
 
         self._verify_terminal_state()
 
@@ -136,39 +160,39 @@ class LabRequest(NoNameCoreModel):
     # AGGREGATE ROOT
     # =====================================================
 
-    def add_exam(self, exame: LabExam):
-        if self.tipo != self.Tipo.LABORATORIO:
-            raise ValidationError("Esta requisição é de exames médicos e não aceita exames laboratoriais.")
+    def add_exam(self, exam: LabExam):
+        if self.type != self.Tipo.LABORATORIO:
+            raise ValidationError("Esta requisição é de exams médicos e não aceita exams laboratoriais.")
 
         if not self._esta_editavel():
-            raise ValidationError("Não é possível adicionar exames após início do processamento.")
+            raise ValidationError("Não é possível adicionar exams após início do processamento.")
 
         from .lab_request_item import LabRequestItem
 
         with transaction.atomic():
             try:
                 return LabRequestItem.all_objects.create(
-                    requisicao=self,
-                    exame=exame,
+                    request=self,
+                    exam=exam,
                 )
 
             except IntegrityError as err:
                 raise ValidationError("Exame já adicionado à requisição.") from err
 
-    def add_medical_exam(self, exame_medico):
-        if self.tipo != self.Tipo.EXAME_MEDICO:
-            raise ValidationError("Esta requisição é laboratorial e não aceita exames médicos.")
+    def add_medical_exam(self, medical_exam):
+        if self.type != self.Tipo.EXAME_MEDICO:
+            raise ValidationError("Esta requisição é laboratorial e não aceita exams médicos.")
 
         if not self._esta_editavel():
-            raise ValidationError("Não é possível adicionar exames após início do processamento.")
+            raise ValidationError("Não é possível adicionar exams após início do processamento.")
 
         from .lab_request_item import LabRequestItem
 
         with transaction.atomic():
             try:
                 return LabRequestItem.all_objects.create(
-                    requisicao=self,
-                    exame_medico=exame_medico,
+                    request=self,
+                    medical_exam=medical_exam,
                 )
             except IntegrityError as err:
                 raise ValidationError("Exame médico já adicionado à requisição.") from err
@@ -177,18 +201,18 @@ class LabRequest(NoNameCoreModel):
     # TRANSIÇÃO DE ESTADO
     # =====================================================
 
-    def transicionar(self, novo_estado):
+    def transicionar(self, novo_status):
         with transaction.atomic():
-            requisicao = LabRequest.all_objects.select_for_update().get(pk=self.pk)
+            request = LabRequest.all_objects.select_for_update().get(pk=self.pk)
 
             ResultStateMachine.validate_transition(
-                requisicao.estado,
-                novo_estado,
+                request.status,
+                novo_status,
             )
 
-            requisicao.estado = novo_estado
+            request.status = novo_status
 
-            requisicao.save(update_fields=["estado"])
+            request.save(update_fields=["status"])
 
     # =====================================================
     # RESULTADO
@@ -197,14 +221,14 @@ class LabRequest(NoNameCoreModel):
     def get_result(self):
         from .result import Result
 
-        return Result.objects.filter(requisicao=self).first()
+        return Result.objects.filter(request=self).first()
 
     def create_result(self):
         from .result import Result
 
         return Result.objects.create(
-            requisicao=self,
-            inquilino=self.inquilino,
+            request=self,
+            tenant=self.tenant,
         )
 
     # =====================================================
@@ -218,11 +242,11 @@ class LabRequest(NoNameCoreModel):
 
         Nota: não existe ManyToMany explícito para ExameMedico; essa propriedade
         existe para suportar serialização (API) e manter a regra de "requisição
-        por setor" sem duplicar modelo.
+        por sector" sem duplicar model.
         """
         from .medical_exam import MedicalExam
 
-        return MedicalExam.objects.filter(requisicoes__requisicao=self, requisicoes__deletado=False).distinct()
+        return MedicalExam.objects.filter(requisicoes__request=self, requisicoes__deleted=False).distinct()
 
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA
@@ -230,32 +254,32 @@ class LabRequest(NoNameCoreModel):
 
     def update_clinical_status(self):
         # Não recalcula nem altera requisição já finalizada (imutável).
-        if self.estado in ResultState.TERMINAL:
+        if self.status in ResultState.TERMINAL:
             try:
-                if hasattr(self, "resultado") and not self.resultado.finalizado:
-                    self.resultado.finalizado = True
-                    self.resultado.save(update_fields=["finalizado"])
+                if hasattr(self, "result") and not self.result.finalized:
+                    self.result.finalized = True
+                    self.result.save(update_fields=["finalized"])
             except Exception:
                 pass
             return
 
         novo_status = StatusClinico.NAO_URGENTE
         possui_critico = False
-        novo_estado = ResultState.PENDING
-        resultado_finalizado = False
+        novo_status = ResultState.PENDING
+        result_finalized = False
 
-        if hasattr(self, "resultado"):
-            resultado = self.resultado
-            itens = resultado.itens.all()
+        if hasattr(self, "result"):
+            result = self.result
+            itens = result.itens.all()
 
             stats = itens.aggregate(
                 total=models.Count("id"),
-                criticos=models.Count("id", filter=models.Q(alerta_critico=True)),
-                urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.URGENTE)),
-                muito_urgentes=models.Count("id", filter=models.Q(status_clinico=StatusClinico.MUITO_URGENTE)),
-                pendentes=models.Count("id", filter=models.Q(estado=ResultState.PENDING)),
-                aguardando=models.Count("id", filter=models.Q(estado=ResultState.AWAITING_VALIDATION)),
-                validados=models.Count("id", filter=models.Q(estado=ResultState.VALIDATED)),
+                criticos=models.Count("id", filter=models.Q(critical_alert=True)),
+                urgentes=models.Count("id", filter=models.Q(clinical_status=StatusClinico.URGENTE)),
+                muito_urgentes=models.Count("id", filter=models.Q(clinical_status=StatusClinico.MUITO_URGENTE)),
+                pendentes=models.Count("id", filter=models.Q(status=ResultState.PENDING)),
+                aguardando=models.Count("id", filter=models.Q(status=ResultState.AWAITING_VALIDATION)),
+                validados=models.Count("id", filter=models.Q(status=ResultState.VALIDATED)),
             )
 
             total = int(stats.get("total") or 0)
@@ -267,7 +291,7 @@ class LabRequest(NoNameCoreModel):
 
             if total == 0:
                 novo_status = StatusClinico.NAO_URGENTE
-                novo_estado = ResultState.PENDING
+                novo_status = ResultState.PENDING
             else:
                 if possui_critico:
                     novo_status = StatusClinico.URGENTISSIMO
@@ -282,53 +306,53 @@ class LabRequest(NoNameCoreModel):
                 aguardando = int(stats.get("aguardando") or 0)
                 validados = int(stats.get("validados") or 0)
 
-                # Sincroniza o estado geral da requisição com o fluxo dos itens:
+                # Sincroniza o status geral da requisição com o fluxo dos itens:
                 # PENDENTE -> EM_ANALISE -> AGUARDANDO_VALIDACAO -> VALIDADO
                 if validados == total:
-                    novo_estado = ResultState.VALIDATED
+                    novo_status = ResultState.VALIDATED
                 elif (validados + aguardando) == total:
-                    novo_estado = ResultState.AWAITING_VALIDATION
+                    novo_status = ResultState.AWAITING_VALIDATION
                 elif pendentes == total:
-                    novo_estado = ResultState.PENDING
+                    novo_status = ResultState.PENDING
                 else:
-                    novo_estado = ResultState.IN_ANALYSIS
+                    novo_status = ResultState.IN_ANALYSIS
 
-            resultado_finalizado = novo_estado == ResultState.VALIDATED
+            result_finalized = novo_status == ResultState.VALIDATED
 
-            if resultado.finalizado != resultado_finalizado:
-                resultado.finalizado = resultado_finalizado
-                resultado.save(update_fields=["finalizado"])
+            if result.finalized != result_finalized:
+                result.finalized = result_finalized
+                result.save(update_fields=["finalized"])
 
         update_fields = []
-        if self.status_clinico != novo_status:
-            self.status_clinico = novo_status
-            update_fields.append("status_clinico")
+        if self.clinical_status != novo_status:
+            self.clinical_status = novo_status
+            update_fields.append("clinical_status")
 
-        if self.possui_resultado_critico != possui_critico:
-            self.possui_resultado_critico = possui_critico
-            update_fields.append("possui_resultado_critico")
+        if self.has_critical_result != possui_critico:
+            self.has_critical_result = possui_critico
+            update_fields.append("has_critical_result")
 
-        if self.estado != novo_estado:
-            self.estado = novo_estado
-            update_fields.append("estado")
+        if self.status != novo_status:
+            self.status = novo_status
+            update_fields.append("status")
 
         if update_fields:
             self.save(update_fields=update_fields)
 
     @property
     def patient_tenant(self):
-        if self.paciente:
-            return getattr(self.paciente, "inquilino", None)
+        if self.patient:
+            return getattr(self.patient, "tenant", None)
         return None
 
-    _verificar_estado_terminal = _verify_terminal_state
-    adicionar_exame = add_exam
-    adicionar_exame_medico = add_medical_exam
-    obter_resultado = get_result
-    criar_resultado = create_result
-    exames_medicos = medical_exams
-    atualizar_status_clinico = update_clinical_status
-    inquilino_do_paciente = patient_tenant
+    _verificar_status_terminal = _verify_terminal_state
+    adicionar_exam = add_exam
+    adicionar_medical_exam = add_medical_exam
+    obter_result = get_result
+    criar_result = create_result
+    exams_medicos = medical_exams
+    atualizar_clinical_status = update_clinical_status
+    tenant_do_patient = patient_tenant
 
     def __str__(self):
-        return f"{self.id_custom} - {self.paciente.nome}"
+        return f"{self.custom_id} - {self.patient.name}"

@@ -4,24 +4,24 @@ from .models.pregnancy import Pregnancy
 
 
 class CoreAdmin(admin.ModelAdmin):
-    list_filter = ("deletado",)
-    search_fields = ("id_custom",)
-    readonly_fields = ("criado_em", "atualizado_em")
-    ordering = ("-criado_em",)
+    list_filter = ("deleted",)
+    search_fields = ("custom_id",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 @admin.register(Pregnancy)
 class PregnancyAdmin(CoreAdmin):
     list_display = (
-        "criado_em",
-        "paciente",
-        "medico_responsavel",
-        "estado",
-        "data_prevista_parto",
+        "created_at",
+        "patient",
+        "responsible_doctor",
+        "status",
+        "expected_delivery_date",
     )
-    list_filter = ("estado",)
-    search_fields = ("paciente__nome", "medico_responsavel__nome")
-    ordering = ("-criado_em", "-id")
+    list_filter = ("status",)
+    search_fields = ("patient__name", "responsible_doctor__name")
+    ordering = ("-created_at", "-id")
 
 
 GestacaoAdmin = PregnancyAdmin

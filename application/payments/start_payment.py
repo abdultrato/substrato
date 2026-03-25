@@ -13,21 +13,21 @@ def execute(value, reference, phone=None, gateway_name=None):
     )
 
 
-def start_payment(fatura, valor):
+def start_payment(invoice, value):
 
-    referencia = f"FAT-{fatura.id}"
+    referencia = f"FAT-{invoice.id}"
 
     gateway = MpesaGateway()
 
-    resposta = gateway.charge(valor, referencia)
+    response = gateway.charge(value, referencia)
 
     return Transaction.objects.create(
-        referencia_externa=referencia,
+        external_reference=referencia,
         gateway=gateway.name,
-        status=resposta.get("status", "pendente"),
-        resposta_gateway=resposta,
+        status=response.get("status", "pendente"),
+        gateway_response=response,
     )
 
 
 executar = execute
-iniciar_pagamento = start_payment
+iniciar_payment = start_payment

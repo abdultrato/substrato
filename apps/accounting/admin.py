@@ -17,19 +17,19 @@ from .models.legacy_movement import LegacyMovement
 @admin.register(Account)
 class ContaAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "tipo",
+        "custom_id",
+        "name",
+        "type",
     )
 
-    list_filter = ("tipo",)
+    list_filter = ("type",)
 
     search_fields = (
-        "id_custom",
-        "nome",
+        "custom_id",
+        "name",
     )
 
-    ordering = ("id_custom",)
+    ordering = ("custom_id",)
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -46,10 +46,10 @@ class LedgerLineInline(admin.TabularInline):
     can_delete = False
 
     readonly_fields = (
-        "conta",
-        "valor",
-        "natureza",
-        "criado_em",
+        "account",
+        "value",
+        "nature",
+        "created_at",
     )
 
     def has_add_permission(self, request, obj=None):
@@ -65,28 +65,28 @@ class LedgerLineInline(admin.TabularInline):
 class LedgerEntryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "data_contabil",
-        "descricao",
-        "referencia_externa",
-        "criado_em",
+        "accounting_date",
+        "description",
+        "external_reference",
+        "created_at",
     )
 
     search_fields = (
-        "descricao",
-        "referencia_externa",
+        "description",
+        "external_reference",
     )
 
-    list_filter = ("data_contabil",)
+    list_filter = ("accounting_date",)
 
-    ordering = ("-data_contabil",)
+    ordering = ("-accounting_date",)
 
     inlines = [LedgerLineInline]
 
     readonly_fields = (
-        "data_contabil",
-        "descricao",
-        "referencia_externa",
-        "criado_em",
+        "accounting_date",
+        "description",
+        "external_reference",
+        "created_at",
     )
 
     def has_add_permission(self, request):
@@ -107,14 +107,14 @@ class LedgerEntryAdmin(admin.ModelAdmin):
 @admin.register(AccountBalance)
 class AccountBalanceAdmin(admin.ModelAdmin):
     list_display = (
-        "conta",
-        "saldo_atual",
-        "atualizado_em",
+        "account",
+        "current_balance",
+        "updated_at",
     )
 
-    search_fields = ("conta__id_custom",)
+    search_fields = ("account__custom_id",)
 
-    ordering = ("-atualizado_em",)
+    ordering = ("-updated_at",)
 
     def has_add_permission(self, request):
         return False
@@ -137,9 +137,9 @@ class LegacyMovementInline(admin.TabularInline):
     can_delete = False
 
     readonly_fields = (
-        "conta",
-        "debito",
-        "credito",
+        "account",
+        "debit",
+        "credit",
     )
 
     def has_add_permission(self, request, obj=None):
@@ -155,22 +155,22 @@ class LegacyMovementInline(admin.TabularInline):
 class LegacyEntryAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "descricao",
-        "data",
-        "confirmado",
+        "description",
+        "date",
+        "confirmed",
         "total_debitos",
         "total_creditos",
     )
 
-    ordering = ("-data",)
+    ordering = ("-date",)
 
     inlines = [LegacyMovementInline]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.annotate(
-            total_deb=Sum("movimentos__debito"),
-            total_cred=Sum("movimentos__credito"),
+            total_deb=Sum("movimentos__debit"),
+            total_cred=Sum("movimentos__credit"),
         )
 
     def total_debitos(self, obj):
@@ -200,15 +200,15 @@ class LegacyEntryAdmin(admin.ModelAdmin):
 @admin.register(LegacyMovement)
 class LegacyMovementAdmin(admin.ModelAdmin):
     list_display = (
-        "lancamento",
-        "conta",
-        "debito",
-        "credito",
+        "entry",
+        "account",
+        "debit",
+        "credit",
     )
 
     search_fields = (
-        "lancamento__descricao",
-        "conta__id_custom",
+        "entry__description",
+        "account__custom_id",
     )
 
     def has_add_permission(self, request):
@@ -229,28 +229,28 @@ class LegacyMovementAdmin(admin.ModelAdmin):
 @admin.register(FinancialReconciliation)
 class ConciliacaoFinanceiraAdmin(admin.ModelAdmin):
     list_display = (
-        "fatura",
-        "valor_contabil",
-        "valor_recebido",
-        "divergencia",
-        "conciliado",
-        "criado_em",
+        "invoice",
+        "accounting_value",
+        "received_amount",
+        "discrepancy",
+        "reconciled",
+        "created_at",
     )
 
     list_filter = (
-        "conciliado",
-        "criado_em",
+        "reconciled",
+        "created_at",
     )
 
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
 
     readonly_fields = (
-        "fatura",
-        "valor_contabil",
-        "valor_recebido",
-        "divergencia",
-        "conciliado",
-        "criado_em",
+        "invoice",
+        "accounting_value",
+        "received_amount",
+        "discrepancy",
+        "reconciled",
+        "created_at",
     )
 
     def has_add_permission(self, request):

@@ -6,18 +6,18 @@ class SystemErrorFilter(SafeFilterSet):
     class Meta:
         model = SystemError
         fields = [
-            "usuario",
+            "user",
             "status_code",
             "exception_class",
-            "caminho",
+            "path",
             "view_basename",
             "view_action",
-            "criado_em",
+            "created_at",
         ]
 
 
 FILTER_MAP = {
-    "erro": SystemErrorFilter,
+    "error": SystemErrorFilter,
 }
 
 ErroSistemaFilter = SystemErrorFilter

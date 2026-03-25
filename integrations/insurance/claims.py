@@ -10,14 +10,14 @@ class ClaimService:
         self.provider = get_insurance_provider(provider)
 
     def submit(self, patient, procedures, total_amount, policy_number):
-        claim_data = {
+        claim_date = {
             "patient": {
                 "id": patient.id,
-                "name": getattr(patient, "nome", ""),
+                "name": getattr(patient, "name", ""),
             },
             "procedures": procedures,
             "total_amount": float(total_amount),
             "policy_number": policy_number,
         }
 
-        return self.provider.submit_claim(claim_data)
+        return self.provider.submit_claim(claim_date)

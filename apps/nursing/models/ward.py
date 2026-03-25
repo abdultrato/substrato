@@ -9,200 +9,250 @@ from core.models.base import CoreModel, NoNameCoreModel
 
 class Ward(CoreModel):
     """
-    Enfermaria (setor/ala) para gestão de camas e internamentos.
+    Enfermaria (sector/ala) para gestão de camas e internamentos.
     """
 
-    prefixo = "ENF"
+    prefix = "ENF"
 
-    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
-    ativa = models.BooleanField(verbose_name="Ativa", default=True, db_index=True)
+    description = models.TextField(
+
+        db_column="descricao",
+
+        verbose_name="Descrição", blank=True, default="")
+    active = models.BooleanField(
+        db_column="ativa",
+        verbose_name="Ativa", default=True, db_index=True)
 
     class Meta:
+        db_table = "enfermagem_enfermaria"
         verbose_name = "Enfermaria"
         verbose_name_plural = "Enfermarias"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "ativa", "nome"]),
+            models.Index(fields=["tenant", "active", "name"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or (self.id_custom or f"Enfermaria {self.pk}")
+        return self.name or (self.custom_id or f"Enfermaria {self.pk}")
 
 
 class WardBed(NoNameCoreModel):
     """
-    Cama vinculada a uma enfermaria.
+    Cama vinculada a uma ward.
     """
 
-    prefixo = "CAMA"
+    prefix = "CAMA"
 
-    enfermaria = models.ForeignKey(
+    ward = models.ForeignKey(
+
         Ward,
+
+        db_column="enfermaria_id",
         verbose_name="Enfermaria",
         on_delete=models.PROTECT,
         related_name="camas",
         db_index=True,
     )
 
-    numero = models.CharField(
-        verbose_name="Número da cama",
+    number = models.CharField(
+
+        db_column="numero",
+
+        verbose_name="Número da bed",
         max_length=20,
         db_index=True,
     )
 
-    ativa = models.BooleanField(verbose_name="Ativa", default=True, db_index=True)
+    active = models.BooleanField(
+
+        db_column="ativa",
+
+        verbose_name="Ativa", default=True, db_index=True)
 
     class Meta:
+        db_table = "enfermagem_camaenfermaria"
         verbose_name = "Cama"
         verbose_name_plural = "Camas"
-        ordering = ["enfermaria__nome", "numero", "-criado_em"]
+        ordering = ["ward__name", "number", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "enfermaria", "numero"]),
-            models.Index(fields=["inquilino", "ativa", "criado_em"]),
+            models.Index(fields=["tenant", "ward", "number"]),
+            models.Index(fields=["tenant", "active", "created_at"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "enfermaria", "numero"],
-                name="uniq_cama_enfermaria_numero_por_inquilino",
+                fields=["tenant", "ward", "number"],
+                name="uniq_bed_ward_number_por_tenant",
             ),
         ]
 
     def clean(self):
         super().clean()
-        if self.enfermaria_id and self.inquilino_id and self.enfermaria.inquilino_id != self.inquilino_id:
-            raise ValidationError({"enfermaria": "Enfermaria e cama devem pertencer ao mesmo inquilino."})
+        if self.ward_id and self.tenant_id and self.ward.tenant_id != self.tenant_id:
+            raise ValidationError({"ward": "Enfermaria e bed devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.enfermaria_id:
-            self.inquilino_id = self.enfermaria.inquilino_id
+        if not self.tenant_id and self.ward_id:
+            self.tenant_id = self.ward.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"Cama {self.numero} ({self.enfermaria})"
+        return f"Cama {self.number} ({self.ward})"
 
 
 class WardAdmission(NoNameCoreModel):
     """
-    Internamento (ocupação) de uma cama por um paciente.
+    Internamento (ocupação) de uma bed por um patient.
 
     MVP: inclui próxima medicação como campo (pode ser alimentado pela enfermagem).
     """
 
-    prefixo = "INT"
+    prefix = "INT"
 
-    cama = models.ForeignKey(
+    bed = models.ForeignKey(
+
         WardBed,
+
+        db_column="cama_id",
         verbose_name="Cama",
         on_delete=models.PROTECT,
         related_name="internamentos",
         db_index=True,
     )
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
-        related_name="internamentos_enfermaria",
+        related_name="internamentos_ward",
         db_index=True,
     )
 
-    tempo_estimado_observacao_horas = models.PositiveSmallIntegerField(
-        verbose_name="Tempo estimado de observação (horas)",
+    estimated_observation_hours = models.PositiveSmallIntegerField(
+
+        db_column="tempo_estimado_observacao_horas",
+
+        verbose_name="Tempo estimado de observação (hours)",
         null=True,
         blank=True,
-        help_text="Tempo estimado de observação em horas (quando aplicável).",
+        help_text="Tempo estimado de observação em hours (quando aplicável).",
     )
 
-    data_internamento = models.DateTimeField(
+    admission_date = models.DateTimeField(
+
+        db_column="data_internamento",
+
         verbose_name="Data de internamento",
         default=timezone.now,
         db_index=True,
     )
 
-    data_prevista_alta = models.DateTimeField(
+    expected_discharge_date = models.DateTimeField(
+
+        db_column="data_prevista_alta",
+
         verbose_name="Data prevista para alta",
         null=True,
         blank=True,
         db_index=True,
     )
 
-    alta_em = models.DateTimeField(
+    discharged_at = models.DateTimeField(
+
+        db_column="alta_em",
+
         verbose_name="Data de alta",
         null=True,
         blank=True,
         db_index=True,
     )
 
-    proxima_medicacao_em = models.DateTimeField(
+    next_medication_at = models.DateTimeField(
+
+        db_column="proxima_medicacao_em",
+
         verbose_name="Horário da próxima medicação",
         null=True,
         blank=True,
         db_index=True,
     )
 
-    proxima_medicacao_descricao = models.CharField(
+    next_medication_description = models.CharField(
+
+        db_column="proxima_medicacao_descricao",
+
         verbose_name="Descrição da próxima medicação",
         max_length=160,
         blank=True,
         default="",
     )
 
-    ativo = models.BooleanField(
-        verbose_name="Internamento ativo",
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        verbose_name="Internamento active",
         default=True,
         db_index=True,
     )
 
-    observacoes = models.TextField(verbose_name="Observações", blank=True, default="")
+    notes = models.TextField(
+
+        db_column="observacoes",
+
+        verbose_name="Observações", blank=True, default="")
 
     class Meta:
+        db_table = "enfermagem_internamentoenfermaria"
         verbose_name = "Internamento (Enfermaria)"
         verbose_name_plural = "Internamentos (Enfermaria)"
-        ordering = ["-data_internamento", "-criado_em"]
+        ordering = ["-admission_date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "ativo", "data_internamento"]),
-            models.Index(fields=["inquilino", "cama", "ativo"]),
-            models.Index(fields=["inquilino", "paciente", "data_internamento"]),
-            models.Index(fields=["inquilino", "proxima_medicacao_em"]),
+            models.Index(fields=["tenant", "active", "admission_date"]),
+            models.Index(fields=["tenant", "bed", "active"]),
+            models.Index(fields=["tenant", "patient", "admission_date"]),
+            models.Index(fields=["tenant", "next_medication_at"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.cama_id and self.inquilino_id and self.cama.inquilino_id != self.inquilino_id:
-            raise ValidationError({"cama": "Cama e internamento devem pertencer ao mesmo inquilino."})
+        if self.bed_id and self.tenant_id and self.bed.tenant_id != self.tenant_id:
+            raise ValidationError({"bed": "Cama e internamento devem pertencer ao mesmo tenant."})
 
-        if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError({"paciente": "Paciente e internamento devem pertencer ao mesmo inquilino."})
+        if self.patient_id and self.tenant_id and self.patient.tenant_id != self.tenant_id:
+            raise ValidationError({"patient": "Paciente e internamento devem pertencer ao mesmo tenant."})
 
-        if self.data_prevista_alta and self.data_internamento and self.data_prevista_alta < self.data_internamento:
+        if self.expected_discharge_date and self.admission_date and self.expected_discharge_date < self.admission_date:
             raise ValidationError(
-                {"data_prevista_alta": "Data prevista para alta não pode ser anterior ao internamento."}
+                {"expected_discharge_date": "Data prevista para alta não pode ser anterior ao internamento."}
             )
 
-        if self.alta_em and self.data_internamento and self.alta_em < self.data_internamento:
-            raise ValidationError({"alta_em": "Data de alta não pode ser anterior ao internamento."})
+        if self.discharged_at and self.admission_date and self.discharged_at < self.admission_date:
+            raise ValidationError({"discharged_at": "Data de alta não pode ser anterior ao internamento."})
 
-        if self.ativo and self.cama_id:
+        if self.active and self.bed_id:
             qs = self.__class__.all_objects.filter(
-                cama_id=self.cama_id,
-                ativo=True,
-                deletado=False,
+                bed_id=self.bed_id,
+                active=True,
+                deleted=False,
             )
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             if qs.exists():
-                raise ValidationError({"cama": "Esta cama já possui um internamento ativo."})
+                raise ValidationError({"bed": "Esta bed já possui um internamento active."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id:
-            if self.cama_id:
-                self.inquilino_id = self.cama.inquilino_id
-            elif self.paciente_id:
-                self.inquilino_id = self.paciente.inquilino_id
+        if not self.tenant_id:
+            if self.bed_id:
+                self.tenant_id = self.bed.tenant_id
+            elif self.patient_id:
+                self.tenant_id = self.patient.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.id_custom or self.pk} - {self.paciente} ({self.cama})"
+        return f"{self.custom_id or self.pk} - {self.patient} ({self.bed})"

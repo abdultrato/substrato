@@ -10,54 +10,67 @@ from core.models.base import NoNameCoreModel
 
 class DailyInspection(PropagarInquilinoMixin, NoNameCoreModel):
     """
-    Inspeção diária de funcionamento e condições do equipamento.
+    Inspeção diária de operation_status e condições do equipment.
     """
 
-    fonte_inquilino = "equipamento"
-    prefixo = "INSP"
+    fonte_tenant = "equipment"
+    prefix = "INSP"
 
     class Funcionamento(models.TextChoices):
         FUNCIONANDO = "FUNCIONANDO", "A funcionar"
         AVARIADO = "AVARIADO", "Avariado"
         DESLIGADO = "DESLIGADO", "Desligado"
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "equipamentos.Equipment",
+
+        db_column="equipamento_id",
         on_delete=models.CASCADE,
         related_name="inspecoes_diarias",
         db_index=True,
     )
-    data = models.DateField(default=timezone.localdate, db_index=True)
-    funcionamento = models.CharField(
+    date = models.DateField(
+        db_column="data",
+        default=timezone.localdate, db_index=True)
+    operation_status = models.CharField(
+        db_column="funcionamento",
         max_length=20,
         choices=Funcionamento.choices,
         default=Funcionamento.FUNCIONANDO,
         db_index=True,
     )
-    limpeza_realizada = models.BooleanField(default=False)
-    avaliacao = models.TextField(blank=True, default="")
-    observacoes = models.TextField(blank=True, default="")
+    cleaning_performed = models.BooleanField(
+        db_column="limpeza_realizada",
+        default=False)
+    assessment = models.TextField(
+        db_column="avaliacao",
+        blank=True, default="")
+    notes = models.TextField(
+        db_column="observacoes",
+        blank=True, default="")
 
     class Meta:
+        db_table = "inspecoes_inspecaodiaria"
         verbose_name = "Inspeção Diária"
         verbose_name_plural = "Inspeções Diárias"
-        ordering = ["-data", "-criado_em"]
+        ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento", "data"]),
-            models.Index(fields=["inquilino", "funcionamento", "data"]),
+            models.Index(fields=["tenant", "equipment", "date"]),
+            models.Index(fields=["tenant", "operation_status", "date"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "equipamento", "data"],
-                name="uq_inspecao_diaria_equipamento_data",
+                fields=["tenant", "equipment", "date"],
+                name="uq_inspecao_diaria_equipment_date",
             )
         ]
 
     def __str__(self) -> str:
-        return f"Inspecao {self.equipamento} - {self.data}"
+        return f"Inspecao {self.equipment} - {self.date}"
 
     def clean(self):
         super().clean()
 
-        if self.equipamento_id and self.inquilino_id and self.equipamento.inquilino_id != self.inquilino_id:
-            raise ValidationError({"equipamento": "Equipamento e inspeção devem pertencer ao mesmo inquilino."})
+        if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
+            raise ValidationError({"equipment": "Equipamento e inspeção devem pertencer ao mesmo tenant."})

@@ -5,7 +5,7 @@ from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
 
 class MedicalExamMethodField(models.CharField):
     """
-    CharField com choices para métodos de exames médicos (imagem/diagnóstico).
+    CharField com choices para métodos de exams médicos (imagem/diagnóstico).
     """
 
     def __init__(self, *args, **kwargs):

@@ -10,7 +10,7 @@ class IntegrationRouting(NoNameCoreModel):
     create a worklist order automatically when a request is created.
     """
 
-    prefixo = "ROUT"
+    prefix = "ROUT"
 
     class ExamType(models.TextChoices):
         LABORATORIO = "LAB", "Exame laboratorial"
@@ -18,40 +18,53 @@ class IntegrationRouting(NoNameCoreModel):
 
     TipoExame = ExamType
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "integracoes_equipamentos.IntegrationEquipment",
+
+        db_column="equipamento_id",
         on_delete=models.CASCADE,
         related_name="roteamentos",
         db_index=True,
     )
 
-    tipo_exame = models.CharField(
+    exam_type = models.CharField(
+
+        db_column="tipo_exame",
+
         max_length=3,
         choices=ExamType.choices,
         default=ExamType.LABORATORIO,
         db_index=True,
     )
 
-    setor = models.CharField(
+    sector = models.CharField(
+
+        db_column="setor",
+
         max_length=40,
         choices=Setor.choices,
         db_index=True,
     )
 
-    ativo = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, db_index=True)
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaoroteamento"
         verbose_name = "Roteamento (Integração)"
         verbose_name_plural = "Roteamentos (Integração)"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["equipamento", "tipo_exame", "setor"],
-                condition=models.Q(deletado=False),
-                name="unique_roteamento_por_equipamento_tipo_setor",
+                fields=["equipment", "exam_type", "sector"],
+                condition=models.Q(deleted=False),
+                name="unique_roteamento_por_equipment_type_sector",
             )
         ]
 
     def __str__(self) -> str:
-        return f"{self.equipamento} - {self.tipo_exame} - {self.setor}"
+        return f"{self.equipment} - {self.exam_type} - {self.sector}"

@@ -4,24 +4,24 @@ from .models.system_error import SystemError
 
 
 class CoreAdmin(admin.ModelAdmin):
-    list_filter = ("deletado",)
-    search_fields = ("id_custom",)
-    readonly_fields = ("criado_em", "atualizado_em")
-    ordering = ("-criado_em",)
+    list_filter = ("deleted",)
+    search_fields = ("custom_id",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 @admin.register(SystemError)
 class SystemErrorAdmin(CoreAdmin):
     list_display = (
-        "criado_em",
+        "created_at",
         "status_code",
         "exception_class",
-        "caminho",
-        "usuario",
+        "path",
+        "user",
     )
     list_filter = ("status_code", "exception_class")
-    search_fields = ("caminho", "mensagem", "exception_class", "usuario__username")
-    ordering = ("-criado_em", "-id")
+    search_fields = ("path", "message", "exception_class", "user__username")
+    ordering = ("-created_at", "-id")
 
 
 ErroSistemaAdmin = SystemErrorAdmin

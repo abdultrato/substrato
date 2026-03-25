@@ -3,12 +3,12 @@ from apps.tenants.models.tenant import Tenant
 
 
 def test_patient_saves_with_tenant(db):
-    tenant = Tenant.objects.create(identificador="tn-inline", nome="Tenant Inline")
+    tenant = Tenant.objects.create(identifier="tn-inline", name="Tenant Inline")
     pac = Patient.objects.create(
-        inquilino=tenant,
-        nome="Paciente Inline",
-        genero="Masculino",
-        endereco_rua="Rua B",
+        tenant=tenant,
+        name="Paciente Inline",
+        gender="Masculino",
+        address_street="Rua B",
     )
     assert pac.pk
-    assert pac.inquilino == tenant
+    assert pac.tenant == tenant

@@ -9,9 +9,9 @@ class RequestService:
     @transaction.atomic
     def create_request(patient, exams):
 
-        request = LabRequest.objects.create(paciente=patient)
+        request = LabRequest.objects.create(patient=patient)
 
-        request.exames.set(exams)
+        request.exams.set(exams)
 
         request.criar_resultados_automaticos()
 
@@ -21,8 +21,8 @@ class RequestService:
     @transaction.atomic
     def finalize_request(request):
 
-        if not request.exames.exists():
-            raise ValueError("Requisição deve conter exames.")
+        if not request.exams.exists():
+            raise ValueError("Requisição deve conter exams.")
 
         request.status = LabRequest.Status.AGUARDANDO_RESULTADO
         request.save(update_fields=["status"])
@@ -33,5 +33,5 @@ class RequestService:
 
 
 ServicoRequisicao = RequestService
-RequestService.criar_requisicao = RequestService.create_request
-RequestService.finalizar_requisicao = RequestService.finalize_request
+RequestService.criar_request = RequestService.create_request
+RequestService.finalizar_request = RequestService.finalize_request

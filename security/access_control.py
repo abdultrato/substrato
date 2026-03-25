@@ -5,7 +5,7 @@ def user_can_access(user, resource):
     if user.is_superuser:
         return True
 
-    return getattr(resource, "inquilino_id", None) == getattr(user, "inquilino_id", None)
+    return getattr(resource, "tenant_id", None) == getattr(user, "tenant_id", None)
 
 
-usuario_pode_acessar = user_can_access
+user_pode_acessar = user_can_access

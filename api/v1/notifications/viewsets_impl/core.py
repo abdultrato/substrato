@@ -14,9 +14,9 @@ class DeliveryLogViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     serializer_class = DeliveryLogSerializer
     filterset_class = DeliveryLogFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["status", "resposta"]
-    ordering_fields = ["notificacao", "status", "resposta", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["status", "response"]
+    ordering_fields = ["notification", "status", "response", "created_at"]
+    ordering = ["-created_at"]
 
 
 class NotificationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -24,14 +24,14 @@ class NotificationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
     serializer_class = NotificationSerializer
     filterset_class = NotificationFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["destinatario", "canal", "mensagem"]
-    ordering_fields = ["destinatario", "canal", "mensagem", "enviada", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["recipient", "channel", "message"]
+    ordering_fields = ["recipient", "channel", "message", "sent", "created_at"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
     "logenvio": DeliveryLogViewSet,
-    "notificacao": NotificationViewSet,
+    "notification": NotificationViewSet,
 }
 
 __all__ = [

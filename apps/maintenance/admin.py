@@ -6,23 +6,23 @@ from .models.maintenance import Maintenance
 @admin.register(Maintenance)
 class ManutencaoAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "equipamento",
-        "tipo",
-        "data_programada",
-        "data_realizada",
-        "tecnico",
-        "criado_em",
+        "custom_id",
+        "equipment",
+        "type",
+        "scheduled_date",
+        "performed_date",
+        "technician",
+        "created_at",
     )
     list_filter = (
-        "tipo",
-        "data_programada",
-        "data_realizada",
+        "type",
+        "scheduled_date",
+        "performed_date",
     )
     search_fields = (
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
-        "tecnico",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
+        "technician",
     )
-    ordering = ("-data_programada",)
+    ordering = ("-scheduled_date",)

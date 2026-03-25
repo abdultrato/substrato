@@ -7,16 +7,16 @@ from apps.billing.models.invoice_items import InvoiceItem
 
 CORE_READ_ONLY_FIELDS = [
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 ]
 
 
@@ -33,19 +33,19 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
             return
 
         reference_field = {
-            InvoiceItem.TipoItem.EXAME: "exame",
-            InvoiceItem.TipoItem.EXAME_MEDICO: "exame_medico",
-            InvoiceItem.TipoItem.ITEM_VENDA: "item_venda",
-            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: "procedimento_item",
-            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: "procedimento_material",
+            InvoiceItem.TipoItem.EXAME: "exam",
+            InvoiceItem.TipoItem.EXAME_MEDICO: "medical_exam",
+            InvoiceItem.TipoItem.ITEM_VENDA: "sale_item",
+            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: "procedure_item",
+            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: "procedure_material",
         }.get(item_type)
 
         if not reference_field:
             return
 
         queryset = InvoiceItem.objects.filter(
-            fatura=invoice,
-            deletado=False,
+            invoice=invoice,
+            deleted=False,
             **{reference_field: reference},
         )
 
@@ -55,15 +55,15 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         for item in queryset:
             item.delete()
 
-    def create(self, validated_data):
-        invoice = validated_data.get("fatura")
-        item_type = validated_data.get("tipo_item", InvoiceItem.TipoItem.EXAME)
+    def create(self, validated_date):
+        invoice = validated_date.get("invoice")
+        item_type = validated_date.get("item_type", InvoiceItem.TipoItem.EXAME)
         reference = {
-            InvoiceItem.TipoItem.EXAME: validated_data.get("exame"),
-            InvoiceItem.TipoItem.EXAME_MEDICO: validated_data.get("exame_medico"),
-            InvoiceItem.TipoItem.ITEM_VENDA: validated_data.get("item_venda"),
-            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: validated_data.get("procedimento_item"),
-            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_data.get("procedimento_material"),
+            InvoiceItem.TipoItem.EXAME: validated_date.get("exam"),
+            InvoiceItem.TipoItem.EXAME_MEDICO: validated_date.get("medical_exam"),
+            InvoiceItem.TipoItem.ITEM_VENDA: validated_date.get("sale_item"),
+            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: validated_date.get("procedure_item"),
+            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_date.get("procedure_material"),
         }.get(item_type)
 
         with transaction.atomic():
@@ -73,33 +73,33 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                 reference=reference,
             )
 
-            return super().create(validated_data)
+            return super().create(validated_date)
 
-    def update(self, instance, validated_data):
-        item_type = validated_data.get("tipo_item", instance.tipo_item)
+    def update(self, instance, validated_date):
+        item_type = validated_date.get("item_type", instance.item_type)
         reference = {
-            InvoiceItem.TipoItem.EXAME: validated_data.get("exame", instance.exame),
-            InvoiceItem.TipoItem.EXAME_MEDICO: validated_data.get("exame_medico", instance.exame_medico),
-            InvoiceItem.TipoItem.ITEM_VENDA: validated_data.get("item_venda", instance.item_venda),
-            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: validated_data.get(
-                "procedimento_item", instance.procedimento_item
+            InvoiceItem.TipoItem.EXAME: validated_date.get("exam", instance.exam),
+            InvoiceItem.TipoItem.EXAME_MEDICO: validated_date.get("medical_exam", instance.medical_exam),
+            InvoiceItem.TipoItem.ITEM_VENDA: validated_date.get("sale_item", instance.sale_item),
+            InvoiceItem.TipoItem.PROCEDIMENTO_ITEM: validated_date.get(
+                "procedure_item", instance.procedure_item
             ),
-            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_data.get(
-                "procedimento_material", instance.procedimento_material
+            InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL: validated_date.get(
+                "procedure_material", instance.procedure_material
             ),
         }.get(item_type)
 
         with transaction.atomic():
             self._remove_existing_items(
-                invoice=validated_data.get("fatura", instance.fatura),
+                invoice=validated_date.get("invoice", instance.invoice),
                 item_type=item_type,
                 reference=reference,
             )
 
-            return super().update(instance, validated_data)
+            return super().update(instance, validated_date)
 
     total_sem_iva = serializers.SerializerMethodField(method_name="get_total_before_tax")
-    iva_valor = serializers.SerializerMethodField(method_name="get_tax_amount")
+    vat_amount = serializers.SerializerMethodField(method_name="get_tax_amount")
     total_com_iva = serializers.SerializerMethodField(method_name="get_total_with_tax")
 
     def get_total_before_tax(self, obj):
@@ -110,7 +110,7 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
     def get_tax_amount(self, obj):
         try:
-            return str(obj.iva_valor)
+            return str(obj.vat_amount)
         except Exception:
             return None
 
@@ -134,7 +134,7 @@ class InvoiceHistorySerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "fatura": InvoiceSerializer,
+    "invoice": InvoiceSerializer,
     "faturaitem": InvoiceItemSerializer,
     "historicofatura": InvoiceHistorySerializer,
 }

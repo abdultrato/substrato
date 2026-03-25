@@ -3,7 +3,8 @@ from django.utils.timezone import now
 
 
 class IdentifierMixin(models.Model):
-    id_custom = models.CharField(
+    custom_id = models.CharField(
+        db_column="id_custom",
         max_length=40,
         unique=True,
         db_index=True,
@@ -12,20 +13,22 @@ class IdentifierMixin(models.Model):
         null=True,
     )
 
+    prefix = None
     prefixo = None
 
     class Meta:
         abstract = True
 
     def generate_identifier(self):
-        if self.id_custom or not self.prefixo:
+        prefix = self.prefix or self.prefixo
+        if self.custom_id or not prefix:
             return
 
         timestamp = now().strftime("%Y%m%d-%H%M")
 
-        numero = self.pk or 0
+        number = self.pk or 0
 
-        self.id_custom = f"{self.prefixo}-{timestamp}-{numero:04d}"
+        self.custom_id = f"{prefix}-{timestamp}-{number:04d}"
 
     def save(self, *args, **kwargs):
         criando = self._state.adding
@@ -35,10 +38,18 @@ class IdentifierMixin(models.Model):
 
             self.generate_identifier()
 
-            return super().save(update_fields=["id_custom"])
+            return super().save(update_fields=["custom_id"])
 
         return super().save(*args, **kwargs)
 
+    @property
+    def id_custom(self):
+        return self.custom_id
+
+    @id_custom.setter
+    def id_custom(self, value):
+        self.custom_id = value
+
 
 IdentificadorMixin = IdentifierMixin
-IdentifierMixin.gerar_identificador = IdentifierMixin.generate_identifier
+IdentifierMixin.gerar_identifier = IdentifierMixin.generate_identifier

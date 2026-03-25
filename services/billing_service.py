@@ -20,11 +20,11 @@ class BillingService:
 
     @staticmethod
     def process_monthly_charge(tenant):
-        if not tenant or not tenant.ativo:
+        if not tenant or not tenant.active:
             return None
 
         plan = getattr(tenant, "plan", None)
-        if not plan or not plan.ativo:
+        if not plan or not plan.active:
             return None
 
         period = BillingService._current_period()
@@ -47,7 +47,7 @@ class BillingService:
 
         usage = TenantUsageService.get_requests(tenant) or 0
         plan = getattr(tenant, "plan", None)
-        limit = getattr(plan, "limite_requisicoes_mes", 0) or 0
+        limit = getattr(plan, "monthly_request_limit", 0) or 0
 
         if usage <= limit:
             TenantCache.set(
@@ -78,7 +78,7 @@ class BillingService:
     @staticmethod
     def _calculate_extra_value(tenant, excess_requests: int) -> Decimal:
         plan = getattr(tenant, "plan", None)
-        unit_price = getattr(plan, "preco_excedente_requisicao", None) or BillingService.EXTRA_REQUEST_UNIT_PRICE
+        unit_price = getattr(plan, "request_overage_price", None) or BillingService.EXTRA_REQUEST_UNIT_PRICE
         return Decimal(excess_requests) * Decimal(unit_price)
 
     @staticmethod
@@ -90,5 +90,5 @@ class BillingService:
 BillingService.EXCEDENTE_PRECO_UNITARIO = BillingService.EXTRA_REQUEST_UNIT_PRICE
 BillingService.processar_cobranca_mensal = BillingService.process_monthly_charge
 BillingService._processar = BillingService._process_charge
-BillingService._calcular_valor_excedente = BillingService._calculate_extra_value
+BillingService._calcular_value_excedente = BillingService._calculate_extra_value
 BillingService._periodo_atual = BillingService._current_period

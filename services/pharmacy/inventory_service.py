@@ -18,11 +18,11 @@ class InventoryService:
     @transaction.atomic
     def register_input(lot, quantity, origin=MovementOrigin.AJUSTE):
         return InventoryMovement.objects.create(
-            lote=lot,
-            tipo=MovementType.ENTRADA,
-            origem=origin,
-            quantidade=quantity,
-            inquilino=getattr(lot, "inquilino", None),
+            lot=lot,
+            type=MovementType.ENTRADA,
+            origin=origin,
+            quantity=quantity,
+            tenant=getattr(lot, "tenant", None),
         )
 
     @staticmethod
@@ -35,16 +35,16 @@ class InventoryService:
             raise ValidationError("Insufficient inventory.")
 
         return InventoryMovement.objects.create(
-            lote=locked_lot,
-            tipo=MovementType.SAIDA,
-            origem=origin,
-            quantidade=quantity,
-            item_venda=sale_item,
-            inquilino=getattr(locked_lot, "inquilino", None),
+            lot=locked_lot,
+            type=MovementType.SAIDA,
+            origin=origin,
+            quantity=quantity,
+            sale_item=sale_item,
+            tenant=getattr(locked_lot, "tenant", None),
         )
 
 
 EstoqueService = InventoryService
-InventoryService.saldo_lote = InventoryService.lot_balance
+InventoryService.saldo_lot = InventoryService.lot_balance
 InventoryService.registrar_entrada = InventoryService.register_input
 InventoryService.registrar_saida = InventoryService.register_output

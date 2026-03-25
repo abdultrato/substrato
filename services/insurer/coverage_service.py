@@ -4,18 +4,18 @@ from domain.insurer.coverage_engine import resolver_regra as resolve_rule
 class CoverageService:
     @staticmethod
     def resolve(plan, exam_code=None, diagnosis_code=None):
-        rules = plan.regras.filter(ativo=True)
+        rules = plan.regras.filter(active=True)
         rule = resolve_rule(rules, exam_code, diagnosis_code)
 
         if not rule:
             return {
-                "percentual": plan.percentual_cobertura,
-                "exige_autorizacao": plan.exige_autorizacao,
+                "percentual": plan.coverage_percentage,
+                "requires_authorization": plan.requires_authorization,
             }
 
         return {
-            "percentual": rule.percentual_cobertura or plan.percentual_cobertura,
-            "exige_autorizacao": rule.exige_autorizacao,
+            "percentual": rule.coverage_percentage or plan.coverage_percentage,
+            "requires_authorization": rule.requires_authorization,
         }
 
 

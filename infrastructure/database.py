@@ -63,4 +63,4 @@ def active_queries():
     return connection.queries
 
 
-consultas_ativas = active_queries
+consultations_ativas = active_queries

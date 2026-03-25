@@ -85,11 +85,11 @@ def unique_str(model, field_name, prefix):
 def ensure_tenants():
     while total(Tenant) < MIN_REGISTROS:
         idx = total(Tenant) + 1
-        identificador = unique_str(Tenant, "identificador", "seed-inq-")
+        identifier = unique_str(Tenant, "identifier", "seed-inq-")
         Tenant.objects.create(
-            identificador=identificador,
-            nome=f"Inquilino Seed {idx}",
-            ativo=True,
+            identifier=identifier,
+            name=f"Inquilino Seed {idx}",
+            active=True,
         )
 
     return list(Tenant.objects.order_by("id")[:MIN_REGISTROS])
@@ -107,7 +107,7 @@ def ensure_users():
             password="Seed@123456",
             first_name=f"Seed{idx}",
             last_name="User",
-            telefone=f"840000{idx:03d}",
+            phone=f"840000{idx:03d}",
             is_active=True,
         )
 
@@ -117,122 +117,122 @@ def ensure_users():
 def ensure_config_uso(tenants):
     for idx, tenant in enumerate(tenants, start=1):
         TenantConfiguration.objects.get_or_create(
-            inquilino=tenant,
+            tenant=tenant,
             defaults={
-                "fuso_horario": "Africa/Maputo",
-                "moeda": "MZN",
-                "idioma": "pt",
-                "permite_multi_unidade": idx % 2 == 0,
-                "limite_usuarios": 10 + idx,
+                "time_zone": "Africa/Maputo",
+                "currency": "MZN",
+                "language": "pt",
+                "allows_multi_unit": idx % 2 == 0,
+                "user_limit": 10 + idx,
             },
         )
         TenantUsage.objects.get_or_create(
-            inquilino=tenant,
+            tenant=tenant,
             defaults={
-                "usuarios_ativos": 5 + idx,
-                "requisicoes_mes_atual": 10 * idx,
+                "active_users": 5 + idx,
+                "current_month_requests": 10 * idx,
             },
         )
 
 
 def ensure_clinical(tenants, users):
-    metodo = choice_value(LabExam, "metodo")
-    setor = choice_value(LabExam, "setor")
-    tipo_resultado = choice_value(LabExamField, "tipo")
-    unidade = choice_value(LabExamField, "unidade")
-    genero = choice_value(Patient, "genero")
-    raca = choice_value(Patient, "raca_origem")
-    tipo_documento = choice_value(Patient, "tipo_documento")
-    proveniencia = choice_value(Patient, "proveniencia")
+    method = choice_value(LabExam, "method")
+    sector = choice_value(LabExam, "sector")
+    type_result = choice_value(LabExamField, "type")
+    unit = choice_value(LabExamField, "unit")
+    gender = choice_value(Patient, "gender")
+    raca = choice_value(Patient, "race_origin")
+    document_type = choice_value(Patient, "document_type")
+    provenance = choice_value(Patient, "provenance")
 
     while total(LabExam) < MIN_REGISTROS:
         idx = total(LabExam) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         LabExam.objects.create(
-            inquilino=tenant,
-            nome=f"Exame Seed {idx}",
-            trl_horas=24 + idx,
-            preco=Decimal("50.00") + Decimal(idx),
-            metodo=metodo,
-            setor=setor,
+            tenant=tenant,
+            name=f"Exame Seed {idx}",
+            turnaround_hours=24 + idx,
+            price=Decimal("50.00") + Decimal(idx),
+            method=method,
+            sector=sector,
         )
 
-    exames = list(LabExam.objects.order_by("id"))
+    exams = list(LabExam.objects.order_by("id"))
 
     while total(LabExamField) < MIN_REGISTROS:
         idx = total(LabExamField) + 1
-        exame = exames[(idx - 1) % len(exames)]
+        exam = exams[(idx - 1) % len(exams)]
         LabExamField.objects.create(
-            inquilino=exame.inquilino,
-            nome=f"Campo Seed {idx}",
-            exame=exame,
-            tipo=tipo_resultado,
-            unidade=unidade,
-            referencia_min=Decimal("4.00"),
-            referencia_max=Decimal("10.00"),
-            critico_min=Decimal("2.00"),
-            critico_max=Decimal("20.00"),
+            tenant=exam.tenant,
+            name=f"Campo Seed {idx}",
+            exam=exam,
+            type=type_result,
+            unit=unit,
+            reference_min=Decimal("4.00"),
+            reference_max=Decimal("10.00"),
+            critical_min=Decimal("2.00"),
+            critical_max=Decimal("20.00"),
         )
 
     while total(Patient) < MIN_REGISTROS:
         idx = total(Patient) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         Patient.objects.create(
-            inquilino=tenant,
-            nome=f"Paciente Seed {idx}",
-            morada=f"Rua Seed {idx}",
-            genero=genero,
-            raca_origem=raca,
-            tipo_documento=tipo_documento,
-            numero_id=f"SEED-ID-{idx:04d}",
-            contacto=f"840100{idx:03d}",
-            email=f"paciente.seed{idx}@example.com",
-            proveniencia=proveniencia,
-            data_nascimento=date(1990, 1, 1) + timedelta(days=30 * idx),
+            tenant=tenant,
+            name=f"Paciente Seed {idx}",
+            address=f"Rua Seed {idx}",
+            gender=gender,
+            race_origin=raca,
+            document_type=document_type,
+            document_number=f"SEED-ID-{idx:04d}",
+            contact=f"840100{idx:03d}",
+            email=f"patient.seed{idx}@example.com",
+            provenance=provenance,
+            birth_date=date(1990, 1, 1) + timedelta(days=30 * idx),
         )
 
     pacientes = list(Patient.objects.order_by("id"))
 
     while total(LabRequest) < MIN_REGISTROS:
         idx = total(LabRequest) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        analista = users[(idx - 1) % len(users)]
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        analyst = users[(idx - 1) % len(users)]
         LabRequest.objects.create(
-            inquilino=paciente.inquilino,
-            paciente=paciente,
-            analista=analista,
+            tenant=patient.tenant,
+            patient=patient,
+            analyst=analyst,
         )
 
     requisicoes = list(LabRequest.objects.order_by("id")[:MIN_REGISTROS])
-    exames_seed = list(LabExam.objects.order_by("id")[:MIN_REGISTROS])
+    exams_seed = list(LabExam.objects.order_by("id")[:MIN_REGISTROS])
 
     for idx, req in enumerate(requisicoes, start=1):
-        exame = exames_seed[(idx - 1) % len(exames_seed)]
+        exam = exams_seed[(idx - 1) % len(exams_seed)]
         LabRequestItem.objects.get_or_create(
-            requisicao=req,
-            exame=exame,
-            defaults={"inquilino": req.inquilino},
+            request=req,
+            exam=exam,
+            defaults={"tenant": req.tenant},
         )
 
     if total(LabRequestItem) < MIN_REGISTROS:
         for req in requisicoes:
-            for exame in exames_seed:
+            for exam in exams_seed:
                 if total(LabRequestItem) >= MIN_REGISTROS:
                     break
                 LabRequestItem.objects.get_or_create(
-                    requisicao=req,
-                    exame=exame,
-                    defaults={"inquilino": req.inquilino},
+                    request=req,
+                    exam=exam,
+                    defaults={"tenant": req.tenant},
                 )
             if total(LabRequestItem) >= MIN_REGISTROS:
                 break
 
     for idx, req in enumerate(requisicoes, start=1):
         Result.objects.get_or_create(
-            requisicao=req,
+            request=req,
             defaults={
-                "inquilino": req.inquilino,
-                "analista": users[(idx - 1) % len(users)],
+                "tenant": req.tenant,
+                "analyst": users[(idx - 1) % len(users)],
             },
         )
 
@@ -242,27 +242,27 @@ def ensure_clinical(tenants, users):
     for idx in range(max(len(resultados), len(campos))):
         if total(ResultItem) >= MIN_REGISTROS:
             break
-        resultado = resultados[idx % len(resultados)]
+        result = resultados[idx % len(resultados)]
         campo = campos[idx % len(campos)]
         ResultItem.objects.get_or_create(
-            resultado=resultado,
-            exame_campo=campo,
-            defaults={"inquilino": resultado.inquilino},
+            result=result,
+            exam_field=campo,
+            defaults={"tenant": result.tenant},
         )
 
     while total(ClinicalReference) < MIN_REGISTROS:
         idx = total(ClinicalReference) + 1
         campo = campos[(idx - 1) % len(campos)]
         ClinicalReference.objects.create(
-            inquilino=campo.inquilino,
-            nome=f"Referência Seed {idx}",
-            exame_campo=campo,
-            idade_minima_dias=0,
-            idade_maxima_dias=36500,
-            valor_minimo=Decimal("4.00"),
-            valor_maximo=Decimal("10.00"),
-            critico_baixo=Decimal("2.00"),
-            critico_alto=Decimal("20.00"),
+            tenant=campo.tenant,
+            name=f"Referência Seed {idx}",
+            exam_field=campo,
+            minimum_age_days=0,
+            maximum_age_days=36500,
+            minimum_value=Decimal("4.00"),
+            maximum_value=Decimal("10.00"),
+            critical_low=Decimal("2.00"),
+            critical_high=Decimal("20.00"),
         )
 
 
@@ -270,131 +270,131 @@ def ensure_enfermagem(users):
     pacientes = list(Patient.objects.order_by("id")[:MIN_REGISTROS])
     produtos = list(Product.objects.order_by("id"))
 
-    prioridade = choice_value(NursingRecord, "prioridade")
+    priority = choice_value(NursingRecord, "priority")
 
     while total(NursingRecord) < MIN_REGISTROS:
         idx = total(NursingRecord) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
+        patient = pacientes[(idx - 1) % len(pacientes)]
         NursingRecord.objects.create(
-            inquilino=paciente.inquilino,
-            nome=f"Registro Enfermagem Seed {idx}",
-            paciente=paciente,
-            prioridade=prioridade,
-            observacao=f"Observação de enfermagem seed {idx}",
+            tenant=patient.tenant,
+            name=f"Registro Enfermagem Seed {idx}",
+            patient=patient,
+            priority=priority,
+            observation=f"Observação de enfermagem seed {idx}",
         )
 
     registros = list(NursingRecord.objects.order_by("id")[:MIN_REGISTROS])
     while total(NursingVitalSign) < MIN_REGISTROS:
         idx = total(NursingVitalSign) + 1
-        registro = registros[(idx - 1) % len(registros)]
+        record = registros[(idx - 1) % len(registros)]
         NursingVitalSign.objects.create(
-            inquilino=registro.inquilino,
-            nome=f"Sinal Vital Seed {idx}",
-            registro=registro,
-            temperatura_c=Decimal("36.5"),
-            frequencia_cardiaca=75 + idx,
-            frequencia_respiratoria=18,
-            saturacao_oxigenio=98,
-            pressao_arterial="120/80",
+            tenant=record.tenant,
+            name=f"Sinal Vital Seed {idx}",
+            record=record,
+            temperature_c=Decimal("36.5"),
+            heart_rate=75 + idx,
+            respiratory_rate=18,
+            oxygen_saturation=98,
+            blood_pressure="120/80",
         )
 
     while total(Procedure) < MIN_REGISTROS:
         idx = total(Procedure) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
+        patient = pacientes[(idx - 1) % len(pacientes)]
         Procedure.objects.create(
-            inquilino=paciente.inquilino,
-            paciente=paciente,
-            profissional=users[(idx - 1) % len(users)],
-            observacoes=f"Procedimento seed {idx}",
+            tenant=patient.tenant,
+            patient=patient,
+            professional=users[(idx - 1) % len(users)],
+            notes=f"Procedimento seed {idx}",
         )
 
     while total(ProcedureCatalog) < MIN_REGISTROS:
         idx = total(ProcedureCatalog) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
+        patient = pacientes[(idx - 1) % len(pacientes)]
         ProcedureCatalog.objects.create(
-            inquilino=paciente.inquilino,
-            nome=f"Procedimento Catálogo {idx}",
-            descricao=f"Descrição catálogo seed {idx}",
-            preco_padrao=Decimal("350.00") + Decimal(idx),
+            tenant=patient.tenant,
+            name=f"Procedimento Catálogo {idx}",
+            description=f"Descrição catálogo seed {idx}",
+            default_price=Decimal("350.00") + Decimal(idx),
         )
 
     catalogos = list(ProcedureCatalog.objects.order_by("id"))
     while total(ProcedureCatalogMaterial) < MIN_REGISTROS:
         idx = total(ProcedureCatalogMaterial) + 1
-        catalogo = catalogos[(idx - 1) % len(catalogos)]
+        catalog = catalogos[(idx - 1) % len(catalogos)]
 
-        produto = next(
+        product = next(
             (
                 candidato
                 for candidato in produtos
-                if candidato.inquilino_id == catalogo.inquilino_id
-                and not ProcedureCatalogMaterial.objects.filter(catalogo=catalogo, produto=candidato).exists()
+                if candidato.tenant_id == catalog.tenant_id
+                and not ProcedureCatalogMaterial.objects.filter(catalog=catalog, product=candidato).exists()
             ),
             None,
         )
-        if produto is None:
+        if product is None:
             break
 
         ProcedureCatalogMaterial.objects.create(
-            inquilino=catalogo.inquilino,
-            catalogo=catalogo,
-            produto=produto,
-            quantidade_padrao=1,
-            custo_unitario_padrao=produto.preco_venda,
-            observacao=f"Material padrão seed {idx}",
+            tenant=catalog.tenant,
+            catalog=catalog,
+            product=product,
+            default_quantity=1,
+            default_unit_cost=product.sale_price,
+            observation=f"Material padrão seed {idx}",
         )
 
-    procedimentos = list(Procedure.objects.order_by("id")[:MIN_REGISTROS])
+    procedures = list(Procedure.objects.order_by("id")[:MIN_REGISTROS])
     while total(ProcedureItem) < MIN_REGISTROS:
         idx = total(ProcedureItem) + 1
-        procedimento = procedimentos[(idx - 1) % len(procedimentos)]
-        catalogo = next(
-            (c for c in catalogos if c.inquilino_id == procedimento.inquilino_id),
+        procedure = procedures[(idx - 1) % len(procedures)]
+        catalog = next(
+            (c for c in catalogos if c.tenant_id == procedure.tenant_id),
             None,
         )
         ProcedureItem.objects.create(
-            inquilino=procedimento.inquilino,
-            procedimento=procedimento,
-            catalogo=catalogo,
-            descricao="" if catalogo else f"Item de procedimento seed {idx}",
-            quantidade=1,
-            preco_unitario=Decimal("0.00") if catalogo else Decimal("150.00"),
-            realizado=True,
-            observacao=f"Observação seed {idx}",
+            tenant=procedure.tenant,
+            procedure=procedure,
+            catalog=catalog,
+            description="" if catalog else f"Item de procedure seed {idx}",
+            quantity=1,
+            unit_price=Decimal("0.00") if catalog else Decimal("150.00"),
+            performed=True,
+            observation=f"Observação seed {idx}",
         )
 
-    lotes = list(Lot.objects.select_related("produto").order_by("validade", "id"))
+    lotes = list(Lot.objects.select_related("product").order_by("expiration_date", "id"))
 
     while total(ProcedureMaterial) < MIN_REGISTROS:
         idx = total(ProcedureMaterial) + 1
-        procedimento = procedimentos[(idx - 1) % len(procedimentos)]
-        lote = next(
+        procedure = procedures[(idx - 1) % len(procedures)]
+        lot = next(
             (
                 candidato
                 for candidato in lotes
-                if candidato.inquilino_id == procedimento.inquilino_id and candidato.saldo() > 0
+                if candidato.tenant_id == procedure.tenant_id and candidato.saldo() > 0
             ),
             None,
         )
-        if lote is None:
+        if lot is None:
             break
 
         ProcedureMaterial.objects.create(
-            inquilino=procedimento.inquilino,
-            procedimento=procedimento,
-            produto=lote.produto,
-            lote=lote,
-            quantidade=1,
-            custo_unitario=lote.produto.preco_venda,
-            observacao=f"Material seed {idx}",
+            tenant=procedure.tenant,
+            procedure=procedure,
+            product=lot.product,
+            lot=lot,
+            quantity=1,
+            unit_cost=lot.product.sale_price,
+            observation=f"Material seed {idx}",
         )
 
-    for item in ProcedureItem.objects.filter(deletado=False):
-        if not ProcedureItemValue.objects.filter(item=item, deletado=False).exists():
+    for item in ProcedureItem.objects.filter(deleted=False):
+        if not ProcedureItemValue.objects.filter(item=item, deleted=False).exists():
             item.save()
 
-    for material in ProcedureMaterial.objects.filter(deletado=False):
-        if not ProcedureMaterialValue.objects.filter(material=material, deletado=False).exists():
+    for material in ProcedureMaterial.objects.filter(deleted=False):
+        if not ProcedureMaterialValue.objects.filter(material=material, deleted=False).exists():
             material.save()
 
 
@@ -403,12 +403,12 @@ def ensure_insurer(tenants):
         idx = total(Insurer) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         Insurer.objects.create(
-            inquilino=tenant,
-            nome=f"Seguradora Seed {idx}",
-            codigo_externo=f"SEG-{idx:03d}",
-            email=f"seguradora{idx}@example.com",
-            telefone=f"840200{idx:03d}",
-            ativa=True,
+            tenant=tenant,
+            name=f"Seguradora Seed {idx}",
+            external_code=f"SEG-{idx:03d}",
+            email=f"insurer{idx}@example.com",
+            phone=f"840200{idx:03d}",
+            active=True,
         )
 
     seguradoras = list(Insurer.objects.order_by("id"))
@@ -417,89 +417,89 @@ def ensure_insurer(tenants):
         idx = total(CoveragePlan) + 1
         seg = seguradoras[(idx - 1) % len(seguradoras)]
         CoveragePlan.objects.create(
-            inquilino=seg.inquilino,
-            nome=f"Plano Seed {idx}",
-            seguradora=seg,
-            percentual_cobertura=Decimal("80.00"),
-            exige_autorizacao=idx % 2 == 0,
+            tenant=seg.tenant,
+            name=f"Plano Seed {idx}",
+            insurer=seg,
+            coverage_percentage=Decimal("80.00"),
+            requires_authorization=idx % 2 == 0,
         )
 
     planos = list(CoveragePlan.objects.order_by("id"))
 
     while total(ProcedureAuthorization) < MIN_REGISTROS:
         idx = total(ProcedureAuthorization) + 1
-        plano = planos[(idx - 1) % len(planos)]
+        plan = planos[(idx - 1) % len(planos)]
         ProcedureAuthorization.objects.create(
-            inquilino=plano.inquilino,
-            nome=f"Autorização Seed {idx}",
-            requisicao_id=uuid4(),
-            plano=plano,
+            tenant=plan.tenant,
+            name=f"Autorização Seed {idx}",
+            request_id=uuid4(),
+            plan=plan,
         )
 
 
 def ensure_billing():
     requisicoes = list(LabRequest.objects.order_by("id")[:MIN_REGISTROS])
-    exames = list(LabExam.objects.order_by("id"))
+    exams = list(LabExam.objects.order_by("id"))
 
     for req in requisicoes:
         Invoice.objects.get_or_create(
-            requisicao=req,
+            request=req,
             defaults={
-                "inquilino": req.inquilino,
-                "paciente": req.paciente,
+                "tenant": req.tenant,
+                "patient": req.patient,
             },
         )
 
     faturas = list(Invoice.objects.order_by("id"))
 
-    for idx, fatura in enumerate(faturas, start=1):
-        exame = exames[(idx - 1) % len(exames)]
+    for idx, invoice in enumerate(faturas, start=1):
+        exam = exams[(idx - 1) % len(exams)]
         InvoiceItem.objects.get_or_create(
-            fatura=fatura,
-            exame=exame,
+            invoice=invoice,
+            exam=exam,
             defaults={
-                "inquilino": fatura.inquilino,
-                "descricao": exame.nome,
-                "quantidade": Decimal("1.00"),
+                "tenant": invoice.tenant,
+                "description": exam.name,
+                "quantity": Decimal("1.00"),
             },
         )
 
     while total(InvoiceHistory) < MIN_REGISTROS:
         idx = total(InvoiceHistory) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
+        invoice = faturas[(idx - 1) % len(faturas)]
         InvoiceHistory.objects.create(
-            inquilino=fatura.inquilino,
-            nome=f"Histórico Seed {idx}",
-            fatura=fatura,
-            descricao=f"Evento de histórico seed {idx}",
-            tipo_evento="SEED",
+            tenant=invoice.tenant,
+            name=f"Histórico Seed {idx}",
+            invoice=invoice,
+            description=f"Evento de histórico seed {idx}",
+            event_type="SEED",
         )
 
 
 def ensure_payments():
-    metodo = choice_value(Payment, "metodo")
+    method = choice_value(Payment, "method")
     faturas = list(Invoice.objects.order_by("id")[:MIN_REGISTROS])
 
     while total(Payment) < MIN_REGISTROS:
         idx = total(Payment) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
-        valor = fatura.total if fatura.total and fatura.total > 0 else Decimal("100.00")
+        invoice = faturas[(idx - 1) % len(faturas)]
+        value = invoice.total if invoice.total and invoice.total > 0 else Decimal("100.00")
         Payment.objects.create(
-            inquilino=fatura.inquilino,
-            nome=f"Pagamento Seed {idx}",
-            fatura=fatura,
-            valor=valor,
-            metodo=metodo,
-            referencia_externa=f"PG-SEED-{idx:04d}",
+            tenant=invoice.tenant,
+            name=f"Pagamento Seed {idx}",
+            invoice=invoice,
+            value=value,
+            method=method,
+            external_reference=f"PG-SEED-{idx:04d}",
         )
 
     while total(Transaction) < MIN_REGISTROS:
         idx = total(Transaction) + 1
         Transaction.objects.create(
-            referencia_externa=f"TX-SEED-{idx:04d}",
+            external_reference=f"TX-SEED-{idx:04d}",
             gateway="SEED_GATEWAY",
             status="confirmada",
-            resposta_gateway={"seed": idx},
+            gateway_response={"seed": idx},
         )
 
     pagamentos = list(Payment.objects.order_by("id")[:MIN_REGISTROS])
@@ -507,37 +507,37 @@ def ensure_payments():
 
     while total(Receipt) < MIN_REGISTROS:
         idx = total(Receipt) + 1
-        pagamento = pagamentos[(idx - 1) % len(pagamentos)]
+        payment = pagamentos[(idx - 1) % len(pagamentos)]
         Receipt.objects.create(
-            fatura=pagamento.fatura,
-            pagamento=pagamento,
-            numero=f"RCB-SEED-{idx:04d}",
-            valor=pagamento.valor,
+            invoice=payment.invoice,
+            payment=payment,
+            number=f"RCB-SEED-{idx:04d}",
+            value=payment.value,
         )
 
     while total(Reconciliation) < MIN_REGISTROS:
         idx = total(Reconciliation) + 1
-        transacao = transacoes[(idx - 1) % len(transacoes)]
+        transaction = transacoes[(idx - 1) % len(transacoes)]
         Reconciliation.objects.create(
-            transacao=transacao,
-            confirmado=idx % 2 == 0,
-            data_confirmacao=timezone.now() if idx % 2 == 0 else None,
+            transaction=transaction,
+            confirmed=idx % 2 == 0,
+            confirmation_date=timezone.now() if idx % 2 == 0 else None,
         )
 
 
 def ensure_contabilidade(tenants):
-    tipo_conta = choice_value(Account, "tipo")
+    type_account = choice_value(Account, "type")
     contas = list(Account.objects.order_by("id"))
 
     while total(Account) < MIN_REGISTROS:
         idx = total(Account) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        conta = Account.objects.create(
-            inquilino=tenant,
-            nome=f"Conta Seed {idx}",
-            tipo=tipo_conta,
+        account = Account.objects.create(
+            tenant=tenant,
+            name=f"Conta Seed {idx}",
+            type=type_account,
         )
-        contas.append(conta)
+        contas.append(account)
 
     contas = list(Account.objects.order_by("id")[:MIN_REGISTROS])
 
@@ -545,93 +545,93 @@ def ensure_contabilidade(tenants):
         idx = total(LegacyEntry) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         LegacyEntry.objects.create(
-            inquilino=tenant,
-            nome=f"Lançamento Seed {idx}",
-            descricao=f"Lançamento de seed {idx}",
-            referencia_externa=f"LANC-SEED-{idx:04d}",
+            tenant=tenant,
+            name=f"Lançamento Seed {idx}",
+            description=f"Lançamento de seed {idx}",
+            external_reference=f"LANC-SEED-{idx:04d}",
         )
 
     lancamentos = list(LegacyEntry.objects.order_by("id")[:MIN_REGISTROS])
 
-    for idx, lancamento in enumerate(lancamentos, start=1):
-        contas_tenant = [c for c in contas if c.inquilino_id == lancamento.inquilino_id]
-        conta_debito = contas_tenant[0]
-        conta_credito = contas_tenant[-1]
+    for idx, entry in enumerate(lancamentos, start=1):
+        contas_tenant = [c for c in contas if c.tenant_id == entry.tenant_id]
+        account_debit = contas_tenant[0]
+        account_credit = contas_tenant[-1]
 
-        if not LegacyMovement.objects.filter(lancamento=lancamento, debito__gt=0).exists():
+        if not LegacyMovement.objects.filter(entry=entry, debit__gt=0).exists():
             LegacyMovement.objects.create(
-                inquilino=lancamento.inquilino,
-                nome=f"Mov Deb Seed {idx}",
-                lancamento=lancamento,
-                conta=conta_debito,
-                debito=Decimal("100.00"),
-                credito=Decimal("0.00"),
+                tenant=entry.tenant,
+                name=f"Mov Deb Seed {idx}",
+                entry=entry,
+                account=account_debit,
+                debit=Decimal("100.00"),
+                credit=Decimal("0.00"),
             )
 
-        if not LegacyMovement.objects.filter(lancamento=lancamento, credito__gt=0).exists():
+        if not LegacyMovement.objects.filter(entry=entry, credit__gt=0).exists():
             LegacyMovement.objects.create(
-                inquilino=lancamento.inquilino,
-                nome=f"Mov Cred Seed {idx}",
-                lancamento=lancamento,
-                conta=conta_credito,
-                debito=Decimal("0.00"),
-                credito=Decimal("100.00"),
+                tenant=entry.tenant,
+                name=f"Mov Cred Seed {idx}",
+                entry=entry,
+                account=account_credit,
+                debit=Decimal("0.00"),
+                credit=Decimal("100.00"),
             )
 
     while total(LedgerEntry) < MIN_REGISTROS:
         idx = total(LedgerEntry) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         LedgerEntry.objects.create(
-            inquilino=tenant,
-            nome=f"Ledger Entry Seed {idx}",
-            referencia_externa=f"LED-REF-{idx:04d}",
+            tenant=tenant,
+            name=f"Ledger Entry Seed {idx}",
+            external_reference=f"LED-REF-{idx:04d}",
             idempotency_key=f"LED-IDEMP-{idx:04d}",
-            data_contabil=timezone.localdate(),
-            descricao=f"Entry de seed {idx}",
+            accounting_date=timezone.localdate(),
+            description=f"Entry de seed {idx}",
         )
 
     entries = list(LedgerEntry.objects.order_by("id")[:MIN_REGISTROS])
 
     for idx, entry in enumerate(entries, start=1):
-        conta_debito = next(c for c in contas if c.inquilino_id == entry.inquilino_id)
-        conta_credito = [c for c in contas if c.inquilino_id == entry.inquilino_id][-1]
+        account_debit = next(c for c in contas if c.tenant_id == entry.tenant_id)
+        account_credit = [c for c in contas if c.tenant_id == entry.tenant_id][-1]
 
-        if not LedgerLine.objects.filter(entry=entry, natureza="D").exists():
+        if not LedgerLine.objects.filter(entry=entry, nature="D").exists():
             LedgerLine.objects.create(
-                inquilino=entry.inquilino,
-                nome=f"Linha D Seed {idx}",
+                tenant=entry.tenant,
+                name=f"Linha D Seed {idx}",
                 entry=entry,
-                conta=conta_debito,
-                valor=Decimal("50.00"),
-                natureza="D",
+                account=account_debit,
+                value=Decimal("50.00"),
+                nature="D",
             )
 
-        if not LedgerLine.objects.filter(entry=entry, natureza="C").exists():
+        if not LedgerLine.objects.filter(entry=entry, nature="C").exists():
             LedgerLine.objects.create(
-                inquilino=entry.inquilino,
-                nome=f"Linha C Seed {idx}",
+                tenant=entry.tenant,
+                name=f"Linha C Seed {idx}",
                 entry=entry,
-                conta=conta_credito,
-                valor=Decimal("50.00"),
-                natureza="C",
+                account=account_credit,
+                value=Decimal("50.00"),
+                nature="C",
             )
 
-    for conta in contas:
-        AccountBalance.objects.get_or_create(conta=conta)
+    for account in contas:
+        AccountBalance.objects.get_or_create(account=account)
 
     faturas = list(Invoice.objects.order_by("id")[:MIN_REGISTROS])
     while total(FinancialReconciliation) < MIN_REGISTROS:
         idx = total(FinancialReconciliation) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
+        invoice = faturas[(idx - 1) % len(faturas)]
         FinancialReconciliation.objects.create(
-            inquilino=fatura.inquilino,
-            nome=f"Conciliação Seed {idx}",
-            fatura=fatura,
-            valor_contabil=Decimal("100.00"),
-            valor_recebido=Decimal("100.00"),
-            divergencia=Decimal("0.00"),
-            conciliado=True,
-            referencia_externa=f"CON-SEED-{idx:04d}",
+            tenant=invoice.tenant,
+            name=f"Conciliação Seed {idx}",
+            invoice=invoice,
+            accounting_value=Decimal("100.00"),
+            received_amount=Decimal("100.00"),
+            discrepancy=Decimal("0.00"),
+            reconciled=True,
+            external_reference=f"CON-SEED-{idx:04d}",
         )
 
 
@@ -640,12 +640,12 @@ def ensure_farmacia(tenants):
 
     while total(Product) < MIN_REGISTROS:
         idx = total(Product) + 1
-        categoria = categorias[(idx - 1) % len(categorias)]
+        category = categorias[(idx - 1) % len(categorias)]
         Product.objects.create(
-            inquilino=categoria.inquilino,
-            nome=f"Produto Seed {idx}",
-            categoria=categoria,
-            preco_venda=Decimal("25.00") + Decimal(idx),
+            tenant=category.tenant,
+            name=f"Produto Seed {idx}",
+            category=category,
+            sale_price=Decimal("25.00") + Decimal(idx),
             estoque_minimo=5,
         )
 
@@ -653,81 +653,81 @@ def ensure_farmacia(tenants):
 
     while total(Lot) < MIN_REGISTROS:
         idx = total(Lot) + 1
-        produto = produtos[(idx - 1) % len(produtos)]
+        product = produtos[(idx - 1) % len(produtos)]
         Lot.objects.create(
-            inquilino=produto.inquilino,
-            nome=f"Lote Seed {idx}",
-            produto=produto,
-            numero_lote=f"SEED-LOT-{idx:04d}",
-            validade=timezone.localdate() + timedelta(days=365 + idx),
-            quantidade_inicial=100,
+            tenant=product.tenant,
+            name=f"Lote Seed {idx}",
+            product=product,
+            lot_number=f"SEED-LOT-{idx:04d}",
+            expiration_date=timezone.localdate() + timedelta(days=365 + idx),
+            initial_quantity=100,
         )
 
     while total(Sale) < MIN_REGISTROS:
         idx = total(Sale) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        Sale.objects.create(inquilino=tenant)
+        Sale.objects.create(tenant=tenant)
 
     vendas = list(Sale.objects.order_by("id")[:MIN_REGISTROS])
     produtos_seed = list(Product.objects.order_by("id"))
 
-    for idx, venda in enumerate(vendas, start=1):
-        produto = None
+    for idx, sale in enumerate(vendas, start=1):
+        product = None
         for offset in range(len(produtos_seed)):
             candidato = produtos_seed[(idx - 1 + offset) % len(produtos_seed)]
-            if candidato.inquilino_id == venda.inquilino_id:
-                produto = candidato
+            if candidato.tenant_id == sale.tenant_id:
+                product = candidato
                 break
-        if produto is None:
+        if product is None:
             continue
 
-        if not SaleItem.objects.filter(venda=venda, produto=produto).exists():
+        if not SaleItem.objects.filter(sale=sale, product=product).exists():
             SaleItem.objects.create(
-                inquilino=venda.inquilino,
-                nome=f"Item Venda Seed {idx}",
-                venda=venda,
-                produto=produto,
-                quantidade=1,
+                tenant=sale.tenant,
+                name=f"Item Venda Seed {idx}",
+                sale=sale,
+                product=product,
+                quantity=1,
             )
 
     while total(SaleItem) < MIN_REGISTROS:
-        produto = Product.objects.order_by("id").first()
-        venda = (
-            Sale.objects.filter(inquilino_id=produto.inquilino_id)
-            .exclude(itens__produto=produto)
+        product = Product.objects.order_by("id").first()
+        sale = (
+            Sale.objects.filter(tenant_id=product.tenant_id)
+            .exclude(itens__product=product)
             .order_by("id")
             .first()
         )
-        if venda is None:
-            venda = Sale.objects.create(inquilino_id=produto.inquilino_id)
+        if sale is None:
+            sale = Sale.objects.create(tenant_id=product.tenant_id)
         SaleItem.objects.create(
-            inquilino=produto.inquilino,
-            nome=f"Item Extra Seed {total(SaleItem) + 1}",
-            venda=venda,
-            produto=produto,
-            quantidade=1,
+            tenant=product.tenant,
+            name=f"Item Extra Seed {total(SaleItem) + 1}",
+            sale=sale,
+            product=product,
+            quantity=1,
         )
 
     while total(InventoryMovement) < MIN_REGISTROS:
         idx = total(InventoryMovement) + 1
-        lote = Lot.objects.order_by("id").first()
+        lot = Lot.objects.order_by("id").first()
         InventoryMovement.objects.create(
-            inquilino=lote.inquilino,
-            nome=f"Movimento Seed {idx}",
-            lote=lote,
-            tipo=TipoMovimento.ENTRADA,
-            quantidade=1,
+            tenant=lot.tenant,
+            name=f"Movimento Seed {idx}",
+            lot=lot,
+            type=TipoMovimento.ENTRADA,
+            quantity=1,
         )
 
 
 def ensure_identidade(users):
     for idx, user in enumerate(users, start=1):
         ProfessionalProfile.objects.get_or_create(
-            usuario=user,
+            user=user,
             defaults={
-                "cargo": "Analista",
-                "registro_profissional": f"REG-SEED-{idx:04d}",
-                "departamento": "Laboratório",
+                "role": "Analista",
+                "professional_registration": f"REG-SEED-{idx:04d}",
+                "department": "Laboratório",
             },
         )
 
@@ -741,27 +741,27 @@ def ensure_notifications():
     while NotificationTemplate.objects.count() < MIN_REGISTROS:
         idx = NotificationTemplate.objects.count() + 1
         NotificationTemplate.objects.create(
-            nome=f"Template Seed {idx}",
-            conteudo=f"Conteúdo seed {idx}",
+            name=f"Template Seed {idx}",
+            content=f"Conteúdo seed {idx}",
         )
 
     while Notification.objects.count() < MIN_REGISTROS:
         idx = Notification.objects.count() + 1
         Notification.objects.create(
-            destinatario=f"destinatario{idx}@example.com",
-            canal="email",
-            mensagem=f"Mensagem seed {idx}",
-            enviada=idx % 2 == 0,
+            recipient=f"recipient{idx}@example.com",
+            channel="email",
+            message=f"Mensagem seed {idx}",
+            sent=idx % 2 == 0,
         )
 
     notificacoes = list(Notification.objects.order_by("id")[:MIN_REGISTROS])
     while DeliveryLog.objects.count() < MIN_REGISTROS:
         idx = DeliveryLog.objects.count() + 1
-        notificacao = notificacoes[(idx - 1) % len(notificacoes)]
+        notification = notificacoes[(idx - 1) % len(notificacoes)]
         DeliveryLog.objects.create(
-            notificacao=notificacao,
+            notification=notification,
             status="enviado",
-            resposta=f"Resposta seed {idx}",
+            response=f"Resposta seed {idx}",
         )
 
 

@@ -9,14 +9,14 @@ class DescriptionMixin(models.Model):
     ✔ evita textos sujos
     """
 
-    descricao = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
 
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
-        if self.descricao:
-            self.descricao = self.descricao.strip()
+        if self.description:
+            self.description = self.description.strip()
         super().save(*args, **kwargs)
 
 

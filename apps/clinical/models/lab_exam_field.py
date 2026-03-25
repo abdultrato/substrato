@@ -1,4 +1,4 @@
-# LOCAL: aplicativos/clinico/models/exame_campo.py
+# LOCAL: aplicativos/clinico/models/exam_field.py
 
 from decimal import Decimal
 
@@ -11,22 +11,31 @@ from core.models.base import CoreModel
 
 
 class LabExamField(PropagarInquilinoMixin, CoreModel):
-    prefixo = "CMP"
+    prefix = "CMP"
 
-    exame = models.ForeignKey(
+    exam = models.ForeignKey(
+
         "clinico.LabExam",
+
+        db_column="exame_id",
         on_delete=models.CASCADE,
         related_name="campos",
         verbose_name="Exame",
     )
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         max_length=20,
         choices=TipoResultado.choices,
         verbose_name="Tipo de parâmetro",
     )
 
-    unidade = models.CharField(
+    unit = models.CharField(
+
+        db_column="unidade",
+
         max_length=30,
         choices=UnidadePadrao.choices,
         default=UnidadePadrao.P_UL,
@@ -34,7 +43,8 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     )
 
     # intervalos normais
-    referencia_min = models.DecimalField(
+    reference_min = models.DecimalField(
+        db_column="referencia_min",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -42,7 +52,10 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
         verbose_name="Referência mínima",
     )
 
-    referencia_max = models.DecimalField(
+    reference_max = models.DecimalField(
+
+        db_column="referencia_max",
+
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -51,7 +64,8 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     )
 
     # limites críticos
-    critico_min = models.DecimalField(
+    critical_min = models.DecimalField(
+        db_column="critico_min",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -59,7 +73,10 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
         verbose_name="Valor crítico mínimo",
     )
 
-    critico_max = models.DecimalField(
+    critical_max = models.DecimalField(
+
+        db_column="critico_max",
+
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -68,7 +85,8 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     )
 
     # delta check
-    delta_max = models.DecimalField(
+    max_delta = models.DecimalField(
+        db_column="delta_max",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -79,10 +97,10 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     class Meta:
         db_table = "clinico_examecampo"
         verbose_name = "parâmetro"
-        verbose_name_plural = "parâmetros do exame"
+        verbose_name_plural = "parâmetros do exam"
 
     def __str__(self):
-        return self.nome
+        return self.name
 
     # =====================================================
     # INTERVALO DE REFERÊNCIA FORMATADO
@@ -97,47 +115,47 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
         >= 4.0
         <= 10.0
         """
-        if self.referencia_min is None and self.referencia_max is None:
+        if self.reference_min is None and self.reference_max is None:
             return None
 
-        if self.referencia_min is not None and self.referencia_max is not None:
-            return f"{self.referencia_min} - {self.referencia_max}"
+        if self.reference_min is not None and self.reference_max is not None:
+            return f"{self.reference_min} - {self.reference_max}"
 
-        if self.referencia_min is not None:
-            return f">= {self.referencia_min}"
+        if self.reference_min is not None:
+            return f">= {self.reference_min}"
 
-        if self.referencia_max is not None:
-            return f"<= {self.referencia_max}"
+        if self.reference_max is not None:
+            return f"<= {self.reference_max}"
         return None
 
     # =====================================================
     # INTERPRETAÇÃO BÁSICA
     # =====================================================
 
-    def interpret_result(self, valor):
-        if valor is None:
+    def interpret_result(self, value):
+        if value is None:
             return None
 
         try:
-            valor = Decimal(valor)
+            value = Decimal(value)
         except Exception:
             return None
 
         # valores críticos
-        if self.critico_min is not None and valor < self.critico_min:
+        if self.critical_min is not None and value < self.critical_min:
             return "↓↓"
 
-        if self.critico_max is not None and valor > self.critico_max:
+        if self.critical_max is not None and value > self.critical_max:
             return "↑↑"
 
         # intervalo normal
-        if self.referencia_min is not None and valor < self.referencia_min:
+        if self.reference_min is not None and value < self.reference_min:
             return "↓"
 
-        if self.referencia_max is not None and valor > self.referencia_max:
+        if self.reference_max is not None and value > self.reference_max:
             return "↑"
 
         return "N"
 
     referencia = reference
-    interpretar_resultado = interpret_result
+    interpretar_result = interpret_result

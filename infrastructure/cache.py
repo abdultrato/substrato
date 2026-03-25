@@ -16,23 +16,34 @@ class CacheService:
 
     @staticmethod
     def get(key):
-        return cache.get(key)
+        try:
+            return cache.get(key)
+        except Exception:
+            return None
 
     @staticmethod
     def set(key, value, timeout=DEFAULT_TIMEOUT):
-        cache.set(key, value, timeout)
+        try:
+            cache.set(key, value, timeout)
+        except Exception:
+            return None
+        return value
 
     @staticmethod
     def delete(key):
-        cache.delete(key)
+        try:
+            cache.delete(key)
+        except Exception:
+            return None
+        return key
 
     @staticmethod
     def remember(key, func, timeout=DEFAULT_TIMEOUT):
-        value = cache.get(key)
+        value = CacheService.get(key)
 
         if value is None:
             value = func()
-            cache.set(key, value, timeout)
+            CacheService.set(key, value, timeout)
 
         return value
 
@@ -55,19 +66,30 @@ class TenantCache:
 
     @staticmethod
     def get(tenant_id: int, suffix: str):
-        return cache.get(TenantCache._key(tenant_id, suffix))
+        try:
+            return cache.get(TenantCache._key(tenant_id, suffix))
+        except Exception:
+            return None
 
     @staticmethod
     def set(tenant_id: int, suffix: str, value, timeout=DEFAULT_TIMEOUT):
-        cache.set(
-            TenantCache._key(tenant_id, suffix),
-            value,
-            timeout,
-        )
+        try:
+            cache.set(
+                TenantCache._key(tenant_id, suffix),
+                value,
+                timeout,
+            )
+        except Exception:
+            return None
+        return value
 
     @staticmethod
     def delete(tenant_id: int, suffix: str):
-        cache.delete(TenantCache._key(tenant_id, suffix))
+        try:
+            cache.delete(TenantCache._key(tenant_id, suffix))
+        except Exception:
+            return None
+        return suffix
 
     @staticmethod
     def incr(tenant_id: int, suffix: str, amount=1, timeout=DEFAULT_TIMEOUT):
@@ -78,12 +100,15 @@ class TenantCache:
         key = TenantCache._key(tenant_id, suffix)
         try:
             conn = get_redis_connection("default")
-        except NotImplementedError:
+        except Exception:
             # Fallback para LocMemCache quando Redis não estiver disponível.
             try:
                 return cache.incr(key, amount)
             except Exception:
-                cache.set(key, amount, timeout)
+                try:
+                    cache.set(key, amount, timeout)
+                except Exception:
+                    return amount
                 return amount
 
         with conn.pipeline() as pipe:
@@ -106,9 +131,12 @@ class TenantCache:
             except Exception:
                 pipe.reset()
                 try:
-                    # Pode falhar se a chave foi expirada entre o watch e o incr.
+                    # Pode falhar se a key foi expirada entre o watch e o incr.
                     return cache.incr(key, amount)
                 except Exception:
-                    # Se a chave não existir, inicializa e devolve o valor inicial.
-                    cache.set(key, amount, timeout)
+                    # Se a key não existir, inicializa e devolve o value inicial.
+                    try:
+                        cache.set(key, amount, timeout)
+                    except Exception:
+                        return amount
                     return amount

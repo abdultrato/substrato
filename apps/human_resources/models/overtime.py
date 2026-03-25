@@ -11,46 +11,59 @@ from core.models.base import NoNameCoreModel
 
 class Overtime(NoNameCoreModel):
     """
-    Registro de horas extras (MVP).
+    Registro de hours extras (MVP).
     """
 
-    prefixo = "HEX"
+    prefix = "HEX"
 
-    funcionario = models.ForeignKey(
+    employee = models.ForeignKey(
+
         "recursos_humanos.Employee",
+
+        db_column="funcionario_id",
         on_delete=models.CASCADE,
-        related_name="horas_extras",
+        related_name="hours_extras",
         db_index=True,
     )
 
-    data = models.DateField(default=timezone.now, db_index=True)
-    horas = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.00"))
-    multiplicador = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("1.50"))
-    observacoes = models.CharField(max_length=255, blank=True, default="")
+    date = models.DateField(
+
+        db_column="data",
+
+        default=timezone.now, db_index=True)
+    hours = models.DecimalField(
+        db_column="horas",
+        max_digits=6, decimal_places=2, default=Decimal("0.00"))
+    multiplier = models.DecimalField(
+        db_column="multiplicador",
+        max_digits=4, decimal_places=2, default=Decimal("1.50"))
+    notes = models.CharField(
+        db_column="observacoes",
+        max_length=255, blank=True, default="")
 
     class Meta:
         db_table = "recursos_humanos_horaextra"
         verbose_name = "Hora Extra"
         verbose_name_plural = "Horas Extras"
-        ordering = ["-data", "-criado_em"]
+        ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "funcionario", "data"]),
+            models.Index(fields=["tenant", "employee", "date"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError({"funcionario": "Funcionário e hora extra devem pertencer ao mesmo inquilino."})
+        if self.employee_id and self.tenant_id and self.employee.tenant_id != self.tenant_id:
+            raise ValidationError({"employee": "Funcionário e hora extra devem pertencer ao mesmo tenant."})
 
-        if self.horas is not None and self.horas < Decimal("0.00"):
-            raise ValidationError({"horas": "Horas inválidas."})
+        if self.hours is not None and self.hours < Decimal("0.00"):
+            raise ValidationError({"hours": "Horas inválidas."})
 
-        if self.multiplicador is not None and self.multiplicador <= Decimal("0.00"):
-            raise ValidationError({"multiplicador": "Multiplicador inválido."})
+        if self.multiplier is not None and self.multiplier <= Decimal("0.00"):
+            raise ValidationError({"multiplier": "Multiplicador inválido."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.funcionario_id:
-            self.inquilino_id = self.funcionario.inquilino_id
+        if not self.tenant_id and self.employee_id:
+            self.tenant_id = self.employee.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)

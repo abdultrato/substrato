@@ -11,7 +11,7 @@ class WorkSchedule(NoNameCoreModel):
     Horário de trabalho semanal por funcionário (MVP).
     """
 
-    prefixo = "HRT"
+    prefix = "HRT"
 
     class DiaSemana(models.IntegerChoices):
         SEGUNDA = 0, "Segunda"
@@ -22,38 +22,51 @@ class WorkSchedule(NoNameCoreModel):
         SABADO = 5, "Sábado"
         DOMINGO = 6, "Domingo"
 
-    funcionario = models.ForeignKey(
+    employee = models.ForeignKey(
+
         "recursos_humanos.Employee",
+
+        db_column="funcionario_id",
         on_delete=models.CASCADE,
         related_name="horarios",
         db_index=True,
     )
 
-    dia_semana = models.IntegerField(choices=DiaSemana.choices, db_index=True)
-    hora_inicio = models.TimeField()
-    hora_fim = models.TimeField()
-    ativo = models.BooleanField(default=True, db_index=True)
+    weekday = models.IntegerField(
+
+        db_column="dia_semana",
+
+        choices=DiaSemana.choices, db_index=True)
+    start_time = models.TimeField(
+        db_column="hora_inicio",
+        )
+    end_time = models.TimeField(
+        db_column="hora_fim",
+        )
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
 
     class Meta:
         db_table = "recursos_humanos_horariotrabalho"
         verbose_name = "Horário de Trabalho"
         verbose_name_plural = "Horários de Trabalho"
-        ordering = ["funcionario", "dia_semana", "hora_inicio"]
+        ordering = ["employee", "weekday", "start_time"]
         indexes = [
-            models.Index(fields=["inquilino", "funcionario", "dia_semana"]),
+            models.Index(fields=["tenant", "employee", "weekday"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError({"funcionario": "Funcionário e horário devem pertencer ao mesmo inquilino."})
+        if self.employee_id and self.tenant_id and self.employee.tenant_id != self.tenant_id:
+            raise ValidationError({"employee": "Funcionário e horário devem pertencer ao mesmo tenant."})
 
-        if self.hora_inicio and self.hora_fim and self.hora_inicio >= self.hora_fim:
-            raise ValidationError({"hora_fim": "Hora fim deve ser maior que hora início."})
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError({"end_time": "Hora fim deve ser maior que hora início."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.funcionario_id:
-            self.inquilino_id = self.funcionario.inquilino_id
+        if not self.tenant_id and self.employee_id:
+            self.tenant_id = self.employee.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)

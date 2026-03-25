@@ -24,19 +24,19 @@ logger = logging.getLogger("tenant_audit")
 
 
 def register_event(
-    usuario,
+    user,
     tenant_id,
-    caminho,
-    metodo,
+    path,
+    method,
     status_code,
 ):
     logger.info(
         "AUDIT",
         extra={
-            "usuario_id": getattr(usuario, "id", None),
+            "user_id": getattr(user, "id", None),
             "tenant_id": tenant_id,
-            "endpoint": caminho,
-            "metodo": metodo,
+            "endpoint": path,
+            "method": method,
             "status": status_code,
         },
     )

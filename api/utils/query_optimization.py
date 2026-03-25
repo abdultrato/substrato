@@ -87,7 +87,7 @@ def values_only(queryset, *fields):
 
 def safe_count(queryset, limit=10000):
     """
-    Limita o count a um valor máximo.
+    Limita o count a um value máximo.
     """
     count = queryset.count()
     return min(count, limit)

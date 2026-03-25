@@ -23,28 +23,28 @@ class ResultInterpreter:
         report_color = "preto"
         critical_alert = False
 
-        if reference.critico_baixo is not None and value < reference.critico_baixo:
+        if reference.critical_low is not None and value < reference.critical_low:
             status = "CRITICO_BAIXO"
             report_color = "vermelho"
             critical_alert = True
 
-        elif reference.critico_alto is not None and value > reference.critico_alto:
+        elif reference.critical_high is not None and value > reference.critical_high:
             status = "CRITICO_ALTO"
             report_color = "vermelho"
             critical_alert = True
 
-        elif reference.valor_minimo is not None and value < reference.valor_minimo:
+        elif reference.minimum_value is not None and value < reference.minimum_value:
             status = "BAIXO"
             report_color = "azul"
 
-        elif reference.valor_maximo is not None and value > reference.valor_maximo:
+        elif reference.maximum_value is not None and value > reference.maximum_value:
             status = "ALTO"
             report_color = "laranja"
 
         return {
-            "status_clinico": status,
-            "cor_laudo": report_color,
-            "alerta_critico": critical_alert,
+            "clinical_status": status,
+            "report_color": report_color,
+            "critical_alert": critical_alert,
         }
 
 

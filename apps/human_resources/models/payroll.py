@@ -15,109 +15,140 @@ class Payroll(NoNameCoreModel):
     Monthly payroll per employee (MVP).
     """
 
-    prefixo = "FPG"
+    prefix = "FPG"
 
-    funcionario = models.ForeignKey(
+    employee = models.ForeignKey(
+
         "recursos_humanos.Employee",
+
+        db_column="funcionario_id",
         on_delete=models.CASCADE,
-        related_name="folhas_pagamento",
+        related_name="folhas_payment",
         db_index=True,
     )
 
-    ano = models.PositiveSmallIntegerField(db_index=True)
-    mes = models.PositiveSmallIntegerField(db_index=True)
+    year = models.PositiveSmallIntegerField(
 
-    salario_nominal = MoneyField(default=Decimal("0.00"))
-    horas_base_mes = models.PositiveSmallIntegerField(default=176)
-    multiplicador_hora_extra = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("1.50"))
+        db_column="ano",
 
-    horas_extras_apuradas = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0.00"))
-    valor_hora = models.DecimalField(max_digits=12, decimal_places=4, default=Decimal("0.0000"))
-    valor_horas_extras = MoneyField(default=Decimal("0.00"))
-    salario_total = MoneyField(default=Decimal("0.00"))
+        db_index=True)
+    month = models.PositiveSmallIntegerField(
+        db_column="mes",
+        db_index=True)
 
-    fechado = models.BooleanField(default=False, db_index=True)
+    nominal_salary = MoneyField(
+
+        db_column="salario_nominal",
+
+        default=Decimal("0.00"))
+    base_month_hours = models.PositiveSmallIntegerField(
+        db_column="horas_base_mes",
+        default=176)
+    overtime_hour_multiplier = models.DecimalField(
+        db_column="multiplicador_hora_extra",
+        max_digits=4, decimal_places=2, default=Decimal("1.50"))
+
+    calculated_overtime_hours = models.DecimalField(
+
+        db_column="horas_extras_apuradas",
+
+        max_digits=8, decimal_places=2, default=Decimal("0.00"))
+    hourly_value = models.DecimalField(
+        db_column="valor_hora",
+        max_digits=12, decimal_places=4, default=Decimal("0.0000"))
+    overtime_value = MoneyField(
+        db_column="valor_horas_extras",
+        default=Decimal("0.00"))
+    total_salary = MoneyField(
+        db_column="salario_total",
+        default=Decimal("0.00"))
+
+    closed = models.BooleanField(
+
+        db_column="fechado",
+
+        default=False, db_index=True)
 
     class Meta:
         db_table = "recursos_humanos_folhapagamento"
         verbose_name = "Folha de Pagamento"
         verbose_name_plural = "Folhas de Pagamento"
-        ordering = ["-ano", "-mes", "-criado_em"]
+        ordering = ["-year", "-month", "-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "funcionario", "ano", "mes"],
-                name="uniq_folha_por_funcionario_mes",
+                fields=["tenant", "employee", "year", "month"],
+                name="uniq_folha_por_employee_month",
             )
         ]
         indexes = [
-            models.Index(fields=["inquilino", "ano", "mes"]),
-            models.Index(fields=["inquilino", "funcionario", "ano", "mes"]),
+            models.Index(fields=["tenant", "year", "month"]),
+            models.Index(fields=["tenant", "employee", "year", "month"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError({"funcionario": "Funcionário e folha devem pertencer ao mesmo inquilino."})
+        if self.employee_id and self.tenant_id and self.employee.tenant_id != self.tenant_id:
+            raise ValidationError({"employee": "Funcionário e folha devem pertencer ao mesmo tenant."})
 
-        if not (1 <= int(self.mes or 0) <= 12):
-            raise ValidationError({"mes": "Mês inválido (1-12)."})
+        if not (1 <= int(self.month or 0) <= 12):
+            raise ValidationError({"month": "Mês inválido (1-12)."})
 
-        if self.salario_nominal is not None and self.salario_nominal < Decimal("0.00"):
-            raise ValidationError({"salario_nominal": "Salário nominal inválido."})
+        if self.nominal_salary is not None and self.nominal_salary < Decimal("0.00"):
+            raise ValidationError({"nominal_salary": "Salário nominal inválido."})
 
-        if self.horas_base_mes <= 0:
-            raise ValidationError({"horas_base_mes": "Horas base do mês deve ser > 0."})
+        if self.base_month_hours <= 0:
+            raise ValidationError({"base_month_hours": "Horas base do mês deve ser > 0."})
 
-        if self.multiplicador_hora_extra <= Decimal("0.00"):
-            raise ValidationError({"multiplicador_hora_extra": "Multiplicador de hora extra inválido."})
+        if self.overtime_hour_multiplier <= Decimal("0.00"):
+            raise ValidationError({"overtime_hour_multiplier": "Multiplicador de hora extra inválido."})
 
     def _calculate_overtime_hours(self) -> Decimal:
         from .overtime import Overtime
 
         qs = Overtime.objects.filter(
-            inquilino=self.inquilino,
-            funcionario=self.funcionario,
-            data__year=self.ano,
-            data__month=self.mes,
-            deletado=False,
+            tenant=self.tenant,
+            employee=self.employee,
+            date__year=self.year,
+            date__month=self.month,
+            deleted=False,
         )
-        raw = qs.aggregate(total=Sum("horas")).get("total") or Decimal("0.00")
+        raw = qs.aggregate(total=Sum("hours")).get("total") or Decimal("0.00")
         return Decimal(raw)
 
     def recalculate(self):
         # If not provided, synchronize salary/base hours from the employee.
-        if self.funcionario_id:
-            if self.salario_nominal is None:
+        if self.employee_id:
+            if self.nominal_salary is None:
                 # Includes promotions and salary increases in the effective salary.
-                salario_atual = getattr(self.funcionario, "salario_atual", None)
-                self.salario_nominal = salario_atual if salario_atual is not None else self.funcionario.salario_nominal
-            if not self.horas_base_mes:
-                self.horas_base_mes = self.funcionario.horas_base_mes or 176
+                salario_atual = getattr(self.employee, "salario_atual", None)
+                self.nominal_salary = salario_atual if salario_atual is not None else self.employee.nominal_salary
+            if not self.base_month_hours:
+                self.base_month_hours = self.employee.base_month_hours or 176
 
-        horas_extras = self._calculate_overtime_hours() if self.funcionario_id and self.inquilino_id else Decimal("0.00")
-        self.horas_extras_apuradas = horas_extras
+        hours_extras = self._calculate_overtime_hours() if self.employee_id and self.tenant_id else Decimal("0.00")
+        self.calculated_overtime_hours = hours_extras
 
-        valor_hora = Decimal("0.0000")
-        if self.horas_base_mes and self.salario_nominal is not None:
-            valor_hora = (Decimal(self.salario_nominal) / Decimal(self.horas_base_mes)).quantize(Decimal("0.0000"))
-        self.valor_hora = valor_hora
+        hourly_value = Decimal("0.0000")
+        if self.base_month_hours and self.nominal_salary is not None:
+            hourly_value = (Decimal(self.nominal_salary) / Decimal(self.base_month_hours)).quantize(Decimal("0.0000"))
+        self.hourly_value = hourly_value
 
-        valor_extra = (horas_extras * valor_hora * Decimal(self.multiplicador_hora_extra)).quantize(Decimal("0.01"))
-        self.valor_horas_extras = valor_extra
+        value_extra = (hours_extras * hourly_value * Decimal(self.overtime_hour_multiplier)).quantize(Decimal("0.01"))
+        self.overtime_value = value_extra
 
-        total = (Decimal(self.salario_nominal) + valor_extra).quantize(Decimal("0.01"))
-        self.salario_total = total
+        total = (Decimal(self.nominal_salary) + value_extra).quantize(Decimal("0.01"))
+        self.total_salary = total
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.funcionario_id:
-            self.inquilino_id = self.funcionario.inquilino_id
+        if not self.tenant_id and self.employee_id:
+            self.tenant_id = self.employee.tenant_id
         # Always recalculate to keep the aggregate consistent.
         self.recalculate()
         self.full_clean()
         return super().save(*args, **kwargs)
 
 
-Payroll._apuracao_horas_extras = Payroll._calculate_overtime_hours
+Payroll._apuracao_hours_extras = Payroll._calculate_overtime_hours
 Payroll.recalcular = Payroll.recalculate
 

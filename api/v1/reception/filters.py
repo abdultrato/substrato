@@ -6,17 +6,17 @@ class ReceptionCheckinFilter(SafeFilterSet):
     class Meta:
         model = ReceptionCheckin
         fields = [
-            "inquilino",
-            "paciente",
-            "requisicao",
-            "fatura",
-            "atendente",
-            "prioridade",
-            "estado",
-            "chegou_em",
-            "chamado_em",
-            "concluido_em",
-            "criado_em",
+            "tenant",
+            "patient",
+            "request",
+            "invoice",
+            "attendant",
+            "priority",
+            "status",
+            "arrived_at",
+            "called_at",
+            "completed_at",
+            "created_at",
         ]
 
 

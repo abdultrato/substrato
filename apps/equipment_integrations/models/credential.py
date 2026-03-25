@@ -18,19 +18,22 @@ def _hash_key(raw_key: str) -> str:
     """
 
     pepper = getattr(settings, "SECRET_KEY", "") or ""
-    data = (pepper + raw_key).encode("utf-8")
-    return hashlib.sha256(data).hexdigest()
+    date = (pepper + raw_key).encode("utf-8")
+    return hashlib.sha256(date).hexdigest()
 
 
 class IntegrationCredential(NoNameCoreModel):
-    prefixo = "KEY"
+    prefix = "KEY"
 
     class Scope(models.TextChoices):
         WORKLIST_READ = "WORKLIST_READ", "Ler worklist"
         RESULT_WRITE = "RESULT_WRITE", "Enviar resultados"
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "integracoes_equipamentos.IntegrationEquipment",
+
+        db_column="equipamento_id",
         on_delete=models.CASCADE,
         related_name="credenciais",
         db_index=True,
@@ -38,7 +41,7 @@ class IntegrationCredential(NoNameCoreModel):
 
     label = models.CharField(max_length=120, blank=True, default="", db_index=True)
 
-    # Ajuda a identificar sem expor chave.
+    # Ajuda a identificar sem expor key.
     key_prefix = models.CharField(max_length=12, blank=True, default="", db_index=True)
     key_last4 = models.CharField(max_length=4, blank=True, default="")
 
@@ -46,17 +49,23 @@ class IntegrationCredential(NoNameCoreModel):
 
     scopes = models.JSONField(default=list, blank=True)
 
-    ativo = models.BooleanField(default=True, db_index=True)
-    revogada_em = models.DateTimeField(null=True, blank=True)
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, db_index=True)
+    revoked_at = models.DateTimeField(
+        db_column="revogada_em",
+        null=True, blank=True)
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaocredencial"
         verbose_name = "Credencial (Equipamento)"
         verbose_name_plural = "Credenciais (Equipamentos)"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento"]),
-            models.Index(fields=["equipamento", "ativo"]),
+            models.Index(fields=["tenant", "equipment"]),
+            models.Index(fields=["equipment", "active"]),
         ]
 
     @classmethod
@@ -73,32 +82,32 @@ class IntegrationCredential(NoNameCoreModel):
         s = list(scopes) if scopes is not None else [cls.Scope.WORKLIST_READ, cls.Scope.RESULT_WRITE]
 
         obj = cls.objects.create(
-            inquilino=equipment.inquilino,
-            equipamento=equipment,
+            tenant=equipment.tenant,
+            equipment=equipment,
             label=label or "",
             key_prefix=key[:12],
             key_last4=key[-4:],
             key_hash=_hash_key(key),
             scopes=s,
-            ativo=True,
+            active=True,
         )
         return obj, key
 
     def clean(self):
         super().clean()
 
-        if self.revogada_em and self.ativo:
-            raise ValidationError({"ativo": "Credencial revogada não pode ficar ativa."})
+        if self.revoked_at and self.active:
+            raise ValidationError({"active": "Credencial revogada não pode ficar active."})
 
         if self.scopes is None:
             self.scopes = []
 
     def revoke(self):
-        if self.revogada_em:
+        if self.revoked_at:
             return
-        self.ativo = False
-        self.revogada_em = timezone.now()
-        self.save(update_fields=["ativo", "revogada_em"])
+        self.active = False
+        self.revoked_at = timezone.now()
+        self.save(update_fields=["active", "revoked_at"])
 
     def has_scope(self, scope: str) -> bool:
         return scope in (self.scopes or [])
@@ -108,10 +117,10 @@ class IntegrationCredential(NoNameCoreModel):
         if not raw_key:
             return None
         h = _hash_key(raw_key)
-        return cls.objects.filter(key_hash=h, ativo=True, deletado=False).select_related("equipamento").first()
+        return cls.objects.filter(key_hash=h, active=True, deleted=False).select_related("equipment").first()
 
 
 IntegrationCredential.gerar = IntegrationCredential.generate
 IntegrationCredential.revogar = IntegrationCredential.revoke
 IntegrationCredential.possui_scope = IntegrationCredential.has_scope
-IntegrationCredential.validar_chave = IntegrationCredential.validate_key
+IntegrationCredential.validar_key = IntegrationCredential.validate_key

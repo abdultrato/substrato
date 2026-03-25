@@ -13,13 +13,13 @@ class ProcessAuthorizationService:
         if authorization.status != authorization.Status.PENDENTE:
             return "ignored"
 
-        adapter = InsurerIntegrationService.get_adapter(authorization.plano.seguradora)
-        response = adapter.query_authorization({"requisicao_id": authorization.requisicao_id})
+        adapter = InsurerIntegrationService.get_adapter(authorization.plan.insurer)
+        response = adapter.query_authorization({"request_id": authorization.request_id})
 
         if response["status"] == "APROVADA":
             authorization.mark_response(
                 ProcedureAuthorization.Status.APROVADA,
-                authorization_code=response.get("codigo"),
+                authorization_code=response.get("code"),
             )
         else:
             authorization.mark_response(ProcedureAuthorization.Status.NEGADA)

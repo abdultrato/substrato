@@ -11,13 +11,13 @@ class GroupsPermissionsView(APIView):
     def get(self, request):
         groups = Group.objects.all()
 
-        data = []
+        date = []
         for group in groups:
-            data.append(
+            date.append(
                 {
                     "grupo": group.name,
                     "permissoes": list(group.permissions.values_list("codename", flat=True)),
                 }
             )
 
-        return Response(data)
+        return Response(date)

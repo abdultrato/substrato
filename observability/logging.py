@@ -8,7 +8,7 @@ class APILoggingMiddleware:
     """
     Logging de requisições API.
 
-    ✔ tempo de resposta
+    ✔ tempo de response
     ✔ status code
     ✔ método e path
     """
@@ -35,4 +35,4 @@ class APILoggingMiddleware:
 
 
 def enrich_log(record, request):
-    record.tenant_id = getattr(request, "inquilino", None)
+    record.tenant_id = getattr(request, "tenant", None)

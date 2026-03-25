@@ -6,14 +6,14 @@ from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
 
 CORE_READ_ONLY_FIELDS = (
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
 )
 
 
@@ -43,16 +43,16 @@ class FinancialReconciliationSerializer(serializers.ModelSerializer):
         model = FinancialReconciliation
         fields = "__all__"
         read_only_fields = (
-            "criado_em",
-            "valor_registrado",
-            "divergencia",
-            "conciliado",
+            "created_at",
+            "value_registrado",
+            "discrepancy",
+            "reconciled",
         )
 
 
 SERIALIZER_MAP = {
-    "conta": AccountSerializer,
+    "account": AccountSerializer,
     "conciliacaofinanceira": FinancialReconciliationSerializer,
-    "lancamento": LedgerEntrySerializer,
+    "entry": LedgerEntrySerializer,
     "movimento": LedgerMovementSerializer,
 }

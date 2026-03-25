@@ -26,7 +26,7 @@ class S3StorageService:
 
     def upload_file(self, file_obj, key: str, content_type=None):
         """
-        Upload de arquivo.
+        Upload de file.
         """
         extra = {}
         if content_type:
@@ -43,13 +43,13 @@ class S3StorageService:
 
     def download_file(self, key: str):
         """
-        Download de arquivo.
+        Download de file.
         """
         return self.client.get_object(Bucket=self.bucket, Key=key)["Body"].read()
 
     def delete_file(self, key: str):
         """
-        Remove arquivo.
+        Remove file.
         """
         self.client.delete_object(Bucket=self.bucket, Key=key)
 

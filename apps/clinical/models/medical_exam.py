@@ -81,10 +81,10 @@ TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO = {
 }
 
 
-def allowed_result_types_for_method(metodo):
-    if not metodo:
+def allowed_result_types_for_method(method):
+    if not method:
         return set(TipoResultadoExameMedico.values)
-    tipos = TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO.get(metodo)
+    tipos = TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO.get(method)
     if tipos:
         return set(tipos)
     return set(TipoResultadoExameMedico.values)
@@ -96,23 +96,32 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
     Segue o mesmo formato de Exame.
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "EXM"
+    fonte_tenant = "patient"
+    prefix = "EXM"
 
-    trl_horas = models.PositiveIntegerField(
-        verbose_name="Tempo de resposta (em horas)",
+    turnaround_hours = models.PositiveIntegerField(
+
+        db_column="trl_horas",
+
+        verbose_name="Tempo de response (em hours)",
         default=24,
-        help_text="Tempo de resposta em horas.",
+        help_text="Tempo de response em hours.",
     )
 
-    preco = MoneyField(
-        verbose_name="Preço do exame médico",
+    price = MoneyField(
+
+        db_column="preco",
+
+        verbose_name="Preço do exam médico",
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="Preço do exame médico.",
+        help_text="Preço do exam médico.",
     )
 
-    iva_percentual = models.DecimalField(
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
@@ -121,22 +130,25 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao exame médico (0 a 100).",
+        help_text="Taxa de IVA aplicada ao exam médico (0 a 100).",
     )
 
-    aplica_iva_por_padrao = models.BooleanField(
+    applies_vat_by_default = models.BooleanField(
+
+        db_column="aplica_iva_por_padrao",
+
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este exame normalmente não deve ter IVA.",
+        help_text="Desmarque se este exam normalmente não deve ter IVA.",
     )
 
-    metodo = MedicalExamMethodField(
-        verbose_name="Método do exame (imagem/diagnóstico)",
+    method = MedicalExamMethodField(
+        verbose_name="Método do exam (imagem/diagnóstico)",
         db_index=True,
     )
 
-    setor = MedicalExamSectorField(
-        verbose_name="Setor do exame (imagem/diagnóstico)",
+    sector = MedicalExamSectorField(
+        verbose_name="Setor do exam (imagem/diagnóstico)",
         db_index=True,
     )
 
@@ -144,99 +156,105 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
         db_table = "clinico_examemedico"
         verbose_name = "Exame médico"
         verbose_name_plural = "Exames médicos"
-        ordering = ["nome", "criado_em"]
+        ordering = ["name", "created_at"]
         indexes = [
-            models.Index(fields=["setor", "deletado"]),
-            models.Index(fields=["metodo"]),
+            models.Index(fields=["sector", "deleted"]),
+            models.Index(fields=["method"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["setor", "nome"],
-                condition=Q(deletado=False),
-                name="unique_nome_exame_medico_por_setor_nao_deletado",
+                fields=["sector", "name"],
+                condition=Q(deleted=False),
+                name="unique_name_medical_exam_por_sector_nao_deleted",
             ),
             models.CheckConstraint(
-                check=Q(trl_horas__gt=0),
-                name="exm_trl_horas_positivo",
+                check=Q(turnaround_hours__gt=0),
+                name="exm_turnaround_hours_positivo",
             ),
             models.CheckConstraint(
-                check=Q(preco__gte=0),
-                name="exm_preco_nao_negativo",
+                check=Q(price__gte=0),
+                name="exm_price_nao_negativo",
             ),
         ]
 
     def clean(self):
         super().clean()
         erros = {}
-        if not self.nome:
-            erros["nome"] = "O exame deve possuir um nome."
-        if self.preco is None:
-            erros["preco"] = "O exame deve possuir um preço."
-        if self.preco == Decimal("0.00"):
-            erros["preco"] = "Exame não pode ter preço zero."
-        if self.trl_horas <= 0:
-            erros["trl_horas"] = "TRL deve ser maior que zero."
+        if not self.name:
+            erros["name"] = "O exam deve possuir um name."
+        if self.price is None:
+            erros["price"] = "O exam deve possuir um preço."
+        if self.price == Decimal("0.00"):
+            erros["price"] = "Exame não pode ter preço zero."
+        if self.turnaround_hours <= 0:
+            erros["turnaround_hours"] = "TRL deve ser maior que zero."
         if erros:
             raise ValidationError(erros)
 
     @property
     def allowed_result_types(self):
-        return allowed_result_types_for_method(self.metodo)
+        return allowed_result_types_for_method(self.method)
 
     @property
     def registered_result_types(self):
         if not self.pk:
             return self.allowed_result_types
-        tipos = set(self.campos.values_list("tipo", flat=True))
+        tipos = set(self.campos.values_list("type", flat=True))
         return tipos or self.allowed_result_types
 
     def __str__(self):
-        return f"{self.nome or 'exame médico sem nome'}"
+        return f"{self.name or 'exam médico sem name'}"
 
-    tipos_resultado_permitidos = allowed_result_types
-    tipos_resultado_cadastrados = registered_result_types
+    tipos_result_permitidos = allowed_result_types
+    tipos_result_cadastrados = registered_result_types
 
 
 class MedicalExamField(PropagarInquilinoMixin, CoreModel):
-    prefixo = "EMC"
+    prefix = "EMC"
 
-    exame = models.ForeignKey(
+    exam = models.ForeignKey(
+
         "clinico.MedicalExam",
+
+        db_column="exame_id",
         on_delete=models.CASCADE,
         related_name="campos",
         verbose_name="Exame médico",
     )
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         max_length=20,
         choices=TipoResultadoExameMedico.choices,
-        verbose_name="Tipo de parâmetro/arquivo",
+        verbose_name="Tipo de parâmetro/file",
     )
 
     class Meta:
         db_table = "clinico_examemedicocampo"
-        verbose_name = "parâmetro de exame médico"
-        verbose_name_plural = "parâmetros de exame médico"
+        verbose_name = "parâmetro de exam médico"
+        verbose_name_plural = "parâmetros de exam médico"
 
     def clean(self):
         super().clean()
-        if self.exame_id and self.tipo:
-            permitidos = self.exame.allowed_result_types
-            if self.tipo not in permitidos:
-                metodo = self.exame.get_metodo_display() or self.exame.metodo
+        if self.exam_id and self.type:
+            permitidos = self.exam.allowed_result_types
+            if self.type not in permitidos:
+                method = self.exam.get_method_display() or self.exam.method
                 permitidos_fmt = ", ".join(sorted(permitidos))
                 raise ValidationError(
                     {
-                        "tipo": (
-                            f"Tipo não permitido para o método {metodo}. "
+                        "type": (
+                            f"Tipo não permitido para o método {method}. "
                             f"Permitidos: {permitidos_fmt}."
                         )
                     }
                 )
 
     def __str__(self):
-        return self.nome
+        return self.name
 
 
-tipos_resultado_permitidos_para_metodo = allowed_result_types_for_method
+tipos_result_permitidos_para_method = allowed_result_types_for_method
 

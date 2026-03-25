@@ -8,10 +8,10 @@ class Phone:
         if len(sanitized_number) < 8:
             raise ValueError("Telefone inválido.")
 
-        self.numero = sanitized_number
+        self.number = sanitized_number
 
     def __str__(self):
-        return self.numero
+        return self.number
 
 
 Telefone = Phone

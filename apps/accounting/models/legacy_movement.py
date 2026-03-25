@@ -12,32 +12,40 @@ class LegacyMovement(CoreModel):
     Linha de movimentação legado (débito/crédito).
     """
 
-    prefixo = "MOV"
+    prefix = "MOV"
 
-    lancamento = models.ForeignKey(
+    entry = models.ForeignKey(
+
         "contabilidade.LegacyEntry",
+
+        db_column="lancamento_id",
         verbose_name="Lançamento",
         on_delete=models.CASCADE,
         related_name="movimentos",
         db_index=True,
     )
-    conta = models.ForeignKey(
+    account = models.ForeignKey(
         "contabilidade.Account",
+        db_column="conta_id",
         verbose_name="Conta",
         on_delete=models.PROTECT,
         related_name="movimentos",
         db_index=True,
     )
 
-    debito = models.DecimalField(
+    debit = models.DecimalField(
+
         "Débito",
+
+        db_column="debito",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    credito = models.DecimalField(
+    credit = models.DecimalField(
         "Crédito",
+        db_column="credito",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -45,32 +53,33 @@ class LegacyMovement(CoreModel):
     )
 
     def __init__(self, *args, **kwargs):
-        valor = kwargs.pop("valor", None)
-        direcao = kwargs.get("debito")
+        value = kwargs.pop("value", None)
+        direction = kwargs.get("debit")
 
-        if valor is not None and isinstance(direcao, bool):
-            valor_decimal = Decimal(valor)
-            if direcao:
-                kwargs["debito"] = valor_decimal
-                kwargs["credito"] = Decimal("0.00")
+        if value is not None and isinstance(direction, bool):
+            value_decimal = Decimal(value)
+            if direction:
+                kwargs["debit"] = value_decimal
+                kwargs["credit"] = Decimal("0.00")
             else:
-                kwargs["debito"] = Decimal("0.00")
-                kwargs["credito"] = valor_decimal
+                kwargs["debit"] = Decimal("0.00")
+                kwargs["credit"] = value_decimal
 
         super().__init__(*args, **kwargs)
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "contabilidade_movimento"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "lancamento"]),
-            models.Index(fields=["inquilino", "conta"]),
+            models.Index(fields=["tenant", "entry"]),
+            models.Index(fields=["tenant", "account"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.debito and self.credito:
+        if self.debit and self.credit:
             raise ValidationError("Movimento não pode ter débito e crédito ao mesmo tempo.")
 
     def __str__(self) -> str:
-        return f"{self.conta_id} D{self.debito} C{self.credito}"
+        return f"{self.account_id} D{self.debit} C{self.credit}"

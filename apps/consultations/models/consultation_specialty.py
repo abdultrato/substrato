@@ -12,18 +12,29 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class ConsultationSpecialty(CoreModel):
     """
-    Especialidade / tipo de consulta com preço base.
+    Especialidade / type de consultation com preço base.
 
     O frontend usa esta tabela como "choices" na marcação.
     """
 
-    prefixo = "ESP"
+    prefix = "ESP"
 
-    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
+    description = models.TextField(
 
-    preco_base = MoneyField(verbose_name="Preço base", default=Decimal("0.00"))
+        db_column="descricao",
 
-    iva_percentual = models.DecimalField(
+        verbose_name="Descrição", blank=True, default="")
+
+    base_price = MoneyField(
+
+        db_column="preco_base",
+
+        verbose_name="Preço base", default=Decimal("0.00"))
+
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
@@ -32,28 +43,33 @@ class ConsultationSpecialty(CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao serviço de consulta (0 a 100).",
+        help_text="Taxa de IVA aplicada ao serviço de consultation (0 a 100).",
     )
 
-    ativo = models.BooleanField(verbose_name="Ativo", default=True, db_index=True)
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        verbose_name="Ativo", default=True, db_index=True)
 
     class Meta:
+        db_table = "consultas_especialidadeconsulta"
         verbose_name = "Especialidade (Consulta)"
         verbose_name_plural = "Especialidades (Consulta)"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "ativo", "nome"]),
+            models.Index(fields=["tenant", "active", "name"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if not (self.nome or "").strip():
-            raise ValidationError({"nome": "Informe o nome da especialidade."})
+        if not (self.name or "").strip():
+            raise ValidationError({"name": "Informe o name da specialty."})
 
-        if self.preco_base is None or self.preco_base < Decimal("0.00"):
-            raise ValidationError({"preco_base": "Preço base inválido."})
+        if self.base_price is None or self.base_price < Decimal("0.00"):
+            raise ValidationError({"base_price": "Preço base inválido."})
 
     def __str__(self) -> str:
-        return self.nome
+        return self.name
 

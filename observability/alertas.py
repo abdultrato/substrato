@@ -1,5 +1,5 @@
-from .logs import erro
+from .logs import error
 
 
-def alerta_critico(mensagem):
-    erro(f"ALERTA CRÍTICO: {mensagem}")
+def critical_alert(message):
+    error(f"ALERTA CRÍTICO: {message}")

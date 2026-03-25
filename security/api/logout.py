@@ -7,4 +7,4 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        return Response({"detail": "Logout realizado com sucesso."})
+        return Response({"detail": "Logout performed com sucesso."})

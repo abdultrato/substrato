@@ -5,26 +5,31 @@ from django.db import models
 
 
 class AccountBalance(models.Model):
-    conta = models.OneToOneField(
+    account = models.OneToOneField(
         "contabilidade.Account",
+        db_column="conta_id",
         on_delete=models.CASCADE,
         related_name="saldo",
         db_index=True,
     )
 
-    saldo_atual = models.DecimalField(
+    current_balance = models.DecimalField(
+
+        db_column="saldo_atual",
+
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    atualizado_em = models.DateTimeField(auto_now=True, db_index=True)
+    updated_at = models.DateTimeField(db_column="atualizado_em", auto_now=True, db_index=True)
 
     class Meta:
+        db_table = "contabilidade_saldoconta"
         verbose_name = "Saldo de Conta"
         verbose_name_plural = "Saldos de Conta"
-        ordering = ["-atualizado_em"]
+        ordering = ["-updated_at"]
 
     def __str__(self) -> str:
-        return f"{self.conta_id}: {self.saldo_atual}"
+        return f"{self.account_id}: {self.current_balance}"

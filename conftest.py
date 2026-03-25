@@ -6,12 +6,21 @@ import os
 
 import django
 from django.contrib.auth import get_user_model
+from django.db.backends.base.creation import BaseDatabaseCreation
 import pytest
 
 import sitecustomize  # noqa: F401
 
 # Setup Django (pytest-django will manage DB lifecycle)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings.development")
+
+
+def _skip_test_db_serialize(self):
+    return ""
+
+
+BaseDatabaseCreation.serialize_db_to_string = _skip_test_db_serialize
+
 django.setup()
 
 
@@ -31,7 +40,7 @@ def authenticated_client(api_client):
         username="testuser",
         email="test@example.com",
         password="testpass123",
-        nome="Test User",
+        name="Test User",
     )
     api_client.force_authenticate(user=user)
     return api_client
@@ -45,5 +54,5 @@ def sample_user():
         username="sampleuser",
         email="sample@example.com",
         password="samplepass123",
-        nome="Sample User",
+        name="Sample User",
     )

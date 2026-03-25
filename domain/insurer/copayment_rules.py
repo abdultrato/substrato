@@ -3,8 +3,8 @@ def calculate_copayment(total_value, coverage_percentage):
     patient_value = total_value - insurer_value
 
     return {
-        "seguradora": insurer_value,
-        "paciente": patient_value,
+        "insurer": insurer_value,
+        "patient": patient_value,
     }
 
 

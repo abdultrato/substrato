@@ -2,13 +2,13 @@ import re
 
 
 class Nuit:
-    def __init__(self, valor: str):
-        valor = re.sub(r"\D", "", valor or "")
+    def __init__(self, value: str):
+        value = re.sub(r"\D", "", value or "")
 
-        if len(valor) != 9:
+        if len(value) != 9:
             raise ValueError("NUIT inválido.")
 
-        self.valor = valor
+        self.value = value
 
     def __str__(self):
-        return self.valor
+        return self.value

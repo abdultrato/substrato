@@ -37,11 +37,11 @@ GROUPS = {
 
 
 def _policy() -> dict[str, dict[str, frozenset[str]]]:
-    # Keys for groups are normalized to be resilient to old data without accents.
+    # Keys for groups are normalized to be resilient to old date without accents.
     g = {k: _normalize(v) for k, v in GROUPS.items()}
 
-    # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefixo}-{nome_modelo}"
-    # Ex.: /api/v1/clinico/exame/ -> basename "clinico-exame"
+    # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
+    # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
     return {
         g["RECEPCAO"]: {
             # Recepcao (workspace + fila/atendimento)
@@ -49,56 +49,56 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recepcao-checkin": SAFE_METHODS | WRITE_METHODS,
             "recepcao-atendimento": SAFE_METHODS | frozenset({"POST"}),
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
             # Clinico
-            "clinico-paciente": SAFE_METHODS | WRITE_METHODS,
+            "clinico-patient": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
             # Catálogo (leitura para criar requisições)
-            "clinico-exame": SAFE_METHODS,
+            "clinico-exam": SAFE_METHODS,
             "clinico-examecampo": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
             # Financeiro
-            "faturamento-fatura": SAFE_METHODS | WRITE_METHODS,
+            "faturamento-invoice": SAFE_METHODS | WRITE_METHODS,
             "faturamento-faturaitem": SAFE_METHODS | WRITE_METHODS,
             "faturamento-historicofatura": SAFE_METHODS,
             "pagamentos-recibo": SAFE_METHODS,
-            "pagamentos-pagamento": SAFE_METHODS | frozenset({"POST"}),
+            "pagamentos-payment": SAFE_METHODS | frozenset({"POST"}),
             # Consultas
-            "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
-            "consultas-medicos": SAFE_METHODS,
-            "consultas-especialidade": SAFE_METHODS,
-            "consultas-feriado": SAFE_METHODS,
+            "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-medicos": SAFE_METHODS,
+            "consultations-specialty": SAFE_METHODS,
+            "consultations-feriado": SAFE_METHODS,
             # Entidades externas (empresas para medicina ocupacional / terceirizações)
             "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
         },
         g["LABORATORIO"]: {
-            # Laboratorio só: requisicoes + resultados (sem catálogo de exames)
+            # Laboratorio só: requisicoes + resultados (sem catálogo de exams)
             "clinico-requisicaoanalise": SAFE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
             "clinico-resultadoitem": SAFE_METHODS | WRITE_METHODS,
             # SGE (CRUD total)
-            "equipamentos-equipamento": SAFE_METHODS | WRITE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS | WRITE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS | WRITE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS | WRITE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS | WRITE_METHODS,
         },
         g["ENFERMAGEM"]: {
-            # Apoio operacional + execucao de procedimentos
-            "clinico-paciente": SAFE_METHODS,
+            # Apoio operacional + execucao de procedures
+            "clinico-patient": SAFE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
-            # Para mapear exame id -> nome na UI atual
-            "clinico-exame": SAFE_METHODS,
+            # Para mapear exam id -> name na UI atual
+            "clinico-exam": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
             # Enfermagem (CRUD operacional)
@@ -106,7 +106,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-sinalvitalenfermagem": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-prescricaoenfermagem": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-evolucaoenfermagem": SAFE_METHODS | WRITE_METHODS,
-            "enfermagem-procedimento": SAFE_METHODS | WRITE_METHODS,
+            "enfermagem-procedure": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentocatalogo": SAFE_METHODS,
             "enfermagem-procedimentocatalogomaterial": SAFE_METHODS,
             "enfermagem-procedimentoitem": SAFE_METHODS | WRITE_METHODS,
@@ -114,24 +114,24 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-procedimentomaterial": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-procedimentomaterialvalor": SAFE_METHODS | WRITE_METHODS,
             # Enfermaria (camas/internamentos) + dashboard
-            "enfermagem-enfermaria": SAFE_METHODS | WRITE_METHODS,
+            "enfermagem-ward": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-camaenfermaria": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-internamentoenfermaria": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-enfermariadashboard": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
-            "prontuario-registro": SAFE_METHODS,
+            "prontuario-record": SAFE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS,
             "maternidade-gestacao": SAFE_METHODS,
-            "cirurgia-cirurgia": SAFE_METHODS,
+            "surgery-surgery": SAFE_METHODS,
         },
         g["MEDICINA"]: {
-            # Jornada clinica (anamnese/diagnostico não expostos na API v1)
-            "clinico-paciente": SAFE_METHODS,
+            # Jornada clinica (anamnese/diagnosis não expostos na API v1)
+            "clinico-patient": SAFE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
-            "clinico-exame": SAFE_METHODS,
+            "clinico-exam": SAFE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
@@ -139,102 +139,102 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
             # Consultas
-            "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
-            "consultas-medicos": SAFE_METHODS,
-            "consultas-especialidade": SAFE_METHODS,
-            "consultas-feriado": SAFE_METHODS,
+            "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-medicos": SAFE_METHODS,
+            "consultations-specialty": SAFE_METHODS,
+            "consultations-feriado": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (MVP)
-            "prontuario-registro": SAFE_METHODS | WRITE_METHODS,
+            "prontuario-record": SAFE_METHODS | WRITE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
             "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
-            "cirurgia-cirurgia": SAFE_METHODS | WRITE_METHODS,
+            "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
         },
         g["MEDICINA_OCUPACIONAL"]: {
-            "clinico-paciente": SAFE_METHODS | WRITE_METHODS,
+            "clinico-patient": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
-            "clinico-exame": SAFE_METHODS,
+            "clinico-exam": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
             # Empresas/entidades externas
             "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
-            # Pode abrir catálogo de procedimentos para requisitar/consultar
+            # Pode abrir catálogo de procedures para requisitar/consultar
             "enfermagem-procedimentocatalogo": SAFE_METHODS,
-            "enfermagem-procedimento": SAFE_METHODS | frozenset({"POST"}),
+            "enfermagem-procedure": SAFE_METHODS | frozenset({"POST"}),
             # Consultas
-            "consultas-consulta": SAFE_METHODS | WRITE_METHODS,
-            "consultas-medicos": SAFE_METHODS,
-            "consultas-especialidade": SAFE_METHODS,
-            "consultas-feriado": SAFE_METHODS,
+            "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-medicos": SAFE_METHODS,
+            "consultations-specialty": SAFE_METHODS,
+            "consultations-feriado": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (MVP)
-            "prontuario-registro": SAFE_METHODS | WRITE_METHODS,
+            "prontuario-record": SAFE_METHODS | WRITE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
             "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
-            "cirurgia-cirurgia": SAFE_METHODS | WRITE_METHODS,
+            "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
         },
         g["FARMACIA"]: {
             # Almoxarifado / estoque
-            "farmacia-produto": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-lote": SAFE_METHODS | WRITE_METHODS,
+            "farmacia-product": SAFE_METHODS | WRITE_METHODS,
+            "farmacia-lot": SAFE_METHODS | WRITE_METHODS,
             "farmacia-movimentoestoque": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-venda": SAFE_METHODS | WRITE_METHODS,
+            "farmacia-sale": SAFE_METHODS | WRITE_METHODS,
             "farmacia-itemvenda": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
-            # (Opcional) consultar paciente para vinculos operacionais
-            "clinico-paciente": SAFE_METHODS,
+            # (Opcional) consultar patient para vinculos operacionais
+            "clinico-patient": SAFE_METHODS,
         },
         g["MANUTENCAO"]: {
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
         },
         g["CONTABILIDADE"]: {
             # Contabilidade (CRUD) + auditoria read-only de recepcao/financeiro
-            "contabilidade-conta": SAFE_METHODS | WRITE_METHODS,
-            "contabilidade-lancamento": SAFE_METHODS | WRITE_METHODS,
+            "contabilidade-account": SAFE_METHODS | WRITE_METHODS,
+            "contabilidade-entry": SAFE_METHODS | WRITE_METHODS,
             "contabilidade-movimento": SAFE_METHODS | WRITE_METHODS,
             "contabilidade-conciliacaofinanceira": SAFE_METHODS | WRITE_METHODS,
             # Pacientes (leitura para contexto das faturas)
-            "clinico-paciente": SAFE_METHODS,
+            "clinico-patient": SAFE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
-            "faturamento-fatura": SAFE_METHODS,
+            "faturamento-invoice": SAFE_METHODS,
             "faturamento-faturaitem": SAFE_METHODS,
             "faturamento-historicofatura": SAFE_METHODS,
             "pagamentos-recibo": SAFE_METHODS,
             # Contabilidade faz controle e pode lançar/ajustar pagamentos.
-            "pagamentos-pagamento": SAFE_METHODS | WRITE_METHODS,
-            "pagamentos-transacao": SAFE_METHODS,
+            "pagamentos-payment": SAFE_METHODS | WRITE_METHODS,
+            "pagamentos-transaction": SAFE_METHODS,
             "pagamentos-reconciliacao": SAFE_METHODS,
             "recepcao-checkin": SAFE_METHODS,
             "recepcao-atendimento": SAFE_METHODS,
             "recepcao-workspace": SAFE_METHODS,
             # Consultas (leitura)
-            "consultas-consulta": SAFE_METHODS,
-            "consultas-medicos": SAFE_METHODS,
-            "consultas-especialidade": SAFE_METHODS,
-            "consultas-feriado": SAFE_METHODS,
+            "consultations-consultation": SAFE_METHODS,
+            "consultations-medicos": SAFE_METHODS,
+            "consultations-specialty": SAFE_METHODS,
+            "consultations-feriado": SAFE_METHODS,
             # Estatísticas
             "dashboard-analytics": SAFE_METHODS,
         },
         g["RECURSOS_HUMANOS"]: {
             # RH (CRUD interno)
-            "recursos_humanos-cargo": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-funcionario": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-role": SAFE_METHODS | WRITE_METHODS,
+            "recursos_humanos-employee": SAFE_METHODS | WRITE_METHODS,
             "recursos_humanos-agregadofamiliar": SAFE_METHODS | WRITE_METHODS,
             "recursos_humanos-horario": SAFE_METHODS | WRITE_METHODS,
             "recursos_humanos-falta": SAFE_METHODS | WRITE_METHODS,
@@ -243,12 +243,12 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recursos_humanos-horaextra": SAFE_METHODS | WRITE_METHODS,
             "recursos_humanos-folhapagamento": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
-            "equipamentos-equipamento": SAFE_METHODS,
+            "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
             # Precisa listar usuários para vincular a funcionários.
-            "identidade-usuario": SAFE_METHODS,
+            "identidade-user": SAFE_METHODS,
         },
     }
 
@@ -265,7 +265,7 @@ class RBACPermission(permissions.BasePermission):
     - Demais grupos: acesso conforme ROLE_POLICY
     """
 
-    message = "A sua conta nao tem permissao para aceder a este recurso."
+    message = "A sua account nao tem permissao para aceder a este recurso."
 
     def has_permission(self, request, view):
         user = getattr(request, "user", None)
@@ -292,8 +292,8 @@ class RBACPermission(permissions.BasePermission):
                 "tenant_mismatch_denied",
                 extra={
                     "user_id": getattr(user, "id", None),
-                    "user_tenant_id": getattr(user, "inquilino_id", None),
-                    "request_tenant_id": getattr(getattr(request, "inquilino", None), "id", None),
+                    "user_tenant_id": getattr(user, "tenant_id", None),
+                    "request_tenant_id": getattr(getattr(request, "tenant", None), "id", None),
                     "method": getattr(request, "method", None),
                     "path": getattr(request, "path", None),
                 },

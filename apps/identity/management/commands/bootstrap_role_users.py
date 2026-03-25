@@ -18,7 +18,7 @@ from security.permissions.rbac import GROUPS as RBAC_GROUPS
 class _RoleUser:
     username: str
     email: str
-    nome: str
+    name: str
     group_name: str
 
 
@@ -29,11 +29,11 @@ def _ensure_tenant() -> Tenant:
 
     # Mirror the DEBUG middleware fallback for a smooth dev bootstrap.
     return Tenant.objects.create(
-        nome="Tenant Local",
-        identificador="local",
-        dominio="localhost",
-        ativo=True,
-        status_comercial=Tenant.StatusComercial.TRIAL,
+        name="Tenant Local",
+        identifier="local",
+        domain="localhost",
+        active=True,
+        commercial_status=Tenant.StatusComercial.TRIAL,
     )
 
 
@@ -76,34 +76,34 @@ def _ensure_groups_permissions() -> None:
     # Recepcao: atendimento + faturamento + cadastro basico
     recepcao = _ensure_group(RBAC_GROUPS["RECEPCAO"])
     for app_label, model, actions in [
-        ("clinico", "paciente", ["view", "add", "change"]),
+        ("clinico", "patient", ["view", "add", "change"]),
         ("clinico", "requisicaoanalise", ["view", "add", "change"]),
         ("clinico", "requisicaoitem", ["view", "add", "change"]),
         ("recepcao", "checkinrecepcao", ["view", "add", "change"]),
-        ("faturamento", "fatura", ["view", "add", "change"]),
+        ("faturamento", "invoice", ["view", "add", "change"]),
         ("faturamento", "faturaitem", ["view", "add", "change"]),
-        ("pagamentos", "pagamento", ["view", "add", "change"]),
+        ("pagamentos", "payment", ["view", "add", "change"]),
         ("pagamentos", "recibo", ["view"]),
     ]:
         _grant_group_model_perms(recepcao, app_label=app_label, model=model, actions=actions)
 
-    # Laboratorio: lancamento/validacao de resultados + consulta de requisicoes
+    # Laboratorio: entry/validacao de resultados + consultation de requisicoes
     laboratorio = _ensure_group(RBAC_GROUPS["LABORATORIO"])
     for app_label, model, actions in [
         ("clinico", "requisicaoanalise", ["view"]),
         ("clinico", "requisicaoitem", ["view"]),
-        ("clinico", "resultado", ["view", "change"]),
+        ("clinico", "result", ["view", "change"]),
         ("clinico", "resultadoitem", ["view", "change"]),
     ]:
         _grant_group_model_perms(laboratorio, app_label=app_label, model=model, actions=actions)
 
-    # Enfermagem: execucao de procedimentos e registos
+    # Enfermagem: execucao de procedures e registos
     enfermagem = _ensure_group(RBAC_GROUPS["ENFERMAGEM"])
     for app_label, model, actions in [
-        ("clinico", "paciente", ["view"]),
+        ("clinico", "patient", ["view"]),
         ("clinico", "requisicaoanalise", ["view"]),
         ("clinico", "requisicaoitem", ["view"]),
-        ("enfermagem", "procedimento", ["view", "add", "change"]),
+        ("enfermagem", "procedure", ["view", "add", "change"]),
         ("enfermagem", "procedimentoitem", ["view", "add", "change"]),
         ("enfermagem", "procedimentomaterial", ["view", "add", "change"]),
         ("enfermagem", "registroenfermagem", ["view", "add", "change"]),
@@ -114,10 +114,10 @@ def _ensure_groups_permissions() -> None:
     # Medicina: jornada clinica + requisicoes
     medicina = _ensure_group(RBAC_GROUPS["MEDICINA"])
     for app_label, model, actions in [
-        ("clinico", "paciente", ["view"]),
+        ("clinico", "patient", ["view"]),
         ("clinico", "requisicaoanalise", ["view", "add", "change"]),
         ("clinico", "requisicaoitem", ["view", "add", "change"]),
-        ("clinico", "exame", ["view"]),
+        ("clinico", "exam", ["view"]),
         ("clinico", "examemedico", ["view"]),
         ("consultas", "consultamedica", ["view", "add", "change"]),
     ]:
@@ -126,22 +126,22 @@ def _ensure_groups_permissions() -> None:
     # Farmacia: estoque + vendas
     farmacia = _ensure_group(RBAC_GROUPS["FARMACIA"])
     for app_label, model, actions in [
-        ("farmacia", "produto", ["view", "add", "change"]),
-        ("farmacia", "lote", ["view", "add", "change"]),
+        ("farmacia", "product", ["view", "add", "change"]),
+        ("farmacia", "lot", ["view", "add", "change"]),
         ("farmacia", "movimentoestoque", ["view", "add", "change"]),
-        ("farmacia", "venda", ["view", "add", "change"]),
+        ("farmacia", "sale", ["view", "add", "change"]),
         ("farmacia", "itemvenda", ["view", "add", "change"]),
-        ("clinico", "paciente", ["view"]),
+        ("clinico", "patient", ["view"]),
     ]:
         _grant_group_model_perms(farmacia, app_label=app_label, model=model, actions=actions)
 
-    # Medicina Ocupacional: semelhante a medicina + pode criar paciente
+    # Medicina Ocupacional: semelhante a medicina + pode criar patient
     ocupacional = _ensure_group(RBAC_GROUPS["MEDICINA_OCUPACIONAL"])
     for app_label, model, actions in [
-        ("clinico", "paciente", ["view", "add", "change"]),
+        ("clinico", "patient", ["view", "add", "change"]),
         ("clinico", "requisicaoanalise", ["view", "add", "change"]),
         ("clinico", "requisicaoitem", ["view", "add", "change"]),
-        ("clinico", "exame", ["view"]),
+        ("clinico", "exam", ["view"]),
         ("clinico", "examemedico", ["view"]),
         ("consultas", "consultamedica", ["view", "add", "change"]),
     ]:
@@ -150,12 +150,12 @@ def _ensure_groups_permissions() -> None:
     # Contabilidade: lancamentos + leitura financeira
     contab = _ensure_group(RBAC_GROUPS["CONTABILIDADE"])
     for app_label, model, actions in [
-        ("contabilidade", "conta", ["view", "add", "change"]),
-        ("contabilidade", "lancamento", ["view", "add", "change"]),
+        ("contabilidade", "account", ["view", "add", "change"]),
+        ("contabilidade", "entry", ["view", "add", "change"]),
         ("contabilidade", "movimento", ["view", "add", "change"]),
         ("contabilidade", "conciliacaofinanceira", ["view", "add", "change"]),
-        ("faturamento", "fatura", ["view"]),
-        ("pagamentos", "pagamento", ["view"]),
+        ("faturamento", "invoice", ["view"]),
+        ("pagamentos", "payment", ["view"]),
         ("pagamentos", "recibo", ["view"]),
     ]:
         _grant_group_model_perms(contab, app_label=app_label, model=model, actions=actions)
@@ -163,8 +163,8 @@ def _ensure_groups_permissions() -> None:
     # Recursos Humanos: gestão interna (funcionários, cargos, horários, etc.)
     rh = _ensure_group(RBAC_GROUPS["RECURSOS_HUMANOS"])
     for app_label, model, actions in [
-        ("recursos_humanos", "cargo", ["view", "add", "change"]),
-        ("recursos_humanos", "funcionario", ["view", "add", "change"]),
+        ("recursos_humanos", "role", ["view", "add", "change"]),
+        ("recursos_humanos", "employee", ["view", "add", "change"]),
         ("recursos_humanos", "horariotrabalho", ["view", "add", "change"]),
         ("recursos_humanos", "falta", ["view", "add", "change"]),
         ("recursos_humanos", "ferias", ["view", "add", "change"]),
@@ -172,13 +172,13 @@ def _ensure_groups_permissions() -> None:
         ("recursos_humanos", "horaextra", ["view", "add", "change"]),
         ("recursos_humanos", "folhapagamento", ["view", "add", "change"]),
         # Necessário para vincular Usuario <-> Funcionario no admin.
-        ("identidade", "usuario", ["view", "change"]),
+        ("identidade", "user", ["view", "change"]),
     ]:
         _grant_group_model_perms(rh, app_label=app_label, model=model, actions=actions)
 
 
 class Command(BaseCommand):
-    help = "Cria 1 usuario por grupo (RBAC), com senha padrao, para testes e demos."
+    help = "Cria 1 user por grupo (RBAC), com senha padrao, para testes e demos."
 
     def add_arguments(self, parser):
         # Keep consistent with other dev bootstrap flows (entrypoint/bootstrap_dev)
@@ -209,16 +209,16 @@ class Command(BaseCommand):
 
         tenant = _ensure_tenant()
 
-        # Configuração mínima para o agendamento de consultas (choices de especialidade).
+        # Configuração mínima para o agendamento de consultations (choices de specialty).
         try:
             from decimal import Decimal
 
             from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 
             ConsultationSpecialty.objects.get_or_create(
-                inquilino=tenant,
-                nome="Consulta Geral",
-                defaults={"preco_base": Decimal("0.00"), "ativo": True},
+                tenant=tenant,
+                name="Consulta Geral",
+                defaults={"base_price": Decimal("0.00"), "active": True},
             )
         except Exception:
             # Não falha bootstrap por causa de app opcional/config.
@@ -234,7 +234,7 @@ class Command(BaseCommand):
             _RoleUser("recepcao", "recepcao@local", "Recepcionista", RBAC_GROUPS["RECEPCAO"]),
             _RoleUser("laboratorio", "laboratorio@local", "Tecnico de Laboratorio", RBAC_GROUPS["LABORATORIO"]),
             _RoleUser("enfermagem", "enfermagem@local", "Enfermeiro", RBAC_GROUPS["ENFERMAGEM"]),
-            _RoleUser("medico", "medico@local", "Medico", RBAC_GROUPS["MEDICINA"]),
+            _RoleUser("doctor", "doctor@local", "Medico", RBAC_GROUPS["MEDICINA"]),
             _RoleUser("farmacia", "farmacia@local", "Tecnico de Farmacia", RBAC_GROUPS["FARMACIA"]),
             _RoleUser("ocupacional", "ocupacional@local", "Medicina Ocupacional", RBAC_GROUPS["MEDICINA_OCUPACIONAL"]),
             _RoleUser("contabilidade", "contabilidade@local", "Contabilidade", RBAC_GROUPS["CONTABILIDADE"]),
@@ -258,28 +258,28 @@ class Command(BaseCommand):
                     username=spec.username,
                     email=spec.email,
                     password=password,
-                    nome=spec.nome,
+                    name=spec.name,
                     is_active=True,
                     # Administrador controla acesso ao Django Admin.
                     is_staff=(is_admin_user and not no_staff),
-                    inquilino=tenant,
+                    tenant=tenant,
                 )
                 created += 1
                 created_usernames.add(spec.username)
             else:
-                # Keep existing email/nome unless empty; avoid breaking real users.
+                # Keep existing email/name unless empty; avoid breaking real users.
                 fields_to_update = []
                 if not getattr(user, "email", ""):
                     user.email = spec.email
                     fields_to_update.append("email")
-                if not getattr(user, "nome", ""):
-                    user.nome = spec.nome
-                    fields_to_update.append("nome")
+                if not getattr(user, "name", ""):
+                    user.name = spec.name
+                    fields_to_update.append("name")
 
                 # Ensure tenant + staff flag for admin login.
-                if not getattr(user, "inquilino_id", None):
-                    user.inquilino = tenant
-                    fields_to_update.append("inquilino")
+                if not getattr(user, "tenant_id", None):
+                    user.tenant = tenant
+                    fields_to_update.append("tenant")
                 # Administrador mantém staff para acesso ao /admin.
                 desired_staff = is_admin_user and not no_staff
                 if getattr(user, "is_staff", False) != desired_staff:
@@ -288,7 +288,7 @@ class Command(BaseCommand):
                 if getattr(user, "is_active", True) is False:
                     user.is_active = True
                     fields_to_update.append("is_active")
-                # Evita superuser em contas operacionais/gestores de setor.
+                # Evita superuser em contas operacionais/gestores de sector.
                 # Administrador mantém (ou vira) superuser para administração completa.
                 desired_superuser = is_admin_user
                 if getattr(user, "is_superuser", False) != desired_superuser:
@@ -306,7 +306,7 @@ class Command(BaseCommand):
 
             user.groups.add(group)
 
-        self.stdout.write(f"Tenant: {tenant.id} {tenant.identificador} ({tenant.nome})")
+        self.stdout.write(f"Tenant: {tenant.id} {tenant.identifier} ({tenant.name})")
         self.stdout.write(f"Usuarios criados: {created}, atualizados: {updated}")
         self.stdout.write("Credenciais (frontend; /admin: Administrador):")
         for spec in role_users:

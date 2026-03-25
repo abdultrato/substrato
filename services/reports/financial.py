@@ -12,10 +12,10 @@ def financial_summary_by_period(start_date, end_date):
     """
 
     invoices = Invoice.objects.filter(
-        criado_em__date__gte=start_date,
-        criado_em__date__lte=end_date,
-        deletado=False,
-        estado__in=[
+        created_at__date__gte=start_date,
+        created_at__date__lte=end_date,
+        deleted=False,
+        status__in=[
             Invoice.Estado.EMITIDA,
             Invoice.Estado.PAGA,
         ],
@@ -23,10 +23,10 @@ def financial_summary_by_period(start_date, end_date):
 
     totals = invoices.aggregate(
         subtotal=Coalesce(Sum("subtotal"), Decimal("0.00")),
-        iva=Coalesce(Sum("iva_valor"), Decimal("0.00")),
+        iva=Coalesce(Sum("vat_amount"), Decimal("0.00")),
         total=Coalesce(Sum("total"), Decimal("0.00")),
         recebido=Coalesce(
-            Sum(F("valor_paciente") + F("valor_seguro")),
+            Sum(F("patient_amount") + F("insurance_amount")),
             Decimal("0.00"),
         ),
     )
@@ -36,7 +36,7 @@ def financial_summary_by_period(start_date, end_date):
         "iva": totals["iva"],
         "total": totals["total"],
         "recebido": totals["recebido"],
-        "quantidade_faturas": invoices.count(),
+        "quantity_faturas": invoices.count(),
     }
 
 
@@ -45,14 +45,14 @@ def billing_by_status():
     Groups invoice totals by status.
     """
 
-    data = (
-        Invoice.objects.filter(deletado=False)
-        .values("estado")
+    date = (
+        Invoice.objects.filter(deleted=False)
+        .values("status")
         .annotate(total=Coalesce(Sum("total"), Decimal("0.00")))
-        .order_by("estado")
+        .order_by("status")
     )
 
-    return list(data)
+    return list(date)
 
 
 def open_invoices():
@@ -61,13 +61,13 @@ def open_invoices():
     """
 
     return Invoice.objects.filter(
-        deletado=False,
-        ativo=True,
-        estado=Invoice.Estado.EMITIDA,
-        valor_paciente__gt=Decimal("0.00"),
+        deleted=False,
+        active=True,
+        status=Invoice.Estado.EMITIDA,
+        patient_amount__gt=Decimal("0.00"),
     )
 
 
 resumo_financeiro_periodo = financial_summary_by_period
-faturamento_por_estado = billing_by_status
+faturamento_por_status = billing_by_status
 faturas_em_aberto = open_invoices

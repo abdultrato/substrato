@@ -8,12 +8,19 @@ from core.models.base import NoNameCoreModel
 
 
 class Sale(NoNameCoreModel):
-    prefixo = "VEND"
+    prefix = "VEND"
 
-    numero = models.CharField(verbose_name="Número", max_length=40, db_index=True)
+    number = models.CharField(
 
-    paciente = models.ForeignKey(
+        db_column="numero",
+
+        verbose_name="Número", max_length=40, db_index=True)
+
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="vendas_farmacia",
@@ -31,25 +38,26 @@ class Sale(NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "farmacia_venda"
         verbose_name = "Venda"
         verbose_name_plural = "Vendas"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "numero"]),
-            models.Index(fields=["inquilino", "paciente"]),
+            models.Index(fields=["tenant", "number"]),
+            models.Index(fields=["tenant", "patient"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "numero"],
-                condition=models.Q(deletado=False),
-                name="unique_numero_venda_por_inquilino",
+                fields=["tenant", "number"],
+                condition=models.Q(deleted=False),
+                name="unique_number_sale_por_tenant",
             )
         ]
 
     def save(self, *args, **kwargs):
-        if not self.numero:
-            self.numero = timezone.now().strftime("V%Y%m%d%H%M%S")
+        if not self.number:
+            self.number = timezone.now().strftime("V%Y%m%d%H%M%S")
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return self.numero or self.id_custom or f"Venda {self.pk}"
+        return self.number or self.custom_id or f"Venda {self.pk}"

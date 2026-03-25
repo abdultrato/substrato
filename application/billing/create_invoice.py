@@ -4,8 +4,8 @@ from apps.billing.models.invoice import Invoice
 
 
 @transaction.atomic
-def create_invoice(paciente):
-    return Invoice.objects.create(paciente=paciente)
+def create_invoice(patient):
+    return Invoice.objects.create(patient=patient)
 
 
-criar_fatura = create_invoice
+criar_invoice = create_invoice

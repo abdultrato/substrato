@@ -40,7 +40,7 @@ class TenantUsageSerializer(serializers.ModelSerializer):
 SERIALIZER_MAP = {
     "configuracaoinquilino": TenantConfigurationSerializer,
     "featureflagtenant": FeatureFlagTenantSerializer,
-    "inquilino": TenantSerializer,
+    "tenant": TenantSerializer,
     "planoassinatura": SubscriptionPlanSerializer,
     "usotenant": TenantUsageSerializer,
 }

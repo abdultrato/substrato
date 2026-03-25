@@ -17,43 +17,69 @@ class Notification(models.Model):
     Canal = Channel
     TipoEvento = EventType
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="notificacoes",
     )
 
-    destinatario = models.CharField(max_length=255)
-    canal = models.CharField(
+    recipient = models.CharField(
+
+        db_column="destinatario",
+
+        max_length=255)
+    channel = models.CharField(
+        db_column="canal",
         max_length=50,
         choices=Channel.choices,
     )
-    assunto = models.CharField(max_length=160, blank=True, default="")
-    tipo_evento = models.CharField(
+    subject = models.CharField(
+        db_column="assunto",
+        max_length=160, blank=True, default="")
+    event_type = models.CharField(
+        db_column="tipo_evento",
         max_length=40,
         choices=EventType.choices,
         default=EventType.GENERICA,
     )
-    referencia_externa = models.CharField(max_length=120, blank=True)
+    external_reference = models.CharField(
+        db_column="referencia_externa",
+        max_length=120, blank=True)
 
-    mensagem = models.TextField()
+    message = models.TextField(
 
-    enviada = models.BooleanField(default=False)
-    erro_envio = models.TextField(blank=True, default="")
-    enviado_em = models.DateTimeField(null=True, blank=True)
+        db_column="mensagem",
 
-    criado_em = models.DateTimeField(auto_now_add=True)
+        )
+
+    sent = models.BooleanField(
+
+        db_column="enviada",
+
+        default=False)
+    send_error = models.TextField(
+        db_column="erro_envio",
+        blank=True, default="")
+    sent_at = models.DateTimeField(
+        db_column="enviado_em",
+        null=True, blank=True)
+
+    created_at = models.DateTimeField(db_column="criado_em", auto_now_add=True)
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "notificacoes_notificacao"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["canal"]),
-            models.Index(fields=["tipo_evento"]),
-            models.Index(fields=["enviada"]),
-            models.Index(fields=["referencia_externa"]),
+            models.Index(fields=["channel"]),
+            models.Index(fields=["event_type"]),
+            models.Index(fields=["sent"]),
+            models.Index(fields=["external_reference"]),
         ]
 
     def __str__(self):
-        return f"{self.get_canal_display()} → {self.destinatario}"
+        return f"{self.get_channel_display()} → {self.recipient}"

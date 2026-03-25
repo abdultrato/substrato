@@ -1,6 +1,6 @@
-def validate_result_value(valor):
-    if valor == "":
-        raise ValueError("Valor do resultado não pode ser vazio")
+def validate_result_value(value):
+    if value == "":
+        raise ValueError("Valor do result não pode ser vazio")
 
 
-validar_valor_resultado = validate_result_value
+validar_value_result = validate_result_value

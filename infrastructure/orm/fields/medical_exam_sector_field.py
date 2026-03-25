@@ -5,7 +5,7 @@ from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
 
 class MedicalExamSectorField(models.CharField):
     """
-    CharField com choices específicos para setores de exames médicos.
+    CharField com choices específicos para setores de exams médicos.
     """
 
     def __init__(self, *args, **kwargs):

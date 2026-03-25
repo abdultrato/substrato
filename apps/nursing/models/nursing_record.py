@@ -6,38 +6,53 @@ from core.models.base import CoreModel
 
 class NursingRecord(PropagarInquilinoMixin, CoreModel):
     """
-    Registro de procedimentos ou observações realizadas pela enfermagem.
+    Registro de procedures ou observações realizadas pela enfermagem.
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "REG"
+    fonte_tenant = "patient"
+    prefix = "REG"
 
     class Prioridade(models.TextChoices):
         URGENTE = "URG", "Urgente"
         NORMAL = "NOR", "Normal"
         BAIXA = "BAI", "Baixa"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         related_name="registros_enfermagem",
     )
 
-    prioridade = models.CharField(
+    priority = models.CharField(
+
+        db_column="prioridade",
+
         max_length=3,
         choices=Prioridade.choices,
         default=Prioridade.NORMAL,
         db_index=True,
     )
 
-    observacao = models.TextField(blank=True, default="")
+    observation = models.TextField(
 
-    data_registro = models.DateTimeField(auto_now_add=True, verbose_name="Data do registro")
+        db_column="observacao",
+
+        blank=True, default="")
+
+    record_date = models.DateTimeField(
+
+        db_column="data_registro",
+
+        auto_now_add=True, verbose_name="Data do record")
 
     class Meta:
+        db_table = "enfermagem_registroenfermagem"
         verbose_name = "Registro de Enfermagem"
         verbose_name_plural = "Registros de Enfermagem"
-        ordering = ["-data_registro"]
+        ordering = ["-record_date"]
 
     def __str__(self):
-        return f"Registro - {self.paciente}"
+        return f"Registro - {self.patient}"

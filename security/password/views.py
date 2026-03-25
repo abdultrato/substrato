@@ -10,7 +10,7 @@ class ChangePasswordView(APIView):
 
     def post(self, request):
         user = request.user
-        password = request.data.get("password")
+        password = request.date.get("password")
 
         if not password:
             return Response(

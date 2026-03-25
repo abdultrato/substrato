@@ -11,7 +11,7 @@ from ..serializers import LabExamFieldSerializer, MedicalExamFieldSerializer
 
 
 @extend_schema(
-    description="Gerenciamento de campos de exames",
+    description="Gerenciamento de campos de exams",
     tags=["Clínico - Campos de Exame"],
 )
 class LabExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -21,34 +21,34 @@ class LabExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
     serializer_class = LabExamFieldSerializer
     filterset_class = LabExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # LabExamField does not expose `descricao`/`ativo`/`ordem`.
+    # LabExamField does not expose `description`/`active`/`order`.
     # Keep exam fields searchable for frontend workflows.
-    search_fields = ["id_custom", "nome", "tipo", "unidade", "exame__nome", "exame__id_custom"]
+    search_fields = ["custom_id", "name", "type", "unit", "exam__name", "exam__custom_id"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "exame",
-        "tipo",
-        "unidade",
-        "referencia_min",
-        "referencia_max",
-        "critico_min",
-        "critico_max",
-        "delta_max",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "exam",
+        "type",
+        "unit",
+        "reference_min",
+        "reference_max",
+        "critical_min",
+        "critical_max",
+        "max_delta",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 @extend_schema(
-    description="Gerenciamento de campos de exames médicos",
+    description="Gerenciamento de campos de exams médicos",
     tags=["Clínico - Campos de Exame Médico"],
 )
 class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -56,23 +56,23 @@ class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     serializer_class = MedicalExamFieldSerializer
     filterset_class = MedicalExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # MedicalExamField does not expose `descricao`/`ativo`/`ordem`.
-    search_fields = ["id_custom", "nome", "tipo", "exame__nome", "exame__id_custom"]
+    # MedicalExamField does not expose `description`/`active`/`order`.
+    search_fields = ["custom_id", "name", "type", "exam__name", "exam__custom_id"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "exame",
-        "tipo",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "exam",
+        "type",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 ExameCampoViewSet = LabExamFieldViewSet

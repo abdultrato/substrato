@@ -40,10 +40,10 @@ class DefaultInsuranceProvider(InsuranceProvider):
         response.raise_for_status()
         return response.json()
 
-    def submit_claim(self, claim_data):
+    def submit_claim(self, claim_date):
         response = requests.post(
             settings.INSURANCE_API_URL + "/claims",
-            json=claim_data,
+            json=claim_date,
             headers={"Authorization": f"Bearer {settings.INSURANCE_API_KEY}"},
             timeout=20,
         )

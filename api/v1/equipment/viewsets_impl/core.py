@@ -22,94 +22,94 @@ class EquipamentoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     filterset_class = EquipamentoFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "numero_serie",
-        "fabricante",
-        "modelo",
-        "localizacao",
-        "responsavel",
+        "custom_id",
+        "name",
+        "serial_number",
+        "manufacturer",
+        "model",
+        "location",
+        "responsible",
     ]
     ordering_fields = [
-        "nome",
-        "numero_serie",
-        "estado_aquisicao",
-        "estado_operacional_inicial",
-        "ativo",
-        "criado_em",
-        "atualizado_em",
+        "name",
+        "serial_number",
+        "acquisition_status",
+        "initial_operational_status",
+        "active",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["nome"]
+    ordering = ["name"]
 
 
 class InspecaoDiariaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = DailyInspection.objects.select_related("equipamento")
+    queryset = DailyInspection.objects.select_related("equipment")
     serializer_class = InspecaoDiariaSerializer
     filterset_class = InspecaoDiariaFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
-        "avaliacao",
-        "observacoes",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
+        "assessment",
+        "notes",
     ]
     ordering_fields = [
-        "data",
-        "funcionamento",
-        "limpeza_realizada",
-        "criado_em",
-        "atualizado_em",
+        "date",
+        "operation_status",
+        "cleaning_performed",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-data", "-criado_em"]
+    ordering = ["-date", "-created_at"]
 
 
 class ManutencaoViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Maintenance.objects.select_related("equipamento")
+    queryset = Maintenance.objects.select_related("equipment")
     serializer_class = ManutencaoSerializer
     filterset_class = ManutencaoFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
-        "descricao",
-        "tecnico",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
+        "description",
+        "technician",
     ]
     ordering_fields = [
-        "data_programada",
-        "data_realizada",
-        "tipo",
-        "criado_em",
-        "atualizado_em",
+        "scheduled_date",
+        "performed_date",
+        "type",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-data_programada", "-criado_em"]
+    ordering = ["-scheduled_date", "-created_at"]
 
 
 class OcorrenciaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Incident.objects.select_related("equipamento")
+    queryset = Incident.objects.select_related("equipment")
     serializer_class = OcorrenciaSerializer
     filterset_class = OcorrenciaFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
-        "descricao",
-        "contacto_assistencia",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
+        "description",
+        "support_contact",
     ]
     ordering_fields = [
-        "data",
-        "tipo",
-        "resolvido",
-        "criado_em",
-        "atualizado_em",
+        "date",
+        "type",
+        "resolved",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-data", "-criado_em"]
+    ordering = ["-date", "-created_at"]
 
 
 VIEWSET_MAP = {
-    "equipamento": EquipamentoViewSet,
+    "equipment": EquipamentoViewSet,
     "inspecaodiaria": InspecaoDiariaViewSet,
     "manutencao": ManutencaoViewSet,
     "ocorrencia": OcorrenciaViewSet,

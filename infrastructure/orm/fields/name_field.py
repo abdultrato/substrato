@@ -11,15 +11,15 @@ class NameField(models.CharField):
     def _normalizar(self, value: str) -> str:
         value = re.sub(r"\s+", " ", value.strip())
         partes = value.lower().split(" ")
-        resultado = []
+        result = []
 
         for p in partes:
             if p in self.PREPOSICOES:
-                resultado.append(p)
+                result.append(p)
             else:
-                resultado.append(p.capitalize())
+                result.append(p.capitalize())
 
-        return " ".join(resultado)
+        return " ".join(result)
 
     def to_python(self, value):
         value = super().to_python(value)

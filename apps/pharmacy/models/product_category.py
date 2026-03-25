@@ -6,7 +6,7 @@ from core.models.base import CoreModel
 
 
 class ProductCategory(CoreModel):
-    prefixo = "CATP"
+    prefix = "CATP"
     CATEGORIAS_PAI_REFERENCIA = (
         "Medicamentos",
         "Sistema Nervoso",
@@ -18,12 +18,18 @@ class ProductCategory(CoreModel):
         "Penicilinas de Espectro Estendido",
     )
 
-    descricao = models.TextField(
+    description = models.TextField(
+
+        db_column="descricao",
+
         blank=True,
     )
 
-    categoria_pai = models.ForeignKey(
+    parent_category = models.ForeignKey(
+
         "self",
+
+        db_column="categoria_pai_id",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
@@ -32,18 +38,19 @@ class ProductCategory(CoreModel):
     )
 
     class Meta:
-        ordering = ["nome"]
+        db_table = "farmacia_categoriaproduto"
+        ordering = ["name"]
 
         indexes = [
-            models.Index(fields=["inquilino", "nome"]),
-            models.Index(fields=["categoria_pai"]),
+            models.Index(fields=["tenant", "name"]),
+            models.Index(fields=["parent_category"]),
         ]
 
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "nome"],
-                condition=Q(deletado=False),
-                name="unique_categoria_produto_por_inquilino",
+                fields=["tenant", "name"],
+                condition=Q(deleted=False),
+                name="unique_category_product_por_tenant",
             )
         ]
 
@@ -55,8 +62,8 @@ class ProductCategory(CoreModel):
 
         super().clean()
 
-        if self.categoria_pai and self.categoria_pai_id == self.id:
-            raise ValidationError({"categoria_pai": "Categoria não pode ser pai de si mesma."})
+        if self.parent_category and self.parent_category_id == self.id:
+            raise ValidationError({"parent_category": "Categoria não pode ser pai de si mesma."})
 
     # ======================================
     # PROPRIEDADES
@@ -65,14 +72,14 @@ class ProductCategory(CoreModel):
     @property
     def nivel(self):
         """
-        Retorna o nível da categoria na hierarquia.
+        Retorna o nível da category na hierarquia.
         """
         nivel = 0
-        pai = self.categoria_pai
+        pai = self.parent_category
 
         while pai:
             nivel += 1
-            pai = pai.categoria_pai
+            pai = pai.parent_category
 
         return nivel
 
@@ -90,10 +97,10 @@ class ProductCategory(CoreModel):
 
     def __str__(self):
 
-        if self.categoria_pai:
-            return f"{self.categoria_pai} / {self.nome}"
+        if self.parent_category:
+            return f"{self.parent_category} / {self.name}"
 
-        return self.nome
+        return self.name
 
 
 ProductCategory.categorias_pai_referencia = ProductCategory.parent_category_references

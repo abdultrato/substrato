@@ -15,52 +15,52 @@ class CreateTenantUseCase:
     ✔ Transacional
     ✔ Cria assinatura automaticamente
     ✔ Define trial
-    ✔ Usa plano FREE padrão
-    ✔ Idempotente por identificador
+    ✔ Usa plan FREE padrão
+    ✔ Idempotente por identifier
     """
 
     TRIAL_DAYS = 14
 
     @staticmethod
     @transaction.atomic
-    def execute(nome: str, identificador: str, dominio: str | None = None):
+    def execute(name: str, identifier: str, domain: str | None = None):
 
         # Evita duplicação
-        existente = Tenant.objects.filter(identificador=identificador).first()
+        existente = Tenant.objects.filter(identifier=identifier).first()
 
         if existente:
             return existente
 
-        # Obtém plano FREE global
-        plano_free = SubscriptionPlan.objects.filter(
-            tipo=SubscriptionPlan.TipoPlano.FREE,
-            ativo=True,
+        # Obtém plan FREE global
+        plan_free = SubscriptionPlan.objects.filter(
+            type=SubscriptionPlan.TipoPlano.FREE,
+            active=True,
         ).first()
 
-        if not plano_free:
+        if not plan_free:
             raise Exception("Plano FREE não configurado.")
 
         hoje = timezone.now().date()
 
         # Criação do tenant
-        inquilino = Tenant.objects.create(
-            nome=nome,
-            identificador=identificador,
-            dominio=dominio,
-            status_comercial=Tenant.StatusComercial.TRIAL,
-            trial_ate=hoje + timedelta(days=CreateTenantUseCase.TRIAL_DAYS),
+        tenant = Tenant.objects.create(
+            name=name,
+            identifier=identifier,
+            domain=domain,
+            commercial_status=Tenant.StatusComercial.TRIAL,
+            trial_until=hoje + timedelta(days=CreateTenantUseCase.TRIAL_DAYS),
         )
 
         # Criação da assinatura inicial
         TenantSubscription.objects.create(
-            inquilino=inquilino,
-            plano=plano_free,
-            data_inicio=hoje,
+            tenant=tenant,
+            plan=plan_free,
+            start_date=hoje,
             status=TenantSubscription.Status.ATIVA,
-            ciclo=TenantSubscription.Ciclo.MENSAL,
+            cycle=TenantSubscription.Ciclo.MENSAL,
         )
 
-        return inquilino
+        return tenant
 
 
 CriarInquilinoUseCase = CreateTenantUseCase

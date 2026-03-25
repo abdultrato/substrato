@@ -28,23 +28,23 @@ class TenantOwnedViewSet(ValidatedSearchOrderingMixin, ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        inquilino = getattr(self.request, "inquilino", None)
-        if inquilino is not None and hasattr(queryset.model, "inquilino_id"):
-            queryset = queryset.filter(inquilino=inquilino)
+        tenant = getattr(self.request, "tenant", None)
+        if tenant is not None and hasattr(queryset.model, "tenant_id"):
+            queryset = queryset.filter(tenant=tenant)
         return queryset
 
     def _build_owner_fields(self):
-        inquilino = getattr(self.request, "inquilino", None)
-        if inquilino is None and hasattr(self.queryset.model, "inquilino_id"):
+        tenant = getattr(self.request, "tenant", None)
+        if tenant is None and hasattr(self.queryset.model, "tenant_id"):
             raise ValidationError("Tenant não identificado na requisição.")
 
         payload = {}
-        if hasattr(self.queryset.model, "inquilino_id"):
-            payload["inquilino"] = inquilino
-        if hasattr(self.queryset.model, "criado_por_id"):
-            payload["criado_por"] = self.request.user
-        if hasattr(self.queryset.model, "atualizado_por_id"):
-            payload["atualizado_por"] = self.request.user
+        if hasattr(self.queryset.model, "tenant_id"):
+            payload["tenant"] = tenant
+        if hasattr(self.queryset.model, "created_by_id"):
+            payload["created_by"] = self.request.user
+        if hasattr(self.queryset.model, "updated_by_id"):
+            payload["updated_by"] = self.request.user
         return payload
 
     @transaction.atomic
@@ -54,8 +54,8 @@ class TenantOwnedViewSet(ValidatedSearchOrderingMixin, ModelViewSet):
     @transaction.atomic
     def perform_update(self, serializer):
         payload = {}
-        if hasattr(self.queryset.model, "atualizado_por_id"):
-            payload["atualizado_por"] = self.request.user
+        if hasattr(self.queryset.model, "updated_by_id"):
+            payload["updated_by"] = self.request.user
         serializer.save(**payload)
 
 
@@ -63,102 +63,102 @@ class AccountViewSet(TenantOwnedViewSet):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
     filterset_class = AccountFilter
-    search_fields = ["id_custom", "nome", "tipo"]
+    search_fields = ["custom_id", "name", "type"]
     ordering_fields = [
-        "id_custom",
-        "nome",
-        "tipo",
+        "custom_id",
+        "name",
+        "type",
         "saldo",
-        "criado_em",
-        "atualizado_em",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class LedgerEntryViewSet(TenantOwnedViewSet):
     queryset = LegacyEntry.objects.all()
     serializer_class = LedgerEntrySerializer
     filterset_class = LedgerEntryFilter
-    search_fields = ["id_custom", "nome", "descricao", "referencia_externa"]
+    search_fields = ["custom_id", "name", "description", "external_reference"]
     ordering_fields = [
-        "id_custom",
-        "nome",
-        "data",
-        "confirmado",
-        "criado_em",
-        "atualizado_em",
+        "custom_id",
+        "name",
+        "date",
+        "confirmed",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class LedgerMovementViewSet(TenantOwnedViewSet):
-    queryset = LegacyMovement.objects.select_related("conta", "lancamento").all()
+    queryset = LegacyMovement.objects.select_related("account", "entry").all()
     serializer_class = LedgerMovementSerializer
     filterset_class = LedgerMovementFilter
-    search_fields = ["id_custom", "nome", "conta__id_custom"]
+    search_fields = ["custom_id", "name", "account__custom_id"]
     ordering_fields = [
-        "id_custom",
-        "nome",
-        "debito",
-        "credito",
-        "criado_em",
-        "atualizado_em",
+        "custom_id",
+        "name",
+        "debit",
+        "credit",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     def perform_create(self, serializer):
-        lancamento = serializer.validated_data.get("lancamento")
-        conta = serializer.validated_data.get("conta")
-        inquilino = getattr(self.request, "inquilino", None)
+        entry = serializer.validated_data.get("entry")
+        account = serializer.validated_data.get("account")
+        tenant = getattr(self.request, "tenant", None)
 
-        if inquilino is None:
+        if tenant is None:
             raise ValidationError("Tenant não identificado na requisição.")
-        if lancamento and lancamento.inquilino_id != inquilino.id:
+        if entry and entry.tenant_id != tenant.id:
             raise ValidationError("Lançamento não pertence ao tenant atual.")
-        if conta and conta.inquilino_id != inquilino.id:
+        if account and account.tenant_id != tenant.id:
             raise ValidationError("Conta não pertence ao tenant atual.")
 
         serializer.save(
-            inquilino=inquilino,
-            criado_por=self.request.user,
-            atualizado_por=self.request.user,
+            tenant=tenant,
+            created_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
-        lancamento = serializer.validated_data.get("lancamento", serializer.instance.lancamento)
-        conta = serializer.validated_data.get("conta", serializer.instance.conta)
-        inquilino = getattr(self.request, "inquilino", None)
+        entry = serializer.validated_data.get("entry", serializer.instance.entry)
+        account = serializer.validated_data.get("account", serializer.instance.account)
+        tenant = getattr(self.request, "tenant", None)
 
-        if inquilino is None:
+        if tenant is None:
             raise ValidationError("Tenant não identificado na requisição.")
-        if lancamento and lancamento.inquilino_id != inquilino.id:
+        if entry and entry.tenant_id != tenant.id:
             raise ValidationError("Lançamento não pertence ao tenant atual.")
-        if conta and conta.inquilino_id != inquilino.id:
+        if account and account.tenant_id != tenant.id:
             raise ValidationError("Conta não pertence ao tenant atual.")
 
-        serializer.save(atualizado_por=self.request.user)
+        serializer.save(updated_by=self.request.user)
 
 
 class FinancialReconciliationViewSet(TenantOwnedViewSet):
-    queryset = FinancialReconciliation.objects.select_related("fatura").all()
+    queryset = FinancialReconciliation.objects.select_related("invoice").all()
     serializer_class = FinancialReconciliationSerializer
     filterset_class = FinancialReconciliationFilter
-    search_fields = ["fatura__id_custom"]
-    ordering_fields = ["fatura", "conciliado", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["invoice__custom_id"]
+    ordering_fields = ["invoice", "reconciled", "created_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        inquilino = getattr(self.request, "inquilino", None)
-        if inquilino is not None:
-            queryset = queryset.filter(fatura__inquilino=inquilino)
+        tenant = getattr(self.request, "tenant", None)
+        if tenant is not None:
+            queryset = queryset.filter(invoice__tenant=tenant)
         return queryset
 
 
 VIEWSET_MAP = {
     "conciliacaofinanceira": FinancialReconciliationViewSet,
-    "conta": AccountViewSet,
-    "lancamento": LedgerEntryViewSet,
+    "account": AccountViewSet,
+    "entry": LedgerEntryViewSet,
     "movimento": LedgerMovementViewSet,
 }
 

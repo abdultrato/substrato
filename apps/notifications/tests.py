@@ -36,11 +36,11 @@ def test_enviar_email_sucesso_cria_log(monkeypatch, settings):
         external_reference="ref-1",
     )
 
-    assert notif.enviada is True
-    assert notif.erro_envio == ""
-    assert notif.enviado_em is not None
+    assert notif.sent is True
+    assert notif.send_error == ""
+    assert notif.sent_at is not None
     assert stub_email.calls == [("user@example.com", "Olá!", "Teste")]
-    assert DeliveryLog.objects.filter(notificacao=notif, status="sucesso").count() == 1
+    assert DeliveryLog.objects.filter(notification=notif, status="sucesso").count() == 1
 
 
 @pytest.mark.django_db
@@ -61,8 +61,8 @@ def test_enviar_sms_desativado_registra_ignore(monkeypatch, settings):
         external_reference="code-123",
     )
 
-    assert notif.enviada is False
-    assert DeliveryLog.objects.filter(notificacao=notif, status="ignorado").exists()
+    assert notif.sent is False
+    assert DeliveryLog.objects.filter(notification=notif, status="ignorado").exists()
     assert stub_sms.calls == []  # não tentou enviar
 
 
@@ -93,7 +93,7 @@ def test_send_does_not_duplicate_same_reference(monkeypatch, settings):
     )
 
     assert first.pk == second.pk  # reused the existing notification
-    assert Notification.objects.filter(destinatario="dup@example.com").count() == 1
+    assert Notification.objects.filter(recipient="dup@example.com").count() == 1
 
 
 @pytest.mark.django_db
@@ -124,7 +124,7 @@ def test_send_to_patient_with_email_and_sms(monkeypatch, settings):
     settings.SMS_API_URL = "http://sms.test"
     settings.SMS_API_KEY = "key"
 
-    fake_patient = SimpleNamespace(email="pac@example.com", contacto="+258840000001")
+    fake_patient = SimpleNamespace(email="pac@example.com", contact="+258840000001")
 
     service = NotificationService()
     notifications = service.send_to_patient(
@@ -143,10 +143,10 @@ def test_send_to_patient_with_email_and_sms(monkeypatch, settings):
 
 @pytest.mark.django_db
 def test_template_str_and_ordering():
-    t1 = NotificationTemplate.objects.create(nome="B", conteudo="b")
-    t2 = NotificationTemplate.objects.create(nome="A", conteudo="a")
+    t1 = NotificationTemplate.objects.create(name="B", content="b")
+    t2 = NotificationTemplate.objects.create(name="A", content="a")
 
-    nomes = list(NotificationTemplate.objects.values_list("nome", flat=True))
+    nomes = list(NotificationTemplate.objects.values_list("name", flat=True))
     assert nomes == ["A", "B"]
     assert str(t1) == "B"
     assert str(t2) == "A"
@@ -155,4 +155,4 @@ def test_template_str_and_ordering():
 StubCanal = StubChannel
 test_enviar_nao_duplica_mesma_referencia = test_send_does_not_duplicate_same_reference
 test_enviar_validacoes_basicas = test_send_basic_validations
-test_enviar_para_paciente_com_email_e_sms = test_send_to_patient_with_email_and_sms
+test_enviar_para_patient_com_email_e_sms = test_send_to_patient_with_email_and_sms

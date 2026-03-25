@@ -13,15 +13,15 @@ class EmpresaViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     serializer_class = EmpresaSerializer
     filterset_class = EmpresaFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "nuit", "email", "telefone1", "telefone2"]
+    search_fields = ["custom_id", "name", "nuit", "email", "phone1", "phone2"]
     ordering_fields = [
-        "nome",
+        "name",
         "nuit",
-        "ativo",
-        "criado_em",
-        "atualizado_em",
+        "active",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["nome"]
+    ordering = ["name"]
 
 
 VIEWSET_MAP = {

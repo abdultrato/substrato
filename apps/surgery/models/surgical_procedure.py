@@ -10,51 +10,67 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class SurgicalProcedure(CoreModel):
     """
-    Catálogo de procedimentos cirúrgicos.
+    Catálogo de procedures cirúrgicos.
 
-    Usado para padronizar o campo "procedimento" na cirurgia e permitir
-    múltiplos procedimentos na mesma cirurgia.
+    Usado para padronizar o campo "procedure" na surgery e permitir
+    múltiplos procedures na mesma surgery.
     """
 
-    prefixo = "PCIR"
+    prefix = "PCIR"
 
-    descricao = models.TextField(
+    description = models.TextField(
+
+        db_column="descricao",
+
         verbose_name="Descrição",
         blank=True,
         default="",
     )
 
-    preco_base = MoneyField(
+    base_price = MoneyField(
+
+        db_column="preco_base",
+
         verbose_name="Preço base",
         default=Decimal("0.00"),
     )
 
-    iva_percentual = models.DecimalField(
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
         default=Decimal("16.00"),
     )
 
-    aplica_iva_por_padrao = models.BooleanField(
+    applies_vat_by_default = models.BooleanField(
+
+        db_column="aplica_iva_por_padrao",
+
         verbose_name="Aplicar IVA por padrão",
         default=True,
     )
 
-    ativo = models.BooleanField(
+    active = models.BooleanField(
+
+        db_column="ativo",
+
         verbose_name="Ativo",
         default=True,
         db_index=True,
     )
 
     class Meta:
+        db_table = "cirurgia_procedimentocirurgico"
         verbose_name = "Procedimento Cirúrgico"
         verbose_name_plural = "Procedimentos Cirúrgicos"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "ativo", "nome"]),
+            models.Index(fields=["tenant", "active", "name"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"Procedimento Cirúrgico {self.pk}"
+        return self.name or f"Procedimento Cirúrgico {self.pk}"
 

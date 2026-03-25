@@ -18,7 +18,7 @@ _EXPORTS = {
     "limpar_texto": ("security.sanitization", "limpar_texto"),
     "permitido": ("security.rate_limit", "permitido"),
     "registrar_acao": ("security.audit", "registrar_acao"),
-    "usuario_pode_acessar": ("security.access_control", "usuario_pode_acessar"),
+    "user_pode_acessar": ("security.access_control", "user_pode_acessar"),
 }
 
 __all__ = sorted([*_EXPORTS, "throttling"])

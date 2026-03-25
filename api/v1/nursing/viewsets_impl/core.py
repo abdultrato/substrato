@@ -69,17 +69,17 @@ class WardDashboardSummarySerializer(serializers.Serializer):
 
 class WardDashboardBedSerializer(serializers.Serializer):
     internamento_id = serializers.IntegerField()
-    internamento_codigo = serializers.CharField(allow_blank=True)
-    enfermaria = serializers.CharField(allow_blank=True)
-    cama_id = serializers.IntegerField()
-    cama_numero = serializers.CharField(allow_blank=True)
-    paciente_id = serializers.IntegerField()
-    paciente_nome = serializers.CharField(allow_blank=True)
-    data_internamento = serializers.DateTimeField(required=False, allow_null=True)
-    data_prevista_alta = serializers.DateTimeField(required=False, allow_null=True)
-    tempo_estimado_observacao_horas = serializers.IntegerField(required=False, allow_null=True)
-    proxima_medicacao_em = serializers.DateTimeField(required=False, allow_null=True)
-    proxima_medicacao_descricao = serializers.CharField(required=False, allow_blank=True)
+    internamento_code = serializers.CharField(allow_blank=True)
+    ward = serializers.CharField(allow_blank=True)
+    bed_id = serializers.IntegerField()
+    bed_number = serializers.CharField(allow_blank=True)
+    patient_id = serializers.IntegerField()
+    patient_name = serializers.CharField(allow_blank=True)
+    admission_date = serializers.DateTimeField(required=False, allow_null=True)
+    expected_discharge_date = serializers.DateTimeField(required=False, allow_null=True)
+    estimated_observation_hours = serializers.IntegerField(required=False, allow_null=True)
+    next_medication_at = serializers.DateTimeField(required=False, allow_null=True)
+    next_medication_description = serializers.CharField(required=False, allow_blank=True)
 
 
 class WardDashboardResponseSerializer(serializers.Serializer):
@@ -93,23 +93,23 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
     filterset_class = NursingRecordFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "paciente__nome",
-        "observacao",
+        "custom_id",
+        "name",
+        "patient__name",
+        "observation",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "paciente",
-        "prioridade",
-        "data_registro",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "name",
+        "patient",
+        "priority",
+        "record_date",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-data_registro", "-criado_em"]
+    ordering = ["-record_date", "-created_at"]
 
 
 class ProcedureCatalogViewSet(TenantScopedModelViewSet):
@@ -118,20 +118,20 @@ class ProcedureCatalogViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureCatalogFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "descricao",
+        "custom_id",
+        "name",
+        "description",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "preco_padrao",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "name",
+        "default_price",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["nome", "-criado_em"]
+    ordering = ["name", "-created_at"]
 
 
 class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
@@ -140,22 +140,22 @@ class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureCatalogMaterialFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "catalogo__nome",
-        "produto__nome",
+        "custom_id",
+        "catalog__name",
+        "product__name",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "catalogo",
-        "produto",
-        "quantidade_padrao",
-        "custo_unitario_padrao",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "catalog",
+        "product",
+        "default_quantity",
+        "default_unit_cost",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["catalogo", "produto", "-criado_em"]
+    ordering = ["catalog", "product", "-created_at"]
 
 
 class ProcedureViewSet(TenantScopedModelViewSet):
@@ -164,24 +164,24 @@ class ProcedureViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "paciente__nome",
-        "observacoes",
+        "custom_id",
+        "patient__name",
+        "notes",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "paciente",
-        "profissional",
-        "data_realizacao",
-        "subtotal_servicos",
-        "subtotal_materiais",
+        "tenant",
+        "custom_id",
+        "patient",
+        "professional",
+        "performed_date",
+        "services_subtotal",
+        "materials_subtotal",
         "total",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-data_realizacao", "-criado_em"]
+    ordering = ["-performed_date", "-created_at"]
 
 
 class ProcedureItemViewSet(TenantScopedModelViewSet):
@@ -190,25 +190,25 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "descricao",
-        "catalogo__nome",
-        "procedimento__id_custom",
-        "procedimento__paciente__nome",
+        "custom_id",
+        "description",
+        "catalog__name",
+        "procedure__custom_id",
+        "procedure__patient__name",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "procedimento",
-        "catalogo",
-        "descricao",
-        "quantidade",
-        "realizado",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "procedure",
+        "catalog",
+        "description",
+        "quantity",
+        "performed",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -218,15 +218,15 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         item = serializer.instance
         warnings = []
         if item is not None:
-            pendentes = item.materiais_gerados.filter(movimento_estoque__isnull=True).select_related("produto").all()
+            pendentes = item.materiais_gerados.filter(inventory_movement__isnull=True).select_related("product").all()
             for material in pendentes:
                 warnings.append(
                     {
-                        "tipo": "ESTOQUE_INSUFICIENTE",
-                        "produto_id": material.produto_id,
-                        "produto": material.produto.nome,
-                        "quantidade": material.quantidade,
-                        "mensagem": (f"Estoque insuficiente na farmácia para '{material.produto.nome}'."),
+                        "type": "ESTOQUE_INSUFICIENTE",
+                        "product_id": material.product_id,
+                        "product": material.product.name,
+                        "quantity": material.quantity,
+                        "message": (f"Estoque insuficiente na farmácia para '{material.product.name}'."),
                     }
                 )
 
@@ -244,21 +244,21 @@ class ProcedureItemValueViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureItemValueFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "item__id_custom",
-        "item__descricao",
-        "item__procedimento__id_custom",
+        "custom_id",
+        "item__custom_id",
+        "item__description",
+        "item__procedure__custom_id",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
+        "tenant",
+        "custom_id",
         "item",
-        "preco_unitario",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "unit_price",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class ProcedureMaterialViewSet(TenantScopedModelViewSet):
@@ -267,27 +267,27 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureMaterialFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "produto__nome",
-        "lote__numero_lote",
-        "procedimento__id_custom",
-        "procedimento__paciente__nome",
-        "procedimento_item__id_custom",
+        "custom_id",
+        "product__name",
+        "lot__lot_number",
+        "procedure__custom_id",
+        "procedure__patient__name",
+        "procedure_item__custom_id",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "procedimento",
-        "procedimento_item",
-        "produto",
-        "lote",
-        "quantidade",
-        "movimento_estoque",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "procedure",
+        "procedure_item",
+        "product",
+        "lot",
+        "quantity",
+        "inventory_movement",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
@@ -296,21 +296,21 @@ class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
     filterset_class = ProcedureMaterialValueFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "material__id_custom",
-        "material__produto__nome",
-        "material__procedimento__id_custom",
+        "custom_id",
+        "material__custom_id",
+        "material__product__name",
+        "material__procedure__custom_id",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
+        "tenant",
+        "custom_id",
         "material",
-        "custo_unitario",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "unit_cost",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class NursingVitalSignViewSet(TenantScopedModelViewSet):
@@ -319,26 +319,26 @@ class NursingVitalSignViewSet(TenantScopedModelViewSet):
     filterset_class = NursingVitalSignFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "registro__paciente__nome",
-        "pressao_arterial",
+        "custom_id",
+        "name",
+        "record__patient__name",
+        "blood_pressure",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "registro",
-        "temperatura_c",
-        "frequencia_cardiaca",
-        "frequencia_respiratoria",
-        "saturacao_oxigenio",
-        "coletado_em",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "name",
+        "record",
+        "temperature_c",
+        "heart_rate",
+        "respiratory_rate",
+        "oxygen_saturation",
+        "collected_at",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-coletado_em", "-criado_em"]
+    ordering = ["-collected_at", "-created_at"]
 
 
 class NursingPrescriptionViewSet(TenantScopedModelViewSet):
@@ -347,23 +347,23 @@ class NursingPrescriptionViewSet(TenantScopedModelViewSet):
     filterset_class = NursingPrescriptionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "paciente__nome",
-        "descricao",
+        "custom_id",
+        "name",
+        "patient__name",
+        "description",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "paciente",
-        "ativo",
-        "data_prescricao",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "name",
+        "patient",
+        "active",
+        "prescription_date",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-data_prescricao", "-criado_em"]
+    ordering = ["-prescription_date", "-created_at"]
 
 
 class NursingEvolutionViewSet(TenantScopedModelViewSet):
@@ -372,22 +372,22 @@ class NursingEvolutionViewSet(TenantScopedModelViewSet):
     filterset_class = NursingEvolutionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "nome",
-        "paciente__nome",
-        "observacao",
+        "custom_id",
+        "name",
+        "patient__name",
+        "observation",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "paciente",
-        "data_evolucao",
-        "criado_em",
-        "atualizado_em",
-        "deletado",
+        "tenant",
+        "custom_id",
+        "name",
+        "patient",
+        "evolution_date",
+        "created_at",
+        "updated_at",
+        "deleted",
     ]
-    ordering = ["-data_evolucao", "-criado_em"]
+    ordering = ["-evolution_date", "-created_at"]
 
 
 class WardViewSet(TenantScopedModelViewSet):
@@ -395,46 +395,46 @@ class WardViewSet(TenantScopedModelViewSet):
     serializer_class = WardSerializer
     filterset_class = WardFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "descricao"]
-    ordering_fields = ["nome", "criado_em", "atualizado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name", "description"]
+    ordering_fields = ["name", "created_at", "updated_at"]
+    ordering = ["name"]
 
 
 class WardBedViewSet(TenantScopedModelViewSet):
-    queryset = WardBed.objects.select_related("enfermaria").all()
+    queryset = WardBed.objects.select_related("ward").all()
     serializer_class = WardBedSerializer
     filterset_class = WardBedFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "numero", "enfermaria__nome"]
-    ordering_fields = ["enfermaria", "numero", "criado_em", "atualizado_em"]
-    ordering = ["enfermaria", "numero", "-criado_em"]
+    search_fields = ["custom_id", "number", "ward__name"]
+    ordering_fields = ["ward", "number", "created_at", "updated_at"]
+    ordering = ["ward", "number", "-created_at"]
 
 
 class WardAdmissionViewSet(TenantScopedModelViewSet):
     queryset = WardAdmission.objects.select_related(
-        "cama",
-        "cama__enfermaria",
-        "paciente",
+        "bed",
+        "bed__ward",
+        "patient",
     ).all()
     serializer_class = WardAdmissionSerializer
     filterset_class = WardAdmissionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "paciente__nome",
-        "cama__numero",
-        "cama__enfermaria__nome",
-        "proxima_medicacao_descricao",
-        "observacoes",
+        "custom_id",
+        "patient__name",
+        "bed__number",
+        "bed__ward__name",
+        "next_medication_description",
+        "notes",
     ]
     ordering_fields = [
-        "data_internamento",
-        "data_prevista_alta",
-        "alta_em",
-        "proxima_medicacao_em",
-        "criado_em",
+        "admission_date",
+        "expected_discharge_date",
+        "discharged_at",
+        "next_medication_at",
+        "created_at",
     ]
-    ordering = ["-data_internamento", "-criado_em"]
+    ordering = ["-admission_date", "-created_at"]
 
 
 class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
@@ -447,38 +447,38 @@ class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
 
     @extend_schema(responses={200: WardDashboardResponseSerializer})
     def list(self, request):
-        inquilino = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
 
-        camas_qs = WardBed.objects.filter(deletado=False, ativa=True)
-        if inquilino is not None:
-            camas_qs = camas_qs.filter(inquilino=inquilino)
+        camas_qs = WardBed.objects.filter(deleted=False, active=True)
+        if tenant is not None:
+            camas_qs = camas_qs.filter(tenant=tenant)
 
-        intern_qs = WardAdmission.objects.filter(deletado=False, ativo=True).select_related(
-            "cama", "cama__enfermaria", "paciente"
+        intern_qs = WardAdmission.objects.filter(deleted=False, active=True).select_related(
+            "bed", "bed__ward", "patient"
         )
-        if inquilino is not None:
-            intern_qs = intern_qs.filter(inquilino=inquilino)
+        if tenant is not None:
+            intern_qs = intern_qs.filter(tenant=tenant)
 
         total_camas = camas_qs.count()
-        camas_ocupadas = intern_qs.values("cama_id").distinct().count()
-        pacientes = intern_qs.values("paciente_id").distinct().count()
+        camas_ocupadas = intern_qs.values("bed_id").distinct().count()
+        pacientes = intern_qs.values("patient_id").distinct().count()
 
         camas = []
-        for it in intern_qs.order_by("cama__enfermaria__nome", "cama__numero", "proxima_medicacao_em"):
+        for it in intern_qs.order_by("bed__ward__name", "bed__number", "next_medication_at"):
             camas.append(
                 {
                     "internamento_id": it.id,
-                    "internamento_codigo": getattr(it, "id_custom", "") or "",
-                    "enfermaria": getattr(getattr(it.cama, "enfermaria", None), "nome", "") or "",
-                    "cama_id": it.cama_id,
-                    "cama_numero": getattr(it.cama, "numero", "") or "",
-                    "paciente_id": it.paciente_id,
-                    "paciente_nome": getattr(it.paciente, "nome", "") or "",
-                    "data_internamento": getattr(it, "data_internamento", None),
-                    "data_prevista_alta": getattr(it, "data_prevista_alta", None),
-                    "tempo_estimado_observacao_horas": getattr(it, "tempo_estimado_observacao_horas", None),
-                    "proxima_medicacao_em": getattr(it, "proxima_medicacao_em", None),
-                    "proxima_medicacao_descricao": getattr(it, "proxima_medicacao_descricao", "") or "",
+                    "internamento_code": getattr(it, "custom_id", "") or "",
+                    "ward": getattr(getattr(it.bed, "ward", None), "name", "") or "",
+                    "bed_id": it.bed_id,
+                    "bed_number": getattr(it.bed, "number", "") or "",
+                    "patient_id": it.patient_id,
+                    "patient_name": getattr(it.patient, "name", "") or "",
+                    "admission_date": getattr(it, "admission_date", None),
+                    "expected_discharge_date": getattr(it, "expected_discharge_date", None),
+                    "estimated_observation_hours": getattr(it, "estimated_observation_hours", None),
+                    "next_medication_at": getattr(it, "next_medication_at", None),
+                    "next_medication_description": getattr(it, "next_medication_description", "") or "",
                 }
             )
 
@@ -499,7 +499,7 @@ VIEWSET_MAP = {
     "evolucaoenfermagem": NursingEvolutionViewSet,
     "procedimentocatalogo": ProcedureCatalogViewSet,
     "procedimentocatalogomaterial": ProcedureCatalogMaterialViewSet,
-    "procedimento": ProcedureViewSet,
+    "procedure": ProcedureViewSet,
     "procedimentoitem": ProcedureItemViewSet,
     "procedimentoitemvalor": ProcedureItemValueViewSet,
     "procedimentomaterial": ProcedureMaterialViewSet,
@@ -507,7 +507,7 @@ VIEWSET_MAP = {
     "prescricaoenfermagem": NursingPrescriptionViewSet,
     "registroenfermagem": NursingRecordViewSet,
     "sinalvitalenfermagem": NursingVitalSignViewSet,
-    "enfermaria": WardViewSet,
+    "ward": WardViewSet,
     "camaenfermaria": WardBedViewSet,
     "internamentoenfermaria": WardAdmissionViewSet,
     "enfermariadashboard": WardDashboardViewSet,

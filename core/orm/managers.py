@@ -10,7 +10,7 @@ class AtivoManager(models.Manager):
     """
 
     def get_queryset(self):
-        return AtivoQuerySet(self.model, using=self._db).filter(deletado=False)
+        return AtivoQuerySet(self.model, using=self._db).filter(deleted=False)
 
     def ativos(self):
         return self.get_queryset().ativos()
@@ -23,3 +23,7 @@ class AtivoManager(models.Manager):
 
     def com_deletados(self):
         return AtivoQuerySet(self.model, using=self._db)
+
+
+class AllObjectsManager(models.Manager.from_queryset(AtivoQuerySet)):
+    pass

@@ -10,26 +10,36 @@ class Insurer(DescricaoMixin, OrdemMixin, CoreModel):
     Cadastro de seguradoras/planos de saude.
     """
 
-    prefixo = "SEG"
+    prefix = "SEG"
 
-    codigo_externo = models.CharField(
+    external_code = models.CharField(
+
+        db_column="codigo_externo",
+
         max_length=60,
         blank=True,
         null=True,
         db_index=True,
     )
     email = models.EmailField(blank=True, null=True)
-    telefone = models.CharField(max_length=30, blank=True, null=True)
+    phone = models.CharField(
+        db_column="telefone",
+        max_length=30, blank=True, null=True)
 
-    # `ativa` e um atributo de negocio (diferente do soft delete)
-    ativa = models.BooleanField(default=True, db_index=True)
+    # `active` e um atributo de negocio (diferente do soft delete)
+    active = models.BooleanField(
+        db_column="ativa",
+        default=True, db_index=True)
 
     # Compatibilidade com filtros/viewsets gerados
-    ativo = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "seguradora_seguradora"
         verbose_name = "Seguradora"
         verbose_name_plural = "Seguradoras"
 
     def __str__(self) -> str:
-        return self.nome or f"Seguradora {self.pk}"
+        return self.name or f"Seguradora {self.pk}"

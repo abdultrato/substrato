@@ -10,14 +10,22 @@ from .patient import Patient
 from .result import Result
 from .result_item import ResultItem
 
-requisicao_analise = lab_request = __import__(__name__, fromlist=["lab_request"]).lab_request
-requisicao_item = lab_request_item = __import__(__name__, fromlist=["lab_request_item"]).lab_request_item
-resultado = result = __import__(__name__, fromlist=["result"]).result
-resultado_item = result_item = __import__(__name__, fromlist=["result_item"]).result_item
-resultado_medico_arquivo = medical_result_file
-exame = lab_exam = __import__(__name__, fromlist=["lab_exam"]).lab_exam
-exame_campo = lab_exam_field = __import__(__name__, fromlist=["lab_exam_field"]).lab_exam_field
-paciente = patient = __import__(__name__, fromlist=["patient"]).patient
+from . import lab_exam as lab_exam
+from . import lab_exam_field as lab_exam_field
+from . import lab_request as lab_request
+from . import lab_request_item as lab_request_item
+from . import patient as patient
+from . import result as result
+from . import result_item as result_item
+
+requisicao_analise = request_analise = lab_request
+requisicao_item = request_item = lab_request_item
+resultado = result
+resultado_item = result_item
+resultado_medico_arquivo = result_doctor_file = medical_result_file
+exame = exam = lab_exam
+exame_campo = exam_field = lab_exam_field
+paciente = patient
 
 RequisicaoAnalise = LabRequest
 RequisicaoItem = LabRequestItem
@@ -48,8 +56,12 @@ __all__ = [
     "Resultado",
     "ResultadoItem",
     "ResultadoMedicoArquivo",
+    "exam",
+    "exam_field",
     "exame",
     "exame_campo",
+    "exam",
+    "exam_field",
     "lab_exam",
     "lab_exam_field",
     "lab_request",
@@ -59,9 +71,12 @@ __all__ = [
     "patient",
     "requisicao_analise",
     "requisicao_item",
+    "request_analise",
+    "request_item",
     "result",
-    "result_item",
     "resultado",
     "resultado_item",
     "resultado_medico_arquivo",
+    "result_item",
+    "result_doctor_file",
 ]

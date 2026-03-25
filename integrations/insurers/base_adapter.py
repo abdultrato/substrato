@@ -1,8 +1,8 @@
 class BaseInsurerAdapter:
-    def query_authorization(self, data):
+    def query_authorization(self, date):
         raise NotImplementedError
 
-    def submit_request(self, data):
+    def submit_request(self, date):
         raise NotImplementedError
 
 

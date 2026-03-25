@@ -1,9 +1,9 @@
 from apps.payments.models.payment import Payment
 
 
-def confirm_payment(pagamento: Payment):
-    pagamento.confirm()
-    return pagamento
+def confirm_payment(payment: Payment):
+    payment.confirm()
+    return payment
 
 
-confirmar_pagamento = confirm_payment
+confirmar_payment = confirm_payment

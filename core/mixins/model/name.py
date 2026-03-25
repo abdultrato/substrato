@@ -10,20 +10,28 @@ class NameMixin(models.Model):
     ✔ indexado para busca rápida
     """
 
-    nome = models.CharField(max_length=120, db_index=True)
+    name = models.CharField(db_column="nome", max_length=120, db_index=True)
 
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
-        if self.nome:
-            self.nome = self.nome.strip()
-            self.nome = " ".join(self.nome.split())
-            self.nome = self.nome.title()
+        if self.name:
+            self.name = self.name.strip()
+            self.name = " ".join(self.name.split())
+            self.name = self.name.title()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.nome or ""
+        return self.name or ""
+
+    @property
+    def nome(self):
+        return self.name
+
+    @nome.setter
+    def nome(self, value):
+        self.name = value
 
 
 NomeMixin = NameMixin

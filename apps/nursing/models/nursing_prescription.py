@@ -6,28 +6,44 @@ from core.models.base import CoreModel
 
 class NursingPrescription(PropagarInquilinoMixin, CoreModel):
     """
-    Prescrição de cuidados de enfermagem para um paciente.
+    Prescrição de cuidados de enfermagem para um patient.
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "PRE"
+    fonte_tenant = "patient"
+    prefix = "PRE"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         related_name="prescricoes_enfermagem",
     )
 
-    descricao = models.TextField(verbose_name="Descrição da prescrição")
+    description = models.TextField(
 
-    data_prescricao = models.DateTimeField(auto_now_add=True, verbose_name="Data da prescrição")
+        db_column="descricao",
 
-    ativo = models.BooleanField(default=True, verbose_name="Prescrição ativa")
+        verbose_name="Descrição da prescrição")
+
+    prescription_date = models.DateTimeField(
+
+        db_column="data_prescricao",
+
+        auto_now_add=True, verbose_name="Data da prescrição")
+
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, verbose_name="Prescrição active")
 
     class Meta:
+        db_table = "enfermagem_prescricaoenfermagem"
         verbose_name = "Prescrição de Enfermagem"
         verbose_name_plural = "Prescrições de Enfermagem"
-        ordering = ["-data_prescricao"]
+        ordering = ["-prescription_date"]
 
     def __str__(self):
-        return f"Prescrição - {self.paciente}"
+        return f"Prescrição - {self.patient}"

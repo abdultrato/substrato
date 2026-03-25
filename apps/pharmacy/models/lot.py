@@ -9,43 +9,56 @@ from core.models.base import CoreModel
 
 
 class Lot(CoreModel):
-    prefixo = "LOTE"
+    prefix = "LOTE"
 
-    produto = models.ForeignKey(
+    product = models.ForeignKey(
+
         "farmacia.Product",
+
+        db_column="produto_id",
         on_delete=models.PROTECT,
         related_name="lotes",
         db_index=True,
     )
 
-    numero_lote = models.CharField(
+    lot_number = models.CharField(
+
+        db_column="numero_lote",
+
         max_length=100,
         db_index=True,
     )
 
-    validade = models.DateField(
+    expiration_date = models.DateField(
+
+        db_column="validade",
+
         db_index=True,
     )
 
-    quantidade_inicial = models.PositiveIntegerField(
+    initial_quantity = models.PositiveIntegerField(
+
+        db_column="quantidade_inicial",
+
         validators=[MinValueValidator(1)],
-        help_text="Quantidade inicial do lote.",
+        help_text="Quantidade inicial do lot.",
     )
 
     class Meta:
-        ordering = ["validade"]
+        db_table = "farmacia_lote"
+        ordering = ["expiration_date"]
 
         constraints = [
             models.UniqueConstraint(
-                fields=["produto", "numero_lote"],
-                condition=models.Q(deletado=False),
-                name="unique_lote_produto",
+                fields=["product", "lot_number"],
+                condition=models.Q(deleted=False),
+                name="unique_lot_product",
             )
         ]
 
         indexes = [
-            models.Index(fields=["produto", "validade"]),
-            models.Index(fields=["validade"]),
+            models.Index(fields=["product", "expiration_date"]),
+            models.Index(fields=["expiration_date"]),
         ]
 
     # =====================================================
@@ -53,17 +66,17 @@ class Lot(CoreModel):
     # =====================================================
 
     def save(self, *args, **kwargs):
-        if not self.nome and self.numero_lote and self.produto_id:
-            self.nome = f"Lote {self.numero_lote} - {self.produto.nome}"
+        if not self.name and self.lot_number and self.product_id:
+            self.name = f"Lote {self.lot_number} - {self.product.name}"
 
         if self.pk:
             original = Lot.all_objects.get(pk=self.pk)
 
-            if original.quantidade_inicial != self.quantidade_inicial:
-                raise ValidationError("Quantidade inicial do lote é imutável.")
+            if original.initial_quantity != self.initial_quantity:
+                raise ValidationError("Quantidade inicial do lot é imutável.")
 
-            if original.numero_lote != self.numero_lote:
-                raise ValidationError("Número do lote não pode ser alterado.")
+            if original.lot_number != self.lot_number:
+                raise ValidationError("Número do lot não pode ser alterado.")
 
         super().save(*args, **kwargs)
 
@@ -74,7 +87,7 @@ class Lot(CoreModel):
     @property
     def vencido(self):
 
-        return self.validade < timezone.localdate()
+        return self.expiration_date < timezone.localdate()
 
     # =====================================================
     # SALDO
@@ -87,10 +100,10 @@ class Lot(CoreModel):
                 Sum(
                     Case(
                         When(
-                            tipo="SAI",
-                            then=-F("quantidade"),
+                            type="SAI",
+                            then=-F("quantity"),
                         ),
-                        default=F("quantidade"),
+                        default=F("quantity"),
                         output_field=IntegerField(),
                     )
                 ),
@@ -98,32 +111,32 @@ class Lot(CoreModel):
             )
         )["total"]
 
-        return self.quantidade_inicial + movimentos
+        return self.initial_quantity + movimentos
 
     # =====================================================
     # QUERY FEFO
     # =====================================================
 
     @classmethod
-    def disponiveis(cls, produto):
+    def disponiveis(cls, product):
 
         hoje = timezone.localdate()
 
         return (
             cls.objects.filter(
-                produto=produto,
-                validade__gte=hoje,
+                product=product,
+                expiration_date__gte=hoje,
             )
             .annotate(
-                saldo=F("quantidade_inicial")
+                saldo=F("initial_quantity")
                 + Coalesce(
                     Sum(
                         Case(
                             When(
-                                movimentos__tipo="SAI",
-                                then=-F("movimentos__quantidade"),
+                                movimentos__type="SAI",
+                                then=-F("movimentos__quantity"),
                             ),
-                            default=F("movimentos__quantidade"),
+                            default=F("movimentos__quantity"),
                             output_field=IntegerField(),
                         )
                     ),
@@ -131,12 +144,12 @@ class Lot(CoreModel):
                 )
             )
             .filter(saldo__gt=0)
-            .order_by("validade")
+            .order_by("expiration_date")
         )
 
     def __str__(self):
 
-        return f"{self.produto} - Lote {self.numero_lote}"
+        return f"{self.product} - Lote {self.lot_number}"
 
 
 Lot.saldo = Lot.balance

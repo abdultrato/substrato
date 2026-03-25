@@ -9,39 +9,39 @@ class MedicalConsultationFilter(SafeFilterSet):
     class Meta:
         model = MedicalConsultation
         fields = [
-            "paciente",
-            "medico",
-            "tipo",
-            "estado",
-            "tipo_horario",
-            "feriado_manual",
-            "agendada_para",
-            "criado_em",
+            "patient",
+            "doctor",
+            "type",
+            "status",
+            "schedule_type",
+            "manual_holiday",
+            "scheduled_for",
+            "created_at",
         ]
 
 
 class DoctorFilter(SafeFilterSet):
     class Meta:
         model = Employee
-        fields = ["nome", "profissao", "cargo", "estado", "criado_em"]
+        fields = ["name", "profession", "role", "status", "created_at"]
 
 
 class ConsultationSpecialtyFilter(SafeFilterSet):
     class Meta:
         model = ConsultationSpecialty
-        fields = ["nome", "ativo", "preco_base"]
+        fields = ["name", "active", "base_price"]
 
 
 class HolidayFilter(SafeFilterSet):
     class Meta:
         model = Holiday
-        fields = ["data", "ativo"]
+        fields = ["date", "active"]
 
 
 FILTER_MAP = {
-    "consulta": MedicalConsultationFilter,
+    "consultation": MedicalConsultationFilter,
     "medicos": DoctorFilter,
-    "especialidade": ConsultationSpecialtyFilter,
+    "specialty": ConsultationSpecialtyFilter,
     "feriado": HolidayFilter,
 }
 

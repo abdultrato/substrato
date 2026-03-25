@@ -28,38 +28,38 @@ class UserAuditViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
         return qs.annotate(
             total_atividades=Count(
                 "auditoria_atividades",
-                filter=Q(auditoria_atividades__deletado=False),
+                filter=Q(auditoria_atividades__deleted=False),
             ),
             ultima_atividade_em=Max(
-                "auditoria_atividades__criado_em",
-                filter=Q(auditoria_atividades__deletado=False),
+                "auditoria_atividades__created_at",
+                filter=Q(auditoria_atividades__deleted=False),
             ),
         )
 
 
 class UserActivityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = UserActivity.objects.select_related("usuario").all()
+    queryset = UserActivity.objects.select_related("user").all()
     serializer_class = UserActivitySerializer
     filterset_class = UserActivityFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "caminho",
-        "path_completo",
-        "usuario__username",
-        "usuario__first_name",
-        "usuario__last_name",
-        "mensagem",
+        "path",
+        "full_path",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "message",
     ]
     ordering_fields = [
-        "criado_em",
+        "created_at",
         "status_code",
-        "duracao_ms",
-        "metodo",
-        "caminho",
+        "duration_ms",
+        "method",
+        "path",
         "view_basename",
         "view_action",
     ]
-    ordering = ["-criado_em", "-id"]
+    ordering = ["-created_at", "-id"]
 
 
 VIEWSET_MAP = {

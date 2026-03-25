@@ -6,11 +6,11 @@ from core.models.base import NoNameCoreModel
 
 class IntegrationOrder(NoNameCoreModel):
     """
-    Ordem (worklist) que o equipamento consome. Geralmente corresponde a uma
-    RequisicaoAnalise agrupada por equipamento.
+    Ordem (worklist) que o equipment consome. Geralmente corresponde a uma
+    RequisicaoAnalise agrupada por equipment.
     """
 
-    prefixo = "ORD"
+    prefix = "ORD"
 
     class Estado(models.TextChoices):
         PENDENTE = "PEND", "Pendente"
@@ -20,56 +20,67 @@ class IntegrationOrder(NoNameCoreModel):
         ERRO = "ERRO", "Erro"
         CANCELADA = "CANC", "Cancelada"
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "integracoes_equipamentos.IntegrationEquipment",
+
+        db_column="equipamento_id",
         on_delete=models.PROTECT,
         related_name="ordens",
         db_index=True,
     )
-    requisicao = models.ForeignKey(
+    request = models.ForeignKey(
         "clinico.LabRequest",
+        db_column="requisicao_id",
         on_delete=models.PROTECT,
         related_name="ordens_integracao",
         db_index=True,
     )
 
-    estado = models.CharField(
+    status = models.CharField(
+
+        db_column="estado",
+
         max_length=4,
         choices=Estado.choices,
         default=Estado.PENDENTE,
         db_index=True,
     )
 
-    observacao = models.TextField(blank=True, default="")
+    observation = models.TextField(
+
+        db_column="observacao",
+
+        blank=True, default="")
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaoordem"
         verbose_name = "Ordem (Integração)"
         verbose_name_plural = "Ordens (Integração)"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["equipamento", "requisicao"],
-                condition=models.Q(deletado=False),
-                name="unique_ordem_por_equipamento_requisicao",
+                fields=["equipment", "request"],
+                condition=models.Q(deleted=False),
+                name="unique_order_por_equipment_request",
             )
         ]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento", "estado"]),
-            models.Index(fields=["requisicao"]),
+            models.Index(fields=["tenant", "equipment", "status"]),
+            models.Index(fields=["request"]),
         ]
 
     def clean(self):
         super().clean()
-        if self.equipamento_id and self.requisicao_id and self.equipamento.inquilino_id != self.requisicao.inquilino_id:
-            raise ValidationError("Equipamento e requisição devem pertencer ao mesmo inquilino.")
+        if self.equipment_id and self.request_id and self.equipment.tenant_id != self.request.tenant_id:
+            raise ValidationError("Equipamento e requisição devem pertencer ao mesmo tenant.")
 
     def __str__(self) -> str:
-        return f"{self.id_custom} - {self.equipamento}"
+        return f"{self.custom_id} - {self.equipment}"
 
 
 class IntegrationOrderItem(NoNameCoreModel):
-    prefixo = "ORDIT"
+    prefix = "ORDIT"
 
     class Estado(models.TextChoices):
         PENDENTE = "PEND", "Pendente"
@@ -78,20 +89,27 @@ class IntegrationOrderItem(NoNameCoreModel):
         ERRO = "ERRO", "Erro"
         CANCELADO = "CANC", "Cancelado"
 
-    ordem = models.ForeignKey(
+    order = models.ForeignKey(
+
         IntegrationOrder,
+
+        db_column="ordem_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
     )
-    requisicao_item = models.ForeignKey(
+    request_item = models.ForeignKey(
         "clinico.LabRequestItem",
+        db_column="requisicao_item_id",
         on_delete=models.PROTECT,
         related_name="ordens_integracao_itens",
         db_index=True,
     )
 
-    estado = models.CharField(
+    status = models.CharField(
+
+        db_column="estado",
+
         max_length=4,
         choices=Estado.choices,
         default=Estado.PENDENTE,
@@ -100,24 +118,24 @@ class IntegrationOrderItem(NoNameCoreModel):
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaoordemitem"
-        verbose_name = "Item de ordem (Integração)"
-        verbose_name_plural = "Itens de ordem (Integração)"
-        ordering = ["-criado_em"]
+        verbose_name = "Item de order (Integração)"
+        verbose_name_plural = "Itens de order (Integração)"
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["ordem", "requisicao_item"],
-                condition=models.Q(deletado=False),
-                name="unique_item_por_ordem",
+                fields=["order", "request_item"],
+                condition=models.Q(deleted=False),
+                name="unique_item_por_order",
             )
         ]
         indexes = [
-            models.Index(fields=["inquilino", "ordem", "estado"]),
+            models.Index(fields=["tenant", "order", "status"]),
         ]
 
     def clean(self):
         super().clean()
-        if self.ordem_id and self.requisicao_item_id and self.ordem.requisicao_id != self.requisicao_item.requisicao_id:
-            raise ValidationError("Item deve pertencer à mesma requisição da ordem.")
+        if self.order_id and self.request_item_id and self.order.request_id != self.request_item.request_id:
+            raise ValidationError("Item deve pertencer à mesma requisição da order.")
 
     def __str__(self) -> str:
-        return f"{self.ordem_id} - item {self.requisicao_item_id}"
+        return f"{self.order_id} - item {self.request_item_id}"

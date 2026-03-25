@@ -1,4 +1,4 @@
-# LOCAL: nucleo/constantes/laboratorio/tipo_evento_clinico.py
+# LOCAL: nucleo/constantes/laboratorio/event_type_clinico.py
 
 from django.db import models
 
@@ -10,23 +10,23 @@ class ClinicalEventType(models.TextChoices):
     """
 
     # RESULTADOS
-    RESULTADO_CRIADO = "resultado_criado", "Resultado Criado"
-    RESULTADO_INTERPRETADO = "resultado_interpretado", "Resultado Interpretado"
-    RESULTADO_VALIDADO = "resultado_validado", "Resultado Validado"
-    RESULTADO_CRITICO = "resultado_critico", "Resultado Crítico"
+    RESULTADO_CRIADO = "result_criado", "Resultado Criado"
+    RESULTADO_INTERPRETADO = "result_interpretado", "Resultado Interpretado"
+    RESULTADO_VALIDADO = "result_validado", "Resultado Validado"
+    RESULTADO_CRITICO = "result_critico", "Resultado Crítico"
 
     # REQUISIÇÃO
-    REQUISICAO_CRIADA = "requisicao_criada", "Requisição Criada"
-    REQUISICAO_PROCESSAMENTO = "requisicao_processamento", "Requisição em Processamento"
-    REQUISICAO_VALIDADA = "requisicao_validada", "Requisição Validada"
-    REQUISICAO_CANCELADA = "requisicao_cancelada", "Requisição Cancelada"
+    REQUISICAO_CRIADA = "request_criada", "Requisição Criada"
+    REQUISICAO_PROCESSAMENTO = "request_processamento", "Requisição em Processamento"
+    REQUISICAO_VALIDADA = "request_validada", "Requisição Validada"
+    REQUISICAO_CANCELADA = "request_cancelada", "Requisição Cancelada"
 
     # PRESCRIÇÃO / FUTURO
-    MEDICACAO_PRESCRITA = "medicacao_prescrita", "Medicação Prescrita"
-    MEDICACAO_ADMINISTRADA = "medicacao_administrada", "Medicação Administrada"
+    MEDICACAO_PRESCRITA = "medication_prescrita", "Medicação Prescrita"
+    MEDICACAO_ADMINISTRADA = "medication_administrada", "Medicação Administrada"
 
     # OUTROS
-    OBSERVACAO_CLINICA = "observacao_clinica", "Observação Clínica"
+    OBSERVACAO_CLINICA = "observation_clinica", "Observação Clínica"
     DIAGNOSTICO = "diagnóstico", "Diagnóstico"
 
 

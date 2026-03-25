@@ -23,14 +23,14 @@ class GlobalSearchView(APIView):
 
         patients = list(
             Patient.objects.filter(
-                Q(nome__icontains=q) | Q(numero_id__icontains=q) | Q(id_custom__icontains=q)
-            ).values("id", "id_custom", "nome")[:10]
+                Q(name__icontains=q) | Q(document_number__icontains=q) | Q(custom_id__icontains=q)
+            ).values("id", "custom_id", "name")[:10]
         )
 
         lab_requests = list(
-            LabRequest.objects.filter(Q(id_custom__icontains=q) | Q(paciente__nome__icontains=q))
-            .select_related("paciente")
-            .values("id", "id_custom", "paciente__nome")[:10]
+            LabRequest.objects.filter(Q(custom_id__icontains=q) | Q(patient__name__icontains=q))
+            .select_related("patient")
+            .values("id", "custom_id", "patient__name")[:10]
         )
 
         return Response(

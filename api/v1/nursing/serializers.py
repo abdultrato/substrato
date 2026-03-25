@@ -43,8 +43,8 @@ class ProcedureSerializer(serializers.ModelSerializer):
 
 
 class ProcedureItemSerializer(serializers.ModelSerializer):
-    valor_unitario = serializers.DecimalField(
-        source="valor.preco_unitario",
+    value_unitario = serializers.DecimalField(
+        source="value.unit_price",
         max_digits=14,
         decimal_places=2,
         read_only=True,
@@ -52,12 +52,12 @@ class ProcedureItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcedureItem
-        exclude = ("preco_unitario",)
+        exclude = ("unit_price",)
 
 
 class ProcedureMaterialSerializer(serializers.ModelSerializer):
-    valor_unitario = serializers.DecimalField(
-        source="valor.custo_unitario",
+    value_unitario = serializers.DecimalField(
+        source="value.unit_cost",
         max_digits=14,
         decimal_places=2,
         read_only=True,
@@ -65,7 +65,7 @@ class ProcedureMaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProcedureMaterial
-        exclude = ("custo_unitario",)
+        exclude = ("unit_cost",)
 
 
 class ProcedureItemValueSerializer(serializers.ModelSerializer):
@@ -105,7 +105,7 @@ class WardSerializer(serializers.ModelSerializer):
 
 
 class WardBedSerializer(serializers.ModelSerializer):
-    enfermaria_nome = serializers.CharField(source="enfermaria.nome", read_only=True)
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
 
     class Meta:
         model = WardBed
@@ -113,9 +113,9 @@ class WardBedSerializer(serializers.ModelSerializer):
 
 
 class WardAdmissionSerializer(serializers.ModelSerializer):
-    paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
-    cama_numero = serializers.CharField(source="cama.numero", read_only=True)
-    enfermaria_nome = serializers.CharField(source="cama.enfermaria.nome", read_only=True)
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    bed_number = serializers.CharField(source="bed.number", read_only=True)
+    ward_name = serializers.CharField(source="bed.ward.name", read_only=True)
 
     class Meta:
         model = WardAdmission
@@ -126,7 +126,7 @@ SERIALIZER_MAP = {
     "evolucaoenfermagem": NursingEvolutionSerializer,
     "procedimentocatalogo": ProcedureCatalogSerializer,
     "procedimentocatalogomaterial": ProcedureCatalogMaterialSerializer,
-    "procedimento": ProcedureSerializer,
+    "procedure": ProcedureSerializer,
     "procedimentoitem": ProcedureItemSerializer,
     "procedimentoitemvalor": ProcedureItemValueSerializer,
     "procedimentomaterial": ProcedureMaterialSerializer,
@@ -134,7 +134,7 @@ SERIALIZER_MAP = {
     "prescricaoenfermagem": NursingPrescriptionSerializer,
     "registroenfermagem": NursingRecordSerializer,
     "sinalvitalenfermagem": NursingVitalSignSerializer,
-    "enfermaria": WardSerializer,
+    "ward": WardSerializer,
     "camaenfermaria": WardBedSerializer,
     "internamentoenfermaria": WardAdmissionSerializer,
 }

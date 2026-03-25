@@ -23,24 +23,24 @@ class SaleItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     serializer_class = SaleItemSerializer
     filterset_class = SaleItemFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "produto__nome", "venda__numero"]
+    search_fields = ["custom_id", "name", "product__name", "sale__number"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "venda",
-        "produto",
-        "quantidade",
-        "preco_unitario",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "sale",
+        "product",
+        "quantity",
+        "unit_price",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -48,24 +48,24 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
     serializer_class = LotSerializer
     filterset_class = LotFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "numero_lote", "produto__nome"]
+    search_fields = ["custom_id", "name", "lot_number", "product__name"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "produto",
-        "numero_lote",
-        "validade",
-        "quantidade_inicial",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "product",
+        "lot_number",
+        "expiration_date",
+        "initial_quantity",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -73,25 +73,25 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     serializer_class = InventoryMovementSerializer
     filterset_class = InventoryMovementFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "tipo", "origem", "lote__numero_lote", "item_venda__id_custom"]
+    search_fields = ["custom_id", "name", "type", "origin", "lot__lot_number", "sale_item__custom_id"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "lote",
-        "tipo",
-        "origem",
-        "item_venda",
-        "quantidade",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "lot",
+        "type",
+        "origin",
+        "sale_item",
+        "quantity",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -99,24 +99,24 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     serializer_class = ProductSerializer
     filterset_class = ProductFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "tipo"]
+    search_fields = ["custom_id", "name", "type"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "tipo",
-        "preco_venda",
-        "iva_percentual",
-        "categoria",
-        "versao",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "type",
+        "sale_price",
+        "vat_percentage",
+        "category",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -124,31 +124,31 @@ class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
     serializer_class = SaleSerializer
     filterset_class = SaleFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "numero", "paciente__id_custom", "paciente__nome"]
+    search_fields = ["custom_id", "number", "patient__custom_id", "patient__name"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "numero",
-        "paciente",
-        "fatura",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "number",
+        "patient",
+        "invoice",
         "total",
-        "versao",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
     "itemvenda": SaleItemViewSet,
-    "lote": LotViewSet,
+    "lot": LotViewSet,
     "movimentoestoque": InventoryMovementViewSet,
-    "produto": ProductViewSet,
-    "venda": SaleViewSet,
+    "product": ProductViewSet,
+    "sale": SaleViewSet,
 }
 
 __all__ = [

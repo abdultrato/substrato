@@ -18,30 +18,30 @@ from .models.sale_item import SaleItem
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "categoria",
-        "preco_venda",
-        "iva_percentual",
-        "aplica_iva_por_padrao",
+        "custom_id",
+        "name",
+        "category",
+        "sale_price",
+        "vat_percentage",
+        "applies_vat_by_default",
         "inventory_total",
         "proximo_vencimento",
-        "criado_em",
+        "created_at",
     )
 
-    search_fields = ("id_custom", "nome")
-    list_filter = ("categoria",)
-    ordering = ("nome",)
+    search_fields = ("custom_id", "name")
+    list_filter = ("category",)
+    ordering = ("name",)
     list_per_page = 50
 
     readonly_fields = (
-        "criado_em",
-        "criado_por",
-        "atualizado_em",
-        "atualizado_por",
-        "versao",
-        "deletado_em",
-        "deletado_por",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
     )
 
     fieldsets = (
@@ -49,11 +49,11 @@ class ProductAdmin(admin.ModelAdmin):
             "Informações do Produto",
             {
                 "fields": (
-                    "nome",
-                    "categoria",
-                    "preco_venda",
-                    "iva_percentual",
-                    "aplica_iva_por_padrao",
+                    "name",
+                    "category",
+                    "sale_price",
+                    "vat_percentage",
+                    "applies_vat_by_default",
                 )
             },
         ),
@@ -62,13 +62,13 @@ class ProductAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
                 ),
             },
         ),
@@ -83,27 +83,27 @@ class ProductAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
 
         qs = qs.annotate(
-            quantidade_lotes=Coalesce(
-                Sum("lotes__quantidade_inicial"),
+            quantity_lotes=Coalesce(
+                Sum("lotes__initial_quantity"),
                 0,
             ),
             movimentos_total=Coalesce(
                 Sum(
                     Case(
                         When(
-                            lotes__movimentos__tipo="SAI",
-                            then=-F("lotes__movimentos__quantidade"),
+                            lotes__movimentos__type="SAI",
+                            then=-F("lotes__movimentos__quantity"),
                         ),
-                        default=F("lotes__movimentos__quantidade"),
+                        default=F("lotes__movimentos__quantity"),
                         output_field=IntegerField(),
                     )
                 ),
                 0,
             ),
-            proximo_vencimento=Min("lotes__validade"),
+            proximo_vencimento=Min("lotes__expiration_date"),
         )
 
-        return qs.annotate(inventory_total_calc=F("quantidade_lotes") + F("movimentos_total"))
+        return qs.annotate(inventory_total_calc=F("quantity_lotes") + F("movimentos_total"))
 
     # =========================
     # ESTOQUE
@@ -145,36 +145,36 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(Lot)
 class LotAdmin(admin.ModelAdmin):
     list_display = (
-        "produto",
-        "numero_lote",
-        "validade",
-        "quantidade_inicial",
+        "product",
+        "lot_number",
+        "expiration_date",
+        "initial_quantity",
         "current_balance",
         "vencido_status",
     )
 
     search_fields = (
-        "numero_lote",
-        "produto__nome",
+        "lot_number",
+        "product__name",
     )
 
     list_filter = (
-        "validade",
-        "produto",
+        "expiration_date",
+        "product",
     )
 
-    ordering = ("validade",)
+    ordering = ("expiration_date",)
 
-    list_select_related = ("produto",)
+    list_select_related = ("product",)
 
     readonly_fields = (
-        "criado_em",
-        "criado_por",
-        "atualizado_em",
-        "atualizado_por",
-        "versao",
-        "deletado_em",
-        "deletado_por",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
     )
 
     fieldsets = (
@@ -182,10 +182,10 @@ class LotAdmin(admin.ModelAdmin):
             "Informações do Lote",
             {
                 "fields": (
-                    "produto",
-                    "numero_lote",
-                    "validade",
-                    "quantidade_inicial",
+                    "product",
+                    "lot_number",
+                    "expiration_date",
+                    "initial_quantity",
                 )
             },
         ),
@@ -194,13 +194,13 @@ class LotAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
                 ),
             },
         ),
@@ -217,15 +217,15 @@ class LotAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
 
         return qs.annotate(
-            saldo_calc=F("quantidade_inicial")
+            saldo_calc=F("initial_quantity")
             + Coalesce(
                 Sum(
                     Case(
                         When(
-                            movimentos__tipo="SAI",
-                            then=-F("movimentos__quantidade"),
+                            movimentos__type="SAI",
+                            then=-F("movimentos__quantity"),
                         ),
-                        default=F("movimentos__quantidade"),
+                        default=F("movimentos__quantity"),
                         output_field=IntegerField(),
                     )
                 ),
@@ -279,45 +279,45 @@ class LotAdmin(admin.ModelAdmin):
 @admin.register(InventoryMovement)
 class InventoryMovementAdmin(admin.ModelAdmin):
     list_display = (
-        "lote",
-        "tipo",
-        "origem",
-        "item_venda",
-        "quantidade",
-        "criado_em",
+        "lot",
+        "type",
+        "origin",
+        "sale_item",
+        "quantity",
+        "created_at",
     )
 
     list_filter = (
-        "tipo",
-        "origem",
-        "criado_em",
+        "type",
+        "origin",
+        "created_at",
     )
 
     search_fields = (
-        "lote__numero_lote",
-        "lote__produto__nome",
-        "item_venda__venda__numero",
-        "item_venda__venda__id_custom",
+        "lot__lot_number",
+        "lot__product__name",
+        "sale_item__sale__number",
+        "sale_item__sale__custom_id",
     )
 
     list_select_related = (
-        "lote",
-        "lote__produto",
+        "lot",
+        "lot__product",
     )
 
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
 
     readonly_fields = (
-        "lote",
-        "tipo",
-        "origem",
-        "item_venda",
-        "quantidade",
-        "criado_em",
-        "criado_por",
-        "atualizado_em",
-        "atualizado_por",
-        "versao",
+        "lot",
+        "type",
+        "origin",
+        "sale_item",
+        "quantity",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
     )
 
     fieldsets = (
@@ -325,11 +325,11 @@ class InventoryMovementAdmin(admin.ModelAdmin):
             "Movimento",
             {
                 "fields": (
-                    "lote",
-                    "tipo",
-                    "origem",
-                    "item_venda",
-                    "quantidade",
+                    "lot",
+                    "type",
+                    "origin",
+                    "sale_item",
+                    "quantity",
                 )
             },
         ),
@@ -338,11 +338,11 @@ class InventoryMovementAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -366,14 +366,14 @@ class ItemVendaInline(admin.TabularInline):
     model = SaleItem
     extra = 0
 
-    autocomplete_fields = ("produto",)
+    autocomplete_fields = ("product",)
 
     readonly_fields = ("total_linha_formatado",)
 
     fields = (
-        "produto",
-        "quantidade",
-        "preco_unitario",
+        "product",
+        "quantity",
+        "unit_price",
         "total_linha_formatado",
     )
 
@@ -395,35 +395,35 @@ class ItemVendaInline(admin.TabularInline):
 @admin.register(Sale)
 class VendaAdmin(admin.ModelAdmin):
     list_display = (
-        "numero",
-        "paciente",
+        "number",
+        "patient",
         "total",
-        "criado_em",
+        "created_at",
     )
 
     search_fields = (
-        "numero",
-        "id_custom",
+        "number",
+        "custom_id",
     )
 
-    list_filter = ("criado_em",)
+    list_filter = ("created_at",)
 
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
 
     list_per_page = 50
 
     inlines = [ItemVendaInline]
 
     readonly_fields = (
-        "numero",
+        "number",
         "total",
-        "criado_em",
-        "criado_por",
-        "atualizado_em",
-        "atualizado_por",
-        "versao",
-        "deletado_em",
-        "deletado_por",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
     )
 
     fieldsets = (
@@ -431,8 +431,8 @@ class VendaAdmin(admin.ModelAdmin):
             "Informações da Venda",
             {
                 "fields": (
-                    "numero",
-                    "paciente",
+                    "number",
+                    "patient",
                     "total",
                 )
             },
@@ -442,49 +442,49 @@ class VendaAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
                 ),
             },
         ),
     )
 
-    autocomplete_fields = ("paciente",)
+    autocomplete_fields = ("patient",)
 
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = (
-        "nome",
-        "categoria_pai",
+        "name",
+        "parent_category",
         "category_level",
-        "criado_em",
+        "created_at",
     )
 
-    search_fields = ("nome",)
+    search_fields = ("name",)
 
-    list_filter = ("categoria_pai",)
+    list_filter = ("parent_category",)
 
-    ordering = ("nome",)
+    ordering = ("name",)
 
     list_per_page = 50
 
-    list_select_related = ("categoria_pai",)
+    list_select_related = ("parent_category",)
 
     readonly_fields = (
         "parent_category_references",
-        "criado_em",
-        "criado_por",
-        "atualizado_em",
-        "atualizado_por",
-        "versao",
-        "deletado_em",
-        "deletado_por",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
     )
 
     fieldsets = (
@@ -492,9 +492,9 @@ class ProductCategoryAdmin(admin.ModelAdmin):
             "Informações da Categoria",
             {
                 "fields": (
-                    "nome",
-                    "descricao",
-                    "categoria_pai",
+                    "name",
+                    "description",
+                    "parent_category",
                 )
             },
         ),
@@ -510,13 +510,13 @@ class ProductCategoryAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
                 ),
             },
         ),
@@ -535,7 +535,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
         itens = format_html_join(
             "",
             "<li>{}</li>",
-            ((categoria,) for categoria in ProductCategory.parent_category_references()),
+            ((category,) for category in ProductCategory.parent_category_references()),
         )
         return format_html("<ul>{}</ul>", itens)
 
@@ -545,8 +545,8 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 ProdutoAdmin = ProductAdmin
 ProductAdmin.estoque_total = ProductAdmin.inventory_total
 LoteAdmin = LotAdmin
-LotAdmin.saldo_atual = LotAdmin.current_balance
+LotAdmin.current_balance = LotAdmin.current_balance
 MovimentoEstoqueAdmin = InventoryMovementAdmin
 CategoriaProdutoAdmin = ProductCategoryAdmin
-ProductCategoryAdmin.nivel_categoria = ProductCategoryAdmin.category_level
+ProductCategoryAdmin.nivel_category = ProductCategoryAdmin.category_level
 ProductCategoryAdmin.categorias_pai_referencia = ProductCategoryAdmin.parent_category_references

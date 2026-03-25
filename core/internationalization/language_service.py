@@ -23,4 +23,4 @@ def get_language_name(iso_code):
 
 
 listar_idiomas_iso = list_iso_languages
-obter_nome_idioma = get_language_name
+obter_name_language = get_language_name

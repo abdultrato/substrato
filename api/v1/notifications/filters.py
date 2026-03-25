@@ -7,18 +7,18 @@ from apps.notifications.models.notification import Notification
 class DeliveryLogFilter(django_filters.FilterSet):
     class Meta:
         model = DeliveryLog
-        fields = ["notificacao", "status", "resposta", "criado_em"]
+        fields = ["notification", "status", "response", "created_at"]
 
 
 class NotificationFilter(django_filters.FilterSet):
     class Meta:
         model = Notification
-        fields = ["destinatario", "canal", "mensagem", "enviada", "criado_em"]
+        fields = ["recipient", "channel", "message", "sent", "created_at"]
 
 
 FILTER_MAP = {
     "logenvio": DeliveryLogFilter,
-    "notificacao": NotificationFilter,
+    "notification": NotificationFilter,
 }
 
 LogEnvioFilter = DeliveryLogFilter

@@ -10,10 +10,10 @@ from .models.invoice_items import InvoiceItem
 
 
 class CoreAdmin(admin.ModelAdmin):
-    list_filter = ("deletado",)
-    search_fields = ("id_custom",)
-    readonly_fields = ("criado_em", "atualizado_em")
-    ordering = ("-criado_em",)
+    list_filter = ("deleted",)
+    search_fields = ("custom_id",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 # =====================================================
@@ -25,24 +25,24 @@ class InvoiceItemInline(admin.TabularInline):
     model = InvoiceItem
     extra = 1
     autocomplete_fields = (
-        "exame",
-        "exame_medico",
-        "procedimento_item",
-        "procedimento_material",
+        "exam",
+        "medical_exam",
+        "procedure_item",
+        "procedure_material",
     )
-    raw_id_fields = ("item_venda",)
+    raw_id_fields = ("sale_item",)
     fields = (
-        "tipo_item",
-        "exame",
-        "exame_medico",
-        "item_venda",
-        "procedimento_item",
-        "procedimento_material",
-        "descricao",
-        "quantidade",
-        "preco_unitario",
-        "aplica_iva",
-        "iva_percentual",
+        "item_type",
+        "exam",
+        "medical_exam",
+        "sale_item",
+        "procedure_item",
+        "procedure_material",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
         "iva_linha",
         "total_linha",
     )
@@ -55,7 +55,7 @@ class InvoiceItemInline(admin.TabularInline):
         if not obj.pk:
             return "-"
         try:
-            return f"{obj.iva_valor:.2f}"
+            return f"{obj.vat_amount:.2f}"
         except Exception:
             return "-"
 
@@ -80,45 +80,45 @@ class InvoiceItemInline(admin.TabularInline):
 @admin.register(Invoice)
 class InvoiceAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "origem",
+        "custom_id",
+        "origin",
         "source_reference",
-        "paciente",
+        "patient",
         "total",
-        "estado",
-        "criado_em",
+        "status",
+        "created_at",
     )
 
     search_fields = (
-        "id_custom",
-        "paciente__nome",
-        "requisicao__id_custom",
-        "requisicao__paciente__nome",
-        "venda__numero",
-        "venda__id_custom",
-        "procedimento__id_custom",
-        "procedimento__paciente__nome",
-        "procedimentos__id_custom",
-        "procedimentos__paciente__nome",
-        "consulta__id_custom",
-        "consulta__paciente__nome",
-        "cirurgia__id_custom",
-        "cirurgia__paciente__nome",
+        "custom_id",
+        "patient__name",
+        "request__custom_id",
+        "request__patient__name",
+        "sale__number",
+        "sale__custom_id",
+        "procedure__custom_id",
+        "procedure__patient__name",
+        "procedures__custom_id",
+        "procedures__patient__name",
+        "consultation__custom_id",
+        "consultation__patient__name",
+        "surgery__custom_id",
+        "surgery__patient__name",
     )
 
-    list_filter = ("origem", "estado", "deletado", "criado_em")
+    list_filter = ("origin", "status", "deleted", "created_at")
 
-    autocomplete_fields = ("requisicao", "venda", "procedimento", "procedimentos", "consulta", "cirurgia")
+    autocomplete_fields = ("request", "sale", "procedure", "procedures", "consultation", "surgery")
 
     readonly_fields = (
-        "id_custom",
-        "paciente",
+        "custom_id",
+        "patient",
         "subtotal",
-        "iva_valor",
+        "vat_amount",
         "total",
-        "valor_paciente",
-        "criado_em",
-        "atualizado_em",
+        "patient_amount",
+        "created_at",
+        "updated_at",
     )
 
     fieldsets = (
@@ -126,20 +126,20 @@ class InvoiceAdmin(CoreAdmin):
             "Fatura",
             {
                 "fields": (
-                    "id_custom",
-                    "origem",
-                    "requisicao",
-                    "venda",
-                    "procedimento",
-                    "procedimentos",
-                    "consulta",
-                    "paciente",
-                    "valor_seguro",
+                    "custom_id",
+                    "origin",
+                    "request",
+                    "sale",
+                    "procedure",
+                    "procedures",
+                    "consultation",
+                    "patient",
+                    "insurance_amount",
                     "subtotal",
-                    "iva_valor",
+                    "vat_amount",
                     "total",
-                    "valor_paciente",
-                    "estado",
+                    "patient_amount",
+                    "status",
                 )
             },
         ),
@@ -148,16 +148,16 @@ class InvoiceAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
+                    "created_at",
+                    "updated_at",
                 ),
             },
         ),
     )
 
     inlines = [InvoiceItemInline]
-    actions = ("sincronizar_itens_origem",)
-    filter_horizontal = ("procedimentos",)
+    actions = ("sincronizar_itens_origin",)
+    filter_horizontal = ("procedures",)
 
     def source_reference(self, obj):
         source_reference = obj.source_reference
@@ -169,39 +169,39 @@ class InvoiceAdmin(CoreAdmin):
 
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
-        fatura = form.instance
+        invoice = form.instance
 
-        if fatura.estado != Invoice.Estado.RASCUNHO:
+        if invoice.status != Invoice.Estado.RASCUNHO:
             return
 
-        if fatura.itens.filter(deletado=False).exists():
+        if invoice.itens.filter(deleted=False).exists():
             return
 
         try:
-            fatura.sincronizar_itens_da_origem()
+            invoice.sincronizar_itens_da_origin()
         except ValidationError as exc:
             messages.error(request, str(exc))
 
-    @admin.action(description="Sincronizar itens com base na origem")
-    def sincronizar_itens_origem(self, request, queryset):
+    @admin.action(description="Sincronizar itens com base na origin")
+    def sincronizar_itens_origin(self, request, queryset):
         processadas = 0
         erros = 0
 
-        for fatura in queryset:
+        for invoice in queryset:
             try:
-                fatura.sincronizar_itens_da_origem()
+                invoice.sincronizar_itens_da_origin()
                 processadas += 1
             except ValidationError as exc:
                 erros += 1
-                messages.error(request, f"{fatura.id_custom}: {exc}")
+                messages.error(request, f"{invoice.custom_id}: {exc}")
 
         if processadas:
             messages.success(
                 request,
-                f"{processadas} fatura(s) sincronizada(s) com sucesso.",
+                f"{processadas} invoice(s) sincronizada(s) com sucesso.",
             )
         if erros and not processadas:
             messages.warning(
                 request,
-                "Nenhuma fatura foi sincronizada devido a erros de validação.",
+                "Nenhuma invoice foi sincronizada devido a erros de validação.",
             )

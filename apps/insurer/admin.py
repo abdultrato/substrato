@@ -13,20 +13,20 @@ from .models.procedure_authorization import ProcedureAuthorization
 @admin.register(Insurer)
 class InsurerAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "ativa",
-        "criado_em",
+        "custom_id",
+        "name",
+        "active",
+        "created_at",
     )
 
-    search_fields = ("nome", "id_custom", "codigo_externo")
-    list_filter = ("ativa", "criado_em")
-    ordering = ("nome",)
+    search_fields = ("name", "custom_id", "external_code")
+    list_filter = ("active", "created_at")
+    ordering = ("name",)
 
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
+        "custom_id",
+        "created_at",
+        "updated_at",
     )
 
     fieldsets = (
@@ -34,9 +34,9 @@ class InsurerAdmin(admin.ModelAdmin):
             "Informações Gerais",
             {
                 "fields": (
-                    "id_custom",
-                    "nome",
-                    "ativa",
+                    "custom_id",
+                    "name",
+                    "active",
                 )
             },
         ),
@@ -45,7 +45,7 @@ class InsurerAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "email",
-                    "telefone",
+                    "phone",
                 )
             },
         ),
@@ -53,10 +53,10 @@ class InsurerAdmin(admin.ModelAdmin):
             "Auditoria",
             {
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
                 )
             },
         ),
@@ -71,44 +71,44 @@ class InsurerAdmin(admin.ModelAdmin):
 @admin.register(CoveragePlan)
 class CoveragePlanAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "seguradora",
-        "percentual_cobertura",
-        "exige_autorizacao",
-        "criado_em",
+        "custom_id",
+        "name",
+        "insurer",
+        "coverage_percentage",
+        "requires_authorization",
+        "created_at",
     )
 
     search_fields = (
-        "nome",
-        "seguradora__nome",
-        "id_custom",
+        "name",
+        "insurer__name",
+        "custom_id",
     )
 
     list_filter = (
-        "seguradora",
-        "exige_autorizacao",
-        "criado_em",
+        "insurer",
+        "requires_authorization",
+        "created_at",
     )
 
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
+        "custom_id",
+        "created_at",
+        "updated_at",
     )
 
-    autocomplete_fields = ("seguradora",)
+    autocomplete_fields = ("insurer",)
 
     fieldsets = (
         (
             "Informações do Plano",
             {
                 "fields": (
-                    "id_custom",
-                    "nome",
-                    "seguradora",
-                    "percentual_cobertura",
-                    "exige_autorizacao",
+                    "custom_id",
+                    "name",
+                    "insurer",
+                    "coverage_percentage",
+                    "requires_authorization",
                 )
             },
         ),
@@ -116,10 +116,10 @@ class CoveragePlanAdmin(admin.ModelAdmin):
             "Auditoria",
             {
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
                 )
             },
         ),
@@ -134,45 +134,45 @@ class CoveragePlanAdmin(admin.ModelAdmin):
 @admin.register(ProcedureAuthorization)
 class ProcedureAuthorizationAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "requisicao_id",
-        "plano",
+        "custom_id",
+        "request_id",
+        "plan",
         "status_colorido",
-        "data_resposta",
+        "response_date",
     )
 
     list_filter = (
         "status",
-        "plano__seguradora",
+        "plan__insurer",
     )
 
     search_fields = (
-        "id_custom",
-        "requisicao_id",
-        "codigo_autorizacao",
+        "custom_id",
+        "request_id",
+        "authorization_code",
     )
 
     readonly_fields = (
-        "id_custom",
-        "codigo_autorizacao",
-        "data_resposta",
-        "criado_em",
-        "atualizado_em",
+        "custom_id",
+        "authorization_code",
+        "response_date",
+        "created_at",
+        "updated_at",
     )
 
-    autocomplete_fields = ("plano",)
+    autocomplete_fields = ("plan",)
 
     fieldsets = (
         (
             "Autorização",
             {
                 "fields": (
-                    "id_custom",
-                    "requisicao_id",
-                    "plano",
+                    "custom_id",
+                    "request_id",
+                    "plan",
                     "status",
-                    "codigo_autorizacao",
-                    "data_resposta",
+                    "authorization_code",
+                    "response_date",
                 )
             },
         ),
@@ -180,10 +180,10 @@ class ProcedureAuthorizationAdmin(admin.ModelAdmin):
             "Auditoria",
             {
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
                 )
             },
         ),

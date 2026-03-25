@@ -4,18 +4,18 @@ from apps.billing.models.invoice_items import InvoiceItem
 
 
 @transaction.atomic
-def add_invoice_item(fatura, descricao, quantidade, preco):
+def add_invoice_item(invoice, description, quantity, price):
     item = InvoiceItem.objects.create(
-        inquilino=fatura.inquilino,
-        fatura=fatura,
-        tipo_item=InvoiceItem.ItemType.AJUSTE,
-        descricao=descricao,
-        quantidade=quantidade,
-        preco_unitario=preco,
+        tenant=invoice.tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.ItemType.AJUSTE,
+        description=description,
+        quantity=quantity,
+        unit_price=price,
     )
-    fatura.persistir_totais()
+    invoice.persistir_totais()
 
     return item
 
 
-adicionar_item_fatura = add_invoice_item
+adicionar_item_invoice = add_invoice_item

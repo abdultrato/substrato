@@ -19,20 +19,20 @@ class UserAuditFilter(SafeFilterSet):
 
 
 class UserActivityFilter(SafeFilterSet):
-    inicio = django_filters.DateTimeFilter(field_name="criado_em", lookup_expr="gte")
-    fim = django_filters.DateTimeFilter(field_name="criado_em", lookup_expr="lte")
+    inicio = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="gte")
+    fim = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
 
     class Meta:
         model = UserActivity
         fields = [
-            "usuario",
-            "metodo",
-            "caminho",
+            "user",
+            "method",
+            "path",
             "status_code",
             "view_basename",
             "view_action",
-            "objeto_id",
-            "criado_em",
+            "object_id",
+            "created_at",
         ]
 
 

@@ -6,33 +6,33 @@ from .models.equipment import Equipment
 @admin.register(Equipment)
 class EquipamentoAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "numero_serie",
-        "fabricante",
-        "modelo",
-        "localizacao",
-        "responsavel",
-        "estado_atual",
-        "ativo",
-        "criado_em",
+        "custom_id",
+        "name",
+        "serial_number",
+        "manufacturer",
+        "model",
+        "location",
+        "responsible",
+        "status_atual",
+        "active",
+        "created_at",
     )
     list_filter = (
-        "ativo",
-        "estado_aquisicao",
-        "estado_operacional_inicial",
+        "active",
+        "acquisition_status",
+        "initial_operational_status",
     )
     search_fields = (
-        "id_custom",
-        "nome",
-        "numero_serie",
-        "fabricante",
-        "modelo",
-        "localizacao",
-        "responsavel",
+        "custom_id",
+        "name",
+        "serial_number",
+        "manufacturer",
+        "model",
+        "location",
+        "responsible",
     )
-    ordering = ("nome",)
+    ordering = ("name",)
 
     @admin.display(description="Estado atual")
-    def estado_atual(self, obj: Equipment) -> str:
-        return obj.estado_atual_label or obj.estado_atual or ""
+    def status_atual(self, obj: Equipment) -> str:
+        return obj.status_atual_label or obj.status_atual or ""

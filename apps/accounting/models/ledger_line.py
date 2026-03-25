@@ -8,7 +8,7 @@ from core.models.base import CoreModel
 
 
 class LedgerLine(CoreModel):
-    prefixo = "LL"
+    prefix = "LL"
 
     # ===============================
     # RELACIONAMENTOS
@@ -21,8 +21,11 @@ class LedgerLine(CoreModel):
         db_index=True,
     )
 
-    conta = models.ForeignKey(
+    account = models.ForeignKey(
+
         "contabilidade.Account",
+
+        db_column="conta_id",
         on_delete=models.PROTECT,
         db_index=True,
     )
@@ -31,12 +34,18 @@ class LedgerLine(CoreModel):
     # CONTÁBIL
     # ===============================
 
-    valor = models.DecimalField(
+    value = models.DecimalField(
+
+        db_column="valor",
+
         max_digits=18,
         decimal_places=2,
     )
 
-    natureza = models.CharField(
+    nature = models.CharField(
+
+        db_column="natureza",
+
         max_length=1,
         choices=[
             ("D", "Débito"),
@@ -44,7 +53,8 @@ class LedgerLine(CoreModel):
         ],
     )
 
-    criado_em = models.DateTimeField(
+    created_at = models.DateTimeField(
+        db_column="criado_em",
         auto_now_add=True,
         db_index=True,
     )
@@ -54,16 +64,17 @@ class LedgerLine(CoreModel):
     # ===============================
 
     class Meta:
+        db_table = "contabilidade_ledgerline"
         indexes = [
             models.Index(fields=["entry"]),
-            models.Index(fields=["inquilino", "conta", "criado_em"]),
-            models.Index(fields=["inquilino", "entry"]),
+            models.Index(fields=["tenant", "account", "created_at"]),
+            models.Index(fields=["tenant", "entry"]),
         ]
 
         constraints = [
             models.CheckConstraint(
-                check=Q(valor__gt=0),
-                name="ledgerline_valor_positivo",
+                check=Q(value__gt=0),
+                name="ledgerline_value_positivo",
             ),
         ]
 
@@ -73,28 +84,28 @@ class LedgerLine(CoreModel):
 
     def clean(self):
 
-        if self.valor is None or self.valor <= Decimal("0.00"):
+        if self.value is None or self.value <= Decimal("0.00"):
             raise ValidationError("Valor deve ser maior que zero.")
 
-        if self.natureza not in ("D", "C"):
+        if self.nature not in ("D", "C"):
             raise ValidationError("Natureza inválida.")
 
         if not self.entry_id:
             raise ValidationError("Entry é obrigatório.")
 
-        if not self.conta_id:
+        if not self.account_id:
             raise ValidationError("Conta é obrigatória.")
 
         # 🔐 Multi-tenant enforcement
-        if self.inquilino_id and self.entry_id and self.entry.inquilino_id != self.inquilino_id:
+        if self.tenant_id and self.entry_id and self.entry.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino da linha difere do LedgerEntry.")
 
-        if self.inquilino_id and self.conta_id and self.conta.inquilino_id != self.inquilino_id:
+        if self.tenant_id and self.account_id and self.account.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino da linha difere da Conta.")
 
         # 🔒 Segurança adicional
-        if hasattr(self.entry, "revertido") and self.entry.revertido:
-            raise ValidationError("Não é permitido adicionar linhas a um LedgerEntry revertido.")
+        if hasattr(self.entry, "reversed") and self.entry.reversed:
+            raise ValidationError("Não é permitido adicionar linhas a um LedgerEntry reversed.")
 
     # ======================================
     # 🔐 IMUTABILIDADE FORTE
@@ -112,4 +123,4 @@ class LedgerLine(CoreModel):
         raise RuntimeError("LedgerLine é imutável.")
 
     def __str__(self):
-        return f"{self.conta_id} | {self.natureza} | {self.valor}"
+        return f"{self.account_id} | {self.nature} | {self.value}"

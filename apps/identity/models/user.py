@@ -22,9 +22,16 @@ class User(AbstractUser, CoreModel):
 
     email = models.EmailField(unique=True, verbose_name="E-mail")
 
-    telefone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Telefone")
+    phone = models.CharField(
 
-    foto = models.ImageField(
+        db_column="telefone",
+
+        max_length=20, blank=True, null=True, verbose_name="Telefone")
+
+    photo = models.ImageField(
+
+        db_column="foto",
+
         upload_to="users/fotos/",
         blank=True,
         null=True,
@@ -57,11 +64,11 @@ class User(AbstractUser, CoreModel):
         if getattr(self, "is_superuser", False) and (self.username not in allowlist) and (not is_admin_group):
             self.is_superuser = False
 
-        # Garantir associação a um inquilino mesmo em ambientes sem contexto (ex.: createsuperuser)
-        if not self.inquilino_id:
+        # Garantir associação a um tenant mesmo em ambientes sem contexto (ex.: createsuperuser)
+        if not self.tenant_id:
             tenant = Tenant.objects.order_by("id").first()
             if tenant:
-                self.inquilino = tenant
+                self.tenant = tenant
         super().save(*args, **kwargs)
 
     def __str__(self):

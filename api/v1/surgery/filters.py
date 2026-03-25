@@ -7,11 +7,11 @@ class SurgeryFilter(SafeFilterSet):
     class Meta:
         model = Surgery
         fields = [
-            "paciente",
-            "cirurgiao",
-            "estado",
-            "agendada_para",
-            "criado_em",
+            "patient",
+            "surgeon",
+            "status",
+            "scheduled_for",
+            "created_at",
         ]
 
 
@@ -19,14 +19,14 @@ class SurgicalProcedureFilter(SafeFilterSet):
     class Meta:
         model = SurgicalProcedure
         fields = [
-            "nome",
-            "ativo",
-            "criado_em",
+            "name",
+            "active",
+            "created_at",
         ]
 
 
 FILTER_MAP = {
-    "cirurgia": SurgeryFilter,
+    "surgery": SurgeryFilter,
     "procedimentocirurgico": SurgicalProcedureFilter,
 }
 

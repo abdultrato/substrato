@@ -7,7 +7,7 @@ from core.models.base import CoreModel
 
 
 class Product(CoreModel):
-    prefixo = "PROD"
+    prefix = "PROD"
 
     class ProductType(models.TextChoices):
         MEDICAMENTO = "MED", "Medicamento"
@@ -16,8 +16,11 @@ class Product(CoreModel):
 
     TipoProduto = ProductType
 
-    categoria = models.ForeignKey(
+    category = models.ForeignKey(
+
         "farmacia.ProductCategory",
+
+        db_column="categoria_id",
         verbose_name="Categoria",
         on_delete=models.PROTECT,
         related_name="produtos",
@@ -26,7 +29,10 @@ class Product(CoreModel):
         db_index=True,
     )
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         verbose_name="Tipo",
         max_length=3,
         choices=ProductType.choices,
@@ -34,15 +40,21 @@ class Product(CoreModel):
         db_index=True,
     )
 
-    preco_venda = models.DecimalField(
-        verbose_name="Preço de venda",
+    sale_price = models.DecimalField(
+
+        db_column="preco_venda",
+
+        verbose_name="Preço de sale",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    iva_percentual = models.DecimalField(
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
@@ -51,24 +63,28 @@ class Product(CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao produto (0 a 100).",
+        help_text="Taxa de IVA aplicada ao product (0 a 100).",
     )
 
-    aplica_iva_por_padrao = models.BooleanField(
+    applies_vat_by_default = models.BooleanField(
+
+        db_column="aplica_iva_por_padrao",
+
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este produto normalmente não deve ter IVA.",
+        help_text="Desmarque se este product normalmente não deve ter IVA.",
     )
 
     class Meta:
+        db_table = "farmacia_produto"
         verbose_name = "Produto"
         verbose_name_plural = "Produtos"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "nome"]),
-            models.Index(fields=["categoria"]),
-            models.Index(fields=["tipo"]),
+            models.Index(fields=["tenant", "name"]),
+            models.Index(fields=["category"]),
+            models.Index(fields=["type"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"Produto {self.pk}"
+        return self.name or f"Produto {self.pk}"

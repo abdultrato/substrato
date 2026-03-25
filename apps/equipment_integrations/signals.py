@@ -30,31 +30,31 @@ def create_integration_order_for_item(sender, instance: LabRequestItem, created:
         logger.exception("Falha ao importar models de integração")
         return
 
-    inquilino_id = instance.inquilino_id
-    if not inquilino_id:
+    tenant_id = instance.tenant_id
+    if not tenant_id:
         return
 
-    tipo_exame = None
-    setor = None
-    if instance.exame_id:
-        tipo_exame = IntegrationRouting.ExamType.LABORATORIO
-        setor = getattr(instance.exame, "setor", None)
-    elif instance.exame_medico_id:
-        tipo_exame = IntegrationRouting.ExamType.MEDICO
-        setor = getattr(instance.exame_medico, "setor", None)
+    exam_type = None
+    sector = None
+    if instance.exam_id:
+        exam_type = IntegrationRouting.ExamType.LABORATORIO
+        sector = getattr(instance.exam, "sector", None)
+    elif instance.medical_exam_id:
+        exam_type = IntegrationRouting.ExamType.MEDICO
+        sector = getattr(instance.medical_exam, "sector", None)
 
-    if not tipo_exame or not setor:
+    if not exam_type or not sector:
         return
 
     roteamento = (
         IntegrationRouting.objects.filter(
-            inquilino_id=inquilino_id,
-            ativo=True,
-            tipo_exame=tipo_exame,
-            setor=setor,
-            deletado=False,
+            tenant_id=tenant_id,
+            active=True,
+            exam_type=exam_type,
+            sector=sector,
+            deleted=False,
         )
-        .select_related("equipamento")
+        .select_related("equipment")
         .order_by("id")
         .first()
     )
@@ -62,23 +62,23 @@ def create_integration_order_for_item(sender, instance: LabRequestItem, created:
     if roteamento is None:
         return
 
-    equipamento = roteamento.equipamento
-    if not equipamento.ativo:
+    equipment = roteamento.equipment
+    if not equipment.active:
         return
 
-    ordem, _ = IntegrationOrder.objects.get_or_create(
-        inquilino_id=inquilino_id,
-        equipamento=equipamento,
-        requisicao=instance.requisicao,
-        defaults={"estado": IntegrationOrder.Estado.PENDENTE},
+    order, _ = IntegrationOrder.objects.get_or_create(
+        tenant_id=tenant_id,
+        equipment=equipment,
+        request=instance.request,
+        defaults={"status": IntegrationOrder.Estado.PENDENTE},
     )
 
     IntegrationOrderItem.objects.get_or_create(
-        inquilino_id=inquilino_id,
-        ordem=ordem,
-        requisicao_item=instance,
-        defaults={"estado": IntegrationOrderItem.Estado.PENDENTE},
+        tenant_id=tenant_id,
+        order=order,
+        request_item=instance,
+        defaults={"status": IntegrationOrderItem.Estado.PENDENTE},
     )
 
 
-criar_ordem_integracao_para_item = create_integration_order_for_item
+criar_order_integracao_para_item = create_integration_order_for_item

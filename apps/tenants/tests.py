@@ -14,9 +14,9 @@ from apps.tenants.models.tenant_usage import TenantUsage
 
 def _tenant():
     return Tenant.objects.create(
-        identificador="tn-tests",
-        nome="Tenant Tests",
-        trial_ate=timezone.localdate() + timedelta(days=7),
+        identifier="tn-tests",
+        name="Tenant Tests",
+        trial_until=timezone.localdate() + timedelta(days=7),
     )
 
 
@@ -26,8 +26,8 @@ def test_tenant_trial_and_blocking():
     assert tenant.esta_em_trial() is True
     assert tenant.esta_bloqueado() is False
 
-    tenant.status_comercial = Tenant.StatusComercial.ATIVO
-    tenant.bloqueado_em = timezone.now()
+    tenant.commercial_status = Tenant.StatusComercial.ATIVO
+    tenant.blocked_at = timezone.now()
     tenant.save()
 
     assert tenant.esta_em_trial() is False
@@ -37,72 +37,72 @@ def test_tenant_trial_and_blocking():
 @pytest.mark.django_db
 def test_active_plan_returns_from_subscription():
     tenant = _tenant()
-    plano_basic = SubscriptionPlan.objects.create(nome="Basic", tipo=SubscriptionPlan.PlanType.BASIC)
-    plano_pro = SubscriptionPlan.objects.create(nome="Pro", tipo=SubscriptionPlan.PlanType.PRO)
+    plan_basic = SubscriptionPlan.objects.create(name="Basic", type=SubscriptionPlan.PlanType.BASIC)
+    plan_pro = SubscriptionPlan.objects.create(name="Pro", type=SubscriptionPlan.PlanType.PRO)
 
     TenantSubscription.objects.create(
-        inquilino=tenant,
-        plano=plano_basic,
+        tenant=tenant,
+        plan=plan_basic,
         status=TenantSubscription.Status.CANCELADA,
-        data_inicio=timezone.localdate() - timedelta(days=30),
-        data_fim=timezone.localdate() - timedelta(days=1),
+        start_date=timezone.localdate() - timedelta(days=30),
+        end_date=timezone.localdate() - timedelta(days=1),
     )
-    assinatura_ativa = TenantSubscription.objects.create(
-        inquilino=tenant,
-        plano=plano_pro,
+    assinatura_active = TenantSubscription.objects.create(
+        tenant=tenant,
+        plan=plan_pro,
         status=TenantSubscription.Status.ATIVA,
-        data_inicio=timezone.localdate(),
+        start_date=timezone.localdate(),
     )
 
-    assert tenant.plan == plano_pro
-    assert tenant.get_active_subscription() == assinatura_ativa
+    assert tenant.plan == plan_pro
+    assert tenant.get_active_subscription() == assinatura_active
 
 
 @pytest.mark.django_db
-def test_assinatura_cancelar_define_status_e_data_fim():
+def test_assinatura_cancelar_define_status_e_end_date():
     tenant = _tenant()
-    plano = SubscriptionPlan.objects.create(nome="Free", tipo=SubscriptionPlan.PlanType.FREE)
-    assinatura = TenantSubscription.objects.create(inquilino=tenant, plano=plano)
+    plan = SubscriptionPlan.objects.create(name="Free", type=SubscriptionPlan.PlanType.FREE)
+    assinatura = TenantSubscription.objects.create(tenant=tenant, plan=plan)
 
     assinatura.cancelar()
 
     assert assinatura.status == TenantSubscription.Status.CANCELADA
-    assert assinatura.data_fim == timezone.localdate()
+    assert assinatura.end_date == timezone.localdate()
 
 
 @pytest.mark.django_db
 def test_feature_flag_unique_per_tenant():
     tenant = _tenant()
-    TenantFeatureFlag.objects.create(inquilino=tenant, chave="beta-ui")
+    TenantFeatureFlag.objects.create(tenant=tenant, key="beta-ui")
     with pytest.raises(IntegrityError):
-        TenantFeatureFlag.objects.create(inquilino=tenant, chave="beta-ui")
+        TenantFeatureFlag.objects.create(tenant=tenant, key="beta-ui")
 
 
 @pytest.mark.django_db
 def test_tenant_configuration_defaults():
     tenant = _tenant()
-    cfg = TenantConfiguration.objects.create(inquilino=tenant)
+    cfg = TenantConfiguration.objects.create(tenant=tenant)
 
-    assert cfg.moeda == "MZN"
-    assert cfg.idioma == "pt"
-    assert cfg.fuso_horario == "Africa/Maputo"
-    assert cfg.inquilino == tenant
+    assert cfg.currency == "MZN"
+    assert cfg.language == "pt"
+    assert cfg.time_zone == "Africa/Maputo"
+    assert cfg.tenant == tenant
 
 
 @pytest.mark.django_db
 def test_uso_tenant_repr():
     tenant = _tenant()
     uso = TenantUsage.objects.create(
-        inquilino=tenant,
-        usuarios_ativos=3,
-        requisicoes_mes_atual=25,
+        tenant=tenant,
+        active_users=3,
+        current_month_requests=25,
     )
 
     assert "Uso" in str(uso)
     assert str(uso).endswith(str(tenant.id))
 
 
-test_inquilino_trial_e_bloqueio = test_tenant_trial_and_blocking
-test_plano_ativo_retorna_da_assinatura = test_active_plan_returns_from_subscription
-test_feature_flag_unica_por_inquilino = test_feature_flag_unique_per_tenant
-test_configuracao_inquilino_defaults = test_tenant_configuration_defaults
+test_tenant_trial_e_bloqueio = test_tenant_trial_and_blocking
+test_plan_active_retorna_da_assinatura = test_active_plan_returns_from_subscription
+test_feature_flag_unica_por_tenant = test_feature_flag_unique_per_tenant
+test_configuracao_tenant_defaults = test_tenant_configuration_defaults

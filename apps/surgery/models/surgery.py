@@ -15,13 +15,13 @@ User = settings.AUTH_USER_MODEL
 
 class Surgery(NoNameCoreModel):
     """
-    Registro de cirurgia (MVP).
+    Registro de surgery (MVP).
 
-    Inclui agendamento e estado básico. Pode ser expandido com equipe,
+    Inclui agendamento e status básico. Pode ser expandido com equipe,
     sala cirúrgica, checklists, anestesia, materiais, etc.
     """
 
-    prefixo = "CIR"
+    prefix = "CIR"
 
     class Estado(models.TextChoices):
         AGENDADA = "AGENDADA", "Agendada"
@@ -29,15 +29,19 @@ class Surgery(NoNameCoreModel):
         CONCLUIDA = "CONCLUIDA", "Concluída"
         CANCELADA = "CANCELADA", "Cancelada"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="cirurgias",
         db_index=True,
     )
-    cirurgiao = models.ForeignKey(
+    surgeon = models.ForeignKey(
         User,
+        db_column="cirurgiao_id",
         verbose_name="Cirurgião",
         on_delete=models.SET_NULL,
         null=True,
@@ -46,29 +50,50 @@ class Surgery(NoNameCoreModel):
         db_index=True,
     )
 
-    procedimentos = models.ManyToManyField(
+    procedures = models.ManyToManyField(
+
         "cirurgia.SurgicalProcedure",
+
+        db_table="cirurgia_cirurgia_procedimentos",
         verbose_name="Procedimentos cirúrgicos",
         blank=True,
         related_name="cirurgias",
     )
 
-    procedimento = models.CharField(
+    procedure = models.CharField(
+
+        db_column="procedimento",
+
         verbose_name="Procedimento (texto livre)",
         max_length=160,
         blank=True,
         default="",
         db_index=True,
-        help_text="Use quando o procedimento não estiver no catálogo.",
+        help_text="Use quando o procedure não estiver no catálogo.",
     )
-    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
+    description = models.TextField(
+        db_column="descricao",
+        verbose_name="Descrição", blank=True, default="")
 
-    preco_estimado = MoneyField(verbose_name="Preço estimado", default=Decimal("0.00"))
-    iva_percentual = models.DecimalField(verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
-    aplica_iva_por_padrao = models.BooleanField(verbose_name="Aplicar IVA por padrão", default=True)
+    estimated_price = MoneyField(
 
-    agendada_para = models.DateTimeField(verbose_name="Agendada para", default=timezone.now, db_index=True)
-    estado = models.CharField(
+        db_column="preco_estimado",
+
+        verbose_name="Preço estimado", default=Decimal("0.00"))
+    vat_percentage = models.DecimalField(
+        db_column="iva_percentual",
+        verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
+    applies_vat_by_default = models.BooleanField(
+        db_column="aplica_iva_por_padrao",
+        verbose_name="Aplicar IVA por padrão", default=True)
+
+    scheduled_for = models.DateTimeField(
+
+        db_column="agendada_para",
+
+        verbose_name="Agendada para", default=timezone.now, db_index=True)
+    status = models.CharField(
+        db_column="estado",
         verbose_name="Estado",
         max_length=20,
         choices=Estado.choices,
@@ -76,39 +101,46 @@ class Surgery(NoNameCoreModel):
         db_index=True,
     )
 
-    concluida_em = models.DateTimeField(verbose_name="Concluída em", null=True, blank=True)
-    cancelada_em = models.DateTimeField(verbose_name="Cancelada em", null=True, blank=True)
+    completed_at = models.DateTimeField(
+
+        db_column="concluida_em",
+
+        verbose_name="Concluída em", null=True, blank=True)
+    canceled_at = models.DateTimeField(
+        db_column="cancelada_em",
+        verbose_name="Cancelada em", null=True, blank=True)
 
     class Meta:
+        db_table = "cirurgia_cirurgia"
         verbose_name = "Cirurgia"
         verbose_name_plural = "Cirurgias"
-        ordering = ["-agendada_para", "-criado_em"]
+        ordering = ["-scheduled_for", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "paciente", "agendada_para"]),
-            models.Index(fields=["inquilino", "cirurgiao", "agendada_para"]),
-            models.Index(fields=["inquilino", "estado", "agendada_para"]),
+            models.Index(fields=["tenant", "patient", "scheduled_for"]),
+            models.Index(fields=["tenant", "surgeon", "scheduled_for"]),
+            models.Index(fields=["tenant", "status", "scheduled_for"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if not self.procedimentos.exists() and not (self.procedimento or "").strip():
+        if not self.procedures.exists() and not (self.procedure or "").strip():
             raise ValidationError(
-                {"procedimentos": "Informe ao menos um procedimento cirúrgico (catálogo) ou preencha o texto livre."}
+                {"procedures": "Informe ao menos um procedure cirúrgico (catálogo) ou preencha o texto livre."}
             )
 
-        if self.paciente_id and self.inquilino_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError({"paciente": "Paciente e cirurgia devem pertencer ao mesmo inquilino."})
+        if self.patient_id and self.tenant_id and self.patient.tenant_id != self.tenant_id:
+            raise ValidationError({"patient": "Paciente e surgery devem pertencer ao mesmo tenant."})
 
-        if self.cirurgiao_id and self.inquilino_id and self.cirurgiao.inquilino_id != self.inquilino_id:
-            raise ValidationError({"cirurgiao": "Cirurgião e cirurgia devem pertencer ao mesmo inquilino."})
+        if self.surgeon_id and self.tenant_id and self.surgeon.tenant_id != self.tenant_id:
+            raise ValidationError({"surgeon": "Cirurgião e surgery devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.paciente_id:
-            self.inquilino_id = self.paciente.inquilino_id
+        if not self.tenant_id and self.patient_id:
+            self.tenant_id = self.patient.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return self.id_custom or f"Cirurgia {self.pk}"
+        return self.custom_id or f"Cirurgia {self.pk}"
 

@@ -9,26 +9,26 @@ class ResultValidatedHandler:
 
         result = (
             ResultItem.all_objects.select_related(
-                "resultado__requisicao__paciente",
-                "exame_campo",
+                "result__request__patient",
+                "exam_field",
             )
             .only(
-                "resultado_valor",
-                "data_validacao",
-                "exame_campo__nome",
-                "resultado__requisicao__paciente",
+                "result_value",
+                "validation_date",
+                "exam_field__name",
+                "result__request__patient",
             )
-            .get(pk=event.resultado_id)
+            .get(pk=event.result_id)
         )
 
-        patient = result.resultado.requisicao.paciente
-        description = f"Resultado validado: {result.exame_campo.nome} = {result.resultado_valor}"
+        patient = result.result.request.patient
+        description = f"Resultado validado: {result.exam_field.name} = {result.result_value}"
 
         ClinicalHistory.objects.create(
-            paciente=patient,
-            tipo_evento=ClinicalEventType.RESULTADO_VALIDADO,
-            descricao=description,
-            data_evento=result.data_validacao,
+            patient=patient,
+            event_type=ClinicalEventType.RESULTADO_VALIDADO,
+            description=description,
+            event_date=result.validation_date,
         )
 
 

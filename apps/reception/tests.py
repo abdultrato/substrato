@@ -17,25 +17,25 @@ from core.constants.laboratory.sector import Setor
 
 
 def _tenant():
-    return Tenant.objects.create(identificador="tn-rec", nome="Tenant Recepcao")
+    return Tenant.objects.create(identifier="tn-rec", name="Tenant Recepcao")
 
 
 def _patient(tenant):
     return Patient.objects.create(
-        inquilino=tenant,
-        nome="Paciente Rec",
-        genero="Masculino",
-        endereco_rua="Rua R",
+        tenant=tenant,
+        name="Paciente Rec",
+        gender="Masculino",
+        address_street="Rua R",
     )
 
 
 def _exam(tenant):
     return LabExam.objects.create(
-        inquilino=tenant,
-        nome="Raio-X",
-        preco=Decimal("50.00"),
-        metodo=Metodo.ENZIMATICO,
-        setor=Setor.RADIOLOGIA if hasattr(Setor, "RADIOLOGIA") else Setor.HEMATOLOGIA,
+        tenant=tenant,
+        name="Raio-X",
+        price=Decimal("50.00"),
+        method=Metodo.ENZIMATICO,
+        sector=Setor.RADIOLOGIA if hasattr(Setor, "RADIOLOGIA") else Setor.HEMATOLOGIA,
     )
 
 
@@ -45,23 +45,23 @@ def test_checkin_basic_flow():
     patient = _patient(tenant)
     exam = _exam(tenant)
 
-    checkin = open_checkin(inquilino=tenant, paciente=patient, prioridade=ReceptionCheckin.Priority.NORMAL)
+    checkin = open_checkin(tenant=tenant, patient=patient, priority=ReceptionCheckin.Priority.NORMAL)
 
-    request = create_request_for_checkin(checkin=checkin, exame_ids=[exam.id])
+    request = create_request_for_checkin(checkin=checkin, exam_ids=[exam.id])
 
-    fatura = create_invoice_for_checkin(checkin=checkin, emitir=True)
+    invoice = create_invoice_for_checkin(checkin=checkin, emitir=True)
 
-    payment, receipt = register_payment_for_checkin(checkin=checkin, valor=Decimal("50.00"))
+    payment, receipt = register_payment_for_checkin(checkin=checkin, value=Decimal("50.00"))
 
     checkin.refresh_from_db()
-    fatura.refresh_from_db()
+    invoice.refresh_from_db()
 
-    assert checkin.requisicao_id == request.id
-    assert checkin.fatura_id == fatura.id
+    assert checkin.request_id == request.id
+    assert checkin.invoice_id == invoice.id
     assert payment.status in {payment.Status.CONFIRMADO, payment.Status.PENDENTE}
-    assert receipt is None or receipt.valor == payment.valor
+    assert receipt is None or receipt.value == payment.value
 
 
-_paciente = _patient
-_exame = _exam
+_patient = _patient
+_exam = _exam
 test_checkin_fluxo_basico = test_checkin_basic_flow

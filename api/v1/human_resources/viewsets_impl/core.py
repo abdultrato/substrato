@@ -44,80 +44,80 @@ class JobTitleViewSet(TenantScopedModelViewSet):
     queryset = JobTitle.objects.all()
     serializer_class = JobTitleSerializer
     filterset_class = JobTitleFilter
-    search_fields = ["id_custom", "nome"]
-    ordering_fields = ["nome", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name"]
+    ordering_fields = ["name", "created_at"]
+    ordering = ["name"]
 
 
 class EmployeeViewSet(TenantScopedModelViewSet):
-    queryset = Employee.objects.select_related("cargo").all()
+    queryset = Employee.objects.select_related("role").all()
     serializer_class = EmployeeSerializer
     filterset_class = EmployeeFilter
-    search_fields = ["id_custom", "nome", "profissao", "email", "telefone"]
-    ordering_fields = ["nome", "profissao", "data_admissao", "estado", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name", "profession", "email", "phone"]
+    ordering_fields = ["name", "profession", "admission_date", "status", "created_at"]
+    ordering = ["name"]
 
 
 class FamilyDependentViewSet(TenantScopedModelViewSet):
-    queryset = FamilyDependent.objects.select_related("funcionario").all()
+    queryset = FamilyDependent.objects.select_related("employee").all()
     serializer_class = FamilyDependentSerializer
     filterset_class = FamilyDependentFilter
-    search_fields = ["id_custom", "nome", "funcionario__nome"]
-    ordering_fields = ["nome", "parentesco", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name", "employee__name"]
+    ordering_fields = ["name", "relationship", "created_at"]
+    ordering = ["name"]
 
 
 class WorkScheduleViewSet(TenantScopedModelViewSet):
-    queryset = WorkSchedule.objects.select_related("funcionario").all()
+    queryset = WorkSchedule.objects.select_related("employee").all()
     serializer_class = WorkScheduleSerializer
     filterset_class = WorkScheduleFilter
-    ordering_fields = ["funcionario", "dia_semana", "hora_inicio"]
-    ordering = ["funcionario", "dia_semana", "hora_inicio"]
+    ordering_fields = ["employee", "weekday", "start_time"]
+    ordering = ["employee", "weekday", "start_time"]
 
 
 class AbsenceViewSet(TenantScopedModelViewSet):
-    queryset = Absence.objects.select_related("funcionario").all()
+    queryset = Absence.objects.select_related("employee").all()
     serializer_class = AbsenceSerializer
     filterset_class = AbsenceFilter
-    ordering_fields = ["data", "criado_em"]
-    ordering = ["-data", "-criado_em"]
+    ordering_fields = ["date", "created_at"]
+    ordering = ["-date", "-created_at"]
 
 
 class VacationViewSet(TenantScopedModelViewSet):
-    queryset = Vacation.objects.select_related("funcionario").all()
+    queryset = Vacation.objects.select_related("employee").all()
     serializer_class = VacationSerializer
     filterset_class = VacationFilter
-    ordering_fields = ["data_inicio", "estado", "criado_em"]
-    ordering = ["-data_inicio", "-criado_em"]
+    ordering_fields = ["start_date", "status", "created_at"]
+    ordering = ["-start_date", "-created_at"]
 
 
 class TerminationViewSet(TenantScopedModelViewSet):
-    queryset = Termination.objects.select_related("funcionario").all()
+    queryset = Termination.objects.select_related("employee").all()
     serializer_class = TerminationSerializer
     filterset_class = TerminationFilter
-    ordering_fields = ["data", "tipo", "criado_em"]
-    ordering = ["-data", "-criado_em"]
+    ordering_fields = ["date", "type", "created_at"]
+    ordering = ["-date", "-created_at"]
 
 
 class OvertimeViewSet(TenantScopedModelViewSet):
-    queryset = Overtime.objects.select_related("funcionario").all()
+    queryset = Overtime.objects.select_related("employee").all()
     serializer_class = OvertimeSerializer
     filterset_class = OvertimeFilter
-    ordering_fields = ["data", "criado_em"]
-    ordering = ["-data", "-criado_em"]
+    ordering_fields = ["date", "created_at"]
+    ordering = ["-date", "-created_at"]
 
 
 class PayrollViewSet(TenantScopedModelViewSet):
-    queryset = Payroll.objects.select_related("funcionario").all()
+    queryset = Payroll.objects.select_related("employee").all()
     serializer_class = PayrollSerializer
     filterset_class = PayrollFilter
-    ordering_fields = ["ano", "mes", "criado_em", "fechado"]
-    ordering = ["-ano", "-mes", "-criado_em"]
+    ordering_fields = ["year", "month", "created_at", "closed"]
+    ordering = ["-year", "-month", "-created_at"]
 
 
 VIEWSET_MAP = {
-    "cargo": JobTitleViewSet,
-    "funcionario": EmployeeViewSet,
+    "role": JobTitleViewSet,
+    "employee": EmployeeViewSet,
     "agregadofamiliar": FamilyDependentViewSet,
     "horario": WorkScheduleViewSet,
     "falta": AbsenceViewSet,

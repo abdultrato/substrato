@@ -13,23 +13,31 @@ class TenantSubscription(NoNameCoreModel):
         MENSAL = "MENSAL", "Mensal"
         ANUAL = "ANUAL", "Anual"
 
-    prefixo = "ASS"
+    prefix = "ASS"
 
-    inquilino = models.ForeignKey(
+    tenant = models.ForeignKey(
         "inquilinos.Tenant",
+        db_column="inquilino_id",
         on_delete=models.CASCADE,
         related_name="assinaturas",
         db_index=True,
     )
-    plano = models.ForeignKey(
+    plan = models.ForeignKey(
         "inquilinos.SubscriptionPlan",
+        db_column="plano_id",
         on_delete=models.PROTECT,
         related_name="assinaturas",
         db_index=True,
     )
 
-    data_inicio = models.DateField(default=timezone.localdate, db_index=True)
-    data_fim = models.DateField(blank=True, null=True)
+    start_date = models.DateField(
+
+        db_column="data_inicio",
+
+        default=timezone.localdate, db_index=True)
+    end_date = models.DateField(
+        db_column="data_fim",
+        blank=True, null=True)
 
     status = models.CharField(
         max_length=10,
@@ -37,7 +45,8 @@ class TenantSubscription(NoNameCoreModel):
         default=Status.ATIVA,
         db_index=True,
     )
-    ciclo = models.CharField(
+    cycle = models.CharField(
+        db_column="ciclo",
         max_length=10,
         choices=Ciclo.choices,
         default=Ciclo.MENSAL,
@@ -45,17 +54,18 @@ class TenantSubscription(NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "inquilinos_assinaturatenant"
         verbose_name = "Assinatura"
         verbose_name_plural = "Assinaturas"
-        ordering = ["-data_inicio"]
+        ordering = ["-start_date"]
         indexes = [
-            models.Index(fields=["inquilino", "status"]),
+            models.Index(fields=["tenant", "status"]),
         ]
 
-    def cancelar(self, data_fim=None):
+    def cancelar(self, end_date=None):
         self.status = TenantSubscription.Status.CANCELADA
-        self.data_fim = data_fim or timezone.localdate()
-        self.save(update_fields=["status", "data_fim"])
+        self.end_date = end_date or timezone.localdate()
+        self.save(update_fields=["status", "end_date"])
 
     def __str__(self) -> str:
-        return f"{self.inquilino_id} -> {self.plano_id} ({self.status})"
+        return f"{self.tenant_id} -> {self.plan_id} ({self.status})"

@@ -5,7 +5,7 @@ class InsurerIntegrationService:
 
     @staticmethod
     def get_adapter(insurer):
-        path = InsurerIntegrationService.ADAPTERS.get(insurer.identificador)
+        path = InsurerIntegrationService.ADAPTERS.get(insurer.identifier)
 
         if not path:
             raise LookupError("Insurer adapter is not configured.")

@@ -24,29 +24,39 @@ OrigemMovimento = MovementOrigin
 
 
 class InventoryMovement(CoreModel):
-    prefixo = "MVESQ"
+    prefix = "MVESQ"
 
-    lote = models.ForeignKey(
+    lot = models.ForeignKey(
+
         "farmacia.Lot",
+
+        db_column="lote_id",
         on_delete=models.PROTECT,
         related_name="movimentos",
         db_index=True,
     )
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         max_length=3,
         choices=MovementType.choices,
         db_index=True,
     )
-    origem = models.CharField(
+    origin = models.CharField(
+        db_column="origem",
         max_length=4,
         choices=MovementOrigin.choices,
         default=MovementOrigin.AJUSTE,
         db_index=True,
     )
 
-    item_venda = models.ForeignKey(
+    sale_item = models.ForeignKey(
+
         "farmacia.SaleItem",
+
+        db_column="item_venda_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -54,15 +64,20 @@ class InventoryMovement(CoreModel):
         db_index=True,
     )
 
-    quantidade = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    quantity = models.PositiveIntegerField(
+
+        db_column="quantidade",
+
+        validators=[MinValueValidator(1)])
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "farmacia_movimentoestoque"
+        ordering = ["-created_at"]
 
         indexes = [
-            models.Index(fields=["lote", "criado_em"]),
-            models.Index(fields=["tipo"]),
-            models.Index(fields=["origem"]),
+            models.Index(fields=["lot", "created_at"]),
+            models.Index(fields=["type"]),
+            models.Index(fields=["origin"]),
         ]
 
     # =====================================
@@ -71,15 +86,15 @@ class InventoryMovement(CoreModel):
 
     def lot_balance(self):
 
-        total = self.lote.movimentos.aggregate(
+        total = self.lot.movimentos.aggregate(
             total=Coalesce(
                 Sum(
                     Case(
                         When(
-                            tipo=MovementType.SAIDA,
-                            then=-F("quantidade"),
+                            type=MovementType.SAIDA,
+                            then=-F("quantity"),
                         ),
-                        default=F("quantidade"),
+                        default=F("quantity"),
                         output_field=IntegerField(),
                     )
                 ),
@@ -87,7 +102,7 @@ class InventoryMovement(CoreModel):
             )
         )["total"]
 
-        return self.lote.quantidade_inicial + total
+        return self.lot.initial_quantity + total
 
     # =====================================
     # VALIDAÇÃO DE DOMÍNIO
@@ -97,37 +112,37 @@ class InventoryMovement(CoreModel):
 
         super().clean()
 
-        if not self.lote_id:
+        if not self.lot_id:
             raise ValidationError("Lote é obrigatório.")
 
-        if self.lote.vencido:
-            raise ValidationError("Não é permitido movimentar lote vencido.")
+        if self.lot.vencido:
+            raise ValidationError("Não é permitido movimentar lot vencido.")
 
         # valida tenant
-        if self.inquilino_id and self.lote.inquilino_id != self.inquilino_id:
-            raise ValidationError("Inquilino do movimento difere do lote.")
+        if self.tenant_id and self.lot.tenant_id != self.tenant_id:
+            raise ValidationError("Inquilino do movimento difere do lot.")
 
-        if self.item_venda_id and self.inquilino_id and self.item_venda.inquilino_id != self.inquilino_id:
-            raise ValidationError("Inquilino do movimento difere do item de venda.")
+        if self.sale_item_id and self.tenant_id and self.sale_item.tenant_id != self.tenant_id:
+            raise ValidationError("Inquilino do movimento difere do item de sale.")
 
-        # coerência origem / tipo / vínculo de venda
-        if self.origem == MovementOrigin.VENDA and self.tipo != MovementType.SAIDA:
-            raise ValidationError("Movimento com origem em venda deve ser de saída.")
+        # coerência origin / type / vínculo de sale
+        if self.origin == MovementOrigin.VENDA and self.type != MovementType.SAIDA:
+            raise ValidationError("Movimento com origin em sale deve ser de saída.")
 
-        if self.tipo == MovementType.SAIDA and self.origem == MovementOrigin.VENDA and not self.item_venda:
+        if self.type == MovementType.SAIDA and self.origin == MovementOrigin.VENDA and not self.sale_item:
             raise ValidationError("Movimentos de saída devem estar ligados a um ItemVenda.")
 
-        if self.tipo == MovementType.SAIDA and self.origem != MovementOrigin.VENDA and self.item_venda:
-            raise ValidationError("Saídas que não são de venda não devem estar ligadas a ItemVenda.")
+        if self.type == MovementType.SAIDA and self.origin != MovementOrigin.VENDA and self.sale_item:
+            raise ValidationError("Saídas que não são de sale não devem estar ligadas a ItemVenda.")
 
-        if self.tipo == MovementType.ENTRADA and self.item_venda:
+        if self.type == MovementType.ENTRADA and self.sale_item:
             raise ValidationError("Entradas de estoque não devem estar ligadas a vendas.")
 
         # valida saldo
-        if self.tipo == MovementType.SAIDA:
+        if self.type == MovementType.SAIDA:
             saldo = self.lot_balance()
 
-            if self.quantidade > saldo:
+            if self.quantity > saldo:
                 raise ValidationError("Estoque insuficiente.")
 
     # =====================================
@@ -135,34 +150,34 @@ class InventoryMovement(CoreModel):
     # =====================================
 
     @property
-    def quantidade_assinada(self):
+    def quantity_assinada(self):
 
-        if self.tipo == MovementType.SAIDA:
-            return -self.quantidade
+        if self.type == MovementType.SAIDA:
+            return -self.quantity
 
-        return self.quantidade
+        return self.quantity
 
     # =====================================
     # SAVE
     # =====================================
 
     def save(self, *args, **kwargs):
-        if not self.nome and self.lote_id:
-            if self.origem == MovementOrigin.VENDA and self.item_venda_id:
-                venda = self.item_venda.venda
-                referencia = venda.numero or venda.id_custom
-                self.nome = f"Venda {referencia} - Lote {self.lote.numero_lote}"
-            elif self.origem == MovementOrigin.PROCEDIMENTO:
-                self.nome = f"Procedimento - Lote {self.lote.numero_lote}"
+        if not self.name and self.lot_id:
+            if self.origin == MovementOrigin.VENDA and self.sale_item_id:
+                sale = self.sale_item.sale
+                referencia = sale.number or sale.custom_id
+                self.name = f"Venda {referencia} - Lote {self.lot.lot_number}"
+            elif self.origin == MovementOrigin.PROCEDIMENTO:
+                self.name = f"Procedimento - Lote {self.lot.lot_number}"
             else:
-                self.nome = f"{self.get_tipo_display()} - Lote {self.lote.numero_lote}"
+                self.name = f"{self.get_type_display()} - Lote {self.lot.lot_number}"
 
         self.full_clean()
 
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.lote} - {self.tipo} ({self.quantidade})"
+        return f"{self.lot} - {self.type} ({self.quantity})"
 
 
-InventoryMovement.saldo_lote = InventoryMovement.lot_balance
+InventoryMovement.saldo_lot = InventoryMovement.lot_balance

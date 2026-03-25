@@ -6,11 +6,11 @@ class PregnancyFilter(SafeFilterSet):
     class Meta:
         model = Pregnancy
         fields = [
-            "paciente",
-            "medico_responsavel",
-            "estado",
-            "data_prevista_parto",
-            "criado_em",
+            "patient",
+            "responsible_doctor",
+            "status",
+            "expected_delivery_date",
+            "created_at",
         ]
 
 

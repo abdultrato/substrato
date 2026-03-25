@@ -3,7 +3,7 @@ from django.db import models
 
 class MedicalExamSector(models.TextChoices):
     """
-    Setores/serviços onde exames médicos (imagem/diagnóstico) são executados.
+    Setores/serviços onde exams médicos (imagem/diagnóstico) são executados.
     Separado dos setores laboratoriais.
     """
 

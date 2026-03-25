@@ -16,15 +16,15 @@ class JobTitleSerializer(serializers.ModelSerializer):
         model = JobTitle
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -33,15 +33,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -50,15 +50,15 @@ class FamilyDependentSerializer(serializers.ModelSerializer):
         model = FamilyDependent
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -67,15 +67,15 @@ class WorkScheduleSerializer(serializers.ModelSerializer):
         model = WorkSchedule
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -84,15 +84,15 @@ class AbsenceSerializer(serializers.ModelSerializer):
         model = Absence
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -101,15 +101,15 @@ class VacationSerializer(serializers.ModelSerializer):
         model = Vacation
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -118,15 +118,15 @@ class TerminationSerializer(serializers.ModelSerializer):
         model = Termination
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -135,15 +135,15 @@ class OvertimeSerializer(serializers.ModelSerializer):
         model = Overtime
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
         )
 
 
@@ -152,25 +152,25 @@ class PayrollSerializer(serializers.ModelSerializer):
         model = Payroll
         fields = "__all__"
         read_only_fields = (
-            "id_custom",
-            "inquilino",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "deletado",
-            "deletado_em",
-            "deletado_por",
-            "horas_extras_apuradas",
-            "valor_hora",
-            "valor_horas_extras",
-            "salario_total",
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
+            "calculated_overtime_hours",
+            "hourly_value",
+            "overtime_value",
+            "total_salary",
         )
 
 
 SERIALIZER_MAP = {
-    "cargo": JobTitleSerializer,
-    "funcionario": EmployeeSerializer,
+    "role": JobTitleSerializer,
+    "employee": EmployeeSerializer,
     "agregadofamiliar": FamilyDependentSerializer,
     "horario": WorkScheduleSerializer,
     "falta": AbsenceSerializer,

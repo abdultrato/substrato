@@ -4,29 +4,29 @@ from apps.monitoring.models.system_error import SystemError
 
 CORE_READ_ONLY_FIELDS = (
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 )
 
 
 class SystemErrorSerializer(serializers.ModelSerializer):
-    usuario_nome = serializers.SerializerMethodField(method_name="get_user_name")
+    user_name = serializers.SerializerMethodField(method_name="get_user_name")
 
     class Meta:
         model = SystemError
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "usuario_nome")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "user_name")
 
     def get_user_name(self, obj: SystemError) -> str:
-        u = getattr(obj, "usuario", None)
+        u = getattr(obj, "user", None)
         if not u:
             return ""
         try:
@@ -36,7 +36,7 @@ class SystemErrorSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "erro": SystemErrorSerializer,
+    "error": SystemErrorSerializer,
 }
 
 ErroSistemaSerializer = SystemErrorSerializer

@@ -74,37 +74,37 @@ class AnalyticsRangeSerializer(serializers.Serializer):
 
 
 class AnalyticsTopExamSerializer(serializers.Serializer):
-    tipo = serializers.CharField()
+    type = serializers.CharField()
     id = serializers.IntegerField(required=False, allow_null=True)
-    nome = serializers.CharField()
+    name = serializers.CharField()
     total = serializers.IntegerField()
 
 
 class AnalyticsTopProcedimentoSerializer(serializers.Serializer):
-    catalogo_id = serializers.IntegerField(required=False, allow_null=True)
-    catalogo__nome = serializers.CharField(required=False, allow_blank=True)
+    catalog_id = serializers.IntegerField(required=False, allow_null=True)
+    catalog__name = serializers.CharField(required=False, allow_blank=True)
     total = serializers.IntegerField()
 
 
 class AnalyticsTopMedicamentoSerializer(serializers.Serializer):
-    produto_id = serializers.IntegerField(required=False, allow_null=True)
-    produto__nome = serializers.CharField(required=False, allow_blank=True)
-    total_quantidade = serializers.DecimalField(max_digits=14, decimal_places=2)
+    product_id = serializers.IntegerField(required=False, allow_null=True)
+    product__name = serializers.CharField(required=False, allow_blank=True)
+    total_quantity = serializers.DecimalField(max_digits=14, decimal_places=2)
     total_pedidos = serializers.IntegerField()
 
 
 class AnalyticsTopConsultaSerializer(serializers.Serializer):
-    tipo = serializers.CharField(required=False, allow_blank=True)
+    type = serializers.CharField(required=False, allow_blank=True)
     total = serializers.IntegerField()
 
 
 class AnalyticsResponseSerializer(serializers.Serializer):
     range = AnalyticsRangeSerializer()
     kpis = serializers.DictField(child=serializers.JSONField())
-    top_exames = AnalyticsTopExamSerializer(many=True)
-    top_procedimentos = AnalyticsTopProcedimentoSerializer(many=True)
+    top_exams = AnalyticsTopExamSerializer(many=True)
+    top_procedures = AnalyticsTopProcedimentoSerializer(many=True)
     top_medicamentos = AnalyticsTopMedicamentoSerializer(many=True)
-    top_consultas = AnalyticsTopConsultaSerializer(many=True)
+    top_consultations = AnalyticsTopConsultaSerializer(many=True)
 
 
 class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
@@ -118,7 +118,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
     http_method_names = ["get", "head", "options"]
 
     def _compute(self, request) -> dict:
-        inquilino = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
 
         limit = int(request.query_params.get("limit") or 10)
         limit = max(1, min(limit, 50))
@@ -148,47 +148,47 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         # =========================
         # KPIs (agregados principais)
         # =========================
-        qs_pacientes = Patient.objects.filter(deletado=False)
-        qs_requisicoes = LabRequest.objects.filter(deletado=False)
-        qs_faturas = Invoice.objects.filter(deletado=False)
-        qs_consultas = MedicalConsultation.objects.filter(deletado=False)
-        qs_internamentos = WardAdmission.objects.filter(deletado=False)
+        qs_pacientes = Patient.objects.filter(deleted=False)
+        qs_requisicoes = LabRequest.objects.filter(deleted=False)
+        qs_faturas = Invoice.objects.filter(deleted=False)
+        qs_consultations = MedicalConsultation.objects.filter(deleted=False)
+        qs_internamentos = WardAdmission.objects.filter(deleted=False)
         qs_pagamentos = Payment.objects.all()
 
-        if inquilino is not None:
-            qs_pacientes = qs_pacientes.filter(inquilino=inquilino)
-            qs_requisicoes = qs_requisicoes.filter(inquilino=inquilino)
-            qs_faturas = qs_faturas.filter(inquilino=inquilino)
-            qs_consultas = qs_consultas.filter(inquilino=inquilino)
-            qs_internamentos = qs_internamentos.filter(inquilino=inquilino)
-            # Pagamento não tem inquilino direto; scopa pela fatura
-            qs_pagamentos = qs_pagamentos.filter(fatura__inquilino=inquilino)
+        if tenant is not None:
+            qs_pacientes = qs_pacientes.filter(tenant=tenant)
+            qs_requisicoes = qs_requisicoes.filter(tenant=tenant)
+            qs_faturas = qs_faturas.filter(tenant=tenant)
+            qs_consultations = qs_consultations.filter(tenant=tenant)
+            qs_internamentos = qs_internamentos.filter(tenant=tenant)
+            # Pagamento não tem tenant direto; scopa pela invoice
+            qs_pagamentos = qs_pagamentos.filter(invoice__tenant=tenant)
 
         pacientes_total = qs_pacientes.count()
-        pacientes_novos = qs_pacientes.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        pacientes_novos = qs_pacientes.filter(created_at__gte=inicio, created_at__lte=fim).count()
 
-        requisicoes_total = qs_requisicoes.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        requisicoes_total = qs_requisicoes.filter(created_at__gte=inicio, created_at__lte=fim).count()
         requisicoes_validadas = qs_requisicoes.filter(
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
-            estado=RequestState.VALIDATED,
+            created_at__gte=inicio,
+            created_at__lte=fim,
+            status=RequestState.VALIDATED,
         ).count()
 
-        consultas_total = qs_consultas.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        consultations_total = qs_consultations.filter(created_at__gte=inicio, created_at__lte=fim).count()
 
-        faturas_total = qs_faturas.filter(criado_em__gte=inicio, criado_em__lte=fim).count()
+        faturas_total = qs_faturas.filter(created_at__gte=inicio, created_at__lte=fim).count()
         faturas_pagas = qs_faturas.filter(
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
-            estado=Invoice.Estado.PAGA,
+            created_at__gte=inicio,
+            created_at__lte=fim,
+            status=Invoice.Estado.PAGA,
         ).count()
 
-        valor_faturado = (
+        value_faturado = (
             qs_faturas.filter(
-                criado_em__gte=inicio,
-                criado_em__lte=fim,
+                created_at__gte=inicio,
+                created_at__lte=fim,
             )
-            .exclude(estado=Invoice.Estado.CANCELADA)
+            .exclude(status=Invoice.Estado.CANCELADA)
             .aggregate(
                 total=Coalesce(
                     Sum(
@@ -200,114 +200,114 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             )["total"]
         )
 
-        valor_pago_confirmado = qs_pagamentos.filter(
+        value_pago_confirmed = qs_pagamentos.filter(
             status=Payment.Status.CONFIRMADO,
-            pago_em__isnull=False,
-            pago_em__gte=inicio,
-            pago_em__lte=fim,
+            paid_at__isnull=False,
+            paid_at__gte=inicio,
+            paid_at__lte=fim,
         ).aggregate(
             total=Coalesce(
                 Sum(
-                    "valor",
+                    "value",
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Value(Decimal("0.00")),
             )
         )["total"]
 
-        internamentos_ativos = qs_internamentos.filter(ativo=True).count()
-        camas_ocupadas = qs_internamentos.filter(ativo=True).values("cama_id").distinct().count()
+        internamentos_ativos = qs_internamentos.filter(active=True).count()
+        camas_ocupadas = qs_internamentos.filter(active=True).values("bed_id").distinct().count()
 
         # =========================
         # EXAMES MAIS SOLICITADOS
         # =========================
-        base_exames = LabRequestItem.objects.filter(
-            deletado=False,
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
+        base_exams = LabRequestItem.objects.filter(
+            deleted=False,
+            created_at__gte=inicio,
+            created_at__lte=fim,
         )
-        if inquilino is not None:
-            base_exames = base_exames.filter(inquilino=inquilino)
+        if tenant is not None:
+            base_exams = base_exams.filter(tenant=tenant)
 
-        top_exames_lab = list(
-            base_exames.filter(exame__isnull=False)
-            .values("exame_id", "exame__nome")
+        top_exams_lab = list(
+            base_exams.filter(exam__isnull=False)
+            .values("exam_id", "exam__name")
             .annotate(total=Count("id"))
             .order_by("-total")[:limit]
         )
-        top_exames_medicos = list(
-            base_exames.filter(exame_medico__isnull=False)
-            .values("exame_medico_id", "exame_medico__nome")
+        top_exams_medicos = list(
+            base_exams.filter(medical_exam__isnull=False)
+            .values("medical_exam_id", "medical_exam__name")
             .annotate(total=Count("id"))
             .order_by("-total")[:limit]
         )
 
-        top_exames = [
+        top_exams = [
             {
-                "tipo": "laboratorial",
-                "id": row["exame_id"],
-                "nome": row["exame__nome"],
+                "type": "laboratorial",
+                "id": row["exam_id"],
+                "name": row["exam__name"],
                 "total": row["total"],
             }
-            for row in top_exames_lab
+            for row in top_exams_lab
         ] + [
             {
-                "tipo": "medico",
-                "id": row["exame_medico_id"],
-                "nome": row["exame_medico__nome"],
+                "type": "doctor",
+                "id": row["medical_exam_id"],
+                "name": row["medical_exam__name"],
                 "total": row["total"],
             }
-            for row in top_exames_medicos
+            for row in top_exams_medicos
         ]
 
-        top_exames = sorted(top_exames, key=lambda x: x["total"], reverse=True)[:limit]
+        top_exams = sorted(top_exams, key=lambda x: x["total"], reverse=True)[:limit]
 
         # =========================
         # PROCEDIMENTOS MAIS SOLICITADOS
         # =========================
         base_procs = ProcedureItem.objects.filter(
-            deletado=False,
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
-            catalogo__isnull=False,
+            deleted=False,
+            created_at__gte=inicio,
+            created_at__lte=fim,
+            catalog__isnull=False,
         )
-        if inquilino is not None:
-            base_procs = base_procs.filter(inquilino=inquilino)
+        if tenant is not None:
+            base_procs = base_procs.filter(tenant=tenant)
 
-        top_procedimentos = list(
-            base_procs.values("catalogo_id", "catalogo__nome").annotate(total=Count("id")).order_by("-total")[:limit]
+        top_procedures = list(
+            base_procs.values("catalog_id", "catalog__name").annotate(total=Count("id")).order_by("-total")[:limit]
         )
 
         # =========================
         # MEDICAMENTOS MAIS REQUISITADOS
         # =========================
         base_meds = SaleItem.objects.filter(
-            deletado=False,
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
-            produto__tipo=Product.TipoProduto.MEDICAMENTO,
+            deleted=False,
+            created_at__gte=inicio,
+            created_at__lte=fim,
+            product__type=Product.TipoProduto.MEDICAMENTO,
         )
-        if inquilino is not None:
-            base_meds = base_meds.filter(inquilino=inquilino)
+        if tenant is not None:
+            base_meds = base_meds.filter(tenant=tenant)
 
         top_medicamentos = list(
-            base_meds.values("produto_id", "produto__nome")
-            .annotate(total_quantidade=Sum("quantidade"), total_pedidos=Count("id"))
-            .order_by("-total_quantidade")[:limit]
+            base_meds.values("product_id", "product__name")
+            .annotate(total_quantity=Sum("quantity"), total_pedidos=Count("id"))
+            .order_by("-total_quantity")[:limit]
         )
 
         # =========================
         # CONSULTAS MAIS MARCADAS
         # =========================
         base_cons = MedicalConsultation.objects.filter(
-            deletado=False,
-            criado_em__gte=inicio,
-            criado_em__lte=fim,
+            deleted=False,
+            created_at__gte=inicio,
+            created_at__lte=fim,
         )
-        if inquilino is not None:
-            base_cons = base_cons.filter(inquilino=inquilino)
+        if tenant is not None:
+            base_cons = base_cons.filter(tenant=tenant)
 
-        top_consultas = list(base_cons.values("tipo").annotate(total=Count("id")).order_by("-total")[:limit])
+        top_consultations = list(base_cons.values("type").annotate(total=Count("id")).order_by("-total")[:limit])
 
         return {
             "range": {
@@ -319,18 +319,18 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
                 "Pacientes (novos no período)": pacientes_novos,
                 "Requisições (no período)": requisicoes_total,
                 "Requisições validadas (no período)": requisicoes_validadas,
-                "Consultas (no período)": consultas_total,
+                "Consultas (no período)": consultations_total,
                 "Faturas (no período)": faturas_total,
                 "Faturas pagas (no período)": faturas_pagas,
-                "Valor faturado (no período)": valor_faturado,
-                "Valor pago confirmado (no período)": valor_pago_confirmado,
+                "Valor faturado (no período)": value_faturado,
+                "Valor pago confirmed (no período)": value_pago_confirmed,
                 "Internamentos ativos (agora)": internamentos_ativos,
                 "Camas ocupadas (agora)": camas_ocupadas,
             },
-            "top_exames": top_exames,
-            "top_procedimentos": top_procedimentos,
+            "top_exams": top_exams,
+            "top_procedures": top_procedures,
             "top_medicamentos": top_medicamentos,
-            "top_consultas": top_consultas,
+            "top_consultations": top_consultations,
         }
 
     @extend_schema(
@@ -349,7 +349,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                "tipo",
+                "type",
                 OpenApiTypes.STR,
                 OpenApiParameter.QUERY,
                 description="Formato de exportação: pdf|csv|word",
@@ -362,16 +362,16 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
     def export(self, request):
         """
         Exporta o relatório do endpoint /dashboard/analytics/ em:
-        - PDF (tipo=pdf)
-        - CSV (tipo=csv)
-        - Word (tipo=word)
+        - PDF (type=pdf)
+        - CSV (type=csv)
+        - Word (type=word)
 
-        Nota: evitamos o query-param `format` porque o DRF usa esse nome
+        Nota: evitamos o query-param `format` porque o DRF usa esse name
         para content negotiation e pode responder 404 quando não existe
         renderer para o formato solicitado.
         """
         fmt = (
-            request.query_params.get("tipo")
+            request.query_params.get("type")
             or request.query_params.get("saida")
             or request.query_params.get("export")
             or "pdf"
@@ -395,23 +395,23 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
 
             writer.writerow([])
             writer.writerow(["Top Exames (Tipo)", "Exame", "Total"])
-            for r in payload.get("top_exames") or []:
-                writer.writerow([r.get("tipo"), r.get("nome"), r.get("total")])
+            for r in payload.get("top_exams") or []:
+                writer.writerow([r.get("type"), r.get("name"), r.get("total")])
 
             writer.writerow([])
             writer.writerow(["Top Procedimentos", "Total"])
-            for r in payload.get("top_procedimentos") or []:
-                writer.writerow([r.get("catalogo__nome"), r.get("total")])
+            for r in payload.get("top_procedures") or []:
+                writer.writerow([r.get("catalog__name"), r.get("total")])
 
             writer.writerow([])
             writer.writerow(["Top Medicamentos", "Quantidade", "Pedidos"])
             for r in payload.get("top_medicamentos") or []:
-                writer.writerow([r.get("produto__nome"), r.get("total_quantidade"), r.get("total_pedidos")])
+                writer.writerow([r.get("product__name"), r.get("total_quantity"), r.get("total_pedidos")])
 
             writer.writerow([])
             writer.writerow(["Top Consultas", "Total"])
-            for r in payload.get("top_consultas") or []:
-                writer.writerow([r.get("tipo"), r.get("total")])
+            for r in payload.get("top_consultations") or []:
+                writer.writerow([r.get("type"), r.get("total")])
 
             csv_bytes = output.getvalue().encode("utf-8")
             resp = HttpResponse(csv_bytes, content_type="text/csv; charset=utf-8")
@@ -455,25 +455,25 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
   <h2>Exames Mais Solicitados</h2>
   <table>
     <tr><th>Tipo</th><th>Exame</th><th>Total</th></tr>
-    {_table_rows([[r.get("tipo", ""), r.get("nome", ""), str(r.get("total", 0))] for r in (payload.get("top_exames") or [])])}
+    {_table_rows([[r.get("type", ""), r.get("name", ""), str(r.get("total", 0))] for r in (payload.get("top_exams") or [])])}
   </table>
 
   <h2>Procedimentos Mais Solicitados</h2>
   <table>
     <tr><th>Procedimento</th><th>Total</th></tr>
-    {_table_rows([[r.get("catalogo__nome", ""), str(r.get("total", 0))] for r in (payload.get("top_procedimentos") or [])])}
+    {_table_rows([[r.get("catalog__name", ""), str(r.get("total", 0))] for r in (payload.get("top_procedures") or [])])}
   </table>
 
   <h2>Medicamentos Mais Requisitados</h2>
   <table>
     <tr><th>Medicamento</th><th>Quantidade</th><th>Pedidos</th></tr>
-    {_table_rows([[r.get("produto__nome", ""), str(r.get("total_quantidade", 0)), str(r.get("total_pedidos", 0))] for r in (payload.get("top_medicamentos") or [])])}
+    {_table_rows([[r.get("product__name", ""), str(r.get("total_quantity", 0)), str(r.get("total_pedidos", 0))] for r in (payload.get("top_medicamentos") or [])])}
   </table>
 
   <h2>Consultas Mais Marcadas</h2>
   <table>
     <tr><th>Consulta</th><th>Total</th></tr>
-    {_table_rows([[r.get("tipo", ""), str(r.get("total", 0))] for r in (payload.get("top_consultas") or [])])}
+    {_table_rows([[r.get("type", ""), str(r.get("total", 0))] for r in (payload.get("top_consultations") or [])])}
   </table>
 </body>
 </html>

@@ -19,12 +19,12 @@ urlpatterns = [
     re_path(r"^dashboard/stats/?$", DashboardStatsView.as_view(), name="dashboard-stats"),
     # Integrações de equipamentos (worklist + inbox HTTP).
     re_path(
-        r"^equipment_integrations/equipment/(?P<equipment_id_custom>[^/]+)/worklist/?$",
+        r"^equipment_integrations/equipment/(?P<equipment_custom_id>[^/]+)/worklist/?$",
         EquipmentWorklistView.as_view(),
         name="equipment-integrations-worklist",
     ),
     re_path(
-        r"^equipment_integrations/equipment/(?P<equipment_id_custom>[^/]+)/results/?$",
+        r"^equipment_integrations/equipment/(?P<equipment_custom_id>[^/]+)/results/?$",
         EquipmentResultsInboxView.as_view(),
         name="equipment-integrations-results",
     ),

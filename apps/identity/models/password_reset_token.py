@@ -12,16 +12,18 @@ class PasswordResetToken(models.Model):
     )
 
     token = models.CharField(max_length=128, unique=True, db_index=True, blank=True)
-    usado = models.BooleanField(default=False, db_index=True)
-    criado_em = models.DateTimeField(auto_now_add=True, db_index=True)
+    used = models.BooleanField(
+        db_column="usado",
+        default=False, db_index=True)
+    created_at = models.DateTimeField(db_column="criado_em", auto_now_add=True, db_index=True)
 
     class Meta:
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         verbose_name = "Token de Reset de Password"
         verbose_name_plural = "Tokens de Reset de Password"
         indexes = [
-            models.Index(fields=["user", "criado_em"]),
-            models.Index(fields=["usado"]),
+            models.Index(fields=["user", "created_at"]),
+            models.Index(fields=["used"]),
         ]
 
     def save(self, *args, **kwargs):
@@ -31,4 +33,4 @@ class PasswordResetToken(models.Model):
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.user_id} - {'usado' if self.usado else 'ativo'}"
+        return f"{self.user_id} - {'used' if self.used else 'active'}"

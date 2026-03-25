@@ -8,10 +8,10 @@ class CommunicationService:
 
         return NotificationService().send_to_patient(
             patient=patient,
-            message="Seu resultado está disponível.",
+            message="Seu result está disponível.",
             subject="Resultado disponível",
         )
 
 
 ServicoComunicacao = CommunicationService
-CommunicationService.avisar_resultado_pronto = CommunicationService.notify_result_ready
+CommunicationService.avisar_result_pronto = CommunicationService.notify_result_ready

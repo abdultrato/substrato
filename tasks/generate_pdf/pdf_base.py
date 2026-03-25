@@ -1,7 +1,7 @@
 """
 PDF Base Engine — Clinical Enterprise Grade
 
-✔ Layout A5 profissional
+✔ Layout A5 professional
 ✔ Header institucional em todas páginas
 ✔ QR Code verificável (topo direito)
 ✔ Assinaturas automáticas
@@ -199,7 +199,7 @@ def generate_qr_code(url: str):
             border=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
         )
-        qr.add_data(url)
+        qr.add_date(url)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
@@ -287,20 +287,20 @@ class NumberedCanvas(rl_canvas.Canvas):
 # =========================================================
 
 
-def _sanitize_barcode(valor: str) -> str:
-    valor = ("" if valor is None else str(valor)).strip()
-    if not valor:
+def _sanitize_barcode(value: str) -> str:
+    value = ("" if value is None else str(value)).strip()
+    if not value:
         return ""
     # Remove acentos e limita a ASCII imprimível.
-    valor = unicodedata.normalize("NFKD", valor)
-    valor = "".join(ch for ch in valor if unicodedata.category(ch) != "Mn")
-    valor = valor.encode("ascii", "ignore").decode("ascii")
-    return "".join(ch for ch in valor if 32 <= ord(ch) <= 126)
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+    value = value.encode("ascii", "ignore").decode("ascii")
+    return "".join(ch for ch in value if 32 <= ord(ch) <= 126)
 
 
 def draw_barcode(canvas_obj, doc, x, y, max_width) -> None:
-    valor = getattr(doc, "barcode_value", None)
-    payload = _sanitize_barcode(valor)
+    value = getattr(doc, "barcode_value", None)
+    payload = _sanitize_barcode(value)
     if not payload:
         return
     try:
@@ -386,7 +386,7 @@ def draw_header(canvas_obj, doc):
             qr_y = logo_y + 0.2 * cm
             canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size)
 
-    # Código de barras (Code128) com dados essenciais do paciente/documento
+    # Código de barras (Code128) com dados essenciais do patient/documento
     if hasattr(doc, "barcode_value") and doc.barcode_value:
         right_limit = (qr_x - 0.2 * cm) if qr_x is not None else (page_w - right_margin)
         max_w = max(1 * cm, right_limit - text_x)
@@ -410,7 +410,7 @@ def draw_header(canvas_obj, doc):
 # =========================================================
 
 
-def draw_signatures(canvas_obj, doc, usuario=None):
+def draw_signatures(canvas_obj, doc, user=None):
     canvas_obj.saveState()
 
     page_w, _ = doc.pagesize
@@ -431,10 +431,10 @@ def draw_signatures(canvas_obj, doc, usuario=None):
     canvas_obj.line(x1, y, x1 + width_line, y)
     canvas_obj.line(x2, y, x2 + width_line, y)
 
-    nome = institutional_user_identity(usuario)
+    name = institutional_user_identity(user)
 
     canvas_obj.setFont(FONT, 9)
-    canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {nome}")
+    canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {name}")
     canvas_obj.drawCentredString(x2 + width_line / 2, y - 9, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
@@ -445,9 +445,9 @@ def draw_signatures(canvas_obj, doc, usuario=None):
 # =========================================================
 
 
-def on_page(canvas_obj, doc, usuario=None):
+def on_page(canvas_obj, doc, user=None):
     draw_header(canvas_obj, doc)
-    draw_signatures(canvas_obj, doc, usuario)
+    draw_signatures(canvas_obj, doc, user)
 
 
 def draw_line_full_width(canvas_obj, doc):
@@ -476,29 +476,29 @@ def cell_paragraph(text, is_bold=False):
     return Paragraph("" if text is None else str(text), style)
 
 
-def user_name(usuario):
-    if not usuario:
+def user_name(user):
+    if not user:
         return "Sem usuário"
 
-    full_name_fn = getattr(usuario, "get_full_name", None)
+    full_name_fn = getattr(user, "get_full_name", None)
     if callable(full_name_fn):
         full_name = (full_name_fn() or "").strip()
         if full_name:
             return full_name
 
-    for attr in ("nome", "username", "email"):
-        valor = getattr(usuario, attr, None)
-        if valor:
-            return str(valor)
+    for attr in ("name", "username", "email"):
+        value = getattr(user, attr, None)
+        if value:
+            return str(value)
 
     return "Sem usuário"
 
 
-def user_groups(usuario):
-    if not usuario:
+def user_groups(user):
+    if not user:
         return "Sem Grupo"
 
-    groups = getattr(usuario, "groups", None)
+    groups = getattr(user, "groups", None)
     if groups is None:
         return "Sem Grupo"
 
@@ -511,17 +511,17 @@ def user_groups(usuario):
                 if isinstance(g, str):
                     nomes.append(g)
                 else:
-                    nome = getattr(g, "name", None)
-                    if nome:
-                        nomes.append(nome)
+                    name = getattr(g, "name", None)
+                    if name:
+                        nomes.append(name)
     except Exception:
         nomes = []
 
     return ", ".join(nomes) if nomes else "Sem Grupo"
 
 
-def institutional_user_identity(usuario):
-    return f"Téc. de Laboratório | {user_groups(usuario)} | {user_name(usuario)}"
+def institutional_user_identity(user):
+    return f"Téc. de Laboratório | {user_groups(user)} | {user_name(user)}"
 
 
 def document_title_style(name="HeadingDoc"):
@@ -589,9 +589,9 @@ def montar_bloco_identificacao(usable_width, left_lines, right_lines):
 
 
 gerar_qr_code = generate_qr_code
-_sanitizar_codigo_barra = _sanitize_barcode
-nome_usuario = user_name
-grupos_usuario = user_groups
-identidade_usuario_institucional = institutional_user_identity
+_sanitizar_code_barra = _sanitize_barcode
+name_user = user_name
+grupos_user = user_groups
+identidade_user_institucional = institutional_user_identity
 estilo_titulo_documento = document_title_style
 estilo_secao_documento = document_section_style

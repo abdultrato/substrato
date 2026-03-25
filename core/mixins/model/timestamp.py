@@ -4,43 +4,43 @@ from django.utils import timezone
 
 class TimestampMixin(models.Model):
     """
-    Timestamp mixin (`criado_em`, `atualizado_em`).
+    Timestamp mixin (`created_at`, `updated_at`).
     """
 
-    criado_em = models.DateTimeField(
+    created_at = models.DateTimeField(
         editable=False,
         db_index=True,
     )
 
-    atualizado_em = models.DateTimeField(
+    updated_at = models.DateTimeField(
         db_index=True,
     )
 
     class Meta:
         abstract = True
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
         now_value = timezone.now()
 
         if not self.pk:
-            self.criado_em = now_value
+            self.created_at = now_value
 
-        self.atualizado_em = now_value
+        self.updated_at = now_value
 
         super().save(*args, **kwargs)
 
     def touch(self, update_fields=None):
         """
-        Updates `atualizado_em` without touching `criado_em`.
+        Updates `updated_at` without touching `created_at`.
         """
-        self.atualizado_em = timezone.now()
+        self.updated_at = timezone.now()
 
         if update_fields:
             update_fields = set(update_fields)
-            update_fields.add("atualizado_em")
+            update_fields.add("updated_at")
         else:
-            update_fields = ["atualizado_em"]
+            update_fields = ["updated_at"]
 
         self.save(update_fields=update_fields)
 

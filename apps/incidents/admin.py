@@ -6,23 +6,23 @@ from .models.incident import Incident
 @admin.register(Incident)
 class OcorrenciaAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "equipamento",
-        "data",
-        "tipo",
-        "resolvido",
-        "criado_em",
+        "custom_id",
+        "equipment",
+        "date",
+        "type",
+        "resolved",
+        "created_at",
     )
     list_filter = (
-        "tipo",
-        "resolvido",
-        "data",
+        "type",
+        "resolved",
+        "date",
     )
     search_fields = (
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
-        "descricao",
-        "contacto_assistencia",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
+        "description",
+        "support_contact",
     )
-    ordering = ("-data",)
+    ordering = ("-date",)

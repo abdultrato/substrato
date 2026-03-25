@@ -13,8 +13,8 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
     Registro de avarias e incidentes.
     """
 
-    fonte_inquilino = "equipamento"
-    prefixo = "OCR"
+    fonte_tenant = "equipment"
+    prefix = "OCR"
 
     class Type(models.TextChoices):
         AVARIA = "AVARIA", "Avaria"
@@ -23,33 +23,47 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
 
     Tipo = Type
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "equipamentos.Equipment",
+
+        db_column="equipamento_id",
         on_delete=models.CASCADE,
         related_name="ocorrencias",
         db_index=True,
     )
-    data = models.DateTimeField(default=timezone.now, db_index=True)
-    tipo = models.CharField(max_length=20, choices=Type.choices, default=Type.AVARIA, db_index=True)
-    descricao = models.TextField()
-    contacto_assistencia = models.CharField("Contacto de assistência", max_length=120, blank=True, default="")
-    resolvido = models.BooleanField(default=False, db_index=True)
+    date = models.DateTimeField(
+        db_column="data",
+        default=timezone.now, db_index=True)
+    type = models.CharField(
+        db_column="tipo",
+        max_length=20, choices=Type.choices, default=Type.AVARIA, db_index=True)
+    description = models.TextField(
+        db_column="descricao",
+        )
+    support_contact = models.CharField("Contacto de assistência", 
+        db_column="contacto_assistencia",
+         max_length=120, blank=True, default="")
+    resolved = models.BooleanField(
+        db_column="resolvido",
+        default=False, db_index=True)
 
     class Meta:
+        db_table = "ocorrencias_ocorrencia"
         verbose_name = "Ocorrência"
         verbose_name_plural = "Ocorrências"
-        ordering = ["-data", "-criado_em"]
+        ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento", "data"]),
-            models.Index(fields=["inquilino", "tipo", "data"]),
-            models.Index(fields=["inquilino", "resolvido"]),
+            models.Index(fields=["tenant", "equipment", "date"]),
+            models.Index(fields=["tenant", "type", "date"]),
+            models.Index(fields=["tenant", "resolved"]),
         ]
 
     def __str__(self) -> str:
-        return f"Ocorrencia {self.equipamento} - {self.data:%Y-%m-%d}"
+        return f"Ocorrencia {self.equipment} - {self.date:%Y-%m-%d}"
 
     def clean(self):
         super().clean()
 
-        if self.equipamento_id and self.inquilino_id and self.equipamento.inquilino_id != self.inquilino_id:
-            raise ValidationError({"equipamento": "Equipamento e ocorrência devem pertencer ao mesmo inquilino."})
+        if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
+            raise ValidationError({"equipment": "Equipamento e ocorrência devem pertencer ao mesmo tenant."})

@@ -11,11 +11,11 @@ def apply_coverages(invoice):
     total_covered_value = d("0.00")
 
     for coverage in invoice.seguros.all():
-        percentage = (coverage.percentual_cobertura or d("0.00")) / d("100")
+        percentage = (coverage.coverage_percentage or d("0.00")) / d("100")
         covered_value = (total * percentage).quantize(d("0.01"))
 
-        coverage.valor_coberto = covered_value
-        coverage.save(update_fields=["valor_coberto"])
+        coverage.value_coberto = covered_value
+        coverage.save(update_fields=["value_coberto"])
 
         total_covered_value += covered_value
 
@@ -24,10 +24,10 @@ def apply_coverages(invoice):
 
     patient_value = (total - total_covered_value).quantize(d("0.01"))
 
-    invoice.valor_seguro = total_covered_value
-    invoice.valor_paciente = patient_value
+    invoice.insurance_amount = total_covered_value
+    invoice.patient_amount = patient_value
 
-    invoice.save(update_fields=["valor_seguro", "valor_paciente", "atualizado_em"])
+    invoice.save(update_fields=["insurance_amount", "patient_amount", "updated_at"])
 
 
 aplicar_coberturas = apply_coverages

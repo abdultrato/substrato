@@ -11,7 +11,7 @@ class StandardPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 100
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, date):
         return Response(
             {
                 "meta": {
@@ -26,6 +26,6 @@ class StandardPagination(PageNumberPagination):
                     "next": self.get_next_link(),
                     "previous": self.get_previous_link(),
                 },
-                "results": data,
+                "results": date,
             }
         )

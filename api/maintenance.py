@@ -15,12 +15,12 @@ class MaintenanceModeView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
-        ativo = ConfiguracaoSistemaService.esta_em_manutencao()
+        active = ConfiguracaoSistemaService.esta_em_manutencao()
 
         return Response(
             {
                 "timestamp": now(),
-                "maintenance_mode": ativo,
+                "maintenance_mode": active,
             }
         )
 
@@ -39,12 +39,12 @@ class MaintenanceModeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        estado_anterior = ConfiguracaoSistemaService.esta_em_manutencao()
+        status_anterior = ConfiguracaoSistemaService.esta_em_manutencao()
 
-        if estado_anterior == enabled:
+        if status_anterior == enabled:
             return Response(
                 {
-                    "maintenance_mode": estado_anterior,
+                    "maintenance_mode": status_anterior,
                     "message": "Nenhuma alteração realizada.",
                 }
             )

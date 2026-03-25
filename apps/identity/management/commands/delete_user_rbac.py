@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = (
         "Apaga (hard delete) ou desativa (recomendado) um usuário.\n\n"
         "Por padrão, desativa: is_active=False + is_staff/is_superuser=False, "
-        "e marca como deletado quando o model possuir campos de soft-delete."
+        "e marca como deleted quando o model possuir campos de soft-delete."
     )
 
     def add_arguments(self, parser):
@@ -93,13 +93,13 @@ class Command(BaseCommand):
             user.is_superuser = False
             update_fields.append("is_superuser")
 
-        # Mark as "deletado" if this model has the soft-delete fields (CoreModel-based).
-        if hasattr(user, "deletado") and getattr(user, "deletado", False) is not True:
-            user.deletado = True
-            update_fields.append("deletado")
-        if hasattr(user, "deletado_em"):
-            user.deletado_em = now
-            update_fields.append("deletado_em")
+        # Mark as "deleted" if this model has the soft-delete fields (CoreModel-based).
+        if hasattr(user, "deleted") and getattr(user, "deleted", False) is not True:
+            user.deleted = True
+            update_fields.append("deleted")
+        if hasattr(user, "deleted_at"):
+            user.deleted_at = now
+            update_fields.append("deleted_at")
 
         if update_fields:
             user.save(update_fields=update_fields)

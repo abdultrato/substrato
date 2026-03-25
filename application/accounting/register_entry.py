@@ -7,30 +7,30 @@ from apps.accounting.models import LegacyEntry, LegacyMovement
 
 
 @transaction.atomic
-def register_entry(descricao: str, movimentos: list[dict]):
-    lancamento = LegacyEntry.objects.create(descricao=descricao)
+def register_entry(description: str, movimentos: list[dict]):
+    entry = LegacyEntry.objects.create(description=description)
 
-    total_debito = Decimal("0.00")
-    total_credito = Decimal("0.00")
+    total_debit = Decimal("0.00")
+    total_credit = Decimal("0.00")
 
     for mov in movimentos:
-        debito = Decimal(mov.get("debito", 0))
-        credito = Decimal(mov.get("credito", 0))
+        debit = Decimal(mov.get("debit", 0))
+        credit = Decimal(mov.get("credit", 0))
 
-        total_debito += debito
-        total_credito += credito
+        total_debit += debit
+        total_credit += credit
 
         LegacyMovement.objects.create(
-            lancamento=lancamento,
-            conta=mov["conta"],
-            debito=debito,
-            credito=credito,
+            entry=entry,
+            account=mov["account"],
+            debit=debit,
+            credit=credit,
         )
 
-    if total_debito != total_credito:
+    if total_debit != total_credit:
         raise ValidationError("Lançamento contábil desbalanceado.")
 
-    return lancamento
+    return entry
 
 
-registrar_lancamento = register_entry
+registrar_entry = register_entry

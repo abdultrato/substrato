@@ -13,27 +13,27 @@ class PaymentFilter(SafeFilterSet):
     class Meta:
         model = Payment
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "fatura",
-            "valor",
-            "metodo",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "invoice",
+            "value",
+            "method",
             "status",
-            "referencia_externa",
-            "seguradora",
-            "plano_cobertura",
-            "numero_autorizacao",
-            "pago_em",
+            "external_reference",
+            "insurer",
+            "coverage_plan",
+            "authorization_number",
+            "paid_at",
         ]
 
 
@@ -46,11 +46,11 @@ class ReceiptFilter(SafeFilterSet):
     class Meta:
         model = Receipt
         fields = [
-            "fatura",
-            "pagamento",
-            "numero",
-            "valor",
-            "criado_em",
+            "invoice",
+            "payment",
+            "number",
+            "value",
+            "created_at",
         ]
 
 
@@ -63,10 +63,10 @@ class ReconciliationFilter(SafeFilterSet):
     class Meta:
         model = Reconciliation
         fields = [
-            "transacao",
-            "confirmado",
-            "data_confirmacao",
-            "criado_em",
+            "transaction",
+            "confirmed",
+            "confirmation_date",
+            "created_at",
         ]
 
 
@@ -79,10 +79,10 @@ class TransactionFilter(SafeFilterSet):
     class Meta:
         model = Transaction
         fields = [
-            "referencia_externa",
+            "external_reference",
             "gateway",
             "status",
-            "criado_em",
+            "created_at",
         ]
 
 
@@ -91,10 +91,10 @@ class TransactionFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "pagamento": PaymentFilter,
+    "payment": PaymentFilter,
     "recibo": ReceiptFilter,
     "reconciliacao": ReconciliationFilter,
-    "transacao": TransactionFilter,
+    "transaction": TransactionFilter,
 }
 
 PagamentoFilter = PaymentFilter

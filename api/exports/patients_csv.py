@@ -20,6 +20,6 @@ class ExportPatientsCSV(APIView):
         writer.writerow(["ID", "Name"])
 
         for patient in Patient.objects.all():
-            writer.writerow([patient.id, patient.nome])
+            writer.writerow([patient.id, patient.name])
 
         return response

@@ -3,9 +3,9 @@ from django.utils import timezone
 from django_countries.fields import CountryField
 
 from core.constants.document_types import TipoDocumento
-from core.constants.genero import Genero
+from core.constants.gender import Genero
 from core.constants.provenance import Proveniencia
-from core.constants.raca_origem import RacaOrigem
+from core.constants.race_origin import RacaOrigem
 from core.models.base import CoreModel
 from infrastructure.orm.fields.email_field import NormalizedEmailField
 from infrastructure.orm.fields.phone_field import PhoneField
@@ -13,30 +13,42 @@ from infrastructure.orm.fields.phone_field import PhoneField
 
 class Patient(CoreModel):
     """
-    Entidade corporativa de paciente.
+    Entidade corporativa de patient.
     """
 
-    prefixo = "PAC"
+    prefix = "PAC"
 
-    gestante = models.BooleanField(
+    pregnant = models.BooleanField(
+
+        db_column="gestante",
+
         verbose_name="Gestante",
         default=False,
     )
 
-    idade_gestacional_semanas = models.PositiveIntegerField(
+    gestational_age_weeks = models.PositiveIntegerField(
+
+        db_column="idade_gestacional_semanas",
+
         verbose_name="Idade gestacional (semanas)",
         null=True,
         blank=True,
-        help_text="Preencher se a paciente estiver gestante.",
+        help_text="Preencher se a patient estiver pregnant.",
     )
 
-    data_nascimento = models.DateField(
+    birth_date = models.DateField(
+
+        db_column="data_nascimento",
+
         verbose_name="Data de nascimento",
         null=True,
         blank=True,
     )
 
-    genero = models.CharField(
+    gender = models.CharField(
+
+        db_column="genero",
+
         verbose_name="Gênero",
         max_length=10,
         choices=Genero.choices,
@@ -44,21 +56,30 @@ class Patient(CoreModel):
         default=Genero.FEMENINO,
     )
 
-    raca_origem = models.CharField(
+    race_origin = models.CharField(
+
+        db_column="raca_origem",
+
         verbose_name="Raça / Origem",
         max_length=20,
         choices=RacaOrigem.choices,
         default=RacaOrigem.NEGRA,
     )
 
-    tipo_documento = models.CharField(
+    document_type = models.CharField(
+
+        db_column="tipo_documento",
+
         verbose_name="Tipo de documento",
         max_length=50,
         choices=TipoDocumento.choices,
         default=TipoDocumento.BI,
     )
 
-    numero_id = models.CharField(
+    document_number = models.CharField(
+
+        db_column="numero_id",
+
         verbose_name="Número do documento",
         max_length=50,
         unique=True,
@@ -68,66 +89,78 @@ class Patient(CoreModel):
 
     # Endereço (campos reais) para evitar JSON no admin/frontend e permitir
     # preenchimento estruturado.
-    endereco_rua = models.CharField(
+    address_street = models.CharField(
+        db_column="endereco_rua",
         verbose_name="Rua",
         max_length=120,
         blank=True,
         default="",
     )
-    endereco_numero = models.CharField(
+    address_number = models.CharField(
+        db_column="endereco_numero",
         verbose_name="Número",
         max_length=30,
         blank=True,
         default="",
     )
-    endereco_bairro = models.CharField(
+    address_neighborhood = models.CharField(
+        db_column="endereco_bairro",
         verbose_name="Bairro",
         max_length=120,
         blank=True,
         default="",
     )
-    endereco_cidade = models.CharField(
+    address_city = models.CharField(
+        db_column="endereco_cidade",
         verbose_name="Cidade",
         max_length=120,
         blank=True,
         default="",
     )
-    endereco_provincia = models.CharField(
+    address_province = models.CharField(
+        db_column="endereco_provincia",
         verbose_name="Província",
         max_length=120,
         blank=True,
         default="",
     )
-    endereco_codigo_postal = models.CharField(
+    address_postal_code = models.CharField(
+        db_column="endereco_codigo_postal",
         verbose_name="Código postal",
         max_length=30,
         blank=True,
         default="",
     )
-    endereco_pais = CountryField(
+    address_country = CountryField(
+        db_column="endereco_pais",
         verbose_name="País",
         blank=True,
         default="MZ",
     )
-    endereco_complemento = models.CharField(
+    address_complement = models.CharField(
+        db_column="endereco_complemento",
         verbose_name="Complemento",
         max_length=255,
         blank=True,
         default="",
     )
 
-    # Compat: mantém o campo "morada" como texto único para consumo/legado.
+    # Compat: mantém o campo "address" como texto único para consumo/legado.
     # Quando os campos de endereço acima são preenchidos, este campo é
     # atualizado automaticamente.
-    morada = models.CharField(
+    address = models.CharField(
+        db_column="morada",
         verbose_name="Morada",
         max_length=255,
         blank=True,
         default="",
-        help_text="Texto livre ou resumo (auto) da morada.",
+        help_text="Texto livre ou resumo (auto) da address.",
     )
 
-    contacto = PhoneField(
+    contact = PhoneField(
+
+        db_column="contacto",
+
         verbose_name="Contacto",
         blank=True,
         null=True,
@@ -140,7 +173,10 @@ class Patient(CoreModel):
         null=True,
     )
 
-    proveniencia = models.CharField(
+    provenance = models.CharField(
+
+        db_column="proveniencia",
+
         verbose_name="Proveniência",
         max_length=50,
         choices=Proveniencia.choices,
@@ -148,10 +184,13 @@ class Patient(CoreModel):
         default=Proveniencia.CLINICA_EXTERNA,
     )
 
-    empresa_origem = models.ForeignKey(
+    origin_company = models.ForeignKey(
+
         "entidades.Company",
-        verbose_name="Empresa (origem)",
-        help_text="Para medicina ocupacional, indique a empresa de origem do paciente.",
+
+        db_column="empresa_origem_id",
+        verbose_name="Empresa (origin)",
+        help_text="Para medicina ocupacional, indique a empresa de origin do patient.",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -163,19 +202,19 @@ class Patient(CoreModel):
         verbose_name = "Entrada"
         verbose_name_plural = "Entradas"
 
-        ordering = ["nome"]
+        ordering = ["name"]
 
         indexes = [
             models.Index(
                 fields=[
-                    "inquilino",
+                    "tenant",
                 ]
             ),
-            models.Index(fields=["nome"]),
-            models.Index(fields=["numero_id"]),
-            models.Index(fields=["genero"]),
-            models.Index(fields=["data_nascimento"]),
-            models.Index(fields=["empresa_origem"]),
+            models.Index(fields=["name"]),
+            models.Index(fields=["document_number"]),
+            models.Index(fields=["gender"]),
+            models.Index(fields=["birth_date"]),
+            models.Index(fields=["origin_company"]),
         ]
 
     # =========================================================
@@ -187,11 +226,11 @@ class Patient(CoreModel):
         Cálculo clínico adaptativo.
         """
 
-        if not self.data_nascimento:
+        if not self.birth_date:
             return "—"
 
         hoje = timezone.localdate()
-        dias = (hoje - self.data_nascimento).days
+        dias = (hoje - self.birth_date).days
 
         if dias < 0:
             return "—"
@@ -213,16 +252,16 @@ class Patient(CoreModel):
     # MORADA (TEXTO RESUMO)
     # =========================================================
 
-    def morada_formatada(self) -> str:
+    def address_formatada(self) -> str:
         parts = []
         for v in (
-            self.endereco_rua,
-            self.endereco_numero,
-            self.endereco_bairro,
-            self.endereco_cidade,
-            self.endereco_provincia,
-            self.endereco_codigo_postal,
-            self.endereco_complemento,
+            self.address_street,
+            self.address_number,
+            self.address_neighborhood,
+            self.address_city,
+            self.address_province,
+            self.address_postal_code,
+            self.address_complement,
         ):
             txt = (v or "").strip()
             if txt:
@@ -230,24 +269,24 @@ class Patient(CoreModel):
         return ", ".join(parts)
 
     def save(self, *args, **kwargs):
-        # Se o endereço estruturado for usado, o "morada" vira um resumo
+        # Se o endereço estruturado for used, o "address" vira um resumo
         # consistente. Se não houver dados estruturados, preserva texto livre.
-        endereco_estruturado_usado = any(
+        endereco_estruturado_used = any(
             (v or "").strip()
             for v in (
-                self.endereco_rua,
-                self.endereco_numero,
-                self.endereco_bairro,
-                self.endereco_cidade,
-                self.endereco_provincia,
-                self.endereco_codigo_postal,
-                self.endereco_complemento,
+                self.address_street,
+                self.address_number,
+                self.address_neighborhood,
+                self.address_city,
+                self.address_province,
+                self.address_postal_code,
+                self.address_complement,
             )
         )
-        if endereco_estruturado_usado:
-            self.morada = self.morada_formatada()
+        if endereco_estruturado_used:
+            self.address = self.address_formatada()
         else:
-            self.morada = (self.morada or "").strip()
+            self.address = (self.address or "").strip()
 
         super().save(*args, **kwargs)
 
@@ -257,10 +296,10 @@ class Patient(CoreModel):
 
     def idade_em_dias(self) -> int | None:
 
-        if not self.data_nascimento:
+        if not self.birth_date:
             return None
 
-        dias = (timezone.localdate() - self.data_nascimento).days
+        dias = (timezone.localdate() - self.birth_date).days
 
         return dias if dias >= 0 else None
 
@@ -299,5 +338,5 @@ class Patient(CoreModel):
     # =========================================================
 
     def __str__(self):
-        return f"{self.id_custom} - {self.nome}"
+        return f"{self.custom_id} - {self.name}"
 

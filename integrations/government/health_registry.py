@@ -4,4 +4,4 @@ class HealthRegistry:
 
 
 RegistroSaude = HealthRegistry
-HealthRegistry.registrar_paciente = HealthRegistry.register_patient
+HealthRegistry.registrar_patient = HealthRegistry.register_patient

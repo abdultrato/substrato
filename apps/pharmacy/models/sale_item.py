@@ -10,24 +10,37 @@ from core.models.base import CoreModel
 
 
 class SaleItem(CoreModel):
-    prefixo = "IVEND"
+    prefix = "IVEND"
 
-    venda = models.ForeignKey(
+    sale = models.ForeignKey(
+
         "farmacia.Sale",
+
+        db_column="venda_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
     )
 
-    produto = models.ForeignKey(
+    product = models.ForeignKey(
+
         "farmacia.Product",
+
+        db_column="produto_id",
         on_delete=models.PROTECT,
         db_index=True,
     )
 
-    quantidade = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    quantity = models.PositiveIntegerField(
 
-    preco_unitario = models.DecimalField(
+        db_column="quantidade",
+
+        validators=[MinValueValidator(1)])
+
+    unit_price = models.DecimalField(
+
+        db_column="preco_unitario",
+
         max_digits=14,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
@@ -35,20 +48,21 @@ class SaleItem(CoreModel):
     )
 
     class Meta:
+        db_table = "farmacia_itemvenda"
         verbose_name = "Item da Venda"
         verbose_name_plural = "Itens da Venda"
 
         indexes = [
-            models.Index(fields=["venda"]),
-            models.Index(fields=["produto"]),
-            models.Index(fields=["venda", "produto"]),
+            models.Index(fields=["sale"]),
+            models.Index(fields=["product"]),
+            models.Index(fields=["sale", "product"]),
         ]
 
         constraints = [
             models.UniqueConstraint(
-                fields=["venda", "produto"],
-                condition=Q(deletado=False),
-                name="unique_produto_por_venda",
+                fields=["sale", "product"],
+                condition=Q(deleted=False),
+                name="unique_product_por_sale",
             )
         ]
 
@@ -58,7 +72,7 @@ class SaleItem(CoreModel):
 
     @property
     def total_linha(self) -> Decimal:
-        return (self.quantidade or 0) * (self.preco_unitario or Decimal("0.00"))
+        return (self.quantity or 0) * (self.unit_price or Decimal("0.00"))
 
     # ==========================================
     # VALIDAÇÃO
@@ -68,17 +82,17 @@ class SaleItem(CoreModel):
 
         super().clean()
 
-        if self.quantidade <= 0:
-            raise ValidationError({"quantidade": "Quantidade deve ser maior que zero."})
+        if self.quantity <= 0:
+            raise ValidationError({"quantity": "Quantidade deve ser maior que zero."})
 
-        if self.preco_unitario is not None and self.preco_unitario < Decimal("0.00"):
-            raise ValidationError({"preco_unitario": "Preço unitário inválido."})
+        if self.unit_price is not None and self.unit_price < Decimal("0.00"):
+            raise ValidationError({"unit_price": "Preço unitário inválido."})
 
-        # impedir troca de produto após criação
+        # impedir troca de product após criação
         if self.pk:
             original = SaleItem.all_objects.get(pk=self.pk)
-            if original.produto_id != self.produto_id:
-                raise ValidationError({"produto": "Produto não pode ser alterado."})
+            if original.product_id != self.product_id:
+                raise ValidationError({"product": "Produto não pode ser alterado."})
 
     # ==========================================
     # ATUALIZA TOTAL DA VENDA
@@ -86,18 +100,18 @@ class SaleItem(CoreModel):
 
     def update_sale_total(self):
 
-        total = self.venda.itens.aggregate(
+        total = self.sale.itens.aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantidade") * F("preco_unitario"),
+                    F("quantity") * F("unit_price"),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),
             )
         )["total"]
 
-        self.venda.total = total
-        self.venda.save(update_fields=["total"])
+        self.sale.total = total
+        self.sale.save(update_fields=["total"])
 
     # ==========================================
     # BAIXA DE ESTOQUE (FEFO)
@@ -112,32 +126,32 @@ class SaleItem(CoreModel):
         )
         from apps.pharmacy.models.lot import Lot
 
-        restante = self.quantidade
+        restante = self.quantity
 
-        for lote in Lot.disponiveis(self.produto):
+        for lot in Lot.disponiveis(self.product):
             if restante <= 0:
                 break
 
-            saldo_lote = getattr(lote, "saldo", None)
-            if callable(saldo_lote):
-                saldo = saldo_lote()
-            elif saldo_lote is None:
-                saldo = lote.balance()
+            saldo_lot = getattr(lot, "saldo", None)
+            if callable(saldo_lot):
+                saldo = saldo_lot()
+            elif saldo_lot is None:
+                saldo = lot.balance()
             else:
-                saldo = saldo_lote
+                saldo = saldo_lot
 
             consumir = min(restante, saldo)
             if consumir <= 0:
                 continue
 
             InventoryMovement.objects.create(
-                nome=f"Saída {self.venda.numero or self.venda.id_custom} - {self.produto.nome}",
-                lote=lote,
-                tipo=MovementType.SAIDA,
-                origem=MovementOrigin.VENDA,
-                quantidade=consumir,
-                item_venda=self,
-                inquilino=self.inquilino,
+                name=f"Saída {self.sale.number or self.sale.custom_id} - {self.product.name}",
+                lot=lot,
+                type=MovementType.SAIDA,
+                origin=MovementOrigin.VENDA,
+                quantity=consumir,
+                sale_item=self,
+                tenant=self.tenant,
             )
 
             restante -= consumir
@@ -154,10 +168,10 @@ class SaleItem(CoreModel):
 
         criando = self.pk is None
 
-        if criando and not self.preco_unitario:
-            self.preco_unitario = self.produto.preco_venda
-        if not self.nome:
-            self.nome = f"Item {self.produto.nome}"
+        if criando and not self.unit_price:
+            self.unit_price = self.product.sale_price
+        if not self.name:
+            self.name = f"Item {self.product.name}"
 
         super().save(*args, **kwargs)
 
@@ -172,26 +186,26 @@ class SaleItem(CoreModel):
 
     def delete(self, *args, **kwargs):
 
-        venda = self.venda
+        sale = self.sale
 
         super().delete(*args, **kwargs)
 
-        total = venda.itens.aggregate(
+        total = sale.itens.aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantidade") * F("preco_unitario"),
+                    F("quantity") * F("unit_price"),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),
             )
         )["total"]
 
-        venda.total = total
-        venda.save(update_fields=["total"])
+        sale.total = total
+        sale.save(update_fields=["total"])
 
     def __str__(self):
-        return f"{self.produto} x{self.quantidade}"
+        return f"{self.product} x{self.quantity}"
 
 
-SaleItem.atualizar_total_venda = SaleItem.update_sale_total
+SaleItem.atualizar_total_sale = SaleItem.update_sale_total
 SaleItem.baixar_estoque = SaleItem.consume_inventory

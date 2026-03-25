@@ -2,16 +2,16 @@ import re
 import unicodedata
 
 
-def digits_only(valor: str | None):
-    if not valor:
-        return valor
-    return re.sub(r"\D", "", valor)
+def digits_only(value: str | None):
+    if not value:
+        return value
+    return re.sub(r"\D", "", value)
 
 
-def normalizar_texto(valor: str | None):
-    if not valor:
-        return valor
-    return unicodedata.normalize("NFKD", valor).encode("ascii", "ignore").decode("ascii")
+def normalizar_texto(value: str | None):
+    if not value:
+        return value
+    return unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
 
 
 def slugify_simples(texto: str):
@@ -20,11 +20,11 @@ def slugify_simples(texto: str):
     return texto.strip("-")
 
 
-def capitalize_name(nome: str | None):
-    if not nome:
-        return nome
-    return " ".join(p.capitalize() for p in nome.split())
+def capitalize_name(name: str | None):
+    if not name:
+        return name
+    return " ".join(p.capitalize() for p in name.split())
 
 
 somente_numeros = digits_only
-capitalizar_nome = capitalize_name
+capitalizar_name = capitalize_name

@@ -29,35 +29,35 @@ from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
 
 
 def _tenant():
-    return Tenant.objects.create(identificador="tn-fat", nome="Tenant Fat")
+    return Tenant.objects.create(identifier="tn-fat", name="Tenant Fat")
 
 
 def _patient(tenant):
     return Patient.objects.create(
-        inquilino=tenant,
-        nome="Paciente Fat",
-        genero="Masculino",
-        endereco_rua="Rua Y",
+        tenant=tenant,
+        name="Paciente Fat",
+        gender="Masculino",
+        address_street="Rua Y",
     )
 
 
 def _exam(tenant):
     return LabExam.objects.create(
-        inquilino=tenant,
-        nome="Hemograma",
-        preco=Decimal("30.00"),
-        metodo=Metodo.ENZIMATICO,
-        setor=Setor.HEMATOLOGIA,
+        tenant=tenant,
+        name="Hemograma",
+        price=Decimal("30.00"),
+        method=Metodo.ENZIMATICO,
+        sector=Setor.HEMATOLOGIA,
     )
 
 
 def _medical_exam(tenant):
     return MedicalExam.objects.create(
-        inquilino=tenant,
-        nome="Ecografia abdominal",
-        preco=Decimal("150.00"),
-        metodo=MetodoExameMedico.ULTRASSONOGRAFIA,
-        setor=SetorExameMedico.RADIOLOGIA,
+        tenant=tenant,
+        name="Ecografia abdominal",
+        price=Decimal("150.00"),
+        method=MetodoExameMedico.ULTRASSONOGRAFIA,
+        sector=SetorExameMedico.RADIOLOGIA,
     )
 
 
@@ -68,91 +68,91 @@ def _horario_normal():
 @pytest.mark.django_db
 def test_clinical_invoice_recalculates_totals():
     tenant = _tenant()
-    paciente = _patient(tenant)
-    exame = _exam(tenant)
-    req = LabRequest.objects.create(inquilino=tenant, paciente=paciente)
-    req.criado_em = _horario_normal()
-    req.save(update_fields=["criado_em"])
-    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exame)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    req = LabRequest.objects.create(tenant=tenant, patient=patient)
+    req.created_at = _horario_normal()
+    req.save(update_fields=["created_at"])
+    LabRequestItem.objects.create(tenant=tenant, request=req, exam=exam)
 
-    fatura = Invoice.objects.create(
-        inquilino=tenant,
-        paciente=paciente,
-        requisicao=req,
-        origem=Invoice.Origem.CLINICO,
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        request=req,
+        origin=Invoice.Origem.CLINICO,
     )
 
     item = InvoiceItem.objects.create(
-        inquilino=tenant,
-        fatura=fatura,
-        tipo_item=InvoiceItem.TipoItem.EXAME,
-        exame=exame,
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.EXAME,
+        exam=exam,
     )
     item._fill_from_reference()
-    item.save(update_fields=["descricao", "preco_unitario", "quantidade"])
+    item.save(update_fields=["description", "unit_price", "quantity"])
 
-    fatura.persistir_totais()
-    fatura.refresh_from_db()
+    invoice.persistir_totais()
+    invoice.refresh_from_db()
 
-    assert fatura.subtotal == exame.preco
-    assert fatura.total == fatura.subtotal - fatura.iva_valor
-    assert fatura.valor_paciente == fatura.total
+    assert invoice.subtotal == exam.price
+    assert invoice.total == invoice.subtotal - invoice.vat_amount
+    assert invoice.patient_amount == invoice.total
 
 
 @pytest.mark.django_db
 def test_clinical_invoice_syncs_medical_exam():
     tenant = _tenant()
-    paciente = _patient(tenant)
-    exame_medico = _medical_exam(tenant)
+    patient = _patient(tenant)
+    medical_exam = _medical_exam(tenant)
 
     req = LabRequest.objects.create(
-        inquilino=tenant,
-        paciente=paciente,
-        tipo=LabRequest.Tipo.EXAME_MEDICO,
+        tenant=tenant,
+        patient=patient,
+        type=LabRequest.Tipo.EXAME_MEDICO,
     )
-    req.criado_em = _horario_normal()
-    req.save(update_fields=["criado_em"])
+    req.created_at = _horario_normal()
+    req.save(update_fields=["created_at"])
     LabRequestItem.objects.create(
-        inquilino=tenant,
-        requisicao=req,
-        exame_medico=exame_medico,
+        tenant=tenant,
+        request=req,
+        medical_exam=medical_exam,
     )
 
-    fatura = Invoice.objects.create(
-        inquilino=tenant,
-        paciente=paciente,
-        requisicao=req,
-        origem=Invoice.Origem.CLINICO,
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        request=req,
+        origin=Invoice.Origem.CLINICO,
     )
 
-    fatura.sincronizar_itens_da_origem()
-    fatura.refresh_from_db()
+    invoice.sincronizar_itens_da_origin()
+    invoice.refresh_from_db()
 
-    itens = list(fatura.itens.filter(deletado=False))
+    itens = list(invoice.itens.filter(deleted=False))
     assert len(itens) == 1
 
     item = itens[0]
-    assert item.tipo_item == InvoiceItem.TipoItem.EXAME_MEDICO
-    assert item.exame_medico_id == exame_medico.id
-    assert item.exame_id is None
-    assert item.descricao == exame_medico.nome
-    assert item.preco_unitario == exame_medico.preco
-    assert fatura.subtotal == exame_medico.preco
+    assert item.item_type == InvoiceItem.TipoItem.EXAME_MEDICO
+    assert item.medical_exam_id == medical_exam.id
+    assert item.exam_id is None
+    assert item.description == medical_exam.name
+    assert item.unit_price == medical_exam.price
+    assert invoice.subtotal == medical_exam.price
 
 
 @pytest.mark.django_db
 def test_manual_adjustment_item_requires_description():
     tenant = _tenant()
-    paciente = _patient(tenant)
-    fatura = Invoice.objects.create(inquilino=tenant, paciente=paciente, origem=Invoice.Origem.CLINICO)
+    patient = _patient(tenant)
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origem.CLINICO)
 
     item = InvoiceItem(
-        inquilino=tenant,
-        fatura=fatura,
-        tipo_item=InvoiceItem.TipoItem.AJUSTE,
-        quantidade=Decimal("1.00"),
-        preco_unitario=Decimal("5.00"),
-        descricao="",
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.AJUSTE,
+        quantity=Decimal("1.00"),
+        unit_price=Decimal("5.00"),
+        description="",
     )
     with pytest.raises(ValidationError):
         item.full_clean()
@@ -161,17 +161,17 @@ def test_manual_adjustment_item_requires_description():
 @pytest.mark.django_db
 def test_exam_item_has_incompatible_source():
     tenant = _tenant()
-    paciente = _patient(tenant)
-    exame = _exam(tenant)
-    fatura = Invoice.objects.create(inquilino=tenant, paciente=paciente, origem=Invoice.Origem.FARMACIA)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origem.FARMACIA)
 
     item = InvoiceItem(
-        inquilino=tenant,
-        fatura=fatura,
-        tipo_item=InvoiceItem.TipoItem.EXAME,
-        exame=exame,
-        quantidade=Decimal("1.00"),
-        preco_unitario=exame.preco,
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.EXAME,
+        exam=exam,
+        quantity=Decimal("1.00"),
+        unit_price=exam.price,
     )
     with pytest.raises(ValidationError):
         item.full_clean()
@@ -180,65 +180,65 @@ def test_exam_item_has_incompatible_source():
 @pytest.mark.django_db
 def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_update():
     tenant = _tenant()
-    paciente = _patient(tenant)
+    patient = _patient(tenant)
 
-    proc = Procedure.objects.create(paciente=paciente)
+    proc = Procedure.objects.create(patient=patient)
 
-    cat = ProductCategory.objects.create(inquilino=tenant, nome="Cat Mat", descricao="")
-    produto = Product.objects.create(
-        inquilino=tenant,
-        nome="Soro",
-        tipo=Product.TipoProduto.MATERIAL,
-        preco_venda=Decimal("5.00"),
-        categoria=cat,
+    cat = ProductCategory.objects.create(tenant=tenant, name="Cat Mat", description="")
+    product = Product.objects.create(
+        tenant=tenant,
+        name="Soro",
+        type=Product.TipoProduto.MATERIAL,
+        sale_price=Decimal("5.00"),
+        category=cat,
     )
 
-    catalogo = ProcedureCatalog.objects.create(
-        inquilino=tenant,
-        nome="Soro IV",
-        preco_padrao=Decimal("10.00"),
+    catalog = ProcedureCatalog.objects.create(
+        tenant=tenant,
+        name="Soro IV",
+        default_price=Decimal("10.00"),
     )
     ProcedureCatalogMaterial.objects.create(
-        inquilino=tenant,
-        catalogo=catalogo,
-        produto=produto,
-        quantidade_padrao=Decimal("1.00"),
-        custo_unitario_padrao=Decimal("2.50"),
+        tenant=tenant,
+        catalog=catalog,
+        product=product,
+        default_quantity=Decimal("1.00"),
+        default_unit_cost=Decimal("2.50"),
     )
 
     ProcedureItem.objects.create(
-        inquilino=tenant,
-        procedimento=proc,
-        catalogo=catalogo,
-        quantidade=1,
+        tenant=tenant,
+        procedure=proc,
+        catalog=catalog,
+        quantity=1,
     )
 
-    fatura = Invoice.objects.create(
-        inquilino=tenant,
-        origem=Invoice.Origem.ENFERMAGEM,
-        procedimento=proc,
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        origin=Invoice.Origem.ENFERMAGEM,
+        procedure=proc,
     )
-    fatura.sincronizar_itens_da_origem()
+    invoice.sincronizar_itens_da_origin()
 
     with pytest.raises(ValidationError) as exc:
-        fatura.emitir()
+        invoice.emitir()
 
     assert "Estoque insuficiente" in str(exc.value)
     assert "itens" in getattr(exc.value, "message_dict", {})
 
-    lote = Lot.objects.create(
-        inquilino=tenant,
-        produto=produto,
-        numero_lote="L999",
-        validade=timezone.localdate() + timedelta(days=60),
-        quantidade_inicial=10,
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number="L999",
+        expiration_date=timezone.localdate() + timedelta(days=60),
+        initial_quantity=10,
     )
 
-    fatura.emitir()
-    fatura.refresh_from_db()
-    assert fatura.estado == Invoice.Estado.EMITIDA
+    invoice.emitir()
+    invoice.refresh_from_db()
+    assert invoice.status == Invoice.Estado.EMITIDA
 
-    material = proc.materiais.get(produto=produto)
+    material = proc.materiais.get(product=product)
     material.refresh_from_db()
-    assert material.lote_id == lote.id
-    assert material.movimento_estoque_id is not None
+    assert material.lot_id == lot.id
+    assert material.inventory_movement_id is not None

@@ -14,245 +14,257 @@ from core.models.base import NoNameCoreModel
 
 
 class ProcedureMaterial(NoNameCoreModel):
-    prefixo = "PROCMAT"
+    prefix = "PROCMAT"
 
-    procedimento = models.ForeignKey(
+    procedure = models.ForeignKey(
+
         "enfermagem.Procedure",
+
+        db_column="procedimento_id",
         on_delete=models.CASCADE,
         related_name="materiais",
         db_index=True,
     )
-    procedimento_item = models.ForeignKey(
+    procedure_item = models.ForeignKey(
         "enfermagem.ProcedureItem",
+        db_column="procedimento_item_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="materiais_gerados",
         db_index=True,
     )
-    produto = models.ForeignKey(
+    product = models.ForeignKey(
         "farmacia.Product",
+        db_column="produto_id",
         on_delete=models.PROTECT,
-        related_name="consumos_procedimento",
+        related_name="consumos_procedure",
         db_index=True,
     )
-    lote = models.ForeignKey(
+    lot = models.ForeignKey(
         "farmacia.Lot",
+        db_column="lote_id",
         on_delete=models.PROTECT,
-        related_name="consumos_procedimento",
+        related_name="consumos_procedure",
         db_index=True,
         null=True,
         blank=True,
     )
-    quantidade = models.PositiveIntegerField(
+    quantity = models.PositiveIntegerField(
+        db_column="quantidade",
         validators=[MinValueValidator(1)],
     )
-    custo_unitario = models.DecimalField(
+    unit_cost = models.DecimalField(
+        db_column="custo_unitario",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    movimento_estoque = models.OneToOneField(
+    inventory_movement = models.OneToOneField(
         "farmacia.InventoryMovement",
+        db_column="movimento_estoque_id",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        related_name="consumo_procedimento",
+        related_name="consumo_procedure",
     )
-    observacao = models.TextField(blank=True, default="")
+    observation = models.TextField(
+        db_column="observacao",
+        blank=True, default="")
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "enfermagem_procedimentomaterial"
+        ordering = ["-created_at"]
         verbose_name = "Material do Procedimento"
         verbose_name_plural = "Materiais do Procedimento"
         indexes = [
-            models.Index(fields=["inquilino", "procedimento"]),
-            models.Index(fields=["procedimento_item"]),
-            models.Index(fields=["produto"]),
-            models.Index(fields=["lote"]),
+            models.Index(fields=["tenant", "procedure"]),
+            models.Index(fields=["procedure_item"]),
+            models.Index(fields=["product"]),
+            models.Index(fields=["lot"]),
         ]
 
     @property
     def total_linha(self):
         try:
-            custo = self.valor.custo_unitario
+            custo = self.value.unit_cost
         except ObjectDoesNotExist:
-            custo = self.custo_unitario or Decimal("0.00")
+            custo = self.unit_cost or Decimal("0.00")
 
-        return (self.quantidade or 0) * (custo or Decimal("0.00"))
+        return (self.quantity or 0) * (custo or Decimal("0.00"))
 
     def clean(self):
         super().clean()
 
-        if self.lote_id and self.produto_id and self.lote.produto_id != self.produto_id:
-            raise ValidationError({"lote": "O lote selecionado não pertence ao produto informado."})
+        if self.lot_id and self.product_id and self.lot.product_id != self.product_id:
+            raise ValidationError({"lot": "O lot selecionado não pertence ao product informado."})
 
         if (
-            self.procedimento_id
-            and self.procedimento_item_id
-            and self.procedimento_item.procedimento_id != self.procedimento_id
+            self.procedure_id
+            and self.procedure_item_id
+            and self.procedure_item.procedure_id != self.procedure_id
         ):
-            raise ValidationError({"procedimento_item": "Item não pertence ao procedimento informado."})
+            raise ValidationError({"procedure_item": "Item não pertence ao procedure informado."})
 
-        if self.procedimento_id and self.produto_id and self.procedimento.inquilino_id != self.produto.inquilino_id:
-            raise ValidationError({"produto": "Produto e procedimento devem pertencer ao mesmo inquilino."})
+        if self.procedure_id and self.product_id and self.procedure.tenant_id != self.product.tenant_id:
+            raise ValidationError({"product": "Produto e procedure devem pertencer ao mesmo tenant."})
 
-        if self.procedimento_id and self.lote_id and self.procedimento.inquilino_id != self.lote.inquilino_id:
-            raise ValidationError({"lote": "Lote e procedimento devem pertencer ao mesmo inquilino."})
+        if self.procedure_id and self.lot_id and self.procedure.tenant_id != self.lot.tenant_id:
+            raise ValidationError({"lot": "Lote e procedure devem pertencer ao mesmo tenant."})
 
-        # Permitimos manter históricos de consumo mesmo após a validade ter passado,
-        # mas não permitimos "baixar" estoque de lote já vencido.
-        if self.lote_id and self.lote.vencido and not self.movimento_estoque_id:
-            raise ValidationError({"lote": "Não é permitido consumir lote vencido."})
+        # Permitimos manter históricos de consumo mesmo após a expiration_date ter passado,
+        # mas não permitimos "baixar" estoque de lot já vencido.
+        if self.lot_id and self.lot.vencido and not self.inventory_movement_id:
+            raise ValidationError({"lot": "Não é permitido consumir lot vencido."})
 
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
             # Depois que o material for lançado no estoque, ele se torna imutável.
-            if original.movimento_estoque_id:
+            if original.inventory_movement_id:
                 campos_immutaveis = (
-                    "procedimento_id",
-                    "produto_id",
-                    "lote_id",
-                    "quantidade",
-                    "procedimento_item_id",
+                    "procedure_id",
+                    "product_id",
+                    "lot_id",
+                    "quantity",
+                    "procedure_item_id",
                 )
                 if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
                     raise ValidationError(
                         "Material já lançado no estoque é imutável. Faça estorno e inclua um novo lançamento."
                     )
             else:
-                # Enquanto estiver pendente (sem movimento_estoque), permitimos
-                # escolher lote e lançar o movimento posteriormente, mas
-                # mantemos a referência e quantidade imutáveis.
+                # Enquanto estiver pendente (sem inventory_movement), permitimos
+                # escolher lot e lançar o movimento posteriormente, mas
+                # mantemos a referência e quantity imutáveis.
                 campos_immutaveis = (
-                    "procedimento_id",
-                    "produto_id",
-                    "quantidade",
-                    "procedimento_item_id",
+                    "procedure_id",
+                    "product_id",
+                    "quantity",
+                    "procedure_item_id",
                 )
                 if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
-                    raise ValidationError("Material pendente é imutável (exceto lote/baixa de estoque).")
+                    raise ValidationError("Material pendente é imutável (exceto lot/baixa de estoque).")
 
-    def _resolver_custo_unitario(self):
-        if self.custo_unitario and self.custo_unitario > 0:
-            return self.custo_unitario
+    def _resolver_unit_cost(self):
+        if self.unit_cost and self.unit_cost > 0:
+            return self.unit_cost
 
         try:
-            return self.valor.custo_unitario
+            return self.value.unit_cost
         except ObjectDoesNotExist:
             pass
 
-        if self.produto_id and self.produto.preco_venda:
-            return self.produto.preco_venda
+        if self.product_id and self.product.sale_price:
+            return self.product.sale_price
 
         return Decimal("0.00")
 
     def _select_automatic_lot(self):
-        if self.lote_id or not self.produto_id:
+        if self.lot_id or not self.product_id:
             return
 
-        quantidade = self.quantidade or 0
+        quantity = self.quantity or 0
 
-        lotes_disponiveis = Lot.disponiveis(self.produto)
-        if self.inquilino_id:
-            lotes_disponiveis = lotes_disponiveis.filter(inquilino_id=self.inquilino_id)
+        lotes_disponiveis = Lot.disponiveis(self.product)
+        if self.tenant_id:
+            lotes_disponiveis = lotes_disponiveis.filter(tenant_id=self.tenant_id)
 
-        lote = lotes_disponiveis.filter(saldo__gte=quantidade).first()
-        if lote is None:
-            raise ValidationError({"produto": ("Sem lote válido com saldo suficiente para este material.")})
+        lot = lotes_disponiveis.filter(saldo__gte=quantity).first()
+        if lot is None:
+            raise ValidationError({"product": ("Sem lot válido com saldo suficiente para este material.")})
 
-        self.lote = lote
+        self.lot = lot
 
     def _upsert_value(self):
         from apps.nursing.models.procedure_material_value import (
             ProcedureMaterialValue,
         )
 
-        custo = self._resolver_custo_unitario()
+        custo = self._resolver_unit_cost()
 
-        valor, created = ProcedureMaterialValue.all_objects.get_or_create(
+        value, created = ProcedureMaterialValue.all_objects.get_or_create(
             material=self,
             defaults={
-                "inquilino_id": self.inquilino_id,
-                "custo_unitario": custo,
+                "tenant_id": self.tenant_id,
+                "unit_cost": custo,
             },
         )
 
-        if not created and (valor.inquilino_id != self.inquilino_id or valor.custo_unitario != custo):
-            valor.inquilino_id = self.inquilino_id
-            valor.custo_unitario = custo
-            valor.save(update_fields=["inquilino", "custo_unitario", "atualizado_em"])
+        if not created and (value.tenant_id != self.tenant_id or value.unit_cost != custo):
+            value.tenant_id = self.tenant_id
+            value.unit_cost = custo
+            value.save(update_fields=["tenant", "unit_cost", "updated_at"])
 
-        if self.custo_unitario != custo:
-            self.__class__.all_objects.filter(pk=self.pk).update(custo_unitario=custo)
-            self.custo_unitario = custo
+        if self.unit_cost != custo:
+            self.__class__.all_objects.filter(pk=self.pk).update(unit_cost=custo)
+            self.unit_cost = custo
 
     @transaction.atomic
     def save(self, *args, **kwargs):
         alocar_estoque = bool(kwargs.pop("alocar_estoque", True))
 
-        if not self.inquilino_id and self.procedimento_id:
-            self.inquilino_id = self.procedimento.inquilino_id
+        if not self.tenant_id and self.procedure_id:
+            self.tenant_id = self.procedure.tenant_id
 
         if alocar_estoque:
             self._select_automatic_lot()
         self.full_clean()
         super().save(*args, **kwargs)
 
-        if alocar_estoque and self.movimento_estoque_id is None:
-            if not self.lote_id:
-                raise ValidationError({"lote": "Lote é obrigatório para baixar estoque do material."})
+        if alocar_estoque and self.inventory_movement_id is None:
+            if not self.lot_id:
+                raise ValidationError({"lot": "Lote é obrigatório para baixar estoque do material."})
 
-            lote = Lot.objects.select_for_update().get(pk=self.lote_id)
-            if self.quantidade > lote.saldo():
-                raise ValidationError({"quantidade": "Estoque insuficiente no lote selecionado."})
+            lot = Lot.objects.select_for_update().get(pk=self.lot_id)
+            if self.quantity > lot.saldo():
+                raise ValidationError({"quantity": "Estoque insuficiente no lot selecionado."})
 
             movimento = InventoryMovement.objects.create(
-                nome=(f"Consumo {self.procedimento.id_custom or self.procedimento_id} - {self.produto.nome}"),
-                lote=lote,
-                tipo=TipoMovimento.SAIDA,
-                origem=OrigemMovimento.PROCEDIMENTO,
-                quantidade=self.quantidade,
-                inquilino=self.inquilino,
+                name=(f"Consumo {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
+                lot=lot,
+                type=TipoMovimento.SAIDA,
+                origin=OrigemMovimento.PROCEDIMENTO,
+                quantity=self.quantity,
+                tenant=self.tenant,
             )
-            self.movimento_estoque = movimento
-            super().save(update_fields=["movimento_estoque"])
+            self.inventory_movement = movimento
+            super().save(update_fields=["inventory_movement"])
 
         self._upsert_value()
-        self.procedimento.recalculate_totals()
+        self.procedure.recalculate_totals()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
-        if self.deletado:
+        if self.deleted:
             return
 
-        procedimento = self.procedimento
+        procedure = self.procedure
 
-        if self.movimento_estoque_id:
+        if self.inventory_movement_id:
             InventoryMovement.objects.create(
-                nome=(f"Estorno {self.procedimento.id_custom or self.procedimento_id} - {self.produto.nome}"),
-                lote=self.lote,
-                tipo=TipoMovimento.ENTRADA,
-                origem=OrigemMovimento.PROCEDIMENTO,
-                quantidade=self.quantidade,
-                inquilino=self.inquilino,
+                name=(f"Estorno {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
+                lot=self.lot,
+                type=TipoMovimento.ENTRADA,
+                origin=OrigemMovimento.PROCEDIMENTO,
+                quantity=self.quantity,
+                tenant=self.tenant,
             )
 
         try:
-            valor = self.valor
+            value = self.value
         except ObjectDoesNotExist:
-            valor = None
+            value = None
 
-        if valor and not valor.deletado:
-            valor.delete()
+        if value and not value.deleted:
+            value.delete()
 
         super().delete(*args, **kwargs)
-        procedimento.recalculate_totals()
+        procedure.recalculate_totals()
 
     def __str__(self):
-        return f"{self.produto.nome} x{self.quantidade}"
+        return f"{self.product.name} x{self.quantity}"
 
 
-ProcedureMaterial._selecionar_lote_automatico = ProcedureMaterial._select_automatic_lot
-ProcedureMaterial._upsert_valor = ProcedureMaterial._upsert_value
+ProcedureMaterial._selecionar_lot_automatico = ProcedureMaterial._select_automatic_lot
+ProcedureMaterial._upsert_value = ProcedureMaterial._upsert_value

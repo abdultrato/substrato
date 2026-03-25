@@ -9,10 +9,10 @@ def register_invoice_event(sender, instance, created, **kwargs):
     if created:
         try:
             linhas = [
-                f"Origem: {instance.get_origem_display()}",
+                f"Origem: {instance.get_origin_display()}",
                 f"Referência: {instance.source_reference or '-'}",
-                f"Paciente: {getattr(instance.paciente, 'nome', '-')}",
-                f"Estado: {instance.get_estado_display()}",
+                f"Paciente: {getattr(instance.patient, 'name', '-')}",
+                f"Estado: {instance.get_status_display()}",
             ]
             instance.register_history("CRIACAO", "Fatura criada", linhas=linhas)
         except Exception:

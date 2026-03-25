@@ -7,13 +7,13 @@ from apps.identity.models.user import User
 class PasswordResetTokenFilter(SafeFilterSet):
     class Meta:
         model = PasswordResetToken
-        fields = ["user", "token", "criado_em", "usado"]
+        fields = ["user", "token", "created_at", "used"]
 
 
 class ProfessionalProfileFilter(SafeFilterSet):
     class Meta:
         model = ProfessionalProfile
-        fields = ["usuario", "cargo", "registro_profissional", "departamento", "ativo", "criado_em", "atualizado_em"]
+        fields = ["user", "role", "professional_registration", "department", "active", "created_at", "updated_at"]
 
 
 class UserFilter(SafeFilterSet):
@@ -29,16 +29,16 @@ class UserFilter(SafeFilterSet):
             "is_active",
             "date_joined",
             "email",
-            "telefone",
-            "ativo",
-            "data_criacao",
+            "phone",
+            "active",
+            "date_criacao",
         ]
 
 
 FILTER_MAP = {
     "passwordresettoken": PasswordResetTokenFilter,
     "perfilprofissional": ProfessionalProfileFilter,
-    "usuario": UserFilter,
+    "user": UserFilter,
 }
 
 PerfilProfissionalFilter = ProfessionalProfileFilter

@@ -11,9 +11,9 @@ class Payment(CoreModel):
     Aggregate Root de Pagamento.
 
     Responsável por:
-    - Estado do pagamento
+    - Estado do payment
     - Transições válidas
-    - Integração com a fatura
+    - Integração com a invoice
     """
 
     class Method(models.TextChoices):
@@ -35,16 +35,26 @@ class Payment(CoreModel):
         ESTORNADO = "EST", "Estornado"
         CANCELADO = "CAN", "Cancelado"
 
-    fatura = models.ForeignKey(
+    invoice = models.ForeignKey(
+
         "faturamento.Invoice",
+
+        db_column="fatura_id",
         verbose_name="Fatura",
         on_delete=models.PROTECT,
         related_name="pagamentos",
     )
 
-    valor = MoneyField(verbose_name="Valor")
+    value = MoneyField(
 
-    metodo = models.CharField(
+        db_column="valor",
+
+        verbose_name="Valor")
+
+    method = models.CharField(
+
+        db_column="metodo",
+
         verbose_name="Método",
         max_length=4,
         choices=Method.choices,
@@ -58,15 +68,21 @@ class Payment(CoreModel):
         db_index=True,
     )
 
-    referencia_externa = models.CharField(
+    external_reference = models.CharField(
+
+        db_column="referencia_externa",
+
         verbose_name="Referência externa",
         max_length=120,
         blank=True,
         help_text="Referência externa (transação, autorização, etc).",
     )
 
-    seguradora = models.ForeignKey(
+    insurer = models.ForeignKey(
+
         "seguradora.Insurer",
+
+        db_column="seguradora_id",
         verbose_name="Seguradora",
         on_delete=models.PROTECT,
         related_name="pagamentos",
@@ -74,8 +90,11 @@ class Payment(CoreModel):
         blank=True,
     )
 
-    plano_cobertura = models.ForeignKey(
+    coverage_plan = models.ForeignKey(
+
         "seguradora.CoveragePlan",
+
+        db_column="plano_cobertura_id",
         verbose_name="Plano de cobertura",
         on_delete=models.PROTECT,
         related_name="pagamentos",
@@ -83,7 +102,10 @@ class Payment(CoreModel):
         blank=True,
     )
 
-    numero_autorizacao = models.CharField(
+    authorization_number = models.CharField(
+
+        db_column="numero_autorizacao",
+
         verbose_name="Número de autorização",
         max_length=80,
         blank=True,
@@ -91,51 +113,58 @@ class Payment(CoreModel):
         help_text="Número de autorização do seguro de saúde.",
     )
 
-    dados_seguro = models.JSONField(
+    insurance_date = models.JSONField(
+
+        db_column="dados_seguro",
+
         verbose_name="Dados do seguro",
         blank=True,
         default=dict,
         help_text="Dados adicionais do seguro de saúde (ex.: apólice, beneficiário).",
     )
 
-    pago_em = models.DateTimeField(
+    paid_at = models.DateTimeField(
+
+        db_column="pago_em",
+
         verbose_name="Pago em",
         null=True,
         blank=True,
     )
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "pagamentos_pagamento"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["fatura"]),
+            models.Index(fields=["invoice"]),
             models.Index(fields=["status"]),
-            models.Index(fields=["criado_em"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.get_metodo_display()} - {self.valor} ({self.get_status_display()})"
+        return f"{self.get_method_display()} - {self.value} ({self.get_status_display()})"
 
     def clean(self):
         super().clean()
-        if self.metodo != self.Method.SEGURO_SAUDE:
+        if self.method != self.Method.SEGURO_SAUDE:
             return
 
         erros = {}
 
-        if not self.seguradora_id:
-            erros["seguradora"] = "Informe a seguradora para pagamentos via seguro de saúde."
+        if not self.insurer_id:
+            erros["insurer"] = "Informe a insurer para pagamentos via seguro de saúde."
 
-        if not (self.numero_autorizacao or "").strip():
-            erros["numero_autorizacao"] = "Informe o número de autorização do seguro."
+        if not (self.authorization_number or "").strip():
+            erros["authorization_number"] = "Informe o número de autorização do seguro."
 
-        if self.seguradora_id and self.inquilino_id and self.seguradora.inquilino_id != self.inquilino_id:
-            erros["seguradora"] = "Seguradora deve pertencer ao mesmo inquilino."
+        if self.insurer_id and self.tenant_id and self.insurer.tenant_id != self.tenant_id:
+            erros["insurer"] = "Seguradora deve pertencer ao mesmo tenant."
 
-        if self.plano_cobertura_id:
-            if self.inquilino_id and self.plano_cobertura.inquilino_id != self.inquilino_id:
-                erros["plano_cobertura"] = "Plano de cobertura deve pertencer ao mesmo inquilino."
-            if self.seguradora_id and self.plano_cobertura.seguradora_id != self.seguradora_id:
-                erros["plano_cobertura"] = "Plano de cobertura deve pertencer à seguradora selecionada."
+        if self.coverage_plan_id:
+            if self.tenant_id and self.coverage_plan.tenant_id != self.tenant_id:
+                erros["coverage_plan"] = "Plano de cobertura deve pertencer ao mesmo tenant."
+            if self.insurer_id and self.coverage_plan.insurer_id != self.insurer_id:
+                erros["coverage_plan"] = "Plano de cobertura deve pertencer à insurer selecionada."
 
         if erros:
             raise ValidationError(erros)
@@ -149,9 +178,9 @@ class Payment(CoreModel):
             raise ValidationError("Pagamentos pendentes podem ser confirmados.")
 
         self.status = self.Status.CONFIRMADO
-        if not self.pago_em:
-            self.pago_em = timezone.now()
-        self.save(update_fields=["status", "pago_em"])
+        if not self.paid_at:
+            self.paid_at = timezone.now()
+        self.save(update_fields=["status", "paid_at"])
         self._update_invoice(payment=self)
 
     def falhar(self):
@@ -181,10 +210,10 @@ class Payment(CoreModel):
     # =========================
 
     def _update_invoice(self, payment=None):
-        if self.fatura_id:
-            self.fatura.atualizar_estado_pagamento(pagamento=payment)
+        if self.invoice_id:
+            self.invoice.atualizar_status_payment(payment=payment)
 
 
 Payment.confirmar = Payment.confirm
-Payment._atualizar_fatura = Payment._update_invoice
+Payment._atualizar_invoice = Payment._update_invoice
 

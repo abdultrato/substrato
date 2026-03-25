@@ -5,7 +5,7 @@ from apps.identity.models.user import User
 
 
 class UserAuditSerializer(serializers.ModelSerializer):
-    nome = serializers.SerializerMethodField(method_name="get_full_name")
+    name = serializers.SerializerMethodField(method_name="get_full_name")
     grupos = serializers.SerializerMethodField(method_name="get_group_names")
 
     # anotados no queryset
@@ -19,7 +19,7 @@ class UserAuditSerializer(serializers.ModelSerializer):
             "username",
             "first_name",
             "last_name",
-            "nome",
+            "name",
             "grupos",
             "total_atividades",
             "ultima_atividade_em",
@@ -39,31 +39,31 @@ class UserAuditSerializer(serializers.ModelSerializer):
 
 
 class UserActivitySerializer(serializers.ModelSerializer):
-    usuario_nome = serializers.SerializerMethodField(method_name="get_user_name")
+    user_name = serializers.SerializerMethodField(method_name="get_user_name")
 
     class Meta:
         model = UserActivity
         fields = [
             "id",
-            "criado_em",
-            "usuario",
-            "usuario_nome",
-            "metodo",
-            "caminho",
-            "path_completo",
+            "created_at",
+            "user",
+            "user_name",
+            "method",
+            "path",
+            "full_path",
             "status_code",
-            "duracao_ms",
+            "duration_ms",
             "ip",
             "user_agent",
             "view_basename",
             "view_action",
-            "objeto_id",
-            "mensagem",
+            "object_id",
+            "message",
             "metadata",
         ]
 
     def get_user_name(self, obj: UserActivity) -> str:
-        user = getattr(obj, "usuario", None)
+        user = getattr(obj, "user", None)
         if not user:
             return ""
         try:

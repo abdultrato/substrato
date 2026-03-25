@@ -31,7 +31,7 @@ class SafeFilterSet(django_filters.FilterSet):
 
         filters = super().get_filters()
 
-        # Restaurar estado original
+        # Restaurar status original
         cls._meta.fields = original_fields
 
         return filters

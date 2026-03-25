@@ -13,17 +13,18 @@ class CustomIdentifierMixin(models.Model):
     ✔ não depende de ordenar registros
     """
 
-    id_custom = models.CharField(
+    custom_id = models.CharField(
+        db_column="id_custom",
         max_length=30,
         unique=True,
         db_index=True,
         editable=False,
         blank=True,
         null=True,
-        verbose_name="ordem",
+        verbose_name="Código",
     )
 
-    prefixo = None
+    prefix = None
 
     class Meta:
         abstract = True
@@ -36,7 +37,7 @@ class CustomIdentifierMixin(models.Model):
         Fetches the next PostgreSQL sequence value.
         """
 
-        sequence_name = f"{cls._meta.db_table}_id_custom_seq"
+        sequence_name = f"{cls._meta.db_table}_custom_id_seq"
 
         with connection.cursor() as cursor:
             # Use query parameters to avoid SQL string interpolation.
@@ -46,23 +47,23 @@ class CustomIdentifierMixin(models.Model):
     # -----------------------------------------------------
 
     def generate_identifier(self):
-        if self.id_custom or not self.prefixo:
+        if self.custom_id or not self.prefix:
             return
 
         sequence_number = self.__class__._next_sequence()
 
         date_string = now().strftime("%Y%m%d")
 
-        self.id_custom = f"{self.prefixo}{date_string}{sequence_number:06d}"
+        self.custom_id = f"{self.prefix}{date_string}{sequence_number:06d}"
 
     # -----------------------------------------------------
 
     def save(self, *args, **kwargs):
-        if not self.id_custom:
+        if not self.custom_id:
             self.generate_identifier()
 
         super().save(*args, **kwargs)
 
 
 IdentificadorMixin = CustomIdentifierMixin
-CustomIdentifierMixin.gerar_identificador = CustomIdentifierMixin.generate_identifier
+CustomIdentifierMixin.gerar_identifier = CustomIdentifierMixin.generate_identifier

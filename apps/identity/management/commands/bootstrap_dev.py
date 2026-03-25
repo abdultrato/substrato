@@ -26,11 +26,11 @@ class Command(BaseCommand):
         tenant = Tenant.objects.order_by("id").first()
         if not tenant:
             tenant = Tenant.objects.create(
-                nome="Tenant Local",
-                identificador="local",
-                dominio="localhost",
-                ativo=True,
-                status_comercial=Tenant.StatusComercial.TRIAL,
+                name="Tenant Local",
+                identifier="local",
+                domain="localhost",
+                active=True,
+                commercial_status=Tenant.StatusComercial.TRIAL,
             )
 
         User = get_user_model()
@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 password=password,
-                inquilino=tenant,
+                tenant=tenant,
             )
             created = True
 
@@ -50,7 +50,7 @@ class Command(BaseCommand):
         grupo_admin.permissions.set(Permission.objects.all())
         user.groups.add(grupo_admin)
 
-        self.stdout.write(f"Tenant: {tenant.id} {tenant.identificador} ({tenant.nome})")
+        self.stdout.write(f"Tenant: {tenant.id} {tenant.identifier} ({tenant.name})")
         if created:
             self.stdout.write(f"Superuser criado: {username} / {password}")
         else:

@@ -11,7 +11,7 @@ class IdempotencyError(Exception):
 
 def generate_idempotency_key(prefix: str, payload: dict) -> str:
     """
-    Gera chave determinística baseada no conteúdo.
+    Gera key determinística baseada no conteúdo.
     """
 
     base = json.dumps(payload, sort_keys=True)
@@ -42,5 +42,5 @@ def idempotent(prefix: str, timeout: int = 3600):
     return decorator
 
 
-gerar_chave_idempotente = generate_idempotency_key
+gerar_key_idempotente = generate_idempotency_key
 idempotente = idempotent

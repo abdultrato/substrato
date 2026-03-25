@@ -13,19 +13,19 @@ class AccountFilter(SafeFilterSet):
     class Meta:
         model = Account
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "tipo",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "type",
         ]
 
 
@@ -38,21 +38,21 @@ class LedgerEntryFilter(SafeFilterSet):
     class Meta:
         model = LegacyEntry
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "descricao",
-            "data",
-            "referencia_externa",
-            "confirmado",
+            "tenant",
+            "custom_id",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "description",
+            "date",
+            "external_reference",
+            "confirmed",
         ]
 
 
@@ -65,22 +65,22 @@ class LedgerMovementFilter(SafeFilterSet):
     class Meta:
         model = LegacyMovement
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "lancamento",
-            "conta",
-            "debito",
-            "credito",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "entry",
+            "account",
+            "debit",
+            "credit",
         ]
 
 
@@ -93,9 +93,9 @@ class FinancialReconciliationFilter(SafeFilterSet):
     class Meta:
         model = FinancialReconciliation
         fields = [
-            "fatura",
-            "conciliado",
-            "criado_em",
+            "invoice",
+            "reconciled",
+            "created_at",
         ]
 
 
@@ -104,8 +104,8 @@ class FinancialReconciliationFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "conta": AccountFilter,
+    "account": AccountFilter,
     "conciliacaofinanceira": FinancialReconciliationFilter,
-    "lancamento": LedgerEntryFilter,
+    "entry": LedgerEntryFilter,
     "movimento": LedgerMovementFilter,
 }

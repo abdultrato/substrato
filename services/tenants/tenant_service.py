@@ -25,35 +25,35 @@ class TenantService:
         if not normalized_domain:
             raise ValueError("Tenant domain is required.")
 
-        existing_tenant = Tenant.objects.filter(identificador=normalized_domain).first()
+        existing_tenant = Tenant.objects.filter(identifier=normalized_domain).first()
         if existing_tenant:
             return existing_tenant
 
         free_plan = SubscriptionPlan.objects.filter(
-            tipo=SubscriptionPlan.PlanType.FREE,
-            ativo=True,
+            type=SubscriptionPlan.PlanType.FREE,
+            active=True,
         ).first()
         if not free_plan:
             raise ValueError("Default FREE subscription plan is not configured.")
 
         today = timezone.localdate()
         tenant = Tenant.objects.create(
-            nome=name,
-            identificador=normalized_domain,
-            dominio=normalized_domain,
-            status_comercial=Tenant.StatusComercial.TRIAL,
-            trial_ate=today + timedelta(days=self.TRIAL_DAYS),
+            name=name,
+            identifier=normalized_domain,
+            domain=normalized_domain,
+            commercial_status=Tenant.StatusComercial.TRIAL,
+            trial_until=today + timedelta(days=self.TRIAL_DAYS),
         )
 
         TenantSubscription.objects.create(
-            inquilino=tenant,
-            plano=free_plan,
-            data_inicio=today,
+            tenant=tenant,
+            plan=free_plan,
+            start_date=today,
             status=TenantSubscription.Status.ATIVA,
-            ciclo=TenantSubscription.Ciclo.MENSAL,
+            cycle=TenantSubscription.Ciclo.MENSAL,
         )
-        TenantConfiguration.objects.create(inquilino=tenant)
-        TenantUsage.objects.create(inquilino=tenant)
+        TenantConfiguration.objects.create(tenant=tenant)
+        TenantUsage.objects.create(tenant=tenant)
 
         return tenant
 

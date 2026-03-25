@@ -50,7 +50,7 @@ def test_all_model_viewsets_do_not_raise_on_search_or_invalid_ordering():
             base_qs = model.objects.all()
 
             # Request ordering on invalid fields; should be ignored, never 500.
-            dj_req = factory.get("/smoke", {"search": "x", "ordering": "descricao"})
+            dj_req = factory.get("/smoke", {"search": "x", "ordering": "description"})
             req = Request(dj_req)
 
             filtered = sf.filter_queryset(req, base_qs, view)

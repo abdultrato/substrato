@@ -1,16 +1,16 @@
 from application.insurer.request_authorization import RequestAuthorizationUseCase
 
 
-def register_request(requisicao, paciente):
+def register_request(request, patient):
     """
-    Dispara solicitação de autorização junto à seguradora quando o paciente possui cobertura.
+    Dispara solicitação de autorização junto à insurer quando o patient possui cobertura.
     """
-    plano = getattr(paciente, "plano_cobertura", None)
-    if plano:
+    plan = getattr(patient, "coverage_plan", None)
+    if plan:
         RequestAuthorizationUseCase.execute(
-            requisicao=requisicao,
-            plano=plano,
+            request=request,
+            plan=plan,
         )
 
 
-registrar_requisicao = register_request
+registrar_request = register_request

@@ -23,7 +23,7 @@ class HealthRegistryService:
 
     def find_patient(self, document_number: str):
         """
-        Consulta paciente no sistema nacional.
+        Consulta patient no sistema nacional.
         """
         response = requests.get(
             f"{self.base_url}/patients",
@@ -51,13 +51,13 @@ class HealthRegistryService:
         response.raise_for_status()
         return response.json()
 
-    def sync_patient(self, patient_data: dict):
+    def sync_patient(self, patient_date: dict):
         """
-        Sincroniza paciente com base nacional.
+        Sincroniza patient com base nacional.
         """
         response = requests.post(
             f"{self.base_url}/patients",
-            json=patient_data,
+            json=patient_date,
             headers=self._headers(),
             timeout=20,
         )

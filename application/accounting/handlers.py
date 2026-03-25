@@ -52,14 +52,14 @@ class DomainAPIException(
 ):
     status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
     default_detail = "Erro de domínio."
-    default_code = "erro_dominio"
+    default_code = "error_domain"
 
 
 def handle_api_exception(
     exc: Exception,
 ):
     """
-    Traduz exceções de domínio para resposta HTTP adequada.
+    Traduz exceções de domínio para response HTTP adequada.
     """
 
     if isinstance(
@@ -166,5 +166,5 @@ def handle_api_exception(
 
 
 DominioAPIException = DomainAPIException
-tratar_excecao_dominio = handle_domain_exception
+tratar_excecao_domain = handle_domain_exception
 tratar_excecao_api = handle_api_exception

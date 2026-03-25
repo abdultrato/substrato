@@ -12,33 +12,43 @@ User = settings.AUTH_USER_MODEL
 
 
 class Procedure(NoNameCoreModel):
-    prefixo = "PROC"
+    prefix = "PROC"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
-        related_name="procedimentos_enfermagem",
+        related_name="procedures_enfermagem",
         db_index=True,
     )
-    profissional = models.ForeignKey(
+    professional = models.ForeignKey(
         User,
+        db_column="profissional_id",
         verbose_name="Profissional",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="procedimentos_realizados",
+        related_name="procedures_realizados",
     )
-    data_realizacao = models.DateTimeField("Data de realização", default=timezone.now, db_index=True)
-    observacoes = models.TextField("Observações", blank=True, default="")
-    subtotal_servicos = models.DecimalField(
+    performed_date = models.DateTimeField("Data de realização", 
+        db_column="data_realizacao",
+         default=timezone.now, db_index=True)
+    notes = models.TextField("Observações", 
+        db_column="observacoes",
+         blank=True, default="")
+    services_subtotal = models.DecimalField(
         "Subtotal (serviços)",
+        db_column="subtotal_servicos",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
     )
-    subtotal_materiais = models.DecimalField(
+    materials_subtotal = models.DecimalField(
         "Subtotal (materiais)",
+        db_column="subtotal_materiais",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -51,57 +61,58 @@ class Procedure(NoNameCoreModel):
     )
 
     class Meta:
-        ordering = ["-data_realizacao", "-criado_em"]
+        db_table = "enfermagem_procedimento"
+        ordering = ["-performed_date", "-created_at"]
         verbose_name = "Procedimento"
         verbose_name_plural = "Procedimentos"
         indexes = [
-            models.Index(fields=["inquilino", "paciente"]),
-            models.Index(fields=["data_realizacao"]),
+            models.Index(fields=["tenant", "patient"]),
+            models.Index(fields=["performed_date"]),
         ]
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.paciente_id:
-            self.inquilino_id = self.paciente.inquilino_id
+        if not self.tenant_id and self.patient_id:
+            self.tenant_id = self.patient.tenant_id
         super().save(*args, **kwargs)
 
     def recalculate_totals(self):
         if not self.pk:
             return
 
-        subtotal_servicos = self.itens.filter(realizado=True).aggregate(
+        services_subtotal = self.itens.filter(performed=True).aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantidade") * F("valor__preco_unitario"),
+                    F("quantity") * F("value__unit_price"),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),
             )
         )["total"]
 
-        subtotal_materiais = self.materiais.aggregate(
+        materials_subtotal = self.materiais.aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantidade") * F("valor__custo_unitario"),
+                    F("quantity") * F("value__unit_cost"),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),
             )
         )["total"]
 
-        total = subtotal_servicos + subtotal_materiais
+        total = services_subtotal + materials_subtotal
 
         self.__class__.all_objects.filter(pk=self.pk).update(
-            subtotal_servicos=subtotal_servicos,
-            subtotal_materiais=subtotal_materiais,
+            services_subtotal=services_subtotal,
+            materials_subtotal=materials_subtotal,
             total=total,
         )
 
-        self.subtotal_servicos = subtotal_servicos
-        self.subtotal_materiais = subtotal_materiais
+        self.services_subtotal = services_subtotal
+        self.materials_subtotal = materials_subtotal
         self.total = total
 
     def __str__(self):
-        return f"{self.id_custom} - {self.paciente.nome}"
+        return f"{self.custom_id} - {self.patient.name}"
 
 
 Procedure.recalcular_totais = Procedure.recalculate_totals

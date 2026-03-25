@@ -19,18 +19,18 @@ class LabExamFilter(SafeFilterSet):
     class Meta:
         model = LabExam
         fields = [
-            "inquilino",
-            "id_custom",
-            "deletado",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "nome",
-            "trl_horas",
-            "preco",
-            "metodo",
-            "setor",
+            "tenant",
+            "custom_id",
+            "deleted",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "name",
+            "turnaround_hours",
+            "price",
+            "method",
+            "sector",
         ]
 
 
@@ -38,18 +38,18 @@ class MedicalExamFilter(SafeFilterSet):
     class Meta:
         model = MedicalExam
         fields = [
-            "inquilino",
-            "id_custom",
-            "deletado",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "nome",
-            "trl_horas",
-            "preco",
-            "metodo",
-            "setor",
+            "tenant",
+            "custom_id",
+            "deleted",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "name",
+            "turnaround_hours",
+            "price",
+            "method",
+            "sector",
         ]
 
 
@@ -62,16 +62,16 @@ class LabExamFieldFilter(SafeFilterSet):
     class Meta:
         model = LabExamField
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "exame",
-            "nome",
-            "tipo",
-            "unidade",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "exam",
+            "name",
+            "type",
+            "unit",
         ]
 
 
@@ -79,15 +79,15 @@ class MedicalExamFieldFilter(SafeFilterSet):
     class Meta:
         model = MedicalExamField
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "exame",
-            "nome",
-            "tipo",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "exam",
+            "name",
+            "type",
         ]
 
 
@@ -97,29 +97,29 @@ class MedicalExamFieldFilter(SafeFilterSet):
 
 
 class PatientFilter(SafeFilterSet):
-    morada = django_filters.CharFilter(field_name="morada", lookup_expr="icontains")
+    address = django_filters.CharFilter(field_name="address", lookup_expr="icontains")
 
     class Meta:
         model = Patient
 
         fields = [
-            "inquilino",
-            "id_custom",
-            "deletado",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "nome",
-            "data_nascimento",
-            "genero",
-            "raca_origem",
-            "tipo_documento",
-            "numero_id",
-            "morada",
-            "contacto",
+            "tenant",
+            "custom_id",
+            "deleted",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "name",
+            "birth_date",
+            "gender",
+            "race_origin",
+            "document_type",
+            "document_number",
+            "address",
+            "contact",
             "email",
-            "proveniencia",
+            "provenance",
         ]
 
 
@@ -132,18 +132,18 @@ class LabRequestFilter(SafeFilterSet):
     class Meta:
         model = LabRequest
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "paciente",
-            "analista",
-            "tipo",
-            "estado",
-            "status_clinico",
-            "possui_resultado_critico",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "patient",
+            "analyst",
+            "type",
+            "status",
+            "clinical_status",
+            "has_critical_result",
         ]
 
 
@@ -156,15 +156,15 @@ class LabRequestItemFilter(SafeFilterSet):
     class Meta:
         model = LabRequestItem
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "requisicao",
-            "exame",
-            "exame_medico",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "request",
+            "exam",
+            "medical_exam",
         ]
 
 
@@ -177,21 +177,21 @@ class ResultItemFilter(SafeFilterSet):
     class Meta:
         model = ResultItem
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "requisicao",
-            "exame_campo",
-            "resultado",
-            "status_clinico",
-            "cor_laudo",
-            "alerta_critico",
-            "estado",
-            "validado_por",
-            "data_validacao",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "request",
+            "exam_field",
+            "result",
+            "clinical_status",
+            "report_color",
+            "critical_alert",
+            "status",
+            "validated_by",
+            "validation_date",
         ]
 
 
@@ -199,15 +199,15 @@ class MedicalResultFileFilter(SafeFilterSet):
     class Meta:
         model = MedicalResultFile
         fields = [
-            "inquilino",
-            "id_custom",
-            "criado_em",
-            "atualizado_em",
-            "requisicao",
-            "exame_medico",
-            "resultado",
-            "requisicao_item",
-            "tipo",
+            "tenant",
+            "custom_id",
+            "created_at",
+            "updated_at",
+            "request",
+            "medical_exam",
+            "result",
+            "request_item",
+            "type",
         ]
 
 
@@ -216,11 +216,11 @@ class MedicalResultFileFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "exame": LabExamFilter,
+    "exam": LabExamFilter,
     "examemedico": MedicalExamFilter,
     "examecampo": LabExamFieldFilter,
     "examemedicocampo": MedicalExamFieldFilter,
-    "paciente": PatientFilter,
+    "patient": PatientFilter,
     "requisicaoanalise": LabRequestFilter,
     "requisicaoitem": LabRequestItemFilter,
     "resultadoitem": ResultItemFilter,

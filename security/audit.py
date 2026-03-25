@@ -5,10 +5,10 @@ logger = logging.getLogger("security.audit")
 
 def register_action(user, action):
     logger.info(
-        "acao_usuario",
+        "acao_user",
         extra={
-            "usuario_id": getattr(user, "id", None),
-            "usuario": str(user),
+            "user_id": getattr(user, "id", None),
+            "user": str(user),
             "acao": action,
         },
     )

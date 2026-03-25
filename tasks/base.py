@@ -18,7 +18,7 @@ class TaskBase:
 
     @classmethod
     def log_fim(cls):
-        logger.info("[%s] finalizado em %s", cls.name, timezone.now())
+        logger.info("[%s] finalized em %s", cls.name, timezone.now())
 
     @classmethod
     def executar(cls, func, *args, **kwargs):

@@ -30,23 +30,23 @@ from .pdf_base import (
 )
 
 
-def _format_results_date(requisicao):
-    data = getattr(requisicao, "criado_em", None)
-    if not data:
+def _format_results_date(request):
+    date = getattr(request, "created_at", None)
+    if not date:
         return "—"
-    return data.strftime("%d/%m/%Y %H:%M")
+    return date.strftime("%d/%m/%Y %H:%M")
 
 
-def _resolve_document_user(requisicao, resultados_qs):
+def _resolve_document_user(request, resultados_qs):
     if resultados_qs:
         for r in resultados_qs:
-            if r.validado_por:
-                return r.validado_por
+            if r.validated_by:
+                return r.validated_by
 
-    return getattr(requisicao, "analista", None)
+    return getattr(request, "analyst", None)
 
 
-def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]:
+def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     buffer = io.BytesIO()
 
     page_width, _ = A5
@@ -65,13 +65,13 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
 
     elements = []
 
-    paciente = requisicao.paciente
+    patient = request.patient
 
     # Código de barras no header (repete em todas páginas)
     try:
-        resultado_obj = getattr(requisicao, "resultado", None)
-        cod_resultado = getattr(resultado_obj, "id_custom", None) or getattr(requisicao, "id_custom", "")
-        doc.barcode_value = f"PAC:{getattr(paciente, 'id_custom', '')}|RES:{cod_resultado}"
+        result_obj = getattr(request, "result", None)
+        cod_result = getattr(result_obj, "custom_id", None) or getattr(request, "custom_id", "")
+        doc.barcode_value = f"PAC:{getattr(patient, 'custom_id', '')}|RES:{cod_result}"
     except Exception:
         doc.barcode_value = None
 
@@ -79,15 +79,15 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     # RESULTADOS
     # =====================================
 
-    resultado = getattr(requisicao, "resultado", None)
+    result = getattr(request, "result", None)
 
-    resultados_qs = resultado.itens.select_related("exame_campo", "exame_campo__exame") if resultado else []
+    resultados_qs = result.itens.select_related("exam_field", "exam_field__exam") if result else []
 
     if apenas_validados and resultados_qs:
-        resultados_qs = resultados_qs.filter(estado=ResultState.VALIDATED)
+        resultados_qs = resultados_qs.filter(status=ResultState.VALIDATED)
 
-    usuario_documento = _resolve_document_user(
-        requisicao,
+    user_documento = _resolve_document_user(
+        request,
         resultados_qs,
     )
 
@@ -96,30 +96,30 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     # =====================================
 
     left_lines = [
-        f"{bold('Paciente')}: {paciente.nome}",
-        f"{bold('Idade')}: {paciente.idade()} - {bold('Gênero')}: {paciente.genero or '—'} - {bold('Raça')}: {paciente.raca_origem}",
-        f"{bold('Documento')}: {paciente.tipo_documento}: {paciente.numero_id or 'Não forneceu documento'}",
-        f"{bold('Proveniência')}: {paciente.proveniencia or '—'}",
-        f"{bold('Contacto')}: {paciente.contacto or '—'}",
+        f"{bold('Paciente')}: {patient.name}",
+        f"{bold('Idade')}: {patient.idade()} - {bold('Gênero')}: {patient.gender or '—'} - {bold('Raça')}: {patient.race_origin}",
+        f"{bold('Documento')}: {patient.document_type}: {patient.document_number or 'Não forneceu documento'}",
+        f"{bold('Proveniência')}: {patient.provenance or '—'}",
+        f"{bold('Contacto')}: {patient.contact or '—'}",
     ]
 
-    empresa_origem = getattr(paciente, "empresa_origem", None)
-    empresa_solicitante = getattr(requisicao, "empresa_solicitante", None)
-    empresa_executora = getattr(requisicao, "empresa_executora_externa", None)
-    if empresa_solicitante:
-        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(empresa_solicitante, 'nome', '—')}")
-    elif empresa_origem:
-        left_lines.append(f"{bold('Empresa')}: {getattr(empresa_origem, 'nome', '—')}")
+    origin_company = getattr(patient, "origin_company", None)
+    requesting_company = getattr(request, "requesting_company", None)
+    empresa_executora = getattr(request, "external_executing_company", None)
+    if requesting_company:
+        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(requesting_company, 'name', '—')}")
+    elif origin_company:
+        left_lines.append(f"{bold('Empresa')}: {getattr(origin_company, 'name', '—')}")
     if empresa_executora:
-        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'nome', '—')}")
+        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'name', '—')}")
 
-    tecnico_texto = institutional_user_identity(usuario_documento)
+    technician_texto = institutional_user_identity(user_documento)
 
     right_lines = [
-        f"{bold('E-mail')}: {paciente.email or '—'}",
-        f"{bold('Requisição')}: {requisicao.id_custom}",
-        f"{bold('Data dos Resultados')}: {_format_results_date(requisicao)}",
-        f"{bold('Técn. de Laboratório')}: {tecnico_texto}",
+        f"{bold('E-mail')}: {patient.email or '—'}",
+        f"{bold('Requisição')}: {request.custom_id}",
+        f"{bold('Data dos Resultados')}: {_format_results_date(request)}",
+        f"{bold('Técn. de Laboratório')}: {technician_texto}",
     ]
 
     # =====================================
@@ -151,31 +151,31 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     # AGRUPAMENTO POR EXAME
     # =====================================
 
-    exames_agrupados = {}
+    exams_agrupados = {}
 
     for item in resultados_qs:
-        exame = item.exame_campo.exame
-        exames_agrupados.setdefault(exame.nome, []).append(item)
+        exam = item.exam_field.exam
+        exams_agrupados.setdefault(exam.name, []).append(item)
 
     # =====================================
     # TABELAS
     # =====================================
 
-    if exames_agrupados:
-        for exame_nome, resultados in exames_agrupados.items():
-            exame = resultados[0].exame_campo.exame
+    if exams_agrupados:
+        for exam_name, resultados in exams_agrupados.items():
+            exam = resultados[0].exam_field.exam
 
             elements.append(Spacer(1, 0.2 * cm))
             elements.append(
                 Paragraph(
-                    f"{exame_nome} — {exame.metodo}",
+                    f"{exam_name} — {exam.method}",
                     style_section,
                 )
             )
 
             elements.append(Spacer(1, 0.2 * cm))
 
-            data = [
+            date = [
                 [
                     cell_paragraph("Parâmetro", True),
                     cell_paragraph("Resultado", True),
@@ -185,21 +185,21 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
             ]
 
             for r in resultados:
-                campo = r.exame_campo
+                campo = r.exam_field
 
-                valor = r.resultado_valor_formatado or "-"
+                value = r.result_value_formatado or "-"
 
-                data.append(
+                date.append(
                     [
-                        cell_paragraph(campo.nome),
-                        cell_paragraph(valor),
-                        cell_paragraph(campo.unidade or "-"),
+                        cell_paragraph(campo.name),
+                        cell_paragraph(value),
+                        cell_paragraph(campo.unit or "-"),
                         cell_paragraph(campo.referencia or "-"),
                     ]
                 )
 
             table = Table(
-                data,
+                date,
                 colWidths=[
                     usable_width * 0.40,
                     usable_width * 0.25,
@@ -226,7 +226,7 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     else:
         elements.append(
             cell_paragraph(
-                "Nenhum resultado disponível para esta requisição.",
+                "Nenhum result disponível para esta requisição.",
                 True,
             )
         )
@@ -240,11 +240,11 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     doc.build(
         elements,
         onFirstPage=lambda c, d: (
-            on_page(c, d, usuario_documento),
+            on_page(c, d, user_documento),
             draw_line_full_width(c, d),
         ),
         onLaterPages=lambda c, d: (
-            on_page(c, d, usuario_documento),
+            on_page(c, d, user_documento),
             draw_line_full_width(c, d),
         ),
         canvasmaker=NumberedCanvas,
@@ -253,11 +253,11 @@ def generate_results_pdf(requisicao, apenas_validados=True) -> tuple[bytes, str]
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    filename = f"{requisicao.id_custom}_{requisicao.paciente.nome}.pdf"
+    filename = f"{request.custom_id}_{request.patient.name}.pdf"
 
     return pdf_bytes, filename
 
 
-_formatar_data_resultados = _format_results_date
-_resolver_usuario_documento = _resolve_document_user
+_formatar_date_resultados = _format_results_date
+_resolver_user_documento = _resolve_document_user
 gerar_pdf_resultados = generate_results_pdf

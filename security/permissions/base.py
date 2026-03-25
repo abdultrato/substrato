@@ -8,19 +8,19 @@ logger = logging.getLogger("security.permissions")
 def tenant_matches_request(request, user) -> bool:
     """
     Defesa multi-tenant:
-    - Se o middleware definiu `request.inquilino`, o usuário autenticado deve pertencer ao mesmo tenant.
+    - Se o middleware definiu `request.tenant`, o usuário autenticado deve pertencer ao mesmo tenant.
     - Superusers fazem bypass (controle feito no caller).
     - Se não for possível determinar tenant (ex.: request sem tenant), não bloqueia.
     """
 
-    req_tenant = getattr(request, "inquilino", None)
+    req_tenant = getattr(request, "tenant", None)
     req_tenant_id = getattr(req_tenant, "id", None)
     if req_tenant_id is None:
         return True
 
-    user_tenant_id = getattr(user, "inquilino_id", None)
+    user_tenant_id = getattr(user, "tenant_id", None)
     if user_tenant_id is None:
-        user_tenant = getattr(user, "inquilino", None)
+        user_tenant = getattr(user, "tenant", None)
         user_tenant_id = getattr(user_tenant, "id", None)
 
     if user_tenant_id is None:
@@ -50,7 +50,7 @@ class BaseRolePermission(permissions.BasePermission):
 
             # Segurança defensiva
             if not user:
-                logger.warning("request_sem_usuario")
+                logger.warning("request_sem_user")
                 return False
 
             # Superuser bypass total
@@ -59,7 +59,7 @@ class BaseRolePermission(permissions.BasePermission):
 
             # Autenticação obrigatória
             if not user.is_authenticated:
-                logger.info("usuario_nao_autenticado")
+                logger.info("user_nao_autenticado")
                 return False
 
             # Tenant isolation: token de um tenant não deve operar noutro tenant via Host header.
@@ -68,8 +68,8 @@ class BaseRolePermission(permissions.BasePermission):
                     "tenant_mismatch",
                     extra={
                         "user_id": getattr(user, "id", None),
-                        "user_tenant_id": getattr(user, "inquilino_id", None),
-                        "request_tenant_id": getattr(getattr(request, "inquilino", None), "id", None),
+                        "user_tenant_id": getattr(user, "tenant_id", None),
+                        "request_tenant_id": getattr(getattr(request, "tenant", None), "id", None),
                     },
                 )
                 return False
@@ -102,20 +102,20 @@ class BaseRolePermission(permissions.BasePermission):
 
             # Verificação de método HTTP
             if self.allowed_methods:
-                metodo = request.method.upper()
+                method = request.method.upper()
 
-                if metodo not in self.allowed_methods:
+                if method not in self.allowed_methods:
                     logger.info(
-                        "metodo_nao_permitido",
-                        extra={"metodo": metodo},
+                        "method_nao_permitido",
+                        extra={"method": method},
                     )
                     return False
 
             return True
 
-        except Exception as erro:
+        except Exception as error:
             logger.exception(
-                "erro_verificacao_permissao",
-                extra={"erro": str(erro)},
+                "error_verificacao_permissao",
+                extra={"error": str(error)},
             )
             return False

@@ -11,71 +11,71 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():
-    return Tenant.objects.create(identificador="tn-cont", nome="Tenant Cont")
+    return Tenant.objects.create(identifier="tn-cont", name="Tenant Cont")
 
 
 @pytest.mark.django_db
-def test_conta_criacao():
+def test_account_criacao():
     tenant = _tenant()
-    conta = Account.objects.create(
-        inquilino=tenant,
-        nome="Caixa",
-        tipo=Account.Tipo.ATIVO,
+    account = Account.objects.create(
+        tenant=tenant,
+        name="Caixa",
+        type=Account.Tipo.ATIVO,
     )
-    assert conta.pk
-    assert conta.tipo == Account.Tipo.ATIVO
+    assert account.pk
+    assert account.type == Account.Tipo.ATIVO
 
 
 @pytest.mark.django_db
 def test_entry_balances_with_movements():
     tenant = _tenant()
-    conta_debito = Account.objects.create(inquilino=tenant, nome="Caixa", tipo=Account.Tipo.ATIVO)
-    conta_credito = Account.objects.create(inquilino=tenant, nome="Receita", tipo=Account.Tipo.RECEITA)
+    account_debit = Account.objects.create(tenant=tenant, name="Caixa", type=Account.Tipo.ATIVO)
+    account_credit = Account.objects.create(tenant=tenant, name="Receita", type=Account.Tipo.RECEITA)
 
-    lancamento = LegacyEntry.objects.create(inquilino=tenant, descricao="Venda à vista")
-    mov_debito = LegacyMovement.objects.create(
-        inquilino=tenant,
-        lancamento=lancamento,
-        conta=conta_debito,
-        valor=Decimal("100.00"),
-        debito=True,
+    entry = LegacyEntry.objects.create(tenant=tenant, description="Venda à vista")
+    mov_debit = LegacyMovement.objects.create(
+        tenant=tenant,
+        entry=entry,
+        account=account_debit,
+        value=Decimal("100.00"),
+        debit=True,
     )
-    mov_credito = LegacyMovement.objects.create(
-        inquilino=tenant,
-        lancamento=lancamento,
-        conta=conta_credito,
-        valor=Decimal("100.00"),
-        debito=False,
+    mov_credit = LegacyMovement.objects.create(
+        tenant=tenant,
+        entry=entry,
+        account=account_credit,
+        value=Decimal("100.00"),
+        debit=False,
     )
 
-    assert lancamento.movimentos.count() == 2
-    assert mov_debito.debito == Decimal("100.00")
-    assert mov_debito.credito == Decimal("0.00")
-    assert mov_credito.credito == Decimal("100.00")
-    assert mov_credito.debito == Decimal("0.00")
+    assert entry.movimentos.count() == 2
+    assert mov_debit.debit == Decimal("100.00")
+    assert mov_debit.credit == Decimal("0.00")
+    assert mov_credit.credit == Decimal("100.00")
+    assert mov_credit.debit == Decimal("0.00")
 
 
 @pytest.mark.django_db
 def test_financial_reconciliation_filters_by_invoice():
     tenant = _tenant()
-    conta = Account.objects.create(inquilino=tenant, nome="Banco", tipo=Account.Tipo.ATIVO)
-    lancamento = LegacyEntry.objects.create(inquilino=tenant, descricao="Pagamento fatura")
+    account = Account.objects.create(tenant=tenant, name="Banco", type=Account.Tipo.ATIVO)
+    entry = LegacyEntry.objects.create(tenant=tenant, description="Pagamento invoice")
     LegacyMovement.objects.create(
-        inquilino=tenant,
-        lancamento=lancamento,
-        conta=conta,
-        valor=Decimal("50.00"),
-        debito=True,
+        tenant=tenant,
+        entry=entry,
+        account=account,
+        value=Decimal("50.00"),
+        debit=True,
     )
-    fatura = Invoice.objects.create(inquilino=tenant, origem=Invoice.Origem.CLINICO)
+    invoice = Invoice.objects.create(tenant=tenant, origin=Invoice.Origem.CLINICO)
 
     conciliacao = FinancialReconciliation.objects.create(
-        inquilino=tenant,
-        fatura=fatura,
-        valor_contabil=Decimal("50.00"),
-        valor_recebido=Decimal("0.00"),
+        tenant=tenant,
+        invoice=invoice,
+        accounting_value=Decimal("50.00"),
+        received_amount=Decimal("0.00"),
     )
 
     assert conciliacao.pk
-    assert conciliacao.conciliado is False
-    assert conciliacao.divergencia == Decimal("50.00")
+    assert conciliacao.reconciled is False
+    assert conciliacao.discrepancy == Decimal("50.00")

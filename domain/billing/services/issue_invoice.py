@@ -1,4 +1,4 @@
-# faturamento/servicos/emitir_fatura.py
+# faturamento/servicos/emitir_invoice.py
 
 from django.db import transaction
 
@@ -13,24 +13,24 @@ def issue_invoice(invoice):
 
     lines = [
         {
-            "conta": invoice.inquilino.conta_clientes,
-            "valor": total,
-            "natureza": "D",
+            "account": invoice.tenant.account_clientes,
+            "value": total,
+            "nature": "D",
         },
         {
-            "conta": invoice.inquilino.conta_receita,
-            "valor": total,
-            "natureza": "C",
+            "account": invoice.tenant.account_receita,
+            "value": total,
+            "nature": "C",
         },
     ]
 
     executar(
-        inquilino=invoice.inquilino,
-        descricao=f"Fatura {invoice.id_custom}",
-        data_contabil=invoice.criado_em.date(),
+        tenant=invoice.tenant,
+        description=f"Fatura {invoice.custom_id}",
+        accounting_date=invoice.created_at.date(),
         linhas=lines,
-        idempotency_key=f"fatura-{invoice.id}",
+        idempotency_key=f"invoice-{invoice.id}",
     )
 
 
-emitir_fatura = issue_invoice
+emitir_invoice = issue_invoice

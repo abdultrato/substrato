@@ -4,9 +4,9 @@ from .result_type import ResultType, TipoResultado
 from .sector import Sector, Setor
 from .units import DefaultUnit, UnidadePadrao
 
-metodo = method
-setor = sector
-tipo_resultado = result_type
+method = method
+sector = sector
+type_result = result_type
 unidades = units
 
 __all__ = [
@@ -19,11 +19,11 @@ __all__ = [
     "TipoResultado",
     "UnidadePadrao",
     "method",
-    "metodo",
+    "method",
     "result_type",
     "sector",
-    "setor",
-    "tipo_resultado",
+    "sector",
+    "type_result",
     "unidades",
     "units",
 ]

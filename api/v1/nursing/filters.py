@@ -21,15 +21,15 @@ class NursingRecordFilter(SafeFilterSet):
     class Meta:
         model = NursingRecord
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "paciente",
-            "prioridade",
-            "data_registro",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "patient",
+            "priority",
+            "record_date",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -37,13 +37,13 @@ class ProcedureCatalogFilter(SafeFilterSet):
     class Meta:
         model = ProcedureCatalog
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "preco_padrao",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "default_price",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -51,15 +51,15 @@ class ProcedureCatalogMaterialFilter(SafeFilterSet):
     class Meta:
         model = ProcedureCatalogMaterial
         fields = [
-            "inquilino",
-            "id_custom",
-            "catalogo",
-            "produto",
-            "quantidade_padrao",
-            "custo_unitario_padrao",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "catalog",
+            "product",
+            "default_quantity",
+            "default_unit_cost",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -67,14 +67,14 @@ class ProcedureFilter(SafeFilterSet):
     class Meta:
         model = Procedure
         fields = [
-            "inquilino",
-            "id_custom",
-            "paciente",
-            "profissional",
-            "data_realizacao",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "patient",
+            "professional",
+            "performed_date",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -82,16 +82,16 @@ class ProcedureItemFilter(SafeFilterSet):
     class Meta:
         model = ProcedureItem
         fields = [
-            "inquilino",
-            "id_custom",
-            "procedimento",
-            "catalogo",
-            "descricao",
-            "quantidade",
-            "realizado",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "procedure",
+            "catalog",
+            "description",
+            "quantity",
+            "performed",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -99,17 +99,17 @@ class ProcedureMaterialFilter(SafeFilterSet):
     class Meta:
         model = ProcedureMaterial
         fields = [
-            "inquilino",
-            "id_custom",
-            "procedimento",
-            "procedimento_item",
-            "produto",
-            "lote",
-            "quantidade",
-            "movimento_estoque",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "procedure",
+            "procedure_item",
+            "product",
+            "lot",
+            "quantity",
+            "inventory_movement",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -117,13 +117,13 @@ class ProcedureItemValueFilter(SafeFilterSet):
     class Meta:
         model = ProcedureItemValue
         fields = [
-            "inquilino",
-            "id_custom",
+            "tenant",
+            "custom_id",
             "item",
-            "preco_unitario",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "unit_price",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -131,13 +131,13 @@ class ProcedureMaterialValueFilter(SafeFilterSet):
     class Meta:
         model = ProcedureMaterialValue
         fields = [
-            "inquilino",
-            "id_custom",
+            "tenant",
+            "custom_id",
             "material",
-            "custo_unitario",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "unit_cost",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -145,18 +145,18 @@ class NursingVitalSignFilter(SafeFilterSet):
     class Meta:
         model = NursingVitalSign
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "registro",
-            "temperatura_c",
-            "frequencia_cardiaca",
-            "frequencia_respiratoria",
-            "saturacao_oxigenio",
-            "coletado_em",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "record",
+            "temperature_c",
+            "heart_rate",
+            "respiratory_rate",
+            "oxygen_saturation",
+            "collected_at",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -164,15 +164,15 @@ class NursingPrescriptionFilter(SafeFilterSet):
     class Meta:
         model = NursingPrescription
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "paciente",
-            "ativo",
-            "data_prescricao",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "patient",
+            "active",
+            "prescription_date",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -180,14 +180,14 @@ class NursingEvolutionFilter(SafeFilterSet):
     class Meta:
         model = NursingEvolution
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "paciente",
-            "data_evolucao",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "patient",
+            "evolution_date",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -195,13 +195,13 @@ class WardFilter(SafeFilterSet):
     class Meta:
         model = Ward
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
-            "ativa",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "name",
+            "active",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -209,14 +209,14 @@ class WardBedFilter(SafeFilterSet):
     class Meta:
         model = WardBed
         fields = [
-            "inquilino",
-            "id_custom",
-            "enfermaria",
-            "numero",
-            "ativa",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "ward",
+            "number",
+            "active",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -224,18 +224,18 @@ class WardAdmissionFilter(SafeFilterSet):
     class Meta:
         model = WardAdmission
         fields = [
-            "inquilino",
-            "id_custom",
-            "cama",
-            "paciente",
-            "ativo",
-            "data_internamento",
-            "data_prevista_alta",
-            "alta_em",
-            "proxima_medicacao_em",
-            "criado_em",
-            "atualizado_em",
-            "deletado",
+            "tenant",
+            "custom_id",
+            "bed",
+            "patient",
+            "active",
+            "admission_date",
+            "expected_discharge_date",
+            "discharged_at",
+            "next_medication_at",
+            "created_at",
+            "updated_at",
+            "deleted",
         ]
 
 
@@ -243,7 +243,7 @@ FILTER_MAP = {
     "evolucaoenfermagem": NursingEvolutionFilter,
     "procedimentocatalogo": ProcedureCatalogFilter,
     "procedimentocatalogomaterial": ProcedureCatalogMaterialFilter,
-    "procedimento": ProcedureFilter,
+    "procedure": ProcedureFilter,
     "procedimentoitem": ProcedureItemFilter,
     "procedimentoitemvalor": ProcedureItemValueFilter,
     "procedimentomaterial": ProcedureMaterialFilter,
@@ -251,7 +251,7 @@ FILTER_MAP = {
     "prescricaoenfermagem": NursingPrescriptionFilter,
     "registroenfermagem": NursingRecordFilter,
     "sinalvitalenfermagem": NursingVitalSignFilter,
-    "enfermaria": WardFilter,
+    "ward": WardFilter,
     "camaenfermaria": WardBedFilter,
     "internamentoenfermaria": WardAdmissionFilter,
 }

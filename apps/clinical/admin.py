@@ -47,9 +47,9 @@ def _user_has_any_group(user, group_names: list[str]) -> bool:
 
 
 class CoreAdmin(admin.ModelAdmin):
-    search_fields = ("id_custom",)
-    readonly_fields = ("criado_em", "atualizado_em")
-    ordering = ("-criado_em",)
+    search_fields = ("custom_id",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
     list_per_page = 50
 
 
@@ -61,44 +61,44 @@ class CoreAdmin(admin.ModelAdmin):
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "numero_id",
-        "genero",
+        "custom_id",
+        "name",
+        "document_number",
+        "gender",
         "idade",
-        "contacto",
+        "contact",
     )
 
     search_fields = (
-        "id_custom",
-        "nome",
-        "numero_id",
-        "contacto",
+        "custom_id",
+        "name",
+        "document_number",
+        "contact",
         "email",
     )
 
     list_filter = (
-        "genero",
-        "proveniencia",
-        "gestante",
+        "gender",
+        "provenance",
+        "pregnant",
     )
 
-    ordering = ("nome",)
+    ordering = ("name",)
 
     list_per_page = 50
 
     readonly_fields = (
-        "id_custom",
+        "custom_id",
         "idade",
-        "versao",
-        "criado_em",
-        "criado_por",
-        "criado_por_id",
-        "atualizado_em",
-        "atualizado_por",
-        "deletado_em",
-        "deletado_por",
-        "deletado_por_id",
+        "version",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_at",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
     )
 
     fieldsets = (
@@ -106,11 +106,11 @@ class PatientAdmin(admin.ModelAdmin):
             "Identificação do Paciente",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
-                    "nome",
-                    "tipo_documento",
-                    "numero_id",
+                    "tenant",
+                    "custom_id",
+                    "name",
+                    "document_type",
+                    "document_number",
                 )
             },
         ),
@@ -118,10 +118,10 @@ class PatientAdmin(admin.ModelAdmin):
             "Dados Demográficos",
             {
                 "fields": (
-                    "data_nascimento",
+                    "birth_date",
                     "idade",
-                    "genero",
-                    "raca_origem",
+                    "gender",
+                    "race_origin",
                 )
             },
         ),
@@ -129,17 +129,17 @@ class PatientAdmin(admin.ModelAdmin):
             "Contacto e Morada",
             {
                 "fields": (
-                    "contacto",
+                    "contact",
                     "email",
-                    "endereco_rua",
-                    "endereco_numero",
-                    "endereco_bairro",
-                    "endereco_cidade",
-                    "endereco_provincia",
-                    "endereco_codigo_postal",
-                    "endereco_pais",
-                    "endereco_complemento",
-                    "morada",
+                    "address_street",
+                    "address_number",
+                    "address_neighborhood",
+                    "address_city",
+                    "address_province",
+                    "address_postal_code",
+                    "address_country",
+                    "address_complement",
+                    "address",
                 )
             },
         ),
@@ -147,9 +147,9 @@ class PatientAdmin(admin.ModelAdmin):
             "Informações Clínicas",
             {
                 "fields": (
-                    "gestante",
-                    "idade_gestacional_semanas",
-                    "proveniencia",
+                    "pregnant",
+                    "gestational_age_weeks",
+                    "provenance",
                 )
             },
         ),
@@ -158,15 +158,15 @@ class PatientAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),
@@ -181,44 +181,44 @@ class PatientAdmin(admin.ModelAdmin):
 @admin.register(LabExamField)
 class LabExamFieldAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "exame",
-        "tipo",
-        "unidade",
+        "custom_id",
+        "name",
+        "exam",
+        "type",
+        "unit",
         "referencia",
     )
 
     search_fields = (
-        "id_custom",
-        "nome",
-        "exame__nome",
+        "custom_id",
+        "name",
+        "exam__name",
     )
 
     list_filter = (
-        "tipo",
-        "exame",
+        "type",
+        "exam",
     )
 
-    autocomplete_fields = ("exame",)
+    autocomplete_fields = ("exam",)
 
-    list_select_related = ("exame",)
+    list_select_related = ("exam",)
 
-    ordering = ("exame", "nome")
+    ordering = ("exam", "name")
 
     list_per_page = 50
 
     readonly_fields = (
-        "id_custom",
-        "versao",
-        "criado_em",
-        "criado_por",
-        "criado_por_id",
-        "atualizado_em",
-        "atualizado_por",
-        "deletado_em",
-        "deletado_por",
-        "deletado_por_id",
+        "custom_id",
+        "version",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_at",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
     )
 
     fieldsets = (
@@ -226,10 +226,10 @@ class LabExamFieldAdmin(CoreAdmin):
             "Identificação do Parâmetro",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
-                    "nome",
-                    "exame",
+                    "tenant",
+                    "custom_id",
+                    "name",
+                    "exam",
                 )
             },
         ),
@@ -237,8 +237,8 @@ class LabExamFieldAdmin(CoreAdmin):
             "Configuração do Resultado",
             {
                 "fields": (
-                    "tipo",
-                    "unidade",
+                    "type",
+                    "unit",
                 )
             },
         ),
@@ -246,10 +246,10 @@ class LabExamFieldAdmin(CoreAdmin):
             "Valores de Referência",
             {
                 "fields": (
-                    "referencia_min",
-                    "referencia_max",
-                    "critico_min",
-                    "critico_max",
+                    "reference_min",
+                    "reference_max",
+                    "critical_min",
+                    "critical_max",
                 )
             },
         ),
@@ -258,15 +258,15 @@ class LabExamFieldAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),
@@ -278,8 +278,8 @@ class LabExamFieldAdmin(CoreAdmin):
 
     def reference(self, obj):
 
-        min_ref = obj.referencia_min
-        max_ref = obj.referencia_max
+        min_ref = obj.reference_min
+        max_ref = obj.reference_max
 
         if min_ref is not None and max_ref is not None:
             return f"{min_ref} - {max_ref}"
@@ -307,23 +307,23 @@ class LabExamFieldInline(admin.TabularInline):
     extra = 0
 
     fields = (
-        "inquilino",
-        "nome",
-        "tipo",
-        "unidade",
-        "referencia_min",
-        "referencia_max",
-        "critico_min",
-        "critico_max",
-        "delta_max",
+        "tenant",
+        "name",
+        "type",
+        "unit",
+        "reference_min",
+        "reference_max",
+        "critical_min",
+        "critical_max",
+        "max_delta",
     )
 
-    ordering = ("nome",)
+    ordering = ("name",)
 
     show_change_link = True
 
-    verbose_name = "Parâmetro do exame"
-    verbose_name_plural = "Parâmetros do exame"
+    verbose_name = "Parâmetro do exam"
+    verbose_name_plural = "Parâmetros do exam"
 
 
 # =========================================================
@@ -334,43 +334,43 @@ class LabExamFieldInline(admin.TabularInline):
 @admin.register(LabExam)
 class LabExamAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "setor",
-        "metodo",
-        "trl_horas",
-        "preco",
-        "iva_percentual",
-        "aplica_iva_por_padrao",
+        "custom_id",
+        "name",
+        "sector",
+        "method",
+        "turnaround_hours",
+        "price",
+        "vat_percentage",
+        "applies_vat_by_default",
     )
 
     search_fields = (
-        "id_custom",
-        "nome",
+        "custom_id",
+        "name",
     )
 
     list_filter = (
-        "setor",
-        "metodo",
+        "sector",
+        "method",
     )
 
-    ordering = ("nome",)
+    ordering = ("name",)
 
     list_per_page = 50
 
     inlines = (LabExamFieldInline,)
 
     readonly_fields = (
-        "id_custom",
-        "versao",
-        "criado_em",
-        "criado_por",
-        "criado_por_id",
-        "atualizado_em",
-        "atualizado_por",
-        "deletado_em",
-        "deletado_por",
-        "deletado_por_id",
+        "custom_id",
+        "version",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_at",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
     )
 
     fieldsets = (
@@ -378,11 +378,11 @@ class LabExamAdmin(CoreAdmin):
             "Informações do Exame",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
-                    "nome",
-                    "setor",
-                    "metodo",
+                    "tenant",
+                    "custom_id",
+                    "name",
+                    "sector",
+                    "method",
                 )
             },
         ),
@@ -390,10 +390,10 @@ class LabExamAdmin(CoreAdmin):
             "Configuração Clínica",
             {
                 "fields": (
-                    "trl_horas",
-                    "preco",
-                    "iva_percentual",
-                    "aplica_iva_por_padrao",
+                    "turnaround_hours",
+                    "price",
+                    "vat_percentage",
+                    "applies_vat_by_default",
                 )
             },
         ),
@@ -402,15 +402,15 @@ class LabExamAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),
@@ -426,56 +426,56 @@ class MedicalExamFieldInline(admin.TabularInline):
     model = MedicalExamField
     extra = 0
     fields = (
-        "inquilino",
-        "nome",
-        "tipo",
+        "tenant",
+        "name",
+        "type",
     )
-    ordering = ("nome",)
+    ordering = ("name",)
     show_change_link = True
-    verbose_name = "Parâmetro do exame médico"
-    verbose_name_plural = "Parâmetros do exame médico"
+    verbose_name = "Parâmetro do exam médico"
+    verbose_name_plural = "Parâmetros do exam médico"
 
 
 @admin.register(MedicalExam)
 class MedicalExamAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "setor",
-        "metodo",
-        "trl_horas",
-        "preco",
-        "iva_percentual",
-        "aplica_iva_por_padrao",
+        "custom_id",
+        "name",
+        "sector",
+        "method",
+        "turnaround_hours",
+        "price",
+        "vat_percentage",
+        "applies_vat_by_default",
     )
 
     search_fields = (
-        "id_custom",
-        "nome",
+        "custom_id",
+        "name",
     )
 
     list_filter = (
-        "setor",
-        "metodo",
+        "sector",
+        "method",
     )
 
-    ordering = ("nome",)
+    ordering = ("name",)
 
     list_per_page = 50
 
     inlines = (MedicalExamFieldInline,)
 
     readonly_fields = (
-        "id_custom",
-        "versao",
-        "criado_em",
-        "criado_por",
-        "criado_por_id",
-        "atualizado_em",
-        "atualizado_por",
-        "deletado_em",
-        "deletado_por",
-        "deletado_por_id",
+        "custom_id",
+        "version",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_at",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
     )
 
     fieldsets = (
@@ -483,11 +483,11 @@ class MedicalExamAdmin(CoreAdmin):
             "Informações do Exame Médico",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
-                    "nome",
-                    "setor",
-                    "metodo",
+                    "tenant",
+                    "custom_id",
+                    "name",
+                    "sector",
+                    "method",
                 )
             },
         ),
@@ -495,10 +495,10 @@ class MedicalExamAdmin(CoreAdmin):
             "Configuração Clínica",
             {
                 "fields": (
-                    "trl_horas",
-                    "preco",
-                    "iva_percentual",
-                    "aplica_iva_por_padrao",
+                    "turnaround_hours",
+                    "price",
+                    "vat_percentage",
+                    "applies_vat_by_default",
                 )
             },
         ),
@@ -507,15 +507,15 @@ class MedicalExamAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),
@@ -531,24 +531,24 @@ class RequestLabItemInline(admin.TabularInline):
     model = LabRequestItem
     extra = 1
 
-    autocomplete_fields = ("exame",)
+    autocomplete_fields = ("exam",)
 
-    fields = ("exame",)
+    fields = ("exam",)
 
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(exame__isnull=False)
+        return super().get_queryset(request).filter(exam__isnull=False)
 
 
 class RequestMedicalItemInline(admin.TabularInline):
     model = LabRequestItem
     extra = 1
 
-    autocomplete_fields = ("exame_medico",)
+    autocomplete_fields = ("medical_exam",)
 
-    fields = ("exame_medico",)
+    fields = ("medical_exam",)
 
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(exame_medico__isnull=False)
+        return super().get_queryset(request).filter(medical_exam__isnull=False)
 
 
 # =========================================================
@@ -559,51 +559,51 @@ class RequestMedicalItemInline(admin.TabularInline):
 @admin.register(LabRequest)
 class LabRequestAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "paciente",
-        "tipo",
-        "estado",
-        "status_clinico",
-        "criado_em",
+        "custom_id",
+        "patient",
+        "type",
+        "status",
+        "clinical_status",
+        "created_at",
     )
 
     search_fields = (
-        "id_custom",
-        "paciente__nome",
+        "custom_id",
+        "patient__name",
     )
 
     list_filter = (
-        "status_clinico",
-        "estado",
+        "clinical_status",
+        "status",
     )
 
     autocomplete_fields = (
-        "paciente",
-        "analista",
+        "patient",
+        "analyst",
     )
 
     list_select_related = (
-        "paciente",
-        "analista",
+        "patient",
+        "analyst",
     )
 
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
 
     list_per_page = 50
 
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "criado_por_id",
-        "criado_por",
-        "atualizado_por",
-        "deletado_em",
-        "deletado_por_id",
-        "deletado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "created_by_id",
+        "created_by",
+        "updated_by",
+        "deleted_at",
+        "deleted_by_id",
+        "deleted_by",
+        "version",
     )
 
-    # Inlines são escolhidos dinamicamente (por tipo/setor).
+    # Inlines são escolhidos dinamicamente (por type/sector).
     inlines: tuple = ()
 
     # =====================================================
@@ -615,8 +615,8 @@ class LabRequestAdmin(CoreAdmin):
             "Identificação da Requisição",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
+                    "tenant",
+                    "custom_id",
                 )
             },
         ),
@@ -624,11 +624,11 @@ class LabRequestAdmin(CoreAdmin):
             "Informações Clínicas",
             {
                 "fields": (
-                    "paciente",
-                    "tipo",
-                    "analista",
-                    "estado",
-                    "status_clinico",
+                    "patient",
+                    "type",
+                    "analyst",
+                    "status",
+                    "clinical_status",
                 )
             },
         ),
@@ -637,14 +637,14 @@ class LabRequestAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),
@@ -656,36 +656,36 @@ class LabRequestAdmin(CoreAdmin):
 
     def get_list_display(self, request):
         base = [
-            "id_custom",
-            "paciente",
-            "tipo",
-            "estado",
-            "status_clinico",
-            "criado_em",
+            "custom_id",
+            "patient",
+            "type",
+            "status",
+            "clinical_status",
+            "created_at",
         ]
 
         # "Lançar resultados" / PDF restrito a Administrador e Técnico de Laboratório.
         if _user_has_any_group(request.user, ["Administrador", "Técnico de Laboratório"]):
-            base.insert(5, "lancar_resultado")
-            base.insert(6, "ver_pdf_resultado")
+            base.insert(5, "lancar_result")
+            base.insert(6, "ver_pdf_result")
 
         return tuple(base)
 
     def get_readonly_fields(self, request, obj=None):
         ro = list(super().get_readonly_fields(request, obj))
-        # Tipo/setor só pode ser definido na criação.
-        if obj is not None and "tipo" not in ro:
-            ro.append("tipo")
+        # Tipo/sector só pode ser definido na criação.
+        if obj is not None and "type" not in ro:
+            ro.append("type")
         return tuple(ro)
 
     def get_inline_instances(self, request, obj=None):
-        # Requisição por setor: mostrar os itens relevantes no change form.
+        # Requisição por sector: mostrar os itens relevantes no change form.
         inline_classes = []
         if obj is None:
-            # No add form mostramos ambos para permitir escolher o tipo antes de salvar.
+            # No add form mostramos ambos para permitir escolher o type antes de salvar.
             inline_classes = [RequestLabItemInline, RequestMedicalItemInline]
         else:
-            if obj.tipo == LabRequest.Tipo.EXAME_MEDICO:
+            if obj.type == LabRequest.Tipo.EXAME_MEDICO:
                 inline_classes = [RequestMedicalItemInline]
             else:
                 inline_classes = [RequestLabItemInline]
@@ -698,14 +698,14 @@ class LabRequestAdmin(CoreAdmin):
 
     def launch_result(self, obj):
 
-        resultado = obj.obter_resultado()
+        result = obj.obter_result()
 
-        if not resultado:
+        if not result:
             return "—"
 
         url = reverse(
-            "admin:clinico_resultado_change",
-            args=[resultado.id],
+            "admin:clinico_result_change",
+            args=[result.id],
         )
 
         return format_html(
@@ -713,8 +713,8 @@ class LabRequestAdmin(CoreAdmin):
             url,
         )
 
-    launch_result.short_description = "Lançar resultado"
-    lancar_resultado = launch_result
+    launch_result.short_description = "Lançar result"
+    lancar_result = launch_result
 
     # -----------------------------------------------------
     # PDF RESULTADO
@@ -722,20 +722,20 @@ class LabRequestAdmin(CoreAdmin):
 
     def view_result_pdf(self, obj):
 
-        if not hasattr(obj, "resultado"):
+        if not hasattr(obj, "result"):
             return mark_safe('<span style="color:gray;">Ainda sem resultados</span>')
 
-        resultado = obj.resultado
-        itens = resultado.itens.all()
+        result = obj.result
+        itens = result.itens.all()
 
         if not itens.exists():
             return mark_safe('<span style="color:gray;">Ainda sem resultados</span>')
 
-        if itens.filter(alerta_critico=True).exists():
+        if itens.filter(critical_alert=True).exists():
             cor = "#c0392b"
             texto = "PDF Crítico"
 
-        elif itens.filter(estado="VALIDADO").count() != itens.count():
+        elif itens.filter(status="VALIDADO").count() != itens.count():
             cor = "#e67e22"
             texto = "PDF Parcial"
 
@@ -744,8 +744,8 @@ class LabRequestAdmin(CoreAdmin):
             texto = "PDF Final"
 
         url = reverse(
-            "resultado_pdf",
-            args=[obj.id_custom],
+            "result_pdf",
+            args=[obj.custom_id],
         )
 
         return format_html(
@@ -756,7 +756,7 @@ class LabRequestAdmin(CoreAdmin):
         )
 
     view_result_pdf.short_description = "Resultado PDF"
-    ver_pdf_resultado = view_result_pdf
+    ver_pdf_result = view_result_pdf
 
 
 # =========================================================
@@ -772,25 +772,25 @@ class ResultItemInlineAdmin(admin.TabularInline):
     can_delete = False
 
     fields = (
-        "inquilino",
+        "tenant",
         "exam_name",
-        "exame_campo",
+        "exam_field",
         "reference",
-        "resultado_valor",
+        "result_value",
         "colored_result",
-        "estado",
+        "status",
         "interpretation",
     )
 
     readonly_fields = (
         "exam_name",
-        "exame_campo",
+        "exam_field",
         "reference",
         "colored_result",
         "interpretation",
     )
 
-    autocomplete_fields = ("exame_campo",)
+    autocomplete_fields = ("exam_field",)
 
     # -----------------------------------------------------
     # QUERY OTIMIZADA
@@ -801,11 +801,11 @@ class ResultItemInlineAdmin(admin.TabularInline):
         qs = super().get_queryset(request)
 
         return qs.select_related(
-            "exame_campo",
-            "exame_campo__exame",
+            "exam_field",
+            "exam_field__exam",
         ).order_by(
-            "exame_campo__exame__nome",
-            "exame_campo__nome",
+            "exam_field__exam__name",
+            "exam_field__name",
         )
 
     # -----------------------------------------------------
@@ -814,15 +814,15 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     def exam_name(self, obj):
 
-        campo = getattr(obj, "exame_campo", None)
+        campo = getattr(obj, "exam_field", None)
 
-        if campo and campo.exame:
-            return format_html("<strong>{}</strong>", campo.exame.nome)
+        if campo and campo.exam:
+            return format_html("<strong>{}</strong>", campo.exam.name)
 
         return "-"
 
     exam_name.short_description = "Exame"
-    exame_nome = exam_name
+    exam_name = exam_name
 
     # -----------------------------------------------------
     # REFERÊNCIA
@@ -830,7 +830,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     def reference(self, obj):
 
-        campo = getattr(obj, "exame_campo", None)
+        campo = getattr(obj, "exam_field", None)
 
         if not campo:
             return "-"
@@ -846,16 +846,16 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     def colored_result(self, obj):
 
-        cor = obj.cor_laudo or "#2c3e50"
+        cor = obj.report_color or "#2c3e50"
 
         return format_html(
             "<strong style='color:{}'>{}</strong>",
             cor,
-            obj.resultado_valor_formatado,
+            obj.result_value_formatado,
         )
 
     colored_result.short_description = "Resultado"
-    resultado_colorido = colored_result
+    result_colorido = colored_result
 
     # -----------------------------------------------------
     # INTERPRETAÇÃO
@@ -863,7 +863,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     def interpretation(self, obj):
 
-        if not obj.status_clinico:
+        if not obj.clinical_status:
             return "-"
 
         cores = {
@@ -874,12 +874,12 @@ class ResultItemInlineAdmin(admin.TabularInline):
             "CRITICO_ALTO": "#c0392b",
         }
 
-        cor = cores.get(obj.status_clinico, "#2c3e50")
+        cor = cores.get(obj.clinical_status, "#2c3e50")
 
         return format_html(
             "<strong style='color:{}'>{}</strong>",
             cor,
-            obj.status_clinico,
+            obj.clinical_status,
         )
 
     interpretation.short_description = "Interpretação"
@@ -894,50 +894,50 @@ class ResultItemInlineAdmin(admin.TabularInline):
 @admin.register(Result)
 class ResultAdmin(CoreAdmin):
     list_display = (
-        "id_custom",
-        "requisicao",
-        "analista",
-        "finalizado",
-        "criado_em",
+        "custom_id",
+        "request",
+        "analyst",
+        "finalized",
+        "created_at",
     )
 
     search_fields = (
-        "id_custom",
-        "requisicao__id_custom",
-        "requisicao__paciente__nome",
+        "custom_id",
+        "request__custom_id",
+        "request__patient__name",
     )
 
     list_filter = (
-        "finalizado",
-        "criado_em",
+        "finalized",
+        "created_at",
     )
 
     list_select_related = (
-        "requisicao",
-        "analista",
+        "request",
+        "analyst",
     )
 
     raw_id_fields = (
-        "requisicao",
-        "analista",
+        "request",
+        "analyst",
     )
 
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
 
     list_per_page = 50
 
     readonly_fields = (
-        "id_custom",
-        "analista",
-        "criado_em",
-        "criado_por",
-        "criado_por_id",
-        "atualizado_por",
-        "atualizado_em",
-        "deletado_em",
-        "deletado_por",
-        "deletado_por_id",
-        "versao",
+        "custom_id",
+        "analyst",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_by",
+        "updated_at",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
+        "version",
     )
 
     inlines = (ResultItemInlineAdmin,)
@@ -951,8 +951,8 @@ class ResultAdmin(CoreAdmin):
             "Identificação do Resultado",
             {
                 "fields": (
-                    "inquilino",
-                    "id_custom",
+                    "tenant",
+                    "custom_id",
                 )
             },
         ),
@@ -960,9 +960,9 @@ class ResultAdmin(CoreAdmin):
             "Informações da Requisição",
             {
                 "fields": (
-                    "requisicao",
-                    "analista",
-                    "finalizado",
+                    "request",
+                    "analyst",
+                    "finalized",
                 )
             },
         ),
@@ -971,15 +971,15 @@ class ResultAdmin(CoreAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "criado_por",
-                    "criado_por_id",
-                    "atualizado_em",
-                    "atualizado_por",
-                    "versao",
-                    "deletado_em",
-                    "deletado_por",
-                    "deletado_por_id",
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
                 ),
             },
         ),

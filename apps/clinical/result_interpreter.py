@@ -1,6 +1,6 @@
 class ResultInterpreter:
     @staticmethod
-    def interpretar(resultado_item):
+    def interpretar(result_item):
         """
         Recebe um ResultadoItem
         Retorna dict com interpretação clínica
@@ -10,9 +10,9 @@ class ResultInterpreter:
         # sem tocar banco diretamente
 
         return {
-            "status_clinico": "normal",
-            "cor_laudo": "verde",
-            "alerta_critico": False,
+            "clinical_status": "normal",
+            "report_color": "verde",
+            "critical_alert": False,
             "delta_alerta": False,
             "tendencia": "",
             "interpretacao": "",

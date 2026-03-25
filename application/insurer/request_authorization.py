@@ -3,10 +3,10 @@ from services.insurer.authorization_service import AuthorizationService
 
 class RequestAuthorizationUseCase:
     @staticmethod
-    def execute(requisicao, plano):
+    def execute(request, plan):
         return AuthorizationService.request(
-            requisicao_id=requisicao.id,
-            plano=plano,
+            request_id=request.id,
+            plan=plan,
         )
 
 

@@ -137,14 +137,14 @@ def get_problem_details(
     context: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Constrói resposta RFC 7807 Problem Details
+    Constrói response RFC 7807 Problem Details
 
     Exemplo:
     {
         "type": "https://example.com/problems/validation-error",
         "status": 400,
         "title": "Validation Error",
-        "detail": "O campo 'nome' é obrigatório",
+        "detail": "O campo 'name' é obrigatório",
         "instance": "/api/v1/pacientes/",
         "code": "VALIDATION_ERROR"
     }
@@ -230,7 +230,7 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
 
         title = title_map.get(status_code, "Error")
 
-        # Determinar código de erro
+        # Determinar código de error
         error_code = "UNKNOWN_ERROR"
         if status_code == status.HTTP_400_BAD_REQUEST:
             error_code = "VALIDATION_ERROR"
@@ -245,7 +245,7 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
         elif status_code >= 500:
             error_code = "INTERNAL_SERVER_ERROR"
 
-        # Extrair mensagem de erro
+        # Extrair message de error
         detail = response.data.get("detail", str(exc)) if isinstance(response.data, dict) else str(exc)
 
         # Formato RFC 7807
@@ -258,7 +258,7 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
             "code": error_code,
         }
 
-        # Se houver campos específicos de erro (ex: validação)
+        # Se houver campos específicos de error (ex: validação)
         if isinstance(response.data, dict) and "detail" not in response.data:
             problem_details["validationErrors"] = response.data
 
@@ -280,7 +280,7 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
 
         return Response(problem_details, status=exc.status_code)
 
-    # Erro não tratado - logar e retornar erro genérico
+    # Erro não tratado - logar e retornar error genérico
     logger.error(
         f"Unhandled exception: {exc.__class__.__name__}",
         exc_info=True,

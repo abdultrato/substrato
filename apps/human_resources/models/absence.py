@@ -12,36 +12,47 @@ class Absence(NoNameCoreModel):
     Registro de faltas/ausências (MVP).
     """
 
-    prefixo = "FLT"
+    prefix = "FLT"
 
-    funcionario = models.ForeignKey(
+    employee = models.ForeignKey(
+
         "recursos_humanos.Employee",
+
+        db_column="funcionario_id",
         on_delete=models.CASCADE,
         related_name="faltas",
         db_index=True,
     )
 
-    data = models.DateField(default=timezone.now, db_index=True)
-    motivo = models.CharField(max_length=255, blank=True, default="")
-    justificada = models.BooleanField(default=False, db_index=True)
+    date = models.DateField(
+
+        db_column="data",
+
+        default=timezone.now, db_index=True)
+    reason = models.CharField(
+        db_column="motivo",
+        max_length=255, blank=True, default="")
+    justified = models.BooleanField(
+        db_column="justificada",
+        default=False, db_index=True)
 
     class Meta:
         db_table = "recursos_humanos_falta"
         verbose_name = "Falta"
         verbose_name_plural = "Faltas"
-        ordering = ["-data", "-criado_em"]
+        ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "funcionario", "data"]),
-            models.Index(fields=["inquilino", "justificada", "data"]),
+            models.Index(fields=["tenant", "employee", "date"]),
+            models.Index(fields=["tenant", "justified", "date"]),
         ]
 
     def clean(self):
         super().clean()
-        if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
-            raise ValidationError({"funcionario": "Funcionário e falta devem pertencer ao mesmo inquilino."})
+        if self.employee_id and self.tenant_id and self.employee.tenant_id != self.tenant_id:
+            raise ValidationError({"employee": "Funcionário e falta devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.funcionario_id:
-            self.inquilino_id = self.funcionario.inquilino_id
+        if not self.tenant_id and self.employee_id:
+            self.tenant_id = self.employee.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)

@@ -4,27 +4,37 @@ from core.models.base import CoreModel
 
 
 class InvoiceHistory(CoreModel):
-    prefixo = "HFAT"
+    prefix = "HFAT"
 
-    fatura = models.ForeignKey(
+    invoice = models.ForeignKey(
+
         "faturamento.Invoice",
+
+        db_column="fatura_id",
         verbose_name="Fatura",
         on_delete=models.CASCADE,
         related_name="historico",
         db_index=True,
     )
 
-    tipo_evento = models.CharField(verbose_name="Tipo de evento", max_length=40, db_index=True)
-    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
+    event_type = models.CharField(
+
+        db_column="tipo_evento",
+
+        verbose_name="Tipo de evento", max_length=40, db_index=True)
+    description = models.TextField(
+        db_column="descricao",
+        verbose_name="Descrição", blank=True, default="")
 
     class Meta:
+        db_table = "faturamento_historicofatura"
         verbose_name = "Histórico de Fatura"
         verbose_name_plural = "Históricos de Fatura"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["fatura", "criado_em"]),
-            models.Index(fields=["tipo_evento"]),
+            models.Index(fields=["invoice", "created_at"]),
+            models.Index(fields=["event_type"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"{self.fatura_id} - {self.tipo_evento}"
+        return self.name or f"{self.invoice_id} - {self.event_type}"

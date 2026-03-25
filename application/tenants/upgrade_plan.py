@@ -7,60 +7,60 @@ from apps.tenants.models.subscription_plan import SubscriptionPlan
 
 class UpgradePlanUseCase:
     """
-    Upgrade / Downgrade de plano.
+    Upgrade / Downgrade de plan.
 
     ✔ Transacional
     ✔ Cancela assinatura anterior
     ✔ Cria nova assinatura
-    ✔ Garante apenas uma ativa
+    ✔ Garante apenas uma active
     ✔ Compatível com billing
     """
 
     @staticmethod
     @transaction.atomic
-    def execute(inquilino, novo_tipo_plano: str, imediato: bool = True):
+    def execute(tenant, novo_type_plan: str, imediato: bool = True):
 
-        assinatura_atual = inquilino.obter_assinatura_ativa()
+        assinatura_atual = tenant.obter_assinatura_active()
 
         if not assinatura_atual:
-            raise Exception("Tenant não possui assinatura ativa.")
+            raise Exception("Tenant não possui assinatura active.")
 
-        if assinatura_atual.plano.tipo == novo_tipo_plano:
+        if assinatura_atual.plan.type == novo_type_plan:
             return assinatura_atual
 
-        novo_plano = SubscriptionPlan.objects.filter(
-            tipo=novo_tipo_plano,
-            ativo=True,
+        novo_plan = SubscriptionPlan.objects.filter(
+            type=novo_type_plan,
+            active=True,
         ).first()
 
-        if not novo_plano:
+        if not novo_plan:
             raise Exception("Plano inválido ou inativo.")
 
         hoje = timezone.now().date()
 
         if imediato:
             # Cancela imediatamente
-            assinatura_atual.cancelar(data_fim=hoje)
+            assinatura_atual.cancelar(end_date=hoje)
 
             return TenantSubscription.objects.create(
-                inquilino=inquilino,
-                plano=novo_plano,
-                data_inicio=hoje,
+                tenant=tenant,
+                plan=novo_plan,
+                start_date=hoje,
                 status=TenantSubscription.Status.ATIVA,
-                ciclo=assinatura_atual.ciclo,
+                cycle=assinatura_atual.cycle,
             )
 
-        # Upgrade programado no fim do ciclo
-        data_fim_atual = assinatura_atual.data_fim or hoje
+        # Upgrade programado no fim do cycle
+        end_date_atual = assinatura_atual.end_date or hoje
 
-        assinatura_atual.cancelar(data_fim=data_fim_atual)
+        assinatura_atual.cancelar(end_date=end_date_atual)
 
         return TenantSubscription.objects.create(
-            inquilino=inquilino,
-            plano=novo_plano,
-            data_inicio=data_fim_atual,
+            tenant=tenant,
+            plan=novo_plan,
+            start_date=end_date_atual,
             status=TenantSubscription.Status.ATIVA,
-            ciclo=assinatura_atual.ciclo,
+            cycle=assinatura_atual.cycle,
         )
 
 

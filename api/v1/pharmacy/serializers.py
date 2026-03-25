@@ -39,10 +39,10 @@ class SaleSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "itemvenda": SaleItemSerializer,
-    "lote": LotSerializer,
+    "lot": LotSerializer,
     "movimentoestoque": InventoryMovementSerializer,
-    "produto": ProductSerializer,
-    "venda": SaleSerializer,
+    "product": ProductSerializer,
+    "sale": SaleSerializer,
 }
 
 ItemVendaSerializer = SaleItemSerializer

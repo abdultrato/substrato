@@ -10,17 +10,17 @@ class LedgerAggregate:
     def validate(self):
         debits = sum(
             (
-                getattr(line.valor, "valor", line.valor)
+                getattr(line.value, "value", line.value)
                 for line in self.lines
-                if getattr(line.natureza, "tipo", line.natureza) == "D"
+                if getattr(line.nature, "type", line.nature) == "D"
             ),
             Decimal("0.00"),
         )
         credits = sum(
             (
-                getattr(line.valor, "valor", line.valor)
+                getattr(line.value, "value", line.value)
                 for line in self.lines
-                if getattr(line.natureza, "tipo", line.natureza) == "C"
+                if getattr(line.nature, "type", line.nature) == "C"
             ),
             Decimal("0.00"),
         )

@@ -8,26 +8,26 @@ class LedgerService:
     @staticmethod
     def balance_by_account(tenant, start_date=None, end_date=None):
         query = LegacyMovement.objects.filter(
-            lancamento__confirmado=True,
-            inquilino=tenant,
+            entry__confirmed=True,
+            tenant=tenant,
         )
 
         if start_date:
-            query = query.filter(lancamento__data__gte=start_date)
+            query = query.filter(entry__date__gte=start_date)
 
         if end_date:
-            query = query.filter(lancamento__data__lte=end_date)
+            query = query.filter(entry__date__lte=end_date)
 
         return (
-            query.values("conta__id", "conta__nome", "conta__id_custom")
+            query.values("account__id", "account__name", "account__custom_id")
             .annotate(
-                total_debito=Coalesce(Sum("debito"), 0),
-                total_credito=Coalesce(Sum("credito"), 0),
+                total_debit=Coalesce(Sum("debit"), 0),
+                total_credit=Coalesce(Sum("credit"), 0),
             )
-            .annotate(saldo=F("total_debito") - F("total_credito"))
-            .order_by("conta__id_custom")
+            .annotate(saldo=F("total_debit") - F("total_credit"))
+            .order_by("account__custom_id")
         )
 
 
 RazaoService = LedgerService
-LedgerService.saldo_por_conta = LedgerService.balance_by_account
+LedgerService.saldo_por_account = LedgerService.balance_by_account

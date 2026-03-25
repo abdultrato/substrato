@@ -9,96 +9,110 @@ from core.models.base import NoNameCoreModel
 
 
 class ProcedureItem(NoNameCoreModel):
-    prefixo = "PROCIT"
+    prefix = "PROCIT"
 
-    procedimento = models.ForeignKey(
+    procedure = models.ForeignKey(
+
         "enfermagem.Procedure",
+
+        db_column="procedimento_id",
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
     )
-    catalogo = models.ForeignKey(
+    catalog = models.ForeignKey(
         "enfermagem.ProcedureCatalog",
+        db_column="catalogo_id",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="itens_lancados",
         db_index=True,
     )
-    descricao = models.CharField(max_length=255, blank=True, default="", db_index=True)
-    quantidade = models.PositiveIntegerField(default=1)
-    preco_unitario = models.DecimalField(
+    description = models.CharField(
+        db_column="descricao",
+        max_length=255, blank=True, default="", db_index=True)
+    quantity = models.PositiveIntegerField(
+        db_column="quantidade",
+        default=1)
+    unit_price = models.DecimalField(
+        db_column="preco_unitario",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    realizado = models.BooleanField(default=True, db_index=True)
-    observacao = models.TextField(blank=True, default="")
+    performed = models.BooleanField(
+        db_column="realizado",
+        default=True, db_index=True)
+    observation = models.TextField(
+        db_column="observacao",
+        blank=True, default="")
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "enfermagem_procedimentoitem"
+        ordering = ["-created_at"]
         verbose_name = "Item de Procedimento"
         verbose_name_plural = "Itens de Procedimento"
         indexes = [
-            models.Index(fields=["inquilino", "procedimento"]),
-            models.Index(fields=["catalogo"]),
-            models.Index(fields=["descricao"]),
+            models.Index(fields=["tenant", "procedure"]),
+            models.Index(fields=["catalog"]),
+            models.Index(fields=["description"]),
         ]
 
     def clean(self):
         super().clean()
-        if self.quantidade <= 0:
-            raise ValidationError({"quantidade": "Quantidade deve ser maior que zero."})
-        if self.preco_unitario is not None and self.preco_unitario < Decimal("0.00"):
-            raise ValidationError({"preco_unitario": "Preço unitário não pode ser negativo."})
+        if self.quantity <= 0:
+            raise ValidationError({"quantity": "Quantidade deve ser maior que zero."})
+        if self.unit_price is not None and self.unit_price < Decimal("0.00"):
+            raise ValidationError({"unit_price": "Preço unitário não pode ser negativo."})
 
-        descricao_informada = bool((self.descricao or "").strip())
-        if not self.catalogo_id and not descricao_informada:
-            raise ValidationError({"descricao": "Informe a descrição ou selecione um procedimento do catálogo."})
+        description_informada = bool((self.description or "").strip())
+        if not self.catalog_id and not description_informada:
+            raise ValidationError({"description": "Informe a descrição ou selecione um procedure do catálogo."})
 
-        if self.procedimento_id and self.catalogo_id and self.procedimento.inquilino_id != self.catalogo.inquilino_id:
-            raise ValidationError({"catalogo": "Catálogo e procedimento devem pertencer ao mesmo inquilino."})
+        if self.procedure_id and self.catalog_id and self.procedure.tenant_id != self.catalog.tenant_id:
+            raise ValidationError({"catalog": "Catálogo e procedure devem pertencer ao mesmo tenant."})
 
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
 
-            if original.catalogo_id != self.catalogo_id:
-                raise ValidationError({"catalogo": "Catálogo do item não pode ser alterado após criação."})
+            if original.catalog_id != self.catalog_id:
+                raise ValidationError({"catalog": "Catálogo do item não pode ser alterado após criação."})
 
-            if original.procedimento_id != self.procedimento_id:
-                raise ValidationError({"procedimento": "Procedimento do item não pode ser alterado."})
+            if original.procedure_id != self.procedure_id:
+                raise ValidationError({"procedure": "Procedimento do item não pode ser alterado."})
 
-            if original.quantidade != self.quantidade and self.materiais_gerados.exists():
+            if original.quantity != self.quantity and self.materiais_gerados.exists():
                 raise ValidationError(
-                    {"quantidade": "Quantidade não pode ser alterada após gerar materiais. Remova e recrie o item."}
+                    {"quantity": "Quantidade não pode ser alterada após gerar materiais. Remova e recrie o item."}
                 )
 
     @property
     def total_linha(self):
         try:
-            preco = self.valor.preco_unitario
+            price = self.value.unit_price
         except ObjectDoesNotExist:
-            preco = self.preco_unitario or Decimal("0.00")
+            price = self.unit_price or Decimal("0.00")
 
-        return (self.quantidade or 0) * (preco or Decimal("0.00"))
+        return (self.quantity or 0) * (price or Decimal("0.00"))
 
     def _apply_catalog_defaults(self):
-        if not self.catalogo_id:
+        if not self.catalog_id:
             return
 
-        if not (self.descricao or "").strip():
-            self.descricao = self.catalogo.nome
+        if not (self.description or "").strip():
+            self.description = self.catalog.name
 
-    def _resolver_preco_unitario(self):
-        if self.catalogo_id:
-            return self.catalogo.preco_padrao or Decimal("0.00")
+    def _resolver_unit_price(self):
+        if self.catalog_id:
+            return self.catalog.default_price or Decimal("0.00")
 
-        if self.preco_unitario and self.preco_unitario > 0:
-            return self.preco_unitario
+        if self.unit_price and self.unit_price > 0:
+            return self.unit_price
 
         try:
-            return self.valor.preco_unitario
+            return self.value.unit_price
         except ObjectDoesNotExist:
             return Decimal("0.00")
 
@@ -107,95 +121,95 @@ class ProcedureItem(NoNameCoreModel):
             ProcedureItemValue,
         )
 
-        preco = self._resolver_preco_unitario()
+        price = self._resolver_unit_price()
 
-        valor, created = ProcedureItemValue.all_objects.get_or_create(
+        value, created = ProcedureItemValue.all_objects.get_or_create(
             item=self,
             defaults={
-                "inquilino_id": self.inquilino_id,
-                "preco_unitario": preco,
+                "tenant_id": self.tenant_id,
+                "unit_price": price,
             },
         )
 
-        if not created and (valor.inquilino_id != self.inquilino_id or valor.preco_unitario != preco):
-            valor.inquilino_id = self.inquilino_id
-            valor.preco_unitario = preco
-            valor.save(update_fields=["inquilino", "preco_unitario", "atualizado_em"])
+        if not created and (value.tenant_id != self.tenant_id or value.unit_price != price):
+            value.tenant_id = self.tenant_id
+            value.unit_price = price
+            value.save(update_fields=["tenant", "unit_price", "updated_at"])
 
-        if self.preco_unitario != preco:
-            self.__class__.all_objects.filter(pk=self.pk).update(preco_unitario=preco)
-            self.preco_unitario = preco
+        if self.unit_price != price:
+            self.__class__.all_objects.filter(pk=self.pk).update(unit_price=price)
+            self.unit_price = price
 
     def _generate_default_materials(self):
-        if not self.catalogo_id:
+        if not self.catalog_id:
             return
 
         from apps.nursing.models.procedure_material import (
             ProcedureMaterial,
         )
 
-        materiais = self.catalogo.materiais_padrao.select_related("produto").all()
+        materiais = self.catalog.materiais_padrao.select_related("product").all()
         for material_padrao in materiais:
-            quantidade_material = material_padrao.quantidade_padrao * Decimal(self.quantidade or 0)
-            if quantidade_material <= 0:
+            quantity_material = material_padrao.default_quantity * Decimal(self.quantity or 0)
+            if quantity_material <= 0:
                 continue
 
-            # ProcedimentoMaterial.quantidade é inteiro (unidades). Mantemos uma validação
+            # ProcedimentoMaterial.quantity é inteiro (unidades). Mantemos uma validação
             # defensiva aqui para evitar truncamento silencioso.
-            if quantidade_material % 1 != 0:
+            if quantity_material % 1 != 0:
                 raise ValidationError(
                     {
-                        "catalogo": (
-                            f"Quantidade do material padrão '{material_padrao.produto.nome}' "
+                        "catalog": (
+                            f"Quantidade do material padrão '{material_padrao.product.name}' "
                             f"deve ser inteira (configuração do catálogo)."
                         )
                     }
                 )
-            quantidade_material_int = int(quantidade_material)
+            quantity_material_int = int(quantity_material)
 
-            lote = (
-                Lot.disponiveis(material_padrao.produto)
-                .filter(inquilino_id=self.inquilino_id)
-                .filter(saldo__gte=quantidade_material_int)
+            lot = (
+                Lot.disponiveis(material_padrao.product)
+                .filter(tenant_id=self.tenant_id)
+                .filter(saldo__gte=quantity_material_int)
                 .first()
             )
 
-            custo = material_padrao.custo_unitario_padrao
+            custo = material_padrao.default_unit_cost
             if custo in (None, Decimal("0.00")):
-                custo = material_padrao.produto.preco_venda
+                custo = material_padrao.product.sale_price
 
-            if lote is None:
-                # Permite criar a requisição do procedimento mesmo com falta de estoque.
-                # A baixa de estoque será exigida no momento da faturação/emissão.
+            if lot is None:
+                # Permite criar a requisição do procedure mesmo com falta de estoque.
+                # A baixa de estoque será exigida no momento da invoiceção/emissão.
                 material = ProcedureMaterial(
-                    inquilino=self.inquilino,
-                    procedimento=self.procedimento,
-                    procedimento_item=self,
-                    produto=material_padrao.produto,
-                    lote=None,
-                    quantidade=quantidade_material_int,
-                    custo_unitario=custo,
-                    observacao=material_padrao.observacao,
+                    tenant=self.tenant,
+                    procedure=self.procedure,
+                    procedure_item=self,
+                    product=material_padrao.product,
+                    lot=None,
+                    quantity=quantity_material_int,
+                    unit_cost=custo,
+                    observation=material_padrao.observation,
                 )
                 material.save(alocar_estoque=False)
             else:
                 ProcedureMaterial.objects.create(
-                    inquilino=self.inquilino,
-                    procedimento=self.procedimento,
-                    procedimento_item=self,
-                    produto=material_padrao.produto,
-                    lote=lote,
-                    quantidade=quantidade_material_int,
-                    custo_unitario=custo,
-                    observacao=material_padrao.observacao,
+                    tenant=self.tenant,
+                    procedure=self.procedure,
+                    procedure_item=self,
+                    product=material_padrao.product,
+                    lot=lot,
+                    quantity=quantity_material_int,
+                    unit_cost=custo,
+                    observation=material_padrao.observation,
                 )
 
     @transaction.atomic
     def save(self, *args, **kwargs):
         criando = self.pk is None
 
-        if not self.inquilino_id and self.procedimento_id:
-            self.inquilino_id = self.procedimento.inquilino_id
+        if not self.tenant_id and self.procedure_id:
+            self.tenant_id = self.procedure.tenant_id
 
         self._apply_catalog_defaults()
         self.full_clean()
@@ -206,30 +220,30 @@ class ProcedureItem(NoNameCoreModel):
             self._generate_default_materials()
 
         self._upsert_value()
-        self.procedimento.recalculate_totals()
+        self.procedure.recalculate_totals()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
-        procedimento = self.procedimento
+        procedure = self.procedure
 
-        for material in self.materiais_gerados.filter(deletado=False):
+        for material in self.materiais_gerados.filter(deleted=False):
             material.delete()
 
         try:
-            valor = self.valor
+            value = self.value
         except ObjectDoesNotExist:
-            valor = None
+            value = None
 
-        if valor and not valor.deletado:
-            valor.delete()
+        if value and not value.deleted:
+            value.delete()
 
         super().delete(*args, **kwargs)
-        procedimento.recalculate_totals()
+        procedure.recalculate_totals()
 
     def __str__(self):
-        return f"{self.descricao} x{self.quantidade}"
+        return f"{self.description} x{self.quantity}"
 
 
-ProcedureItem._aplicar_defaults_catalogo = ProcedureItem._apply_catalog_defaults
-ProcedureItem._upsert_valor = ProcedureItem._upsert_value
+ProcedureItem._aplicar_defaults_catalog = ProcedureItem._apply_catalog_defaults
+ProcedureItem._upsert_value = ProcedureItem._upsert_value
 ProcedureItem._gerar_materiais_padrao = ProcedureItem._generate_default_materials

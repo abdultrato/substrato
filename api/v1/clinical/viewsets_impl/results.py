@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.result_item import ResultItem
-from domain.clinical.estado_resultado import EstadoResultado
+from domain.clinical.status_result import EstadoResultado
 
 from ..filters import ResultItemFilter
 from ..serializers import LaboratoryResultItemSerializer, ResultItemSerializer
@@ -27,40 +27,40 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     serializer_class = ResultItemSerializer
     filterset_class = ResultItemFilter
     permission_classes = [IsAuthenticated]
-    # ResultItem does not expose `nome`/`descricao`/`ativo`/`ordem`.
+    # ResultItem does not expose `name`/`description`/`active`/`order`.
     search_fields = [
-        "id_custom",
-        "resultado__requisicao__id_custom",
-        "resultado__requisicao__paciente__nome",
-        "resultado__requisicao__paciente__numero_id",
-        "exame_campo__id_custom",
-        "exame_campo__nome",
-        "exame_campo__exame__nome",
-        "estado",
-        "status_clinico",
-        "cor_laudo",
+        "custom_id",
+        "result__request__custom_id",
+        "result__request__patient__name",
+        "result__request__patient__document_number",
+        "exam_field__custom_id",
+        "exam_field__name",
+        "exam_field__exam__name",
+        "status",
+        "clinical_status",
+        "report_color",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "resultado",
-        "exame_campo",
-        "status_clinico",
-        "cor_laudo",
-        "alerta_critico",
-        "resultado_valor",
-        "validado_por",
-        "data_validacao",
-        "estado",
-        "versao",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "result",
+        "exam_field",
+        "clinical_status",
+        "report_color",
+        "critical_alert",
+        "result_value",
+        "validated_by",
+        "validation_date",
+        "status",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     def _is_admin_user(self, user) -> bool:
         if not user or not getattr(user, "is_authenticated", False):
@@ -93,11 +93,11 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     def start_analysis(self, request, pk=None):
         """Move the result item to EM_ANALISE."""
         item = self.get_object()
-        if item.estado == EstadoResultado.EM_ANALISE:
+        if item.status == EstadoResultado.EM_ANALISE:
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(EstadoResultado.EM_ANALISE, usuario=getattr(request, "user", None))
+            item.transicionar(EstadoResultado.EM_ANALISE, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 
@@ -111,43 +111,43 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         """
         item = self.get_object()
 
-        raw = (request.data or {}).get("resultado_valor", None)
+        raw = (request.data or {}).get("result_value", None)
         if raw is None:
-            raw = (request.data or {}).get("valor", None)
+            raw = (request.data or {}).get("value", None)
 
         if raw is None or (isinstance(raw, str) and not raw.strip()):
-            raise ValidationError({"resultado_valor": "Informe um valor antes de gravar."})
+            raise ValidationError({"result_value": "Informe um valor antes de gravar."})
 
         try:
-            valor = Decimal(str(raw).replace(",", "."))
+            value = Decimal(str(raw).replace(",", "."))
         except (InvalidOperation, TypeError, ValueError) as err:
-            raise ValidationError({"resultado_valor": "Valor inválido."}) from err
+            raise ValidationError({"result_value": "Valor inválido."}) from err
 
-        from domain.clinical.state_machine_resultado import ResultadoStateMachine, TransicaoInvalidaError
+        from domain.clinical.state_machine_result import ResultadoStateMachine, TransicaoInvalidaError
 
         with transaction.atomic():
             locked = (
                 ResultItem.all_objects.select_for_update()
                 .select_related(
-                    "resultado",
-                    "resultado__requisicao",
-                    "resultado__requisicao__paciente",
-                    "exame_campo",
-                    "exame_campo__exame",
+                    "result",
+                    "result__request",
+                    "result__request__patient",
+                    "exam_field",
+                    "exam_field__exam",
                 )
                 .get(pk=item.pk)
             )
 
             try:
                 ResultadoStateMachine.validar_transicao(
-                    locked.estado,
+                    locked.status,
                     EstadoResultado.AGUARDANDO_VALIDACAO,
                 )
             except TransicaoInvalidaError as err:
                 raise ValidationError(str(err)) from err
 
-            locked.resultado_valor = valor
-            locked.estado = EstadoResultado.AGUARDANDO_VALIDACAO
+            locked.result_value = value
+            locked.status = EstadoResultado.AGUARDANDO_VALIDACAO
             locked.save()
 
         locked.refresh_from_db()
@@ -157,11 +157,11 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     def validate_result(self, request, pk=None):
         """Move the result item to VALIDADO."""
         item = self.get_object()
-        if item.estado == EstadoResultado.VALIDADO:
+        if item.status == EstadoResultado.VALIDADO:
             return Response(LaboratoryResultItemSerializer(item).data)
 
         try:
-            item.transicionar(EstadoResultado.VALIDADO, usuario=getattr(request, "user", None))
+            item.transicionar(EstadoResultado.VALIDADO, user=getattr(request, "user", None))
         except Exception as err:
             raise ValidationError(str(err)) from err
 

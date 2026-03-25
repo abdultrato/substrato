@@ -5,7 +5,20 @@ from .product_category import ProductCategory
 from .sale import Sale
 from .sale_item import SaleItem
 
+CategoriaProduto = ProductCategory
+Produto = Product
+Lote = Lot
+MovimentoEstoque = InventoryMovement
+Venda = Sale
+ItemVenda = SaleItem
+
 __all__ = [
+    "CategoriaProduto",
+    "Produto",
+    "Lote",
+    "MovimentoEstoque",
+    "Venda",
+    "ItemVenda",
     "InventoryMovement",
     "Lot",
     "OrigemMovimento",

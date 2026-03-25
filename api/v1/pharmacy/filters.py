@@ -14,22 +14,22 @@ class SaleItemFilter(SafeFilterSet):
     class Meta:
         model = SaleItem
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "venda",
-            "produto",
-            "quantidade",
-            "preco_unitario",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "sale",
+            "product",
+            "quantity",
+            "unit_price",
         ]
 
 
@@ -42,22 +42,22 @@ class LotFilter(SafeFilterSet):
     class Meta:
         model = Lot
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "produto",
-            "numero_lote",
-            "validade",
-            "quantidade_inicial",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "product",
+            "lot_number",
+            "expiration_date",
+            "initial_quantity",
         ]
 
 
@@ -70,23 +70,23 @@ class InventoryMovementFilter(SafeFilterSet):
     class Meta:
         model = InventoryMovement
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "lote",
-            "tipo",
-            "origem",
-            "item_venda",
-            "quantidade",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "lot",
+            "type",
+            "origin",
+            "sale_item",
+            "quantity",
         ]
 
 
@@ -99,20 +99,20 @@ class ProductFilter(SafeFilterSet):
     class Meta:
         model = Product
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "tipo",
-            "preco_venda",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "type",
+            "sale_price",
         ]
 
 
@@ -125,20 +125,20 @@ class SaleFilter(SafeFilterSet):
     class Meta:
         model = Sale
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "numero",
-            "paciente",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "number",
+            "patient",
             "total",
         ]
 
@@ -149,10 +149,10 @@ class SaleFilter(SafeFilterSet):
 
 FILTER_MAP = {
     "itemvenda": SaleItemFilter,
-    "lote": LotFilter,
+    "lot": LotFilter,
     "movimentoestoque": InventoryMovementFilter,
-    "produto": ProductFilter,
-    "venda": SaleFilter,
+    "product": ProductFilter,
+    "sale": SaleFilter,
 }
 
 ItemVendaFilter = SaleItemFilter

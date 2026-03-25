@@ -10,18 +10,24 @@ from core.models import CoreModel
 
 class CoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Plano de cobertura associado a uma seguradora.
+    Plano de cobertura associado a uma insurer.
     """
 
-    prefixo = "PLC"
+    prefix = "PLC"
 
-    seguradora = models.ForeignKey(
+    insurer = models.ForeignKey(
+
         "seguradora.Insurer",
+
+        db_column="seguradora_id",
         on_delete=models.PROTECT,
         related_name="planos",
     )
 
-    percentual_cobertura = models.DecimalField(
+    coverage_percentage = models.DecimalField(
+
+        db_column="percentual_cobertura",
+
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -32,17 +38,24 @@ class CoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
         help_text="Percentual de cobertura (0-100).",
     )
 
-    exige_autorizacao = models.BooleanField(default=False, db_index=True)
+    requires_authorization = models.BooleanField(
+
+        db_column="exige_autorizacao",
+
+        default=False, db_index=True)
 
     # Compatibilidade com filtros/viewsets gerados
-    ativo = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "seguradora_planocobertura"
         verbose_name = "Plano de Cobertura"
         verbose_name_plural = "Planos de Cobertura"
 
     def percentual_final(self) -> Decimal:
-        return self.percentual_cobertura
+        return self.coverage_percentage
 
     def __str__(self) -> str:
-        return self.nome or f"Plano {self.pk}"
+        return self.name or f"Plano {self.pk}"

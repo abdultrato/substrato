@@ -10,7 +10,7 @@ class Equipment(CoreModel):
     Equipamento físico/operacional da empresa.
     """
 
-    prefixo = "EQP"
+    prefix = "EQP"
 
     class EstadoAquisicao(models.TextChoices):
         NOVO = "NOVO", "Novo"
@@ -21,61 +21,90 @@ class Equipment(CoreModel):
         AVARIADO = "AVARIADO", "Avariado"
         DESLIGADO = "DESLIGADO", "Desligado"
 
-    numero_serie = models.CharField(
+    serial_number = models.CharField(
+
         "Número de série",
+
+        db_column="numero_serie",
         max_length=120,
         db_index=True,
     )
-    data_aquisicao = models.DateField("Data de aquisição", null=True, blank=True)
+    acquisition_date = models.DateField("Data de aquisição", 
+        db_column="data_aquisicao",
+         null=True, blank=True)
 
-    estado_aquisicao = models.CharField(
+    acquisition_status = models.CharField(
+
         "Estado na aquisição",
+
+        db_column="estado_aquisicao",
         max_length=20,
         choices=EstadoAquisicao.choices,
         default=EstadoAquisicao.NOVO,
         db_index=True,
     )
-    estado_operacional_inicial = models.CharField(
+    initial_operational_status = models.CharField(
         "Estado operacional inicial",
+        db_column="estado_operacional_inicial",
         max_length=20,
         choices=EstadoOperacional.choices,
         default=EstadoOperacional.FUNCIONANDO,
         db_index=True,
     )
 
-    tipo_avaria_inicial = models.CharField(
+    initial_failure_type = models.CharField(
+
         "Tipo de avaria inicial",
+
+        db_column="tipo_avaria_inicial",
         max_length=120,
         blank=True,
         default="",
     )
 
-    fabricante = models.CharField(max_length=120, blank=True, default="")
-    modelo = models.CharField(max_length=120, blank=True, default="")
+    manufacturer = models.CharField(
 
-    localizacao = models.CharField("Localização", max_length=255, blank=True, default="")
-    responsavel = models.CharField("Responsável", max_length=120, blank=True, default="")
+        db_column="fabricante",
 
-    ativo = models.BooleanField(default=True, db_index=True)
+        max_length=120, blank=True, default="")
+    model = models.CharField(
+        db_column="modelo",
+        max_length=120, blank=True, default="")
+
+    location = models.CharField("Localização", 
+
+        db_column="localizacao",
+
+         max_length=255, blank=True, default="")
+    responsible = models.CharField("Responsável", 
+        db_column="responsavel",
+         max_length=120, blank=True, default="")
+
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "equipamentos_equipamento"
         verbose_name = "Equipamento"
         verbose_name_plural = "Equipamentos"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "numero_serie"]),
-            models.Index(fields=["inquilino", "ativo"]),
-            models.Index(fields=["inquilino", "estado_operacional_inicial"]),
+            models.Index(fields=["tenant", "serial_number"]),
+            models.Index(fields=["tenant", "active"]),
+            models.Index(fields=["tenant", "initial_operational_status"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "numero_serie"],
-                name="uq_equipamento_numero_serie_inquilino",
+                fields=["tenant", "serial_number"],
+                name="uq_equipment_serial_number_tenant",
             )
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"Equipamento {self.pk}"
+        return self.name or f"Equipamento {self.pk}"
 
     def ultima_inspecao(self):
         if not self.pk:
@@ -85,29 +114,29 @@ class Equipment(CoreModel):
         from apps.inspections.models.daily_inspection import DailyInspection
 
         ultima = (
-            DailyInspection.objects.filter(equipamento_id=self.pk)
-            .order_by("-data", "-criado_em")
+            DailyInspection.objects.filter(equipment_id=self.pk)
+            .order_by("-date", "-created_at")
             .first()
         )
         self._ultima_inspecao_cache = ultima
         return ultima
 
     @property
-    def estado_atual(self) -> str:
+    def status_atual(self) -> str:
         """
         Estado operacional atual calculado a partir da última inspeção.
         """
         ultima = self.ultima_inspecao()
-        if ultima and ultima.funcionamento:
-            return ultima.funcionamento
-        return self.estado_operacional_inicial
+        if ultima and ultima.operation_status:
+            return ultima.operation_status
+        return self.initial_operational_status
 
     @property
-    def estado_atual_label(self) -> str:
-        valor = self.estado_atual
-        if not valor:
+    def status_atual_label(self) -> str:
+        value = self.status_atual
+        if not value:
             return ""
         try:
-            return self.EstadoOperacional(valor).label
+            return self.EstadoOperacional(value).label
         except Exception:
-            return str(valor)
+            return str(value)

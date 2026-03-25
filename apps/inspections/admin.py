@@ -6,21 +6,21 @@ from .models.daily_inspection import DailyInspection
 @admin.register(DailyInspection)
 class InspecaoDiariaAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "equipamento",
-        "data",
-        "funcionamento",
-        "limpeza_realizada",
-        "criado_em",
+        "custom_id",
+        "equipment",
+        "date",
+        "operation_status",
+        "cleaning_performed",
+        "created_at",
     )
     list_filter = (
-        "funcionamento",
-        "limpeza_realizada",
-        "data",
+        "operation_status",
+        "cleaning_performed",
+        "date",
     )
     search_fields = (
-        "id_custom",
-        "equipamento__nome",
-        "equipamento__numero_serie",
+        "custom_id",
+        "equipment__name",
+        "equipment__serial_number",
     )
-    ordering = ("-data",)
+    ordering = ("-date",)

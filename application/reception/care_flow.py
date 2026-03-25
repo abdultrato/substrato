@@ -16,57 +16,57 @@ from apps.payments.models.receipt import Receipt
 from apps.reception.models.reception_checkin import ReceptionCheckin
 
 
-def _quantize_value(valor):
-    if valor is None:
+def _quantize_value(value):
+    if value is None:
         return None
 
-    return Decimal(valor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
-def _resolve_patient(inquilino, paciente_id=None, paciente=None):
-    paciente = paciente or {}
+def _resolve_patient(tenant, patient_id=None, patient=None):
+    patient = patient or {}
 
-    if paciente_id:
-        paciente_obj = Patient.objects.filter(inquilino=inquilino, pk=paciente_id).first()
-        if not paciente_obj:
-            raise ValidationError({"paciente_id": "Paciente não encontrado para este tenant."})
+    if patient_id:
+        patient_obj = Patient.objects.filter(tenant=tenant, pk=patient_id).first()
+        if not patient_obj:
+            raise ValidationError({"patient_id": "Paciente não encontrado para este tenant."})
 
-        for campo, valor in paciente.items():
-            setattr(paciente_obj, campo, valor)
+        for campo, value in patient.items():
+            setattr(patient_obj, campo, value)
     else:
-        nome = (paciente.get("nome") or "").strip()
-        morada = (paciente.get("morada") or "").strip()
+        name = (patient.get("name") or "").strip()
+        address = (patient.get("address") or "").strip()
 
-        if not nome:
-            raise ValidationError({"paciente": {"nome": "Nome é obrigatório."}})
-        if not morada:
-            raise ValidationError({"paciente": {"morada": "Morada é obrigatória."}})
+        if not name:
+            raise ValidationError({"patient": {"name": "Nome é obrigatório."}})
+        if not address:
+            raise ValidationError({"patient": {"address": "Morada é obrigatória."}})
 
-        paciente_obj = Patient(inquilino=inquilino, **paciente)
+        patient_obj = Patient(tenant=tenant, **patient)
 
-    paciente_obj.inquilino = inquilino
-    paciente_obj.full_clean()
-    paciente_obj.save()
-    return paciente_obj
+    patient_obj.tenant = tenant
+    patient_obj.full_clean()
+    patient_obj.save()
+    return patient_obj
 
 
 @transaction.atomic
 def open_checkin(
     *,
-    inquilino,
-    paciente,
-    prioridade=None,
-    motivo="",
-    observacoes="",
-    atendente=None,
+    tenant,
+    patient,
+    priority=None,
+    reason="",
+    notes="",
+    attendant=None,
 ):
     return ReceptionCheckin.objects.create(
-        inquilino=inquilino,
-        paciente=paciente,
-        prioridade=prioridade or ReceptionCheckin.Priority.NORMAL,
-        motivo=motivo or "",
-        observacoes=observacoes or "",
-        atendente=atendente,
+        tenant=tenant,
+        patient=patient,
+        priority=priority or ReceptionCheckin.Priority.NORMAL,
+        reason=reason or "",
+        notes=notes or "",
+        attendant=attendant,
     )
 
 
@@ -74,54 +74,54 @@ def open_checkin(
 def create_request_for_checkin(
     *,
     checkin,
-    exame_ids,
-    status_clinico=None,
+    exam_ids,
+    clinical_status=None,
 ):
-    if checkin.requisicao_id:
+    if checkin.request_id:
         raise ValidationError("Check-in já possui requisição vinculada.")
 
-    ids = list(dict.fromkeys(exame_ids or []))
+    ids = list(dict.fromkeys(exam_ids or []))
     if not ids:
-        raise ValidationError({"requisicao": {"exames_ids": "Informe ao menos um exame."}})
+        raise ValidationError({"request": {"exams_ids": "Informe ao menos um exam."}})
 
-    exames = list(
+    exams = list(
         LabExam.objects.filter(
-            inquilino=checkin.inquilino,
+            tenant=checkin.tenant,
             pk__in=ids,
-            deletado=False,
+            deleted=False,
         ).order_by("pk")
     )
 
-    if len(exames) != len(ids):
-        raise ValidationError({"requisicao": {"exames_ids": "Um ou mais exames são inválidos para este tenant."}})
+    if len(exams) != len(ids):
+        raise ValidationError({"request": {"exams_ids": "Um ou mais exams são inválidos para este tenant."}})
 
-    requisicao = LabRequest(
-        inquilino=checkin.inquilino,
-        paciente=checkin.paciente,
+    request = LabRequest(
+        tenant=checkin.tenant,
+        patient=checkin.patient,
     )
 
-    if status_clinico:
-        requisicao.status_clinico = status_clinico
+    if clinical_status:
+        request.clinical_status = clinical_status
 
-    requisicao.full_clean()
-    requisicao.save()
+    request.full_clean()
+    request.save()
 
-    for exame in exames:
+    for exam in exams:
         item = LabRequestItem(
-            inquilino=checkin.inquilino,
-            requisicao=requisicao,
-            exame=exame,
+            tenant=checkin.tenant,
+            request=request,
+            exam=exam,
         )
         item.full_clean()
         item.save()
 
     Result.objects.create(
-        requisicao=requisicao,
-        inquilino=checkin.inquilino,
+        request=request,
+        tenant=checkin.tenant,
     )
 
-    checkin.register_request(requisicao)
-    return requisicao
+    checkin.register_request(request)
+    return request
 
 
 @transaction.atomic
@@ -130,219 +130,219 @@ def create_invoice_for_checkin(
     checkin,
     emitir=True,
 ):
-    if checkin.fatura_id:
-        raise ValidationError("Check-in já possui fatura vinculada.")
+    if checkin.invoice_id:
+        raise ValidationError("Check-in já possui invoice vinculada.")
 
-    if not checkin.requisicao_id:
-        raise ValidationError("Crie ou vincule uma requisição antes da fatura.")
+    if not checkin.request_id:
+        raise ValidationError("Crie ou vincule uma requisição antes da invoice.")
 
-    fatura = Invoice(
-        inquilino=checkin.inquilino,
-        origem=Invoice.Origem.CLINICO,
-        requisicao=checkin.requisicao,
-        paciente=checkin.paciente,
+    invoice = Invoice(
+        tenant=checkin.tenant,
+        origin=Invoice.Origem.CLINICO,
+        request=checkin.request,
+        patient=checkin.patient,
     )
-    fatura.full_clean()
-    fatura.save()
-    fatura.sincronizar_itens_da_origem()
+    invoice.full_clean()
+    invoice.save()
+    invoice.sincronizar_itens_da_origin()
 
     if emitir:
-        fatura.emitir()
+        invoice.emitir()
 
-    checkin.register_invoice(fatura)
-    return fatura
+    checkin.register_invoice(invoice)
+    return invoice
 
 
 @transaction.atomic
 def register_payment_for_checkin(
     *,
     checkin,
-    valor=None,
-    metodo=Payment.Method.DINHEIRO,
-    referencia_externa="",
-    seguradora_id=None,
-    plano_cobertura_id=None,
-    numero_autorizacao="",
-    dados_seguro=None,
+    value=None,
+    method=Payment.Method.DINHEIRO,
+    external_reference="",
+    insurer_id=None,
+    coverage_plan_id=None,
+    authorization_number="",
+    insurance_date=None,
     confirmar=True,
 ):
-    if not checkin.fatura_id:
-        raise ValidationError("Check-in não possui fatura vinculada.")
+    if not checkin.invoice_id:
+        raise ValidationError("Check-in não possui invoice vinculada.")
 
-    fatura = checkin.fatura
-    if fatura.estado == Invoice.Estado.RASCUNHO:
-        raise ValidationError("Emita a fatura antes de registrar pagamento.")
+    invoice = checkin.invoice
+    if invoice.status == Invoice.Estado.RASCUNHO:
+        raise ValidationError("Emita a invoice antes de registrar payment.")
 
-    valor_pagamento = _quantize_value(valor or fatura.total)
-    if valor_pagamento <= Decimal("0.00"):
-        raise ValidationError({"pagamento": {"valor": "Valor do pagamento deve ser maior que zero."}})
+    value_payment = _quantize_value(value or invoice.total)
+    if value_payment <= Decimal("0.00"):
+        raise ValidationError({"payment": {"value": "Valor do payment deve ser maior que zero."}})
 
-    seguradora = None
-    plano_cobertura = None
-    numero_autorizacao = (numero_autorizacao or "").strip()
+    insurer = None
+    coverage_plan = None
+    authorization_number = (authorization_number or "").strip()
 
-    if metodo == Payment.Method.SEGURO_SAUDE:
-        if not seguradora_id:
-            raise ValidationError({"pagamento": {"seguradora_id": "Informe a seguradora do seguro de saúde."}})
+    if method == Payment.Method.SEGURO_SAUDE:
+        if not insurer_id:
+            raise ValidationError({"payment": {"insurer_id": "Informe a insurer do seguro de saúde."}})
 
-        seguradora = Insurer.objects.filter(inquilino=checkin.inquilino, pk=seguradora_id).first()
-        if not seguradora:
-            raise ValidationError({"pagamento": {"seguradora_id": "Seguradora não encontrada para este tenant."}})
+        insurer = Insurer.objects.filter(tenant=checkin.tenant, pk=insurer_id).first()
+        if not insurer:
+            raise ValidationError({"payment": {"insurer_id": "Seguradora não encontrada para este tenant."}})
 
-        if plano_cobertura_id:
-            plano_cobertura = CoveragePlan.objects.filter(
-                inquilino=checkin.inquilino, pk=plano_cobertura_id
+        if coverage_plan_id:
+            coverage_plan = CoveragePlan.objects.filter(
+                tenant=checkin.tenant, pk=coverage_plan_id
             ).first()
-            if not plano_cobertura:
+            if not coverage_plan:
                 raise ValidationError(
-                    {"pagamento": {"plano_cobertura_id": "Plano de cobertura não encontrado para este tenant."}}
+                    {"payment": {"coverage_plan_id": "Plano de cobertura não encontrado para este tenant."}}
                 )
-            if plano_cobertura.seguradora_id != seguradora.id:
+            if coverage_plan.insurer_id != insurer.id:
                 raise ValidationError(
-                    {"pagamento": {"plano_cobertura_id": "Plano de cobertura não pertence à seguradora selecionada."}}
+                    {"payment": {"coverage_plan_id": "Plano de cobertura não pertence à insurer selecionada."}}
                 )
 
-        if not numero_autorizacao:
-            raise ValidationError({"pagamento": {"numero_autorizacao": "Informe o número de autorização do seguro."}})
+        if not authorization_number:
+            raise ValidationError({"payment": {"authorization_number": "Informe o número de autorização do seguro."}})
 
-    pagamento = Payment(
-        inquilino=checkin.inquilino,
-        nome=f"Pagamento {fatura.id_custom or fatura.pk}",
-        fatura=fatura,
-        valor=valor_pagamento,
-        metodo=metodo,
-        referencia_externa=referencia_externa or "",
-        seguradora=seguradora,
-        plano_cobertura=plano_cobertura,
-        numero_autorizacao=numero_autorizacao or "",
-        dados_seguro=dados_seguro or {},
+    payment = Payment(
+        tenant=checkin.tenant,
+        name=f"Pagamento {invoice.custom_id or invoice.pk}",
+        invoice=invoice,
+        value=value_payment,
+        method=method,
+        external_reference=external_reference or "",
+        insurer=insurer,
+        coverage_plan=coverage_plan,
+        authorization_number=authorization_number or "",
+        insurance_date=insurance_date or {},
     )
-    pagamento.full_clean()
-    pagamento.save()
+    payment.full_clean()
+    payment.save()
 
     if confirmar:
-        pagamento.confirm()
+        payment.confirm()
 
-    recibo = Receipt.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
-    return pagamento, recibo
+    recibo = Receipt.objects.filter(payment=payment).order_by("-created_at", "-id").first()
+    return payment, recibo
 
 
 def get_care_summary(checkin):
     checkin = (
         ReceptionCheckin.objects.select_related(
-            "paciente",
-            "requisicao",
-            "fatura",
-            "atendente",
+            "patient",
+            "request",
+            "invoice",
+            "attendant",
         )
         .prefetch_related(
-            "requisicao__itens__exame",
-            "fatura__itens",
-            "fatura__pagamentos",
-            "fatura__recibos",
+            "request__itens__exam",
+            "invoice__itens",
+            "invoice__pagamentos",
+            "invoice__recibos",
         )
         .get(pk=checkin.pk)
     )
 
-    requisicao = checkin.requisicao
-    fatura = checkin.fatura
-    pagamentos = list(fatura.pagamentos.order_by("-criado_em")) if fatura else []
-    recibos = list(fatura.recibos.order_by("-criado_em")) if fatura else []
+    request = checkin.request
+    invoice = checkin.invoice
+    pagamentos = list(invoice.pagamentos.order_by("-created_at")) if invoice else []
+    recibos = list(invoice.recibos.order_by("-created_at")) if invoice else []
 
     return {
         "checkin": {
             "id": checkin.id,
-            "id_custom": checkin.id_custom,
-            "estado": checkin.estado,
-            "estado_display": checkin.get_estado_display(),
-            "prioridade": checkin.prioridade,
-            "prioridade_display": checkin.get_prioridade_display(),
-            "motivo": checkin.motivo,
-            "observacoes": checkin.observacoes,
-            "chegou_em": checkin.chegou_em.isoformat() if checkin.chegou_em else None,
-            "chamado_em": checkin.chamado_em.isoformat() if checkin.chamado_em else None,
-            "concluido_em": checkin.concluido_em.isoformat() if checkin.concluido_em else None,
-            "atendente": (
-                checkin.atendente.get_full_name() or checkin.atendente.username if checkin.atendente_id else ""
+            "custom_id": checkin.custom_id,
+            "status": checkin.status,
+            "status_display": checkin.get_status_display(),
+            "priority": checkin.priority,
+            "priority_display": checkin.get_priority_display(),
+            "reason": checkin.reason,
+            "notes": checkin.notes,
+            "arrived_at": checkin.arrived_at.isoformat() if checkin.arrived_at else None,
+            "called_at": checkin.called_at.isoformat() if checkin.called_at else None,
+            "completed_at": checkin.completed_at.isoformat() if checkin.completed_at else None,
+            "attendant": (
+                checkin.attendant.get_full_name() or checkin.attendant.username if checkin.attendant_id else ""
             ),
         },
-        "paciente": {
-            "id": checkin.paciente_id,
-            "id_custom": checkin.paciente.id_custom,
-            "nome": checkin.paciente.nome,
-            "numero_id": checkin.paciente.numero_id,
-            "contacto": checkin.paciente.contacto,
-            "morada": checkin.paciente.morada,
+        "patient": {
+            "id": checkin.patient_id,
+            "custom_id": checkin.patient.custom_id,
+            "name": checkin.patient.name,
+            "document_number": checkin.patient.document_number,
+            "contact": checkin.patient.contact,
+            "address": checkin.patient.address,
         },
-        "requisicao": (
+        "request": (
             {
-                "id": requisicao.id,
-                "id_custom": requisicao.id_custom,
-                "estado": requisicao.estado,
-                "status_clinico": requisicao.status_clinico,
-                "exames": [
+                "id": request.id,
+                "custom_id": request.custom_id,
+                "status": request.status,
+                "clinical_status": request.clinical_status,
+                "exams": [
                     {
-                        "id": item.exame_id,
-                        "id_custom": item.exame.id_custom,
-                        "nome": item.exame.nome,
-                        "preco": str(item.exame.preco),
+                        "id": item.exam_id,
+                        "custom_id": item.exam.custom_id,
+                        "name": item.exam.name,
+                        "price": str(item.exam.price),
                     }
-                    for item in requisicao.itens.all()
+                    for item in request.itens.all()
                 ],
             }
-            if requisicao
+            if request
             else None
         ),
-        "fatura": (
+        "invoice": (
             {
-                "id": fatura.id,
-                "id_custom": fatura.id_custom,
-                "estado": fatura.estado,
-                "subtotal": str(fatura.subtotal),
-                "iva_valor": str(fatura.iva_valor),
-                "total": str(fatura.total),
-                "valor_paciente": str(fatura.valor_paciente),
-                "valor_seguro": str(fatura.valor_seguro),
+                "id": invoice.id,
+                "custom_id": invoice.custom_id,
+                "status": invoice.status,
+                "subtotal": str(invoice.subtotal),
+                "vat_amount": str(invoice.vat_amount),
+                "total": str(invoice.total),
+                "patient_amount": str(invoice.patient_amount),
+                "insurance_amount": str(invoice.insurance_amount),
                 "itens": [
                     {
                         "id": item.id,
-                        "id_custom": item.id_custom,
-                        "descricao": item.descricao,
-                        "quantidade": str(item.quantidade),
-                        "preco_unitario": str(item.preco_unitario),
+                        "custom_id": item.custom_id,
+                        "description": item.description,
+                        "quantity": str(item.quantity),
+                        "unit_price": str(item.unit_price),
                         "total": str(item.total),
                     }
-                    for item in fatura.itens.filter(deletado=False)
+                    for item in invoice.itens.filter(deleted=False)
                 ],
             }
-            if fatura
+            if invoice
             else None
         ),
         "pagamentos": [
             {
-                "id": pagamento.id,
-                "id_custom": pagamento.id_custom,
-                "nome": pagamento.nome,
-                "valor": str(pagamento.valor),
-                "metodo": pagamento.metodo,
-                "metodo_display": pagamento.get_metodo_display(),
-                "status": pagamento.status,
-                "status_display": pagamento.get_status_display(),
-                "referencia_externa": pagamento.referencia_externa,
-                "seguradora_id": pagamento.seguradora_id,
-                "plano_cobertura_id": pagamento.plano_cobertura_id,
-                "numero_autorizacao": pagamento.numero_autorizacao,
-                "dados_seguro": pagamento.dados_seguro,
-                "pago_em": pagamento.pago_em.isoformat() if pagamento.pago_em else None,
+                "id": payment.id,
+                "custom_id": payment.custom_id,
+                "name": payment.name,
+                "value": str(payment.value),
+                "method": payment.method,
+                "method_display": payment.get_method_display(),
+                "status": payment.status,
+                "status_display": payment.get_status_display(),
+                "external_reference": payment.external_reference,
+                "insurer_id": payment.insurer_id,
+                "coverage_plan_id": payment.coverage_plan_id,
+                "authorization_number": payment.authorization_number,
+                "insurance_date": payment.insurance_date,
+                "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
             }
-            for pagamento in pagamentos
+            for payment in pagamentos
         ],
         "recibos": [
             {
                 "id": recibo.id,
-                "numero": recibo.numero,
-                "valor": str(recibo.valor),
-                "criado_em": recibo.criado_em.isoformat() if recibo.criado_em else None,
+                "number": recibo.number,
+                "value": str(recibo.value),
+                "created_at": recibo.created_at.isoformat() if recibo.created_at else None,
             }
             for recibo in recibos
         ],
@@ -352,68 +352,68 @@ def get_care_summary(checkin):
 @transaction.atomic
 def execute_full_flow(
     *,
-    inquilino,
-    usuario=None,
-    paciente_id=None,
-    paciente=None,
+    tenant,
+    user=None,
+    patient_id=None,
+    patient=None,
     checkin=None,
-    requisicao=None,
+    request=None,
     faturamento=None,
-    pagamento=None,
+    payment=None,
     concluir_checkin=False,
 ):
-    paciente_obj = _resolve_patient(
-        inquilino=inquilino,
-        paciente_id=paciente_id,
-        paciente=dict(paciente or {}),
+    patient_obj = _resolve_patient(
+        tenant=tenant,
+        patient_id=patient_id,
+        patient=dict(patient or {}),
     )
 
     dados_checkin = dict(checkin or {})
     iniciar_atendimento = bool(dados_checkin.pop("iniciar_atendimento", False))
 
     checkin_obj = open_checkin(
-        inquilino=inquilino,
-        paciente=paciente_obj,
-        prioridade=dados_checkin.get("prioridade"),
-        motivo=dados_checkin.get("motivo", ""),
-        observacoes=dados_checkin.get("observacoes", ""),
-        atendente=usuario if usuario and iniciar_atendimento else None,
+        tenant=tenant,
+        patient=patient_obj,
+        priority=dados_checkin.get("priority"),
+        reason=dados_checkin.get("reason", ""),
+        notes=dados_checkin.get("notes", ""),
+        attendant=user if user and iniciar_atendimento else None,
     )
 
     if iniciar_atendimento:
-        checkin_obj.start_care(attendant=usuario)
+        checkin_obj.start_care(attendant=user)
 
-    requisicao_obj = None
-    if requisicao:
-        dados_requisicao = dict(requisicao)
-        requisicao_obj = create_request_for_checkin(
+    request_obj = None
+    if request:
+        dados_request = dict(request)
+        request_obj = create_request_for_checkin(
             checkin=checkin_obj,
-            exame_ids=dados_requisicao.get("exames_ids", []),
-            status_clinico=dados_requisicao.get("status_clinico"),
+            exam_ids=dados_request.get("exams_ids", []),
+            clinical_status=dados_request.get("clinical_status"),
         )
 
-    if faturamento or pagamento:
-        if not checkin_obj.requisicao_id and not requisicao_obj:
+    if faturamento or payment:
+        if not checkin_obj.request_id and not request_obj:
             raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
 
         dados_faturamento = dict(faturamento or {})
         create_invoice_for_checkin(
             checkin=checkin_obj,
-            emitir=True if pagamento else dados_faturamento.get("emitir", True),
+            emitir=True if payment else dados_faturamento.get("emitir", True),
         )
 
-    if pagamento:
-        dados_pagamento = dict(pagamento)
+    if payment:
+        dados_payment = dict(payment)
         register_payment_for_checkin(
             checkin=checkin_obj,
-            valor=dados_pagamento.get("valor"),
-            metodo=dados_pagamento.get("metodo", Payment.Method.DINHEIRO),
-            referencia_externa=dados_pagamento.get("referencia_externa", ""),
-            seguradora_id=dados_pagamento.get("seguradora_id"),
-            plano_cobertura_id=dados_pagamento.get("plano_cobertura_id"),
-            numero_autorizacao=dados_pagamento.get("numero_autorizacao", ""),
-            dados_seguro=dados_pagamento.get("dados_seguro"),
-            confirmar=dados_pagamento.get("confirmar", True),
+            value=dados_payment.get("value"),
+            method=dados_payment.get("method", Payment.Method.DINHEIRO),
+            external_reference=dados_payment.get("external_reference", ""),
+            insurer_id=dados_payment.get("insurer_id"),
+            coverage_plan_id=dados_payment.get("coverage_plan_id"),
+            authorization_number=dados_payment.get("authorization_number", ""),
+            insurance_date=dados_payment.get("insurance_date"),
+            confirmar=dados_payment.get("confirmar", True),
         )
 
     if concluir_checkin:
@@ -422,11 +422,11 @@ def execute_full_flow(
     return get_care_summary(checkin_obj)
 
 
-_quantizar_valor = _quantize_value
-_resolver_paciente = _resolve_patient
+_quantizar_value = _quantize_value
+_resolver_patient = _resolve_patient
 abrir_checkin = open_checkin
-criar_requisicao_para_checkin = create_request_for_checkin
-criar_fatura_para_checkin = create_invoice_for_checkin
-registrar_pagamento_para_checkin = register_payment_for_checkin
+criar_request_para_checkin = create_request_for_checkin
+criar_invoice_para_checkin = create_invoice_for_checkin
+registrar_payment_para_checkin = register_payment_for_checkin
 obter_resumo_atendimento = get_care_summary
 executar_fluxo_completo = execute_full_flow

@@ -13,40 +13,40 @@ class TenantLimitMiddleware:
 
     def __call__(self, request):
 
-        inquilino = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
 
         # Sem tenant → segue fluxo
-        if not inquilino:
+        if not tenant:
             return self.get_response(request)
 
         # Trial ignora limite
-        if inquilino.esta_em_trial():
-            TenantUsageService.increment_request(inquilino)
+        if tenant.esta_em_trial():
+            TenantUsageService.increment_request(tenant)
             return self.get_response(request)
 
-        assinatura = inquilino.obter_assinatura_ativa()
+        assinatura = tenant.obter_assinatura_active()
 
         if not assinatura:
             return JsonResponse(
-                {"erro": "Tenant sem assinatura ativa."},
+                {"error": "Tenant sem assinatura active."},
                 status=403,
             )
 
-        plano = assinatura.plano
+        plan = assinatura.plan
 
-        limite = plano.limite_requisicoes_mes or 0
-        atual = TenantUsageService.get_requests(inquilino)
+        limite = plan.monthly_request_limit or 0
+        atual = TenantUsageService.get_requests(tenant)
 
         if limite and atual >= limite:
             return JsonResponse(
                 {
-                    "erro": "Limite de requisições atingido.",
-                    "codigo": "TENANT_LIMIT_REACHED",
+                    "error": "Limite de requisições atingido.",
+                    "code": "TENANT_LIMIT_REACHED",
                 },
                 status=429,
             )
 
-        # Incremento ocorre antes da resposta
-        TenantUsageService.increment_request(inquilino)
+        # Incremento ocorre antes da response
+        TenantUsageService.increment_request(tenant)
 
         return self.get_response(request)

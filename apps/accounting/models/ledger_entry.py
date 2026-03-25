@@ -7,13 +7,16 @@ from core.models.base import CoreModel
 class LedgerEntry(
     CoreModel,
 ):
-    prefixo = "LGENT"
+    prefix = "LGENT"
 
     # ===============================
     # IDENTIFICAÇÃO
     # ===============================
 
-    referencia_externa = models.CharField(
+    external_reference = models.CharField(
+
+        db_column="referencia_externa",
+
         max_length=120,
         db_index=True,
     )
@@ -28,11 +31,17 @@ class LedgerEntry(
     # CONTÁBIL
     # ===============================
 
-    data_contabil = models.DateField(
+    accounting_date = models.DateField(
+
+        db_column="data_contabil",
+
         db_index=True,
     )
 
-    descricao = models.CharField(
+    description = models.CharField(
+
+        db_column="descricao",
+
         max_length=255,
     )
 
@@ -40,20 +49,29 @@ class LedgerEntry(
     # REVERSÃO
     # ===============================
 
-    revertido = models.BooleanField(
+    reversed = models.BooleanField(
+
+        db_column="revertido",
+
         default=False,
         db_index=True,
     )
 
-    reverso_de = models.OneToOneField(
+    reversal_of = models.OneToOneField(
+
         "self",
+
+        db_column="reverso_de_id",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
         related_name="reversao",
     )
 
-    motivo_reversao = models.TextField(
+    reversal_reason = models.TextField(
+
+        db_column="motivo_reversao",
+
         null=True,
         blank=True,
     )
@@ -62,7 +80,8 @@ class LedgerEntry(
     # AUDITORIA
     # ===============================
 
-    criado_em = models.DateTimeField(
+    created_at = models.DateTimeField(
+        db_column="criado_em",
         auto_now_add=True,
         db_index=True,
     )
@@ -71,14 +90,20 @@ class LedgerEntry(
     # INTEGRIDADE / ANTIFRAUDE
     # ===============================
 
-    hash_anterior = models.CharField(
+    previous_hash = models.CharField(
+
+        db_column="hash_anterior",
+
         max_length=64,
         null=True,
         blank=True,
         db_index=True,
     )
 
-    hash_atual = models.CharField(
+    current_hash = models.CharField(
+
+        db_column="hash_atual",
+
         max_length=64,
         null=True,
         blank=True,
@@ -86,22 +111,23 @@ class LedgerEntry(
     )
 
     class Meta:
+        db_table = "contabilidade_ledgerentry"
         indexes = [
             models.Index(
                 fields=[
-                    "inquilino",
-                    "data_contabil",
+                    "tenant",
+                    "accounting_date",
                 ],
             ),
             models.Index(
                 fields=[
-                    "inquilino",
-                    "criado_em",
+                    "tenant",
+                    "created_at",
                 ],
             ),
             models.Index(
                 fields=[
-                    "referencia_externa",
+                    "external_reference",
                 ],
             ),
         ]
@@ -109,7 +135,7 @@ class LedgerEntry(
         constraints = [
             models.UniqueConstraint(
                 fields=[
-                    "inquilino",
+                    "tenant",
                     "idempotency_key",
                 ],
                 condition=Q(

@@ -24,22 +24,22 @@ def _queryset_produtos_disponiveis():
 
     lotes_disponiveis = (
         Lot.objects.filter(
-            produto_id=OuterRef("pk"),
-            validade__gte=hoje,
+            product_id=OuterRef("pk"),
+            expiration_date__gte=hoje,
         )
         .annotate(
-            saldo_calc=F("quantidade_inicial")
+            saldo_calc=F("initial_quantity")
             + Coalesce(
                 Sum(
                     Case(
                         When(
-                            movimentos__deletado=False,
-                            movimentos__tipo="SAI",
-                            then=-F("movimentos__quantidade"),
+                            movimentos__deleted=False,
+                            movimentos__type="SAI",
+                            then=-F("movimentos__quantity"),
                         ),
                         When(
-                            movimentos__deletado=False,
-                            then=F("movimentos__quantidade"),
+                            movimentos__deleted=False,
+                            then=F("movimentos__quantity"),
                         ),
                         default=0,
                         output_field=IntegerField(),
@@ -51,38 +51,38 @@ def _queryset_produtos_disponiveis():
         .filter(saldo_calc__gt=0)
     )
 
-    return Product.objects.filter(Exists(lotes_disponiveis)).order_by("nome")
+    return Product.objects.filter(Exists(lotes_disponiveis)).order_by("name")
 
 
 class ProcedimentoItemInline(admin.TabularInline):
     model = ProcedureItem
     extra = 1
     fields = (
-        "catalogo",
-        "descricao",
-        "quantidade",
-        "realizado",
-        "observacao",
+        "catalog",
+        "description",
+        "quantity",
+        "performed",
+        "observation",
     )
-    autocomplete_fields = ("catalogo",)
+    autocomplete_fields = ("catalog",)
 
 
 class ProcedimentoMaterialInline(admin.TabularInline):
     model = ProcedureMaterial
     extra = 1
     fields = (
-        "procedimento_item",
-        "produto",
-        "quantidade",
-        "lote",
-        "movimento_estoque",
-        "observacao",
+        "procedure_item",
+        "product",
+        "quantity",
+        "lot",
+        "inventory_movement",
+        "observation",
     )
-    readonly_fields = ("procedimento_item", "lote", "movimento_estoque")
-    autocomplete_fields = ("produto",)
+    readonly_fields = ("procedure_item", "lot", "inventory_movement")
+    autocomplete_fields = ("product",)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "produto":
+        if db_field.name == "product":
             kwargs["queryset"] = _queryset_produtos_disponiveis()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -92,38 +92,38 @@ class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
     model = ProcedureCatalogMaterial
     extra = 1
     fields = (
-        "produto",
-        "quantidade_padrao",
-        "custo_unitario_padrao",
-        "observacao",
+        "product",
+        "default_quantity",
+        "default_unit_cost",
+        "observation",
     )
-    autocomplete_fields = ("produto",)
+    autocomplete_fields = ("product",)
 
 
 @admin.register(ProcedureCatalog)
 class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "preco_padrao",
-        "iva_percentual",
-        "aplica_iva_por_padrao",
-        "criado_em",
+        "custom_id",
+        "name",
+        "default_price",
+        "vat_percentage",
+        "applies_vat_by_default",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "nome",
-        "descricao",
+        "custom_id",
+        "name",
+        "description",
     )
-    list_filter = ("criado_em",)
-    ordering = ("nome",)
+    list_filter = ("created_at",)
+    ordering = ("name",)
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     inlines = (ProcedimentoCatalogoMaterialInline,)
     fieldsets = (
@@ -131,12 +131,12 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
             "Procedimento do Catálogo",
             {
                 "fields": (
-                    "id_custom",
-                    "nome",
-                    "descricao",
-                    "preco_padrao",
-                    "iva_percentual",
-                    "aplica_iva_por_padrao",
+                    "custom_id",
+                    "name",
+                    "description",
+                    "default_price",
+                    "vat_percentage",
+                    "applies_vat_by_default",
                 )
             },
         ),
@@ -145,11 +145,11 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -159,44 +159,44 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
 @admin.register(ProcedureCatalogMaterial)
 class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "catalogo",
-        "produto",
-        "quantidade_padrao",
-        "custo_unitario_padrao",
-        "criado_em",
+        "custom_id",
+        "catalog",
+        "product",
+        "default_quantity",
+        "default_unit_cost",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "catalogo__nome",
-        "produto__nome",
+        "custom_id",
+        "catalog__name",
+        "product__name",
     )
     list_filter = (
-        "catalogo",
-        "criado_em",
+        "catalog",
+        "created_at",
     )
-    ordering = ("catalogo", "produto")
-    autocomplete_fields = ("catalogo", "produto")
-    list_select_related = ("catalogo", "produto")
+    ordering = ("catalog", "product")
+    autocomplete_fields = ("catalog", "product")
+    list_select_related = ("catalog", "product")
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Material Padrão",
             {
                 "fields": (
-                    "id_custom",
-                    "catalogo",
-                    "produto",
-                    "quantidade_padrao",
-                    "custo_unitario_padrao",
-                    "observacao",
+                    "custom_id",
+                    "catalog",
+                    "product",
+                    "default_quantity",
+                    "default_unit_cost",
+                    "observation",
                 )
             },
         ),
@@ -205,11 +205,11 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -219,45 +219,45 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
 @admin.register(NursingRecord)
 class NursingRecordAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "paciente",
-        "prioridade",
-        "data_registro",
-        "criado_em",
+        "custom_id",
+        "name",
+        "patient",
+        "priority",
+        "record_date",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "nome",
-        "paciente__nome",
+        "custom_id",
+        "name",
+        "patient__name",
     )
     list_filter = (
-        "prioridade",
-        "data_registro",
+        "priority",
+        "record_date",
     )
-    autocomplete_fields = ("paciente",)
-    list_select_related = ("paciente",)
-    ordering = ("-data_registro",)
+    autocomplete_fields = ("patient",)
+    list_select_related = ("patient",)
+    ordering = ("-record_date",)
     readonly_fields = (
-        "id_custom",
-        "data_registro",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "record_date",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Registro de Enfermagem",
             {
                 "fields": (
-                    "id_custom",
-                    "nome",
-                    "paciente",
-                    "prioridade",
-                    "observacao",
-                    "data_registro",
+                    "custom_id",
+                    "name",
+                    "patient",
+                    "priority",
+                    "observation",
+                    "record_date",
                 )
             },
         ),
@@ -266,11 +266,11 @@ class NursingRecordAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -280,40 +280,40 @@ class NursingRecordAdmin(admin.ModelAdmin):
 @admin.register(Procedure)
 class ProcedimentoAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "paciente",
-        "profissional",
-        "data_realizacao",
+        "custom_id",
+        "patient",
+        "professional",
+        "performed_date",
         "itens_total",
         "materiais_total",
         "total",
-        "criado_em",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "paciente__nome",
-        "observacoes",
+        "custom_id",
+        "patient__name",
+        "notes",
     )
     list_filter = (
-        "data_realizacao",
-        "criado_em",
+        "performed_date",
+        "created_at",
     )
     autocomplete_fields = (
-        "paciente",
-        "profissional",
+        "patient",
+        "professional",
     )
-    list_select_related = ("paciente", "profissional")
-    ordering = ("-data_realizacao",)
+    list_select_related = ("patient", "professional")
+    ordering = ("-performed_date",)
     readonly_fields = (
-        "id_custom",
-        "subtotal_servicos",
-        "subtotal_materiais",
+        "custom_id",
+        "services_subtotal",
+        "materials_subtotal",
         "total",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     inlines = (ProcedimentoItemInline, ProcedimentoMaterialInline)
     fieldsets = (
@@ -321,14 +321,14 @@ class ProcedimentoAdmin(admin.ModelAdmin):
             "Procedimento",
             {
                 "fields": (
-                    "id_custom",
-                    "inquilino",
-                    "paciente",
-                    "profissional",
-                    "data_realizacao",
-                    "observacoes",
-                    "subtotal_servicos",
-                    "subtotal_materiais",
+                    "custom_id",
+                    "tenant",
+                    "patient",
+                    "professional",
+                    "performed_date",
+                    "notes",
+                    "services_subtotal",
+                    "materials_subtotal",
                     "total",
                 )
             },
@@ -338,11 +338,11 @@ class ProcedimentoAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -362,45 +362,45 @@ class ProcedimentoAdmin(admin.ModelAdmin):
 @admin.register(ProcedureItem)
 class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "procedimento",
-        "catalogo",
-        "descricao",
-        "quantidade",
-        "realizado",
-        "criado_em",
+        "custom_id",
+        "procedure",
+        "catalog",
+        "description",
+        "quantity",
+        "performed",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "catalogo__nome",
-        "descricao",
-        "procedimento__id_custom",
-        "procedimento__paciente__nome",
+        "custom_id",
+        "catalog__name",
+        "description",
+        "procedure__custom_id",
+        "procedure__patient__name",
     )
-    list_filter = ("realizado", "criado_em")
-    autocomplete_fields = ("procedimento", "catalogo")
-    list_select_related = ("procedimento", "procedimento__paciente", "catalogo")
-    ordering = ("-criado_em",)
+    list_filter = ("performed", "created_at")
+    autocomplete_fields = ("procedure", "catalog")
+    list_select_related = ("procedure", "procedure__patient", "catalog")
+    ordering = ("-created_at",)
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Item de Procedimento",
             {
                 "fields": (
-                    "id_custom",
-                    "procedimento",
-                    "catalogo",
-                    "descricao",
-                    "quantidade",
-                    "realizado",
-                    "observacao",
+                    "custom_id",
+                    "procedure",
+                    "catalog",
+                    "description",
+                    "quantity",
+                    "performed",
+                    "observation",
                 )
             },
         ),
@@ -409,11 +409,11 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -423,60 +423,60 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
 @admin.register(ProcedureMaterial)
 class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "procedimento",
-        "procedimento_item",
-        "produto",
-        "lote",
-        "quantidade",
-        "movimento_estoque",
-        "criado_em",
+        "custom_id",
+        "procedure",
+        "procedure_item",
+        "product",
+        "lot",
+        "quantity",
+        "inventory_movement",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "produto__nome",
-        "lote__numero_lote",
-        "procedimento__id_custom",
-        "procedimento__paciente__nome",
-        "procedimento_item__id_custom",
+        "custom_id",
+        "product__name",
+        "lot__lot_number",
+        "procedure__custom_id",
+        "procedure__patient__name",
+        "procedure_item__custom_id",
     )
-    list_filter = ("criado_em", "produto")
+    list_filter = ("created_at", "product")
     autocomplete_fields = (
-        "procedimento",
-        "procedimento_item",
-        "produto",
+        "procedure",
+        "procedure_item",
+        "product",
     )
     list_select_related = (
-        "procedimento",
-        "procedimento_item",
-        "produto",
-        "lote",
-        "movimento_estoque",
+        "procedure",
+        "procedure_item",
+        "product",
+        "lot",
+        "inventory_movement",
     )
-    ordering = ("-criado_em",)
+    ordering = ("-created_at",)
     readonly_fields = (
-        "id_custom",
-        "lote",
-        "movimento_estoque",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "lot",
+        "inventory_movement",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Material do Procedimento",
             {
                 "fields": (
-                    "id_custom",
-                    "procedimento",
-                    "procedimento_item",
-                    "produto",
-                    "lote",
-                    "quantidade",
-                    "movimento_estoque",
-                    "observacao",
+                    "custom_id",
+                    "procedure",
+                    "procedure_item",
+                    "product",
+                    "lot",
+                    "quantity",
+                    "inventory_movement",
+                    "observation",
                 )
             },
         ),
@@ -485,18 +485,18 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
     )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "produto":
+        if db_field.name == "product":
             kwargs["queryset"] = _queryset_produtos_disponiveis()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -505,37 +505,37 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
 @admin.register(ProcedureItemValue)
 class ProcedureItemValueAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
+        "custom_id",
         "item",
-        "preco_unitario",
-        "criado_em",
+        "unit_price",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "item__id_custom",
-        "item__descricao",
-        "item__procedimento__id_custom",
+        "custom_id",
+        "item__custom_id",
+        "item__description",
+        "item__procedure__custom_id",
     )
-    list_filter = ("criado_em",)
+    list_filter = ("created_at",)
     autocomplete_fields = ("item",)
-    list_select_related = ("item", "item__procedimento")
-    ordering = ("-criado_em",)
+    list_select_related = ("item", "item__procedure")
+    ordering = ("-created_at",)
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Valor do Item",
             {
                 "fields": (
-                    "id_custom",
+                    "custom_id",
                     "item",
-                    "preco_unitario",
+                    "unit_price",
                 )
             },
         ),
@@ -544,11 +544,11 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -558,37 +558,37 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
 @admin.register(ProcedureMaterialValue)
 class ProcedureMaterialValueAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
+        "custom_id",
         "material",
-        "custo_unitario",
-        "criado_em",
+        "unit_cost",
+        "created_at",
     )
     search_fields = (
-        "id_custom",
-        "material__id_custom",
-        "material__produto__nome",
-        "material__procedimento__id_custom",
+        "custom_id",
+        "material__custom_id",
+        "material__product__name",
+        "material__procedure__custom_id",
     )
-    list_filter = ("criado_em",)
+    list_filter = ("created_at",)
     autocomplete_fields = ("material",)
-    list_select_related = ("material", "material__procedimento", "material__produto")
-    ordering = ("-criado_em",)
+    list_select_related = ("material", "material__procedure", "material__product")
+    ordering = ("-created_at",)
     readonly_fields = (
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Valor do Material",
             {
                 "fields": (
-                    "id_custom",
+                    "custom_id",
                     "material",
-                    "custo_unitario",
+                    "unit_cost",
                 )
             },
         ),
@@ -597,11 +597,11 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),
@@ -611,46 +611,46 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
 @admin.register(NursingVitalSign)
 class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
-        "registro",
-        "temperatura_c",
-        "frequencia_cardiaca",
-        "saturacao_oxigenio",
-        "coletado_em",
+        "custom_id",
+        "name",
+        "record",
+        "temperature_c",
+        "heart_rate",
+        "oxygen_saturation",
+        "collected_at",
     )
     search_fields = (
-        "id_custom",
-        "nome",
-        "registro__paciente__nome",
+        "custom_id",
+        "name",
+        "record__patient__name",
     )
-    list_filter = ("coletado_em",)
-    autocomplete_fields = ("registro",)
-    list_select_related = ("registro", "registro__paciente")
-    ordering = ("-coletado_em",)
+    list_filter = ("collected_at",)
+    autocomplete_fields = ("record",)
+    list_select_related = ("record", "record__patient")
+    ordering = ("-collected_at",)
     readonly_fields = (
-        "id_custom",
-        "coletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "versao",
+        "custom_id",
+        "collected_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
     )
     fieldsets = (
         (
             "Sinais Vitais",
             {
                 "fields": (
-                    "id_custom",
-                    "nome",
-                    "registro",
-                    "temperatura_c",
-                    "frequencia_cardiaca",
-                    "frequencia_respiratoria",
-                    "saturacao_oxigenio",
-                    "pressao_arterial",
-                    "coletado_em",
+                    "custom_id",
+                    "name",
+                    "record",
+                    "temperature_c",
+                    "heart_rate",
+                    "respiratory_rate",
+                    "oxygen_saturation",
+                    "blood_pressure",
+                    "collected_at",
                 )
             },
         ),
@@ -659,11 +659,11 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
-                    "criado_em",
-                    "atualizado_em",
-                    "criado_por",
-                    "atualizado_por",
-                    "versao",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
                 ),
             },
         ),

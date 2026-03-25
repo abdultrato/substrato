@@ -4,4 +4,4 @@ class FHIRIntegration:
 
 
 IntegracaoFHIR = FHIRIntegration
-FHIRIntegration.enviar_paciente = FHIRIntegration.send_patient
+FHIRIntegration.enviar_patient = FHIRIntegration.send_patient

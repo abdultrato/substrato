@@ -7,15 +7,15 @@ class PaymentGateway:
     (Mobile Money, POS, bancos, gateways online).
     """
 
-    def cobrar(self, valor, referencia, **kwargs):
+    def cobrar(self, value, referencia, **kwargs):
         """
         Realisa uma cobrança no provedor externo.
 
         Deve retornar:
         {
             "sucesso": bool,
-            "transacao_id": str,
-            "mensagem": str,
+            "transaction_id": str,
+            "message": str,
         }
         """
         raise NotImplementedError
@@ -26,37 +26,37 @@ class SimulatedGateway(PaymentGateway):
     Gateway de teste para desenvolvimento.
     """
 
-    def cobrar(self, valor, referencia, **kwargs):
-        valor = Decimal(valor).quantize(Decimal("0.01"))
+    def cobrar(self, value, referencia, **kwargs):
+        value = Decimal(value).quantize(Decimal("0.01"))
 
         return {
             "sucesso": True,
-            "transacao_id": f"SIM-{referencia}",
-            "mensagem": f"Pagamento simulado aprovado ({valor})",
+            "transaction_id": f"SIM-{referencia}",
+            "message": f"Pagamento simulado aprovado ({value})",
         }
 
 
 def process_payment_gateway(payment, gateway: PaymentGateway):
     """
-    Processa pagamento usando gateway externo.
+    Processa payment usando gateway externo.
     """
 
-    resposta = gateway.cobrar(
-        valor=payment.valor,
-        referencia=payment.id_custom,
+    response = gateway.cobrar(
+        value=payment.value,
+        referencia=payment.custom_id,
     )
 
-    if resposta.get("sucesso"):
-        payment.referencia = resposta.get("transacao_id", "")
-        payment.confirmado = True
-        payment.save(update_fields=["referencia", "confirmado", "atualizado_em"])
+    if response.get("sucesso"):
+        payment.referencia = response.get("transaction_id", "")
+        payment.confirmed = True
+        payment.save(update_fields=["referencia", "confirmed", "updated_at"])
     else:
-        payment.confirmado = False
-        payment.save(update_fields=["confirmado", "atualizado_em"])
+        payment.confirmed = False
+        payment.save(update_fields=["confirmed", "updated_at"])
 
-    return resposta
+    return response
 
 
 PagamentoGateway = PaymentGateway
 GatewaySimulado = SimulatedGateway
-processar_pagamento_gateway = process_payment_gateway
+processar_payment_gateway = process_payment_gateway

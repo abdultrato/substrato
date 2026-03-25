@@ -3,34 +3,42 @@ from django.utils import timezone
 
 
 class Reconciliation(models.Model):
-    transacao = models.OneToOneField(
+    transaction = models.OneToOneField(
         "pagamentos.Transaction",
+        db_column="transacao_id",
         verbose_name="Transação",
         on_delete=models.CASCADE,
         related_name="reconciliacao",
         db_index=True,
     )
 
-    confirmado = models.BooleanField("Confirmado", default=False, db_index=True)
-    data_confirmacao = models.DateTimeField("Data de confirmação", blank=True, null=True)
+    confirmed = models.BooleanField("Confirmado", 
 
-    criado_em = models.DateTimeField("Criado em", auto_now_add=True, db_index=True)
+        db_column="confirmado",
+
+         default=False, db_index=True)
+    confirmation_date = models.DateTimeField("Data de confirmação", 
+        db_column="data_confirmacao",
+         blank=True, null=True)
+
+    created_at = models.DateTimeField("Criado em", db_column="criado_em", auto_now_add=True, db_index=True)
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "pagamentos_reconciliacao"
+        ordering = ["-created_at"]
         verbose_name = "Reconciliação"
         verbose_name_plural = "Reconciliações"
         indexes = [
-            models.Index(fields=["confirmado"]),
+            models.Index(fields=["confirmed"]),
         ]
 
     def confirm(self):
-        self.confirmado = True
-        self.data_confirmacao = timezone.now()
-        self.save(update_fields=["confirmado", "data_confirmacao"])
+        self.confirmed = True
+        self.confirmation_date = timezone.now()
+        self.save(update_fields=["confirmed", "confirmation_date"])
 
     def __str__(self) -> str:
-        return f"{self.transacao_id} - {'ok' if self.confirmado else 'pendente'}"
+        return f"{self.transaction_id} - {'ok' if self.confirmed else 'pendente'}"
 
 
 Reconciliation.confirmar = Reconciliation.confirm

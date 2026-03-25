@@ -6,20 +6,20 @@ class EmpresaFilter(SafeFilterSet):
     class Meta:
         model = Company
         fields = [
-            "inquilino",
-            "id_custom",
-            "nome",
+            "tenant",
+            "custom_id",
+            "name",
             "nuit",
-            "endereco_sede",
-            "contactos",
+            "headquarters_address",
+            "contacts",
             "email",
-            "telefone1",
-            "telefone2",
+            "phone1",
+            "phone2",
             "nib",
-            "ativo",
-            "deletado",
-            "criado_em",
-            "atualizado_em",
+            "active",
+            "deleted",
+            "created_at",
+            "updated_at",
         ]
 
 

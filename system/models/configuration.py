@@ -8,7 +8,7 @@ class SystemConfiguration(models.Model):
     """
 
     maintenance_mode = models.BooleanField(default=False)
-    atualizado_em = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Configuração do Sistema"

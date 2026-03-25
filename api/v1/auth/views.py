@@ -43,7 +43,7 @@ def _cookie_domain(request):
     env_domain = os.getenv("AUTH_COOKIE_DOMAIN") or getattr(settings, "SESSION_COOKIE_DOMAIN", None)
     if env_domain:
         return env_domain
-    # Em DEV, preferir a origem real do frontend (Origin) quando disponível.
+    # Em DEV, preferir a origin real do frontend (Origin) quando disponível.
     # Isso evita definir domain=localhost quando a requisição chega via proxy
     # (ex.: Next -> backend), mas o navegador está em outro host/IP.
     if getattr(settings, "DEBUG", False):
@@ -147,20 +147,20 @@ def _password_reset_cutoff():
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
-    # Aceita username/email para localizar o usuario.
+    # Aceita username/email para localizar o user.
     username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_blank=True)
-    telefone = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
     # Canal opcional; se omitido, tenta enviar para email + whatsapp se existirem.
-    canal = serializers.ChoiceField(
+    channel = serializers.ChoiceField(
         choices=[Notification.Channel.EMAIL, Notification.Channel.WHATSAPP],
         required=False,
         allow_null=True,
     )
 
     def validate(self, attrs):
-        if not (attrs.get("username") or attrs.get("email") or attrs.get("telefone")):
-            raise serializers.ValidationError("Informe pelo menos um: username, email ou telefone.")
+        if not (attrs.get("username") or attrs.get("email") or attrs.get("phone")):
+            raise serializers.ValidationError("Informe pelo menos um: username, email ou phone.")
         return attrs
 
 
@@ -180,7 +180,7 @@ class DetailSerializer(serializers.Serializer):
 
 class SessionTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
+        date = super().validate(attrs)
 
         session_id = uuid.uuid4().hex
 
@@ -191,13 +191,13 @@ class SessionTokenObtainPairSerializer(TokenObtainPairSerializer):
         refresh_ttl = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
         _allow_refresh(self.user.id, str(refresh.get("jti")), refresh_ttl)
 
-        data["refresh"] = str(refresh)
-        data["access"] = str(refresh.access_token)
-        data["session_id"] = session_id
+        date["refresh"] = str(refresh)
+        date["access"] = str(refresh.access_token)
+        date["session_id"] = session_id
 
         _start_session(self.user.id, session_id)
 
-        return data
+        return date
 
 
 class SessionTokenRefreshSerializer(TokenRefreshSerializer):
@@ -244,10 +244,10 @@ class UserMeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField(required=False, allow_null=True)
     email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
-    telefone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
-    foto_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    photo_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     full_name = serializers.CharField()
     groups = serializers.ListField(child=serializers.CharField(), required=False)
 
@@ -255,7 +255,7 @@ class UserMeSerializer(serializers.Serializer):
 class UserPatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "email", "telefone", "foto")
+        fields = ("first_name", "last_name", "email", "phone", "photo")
 
     def validate_email(self, value):
         # Permitir manter o mesmo email; garantir unicidade case-insensitive.
@@ -356,7 +356,7 @@ class UserView(APIView):
                 "id": user.id,
                 "username": getattr(user, "username", None),
                 "email": getattr(user, "email", None),
-                "telefone": getattr(user, "telefone", None),
+                "phone": getattr(user, "phone", None),
                 "first_name": getattr(user, "first_name", ""),
                 "last_name": getattr(user, "last_name", ""),
                 # IMPORTANT:
@@ -364,7 +364,7 @@ class UserView(APIView):
                 # - via proxy do Next.js (localhost:3000 -> backend:8000), onde build_absolute_uri
                 #   pode gerar "http://backend:8000/..." (host interno, inacessivel no browser)
                 # - quanto diretamente no backend (localhost:8000) e via nginx.
-                "foto_url": (user.foto.url if getattr(user, "foto", None) else None),
+                "photo_url": (user.photo.url if getattr(user, "photo", None) else None),
                 "full_name": full_name or getattr(user, "username", None),
                 "groups": groups,
             }
@@ -386,15 +386,15 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         ser = PasswordResetRequestSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        data = ser.validated_data
+        payload = ser.validated_data
 
         user = None
-        if data.get("email"):
-            user = User.objects.filter(email__iexact=data["email"]).first()
-        elif data.get("username"):
-            user = User.objects.filter(username__iexact=data["username"]).first()
-        elif data.get("telefone"):
-            user = User.objects.filter(telefone=str(data["telefone"])).first()
+        if payload.get("email"):
+            user = User.objects.filter(email__iexact=payload["email"]).first()
+        elif payload.get("username"):
+            user = User.objects.filter(username__iexact=payload["username"]).first()
+        elif payload.get("phone"):
+            user = User.objects.filter(phone=str(payload["phone"])).first()
 
         # Não revelar se existe ou não.
         if not user:
@@ -405,35 +405,35 @@ class PasswordResetRequestView(APIView):
 
         cutoff = _password_reset_cutoff()
         token_obj = (
-            PasswordResetToken.objects.filter(user=user, usado=False, criado_em__gte=cutoff)
-            .order_by("-criado_em")
+            PasswordResetToken.objects.filter(user=user, used=False, created_at__gte=cutoff)
+            .order_by("-created_at")
             .first()
         )
         if not token_obj:
             token_obj = PasswordResetToken.objects.create(user=user)
 
         ttl = _password_reset_ttl_minutes()
-        mensagem = f"Reposição de palavra-passe\nCódigo: {token_obj.token}\nValidade: {ttl} minutos."
+        message = f"Reposição de palavra-passe\nCódigo: {token_obj.token}\nValidade: {ttl} minutos."
 
-        canal = data.get("canal")
+        channel = payload.get("channel")
         canais = []
-        if canal:
-            canais = [canal]
+        if channel:
+            canais = [channel]
         else:
             if getattr(user, "email", None):
                 canais.append(Notification.Channel.EMAIL)
-            if getattr(user, "telefone", None):
+            if getattr(user, "phone", None):
                 canais.append(Notification.Channel.WHATSAPP)
 
         service = NotificationService()
         for c in canais:
-            destino = user.email if c == Notification.Channel.EMAIL else str(user.telefone)
+            destino = user.email if c == Notification.Channel.EMAIL else str(user.phone)
             if not destino:
                 continue
-            # referência externa evita spam (idempotência por token+canal).
+            # referência externa evita spam (idempotência por token+channel).
             service.send(
                 destination=destino,
-                message=mensagem,
+                message=message,
                 channel=c,
                 subject="Reposição de palavra-passe",
                 event_type=getattr(Notification.EventType, "PASSWORD_RESET", Notification.EventType.GENERICA),
@@ -464,12 +464,12 @@ class PasswordResetConfirmView(APIView):
         new_password = ser.validated_data["new_password"]
 
         token_obj = (
-            PasswordResetToken.objects.select_related("user").filter(token=token_str).order_by("-criado_em").first()
+            PasswordResetToken.objects.select_related("user").filter(token=token_str).order_by("-created_at").first()
         )
-        if not token_obj or token_obj.usado:
-            return Response({"detail": "Token inválido ou já usado."}, status=status.HTTP_400_BAD_REQUEST)
+        if not token_obj or token_obj.used:
+            return Response({"detail": "Token inválido ou já used."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if token_obj.criado_em < _password_reset_cutoff():
+        if token_obj.created_at < _password_reset_cutoff():
             return Response({"detail": "Token expirado."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = token_obj.user
@@ -485,8 +485,8 @@ class PasswordResetConfirmView(APIView):
             user.set_password(new_password)
             user.save(update_fields=["password"])
 
-            # Marca o token como usado e invalida tokens antigos do mesmo usuário.
-            PasswordResetToken.objects.filter(user=user, usado=False).update(usado=True)
+            # Marca o token como used e invalida tokens antigos do mesmo usuário.
+            PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
 
             # Revoga sessões JWT ativas (idle cache) após reset de senha.
             cache.delete(_session_cache_key(user.id))

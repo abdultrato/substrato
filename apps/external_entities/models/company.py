@@ -9,7 +9,7 @@ class Company(CoreModel):
     parceiros subcontratados, etc.).
     """
 
-    prefixo = "EMP"
+    prefix = "EMP"
 
     nuit = models.CharField(
         verbose_name="NUIT",
@@ -19,19 +19,25 @@ class Company(CoreModel):
         db_index=True,
     )
 
-    endereco_sede = models.CharField(
+    headquarters_address = models.CharField(
+
+        db_column="endereco_sede",
+
         verbose_name="Local / Sede",
         max_length=255,
         blank=True,
         null=True,
     )
 
-    contactos = models.CharField(
+    contacts = models.CharField(
+
+        db_column="contactos",
+
         verbose_name="Contactos",
         max_length=255,
         blank=True,
         null=True,
-        help_text="Pessoa, departamento ou referência de contacto.",
+        help_text="Pessoa, department ou referência de contact.",
     )
 
     email = models.EmailField(
@@ -40,14 +46,20 @@ class Company(CoreModel):
         null=True,
     )
 
-    telefone1 = models.CharField(
+    phone1 = models.CharField(
+
+        db_column="telefone1",
+
         verbose_name="Telefone",
         max_length=30,
         blank=True,
         null=True,
     )
 
-    telefone2 = models.CharField(
+    phone2 = models.CharField(
+
+        db_column="telefone2",
+
         verbose_name="Telefone (alternativo)",
         max_length=30,
         blank=True,
@@ -61,28 +73,35 @@ class Company(CoreModel):
         null=True,
     )
 
-    ativo = models.BooleanField(
+    active = models.BooleanField(
+
+        db_column="ativo",
+
         verbose_name="Ativo",
         default=True,
         db_index=True,
     )
 
-    observacoes = models.TextField(
+    notes = models.TextField(
+
+        db_column="observacoes",
+
         verbose_name="Observações",
         blank=True,
         null=True,
     )
 
     class Meta:
+        db_table = "entidades_empresa"
         verbose_name = "Empresa"
         verbose_name_plural = "Empresas"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino"]),
-            models.Index(fields=["nome"]),
+            models.Index(fields=["tenant"]),
+            models.Index(fields=["name"]),
             models.Index(fields=["nuit"]),
-            models.Index(fields=["ativo"]),
+            models.Index(fields=["active"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"Empresa {self.pk}"
+        return self.name or f"Empresa {self.pk}"

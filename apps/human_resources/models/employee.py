@@ -17,14 +17,17 @@ class Employee(CoreModel):
     Observação: o vínculo com usuário (login) é feito via Perfil Profissional.
     """
 
-    prefixo = "FUN"
+    prefix = "FUN"
 
     class Estado(models.TextChoices):
         ATIVO = "ATIVO", "Ativo"
         INATIVO = "INATIVO", "Inativo"
 
-    cargo = models.ForeignKey(
+    role = models.ForeignKey(
+
         "recursos_humanos.JobTitle",
+
+        db_column="cargo_id",
         verbose_name="Cargo",
         on_delete=models.PROTECT,
         related_name="funcionarios",
@@ -33,7 +36,10 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    profissao = models.CharField(
+    profession = models.CharField(
+
+        db_column="profissao",
+
         verbose_name="Profissão",
         max_length=120,
         blank=True,
@@ -56,7 +62,10 @@ class Employee(CoreModel):
         default="",
     )
 
-    numero_documento = models.CharField(
+    document_number = models.CharField(
+
+        db_column="numero_documento",
+
         verbose_name="Número do documento",
         max_length=60,
         blank=True,
@@ -65,10 +74,17 @@ class Employee(CoreModel):
     )
 
     email = models.EmailField(verbose_name="E-mail", blank=True, default="")
-    telefone = models.CharField(verbose_name="Telefone", max_length=30, blank=True, default="")
+    phone = models.CharField(
+        db_column="telefone",
+        verbose_name="Telefone", max_length=30, blank=True, default="")
 
-    data_admissao = models.DateField(verbose_name="Data de admissão", default=timezone.now)
-    estado = models.CharField(
+    admission_date = models.DateField(
+
+        db_column="data_admissao",
+
+        verbose_name="Data de admissão", default=timezone.now)
+    status = models.CharField(
+        db_column="estado",
         verbose_name="Estado",
         max_length=10,
         choices=Estado.choices,
@@ -76,13 +92,19 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    salario_nominal = MoneyField(verbose_name="Salário nominal", default=Decimal("0.00"))
-    aumento_salarial = MoneyField(
+    nominal_salary = MoneyField(
+
+        db_column="salario_nominal",
+
+        verbose_name="Salário nominal", default=Decimal("0.00"))
+    salary_increase = MoneyField(
+        db_column="aumento_salarial",
         verbose_name="Aumento salarial",
         default=Decimal("0.00"),
         help_text="Valor adicional por promoção/aumento (somado ao salário nominal).",
     )
-    horas_base_mes = models.PositiveSmallIntegerField(
+    base_month_hours = models.PositiveSmallIntegerField(
+        db_column="horas_base_mes",
         verbose_name="Horas base (mês)",
         default=176,
         help_text="Horas contratuais base por mês (ex.: 176).",
@@ -92,19 +114,19 @@ class Employee(CoreModel):
         db_table = "recursos_humanos_funcionario"
         verbose_name = "Funcionário"
         verbose_name_plural = "Funcionários"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "estado"]),
-            models.Index(fields=["inquilino", "cargo"]),
-            models.Index(fields=["inquilino", "nuit"]),
-            models.Index(fields=["inquilino", "numero_documento"]),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["tenant", "role"]),
+            models.Index(fields=["tenant", "nuit"]),
+            models.Index(fields=["tenant", "document_number"]),
         ]
 
     @property
     def salario_atual(self) -> Decimal:
         """Salário nominal + aumento salarial."""
-        base = self.salario_nominal or Decimal("0.00")
-        aumento = self.aumento_salarial or Decimal("0.00")
+        base = self.nominal_salary or Decimal("0.00")
+        aumento = self.salary_increase or Decimal("0.00")
         try:
             return (Decimal(base) + Decimal(aumento)).quantize(Decimal("0.01"))
         except Exception:
@@ -113,12 +135,12 @@ class Employee(CoreModel):
     def clean(self):
         super().clean()
 
-        if self.salario_nominal is not None and self.salario_nominal < Decimal("0.00"):
-            raise ValidationError({"salario_nominal": "Salário nominal inválido."})
+        if self.nominal_salary is not None and self.nominal_salary < Decimal("0.00"):
+            raise ValidationError({"nominal_salary": "Salário nominal inválido."})
 
-        if self.aumento_salarial is not None and self.aumento_salarial < Decimal("0.00"):
-            raise ValidationError({"aumento_salarial": "Aumento salarial inválido."})
+        if self.salary_increase is not None and self.salary_increase < Decimal("0.00"):
+            raise ValidationError({"salary_increase": "Aumento salarial inválido."})
 
-        if self.cargo_id and self.inquilino_id and self.cargo.inquilino_id != self.inquilino_id:
-            raise ValidationError({"cargo": "Cargo e funcionário devem pertencer ao mesmo inquilino."})
+        if self.role_id and self.tenant_id and self.role.tenant_id != self.tenant_id:
+            raise ValidationError({"role": "Cargo e funcionário devem pertencer ao mesmo tenant."})
 

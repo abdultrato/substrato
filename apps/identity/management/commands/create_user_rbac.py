@@ -27,11 +27,11 @@ def _ensure_tenant() -> Tenant:
 
     # Mirror bootstrap defaults: smooth dev bootstrap.
     return Tenant.objects.create(
-        nome="Tenant Local",
-        identificador="local",
-        dominio="localhost",
-        ativo=True,
-        status_comercial=Tenant.StatusComercial.TRIAL,
+        name="Tenant Local",
+        identifier="local",
+        domain="localhost",
+        active=True,
+        commercial_status=Tenant.StatusComercial.TRIAL,
     )
 
 
@@ -53,7 +53,7 @@ def _resolve_group_name(group_input: str) -> str:
     allowed = ", ".join(sorted(RBAC_GROUPS.keys()))
     raise CommandError(
         f"Grupo inválido: {raw!r}. Use uma das chaves: {allowed} "
-        f"(ou o nome exato do grupo, ex.: {RBAC_GROUPS['RECEPCAO']!r})."
+        f"(ou o name exato do grupo, ex.: {RBAC_GROUPS['RECEPCAO']!r})."
     )
 
 
@@ -69,15 +69,15 @@ class Command(BaseCommand):
 
         parser.add_argument("--username", help="Username (login).")
         parser.add_argument("--password", help="Senha (use com cuidado; fica no histórico do terminal).")
-        parser.add_argument("--nome", help="Nome completo (campo corporativo).")
-        parser.add_argument("--first-name", dest="first_name", help="Nome (primeiro nome).")
-        parser.add_argument("--last-name", dest="last_name", help="Apelido (último nome).")
+        parser.add_argument("--name", help="Nome completo (campo corporativo).")
+        parser.add_argument("--first-name", dest="first_name", help="Nome (primeiro name).")
+        parser.add_argument("--last-name", dest="last_name", help="Apelido (último name).")
         parser.add_argument("--email", help="E-mail (obrigatório; se omitido usa <username>@local).")
-        parser.add_argument("--telefone", help="Telefone (opcional).")
+        parser.add_argument("--phone", help="Telefone (opcional).")
 
         parser.add_argument(
             "--group",
-            help="Grupo RBAC (chave: ADMIN/RECEPCAO/... ou o nome do grupo).",
+            help="Grupo RBAC (key: ADMIN/RECEPCAO/... ou o name do grupo).",
         )
 
         parser.add_argument(
@@ -110,26 +110,26 @@ class Command(BaseCommand):
         if not password:
             raise CommandError("--password é obrigatório.")
 
-        nome = (options.get("nome") or "").strip()
-        if not nome:
-            # `nome` vem do NomeMixin (obrigatório no model).
-            raise CommandError("--nome é obrigatório (nome completo).")
+        name = (options.get("name") or "").strip()
+        if not name:
+            # `name` vem do NomeMixin (obrigatório no model).
+            raise CommandError("--name é obrigatório (name completo).")
 
         email = (options.get("email") or "").strip() or f"{username}@local"
         first_name = (options.get("first_name") or "").strip()
         last_name = (options.get("last_name") or "").strip()
-        telefone = (options.get("telefone") or "").strip() or None
+        phone = (options.get("phone") or "").strip() or None
 
-        # Conveniência: se não vier first/last, tenta derivar do nome completo.
-        if not first_name and not last_name and nome:
-            parts = [p for p in nome.split(" ") if p.strip()]
+        # Conveniência: se não vier first/last, tenta derivar do name completo.
+        if not first_name and not last_name and name:
+            parts = [p for p in name.split(" ") if p.strip()]
             if parts:
                 first_name = parts[0]
                 last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
 
         tenant = _ensure_tenant()
 
-        # Garantir que o grupo existe (com o nome exato definido em RBAC).
+        # Garantir que o grupo existe (com o name exato definido em RBAC).
         group, _ = Group.objects.get_or_create(name=group_name)
 
         User = get_user_model()
@@ -148,14 +148,14 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 password=password,
-                nome=nome,
+                name=name,
                 first_name=first_name or "",
                 last_name=last_name or "",
-                telefone=telefone,
+                phone=phone,
                 is_active=True,
                 is_staff=desired_staff,
                 is_superuser=desired_superuser,
-                inquilino=tenant,
+                tenant=tenant,
             )
             created = True
         else:
@@ -165,22 +165,22 @@ class Command(BaseCommand):
             if email and getattr(user, "email", "") != email:
                 user.email = email
                 fields_to_update.append("email")
-            if nome and getattr(user, "nome", "") != nome:
-                user.nome = nome
-                fields_to_update.append("nome")
+            if name and getattr(user, "name", "") != name:
+                user.name = name
+                fields_to_update.append("name")
             if first_name and getattr(user, "first_name", "") != first_name:
                 user.first_name = first_name
                 fields_to_update.append("first_name")
             if last_name and getattr(user, "last_name", "") != last_name:
                 user.last_name = last_name
                 fields_to_update.append("last_name")
-            if telefone != getattr(user, "telefone", None):
-                user.telefone = telefone
-                fields_to_update.append("telefone")
+            if phone != getattr(user, "phone", None):
+                user.phone = phone
+                fields_to_update.append("phone")
 
-            if not getattr(user, "inquilino_id", None):
-                user.inquilino = tenant
-                fields_to_update.append("inquilino")
+            if not getattr(user, "tenant_id", None):
+                user.tenant = tenant
+                fields_to_update.append("tenant")
 
             if getattr(user, "is_staff", False) != desired_staff:
                 user.is_staff = desired_staff
@@ -216,7 +216,7 @@ class Command(BaseCommand):
 
         action = "criado" if created else "atualizado"
         self.stdout.write(f"Usuário {action}: {user.username}")
-        self.stdout.write(f"- Nome: {getattr(user, 'nome', '')}")
+        self.stdout.write(f"- Nome: {getattr(user, 'name', '')}")
         self.stdout.write(f"- E-mail: {getattr(user, 'email', '')}")
         self.stdout.write(f"- Grupo: {group.name}")
         self.stdout.write(f"- Staff (/admin): {'SIM' if getattr(user, 'is_staff', False) else 'NÃO'}")

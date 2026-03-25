@@ -13,7 +13,7 @@ from typing import Any
 
 from .backup import BackupDatabaseView
 from .limitacao import AnonBurstRateThrottle, BurstRateThrottle, SustainedRateThrottle
-from .maintenance import ativar, desativar, esta_ativo
+from .maintenance import ativar, desativar, esta_active
 from .system import SystemInfoView
 from .tasks import BackgroundTasksView
 
@@ -49,7 +49,7 @@ __all__ = [
     "api",
     "ativar",
     "desativar",
-    "esta_ativo",
+    "esta_active",
     "middleware",
     "models",
     "service",

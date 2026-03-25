@@ -14,9 +14,19 @@ IntegracaoMensagem = IntegrationMessage
 IntegracaoOrdem = IntegrationOrder
 IntegracaoOrdemItem = IntegrationOrderItem
 IntegracaoRoteamento = IntegrationRouting
+mapeamento = mapping = __import__(__name__, fromlist=["mapping"]).mapping
 mensagem = message
+ordem = order = __import__(__name__, fromlist=["order"]).order
+roteamento = routing = __import__(__name__, fromlist=["routing"]).routing
+credencial = credential = __import__(__name__, fromlist=["credential"]).credential
+equipamento = equipment = __import__(__name__, fromlist=["equipment"]).equipment
+message = message
 
 __all__ = [
+    "credencial",
+    "credential",
+    "equipamento",
+    "equipment",
     "IntegracaoCredencial",
     "IntegracaoDocumento",
     "IntegracaoEquipamento",
@@ -33,6 +43,12 @@ __all__ = [
     "IntegrationOrder",
     "IntegrationOrderItem",
     "IntegrationRouting",
-    "mensagem",
+    "mapeamento",
+    "mapping",
     "message",
+    "mensagem",
+    "ordem",
+    "order",
+    "roteamento",
+    "routing",
 ]

@@ -36,18 +36,18 @@ from ..serializers import (
 
 
 class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = Employee.objects.select_related("cargo").all()
+    queryset = Employee.objects.select_related("role").all()
     serializer_class = DoctorSerializer
     filterset_class = DoctorFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["nome", "profissao", "cargo__nome"]
-    ordering_fields = ["nome", "profissao", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["name", "profession", "role__name"]
+    ordering_fields = ["name", "profession", "created_at"]
+    ordering = ["name"]
 
     def get_queryset(self):
         qs = super().get_queryset()
         # Doctors are employees with a role flagged as doctor and active.
-        return qs.filter(cargo__eh_medico=True, estado="ATIVO").distinct()
+        return qs.filter(role__is_doctor=True, status="ATIVO").distinct()
 
 
 class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -58,93 +58,93 @@ class ConsultationSpecialtyViewSet(TenantScopedModelViewSet):
     queryset = ConsultationSpecialty.objects.all()
     serializer_class = ConsultationSpecialtySerializer
     filterset_class = ConsultationSpecialtyFilter
-    search_fields = ["id_custom", "nome"]
-    ordering_fields = ["nome", "preco_base", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name"]
+    ordering_fields = ["name", "base_price", "created_at"]
+    ordering = ["name"]
 
 
 class HolidayViewSet(TenantScopedModelViewSet):
     queryset = Holiday.objects.all()
     serializer_class = HolidaySerializer
     filterset_class = HolidayFilter
-    search_fields = ["id_custom", "descricao"]
-    ordering_fields = ["data", "ativo", "criado_em"]
-    ordering = ["-data", "-criado_em"]
+    search_fields = ["custom_id", "description"]
+    ordering_fields = ["date", "active", "created_at"]
+    ordering = ["-date", "-created_at"]
 
 
 class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MedicalConsultation.objects.select_related("paciente", "medico", "especialidade").all()
+    queryset = MedicalConsultation.objects.select_related("patient", "doctor", "specialty").all()
     serializer_class = MedicalConsultationSerializer
     filterset_class = MedicalConsultationFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "tipo", "paciente__nome", "medico__nome"]
-    ordering_fields = ["agendada_para", "criado_em", "tipo", "estado", "preco"]
-    ordering = ["-agendada_para", "-criado_em"]
+    search_fields = ["custom_id", "type", "patient__name", "doctor__name"]
+    ordering_fields = ["scheduled_for", "created_at", "type", "status", "price"]
+    ordering = ["-scheduled_for", "-created_at"]
 
-    @action(detail=False, methods=["get"], url_path="preco", url_name="preco")
+    @action(detail=False, methods=["get"], url_path="price", url_name="price")
     def price_preview(self, request):
         """
         Price preview for a specialty at a given date/time.
 
         Query params:
-        - especialidade: id (required)
-        - agendada_para: ISO datetime (optional; default: now)
-        - feriado_manual: bool (optional; default: False)
+        - specialty: id (required)
+        - scheduled_for: ISO datetime (optional; default: now)
+        - manual_holiday: bool (optional; default: False)
         """
-        tenant = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
         if tenant is None:
             raise ValidationError("Tenant não identificado.")
 
-        specialty_id = (request.query_params.get("especialidade") or "").strip()
+        specialty_id = (request.query_params.get("specialty") or "").strip()
         if not specialty_id:
-            raise ValidationError({"especialidade": "Informe o id da especialidade."})
+            raise ValidationError({"specialty": "Informe o id da specialty."})
 
-        specialty = ConsultationSpecialty.objects.filter(inquilino=tenant, pk=specialty_id).first()
+        specialty = ConsultationSpecialty.objects.filter(tenant=tenant, pk=specialty_id).first()
         if not specialty:
-            raise ValidationError({"especialidade": "Especialidade não encontrada."})
+            raise ValidationError({"specialty": "Especialidade não encontrada."})
 
-        raw_dt = (request.query_params.get("agendada_para") or "").strip()
+        raw_dt = (request.query_params.get("scheduled_for") or "").strip()
         dt = parse_datetime(raw_dt) if raw_dt else None
         if raw_dt and not dt:
             # Accept YYYY-MM-DD as a convenience fallback.
             d = parse_date(raw_dt)
             if not d:
-                raise ValidationError({"agendada_para": "Datetime inválido (use ISO 8601)."})
+                raise ValidationError({"scheduled_for": "Datetime inválido (use ISO 8601)."})
             dt = timezone.make_aware(datetime.combine(d, time.min))
 
         if not dt:
             dt = timezone.now()
 
-        manual_holiday = (request.query_params.get("feriado_manual") or "").lower() in {"1", "true", "t", "sim"}
+        manual_holiday = (request.query_params.get("manual_holiday") or "").lower() in {"1", "true", "t", "sim"}
 
         consultation = MedicalConsultation(
-            inquilino=tenant,
-            especialidade=specialty,
-            agendada_para=dt,
-            tipo="tmp",
-            preco=Decimal("0.00"),
-            feriado_manual=manual_holiday,
+            tenant=tenant,
+            specialty=specialty,
+            scheduled_for=dt,
+            type="tmp",
+            price=Decimal("0.00"),
+            manual_holiday=manual_holiday,
         )
 
         # Reuse the model pricing rules (holiday + percentage uplift).
-        consultation._sincronizar_especialidade_e_preco(None)
+        consultation._sincronizar_specialty_e_price(None)
 
         try:
-            currency = getattr(getattr(tenant, "configuracao", None), "moeda", "MZN")
+            currency = getattr(getattr(tenant, "configuracao", None), "currency", "MZN")
         except Exception:
             currency = "MZN"
 
         return Response(
             {
-                "especialidade": specialty.id,
-                "especialidade_nome": specialty.nome,
-                "preco_base": str(specialty.preco_base or Decimal("0.00")),
-                "feriado_manual": bool(manual_holiday),
+                "specialty": specialty.id,
+                "specialty_name": specialty.name,
+                "base_price": str(specialty.base_price or Decimal("0.00")),
+                "manual_holiday": bool(manual_holiday),
                 "eh_feriado": bool(consultation._is_feriado()),
-                "tipo_horario": consultation.tipo_horario,
-                "multiplicador_preco": str(consultation.multiplicador_preco or Decimal("1.00")),
-                "preco_final": str(consultation.preco or Decimal("0.00")),
-                "moeda": currency,
+                "schedule_type": consultation.schedule_type,
+                "price_multiplier": str(consultation.price_multiplier or Decimal("1.00")),
+                "price_final": str(consultation.price or Decimal("0.00")),
+                "currency": currency,
             },
             status=status.HTTP_200_OK,
         )
@@ -155,37 +155,37 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         List consultations by doctor and time range.
 
         Query params:
-        - medico: user id (optional)
+        - doctor: user id (optional)
         - start: ISO datetime (optional)
         - end: ISO datetime (optional)
-        - estado: MARCADA|CONCLUIDA|CANCELADA (optional)
+        - status: MARCADA|CONCLUIDA|CANCELADA (optional)
         """
 
         qs = self.get_queryset()
 
-        doctor_id = (request.query_params.get("medico") or "").strip()
+        doctor_id = (request.query_params.get("doctor") or "").strip()
         if doctor_id:
-            qs = qs.filter(medico_id=doctor_id)
+            qs = qs.filter(doctor_id=doctor_id)
 
-        estado = (request.query_params.get("estado") or "").strip()
-        if estado:
-            qs = qs.filter(estado=estado)
+        status = (request.query_params.get("status") or "").strip()
+        if status:
+            qs = qs.filter(status=status)
 
         start = (request.query_params.get("start") or "").strip()
         if start:
             dt = parse_datetime(start)
             if not dt:
                 raise ValidationError({"start": "Datetime inválido (use ISO 8601)."})
-            qs = qs.filter(agendada_para__gte=dt)
+            qs = qs.filter(scheduled_for__gte=dt)
 
         end = (request.query_params.get("end") or "").strip()
         if end:
             dt = parse_datetime(end)
             if not dt:
                 raise ValidationError({"end": "Datetime inválido (use ISO 8601)."})
-            qs = qs.filter(agendada_para__lte=dt)
+            qs = qs.filter(scheduled_for__lte=dt)
 
-        qs = qs.order_by("agendada_para", "id")
+        qs = qs.order_by("scheduled_for", "id")
 
         page = self.paginate_queryset(qs)
         if page is not None:
@@ -196,7 +196,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         return Response(ser.data, status=status.HTTP_200_OK)
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="criar_fatura", url_name="criar-fatura")
+    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
     def create_invoice(self, request, pk=None):
         consultation = self.get_object()
 
@@ -204,34 +204,34 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         payload.is_valid(raise_exception=True)
         should_issue = payload.validated_data.get("emitir", True)
 
-        if hasattr(consultation, "fatura") and getattr(consultation, "fatura", None):
-            invoice = consultation.fatura
+        if hasattr(consultation, "invoice") and getattr(consultation, "invoice", None):
+            invoice = consultation.invoice
         else:
             invoice = Invoice(
-                inquilino=consultation.inquilino,
-                origem=Invoice.Origem.CONSULTA,
-                consulta=consultation,
-                paciente=consultation.paciente,
+                tenant=consultation.tenant,
+                origin=Invoice.Origem.CONSULTA,
+                consultation=consultation,
+                patient=consultation.patient,
             )
             invoice.full_clean()
             invoice.save()
 
         # Keep the invoice draft aligned with the consultation pricing.
-        if invoice.estado != Invoice.Estado.RASCUNHO:
-            raise ValidationError("A fatura vinculada já foi emitida/paga/cancelada.")
+        if invoice.status != Invoice.Estado.RASCUNHO:
+            raise ValidationError("A invoice vinculada já foi emitida/paga/cancelada.")
 
         # Replace draft items from the current consultation state.
-        invoice.sincronizar_itens_da_origem()
+        invoice.sincronizar_itens_da_origin()
 
         if should_issue:
             invoice.emitir()
 
         return Response(
             {
-                "consulta_id": consultation.id,
-                "fatura_id": invoice.id,
-                "fatura_codigo": invoice.id_custom,
-                "fatura_estado": invoice.estado,
+                "consultation_id": consultation.id,
+                "invoice_id": invoice.id,
+                "invoice_code": invoice.custom_id,
+                "invoice_status": invoice.status,
                 "total": str(invoice.total or Decimal("0.00")),
             },
             status=status.HTTP_200_OK,
@@ -242,14 +242,14 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def reschedule(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.estado in {MedicalConsultation.Estado.CANCELADA, MedicalConsultation.Estado.CONCLUIDA}:
+        if consultation.status in {MedicalConsultation.Estado.CANCELADA, MedicalConsultation.Estado.CONCLUIDA}:
             raise ValidationError("Consulta não pode ser remarcada (já finalizada).")
 
         payload = RescheduleConsultationSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
 
-        consultation.agendada_para = payload.validated_data["agendada_para"]
-        consultation.save(update_fields=["agendada_para"])
+        consultation.scheduled_for = payload.validated_data["scheduled_for"]
+        consultation.save(update_fields=["scheduled_for"])
 
         return Response(
             MedicalConsultationSerializer(consultation).data,
@@ -261,16 +261,16 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def cancel(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.estado == MedicalConsultation.Estado.CONCLUIDA:
+        if consultation.status == MedicalConsultation.Estado.CONCLUIDA:
             raise ValidationError("Consulta concluída não pode ser cancelada.")
 
         # Keep accepting a payload for future extensions (reason, actor, etc).
         payload = CancelConsultationSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
 
-        consultation.estado = MedicalConsultation.Estado.CANCELADA
-        consultation.cancelada_em = timezone.now()
-        consultation.save(update_fields=["estado", "cancelada_em"])
+        consultation.status = MedicalConsultation.Estado.CANCELADA
+        consultation.canceled_at = timezone.now()
+        consultation.save(update_fields=["status", "canceled_at"])
 
         return Response(
             MedicalConsultationSerializer(consultation).data,
@@ -282,12 +282,12 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     def complete(self, request, pk=None):
         consultation = self.get_object()
 
-        if consultation.estado == MedicalConsultation.Estado.CANCELADA:
+        if consultation.status == MedicalConsultation.Estado.CANCELADA:
             raise ValidationError("Consulta cancelada não pode ser concluída.")
 
-        consultation.estado = MedicalConsultation.Estado.CONCLUIDA
-        consultation.concluida_em = timezone.now()
-        consultation.save(update_fields=["estado", "concluida_em"])
+        consultation.status = MedicalConsultation.Estado.CONCLUIDA
+        consultation.completed_at = timezone.now()
+        consultation.save(update_fields=["status", "completed_at"])
 
         return Response(
             MedicalConsultationSerializer(consultation).data,
@@ -296,9 +296,9 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
 
 VIEWSET_MAP = {
-    "consulta": MedicalConsultationViewSet,
+    "consultation": MedicalConsultationViewSet,
     "medicos": DoctorsViewSet,
-    "especialidade": ConsultationSpecialtyViewSet,
+    "specialty": ConsultationSpecialtyViewSet,
     "feriado": HolidayViewSet,
 }
 

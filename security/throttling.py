@@ -12,8 +12,8 @@ class TenantScopedThrottleMixin:
     def get_cache_key(self, request, view):
         ident = request.user.pk if request.user and request.user.is_authenticated else self.get_ident(request)
 
-        inquilino = getattr(request, "inquilino", None)
-        tenant_id = getattr(inquilino, "id", "global")
+        tenant = getattr(request, "tenant", None)
+        tenant_id = getattr(tenant, "id", "global")
 
         return f"throttle:{tenant_id}:{ident}:{self.scope}"
 

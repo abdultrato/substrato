@@ -21,54 +21,70 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
     • rastreabilidade laboratorial
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "EVT"
+    fonte_tenant = "patient"
+    prefix = "EVT"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         Patient,
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         related_name="eventos_clinicos",
     )
 
-    requisicao = models.ForeignKey(
+    request = models.ForeignKey(
+
         LabRequest,
+
+        db_column="requisicao_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="eventos_clinicos",
     )
 
-    resultado = models.ForeignKey(
+    result = models.ForeignKey(
+
         ResultItem,
+
+        db_column="resultado_id",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="eventos_clinicos",
     )
 
-    tipo_evento = models.CharField(
+    event_type = models.CharField(
+
+        db_column="tipo_evento",
+
         max_length=50,
         choices=TipoEventoClinico.choices,
         db_index=True,
     )
 
-    descricao = models.TextField()
+    description = models.TextField(
+
+        db_column="descricao",
+
+        )
 
     class Meta:
         db_table = "clinico_eventoclinico"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
 
         indexes = [
-            models.Index(fields=["paciente"]),
-            models.Index(fields=["tipo_evento"]),
-            models.Index(fields=["criado_em"]),
-            models.Index(fields=["requisicao"]),
-            models.Index(fields=["resultado"]),
+            models.Index(fields=["patient"]),
+            models.Index(fields=["event_type"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["request"]),
+            models.Index(fields=["result"]),
         ]
 
-        constraints = [  # evento deve ter pelo menos requisicao ou resultado
+        constraints = [  # evento deve ter pelo menos request ou result
             models.CheckConstraint(
-                check=(Q(requisicao__isnull=False) | Q(resultado__isnull=False)),
+                check=(Q(request__isnull=False) | Q(result__isnull=False)),
                 name="evento_clinico_deve_ter_contexto",
             )
         ]
@@ -78,16 +94,16 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
     # =====================================================
 
     def clean(self):
-        # resultado deve pertencer à requisição
-        if self.resultado and self.requisicao and self.resultado.requisicao_id != self.requisicao_id:
+        # result deve pertencer à requisição
+        if self.result and self.request and self.result.request_id != self.request_id:
             raise ValidationError("Resultado não pertence à requisição informada.")
 
-        # paciente deve ser consistente
-        if self.requisicao and self.requisicao.paciente_id != self.paciente_id:
+        # patient deve ser consistente
+        if self.request and self.request.patient_id != self.patient_id:
             raise ValidationError("Paciente inconsistente com a requisição.")
 
-        if self.resultado and self.resultado.requisicao.paciente_id != self.paciente_id:
-            raise ValidationError("Paciente inconsistente com o resultado.")
+        if self.result and self.result.request.patient_id != self.patient_id:
+            raise ValidationError("Paciente inconsistente com o result.")
 
     # =====================================================
     # EVENTO É IMUTÁVEL
@@ -105,4 +121,4 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
     # =====================================================
 
     def __str__(self):
-        return f"{self.tipo_evento} - {self.paciente.nome}"
+        return f"{self.event_type} - {self.patient.name}"

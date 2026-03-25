@@ -13,8 +13,8 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
     Planeamento e execução de manutenção de equipamentos.
     """
 
-    fonte_inquilino = "equipamento"
-    prefixo = "MNT"
+    fonte_tenant = "equipment"
+    prefix = "MNT"
 
     class Type(models.TextChoices):
         DIARIA = "DIARIA", "Diária"
@@ -25,39 +25,57 @@ class Maintenance(PropagarInquilinoMixin, NoNameCoreModel):
 
     Tipo = Type
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "equipamentos.Equipment",
+
+        db_column="equipamento_id",
         on_delete=models.CASCADE,
         related_name="manutencoes",
         db_index=True,
     )
 
-    tipo = models.CharField(max_length=20, choices=Type.choices, default=Type.MENSAL, db_index=True)
-    data_programada = models.DateField(default=timezone.localdate, db_index=True)
-    data_realizada = models.DateField(null=True, blank=True, db_index=True)
+    type = models.CharField(
 
-    descricao = models.TextField(blank=True, default="")
-    tecnico = models.CharField("Técnico", max_length=120, blank=True, default="")
+        db_column="tipo",
+
+        max_length=20, choices=Type.choices, default=Type.MENSAL, db_index=True)
+    scheduled_date = models.DateField(
+        db_column="data_programada",
+        default=timezone.localdate, db_index=True)
+    performed_date = models.DateField(
+        db_column="data_realizada",
+        null=True, blank=True, db_index=True)
+
+    description = models.TextField(
+
+        db_column="descricao",
+
+        blank=True, default="")
+    technician = models.CharField("Técnico", 
+        db_column="tecnico",
+         max_length=120, blank=True, default="")
 
     class Meta:
+        db_table = "manutencoes_manutencao"
         verbose_name = "Manutenção"
         verbose_name_plural = "Manutenções"
-        ordering = ["-data_programada", "-criado_em"]
+        ordering = ["-scheduled_date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento", "data_programada"]),
-            models.Index(fields=["inquilino", "tipo", "data_programada"]),
-            models.Index(fields=["inquilino", "data_realizada"]),
+            models.Index(fields=["tenant", "equipment", "scheduled_date"]),
+            models.Index(fields=["tenant", "type", "scheduled_date"]),
+            models.Index(fields=["tenant", "performed_date"]),
         ]
 
     def __str__(self) -> str:
-        return f"Manutencao {self.equipamento} - {self.data_programada}"
+        return f"Manutencao {self.equipment} - {self.scheduled_date}"
 
     @property
     def executada(self) -> bool:
-        return bool(self.data_realizada)
+        return bool(self.performed_date)
 
     def clean(self):
         super().clean()
 
-        if self.equipamento_id and self.inquilino_id and self.equipamento.inquilino_id != self.inquilino_id:
-            raise ValidationError({"equipamento": "Equipamento e manutenção devem pertencer ao mesmo inquilino."})
+        if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
+            raise ValidationError({"equipment": "Equipamento e manutenção devem pertencer ao mesmo tenant."})

@@ -5,9 +5,9 @@ class PlanResolutionService:
     @staticmethod
     def get_effective_plan(tenant, global_plan):
         custom_plan = TenantCoveragePlan.objects.filter(
-            inquilino=tenant,
-            plano_global=global_plan,
-            ativo=True,
+            tenant=tenant,
+            global_plan=global_plan,
+            active=True,
         ).first()
 
         if not custom_plan:
@@ -17,4 +17,4 @@ class PlanResolutionService:
 
 
 ServicoResolucaoPlano = PlanResolutionService
-PlanResolutionService.obter_plano_efetivo = PlanResolutionService.get_effective_plan
+PlanResolutionService.obter_plan_efetivo = PlanResolutionService.get_effective_plan

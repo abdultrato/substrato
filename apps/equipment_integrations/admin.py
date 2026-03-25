@@ -14,24 +14,24 @@ from .models import (
 
 @admin.register(IntegrationEquipment)
 class IntegrationEquipmentAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "nome", "modalidade", "protocolo", "ativo", "inquilino")
-    list_filter = ("modalidade", "protocolo", "ativo", "inquilino")
-    search_fields = ("id_custom", "nome", "fabricante", "modelo", "numero_serie")
+    list_display = ("id", "custom_id", "name", "modality", "protocol", "active", "tenant")
+    list_filter = ("modality", "protocol", "active", "tenant")
+    search_fields = ("custom_id", "name", "manufacturer", "model", "serial_number")
 
 
 @admin.register(IntegrationCredential)
 class IntegrationCredentialAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "equipamento", "label", "key_prefix", "key_last4", "ativo", "revogada_em")
-    list_filter = ("ativo", "equipamento")
-    search_fields = ("id_custom", "label", "key_prefix", "key_last4")
-    readonly_fields = ("key_hash", "key_prefix", "key_last4", "criado_em", "atualizado_em")
+    list_display = ("id", "custom_id", "equipment", "label", "key_prefix", "key_last4", "active", "revoked_at")
+    list_filter = ("active", "equipment")
+    search_fields = ("custom_id", "label", "key_prefix", "key_last4")
+    readonly_fields = ("key_hash", "key_prefix", "key_last4", "created_at", "updated_at")
 
 
 @admin.register(IntegrationRouting)
 class IntegrationRoutingAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "equipamento", "tipo_exame", "setor", "ativo", "inquilino")
-    list_filter = ("tipo_exame", "setor", "ativo", "inquilino")
-    search_fields = ("id_custom",)
+    list_display = ("id", "custom_id", "equipment", "exam_type", "sector", "active", "tenant")
+    list_filter = ("exam_type", "sector", "active", "tenant")
+    search_fields = ("custom_id",)
 
 
 class IntegrationOrderItemInline(admin.TabularInline):
@@ -41,32 +41,32 @@ class IntegrationOrderItemInline(admin.TabularInline):
 
 @admin.register(IntegrationOrder)
 class IntegrationOrderAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "equipamento", "requisicao", "estado", "inquilino", "criado_em")
-    list_filter = ("estado", "equipamento", "inquilino")
-    search_fields = ("id_custom", "requisicao__id_custom")
+    list_display = ("id", "custom_id", "equipment", "request", "status", "tenant", "created_at")
+    list_filter = ("status", "equipment", "tenant")
+    search_fields = ("custom_id", "request__custom_id")
     inlines = (IntegrationOrderItemInline,)
 
 
 @admin.register(IntegrationMessage)
 class IntegrationMessageAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "equipamento", "ordem", "direcao", "protocolo", "estado", "criado_em")
-    list_filter = ("estado", "direcao", "protocolo", "equipamento")
-    search_fields = ("id_custom", "message_id", "sha256")
-    readonly_fields = ("sha256", "payload_raw", "payload_json", "criado_em", "atualizado_em")
+    list_display = ("id", "custom_id", "equipment", "order", "direction", "protocol", "status", "created_at")
+    list_filter = ("status", "direction", "protocol", "equipment")
+    search_fields = ("custom_id", "message_id", "sha256")
+    readonly_fields = ("sha256", "payload_raw", "payload_json", "created_at", "updated_at")
 
 
 @admin.register(IntegrationDocument)
 class IntegrationDocumentAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "mensagem", "ordem_item", "filename", "content_type", "sha256", "criado_em")
+    list_display = ("id", "custom_id", "message", "order_item", "filename", "content_type", "sha256", "created_at")
     list_filter = ("content_type",)
-    search_fields = ("id_custom", "filename", "sha256")
+    search_fields = ("custom_id", "filename", "sha256")
 
 
 @admin.register(IntegrationAnalyteMapping)
 class IntegrationAnalyteMappingAdmin(admin.ModelAdmin):
-    list_display = ("id", "id_custom", "equipamento", "codigo", "exame_campo", "ativo", "inquilino")
-    list_filter = ("equipamento", "ativo", "inquilino")
-    search_fields = ("id_custom", "codigo", "exame_campo__nome", "equipamento__nome")
+    list_display = ("id", "custom_id", "equipment", "code", "exam_field", "active", "tenant")
+    list_filter = ("equipment", "active", "tenant")
+    search_fields = ("custom_id", "code", "exam_field__name", "equipment__name")
 
 
 IntegracaoEquipamentoAdmin = IntegrationEquipmentAdmin

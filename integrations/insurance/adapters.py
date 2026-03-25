@@ -14,7 +14,7 @@ class InsuranceProvider:
     def authorize_procedure(self, procedure_code, policy_number, **kwargs):
         raise NotImplementedError
 
-    def submit_claim(self, claim_data: dict):
+    def submit_claim(self, claim_date: dict):
         raise NotImplementedError
 
 

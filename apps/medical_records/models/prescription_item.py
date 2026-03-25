@@ -16,7 +16,7 @@ class PrescriptionItem(NoNameCoreModel):
     Associa uma medicação a uma dosagem e um esquema de administração.
     """
 
-    prefixo = "PRTI"
+    prefix = "PRTI"
 
     class DosageUnit(models.TextChoices):
         MG = "MG", "mg"
@@ -27,23 +27,32 @@ class PrescriptionItem(NoNameCoreModel):
 
     UnidadeDosagem = DosageUnit
 
-    registro = models.ForeignKey(
+    record = models.ForeignKey(
+
         "prontuario.MedicalRecordEntry",
+
+        db_column="registro_id",
         verbose_name="Cardex",
         on_delete=models.CASCADE,
-        related_name="itens_prescricao",
+        related_name="itens_prescription",
         db_index=True,
     )
 
-    medicacao = models.ForeignKey(
+    medication = models.ForeignKey(
+
         "farmacia.Product",
+
+        db_column="medicacao_id",
         verbose_name="Medicação",
         on_delete=models.PROTECT,
         related_name="prescricoes_prontuario",
         db_index=True,
     )
 
-    dosagem_valor = models.DecimalField(
+    dosage_value = models.DecimalField(
+
+        db_column="dosagem_valor",
+
         verbose_name="Dosagem",
         max_digits=10,
         decimal_places=2,
@@ -52,7 +61,10 @@ class PrescriptionItem(NoNameCoreModel):
         help_text="Quantidade da dose (ex.: 500).",
     )
 
-    dosagem_unidade = models.CharField(
+    dosage_unit = models.CharField(
+
+        db_column="dosagem_unidade",
+
         verbose_name="Unidade da dosagem",
         max_length=3,
         choices=DosageUnit.choices,
@@ -60,73 +72,83 @@ class PrescriptionItem(NoNameCoreModel):
         db_index=True,
     )
 
-    intervalo_horas = models.PositiveSmallIntegerField(
-        verbose_name="Intervalo (horas)",
+    interval_hours = models.PositiveSmallIntegerField(
+
+        db_column="intervalo_horas",
+
+        verbose_name="Intervalo (hours)",
         null=True,
         blank=True,
         help_text="Intervalo entre doses. Obrigatório quando houver mais de uma dose.",
     )
 
-    numero_doses = models.PositiveSmallIntegerField(
+    dose_count = models.PositiveSmallIntegerField(
+
+        db_column="numero_doses",
+
         verbose_name="Número de doses",
         default=1,
         help_text="Quantidade total de doses. Para dose única, informe 1.",
     )
 
-    observacoes = models.TextField(
+    notes = models.TextField(
+
+        db_column="observacoes",
+
         verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
+        db_table = "prontuario_prescricaoitem"
         verbose_name = "Item de Prescrição"
         verbose_name_plural = "Itens de Prescrição"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "registro"]),
-            models.Index(fields=["inquilino", "medicacao"]),
+            models.Index(fields=["tenant", "record"]),
+            models.Index(fields=["tenant", "medication"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.registro_id and self.inquilino_id and self.registro.inquilino_id != self.inquilino_id:
-            raise ValidationError({"registro": "Cardex e item de prescrição devem pertencer ao mesmo inquilino."})
+        if self.record_id and self.tenant_id and self.record.tenant_id != self.tenant_id:
+            raise ValidationError({"record": "Cardex e item de prescrição devem pertencer ao mesmo tenant."})
 
-        if self.medicacao_id and self.inquilino_id and self.medicacao.inquilino_id != self.inquilino_id:
-            raise ValidationError({"medicacao": "Medicação e item de prescrição devem pertencer ao mesmo inquilino."})
+        if self.medication_id and self.tenant_id and self.medication.tenant_id != self.tenant_id:
+            raise ValidationError({"medication": "Medicação e item de prescrição devem pertencer ao mesmo tenant."})
 
-        # Garantir que o produto selecionado é de tipo "Medicamento".
-        if self.medicacao_id:
+        # Garantir que o product selecionado é de type "Medicamento".
+        if self.medication_id:
             try:
                 from apps.pharmacy.models.product import Product
 
-                if self.medicacao.tipo != Product.TipoProduto.MEDICAMENTO:
-                    raise ValidationError({"medicacao": "Selecione um produto do tipo Medicamento."})
+                if self.medication.type != Product.TipoProduto.MEDICAMENTO:
+                    raise ValidationError({"medication": "Selecione um product do type Medicamento."})
             except Exception:
-                # Fallback: se não houver tipo/enum, não bloqueia.
+                # Fallback: se não houver type/enum, não bloqueia.
                 pass
 
-        if self.numero_doses <= 0:
-            raise ValidationError({"numero_doses": "Número de doses deve ser maior que zero."})
+        if self.dose_count <= 0:
+            raise ValidationError({"dose_count": "Número de doses deve ser maior que zero."})
 
-        if self.numero_doses == 1:
-            if self.intervalo_horas is not None:
-                raise ValidationError({"intervalo_horas": "Intervalo não é permitido para dose única."})
+        if self.dose_count == 1:
+            if self.interval_hours is not None:
+                raise ValidationError({"interval_hours": "Intervalo não é permitido para dose única."})
         else:
-            if self.intervalo_horas is None or self.intervalo_horas <= 0:
-                raise ValidationError({"intervalo_horas": "Intervalo é obrigatório quando houver múltiplas doses."})
+            if self.interval_hours is None or self.interval_hours <= 0:
+                raise ValidationError({"interval_hours": "Intervalo é obrigatório quando houver múltiplas doses."})
 
-        if self.dosagem_valor is None or self.dosagem_valor <= Decimal("0.00"):
-            raise ValidationError({"dosagem_valor": "Dosagem deve ser maior que zero."})
+        if self.dosage_value is None or self.dosage_value <= Decimal("0.00"):
+            raise ValidationError({"dosage_value": "Dosagem deve ser maior que zero."})
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.registro_id:
-            self.inquilino_id = self.registro.inquilino_id
+        if not self.tenant_id and self.record_id:
+            self.tenant_id = self.record.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        med = getattr(self.medicacao, "nome", None) or "Medicação"
-        return f"{med} - {self.dosagem_valor}{self.dosagem_unidade}"
+        med = getattr(self.medication, "name", None) or "Medicação"
+        return f"{med} - {self.dosage_value}{self.dosage_unit}"

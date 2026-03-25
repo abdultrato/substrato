@@ -9,23 +9,33 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class ProcedureCatalog(CoreModel):
     """
-    Catálogo de procedimentos de enfermagem.
+    Catálogo de procedures de enfermagem.
 
     Usado como base para:
-    - valor padrão (`preco_padrao`)
+    - value padrão (`default_price`)
     - materiais padrão (`materiais_padrao`)
     """
 
-    prefixo = "PCAT"
+    prefix = "PCAT"
 
-    descricao = models.TextField(verbose_name="Descrição", blank=True, default="")
+    description = models.TextField(
 
-    preco_padrao = MoneyField(
+        db_column="descricao",
+
+        verbose_name="Descrição", blank=True, default="")
+
+    default_price = MoneyField(
+
+        db_column="preco_padrao",
+
         verbose_name="Preço padrão",
         default=Decimal("0.00"),
     )
 
-    iva_percentual = models.DecimalField(
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
@@ -34,20 +44,24 @@ class ProcedureCatalog(CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao procedimento (0 a 100).",
+        help_text="Taxa de IVA aplicada ao procedure (0 a 100).",
     )
 
-    aplica_iva_por_padrao = models.BooleanField(
+    applies_vat_by_default = models.BooleanField(
+
+        db_column="aplica_iva_por_padrao",
+
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este procedimento normalmente não deve ter IVA.",
+        help_text="Desmarque se este procedure normalmente não deve ter IVA.",
     )
 
     class Meta:
+        db_table = "enfermagem_procedimentocatalogo"
         verbose_name = "Procedimento (Catálogo)"
         verbose_name_plural = "Procedimentos (Catálogo)"
-        ordering = ["nome"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
-        return self.nome or f"Procedimento {self.pk}"
+        return self.name or f"Procedimento {self.pk}"
 

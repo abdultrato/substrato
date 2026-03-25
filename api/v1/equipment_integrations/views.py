@@ -52,7 +52,7 @@ class IntegrationKeyPermission(BasePermission):
     def has_permission(self, request, view):
         raw_key = _get_integration_key(request)
         cred = IntegrationCredential.validate_key(raw_key)
-        if cred is None or not cred.ativo or cred.revogada_em:
+        if cred is None or not cred.active or cred.revoked_at:
             return False
         request.integration_cred = cred
         return True
@@ -64,57 +64,57 @@ class IntegrationDetailSerializer(serializers.Serializer):
 
 class WorklistEquipmentSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    codigo = serializers.CharField()
-    nome = serializers.CharField()
-    modalidade = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    protocolo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    code = serializers.CharField()
+    name = serializers.CharField()
+    modality = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    protocol = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class WorklistPatientSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    codigo = serializers.CharField()
-    nome = serializers.CharField()
-    data_nascimento = serializers.DateField(required=False, allow_null=True)
-    genero = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    numero_id = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    code = serializers.CharField()
+    name = serializers.CharField()
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    document_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class WorklistExamItemSerializer(serializers.Serializer):
-    requisicao_item_id = serializers.IntegerField()
-    tipo = serializers.CharField()
-    exame_id = serializers.IntegerField()
-    exame_codigo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    exame_nome = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    setor = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    request_item_id = serializers.IntegerField()
+    type = serializers.CharField()
+    exam_id = serializers.IntegerField()
+    exam_code = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    exam_name = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    sector = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class WorklistOrderSerializer(serializers.Serializer):
     accession = serializers.CharField()
-    ordem_id = serializers.IntegerField()
-    estado = serializers.CharField()
-    requisicao_id = serializers.IntegerField()
-    requisicao_codigo = serializers.CharField()
-    paciente = WorklistPatientSerializer()
+    order_id = serializers.IntegerField()
+    status = serializers.CharField()
+    request_id = serializers.IntegerField()
+    request_code = serializers.CharField()
+    patient = WorklistPatientSerializer()
     itens = WorklistExamItemSerializer(many=True)
-    criado_em = serializers.DateTimeField(required=False, allow_null=True)
+    created_at = serializers.DateTimeField(required=False, allow_null=True)
 
 
 class WorklistResponseSerializer(serializers.Serializer):
-    equipamento = WorklistEquipmentSerializer()
+    equipment = WorklistEquipmentSerializer()
     count = serializers.IntegerField()
     results = WorklistOrderSerializer(many=True)
 
 
 class ResultsInboxResultSerializer(serializers.Serializer):
-    codigo = serializers.CharField()
-    valor = serializers.JSONField(required=False, allow_null=True)
+    code = serializers.CharField()
+    value = serializers.JSONField(required=False, allow_null=True)
 
 
 class ResultsInboxDocumentSerializer(serializers.Serializer):
     filename = serializers.CharField(required=False, allow_blank=True)
     content_type = serializers.CharField(required=False, allow_blank=True)
     base64 = serializers.CharField(required=False, allow_blank=True)
-    requisicao_item_id = serializers.IntegerField(required=False, allow_null=True)
+    request_item_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class ResultsInboxRequestSerializer(serializers.Serializer):
@@ -125,16 +125,16 @@ class ResultsInboxRequestSerializer(serializers.Serializer):
 
 
 class ResultsInboxAppliedSerializer(serializers.Serializer):
-    codigo = serializers.CharField()
-    exame_campo_id = serializers.IntegerField()
-    exame_campo = serializers.CharField()
-    valor = serializers.CharField()
+    code = serializers.CharField()
+    exam_field_id = serializers.IntegerField()
+    exam_field = serializers.CharField()
+    value = serializers.CharField()
 
 
 class ResultsInboxResponseSerializer(serializers.Serializer):
-    mensagem = serializers.CharField()
-    ordem = serializers.CharField()
-    ordem_estado = serializers.CharField()
+    message = serializers.CharField()
+    order = serializers.CharField()
+    order_status = serializers.CharField()
     aplicados = ResultsInboxAppliedSerializer(many=True)
     erros = serializers.ListField(child=serializers.CharField())
 
@@ -160,10 +160,10 @@ class EquipmentWorklistView(APIView):
             ),
             OpenApiParameter("limit", OpenApiTypes.INT, OpenApiParameter.QUERY, description="Limite (1-200)"),
             OpenApiParameter(
-                "estado",
+                "status",
                 OpenApiTypes.STR,
                 OpenApiParameter.QUERY,
-                description="Filtrar por estado (pode repetir ?estado=...)",
+                description="Filtrar por status (pode repetir ?status=...)",
                 many=True,
                 required=False,
             ),
@@ -175,7 +175,7 @@ class EquipmentWorklistView(APIView):
             404: IntegrationDetailSerializer,
         },
     )
-    def get(self, request, equipment_id_custom: str):
+    def get(self, request, equipment_custom_id: str):
         cred = getattr(request, "integration_cred", None)
         if cred is None:
             return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -186,107 +186,107 @@ class EquipmentWorklistView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        equipamento = (
+        equipment = (
             IntegrationEquipment.objects.filter(
-                id_custom=equipment_id_custom,
-                deletado=False,
+                custom_id=equipment_custom_id,
+                deleted=False,
             )
-            .select_related("inquilino")
+            .select_related("tenant")
             .first()
         )
 
-        if equipamento is None:
+        if equipment is None:
             return Response(
                 {"detail": "Equipamento não encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if cred.equipamento_id != equipamento.id:
+        if cred.equipment_id != equipment.id:
             return Response(
-                {"detail": "Credencial não corresponde ao equipamento."},
+                {"detail": "Credencial não corresponde ao equipment."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         limit = int(request.query_params.get("limit") or 50)
         limit = max(1, min(limit, 200))
 
-        estados = request.query_params.getlist("estado")
+        estados = request.query_params.getlist("status")
         if not estados:
             estados = [IntegrationOrder.Estado.PENDENTE, IntegrationOrder.Estado.EM_EXECUCAO]
 
         ordens = (
             IntegrationOrder.objects.filter(
-                equipamento=equipamento,
-                estado__in=estados,
-                deletado=False,
+                equipment=equipment,
+                status__in=estados,
+                deleted=False,
             )
-            .select_related("requisicao__paciente")
+            .select_related("request__patient")
             .prefetch_related(
-                "itens__requisicao_item__exame",
-                "itens__requisicao_item__exame_medico",
+                "itens__request_item__exam",
+                "itens__request_item__medical_exam",
             )
-            .order_by("criado_em")[:limit]
+            .order_by("created_at")[:limit]
         )
 
         out = []
-        for ordem in ordens:
-            req = ordem.requisicao
-            pac = req.paciente
+        for order in ordens:
+            req = order.request
+            pac = req.patient
 
             itens = []
-            for oi in ordem.itens.all():
-                ri = oi.requisicao_item
-                if ri.exame_id:
+            for oi in order.itens.all():
+                ri = oi.request_item
+                if ri.exam_id:
                     itens.append(
                         {
-                            "requisicao_item_id": ri.id,
-                            "tipo": "LAB",
-                            "exame_id": ri.exame_id,
-                            "exame_codigo": getattr(ri.exame, "id_custom", None),
-                            "exame_nome": getattr(ri.exame, "nome", None),
-                            "setor": getattr(ri.exame, "setor", None),
+                            "request_item_id": ri.id,
+                            "type": "LAB",
+                            "exam_id": ri.exam_id,
+                            "exam_code": getattr(ri.exam, "custom_id", None),
+                            "exam_name": getattr(ri.exam, "name", None),
+                            "sector": getattr(ri.exam, "sector", None),
                         }
                     )
-                elif ri.exame_medico_id:
+                elif ri.medical_exam_id:
                     itens.append(
                         {
-                            "requisicao_item_id": ri.id,
-                            "tipo": "MED",
-                            "exame_id": ri.exame_medico_id,
-                            "exame_codigo": getattr(ri.exame_medico, "id_custom", None),
-                            "exame_nome": getattr(ri.exame_medico, "nome", None),
-                            "setor": getattr(ri.exame_medico, "setor", None),
+                            "request_item_id": ri.id,
+                            "type": "MED",
+                            "exam_id": ri.medical_exam_id,
+                            "exam_code": getattr(ri.medical_exam, "custom_id", None),
+                            "exam_name": getattr(ri.medical_exam, "name", None),
+                            "sector": getattr(ri.medical_exam, "sector", None),
                         }
                     )
 
             out.append(
                 {
-                    "accession": ordem.id_custom,
-                    "ordem_id": ordem.id,
-                    "estado": ordem.estado,
-                    "requisicao_id": req.id,
-                    "requisicao_codigo": req.id_custom,
-                    "paciente": {
+                    "accession": order.custom_id,
+                    "order_id": order.id,
+                    "status": order.status,
+                    "request_id": req.id,
+                    "request_code": req.custom_id,
+                    "patient": {
                         "id": pac.id,
-                        "codigo": pac.id_custom,
-                        "nome": pac.nome,
-                        "data_nascimento": pac.data_nascimento.isoformat() if pac.data_nascimento else None,
-                        "genero": pac.genero,
-                        "numero_id": pac.numero_id,
+                        "code": pac.custom_id,
+                        "name": pac.name,
+                        "birth_date": pac.birth_date.isoformat() if pac.birth_date else None,
+                        "gender": pac.gender,
+                        "document_number": pac.document_number,
                     },
                     "itens": itens,
-                    "criado_em": ordem.criado_em.isoformat() if ordem.criado_em else None,
+                    "created_at": order.created_at.isoformat() if order.created_at else None,
                 }
             )
 
         return Response(
             {
-                "equipamento": {
-                    "id": equipamento.id,
-                    "codigo": equipamento.id_custom,
-                    "nome": equipamento.nome,
-                    "modalidade": equipamento.modalidade,
-                    "protocolo": equipamento.protocolo,
+                "equipment": {
+                    "id": equipment.id,
+                    "code": equipment.custom_id,
+                    "name": equipment.name,
+                    "modality": equipment.modality,
+                    "protocol": equipment.protocol,
                 },
                 "count": len(out),
                 "results": out,
@@ -304,8 +304,8 @@ class EquipmentResultsInboxView(APIView):
     {
       "message_id": "uuid-externo-opcional",
       "accession": "ORD-....",
-      "results": [{"codigo": "HB", "valor": "13.2"}, ...],
-      "documentos": [{"filename":"ecg.pdf","content_type":"application/pdf","base64":"...","requisicao_item_id": 123}]
+      "results": [{"code": "HB", "value": "13.2"}, ...],
+      "documentos": [{"filename":"ecg.pdf","content_type":"application/pdf","base64":"...","request_item_id": 123}]
     }
     """
 
@@ -332,7 +332,7 @@ class EquipmentResultsInboxView(APIView):
             404: IntegrationDetailSerializer,
         },
     )
-    def post(self, request, equipment_id_custom: str):
+    def post(self, request, equipment_custom_id: str):
         cred = getattr(request, "integration_cred", None)
         if cred is None:
             return Response({"detail": "Credencial de integração inválida."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -343,26 +343,27 @@ class EquipmentResultsInboxView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        equipamento = (
+        equipment = (
             IntegrationEquipment.objects.filter(
-                id_custom=equipment_id_custom,
-                deletado=False,
+                custom_id=equipment_custom_id,
+                deleted=False,
             )
-            .select_related("inquilino")
+            .select_related("tenant")
             .first()
         )
-        if equipamento is None:
+        if equipment is None:
             return Response(
                 {"detail": "Equipamento não encontrado."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if cred.equipamento_id != equipamento.id:
+        if cred.equipment_id != equipment.id:
             return Response(
-                {"detail": "Credencial não corresponde ao equipamento."},
+                {"detail": "Credencial não corresponde ao equipment."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        # DRF expõe o payload parseado em `request.data`.
         raw_body = request.body or b""
         payload = request.data if isinstance(request.data, dict) else {}
 
@@ -376,43 +377,43 @@ class EquipmentResultsInboxView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ordem = (
+        order = (
             IntegrationOrder.objects.filter(
-                id_custom=accession,
-                equipamento=equipamento,
-                deletado=False,
+                custom_id=accession,
+                equipment=equipment,
+                deleted=False,
             )
-            .select_related("requisicao__paciente")
+            .select_related("request__patient")
             .first()
         )
-        if ordem is None:
+        if order is None:
             return Response(
-                {"detail": "Ordem não encontrada para este equipamento."},
+                {"detail": "Ordem não encontrada para este equipment."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Idempotência leve: se message_id já existe para este equipamento, devolve OK.
+        # Idempotência leve: se message_id já existe para este equipment, devolve OK.
         if message_id:
             dup = IntegrationMessage.objects.filter(
-                equipamento=equipamento,
+                equipment=equipment,
                 message_id=message_id,
                 sha256=_sha256_bytes(raw_body),
-                deletado=False,
+                deleted=False,
             ).first()
             if dup is not None:
                 return Response(
                     {
                         "detail": "Mensagem já processada (idempotência).",
-                        "mensagem_id": dup.id_custom,
-                        "estado": dup.estado,
+                        "message_id": dup.custom_id,
+                        "status": dup.status,
                     }
                 )
 
         msg = IntegrationMessage.create_from_payload(
-            equipment=equipamento,
-            order=ordem,
+            equipment=equipment,
+            order=order,
             direction=IntegrationMessage.Direction.ENTRADA,
-            protocol=equipamento.protocolo,
+            protocol=equipment.protocol,
             message_id=message_id,
             content_type=content_type,
             raw_body=raw_body,
@@ -427,70 +428,70 @@ class EquipmentResultsInboxView(APIView):
 
         try:
             # Garante Resultado (e itens) para a requisição.
-            requisicao = ordem.requisicao
-            resultado, _ = Result.objects.get_or_create(
-                requisicao=requisicao,
-                defaults={"inquilino": requisicao.inquilino},
+            request = order.request
+            result, _ = Result.objects.get_or_create(
+                request=request,
+                defaults={"tenant": request.tenant},
             )
 
-            # Garante que os itens de resultado existam para cada item do pedido.
-            for oi in ordem.itens.select_related("requisicao_item").all():
+            # Garante que os itens de result existam para cada item do pedido.
+            for oi in order.itens.select_related("request_item").all():
                 with suppress(Exception):
-                    oi.requisicao_item._criar_resultados()
+                    oi.request_item._criar_resultados()
 
             # Aplica resultados numéricos via mapeamento de analitos.
             for r in results if isinstance(results, list) else []:
-                codigo = str((r or {}).get("codigo") or "").strip()
-                valor_raw = (r or {}).get("valor", None)
+                code = str((r or {}).get("code") or "").strip()
+                value_raw = (r or {}).get("value", None)
 
-                if not codigo:
-                    erros.append("Resultado sem 'codigo'.")
+                if not code:
+                    erros.append("Resultado sem 'code'.")
                     continue
 
                 mapping = (
                     IntegrationAnalyteMapping.objects.filter(
-                        equipamento=equipamento,
-                        codigo=codigo,
-                        ativo=True,
-                        deletado=False,
+                        equipment=equipment,
+                        code=code,
+                        active=True,
+                        deleted=False,
                     )
-                    .select_related("exame_campo")
+                    .select_related("exam_field")
                     .first()
                 )
                 if mapping is None:
-                    erros.append(f"Sem mapeamento para codigo '{codigo}'.")
+                    erros.append(f"Sem mapeamento para code '{code}'.")
                     continue
 
-                exame_campo = mapping.exame_campo
+                exam_field = mapping.exam_field
 
                 item = ResultItem.objects.filter(
-                    resultado=resultado,
-                    exame_campo=exame_campo,
-                    deletado=False,
+                    result=result,
+                    exam_field=exam_field,
+                    deleted=False,
                 ).first()
 
                 if item is None:
-                    erros.append(f"Campo '{exame_campo.nome}' não pertence à requisição desta ordem.")
+                    erros.append(f"Campo '{exam_field.name}' não pertence à requisição desta order.")
                     continue
 
                 try:
-                    if valor_raw is None or valor_raw == "":
+                    if value_raw is None or value_raw == "":
                         raise InvalidOperation
-                    valor = Decimal(str(valor_raw))
+                    value = Decimal(str(value_raw))
                 except (InvalidOperation, ValueError, TypeError):
-                    erros.append(f"Valor inválido para '{codigo}': {valor_raw!r}.")
+                    erros.append(f"Valor inválido para '{code}': {value_raw!r}.")
                     continue
 
                 # Nota: ResultadoItem.save interpreta/alerta automaticamente.
-                item.resultado_valor = valor
-                item.save(update_fields=["resultado_valor", "atualizado_em"])
+                item.result_value = value
+                item.save(update_fields=["result_value", "updated_at"])
 
                 aplicados.append(
                     {
-                        "codigo": codigo,
-                        "exame_campo_id": exame_campo.id,
-                        "exame_campo": exame_campo.nome,
-                        "valor": str(valor),
+                        "code": code,
+                        "exam_field_id": exam_field.id,
+                        "exam_field": exam_field.name,
+                        "value": str(value),
                     }
                 )
 
@@ -499,7 +500,7 @@ class EquipmentResultsInboxView(APIView):
                 filename = str((d or {}).get("filename") or "").strip() or "documento.bin"
                 ctype = str((d or {}).get("content_type") or "").strip() or "application/octet-stream"
                 b64 = (d or {}).get("base64") or ""
-                requisicao_item_id = (d or {}).get("requisicao_item_id")
+                request_item_id = (d or {}).get("request_item_id")
 
                 try:
                     raw = base64.b64decode(b64, validate=True)
@@ -507,76 +508,76 @@ class EquipmentResultsInboxView(APIView):
                     erros.append(f"Documento '{filename}' com base64 inválido.")
                     continue
 
-                ordem_item = None
-                if requisicao_item_id:
-                    ordem_item = IntegrationOrderItem.objects.filter(
-                        ordem=ordem,
-                        requisicao_item_id=requisicao_item_id,
-                        deletado=False,
+                order_item = None
+                if request_item_id:
+                    order_item = IntegrationOrderItem.objects.filter(
+                        order=order,
+                        request_item_id=request_item_id,
+                        deleted=False,
                     ).first()
 
                 # Salva em FileField via ContentFile.
                 from django.core.files.base import ContentFile
 
                 doc = IntegrationDocument(
-                    inquilino=equipamento.inquilino,
-                    mensagem=msg,
-                    ordem_item=ordem_item,
+                    tenant=equipment.tenant,
+                    message=msg,
+                    order_item=order_item,
                     filename=filename,
                     content_type=ctype,
                     sha256=_sha256_bytes(raw),
                 )
-                doc.arquivo.save(filename, ContentFile(raw), save=True)
+                doc.file.save(filename, ContentFile(raw), save=True)
 
-            # Atualiza estado da ordem de forma simples:
+            # Atualiza status da order de forma simples:
             # se houver erros, marca ERRO; senão, EXEC/DONE dependendo de completude.
             if erros:
-                ordem.estado = IntegrationOrder.Estado.ERRO
-                ordem.save(update_fields=["estado", "atualizado_em"])
-                msg.estado = IntegrationMessage.Estado.ERRO
-                msg.erro = "\n".join(erros)[:8000]
+                order.status = IntegrationOrder.Estado.ERRO
+                order.save(update_fields=["status", "updated_at"])
+                msg.status = IntegrationMessage.Estado.ERRO
+                msg.error = "\n".join(erros)[:8000]
             else:
-                # Completa se todos os campos dos exames (LAB) tiverem valor preenchido.
+                # Completa se todos os campos dos exams (LAB) tiverem value preenchido.
                 completo = True
-                for oi in ordem.itens.select_related("requisicao_item__exame").all():
-                    ri = oi.requisicao_item
-                    if not ri.exame_id:
+                for oi in order.itens.select_related("request_item__exam").all():
+                    ri = oi.request_item
+                    if not ri.exam_id:
                         continue
-                    campos = list(getattr(ri.exame, "campos", []).all())
+                    campos = list(getattr(ri.exam, "campos", []).all())
                     if not campos:
                         continue
                     for campo in campos:
                         if not ResultItem.objects.filter(
-                            resultado=resultado,
-                            exame_campo=campo,
-                            resultado_valor__isnull=False,
-                            deletado=False,
+                            result=result,
+                            exam_field=campo,
+                            result_value__isnull=False,
+                            deleted=False,
                         ).exists():
                             completo = False
                             break
                     if not completo:
                         break
 
-                ordem.estado = IntegrationOrder.Estado.CONCLUIDA if completo else IntegrationOrder.Estado.EM_EXECUCAO
-                ordem.save(update_fields=["estado", "atualizado_em"])
+                order.status = IntegrationOrder.Estado.CONCLUIDA if completo else IntegrationOrder.Estado.EM_EXECUCAO
+                order.save(update_fields=["status", "updated_at"])
 
-                msg.estado = IntegrationMessage.Estado.PROCESSADA
+                msg.status = IntegrationMessage.Estado.PROCESSADA
 
-            msg.processado_em = timezone.now()
-            msg.save(update_fields=["estado", "erro", "processado_em", "atualizado_em"])
+            msg.processed_at = timezone.now()
+            msg.save(update_fields=["status", "error", "processed_at", "updated_at"])
 
         except ValidationError as e:
-            msg.estado = IntegrationMessage.Estado.ERRO
-            msg.erro = str(e)
-            msg.processado_em = timezone.now()
-            msg.save(update_fields=["estado", "erro", "processado_em", "atualizado_em"])
+            msg.status = IntegrationMessage.Estado.ERRO
+            msg.error = str(e)
+            msg.processed_at = timezone.now()
+            msg.save(update_fields=["status", "error", "processed_at", "updated_at"])
             raise
 
         return Response(
             {
-                "mensagem": msg.id_custom,
-                "ordem": ordem.id_custom,
-                "ordem_estado": ordem.estado,
+                "message": msg.custom_id,
+                "order": order.custom_id,
+                "order_status": order.status,
                 "aplicados": aplicados,
                 "erros": erros,
             },

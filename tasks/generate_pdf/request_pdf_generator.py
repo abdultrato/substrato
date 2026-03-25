@@ -28,22 +28,22 @@ from .pdf_base import (
 )
 
 
-def _format_request_date(requisicao):
-    data = getattr(requisicao, "created_at", None) or getattr(requisicao, "criado_em", None)
-    if not data:
+def _format_request_date(request):
+    date = getattr(request, "created_at", None) or getattr(request, "created_at", None)
+    if not date:
         return "—"
-    return data.strftime("%d/%m/%Y %H:%M")
+    return date.strftime("%d/%m/%Y %H:%M")
 
 
 def _exam_code(exam):
-    return getattr(exam, "codigo", None) or getattr(exam, "id_custom", None) or "—"
+    return getattr(exam, "code", None) or getattr(exam, "custom_id", None) or "—"
 
 
-def _resolve_document_user(requisicao):
-    return getattr(requisicao, "criado_por", None) or getattr(requisicao, "analista", None)
+def _resolve_document_user(request):
+    return getattr(request, "created_by", None) or getattr(request, "analyst", None)
 
 
-def generate_request_pdf(requisicao) -> tuple[bytes, str]:
+def generate_request_pdf(request) -> tuple[bytes, str]:
     buffer = io.BytesIO()
     page_width, _ = A5
     min_margin = 1 * cm
@@ -61,8 +61,8 @@ def generate_request_pdf(requisicao) -> tuple[bytes, str]:
 
     # Código de barras no header (repete em todas páginas)
     try:
-        paciente = requisicao.paciente
-        doc.barcode_value = f"PAC:{getattr(paciente, 'id_custom', '')}|REQ:{getattr(requisicao, 'id_custom', '')}"
+        patient = request.patient
+        doc.barcode_value = f"PAC:{getattr(patient, 'custom_id', '')}|REQ:{getattr(request, 'custom_id', '')}"
     except Exception:
         doc.barcode_value = None
 
@@ -71,11 +71,11 @@ def generate_request_pdf(requisicao) -> tuple[bytes, str]:
     style_title = document_title_style("HeadingReq")
 
     story.append(Spacer(1, 0.6 * cm))
-    paciente = requisicao.paciente
+    patient = request.patient
     eh_externa = bool(
-        getattr(requisicao, "empresa_solicitante_id", None)
-        or getattr(requisicao, "empresa_executora_externa_id", None)
-        or getattr(paciente, "empresa_origem_id", None)
+        getattr(request, "requesting_company_id", None)
+        or getattr(request, "external_executing_company_id", None)
+        or getattr(patient, "origin_company_id", None)
     )
     story.append(
         Paragraph(
@@ -85,34 +85,34 @@ def generate_request_pdf(requisicao) -> tuple[bytes, str]:
     )
     story.append(Spacer(1, 0.3 * cm))
 
-    idade = getattr(paciente, "idade", lambda: "—")()
-    usuario_documento = _resolve_document_user(requisicao)
+    idade = getattr(patient, "idade", lambda: "—")()
+    user_documento = _resolve_document_user(request)
 
     left_lines = [
-        f"{bold('Paciente')}: {paciente.nome}",
-        f"{bold('Idade')}: {idade}   -  {bold('Gênero')}: {paciente.genero or '—'}   -  {bold('Raça')}: {paciente.raca_origem or '—'}",
-        f"{bold('Documento')}: {paciente.tipo_documento or '—'}    {paciente.numero_id or '—'}",
-        f"{bold('Proveniência')}: {getattr(paciente, 'proveniencia', '—')}",
-        f"{bold('Contacto e Whatsapp')}: {paciente.contacto or '—'}",
+        f"{bold('Paciente')}: {patient.name}",
+        f"{bold('Idade')}: {idade}   -  {bold('Gênero')}: {patient.gender or '—'}   -  {bold('Raça')}: {patient.race_origin or '—'}",
+        f"{bold('Documento')}: {patient.document_type or '—'}    {patient.document_number or '—'}",
+        f"{bold('Proveniência')}: {getattr(patient, 'provenance', '—')}",
+        f"{bold('Contacto e Whatsapp')}: {patient.contact or '—'}",
     ]
 
-    empresa_origem = getattr(paciente, "empresa_origem", None)
-    empresa_solicitante = getattr(requisicao, "empresa_solicitante", None)
-    empresa_executora = getattr(requisicao, "empresa_executora_externa", None)
-    if empresa_solicitante:
-        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(empresa_solicitante, 'nome', '—')}")
-    elif empresa_origem:
-        left_lines.append(f"{bold('Empresa')}: {getattr(empresa_origem, 'nome', '—')}")
+    origin_company = getattr(patient, "origin_company", None)
+    requesting_company = getattr(request, "requesting_company", None)
+    empresa_executora = getattr(request, "external_executing_company", None)
+    if requesting_company:
+        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(requesting_company, 'name', '—')}")
+    elif origin_company:
+        left_lines.append(f"{bold('Empresa')}: {getattr(origin_company, 'name', '—')}")
     if empresa_executora:
-        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'nome', '—')}")
+        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'name', '—')}")
 
-    tecnico_texto = institutional_user_identity(usuario_documento)
+    technician_texto = institutional_user_identity(user_documento)
 
     right_lines = [
-        f"{bold('E-mail')}: {paciente.email or '—'}",
-        f"{bold('Requisição')}: {requisicao.id_custom}",
-        f"{bold('Data da Requisição')}: {_format_request_date(requisicao)}",
-        f"{bold('Técn. de Laboratório')}: {tecnico_texto}",
+        f"{bold('E-mail')}: {patient.email or '—'}",
+        f"{bold('Requisição')}: {request.custom_id}",
+        f"{bold('Data da Requisição')}: {_format_request_date(request)}",
+        f"{bold('Técn. de Laboratório')}: {technician_texto}",
     ]
 
     patient_table = montar_bloco_identificacao(
@@ -130,22 +130,22 @@ def generate_request_pdf(requisicao) -> tuple[bytes, str]:
     story.append(Paragraph("EXAMES REQUISITADOS", style_section))
     story.append(Spacer(1, 0.2 * cm))
 
-    exames = requisicao.exames.all()
-    exames_data = (
+    exams = request.exams.all()
+    exams_date = (
         [
             [
                 cell_paragraph(
-                    f"{bold('Código')}: {_exam_code(e)} - {bold('Nome')}: {e.nome.capitalize()} - {bold('Método')}: {e.metodo.capitalize()}"
+                    f"{bold('Código')}: {_exam_code(e)} - {bold('Nome')}: {e.name.capitalize()} - {bold('Método')}: {e.method.capitalize()}"
                 )
             ]
-            for e in exames
+            for e in exams
         ]
-        if exames.exists()
-        else [[cell_paragraph("Nenhum exame registrado.", is_bold=True)]]
+        if exams.exists()
+        else [[cell_paragraph("Nenhum exam registrado.", is_bold=True)]]
     )
 
-    tabela_exames = Table(exames_data, colWidths=[usable_width])
-    tabela_exames.setStyle(
+    tabela_exams = Table(exams_date, colWidths=[usable_width])
+    tabela_exams.setStyle(
         TableStyle(
             [
                 ("LEFTPADDING", (0, 0), (-1, -1), 2),
@@ -153,24 +153,24 @@ def generate_request_pdf(requisicao) -> tuple[bytes, str]:
             ]
         )
     )
-    story.append(KeepTogether(tabela_exames))
+    story.append(KeepTogether(tabela_exams))
 
     append_fim(story)
 
     doc.build(
         story,
-        onFirstPage=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
+        onFirstPage=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
+        onLaterPages=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
         canvasmaker=NumberedCanvas,
     )
 
     pdf_bytes = buffer.getvalue()
     buffer.close()
-    filename = f"{requisicao.id_custom}_{requisicao.paciente.nome}.pdf"
+    filename = f"{request.custom_id}_{request.patient.name}.pdf"
     return pdf_bytes, filename
 
 
-_codigo_exame = _exam_code
-_formatar_data_requisicao = _format_request_date
-_resolver_usuario_documento = _resolve_document_user
-gerar_pdf_requisicao = generate_request_pdf
+_code_exam = _exam_code
+_formatar_date_request = _format_request_date
+_resolver_user_documento = _resolve_document_user
+gerar_pdf_request = generate_request_pdf

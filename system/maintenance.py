@@ -11,5 +11,5 @@ def desativar():
     cache.delete(CACHE_KEY)
 
 
-def esta_ativo() -> bool:
+def esta_active() -> bool:
     return bool(cache.get(CACHE_KEY, False))

@@ -1,12 +1,12 @@
 from apps.billing.models import InvoiceHistory
 
 
-def register_invoice_event(fatura, descricao, tipo=None):
+def register_invoice_event(invoice, description, type=None):
     return InvoiceHistory.objects.create(
-        fatura=fatura,
-        descricao=descricao,
-        tipo_evento=tipo,
+        invoice=invoice,
+        description=description,
+        event_type=type,
     )
 
 
-registrar_evento_fatura = register_invoice_event
+registrar_evento_invoice = register_invoice_event

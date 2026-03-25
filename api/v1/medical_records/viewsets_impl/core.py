@@ -10,33 +10,33 @@ from ..serializers import MedicalRecordEntrySerializer, PrescricaoItemSerializer
 
 
 class MedicalRecordEntryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MedicalRecordEntry.objects.select_related("paciente", "medico").prefetch_related("consultas").all()
+    queryset = MedicalRecordEntry.objects.select_related("patient", "doctor").prefetch_related("consultations").all()
     serializer_class = MedicalRecordEntrySerializer
     filterset_class = MedicalRecordEntryFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "paciente__nome",
-        "medico__nome",
-        "diagnostico",
-        "sintomas",
+        "custom_id",
+        "patient__name",
+        "doctor__name",
+        "diagnosis",
+        "symptoms",
     ]
-    ordering_fields = ["inicio_atendimento", "fim_atendimento", "criado_em", "estado"]
-    ordering = ["-inicio_atendimento", "-criado_em"]
+    ordering_fields = ["care_start_at", "care_end_at", "created_at", "status"]
+    ordering = ["-care_start_at", "-created_at"]
 
 
 class PrescriptionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = PrescriptionItem.objects.select_related("registro", "medicacao").all()
+    queryset = PrescriptionItem.objects.select_related("record", "medication").all()
     serializer_class = PrescricaoItemSerializer
     filterset_class = PrescriptionItemFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "medicacao__nome", "observacoes"]
-    ordering_fields = ["criado_em", "dosagem_valor", "numero_doses"]
-    ordering = ["-criado_em"]
+    search_fields = ["custom_id", "medication__name", "notes"]
+    ordering_fields = ["created_at", "dosage_value", "dose_count"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
-    "registro": MedicalRecordEntryViewSet,
+    "record": MedicalRecordEntryViewSet,
     "prescricaoitem": PrescriptionItemViewSet,
 }
 

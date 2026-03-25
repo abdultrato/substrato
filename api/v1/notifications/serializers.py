@@ -18,7 +18,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "logenvio": DeliveryLogSerializer,
-    "notificacao": NotificationSerializer,
+    "notification": NotificationSerializer,
 }
 
 LogEnvioSerializer = DeliveryLogSerializer

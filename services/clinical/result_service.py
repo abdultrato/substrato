@@ -9,15 +9,15 @@ class ResultService:
 
     @staticmethod
     def interpret(result_item):
-        request = getattr(result_item, "requisicao", None)
-        if request is None and getattr(result_item, "resultado", None) is not None:
-            request = result_item.resultado.requisicao
+        request = getattr(result_item, "request", None)
+        if request is None and getattr(result_item, "result", None) is not None:
+            request = result_item.result.request
 
         if request is None:
             return
 
-        patient = request.paciente
-        exam_field = result_item.exame_campo
+        patient = request.patient
+        exam_field = result_item.exam_field
 
         reference = ClinicalReferenceResolver.resolve(
             exam_field,
@@ -25,20 +25,20 @@ class ResultService:
         )
 
         status = interpret(
-            getattr(result_item, "resultado_valor", getattr(result_item, "resultado", None)),
+            getattr(result_item, "result_value", getattr(result_item, "result", None)),
             reference,
         )
 
-        result_item.status_clinico = status
-        result_item.alerta_critico = status == ClinicalStatus.CRITICAL
-        result_item.cor_laudo = {
+        result_item.clinical_status = status
+        result_item.critical_alert = status == ClinicalStatus.CRITICAL
+        result_item.report_color = {
             ClinicalStatus.NORMAL: "preto",
             ClinicalStatus.LOW: "azul",
             ClinicalStatus.HIGH: "vermelho",
             ClinicalStatus.CRITICAL: "vermelho",
         }.get(status)
 
-        result_item.save(update_fields=["status_clinico", "cor_laudo", "alerta_critico"])
+        result_item.save(update_fields=["clinical_status", "report_color", "critical_alert"])
 
 
 ServicoResultado = ResultService

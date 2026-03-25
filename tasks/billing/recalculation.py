@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=False)
 def recalculate_invoice_task(invoice_id: int) -> None:
     """
-    Recalcula totais e persiste o estado da fatura em background.
+    Recalcula totais e persiste o status da invoice em background.
     """
 
     start = time.perf_counter()
     try:
-        invoice = Invoice.objects.select_related("paciente").get(pk=invoice_id)
+        invoice = Invoice.objects.select_related("patient").get(pk=invoice_id)
     except Invoice.DoesNotExist:
         return
 
@@ -27,5 +27,5 @@ def recalculate_invoice_task(invoice_id: int) -> None:
         invoice.persistir_totais()
 
     duration = time.perf_counter() - start
-    tenant_id = getattr(invoice, "inquilino_id", None)
+    tenant_id = getattr(invoice, "tenant_id", None)
     INVOICE_RECALCULATION_DURATION.labels(tenant_id or "unknown").observe(duration)

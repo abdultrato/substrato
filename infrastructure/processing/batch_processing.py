@@ -33,12 +33,12 @@ def iterar_em_chunks(queryset, chunk_size=1000):
     ultimo_id = None
 
     while True:
-        lote = queryset.filter(id__gt=ultimo_id if ultimo_id else 0).order_by("id")[:chunk_size]
+        lot = queryset.filter(id__gt=ultimo_id if ultimo_id else 0).order_by("id")[:chunk_size]
 
-        if not lote:
+        if not lot:
             break
 
-        for obj in lote:
+        for obj in lot:
             yield obj
             ultimo_id = obj.id
 

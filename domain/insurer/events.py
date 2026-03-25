@@ -1,4 +1,4 @@
-# LOCAL: dominio/seguradora/events.py
+# LOCAL: domain/insurer/events.py
 
 
 class AuthorizationRequestedEvent:

@@ -5,7 +5,7 @@ from django.db.models import (
     Q,
 )
 
-from core.constants.genero import Genero
+from core.constants.gender import Genero
 from core.models.base import CoreModel
 
 from .lab_exam_field import LabExamField
@@ -16,22 +16,28 @@ class ClinicalReference(CoreModel):
     Define intervalos de referência laboratoriais.
 
     Pode variar por:
-    • sexo
+    • sex
     • faixa etária
-    • exame_campo
+    • exam_field
 
     Também define limites críticos clínicos.
     """
 
-    prefixo = "REF"
+    prefix = "REF"
 
-    exame_campo = models.ForeignKey(
+    exam_field = models.ForeignKey(
+
         LabExamField,
+
+        db_column="exame_campo_id",
         on_delete=models.CASCADE,
         related_name="referencias",
     )
 
-    sexo = models.CharField(
+    sex = models.CharField(
+
+        db_column="sexo",
+
         max_length=10,
         choices=Genero.choices,
         null=True,
@@ -39,40 +45,58 @@ class ClinicalReference(CoreModel):
         help_text="Se vazio, aplica-se a ambos os sexos.",
     )
 
-    idade_minima_dias = models.PositiveIntegerField(
+    minimum_age_days = models.PositiveIntegerField(
+
+        db_column="idade_minima_dias",
+
         null=True,
         blank=True,
         help_text="Idade mínima em dias.",
     )
 
-    idade_maxima_dias = models.PositiveIntegerField(
+    maximum_age_days = models.PositiveIntegerField(
+
+        db_column="idade_maxima_dias",
+
         null=True,
         blank=True,
         help_text="Idade máxima em dias.",
     )
 
-    valor_minimo = models.DecimalField(
+    minimum_value = models.DecimalField(
+
+        db_column="valor_minimo",
+
         max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
     )
 
-    valor_maximo = models.DecimalField(
+    maximum_value = models.DecimalField(
+
+        db_column="valor_maximo",
+
         max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
     )
 
-    critico_baixo = models.DecimalField(
+    critical_low = models.DecimalField(
+
+        db_column="critico_baixo",
+
         max_digits=10,
         decimal_places=2,
         null=True,
         blank=True,
     )
 
-    critico_alto = models.DecimalField(
+    critical_high = models.DecimalField(
+
+        db_column="critico_alto",
+
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -82,40 +106,40 @@ class ClinicalReference(CoreModel):
     class Meta:
         db_table = "clinico_referenciaclinica"
         ordering = [
-            "exame_campo",
-            "sexo",
-            "idade_minima_dias",
+            "exam_field",
+            "sex",
+            "minimum_age_days",
         ]
 
         indexes = [
-            models.Index(fields=["exame_campo"]),
-            models.Index(fields=["sexo"]),
-            models.Index(fields=["idade_minima_dias", "idade_maxima_dias"]),
+            models.Index(fields=["exam_field"]),
+            models.Index(fields=["sex"]),
+            models.Index(fields=["minimum_age_days", "maximum_age_days"]),
         ]
 
         constraints = [
             # faixa etária válida
             models.CheckConstraint(
                 check=(
-                    Q(idade_maxima_dias__gte=F("idade_minima_dias"))
-                    | Q(idade_minima_dias__isnull=True)
-                    | Q(idade_maxima_dias__isnull=True)
+                    Q(maximum_age_days__gte=F("minimum_age_days"))
+                    | Q(minimum_age_days__isnull=True)
+                    | Q(maximum_age_days__isnull=True)
                 ),
                 name="ref_idade_intervalo_valido",
             ),
             # intervalo clínico válido
             models.CheckConstraint(
                 check=(
-                    Q(valor_maximo__gte=F("valor_minimo")) | Q(valor_minimo__isnull=True) | Q(valor_maximo__isnull=True)
+                    Q(maximum_value__gte=F("minimum_value")) | Q(minimum_value__isnull=True) | Q(maximum_value__isnull=True)
                 ),
-                name="ref_valor_intervalo_valido",
+                name="ref_value_intervalo_valido",
             ),
             # intervalo crítico válido
             models.CheckConstraint(
                 check=(
-                    Q(critico_alto__gte=F("critico_baixo"))
-                    | Q(critico_baixo__isnull=True)
-                    | Q(critico_alto__isnull=True)
+                    Q(critical_high__gte=F("critical_low"))
+                    | Q(critical_low__isnull=True)
+                    | Q(critical_high__isnull=True)
                 ),
                 name="ref_critico_intervalo_valido",
             ),
@@ -126,16 +150,16 @@ class ClinicalReference(CoreModel):
     # =====================================================
 
     def clean(self):
-        if self.valor_minimo is not None and self.valor_maximo is not None and self.valor_minimo > self.valor_maximo:
-            raise ValidationError("Valor mínimo não pode ser maior que valor máximo.")
+        if self.minimum_value is not None and self.maximum_value is not None and self.minimum_value > self.maximum_value:
+            raise ValidationError("Valor mínimo não pode ser maior que value máximo.")
 
-        if self.critico_baixo is not None and self.critico_alto is not None and self.critico_baixo > self.critico_alto:
+        if self.critical_low is not None and self.critical_high is not None and self.critical_low > self.critical_high:
             raise ValidationError("Limite crítico baixo não pode ser maior que crítico alto.")
 
         if (
-            self.idade_minima_dias is not None
-            and self.idade_maxima_dias is not None
-            and self.idade_minima_dias > self.idade_maxima_dias
+            self.minimum_age_days is not None
+            and self.maximum_age_days is not None
+            and self.minimum_age_days > self.maximum_age_days
         ):
             raise ValidationError("Idade mínima não pode ser maior que idade máxima.")
 
@@ -144,11 +168,11 @@ class ClinicalReference(CoreModel):
     # =====================================================
 
     def __str__(self):
-        sexo = self.sexo or "Todos"
+        sex = self.sex or "Todos"
 
-        if self.valor_minimo is not None and self.valor_maximo is not None:
-            intervalo = f"{self.valor_minimo} - {self.valor_maximo}"
+        if self.minimum_value is not None and self.maximum_value is not None:
+            intervalo = f"{self.minimum_value} - {self.maximum_value}"
         else:
             intervalo = "intervalo aberto"
 
-        return f"{self.exame_campo.nome} ({sexo}) {intervalo}"
+        return f"{self.exam_field.name} ({sex}) {intervalo}"

@@ -7,36 +7,61 @@ from core.models.base import CoreModel
 
 class NursingVitalSign(PropagarInquilinoMixin, CoreModel):
     """
-    Registro de sinais vitais do paciente.
+    Registro de sinais vitais do patient.
     """
 
-    fonte_inquilino = "registro"
-    prefixo = "SVI"
+    fonte_tenant = "record"
+    prefix = "SVI"
 
-    registro = models.ForeignKey(
+    record = models.ForeignKey(
+
         "enfermagem.NursingRecord",
+
+        db_column="registro_id",
         on_delete=models.CASCADE,
         related_name="signals_vitais",
         db_index=True,
     )
 
-    temperatura_c = models.DecimalField(
+    temperature_c = models.DecimalField(
+
+        db_column="temperatura_c",
+
         max_digits=4, decimal_places=1, null=True, blank=True, verbose_name="Temperatura (°C)"
     )
-    pressao_arterial = models.CharField(max_length=20, blank=True, default="")
+    blood_pressure = models.CharField(
+        db_column="pressao_arterial",
+        max_length=20, blank=True, default="")
 
-    frequencia_cardiaca = models.PositiveIntegerField(null=True, blank=True, verbose_name="Frequência cardíaca")
+    heart_rate = models.PositiveIntegerField(
 
-    frequencia_respiratoria = models.PositiveIntegerField(null=True, blank=True, verbose_name="Frequência respiratória")
+        db_column="frequencia_cardiaca",
 
-    saturacao_oxigenio = models.PositiveIntegerField(null=True, blank=True, verbose_name="Saturação de O₂ (%)")
+        null=True, blank=True, verbose_name="Frequência cardíaca")
 
-    coletado_em = models.DateTimeField(default=timezone.now, db_index=True)
+    respiratory_rate = models.PositiveIntegerField(
+
+        db_column="frequencia_respiratoria",
+
+        null=True, blank=True, verbose_name="Frequência respiratória")
+
+    oxygen_saturation = models.PositiveIntegerField(
+
+        db_column="saturacao_oxigenio",
+
+        null=True, blank=True, verbose_name="Saturação de O₂ (%)")
+
+    collected_at = models.DateTimeField(
+
+        db_column="coletado_em",
+
+        default=timezone.now, db_index=True)
 
     class Meta:
+        db_table = "enfermagem_sinalvitalenfermagem"
         verbose_name = "Sinal Vital"
         verbose_name_plural = "Sinais Vitais"
-        ordering = ["-coletado_em", "-criado_em"]
+        ordering = ["-collected_at", "-created_at"]
 
     def __str__(self):
-        return f"Sinais vitais - {self.registro_id}"
+        return f"Sinais vitais - {self.record_id}"

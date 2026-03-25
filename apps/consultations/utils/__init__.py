@@ -1,1 +1,1 @@
-"""Utilitarios de consultas."""
+"""Utilitarios de consultations."""

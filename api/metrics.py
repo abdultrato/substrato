@@ -16,12 +16,12 @@ class BaseSystemAPIView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def success(self, data, http_status=status.HTTP_200_OK):
+    def success(self, date, http_status=status.HTTP_200_OK):
         return Response(
             {
                 "timestamp": now(),
                 "status": "success",
-                "data": data,
+                "date": date,
             },
             status=http_status,
         )
@@ -70,13 +70,13 @@ class MetricsAPI(BaseSystemAPIView):
 
     def get(self, request):
         try:
-            metrics_data = cache.get(self.CACHE_KEY)
+            metrics_date = cache.get(self.CACHE_KEY)
 
-            if not metrics_data:
-                metrics_data = obter_metricas()
-                cache.set(self.CACHE_KEY, metrics_data, self.CACHE_TIMEOUT)
+            if not metrics_date:
+                metrics_date = obter_metricas()
+                cache.set(self.CACHE_KEY, metrics_date, self.CACHE_TIMEOUT)
 
-            return self.success(metrics_data)
+            return self.success(metrics_date)
 
         except Exception as e:
             return self.error(str(e))

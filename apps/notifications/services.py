@@ -49,11 +49,11 @@ class NotificationService:
 
         return (
             Notification.objects.filter(
-                canal=channel,
-                tipo_evento=event_type,
-                referencia_externa=external_reference,
-                destinatario=destination,
-                enviada=True,
+                channel=channel,
+                event_type=event_type,
+                external_reference=external_reference,
+                recipient=destination,
+                sent=True,
             )
             .order_by("-id")
             .first()
@@ -69,7 +69,12 @@ class NotificationService:
         event_type=Notification.EventType.GENERICA,
         external_reference="",
         raise_exception=False,
+        **kwargs,
     ):
+        legacy_external_reference = kwargs.pop("referencia_externa", "")
+        if not external_reference and legacy_external_reference:
+            external_reference = legacy_external_reference
+
         if not destination:
             raise ValueError("Destino da notificação é obrigatório.")
         if channel not in CHANNELS:
@@ -85,21 +90,21 @@ class NotificationService:
             return existing
 
         notification = Notification.objects.create(
-            paciente=patient,
-            destinatario=destination,
-            canal=channel,
-            assunto=subject or "",
-            tipo_evento=event_type,
-            referencia_externa=external_reference or "",
-            mensagem=message,
+            patient=patient,
+            recipient=destination,
+            channel=channel,
+            subject=subject or "",
+            event_type=event_type,
+            external_reference=external_reference or "",
+            message=message,
         )
 
         channel_active, inactive_reason = self._active_channel(channel)
         if not channel_active:
             DeliveryLog.objects.create(
-                notificacao=notification,
+                notification=notification,
                 status="ignorado",
-                resposta=inactive_reason,
+                response=inactive_reason,
             )
             return notification
 
@@ -109,23 +114,23 @@ class NotificationService:
                 message=message,
                 subject=subject,
             )
-            notification.enviada = True
-            notification.enviado_em = timezone.now()
-            notification.erro_envio = ""
-            notification.save(update_fields=["enviada", "enviado_em", "erro_envio"])
+            notification.sent = True
+            notification.sent_at = timezone.now()
+            notification.send_error = ""
+            notification.save(update_fields=["sent", "sent_at", "send_error"])
 
             DeliveryLog.objects.create(
-                notificacao=notification,
+                notification=notification,
                 status="sucesso",
-                resposta=str(response),
+                response=str(response),
             )
         except Exception as error:
-            notification.erro_envio = str(error)
-            notification.save(update_fields=["erro_envio"])
+            notification.send_error = str(error)
+            notification.save(update_fields=["send_error"])
             DeliveryLog.objects.create(
-                notificacao=notification,
-                status="erro",
-                resposta=str(error),
+                notification=notification,
+                status="error",
+                response=str(error),
             )
             if raise_exception:
                 raise DeliveryFailure(str(error)) from error
@@ -139,7 +144,12 @@ class NotificationService:
         subject="Notificação",
         event_type=Notification.EventType.GENERICA,
         external_reference="",
+        **kwargs,
     ):
+        legacy_external_reference = kwargs.pop("referencia_externa", "")
+        if not external_reference and legacy_external_reference:
+            external_reference = legacy_external_reference
+
         if not patient:
             return []
 
@@ -147,7 +157,7 @@ class NotificationService:
 
         related_patient = patient if hasattr(patient, "_meta") else None
         email = getattr(patient, "email", None)
-        phone = getattr(patient, "contacto", None)
+        phone = getattr(patient, "contact", None)
 
         if email:
             notifications.append(
@@ -177,59 +187,59 @@ class NotificationService:
 
         return notifications
 
-    def _legacy_active_channel(self, canal):
-        return self._active_channel(channel=canal)
+    def _legacy_active_channel(self, channel):
+        return self._active_channel(channel=channel)
 
-    def _legacy_get_existing(self, canal, tipo_evento, referencia_externa, destino):
+    def _legacy_get_existing(self, channel, event_type, external_reference, destino):
         return self._get_existing(
-            channel=canal,
-            event_type=tipo_evento,
-            external_reference=referencia_externa,
+            channel=channel,
+            event_type=event_type,
+            external_reference=external_reference,
             destination=destino,
         )
 
     def _legacy_send(
         self,
         destino,
-        mensagem,
-        canal,
-        assunto="Notificação",
-        paciente=None,
-        tipo_evento=Notification.TipoEvento.GENERICA,
-        referencia_externa="",
+        message,
+        channel,
+        subject="Notificação",
+        patient=None,
+        event_type=Notification.TipoEvento.GENERICA,
+        external_reference="",
         levantar_excecao=False,
     ):
         return self.send(
             destination=destino,
-            message=mensagem,
-            channel=canal,
-            subject=assunto,
-            patient=paciente,
-            event_type=tipo_evento,
-            external_reference=referencia_externa,
+            message=message,
+            channel=channel,
+            subject=subject,
+            patient=patient,
+            event_type=event_type,
+            external_reference=external_reference,
             raise_exception=levantar_excecao,
         )
 
     def _legacy_send_to_patient(
         self,
-        paciente,
-        mensagem,
-        assunto="Notificação",
-        tipo_evento=Notification.TipoEvento.GENERICA,
-        referencia_externa="",
+        patient,
+        message,
+        subject="Notificação",
+        event_type=Notification.TipoEvento.GENERICA,
+        external_reference="",
     ):
         return self.send_to_patient(
-            patient=paciente,
-            message=mensagem,
-            subject=assunto,
-            event_type=tipo_evento,
-            external_reference=referencia_externa,
+            patient=patient,
+            message=message,
+            subject=subject,
+            event_type=event_type,
+            external_reference=external_reference,
         )
 
 
 ServicoNotificacao = NotificationService
 CANAIS = CHANNELS
-NotificationService._canal_ativo = NotificationService._legacy_active_channel
+NotificationService._channel_active = NotificationService._legacy_active_channel
 NotificationService._obter_existente = NotificationService._legacy_get_existing
 NotificationService.enviar = NotificationService._legacy_send
-NotificationService.enviar_para_paciente = NotificationService._legacy_send_to_patient
+NotificationService.enviar_para_patient = NotificationService._legacy_send_to_patient

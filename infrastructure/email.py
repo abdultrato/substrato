@@ -1,10 +1,10 @@
 from django.core.mail import send_mail
 
 
-def enviar_email(destino, assunto, mensagem):
+def enviar_email(destino, subject, message):
     send_mail(
-        subject=assunto,
-        message=mensagem,
+        subject=subject,
+        message=message,
         from_email=None,
         recipient_list=[destino],
     )

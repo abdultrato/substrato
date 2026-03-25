@@ -4,8 +4,8 @@ from .views import result_pdf
 
 urlpatterns = [
     path(
-        "resultado/<str:id_custom>/",
+        "result/<str:custom_id>/",
         result_pdf,
-        name="resultado_pdf",
+        name="result_pdf",
     ),
 ]

@@ -18,11 +18,11 @@ def _resolver_info(request) -> tuple[str, str, str]:
     """
     view_basename = ""
     view_action = ""
-    objeto_id = ""
+    object_id = ""
     try:
         rm = getattr(request, "resolver_match", None)
         if not rm:
-            return view_basename, view_action, objeto_id
+            return view_basename, view_action, object_id
 
         func = getattr(rm, "func", None)
         initkwargs = getattr(func, "initkwargs", {}) or {}
@@ -32,11 +32,11 @@ def _resolver_info(request) -> tuple[str, str, str]:
         view_action = str(getattr(rm, "url_name", None) or getattr(rm, "view_name", None) or "")
 
         kwargs = getattr(rm, "kwargs", {}) or {}
-        objeto_id = str(kwargs.get("pk") or kwargs.get("id") or kwargs.get("id_custom") or "")
+        object_id = str(kwargs.get("pk") or kwargs.get("id") or kwargs.get("custom_id") or "")
     except Exception:
         pass
 
-    return view_basename, view_action, objeto_id
+    return view_basename, view_action, object_id
 
 
 class TenantAuditMiddleware:
@@ -50,20 +50,20 @@ class TenantAuditMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        inquilino = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
 
-        # Mantém log estruturado em arquivo (observabilidade)
+        # Mantém log estruturado em file (observabilidade)
         register_event(
-            usuario=getattr(request, "user", None),
-            tenant_id=getattr(inquilino, "id", None),
-            caminho=request.path,
-            metodo=request.method,
+            user=getattr(request, "user", None),
+            tenant_id=getattr(tenant, "id", None),
+            path=request.path,
+            method=request.method,
             status_code=response.status_code,
         )
 
         # Persistência em BD (para UI de auditoria/uso de sistema).
         try:
-            if not inquilino:
+            if not tenant:
                 return response
 
             # Evita poluir auditoria com assets; grava rotas relevantes.
@@ -75,39 +75,39 @@ class TenantAuditMiddleware:
                 return response
 
             user = getattr(request, "user", None)
-            usuario = user if getattr(user, "is_authenticated", False) else None
+            user = user if getattr(user, "is_authenticated", False) else None
 
             status_code = getattr(request, "status_code", None) or getattr(response, "status_code", None)
-            duracao_ms = getattr(request, "duracao_ms", None)
-            duracao_ms_int = None
-            if duracao_ms is not None:
+            duration_ms = getattr(request, "duration_ms", None)
+            duration_ms_int = None
+            if duration_ms is not None:
                 try:
-                    duracao_ms_int = round(float(duracao_ms))
+                    duration_ms_int = round(float(duration_ms))
                 except Exception:
-                    duracao_ms_int = None
+                    duration_ms_int = None
 
-            view_basename, view_action, objeto_id = _resolver_info(request)
+            view_basename, view_action, object_id = _resolver_info(request)
 
             UserActivity.objects.create(
-                inquilino=inquilino,
-                usuario=usuario,
-                metodo=request.method,
-                caminho=(request.path or "")[:255],
-                path_completo=(request.get_full_path() or ""),
+                tenant=tenant,
+                user=user,
+                method=request.method,
+                path=(request.path or "")[:255],
+                full_path=(request.get_full_path() or ""),
                 status_code=status_code,
-                duracao_ms=duracao_ms_int,
+                duration_ms=duration_ms_int,
                 ip=_client_ip(request),
                 user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:255],
                 view_basename=(view_basename or "")[:120],
                 view_action=(view_action or "")[:120],
-                objeto_id=(objeto_id or "")[:80],
-                mensagem="",
+                object_id=(object_id or "")[:80],
+                message="",
                 metadata={
                     "referer": (request.META.get("HTTP_REFERER") or "")[:500],
                 },
             )
         except Exception:
-            # Não pode quebrar a resposta por erro de audit.
+            # Não pode quebrar a response por error de audit.
             pass
 
         return response

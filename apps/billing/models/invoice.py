@@ -12,7 +12,7 @@ from core.models.base import NoNameCoreModel
 
 
 class Invoice(NoNameCoreModel):
-    prefixo = "FAT"
+    prefix = "FAT"
 
     class Estado(models.TextChoices):
         RASCUNHO = "RASC", "Rascunho"
@@ -28,7 +28,10 @@ class Invoice(NoNameCoreModel):
         CIRURGIA = "CIR", "Cirurgia"
         MISTA = "MIX", "Mista"
 
-    origem = models.CharField(
+    origin = models.CharField(
+
+        db_column="origem",
+
         verbose_name="Origem",
         max_length=3,
         choices=Origem.choices,
@@ -36,57 +39,68 @@ class Invoice(NoNameCoreModel):
         db_index=True,
     )
 
-    requisicao = models.OneToOneField(
+    request = models.OneToOneField(
+
         LabRequest,
+
+        db_column="requisicao_id",
         verbose_name="Requisição",
         on_delete=models.CASCADE,
-        related_name="fatura",
+        related_name="invoice",
         null=True,
         blank=True,
     )
-    venda = models.OneToOneField(
+    sale = models.OneToOneField(
         "farmacia.Sale",
+        db_column="venda_id",
         verbose_name="Venda",
         on_delete=models.PROTECT,
-        related_name="fatura",
+        related_name="invoice",
         null=True,
         blank=True,
     )
-    procedimento = models.OneToOneField(
+    procedure = models.OneToOneField(
         "enfermagem.Procedure",
+        db_column="procedimento_id",
         verbose_name="Procedimento (legado)",
         on_delete=models.PROTECT,
-        related_name="fatura",
+        related_name="invoice",
         null=True,
         blank=True,
-        help_text="Legado: prefira usar o campo 'procedimentos' (múltiplos).",
+        help_text="Legado: prefira usar o campo 'procedures' (múltiplos).",
     )
-    procedimentos = models.ManyToManyField(
+    procedures = models.ManyToManyField(
         "enfermagem.Procedure",
+        db_table="faturamento_fatura_procedimentos",
         verbose_name="Procedimentos (Enfermagem)",
         blank=True,
         related_name="faturas",
-        help_text="Pode associar múltiplos procedimentos de enfermagem à mesma fatura.",
+        help_text="Pode associar múltiplos procedures de enfermagem à mesma invoice.",
     )
-    consulta = models.OneToOneField(
+    consultation = models.OneToOneField(
         "consultas.MedicalConsultation",
+        db_column="consulta_id",
         verbose_name="Consulta",
         on_delete=models.PROTECT,
-        related_name="fatura",
+        related_name="invoice",
         null=True,
         blank=True,
     )
-    cirurgia = models.OneToOneField(
+    surgery = models.OneToOneField(
         "cirurgia.Surgery",
+        db_column="cirurgia_id",
         verbose_name="Cirurgia",
         on_delete=models.PROTECT,
-        related_name="fatura",
+        related_name="invoice",
         null=True,
         blank=True,
     )
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         Patient,
+
+        db_column="paciente_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="faturas",
@@ -95,13 +109,24 @@ class Invoice(NoNameCoreModel):
     )
 
     subtotal = models.DecimalField(verbose_name="Total sem IVA", max_digits=12, decimal_places=2, default=0)
-    iva_valor = models.DecimalField(verbose_name="Total de IVA", max_digits=12, decimal_places=2, default=0)
+    vat_amount = models.DecimalField(
+        db_column="iva_valor",
+        verbose_name="Total de IVA", max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(verbose_name="Total com IVA", max_digits=12, decimal_places=2, default=0)
 
-    valor_seguro = models.DecimalField(verbose_name="Valor do seguro", max_digits=12, decimal_places=2, default=0)
-    valor_paciente = models.DecimalField(verbose_name="Valor do paciente", max_digits=12, decimal_places=2, default=0)
+    insurance_amount = models.DecimalField(
 
-    estado = models.CharField(
+        db_column="valor_seguro",
+
+        verbose_name="Valor do seguro", max_digits=12, decimal_places=2, default=0)
+    patient_amount = models.DecimalField(
+        db_column="valor_paciente",
+        verbose_name="Valor do patient", max_digits=12, decimal_places=2, default=0)
+
+    status = models.CharField(
+
+        db_column="estado",
+
         verbose_name="Estado",
         max_length=5,
         choices=Estado.choices,
@@ -110,19 +135,20 @@ class Invoice(NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "faturamento_fatura"
         verbose_name = "Fatura"
         verbose_name_plural = "Faturas"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "origem", "estado", "criado_em"]),
-            models.Index(fields=["inquilino", "paciente", "criado_em"]),
+            models.Index(fields=["tenant", "origin", "status", "created_at"]),
+            models.Index(fields=["tenant", "patient", "created_at"]),
         ]
 
     # ==========================================
     # RECÁLCULO FINANCEIRO
     # ==========================================
 
-    def register_history(self, tipo_evento: str, titulo: str, linhas: list[str] | None = None) -> None:
+    def register_history(self, event_type: str, titulo: str, linhas: list[str] | None = None) -> None:
         """
         Registra histórico textual com formatação linha-a-linha.
         """
@@ -136,15 +162,15 @@ class Invoice(NoNameCoreModel):
                     parts.append(texto)
 
         InvoiceHistory.objects.create(
-            inquilino=self.inquilino,
-            nome=titulo,
-            fatura=self,
-            descricao="\n".join(parts).strip(),
-            tipo_evento=tipo_evento,
+            tenant=self.tenant,
+            name=titulo,
+            invoice=self,
+            description="\n".join(parts).strip(),
+            event_type=event_type,
         )
 
     def recalculate_totals(self):
-        linha_expr = F("quantidade") * F("preco_unitario")
+        linha_expr = F("quantity") * F("unit_price")
         subtotal = self.itens.aggregate(
             total=Coalesce(
                 Sum(
@@ -157,8 +183,8 @@ class Invoice(NoNameCoreModel):
 
         iva_expr = Case(
             When(
-                aplica_iva=True,
-                then=linha_expr * Coalesce(F("iva_percentual"), Value(Decimal("0.00"))) / Value(Decimal("100.00")),
+                applies_vat=True,
+                then=linha_expr * Coalesce(F("vat_percentage"), Value(Decimal("0.00"))) / Value(Decimal("100.00")),
             ),
             default=Value(Decimal("0.00")),
             output_field=DecimalField(max_digits=12, decimal_places=2),
@@ -176,9 +202,9 @@ class Invoice(NoNameCoreModel):
             total = Decimal("0.00")
 
         self.subtotal = subtotal
-        self.iva_valor = iva
+        self.vat_amount = iva
         self.total = total
-        self.valor_paciente = total - (self.valor_seguro or Decimal("0.00"))
+        self.patient_amount = total - (self.insurance_amount or Decimal("0.00"))
 
     def persistir_totais(self):
         self.recalculate_totals()
@@ -186,9 +212,9 @@ class Invoice(NoNameCoreModel):
             return
         self.__class__.all_objects.filter(pk=self.pk).update(
             subtotal=self.subtotal,
-            iva_valor=self.iva_valor,
+            vat_amount=self.vat_amount,
             total=self.total,
-            valor_paciente=self.valor_paciente,
+            patient_amount=self.patient_amount,
         )
 
     def confirmed_paid_amount(self):
@@ -196,58 +222,58 @@ class Invoice(NoNameCoreModel):
 
         return self.pagamentos.filter(
             status=Payment.Status.CONFIRMADO,
-            deletado=False,
+            deleted=False,
         ).aggregate(
             total=Coalesce(
                 Sum(
-                    "valor",
+                    "value",
                     output_field=DecimalField(max_digits=12, decimal_places=2),
                 ),
                 Decimal("0.00"),
             )
         )["total"]
 
-    def _default_receipt_number(self, pagamento):
-        # Um recibo é gerado quando a fatura fica totalmente paga. O número
-        # precisa ser estável e rastreável pela fatura (não pelo pagamento
-        # parcial), mas mantemos referência do pagamento que fechou a fatura.
-        fat_ref = self.id_custom or self.pk
-        pag_ref = getattr(pagamento, "id_custom", None) or getattr(pagamento, "pk", None)
+    def _default_receipt_number(self, payment):
+        # Um recibo é gerado quando a invoice fica totalmente paga. O número
+        # precisa ser estável e rastreável pela invoice (não pelo payment
+        # parcial), mas mantemos referência do payment que fechou a invoice.
+        fat_ref = self.custom_id or self.pk
+        pag_ref = getattr(payment, "custom_id", None) or getattr(payment, "pk", None)
         if pag_ref:
             return f"REC-{fat_ref}-{pag_ref}"
         return f"REC-{fat_ref}"
 
-    def generate_automatic_receipt(self, pagamento):
-        if not pagamento or pagamento.status != pagamento.Status.CONFIRMADO:
+    def generate_automatic_receipt(self, payment):
+        if not payment or payment.status != payment.Status.CONFIRMADO:
             return None
 
         from apps.payments.models.receipt import Receipt
 
-        # Garante 1 recibo por fatura (mesmo que existam pagamentos parciais).
-        # Se já existir, sincroniza o pagamento de referência + valor.
+        # Garante 1 recibo por invoice (mesmo que existam pagamentos parciais).
+        # Se já existir, sincroniza o payment de referência + value.
         recibo = (
-            Receipt.objects.filter(fatura=self).order_by("-criado_em", "-id").first()
-            or Receipt.objects.filter(pagamento=pagamento).order_by("-criado_em", "-id").first()
+            Receipt.objects.filter(invoice=self).order_by("-created_at", "-id").first()
+            or Receipt.objects.filter(payment=payment).order_by("-created_at", "-id").first()
         )
 
         if recibo:
             campos_atualizar = []
-            if recibo.fatura_id != self.pk:
-                recibo.fatura = self
-                campos_atualizar.append("fatura")
-            if recibo.valor != self.total:
-                # O recibo representa o pagamento total da fatura (não só o
-                # último pagamento).
-                recibo.valor = self.total
-                campos_atualizar.append("valor")
-            if recibo.pagamento_id != pagamento.pk:
-                recibo.pagamento = pagamento
-                campos_atualizar.append("pagamento")
+            if recibo.invoice_id != self.pk:
+                recibo.invoice = self
+                campos_atualizar.append("invoice")
+            if recibo.value != self.total:
+                # O recibo representa o payment total da invoice (não só o
+                # último payment).
+                recibo.value = self.total
+                campos_atualizar.append("value")
+            if recibo.payment_id != payment.pk:
+                recibo.payment = payment
+                campos_atualizar.append("payment")
 
-            numero = self._default_receipt_number(pagamento)
-            if recibo.numero != numero:
-                recibo.numero = numero
-                campos_atualizar.append("numero")
+            number = self._default_receipt_number(payment)
+            if recibo.number != number:
+                recibo.number = number
+                campos_atualizar.append("number")
 
             if campos_atualizar:
                 recibo.save(update_fields=campos_atualizar)
@@ -255,35 +281,35 @@ class Invoice(NoNameCoreModel):
             return recibo
 
         return Receipt.objects.create(
-            fatura=self,
-            pagamento=pagamento,
-            numero=self._default_receipt_number(pagamento),
-            valor=self.total,
+            invoice=self,
+            payment=payment,
+            number=self._default_receipt_number(payment),
+            value=self.total,
         )
 
-    def update_payment_status(self, pagamento=None):
-        if self.estado in {self.Estado.RASCUNHO, self.Estado.CANCELADA}:
+    def update_payment_status(self, payment=None):
+        if self.status in {self.Estado.RASCUNHO, self.Estado.CANCELADA}:
             return
 
         total_paid = self.confirmed_paid_amount() or Decimal("0.00")
-        total_fatura = self.total or Decimal("0.00")
-        novo_estado = (
-            self.Estado.PAGA if total_paid >= total_fatura and total_fatura > Decimal("0.00") else self.Estado.EMITIDA
+        total_invoice = self.total or Decimal("0.00")
+        novo_status = (
+            self.Estado.PAGA if total_paid >= total_invoice and total_invoice > Decimal("0.00") else self.Estado.EMITIDA
         )
 
-        if novo_estado == self.Estado.PAGA and pagamento is not None:
-            self.generate_automatic_receipt(pagamento)
+        if novo_status == self.Estado.PAGA and payment is not None:
+            self.generate_automatic_receipt(payment)
 
-        if self.estado != novo_estado:
-            self.estado = novo_estado
-            self.save(update_fields=["estado"])
+        if self.status != novo_status:
+            self.status = novo_status
+            self.save(update_fields=["status"])
             try:
                 linhas = [
-                    f"Novo estado: {self.get_estado_display()}",
+                    f"Novo status: {self.get_status_display()}",
                     f"Total com IVA: {self.total:.2f}",
-                    f"Total pago confirmado: {(total_paid or Decimal('0.00')):.2f}",
+                    f"Total pago confirmed: {(total_paid or Decimal('0.00')):.2f}",
                 ]
-                self.register_history("PAGAMENTO", "Estado de pagamento atualizado", linhas=linhas)
+                self.register_history("PAGAMENTO", "Estado de payment atualizado", linhas=linhas)
             except Exception:
                 pass
 
@@ -293,277 +319,277 @@ class Invoice(NoNameCoreModel):
 
     @property
     def source_reference(self):
-        if self.origem == self.Origem.CLINICO:
-            return self.requisicao
-        if self.origem == self.Origem.FARMACIA:
-            return self.venda
-        if self.origem == self.Origem.ENFERMAGEM:
-            if self.pk and self.procedimentos.exists():
-                return f"{self.procedimentos.count()} procedimento(s)"
-            return self.procedimento
-        if self.origem == self.Origem.CONSULTA:
-            return self.consulta
-        if self.origem == self.Origem.CIRURGIA:
-            return self.cirurgia
-        if self.origem == self.Origem.MISTA:
+        if self.origin == self.Origem.CLINICO:
+            return self.request
+        if self.origin == self.Origem.FARMACIA:
+            return self.sale
+        if self.origin == self.Origem.ENFERMAGEM:
+            if self.pk and self.procedures.exists():
+                return f"{self.procedures.count()} procedure(s)"
+            return self.procedure
+        if self.origin == self.Origem.CONSULTA:
+            return self.consultation
+        if self.origin == self.Origem.CIRURGIA:
+            return self.surgery
+        if self.origin == self.Origem.MISTA:
             return None
         return None
 
     def _validate_source(self):
-        if self.origem == self.Origem.MISTA:
+        if self.origin == self.Origem.MISTA:
             refs = []
-            if self.requisicao_id:
-                refs.append(self.requisicao)
-            if self.venda_id and getattr(self.venda, "paciente_id", None):
-                refs.append(self.venda)
-            if self.procedimento_id:
-                refs.append(self.procedimento)
-            if self.consulta_id:
-                refs.append(self.consulta)
-            if self.cirurgia_id:
-                refs.append(self.cirurgia)
-            if self.pk and self.procedimentos.exists():
-                refs.extend(list(self.procedimentos.select_related("paciente").all()))
+            if self.request_id:
+                refs.append(self.request)
+            if self.sale_id and getattr(self.sale, "patient_id", None):
+                refs.append(self.sale)
+            if self.procedure_id:
+                refs.append(self.procedure)
+            if self.consultation_id:
+                refs.append(self.consultation)
+            if self.surgery_id:
+                refs.append(self.surgery)
+            if self.pk and self.procedures.exists():
+                refs.extend(list(self.procedures.select_related("patient").all()))
 
             if refs:
                 primeiro = refs[0]
-                paciente_ref = getattr(primeiro, "paciente", None)
-                paciente_id = getattr(paciente_ref, "id", None)
-                inquilino_id = getattr(primeiro, "inquilino_id", None)
+                patient_ref = getattr(primeiro, "patient", None)
+                patient_id = getattr(patient_ref, "id", None)
+                tenant_id = getattr(primeiro, "tenant_id", None)
 
                 for ref in refs[1:]:
-                    ref_paciente_id = getattr(getattr(ref, "paciente", None), "id", None)
-                    if paciente_id and ref_paciente_id and ref_paciente_id != paciente_id:
-                        raise ValidationError({"paciente": "Referências da fatura mista devem ser do mesmo paciente."})
-                    ref_inquilino_id = getattr(ref, "inquilino_id", None)
-                    if inquilino_id and ref_inquilino_id and ref_inquilino_id != inquilino_id:
-                        raise ValidationError({"inquilino": "Referências da fatura mista devem ser do mesmo inquilino."})
+                    ref_patient_id = getattr(getattr(ref, "patient", None), "id", None)
+                    if patient_id and ref_patient_id and ref_patient_id != patient_id:
+                        raise ValidationError({"patient": "Referências da invoice mista devem ser do mesmo patient."})
+                    ref_tenant_id = getattr(ref, "tenant_id", None)
+                    if tenant_id and ref_tenant_id and ref_tenant_id != tenant_id:
+                        raise ValidationError({"tenant": "Referências da invoice mista devem ser do mesmo tenant."})
 
-                if not self.paciente_id and paciente_ref is not None:
-                    self.paciente = paciente_ref
+                if not self.patient_id and patient_ref is not None:
+                    self.patient = patient_ref
 
-            if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
-                raise ValidationError({"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."})
+            if self.patient_id and self.patient.tenant_id != self.tenant_id:
+                raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
             return
 
-        if self.origem == self.Origem.ENFERMAGEM:
-            # Enfermagem: pode usar legado (procedimento) OU múltiplos (procedimentos).
-            if self.procedimento_id and self.pk and self.procedimentos.exists():
+        if self.origin == self.Origem.ENFERMAGEM:
+            # Enfermagem: pode usar legado (procedure) OU múltiplos (procedures).
+            if self.procedure_id and self.pk and self.procedures.exists():
                 raise ValidationError(
-                    {"procedimentos": ("Use um: 'procedimento (legado)' OU 'procedimentos (múltiplos)'.")}
+                    {"procedures": ("Use um: 'procedure (legado)' OU 'procedures (múltiplos)'.")}
                 )
 
-            if self.requisicao_id:
-                raise ValidationError({"requisicao": "Remova a requisição, não corresponde à origem Enfermagem."})
-            if self.venda_id:
-                raise ValidationError({"venda": "Remova a venda, não corresponde à origem Enfermagem."})
-            if self.consulta_id:
-                raise ValidationError({"consulta": "Remova a consulta, não corresponde à origem Enfermagem."})
+            if self.request_id:
+                raise ValidationError({"request": "Remova a requisição, não corresponde à origin Enfermagem."})
+            if self.sale_id:
+                raise ValidationError({"sale": "Remova a sale, não corresponde à origin Enfermagem."})
+            if self.consultation_id:
+                raise ValidationError({"consultation": "Remova a consultation, não corresponde à origin Enfermagem."})
 
-            if self.procedimento_id:
-                self.paciente = self.procedimento.paciente
-                if self.inquilino_id and self.procedimento.inquilino_id != self.inquilino_id:
-                    raise ValidationError({"procedimento": "Procedimento e fatura devem pertencer ao mesmo inquilino."})
+            if self.procedure_id:
+                self.patient = self.procedure.patient
+                if self.tenant_id and self.procedure.tenant_id != self.tenant_id:
+                    raise ValidationError({"procedure": "Procedimento e invoice devem pertencer ao mesmo tenant."})
             elif self.pk:
-                procs = list(self.procedimentos.select_related("paciente").all())
+                procs = list(self.procedures.select_related("patient").all())
                 if not procs:
-                    raise ValidationError({"procedimentos": "Informe ao menos um procedimento."})
-                paciente_id = procs[0].paciente_id
-                inquilino_id = procs[0].inquilino_id
+                    raise ValidationError({"procedures": "Informe ao menos um procedure."})
+                patient_id = procs[0].patient_id
+                tenant_id = procs[0].tenant_id
                 for p in procs:
-                    if p.inquilino_id != inquilino_id:
+                    if p.tenant_id != tenant_id:
                         raise ValidationError(
-                            {"procedimentos": "Todos os procedimentos devem pertencer ao mesmo inquilino."}
+                            {"procedures": "Todos os procedures devem pertencer ao mesmo tenant."}
                         )
-                    if p.paciente_id != paciente_id:
-                        raise ValidationError({"procedimentos": "Todos os procedimentos devem ser do mesmo paciente."})
-                if self.inquilino_id and inquilino_id != self.inquilino_id:
+                    if p.patient_id != patient_id:
+                        raise ValidationError({"procedures": "Todos os procedures devem ser do mesmo patient."})
+                if self.tenant_id and tenant_id != self.tenant_id:
                     raise ValidationError(
-                        {"procedimentos": "Procedimentos e fatura devem pertencer ao mesmo inquilino."}
+                        {"procedures": "Procedimentos e invoice devem pertencer ao mesmo tenant."}
                     )
-                self.paciente = procs[0].paciente
+                self.patient = procs[0].patient
 
         else:
             # Demais origens (mantém regra: exatamente uma referência)
-            campos_origem = {
-                self.Origem.CLINICO: "requisicao",
-                self.Origem.FARMACIA: "venda",
-                self.Origem.ENFERMAGEM: "procedimento",
-                self.Origem.CONSULTA: "consulta",
-                self.Origem.CIRURGIA: "cirurgia",
+            campos_origin = {
+                self.Origem.CLINICO: "request",
+                self.Origem.FARMACIA: "sale",
+                self.Origem.ENFERMAGEM: "procedure",
+                self.Origem.CONSULTA: "consultation",
+                self.Origem.CIRURGIA: "surgery",
             }
-            campo_esperado = campos_origem[self.origem]
+            campo_esperado = campos_origin[self.origin]
 
             vinculados = {
-                "requisicao": bool(self.requisicao_id),
-                "venda": bool(self.venda_id),
-                "procedimento": bool(self.procedimento_id),
-                "consulta": bool(self.consulta_id),
-                "cirurgia": bool(self.cirurgia_id),
+                "request": bool(self.request_id),
+                "sale": bool(self.sale_id),
+                "procedure": bool(self.procedure_id),
+                "consultation": bool(self.consultation_id),
+                "surgery": bool(self.surgery_id),
             }
             if sum(vinculados.values()) != 1:
-                raise ValidationError("A fatura deve possuir exatamente uma referência de origem.")
+                raise ValidationError("A invoice deve possuir exatamente uma referência de origin.")
 
             if not vinculados[campo_esperado]:
-                raise ValidationError({campo_esperado: "Informe a referência compatível com a origem."})
+                raise ValidationError({campo_esperado: "Informe a referência compatível com a origin."})
 
             for campo, informado in vinculados.items():
                 if campo != campo_esperado and informado:
-                    raise ValidationError({campo: "Remova esta referência, ela não corresponde à origem."})
+                    raise ValidationError({campo: "Remova esta referência, ela não corresponde à origin."})
 
-            if self.pk and self.procedimentos.exists():
+            if self.pk and self.procedures.exists():
                 raise ValidationError(
-                    {"procedimentos": "Remova os procedimentos, não correspondem à origem selecionada."}
+                    {"procedures": "Remova os procedures, não correspondem à origin selecionada."}
                 )
 
-            if self.origem == self.Origem.CLINICO and self.requisicao_id:
-                self.paciente = self.requisicao.paciente
-                if self.requisicao.inquilino_id != self.inquilino_id:
-                    raise ValidationError({"requisicao": "Requisição e fatura devem pertencer ao mesmo inquilino."})
+            if self.origin == self.Origem.CLINICO and self.request_id:
+                self.patient = self.request.patient
+                if self.request.tenant_id != self.tenant_id:
+                    raise ValidationError({"request": "Requisição e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origem == self.Origem.FARMACIA and self.venda_id:
-            if getattr(self.venda, "paciente_id", None):
-                self.paciente = self.venda.paciente
-            if self.venda.inquilino_id != self.inquilino_id:
-                raise ValidationError({"venda": "Venda e fatura devem pertencer ao mesmo inquilino."})
+        if self.origin == self.Origem.FARMACIA and self.sale_id:
+            if getattr(self.sale, "patient_id", None):
+                self.patient = self.sale.patient
+            if self.sale.tenant_id != self.tenant_id:
+                raise ValidationError({"sale": "Venda e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origem == self.Origem.CONSULTA and self.consulta_id:
-            self.paciente = self.consulta.paciente
-            if self.consulta.inquilino_id != self.inquilino_id:
-                raise ValidationError({"consulta": "Consulta e fatura devem pertencer ao mesmo inquilino."})
+        if self.origin == self.Origem.CONSULTA and self.consultation_id:
+            self.patient = self.consultation.patient
+            if self.consultation.tenant_id != self.tenant_id:
+                raise ValidationError({"consultation": "Consulta e invoice devem pertencer ao mesmo tenant."})
 
-        if self.origem == self.Origem.CIRURGIA and self.cirurgia_id:
-            self.paciente = self.cirurgia.paciente
-            if self.cirurgia.inquilino_id != self.inquilino_id:
-                raise ValidationError({"cirurgia": "Cirurgia e fatura devem pertencer ao mesmo inquilino."})
+        if self.origin == self.Origem.CIRURGIA and self.surgery_id:
+            self.patient = self.surgery.patient
+            if self.surgery.tenant_id != self.tenant_id:
+                raise ValidationError({"surgery": "Cirurgia e invoice devem pertencer ao mesmo tenant."})
 
-        if self.paciente_id and self.paciente.inquilino_id != self.inquilino_id:
-            raise ValidationError({"paciente": "Paciente e fatura devem pertencer ao mesmo inquilino."})
+        if self.patient_id and self.patient.tenant_id != self.tenant_id:
+            raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
 
-    def sincronizar_itens_da_origem(self):
-        if self.estado != self.Estado.RASCUNHO:
+    def sincronizar_itens_da_origin(self):
+        if self.status != self.Estado.RASCUNHO:
             raise ValidationError("Somente faturas em rascunho podem sincronizar itens.")
 
-        if self.origem == self.Origem.MISTA:
+        if self.origin == self.Origem.MISTA:
             # Fatura mista não sincroniza itens automaticamente.
             self.persistir_totais()
             return
 
         from apps.billing.models.invoice_items import InvoiceItem
 
-        for item in self.itens.filter(deletado=False):
+        for item in self.itens.filter(deleted=False):
             item.delete()
 
-        if self.origem == self.Origem.CLINICO:
-            itens_requisicao = self.requisicao.itens.select_related(
-                "exame",
-                "exame_medico",
+        if self.origin == self.Origem.CLINICO:
+            itens_request = self.request.itens.select_related(
+                "exam",
+                "medical_exam",
             )
-            for item in itens_requisicao:
-                if item.exame_id:
+            for item in itens_request:
+                if item.exam_id:
                     InvoiceItem.objects.create(
-                        inquilino=self.inquilino,
-                        fatura=self,
-                        tipo_item=InvoiceItem.TipoItem.EXAME,
-                        exame=item.exame,
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.EXAME,
+                        exam=item.exam,
                     )
 
-                elif item.exame_medico_id:
+                elif item.medical_exam_id:
                     InvoiceItem.objects.create(
-                        inquilino=self.inquilino,
-                        fatura=self,
-                        tipo_item=InvoiceItem.TipoItem.EXAME_MEDICO,
-                        exame_medico=item.exame_medico,
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.EXAME_MEDICO,
+                        medical_exam=item.medical_exam,
                     )
 
-        elif self.origem == self.Origem.FARMACIA:
-            itens_venda = self.venda.itens.select_related("produto")
-            for item in itens_venda:
+        elif self.origin == self.Origem.FARMACIA:
+            itens_sale = self.sale.itens.select_related("product")
+            for item in itens_sale:
                 InvoiceItem.objects.create(
-                    inquilino=self.inquilino,
-                    fatura=self,
-                    tipo_item=InvoiceItem.TipoItem.ITEM_VENDA,
-                    item_venda=item,
+                    tenant=self.tenant,
+                    invoice=self,
+                    item_type=InvoiceItem.TipoItem.ITEM_VENDA,
+                    sale_item=item,
                 )
 
-        elif self.origem == self.Origem.ENFERMAGEM:
-            procedimentos = []
-            if self.procedimento_id:
-                procedimentos = [self.procedimento]
+        elif self.origin == self.Origem.ENFERMAGEM:
+            procedures = []
+            if self.procedure_id:
+                procedures = [self.procedure]
             elif self.pk:
-                procedimentos = list(self.procedimentos.all())
+                procedures = list(self.procedures.all())
 
-            if not procedimentos:
+            if not procedures:
                 raise ValidationError(
-                    {"procedimentos": "Informe ao menos um procedimento de enfermagem para sincronizar itens."}
+                    {"procedures": "Informe ao menos um procedure de enfermagem para sincronizar itens."}
                 )
 
-            for proc in procedimentos:
-                itens_procedimento = proc.itens.filter(realizado=True)
-                for item in itens_procedimento:
+            for proc in procedures:
+                itens_procedure = proc.itens.filter(performed=True)
+                for item in itens_procedure:
                     InvoiceItem.objects.create(
-                        inquilino=self.inquilino,
-                        fatura=self,
-                        tipo_item=InvoiceItem.TipoItem.PROCEDIMENTO_ITEM,
-                        procedimento_item=item,
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.PROCEDIMENTO_ITEM,
+                        procedure_item=item,
                     )
 
-                materiais_procedimento = proc.materiais.all()
-                for material in materiais_procedimento:
+                materiais_procedure = proc.materiais.all()
+                for material in materiais_procedure:
                     InvoiceItem.objects.create(
-                        inquilino=self.inquilino,
-                        fatura=self,
-                        tipo_item=InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL,
-                        procedimento_material=material,
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.PROCEDIMENTO_MATERIAL,
+                        procedure_material=material,
                     )
 
-        elif self.origem == self.Origem.CONSULTA:
-            descricao = f"Consulta: {getattr(self.consulta, 'tipo', '')}".strip()
-            if not descricao:
-                descricao = "Consulta"
-            iva_percentual = getattr(getattr(self.consulta, "especialidade", None), "iva_percentual", None)
+        elif self.origin == self.Origem.CONSULTA:
+            description = f"Consulta: {getattr(self.consultation, 'type', '')}".strip()
+            if not description:
+                description = "Consulta"
+            vat_percentage = getattr(getattr(self.consultation, "specialty", None), "vat_percentage", None)
             InvoiceItem.objects.create(
-                inquilino=self.inquilino,
-                fatura=self,
-                tipo_item=InvoiceItem.TipoItem.AJUSTE,
-                descricao=descricao,
-                quantidade=Decimal("1.00"),
-                preco_unitario=getattr(self.consulta, "preco", Decimal("0.00")) or Decimal("0.00"),
-                iva_percentual=iva_percentual if iva_percentual is not None else Decimal("0.00"),
+                tenant=self.tenant,
+                invoice=self,
+                item_type=InvoiceItem.TipoItem.AJUSTE,
+                description=description,
+                quantity=Decimal("1.00"),
+                unit_price=getattr(self.consultation, "price", Decimal("0.00")) or Decimal("0.00"),
+                vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
             )
-        elif self.origem == self.Origem.CIRURGIA:
-            descricao = "Cirurgia"
+        elif self.origin == self.Origem.CIRURGIA:
+            description = "Cirurgia"
             nomes = []
             with suppress(Exception):
-                nomes = list(self.cirurgia.procedimentos.values_list("nome", flat=True))
+                nomes = list(self.surgery.procedures.values_list("name", flat=True))
             if nomes:
-                descricao = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
-            elif getattr(self.cirurgia, "procedimento", "").strip():
-                descricao = f"Cirurgia: {self.cirurgia.procedimento.strip()}"
+                description = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
+            elif getattr(self.surgery, "procedure", "").strip():
+                description = f"Cirurgia: {self.surgery.procedure.strip()}"
 
-            preco = getattr(self.cirurgia, "preco_estimado", Decimal("0.00")) or Decimal("0.00")
-            iva_percentual = getattr(self.cirurgia, "iva_percentual", None)
-            aplica_iva = getattr(self.cirurgia, "aplica_iva_por_padrao", True)
+            price = getattr(self.surgery, "estimated_price", Decimal("0.00")) or Decimal("0.00")
+            vat_percentage = getattr(self.surgery, "vat_percentage", None)
+            applies_vat = getattr(self.surgery, "applies_vat_by_default", True)
 
             InvoiceItem.objects.create(
-                inquilino=self.inquilino,
-                fatura=self,
-                tipo_item=InvoiceItem.TipoItem.AJUSTE,
-                descricao=descricao,
-                quantidade=Decimal("1.00"),
-                preco_unitario=preco,
-                iva_percentual=iva_percentual if iva_percentual is not None else Decimal("0.00"),
-                aplica_iva=aplica_iva,
+                tenant=self.tenant,
+                invoice=self,
+                item_type=InvoiceItem.TipoItem.AJUSTE,
+                description=description,
+                quantity=Decimal("1.00"),
+                unit_price=price,
+                vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
+                applies_vat=applies_vat,
             )
 
         self.persistir_totais()
         try:
             linhas = [
-                f"Origem: {self.get_origem_display()}",
-                f"Paciente: {getattr(self.paciente, 'nome', '-')}",
-                f"Itens: {self.itens.filter(deletado=False).count()}",
+                f"Origem: {self.get_origin_display()}",
+                f"Paciente: {getattr(self.patient, 'name', '-')}",
+                f"Itens: {self.itens.filter(deleted=False).count()}",
                 f"Total sem IVA: {self.subtotal:.2f}",
-                f"IVA: {self.iva_valor:.2f}",
+                f"IVA: {self.vat_amount:.2f}",
                 f"Total com IVA: {self.total:.2f}",
             ]
             self.register_history("SINCRONIZACAO", "Itens sincronizados", linhas=linhas)
@@ -576,41 +602,41 @@ class Invoice(NoNameCoreModel):
 
     @transaction.atomic
     def issue(self):
-        if self.estado != self.Estado.RASCUNHO:
+        if self.status != self.Estado.RASCUNHO:
             raise ValidationError("Somente faturas em rascunho podem ser emitidas.")
 
-        if not self.itens.filter(deletado=False).exists():
+        if not self.itens.filter(deleted=False).exists():
             raise ValidationError("Fatura sem itens.")
 
-        if self.origem == self.Origem.ENFERMAGEM:
+        if self.origin == self.Origem.ENFERMAGEM:
             from apps.pharmacy.models.lot import Lot
 
-            procedimentos = []
-            if self.procedimento_id:
-                procedimentos = [self.procedimento]
+            procedures = []
+            if self.procedure_id:
+                procedures = [self.procedure]
             elif self.pk:
-                procedimentos = list(self.procedimentos.all())
+                procedures = list(self.procedures.all())
 
             pendentes = []
-            for proc in procedimentos:
+            for proc in procedures:
                 pendentes.extend(
-                    list(proc.materiais.filter(movimento_estoque__isnull=True).select_related("produto").all())
+                    list(proc.materiais.filter(inventory_movement__isnull=True).select_related("product").all())
                 )
 
             faltas = []
             for material in pendentes:
-                # Regra atual: cada consumo precisa caber em um lote válido.
-                lotes = Lot.disponiveis(material.produto)
-                if self.inquilino_id:
-                    lotes = lotes.filter(inquilino_id=self.inquilino_id)
+                # Regra atual: cada consumo precisa caber em um lot válido.
+                lotes = Lot.disponiveis(material.product)
+                if self.tenant_id:
+                    lotes = lotes.filter(tenant_id=self.tenant_id)
 
                 best = lotes.order_by("-saldo").first()
                 disponivel = int(getattr(best, "saldo", 0) or 0) if best else 0
-                necessario = int(material.quantidade or 0)
+                necessario = int(material.quantity or 0)
 
                 if disponivel < necessario:
                     faltas.append(
-                        f"{material.produto.nome} (produto_id={material.produto_id}): "
+                        f"{material.product.name} (product_id={material.product_id}): "
                         f"necessario {necessario}, disponivel {disponivel}"
                     )
 
@@ -618,7 +644,7 @@ class Invoice(NoNameCoreModel):
                 raise ValidationError(
                     {
                         "estoque": (
-                            "Estoque insuficiente na farmácia para emitir a fatura. "
+                            "Estoque insuficiente na farmácia para emitir a invoice. "
                             "Atualize o estoque e tente novamente."
                         ),
                         "itens": faltas,
@@ -630,14 +656,14 @@ class Invoice(NoNameCoreModel):
                 material.save(alocar_estoque=True)
 
         self.persistir_totais()
-        self.estado = self.Estado.EMITIDA
-        self.save(update_fields=["estado", "subtotal", "iva_valor", "total", "valor_paciente"])
+        self.status = self.Estado.EMITIDA
+        self.save(update_fields=["status", "subtotal", "vat_amount", "total", "patient_amount"])
         try:
             linhas = [
-                f"Origem: {self.get_origem_display()}",
-                f"Paciente: {getattr(self.paciente, 'nome', '-')}",
+                f"Origem: {self.get_origin_display()}",
+                f"Paciente: {getattr(self.patient, 'name', '-')}",
                 f"Total sem IVA: {self.subtotal:.2f}",
-                f"IVA: {self.iva_valor:.2f}",
+                f"IVA: {self.vat_amount:.2f}",
                 f"Total com IVA: {self.total:.2f}",
             ]
             self.register_history("EMISSAO", "Fatura emitida", linhas=linhas)
@@ -646,12 +672,12 @@ class Invoice(NoNameCoreModel):
 
     registrar_historico = register_history
     recalcular_totais = recalculate_totals
-    valor_pago_confirmado = confirmed_paid_amount
-    _numero_recibo_padrao = _default_receipt_number
+    value_pago_confirmed = confirmed_paid_amount
+    _number_recibo_padrao = _default_receipt_number
     gerar_recibo_automatico = generate_automatic_receipt
-    atualizar_estado_pagamento = update_payment_status
-    referencia_origem = source_reference
-    _validar_origem = _validate_source
+    atualizar_status_payment = update_payment_status
+    referencia_origin = source_reference
+    _validar_origin = _validate_source
     emitir = issue
 
     # ==========================================
@@ -665,10 +691,10 @@ class Invoice(NoNameCoreModel):
 
         if self.pk:
             original = Invoice.all_objects.get(pk=self.pk)
-            if original.estado != self.Estado.RASCUNHO:
+            if original.status != self.Estado.RASCUNHO:
                 raise ValidationError("Fatura já emitida não pode ser alterada.")
 
     def __str__(self):
-        if self.paciente_id:
-            return f"{self.id_custom} - {self.paciente.nome}"
-        return f"{self.id_custom}"
+        if self.patient_id:
+            return f"{self.custom_id} - {self.patient.name}"
+        return f"{self.custom_id}"

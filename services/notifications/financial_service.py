@@ -9,18 +9,18 @@ class FinancialService:
         if not debit_account or not credit_account:
             return None
 
-        reference = getattr(payment, "referencia_externa", "") or str(payment.pk)
-        payment_date = getattr(payment, "pago_em", None)
+        reference = getattr(payment, "external_reference", "") or str(payment.pk)
+        payment_date = getattr(payment, "paid_at", None)
 
         return AccountingService.create_entry(
-            description=f"Payment receipt {getattr(payment, 'id_custom', payment.pk)}",
-            data=payment_date.date() if payment_date else None,
+            description=f"Payment receipt {getattr(payment, 'custom_id', payment.pk)}",
+            date=payment_date.date() if payment_date else None,
             movements=[
-                {"conta": debit_account, "debito": payment.valor, "credito": 0},
-                {"conta": credit_account, "debito": 0, "credito": payment.valor},
+                {"account": debit_account, "debit": payment.value, "credit": 0},
+                {"account": credit_account, "debit": 0, "credit": payment.value},
             ],
             external_reference=reference,
-            tenant=getattr(payment, "inquilino", None),
+            tenant=getattr(payment, "tenant", None),
         )
 
 

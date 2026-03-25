@@ -23,7 +23,7 @@ class SubscriptionPlan(
     SoftDeleteMixin,
     BaseModel,
 ):
-    prefixo = "PLAN"
+    prefix = "PLAN"
 
     class PlanType(models.TextChoices):
         FREE = "FREE", "Free"
@@ -32,41 +32,65 @@ class SubscriptionPlan(
 
     TipoPlano = PlanType
 
-    tipo = models.CharField(
+    type = models.CharField(
+
+        db_column="tipo",
+
         max_length=10,
         choices=PlanType.choices,
         default=PlanType.FREE,
         db_index=True,
     )
 
-    limite_usuarios = models.PositiveIntegerField(default=1)
-    limite_requisicoes_mes = models.PositiveIntegerField(default=0)
+    user_limit = models.PositiveIntegerField(
 
-    preco_mensal = models.DecimalField(
+        db_column="limite_usuarios",
+
+        default=1)
+    monthly_request_limit = models.PositiveIntegerField(
+        db_column="limite_requisicoes_mes",
+        default=0)
+
+    monthly_price = models.DecimalField(
+
+        db_column="preco_mensal",
+
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
-    preco_excedente_requisicao = models.DecimalField(
+    request_overage_price = models.DecimalField(
+        db_column="preco_excedente_requisicao",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    suporte_prioritario = models.BooleanField(default=False)
-    permite_multi_unidade = models.BooleanField(default=False)
+    priority_support = models.BooleanField(
 
-    ativo = models.BooleanField(default=True, db_index=True)
+        db_column="suporte_prioritario",
+
+        default=False)
+    allows_multi_unit = models.BooleanField(
+        db_column="permite_multi_unidade",
+        default=False)
+
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "inquilinos_planoassinatura"
         verbose_name = "Plano de Assinatura"
         verbose_name_plural = "Planos de Assinatura"
         indexes = [
-            models.Index(fields=["tipo", "ativo"]),
-            models.Index(fields=["ativo"]),
+            models.Index(fields=["type", "active"]),
+            models.Index(fields=["active"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or self.tipo
+        return self.name or self.type

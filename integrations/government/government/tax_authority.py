@@ -21,13 +21,13 @@ class TaxAuthorityService:
             "Content-Type": "application/json",
         }
 
-    def submit_invoice(self, invoice_data: dict):
+    def submit_invoice(self, invoice_date: dict):
         """
-        Submete fatura para autoridade tributária.
+        Submete invoice para autoridade tributária.
         """
         response = requests.post(
             f"{self.base_url}/invoices",
-            json=invoice_data,
+            json=invoice_date,
             headers=self._headers(),
             timeout=30,
         )

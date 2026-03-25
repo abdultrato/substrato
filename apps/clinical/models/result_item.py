@@ -1,4 +1,4 @@
-# LOCAL: aplicativos/clinico/models/resultado_item.py
+# LOCAL: aplicativos/clinico/models/result_item.py
 
 from decimal import Decimal, InvalidOperation
 
@@ -21,40 +21,66 @@ User = settings.AUTH_USER_MODEL
 
 
 class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
-    fonte_inquilino = "paciente"
+    fonte_tenant = "patient"
 
-    prefixo = "RES"
+    prefix = "RES"
 
-    resultado = models.ForeignKey(
+    result = models.ForeignKey(
+
         Result,
+
+        db_column="resultado_id",
         on_delete=models.CASCADE,
         related_name="itens",
     )
 
-    exame_campo = models.ForeignKey(
+    exam_field = models.ForeignKey(
+
         LabExamField,
+
+        db_column="exame_campo_id",
         on_delete=models.CASCADE,
         related_name="resultados",
     )
 
-    # valor numérico do resultado
-    resultado_valor = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    # value numérico do result
+    result_value = models.DecimalField(
+        db_column="resultado_valor",
+        max_digits=12, decimal_places=2, null=True, blank=True)
 
-    status_clinico = models.CharField(max_length=20, blank=True)
+    clinical_status = models.CharField(
 
-    cor_laudo = models.CharField(max_length=20, blank=True, null=True)
+        db_column="status_clinico",
 
-    alerta_critico = models.BooleanField(default=False)
+        max_length=20, blank=True)
 
-    estado = models.CharField(
+    report_color = models.CharField(
+
+        db_column="cor_laudo",
+
+        max_length=20, blank=True, null=True)
+
+    critical_alert = models.BooleanField(
+
+        db_column="alerta_critico",
+
+        default=False)
+
+    status = models.CharField(
+
+        db_column="estado",
+
         max_length=30,
         choices=ResultState.CHOICES,
         default=ResultState.PENDING,
         db_index=True,
     )
 
-    validado_por = models.ForeignKey(
+    validated_by = models.ForeignKey(
+
         User,
+
+        db_column="validado_por_id",
         on_delete=models.SET_NULL,
         verbose_name="Resultado",
         null=True,
@@ -62,11 +88,15 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         related_name="resultados_validados",
     )
 
-    data_validacao = models.DateTimeField(null=True, blank=True)
+    validation_date = models.DateTimeField(
+
+        db_column="data_validacao",
+
+        null=True, blank=True)
 
     class Meta:
         db_table = "clinico_resultadoitem"
-        unique_together = ("resultado", "exame_campo")
+        unique_together = ("result", "exam_field")
 
     # =====================================================
     # LAZY IMPORT
@@ -83,39 +113,39 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # =====================================================
 
     def save(self, *args, **kwargs):
-        if not self.inquilino and self.resultado:
-            self.inquilino = self.resultado.inquilino
+        if not self.tenant and self.result:
+            self.tenant = self.result.tenant
 
-        valor_anterior = None
+        value_anterior = None
 
         if self.pk:
-            valor_anterior = (
-                self.__class__.all_objects.filter(pk=self.pk).values_list("resultado_valor", flat=True).first()
+            value_anterior = (
+                self.__class__.all_objects.filter(pk=self.pk).values_list("result_value", flat=True).first()
             )
 
-        valor_alterado = valor_anterior != self.resultado_valor
+        value_alterado = value_anterior != self.result_value
 
         # interpretação automática
-        if valor_alterado and self.estado != ResultState.VALIDATED:
+        if value_alterado and self.status != ResultState.VALIDATED:
             try:
-                if self.resultado_valor is not None:
-                    self.resultado_valor = Decimal(self.resultado_valor)
+                if self.result_value is not None:
+                    self.result_value = Decimal(self.result_value)
             except (InvalidOperation, TypeError) as err:
-                raise ValidationError("Valor do resultado inválido.") from err
+                raise ValidationError("Valor do result inválido.") from err
 
             self._result_service().interpretar(self)
 
         super().save(*args, **kwargs)
 
-        if self.resultado:
-            self.resultado.requisicao.update_clinical_status()
+        if self.result:
+            self.result.request.update_clinical_status()
 
     # =====================================================
     # DELETE PROTEGIDO
     # =====================================================
 
     def delete(self, *args, **kwargs):
-        if self.estado in ResultState.TERMINAL:
+        if self.status in ResultState.TERMINAL:
             raise ValidationError("Resultado validado não pode ser removido.")
 
         super().delete(*args, **kwargs)
@@ -124,43 +154,43 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     # TRANSIÇÃO DE ESTADO
     # =====================================================
 
-    def transicionar(self, novo_estado, usuario=None):
+    def transicionar(self, novo_status, user=None):
         with transaction.atomic():
-            resultado = ResultItem.all_objects.select_for_update().get(pk=self.pk)
+            result = ResultItem.all_objects.select_for_update().get(pk=self.pk)
 
             ResultStateMachine.validate_transition(
-                resultado.estado,
-                novo_estado,
+                result.status,
+                novo_status,
             )
 
-            if novo_estado == ResultState.VALIDATED:
-                if resultado.resultado_valor is None:
-                    raise ValidationError("Não é possível validar resultado vazio.")
+            if novo_status == ResultState.VALIDATED:
+                if result.result_value is None:
+                    raise ValidationError("Não é possível validar result vazio.")
 
-                resultado.validado_por = usuario
-                resultado.data_validacao = timezone.now()
+                result.validated_by = user
+                result.validation_date = timezone.now()
 
-                self._result_service().interpretar(resultado)
+                self._result_service().interpretar(result)
 
-            resultado.estado = novo_estado
+            result.status = novo_status
 
-            resultado.save(
+            result.save(
                 update_fields=[
-                    "estado",
-                    "validado_por",
-                    "data_validacao",
-                    "status_clinico",
-                    "cor_laudo",
-                    "alerta_critico",
-                    "resultado_valor",
+                    "status",
+                    "validated_by",
+                    "validation_date",
+                    "clinical_status",
+                    "report_color",
+                    "critical_alert",
+                    "result_value",
                 ]
             )
 
-        if novo_estado == ResultState.VALIDATED:
+        if novo_status == ResultState.VALIDATED:
             event_bus.publish_after_commit(ResultValidatedEvent(result_id=self.id))
 
     def __str__(self):
-        return f"{self.id_custom} - {self.exame_campo.nome}"
+        return f"{self.custom_id} - {self.exam_field.name}"
 
     # =====================================================
     # RESULTADO FORMATADO
@@ -169,7 +199,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     @property
     def formatted_result_value(self):
         """
-        Retorna o valor do resultado acompanhado do símbolo clínico.
+        Retorna o value do result acompanhado do símbolo clínico.
 
         Exemplos:
         6.2 ↓↓
@@ -177,15 +207,15 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
         4.5
         """
 
-        if self.resultado_valor is None:
+        if self.result_value is None:
             return "-"
 
-        simbolo = self.status_clinico or ""
+        simbolo = self.clinical_status or ""
 
         if simbolo and simbolo != "N":
-            return f"{self.resultado_valor} {simbolo}"
+            return f"{self.result_value} {simbolo}"
 
-        return str(self.resultado_valor)
+        return str(self.result_value)
 
-    _servico_resultado = _result_service
-    resultado_valor_formatado = formatted_result_value
+    _servico_result = _result_service
+    result_value_formatado = formatted_result_value

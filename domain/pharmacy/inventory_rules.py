@@ -1,5 +1,5 @@
 def validate_available_inventory(lot, quantity):
-    if lot.quantidade_atual < quantity:
+    if lot.quantity_atual < quantity:
         raise ValueError("Estoque insuficiente.")
 
 

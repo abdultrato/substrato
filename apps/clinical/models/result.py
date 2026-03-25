@@ -9,26 +9,36 @@ User = settings.AUTH_USER_MODEL
 
 
 class Result(NoNameCoreModel):
-    prefixo = "RESG"
+    prefix = "RESG"
 
-    requisicao = models.OneToOneField(
+    request = models.OneToOneField(
+
         LabRequest,
+
+        db_column="requisicao_id",
         on_delete=models.CASCADE,
-        related_name="resultado",
+        related_name="result",
     )
 
-    analista = models.ForeignKey(
+    analyst = models.ForeignKey(
+
         User,
+
+        db_column="analista_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
 
-    finalizado = models.BooleanField(default=False)
+    finalized = models.BooleanField(
+
+        db_column="finalizado",
+
+        default=False)
 
     class Meta:
         db_table = "clinico_resultado"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
 
     # -----------------------------------------------------
 
@@ -36,8 +46,8 @@ class Result(NoNameCoreModel):
         criando = not self.pk
 
         # garante propagação do tenant
-        if not self.inquilino and self.requisicao:
-            self.inquilino = self.requisicao.inquilino
+        if not self.tenant and self.request:
+            self.tenant = self.request.tenant
 
         super().save(*args, **kwargs)
 
@@ -54,22 +64,22 @@ class Result(NoNameCoreModel):
             return
 
         itens = []
-        inquilino = self.inquilino
+        tenant = self.tenant
 
-        requisicao_itens = self.requisicao.itens.select_related("exame").prefetch_related("exame__campos")
+        request_itens = self.request.itens.select_related("exam").prefetch_related("exam__campos")
 
-        for item in requisicao_itens:
-            # Requisições podem conter itens de exame médico (imagem) que não
-            # geram `ResultadoItem`. Evita erro quando `item.exame` é None.
-            if not item.exame_id:
+        for item in request_itens:
+            # Requisições podem conter itens de exam médico (imagem) que não
+            # geram `ResultadoItem`. Evita error quando `item.exam` é None.
+            if not item.exam_id:
                 continue
 
-            for campo in item.exame.campos.all():
+            for campo in item.exam.campos.all():
                 itens.append(
                     ResultItem(
-                        resultado=self,
-                        exame_campo=campo,
-                        inquilino=inquilino,  # ESSENCIAL para multi-tenant
+                        result=self,
+                        exam_field=campo,
+                        tenant=tenant,  # ESSENCIAL para multi-tenant
                     )
                 )
 
@@ -81,4 +91,4 @@ class Result(NoNameCoreModel):
     # -----------------------------------------------------
 
     def __str__(self):
-        return f"{self.id_custom} - {self.requisicao}"
+        return f"{self.custom_id} - {self.request}"

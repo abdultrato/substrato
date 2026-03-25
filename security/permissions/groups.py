@@ -29,7 +29,7 @@ class IsRecepcionista(BaseRolePermission):
     """
 
     group_name = "Recepcionista"
-    allowed_basename = ["paciente", "requisicao", "fatura"]
+    allowed_basename = ["patient", "request", "invoice"]
     allowed_methods = ["GET", "POST", "PUT", "PATCH", "HEAD", "OPTIONS"]
 
 
@@ -47,7 +47,7 @@ class IsLabTechnician(BaseRolePermission):
     """
 
     group_name = "Técnico de Laboratório"
-    allowed_basename = ["resultadoitem", "requisicao", "fatura"]
+    allowed_basename = ["resultadoitem", "request", "invoice"]
     allowed_methods = ["GET", "POST", "PUT", "PATCH", "HEAD", "OPTIONS"]
 
 
@@ -79,7 +79,7 @@ class IsNurse(BaseRolePermission):
     """
 
     group_name = "Enfermeiro"
-    allowed_basename = ["paciente", "requisicao", "resultadoitem"]
+    allowed_basename = ["patient", "request", "resultadoitem"]
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
 
 
@@ -96,7 +96,7 @@ class IsAdminTech(BaseRolePermission):
     """
 
     group_name = "Técnico Administrativo"
-    allowed_basename = ["fatura", "entidade"]
+    allowed_basename = ["invoice", "entidade"]
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
 
 

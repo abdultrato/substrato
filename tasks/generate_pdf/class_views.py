@@ -10,21 +10,21 @@ from .views import request_pdf, results_pdf
 class RequestPdfView(View):
     def get(self, request, pk: int):
         try:
-            requisicao = get_object_or_404(LabRequest.objects.select_related("paciente"), pk=pk)
+            request = get_object_or_404(LabRequest.objects.select_related("patient"), pk=pk)
         except Exception as exc:
             raise Http404("Requisição não encontrada") from exc
 
-        return request_pdf(request, requisicao_id=requisicao.id)
+        return request_pdf(request, request_id=request.id)
 
 
 class ResultPdfView(View):
     def get(self, request, pk: int):
         try:
-            requisicao = get_object_or_404(LabRequest.objects.select_related("paciente"), pk=pk)
+            request = get_object_or_404(LabRequest.objects.select_related("patient"), pk=pk)
         except Exception as exc:
             raise Http404("Requisição não encontrada") from exc
 
-        return results_pdf(request, requisicao_id=requisicao.id)
+        return results_pdf(request, request_id=request.id)
 
 
 RequisicaoPdf = RequestPdfView

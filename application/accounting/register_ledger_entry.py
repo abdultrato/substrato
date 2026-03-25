@@ -23,18 +23,18 @@ class DuplicateOperationError(
 
 @transaction.atomic
 def execute(
-    inquilino,
-    descricao,
-    data_contabil,
+    tenant,
+    description,
+    accounting_date,
     linhas,
     idempotency_key=None,
 ):
     if idempotency_key and LedgerEntry.objects.select_for_update().filter(
-        inquilino=inquilino,
+        tenant=tenant,
         idempotency_key=idempotency_key,
     ).exists():
         raise DuplicateOperationError(
-            "Operação já processada para esta chave.",
+            "Operação já processada para esta key.",
         )
 
     # =====================================================
@@ -51,9 +51,9 @@ def execute(
     # =====================================================
 
     for linha in linhas:
-        if linha.conta.inquilino_id != inquilino.id:
+        if linha.account.tenant_id != tenant.id:
             raise TenantViolationError(
-                "Conta pertence a outro inquilino.",
+                "Conta pertence a outro tenant.",
             )
 
     # =====================================================
@@ -64,16 +64,16 @@ def execute(
 
     try:
         entry = LedgerEntry.objects.create(
-            inquilino=inquilino,
-            descricao=descricao,
-            data_contabil=data_contabil,
-            referencia_externa=reference,
+            tenant=tenant,
+            description=description,
+            accounting_date=accounting_date,
+            external_reference=reference,
             idempotency_key=idempotency_key,
         )
     except IntegrityError as exc:
         if idempotency_key:
             raise DuplicateOperationError(
-                "Operação já processada para esta chave.",
+                "Operação já processada para esta key.",
             ) from exc
         raise
 
@@ -86,10 +86,10 @@ def execute(
         linhas_model.append(
             LedgerLine(
                 entry=entry,
-                conta=linha.conta,
-                valor=getattr(linha.valor, "valor", linha.valor),
-                natureza=getattr(linha.natureza, "tipo", linha.natureza),
-                inquilino=inquilino,
+                account=linha.account,
+                value=getattr(linha.value, "value", linha.value),
+                nature=getattr(linha.nature, "type", linha.nature),
+                tenant=tenant,
             )
         )
 
@@ -104,15 +104,15 @@ def execute(
     def publish_event():
         event = LedgerEntryCreated(
             entry_id=entry.id,
-            inquilino_id=entry.inquilino_id,
-            data_contabil=entry.data_contabil,
+            tenant_id=entry.tenant_id,
+            accounting_date=entry.accounting_date,
             linhas=[
                 LedgerLineDTO(
-                    conta_id=linha_model.conta_id,
-                    valor=str(
-                        linha_model.valor,
+                    account_id=linha_model.account_id,
+                    value=str(
+                        linha_model.value,
                     ),
-                    natureza=linha_model.natureza,
+                    nature=linha_model.nature,
                 )
                 for linha_model in linhas_model
             ],

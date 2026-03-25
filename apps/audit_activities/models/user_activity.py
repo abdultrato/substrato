@@ -16,10 +16,13 @@ class UserActivity(NoNameCoreModel):
     - rota/resolução DRF quando disponível (basename/action)
     """
 
-    prefixo = "AUD"
+    prefix = "AUD"
 
-    usuario = models.ForeignKey(
+    user = models.ForeignKey(
+
         settings.AUTH_USER_MODEL,
+
+        db_column="usuario_id",
         on_delete=models.PROTECT,
         related_name="auditoria_atividades",
         null=True,
@@ -28,9 +31,17 @@ class UserActivity(NoNameCoreModel):
         verbose_name="Utilizador",
     )
 
-    metodo = models.CharField(max_length=10, db_index=True, verbose_name="Método HTTP")
-    caminho = models.CharField(max_length=255, db_index=True, verbose_name="Rota curta")
-    path_completo = models.TextField(blank=True, default="", verbose_name="URL completa")
+    method = models.CharField(
+
+        db_column="metodo",
+
+        max_length=10, db_index=True, verbose_name="Método HTTP")
+    path = models.CharField(
+        db_column="caminho",
+        max_length=255, db_index=True, verbose_name="Rota curta")
+    full_path = models.TextField(
+        db_column="path_completo",
+        blank=True, default="", verbose_name="URL completa")
 
     status_code = models.PositiveSmallIntegerField(
         null=True,
@@ -38,9 +49,11 @@ class UserActivity(NoNameCoreModel):
         db_index=True,
         verbose_name="Status HTTP",
     )
-    duracao_ms = models.PositiveIntegerField(null=True, blank=True, verbose_name="Duração (ms)")
+    duration_ms = models.PositiveIntegerField(
+        db_column="duracao_ms",
+        null=True, blank=True, verbose_name="Duração (ms)")
 
-    ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP de origem")
+    ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP de origin")
     user_agent = models.CharField(max_length=255, blank=True, default="", verbose_name="User-Agent")
 
     view_basename = models.CharField(
@@ -58,27 +71,33 @@ class UserActivity(NoNameCoreModel):
         verbose_name="Ação da view",
     )
 
-    objeto_id = models.CharField(
+    object_id = models.CharField(
+
+        db_column="objeto_id",
+
         max_length=80,
         blank=True,
         default="",
         db_index=True,
         verbose_name="Objeto (ID)",
     )
-    mensagem = models.CharField(max_length=255, blank=True, default="", verbose_name="Mensagem")
+    message = models.CharField(
+        db_column="mensagem",
+        max_length=255, blank=True, default="", verbose_name="Mensagem")
     metadata = models.JSONField(default=dict, blank=True, verbose_name="Metadados")
 
     class Meta:
+        db_table = "auditoria_atividades_atividadeusuario"
         verbose_name = "Actividade do Utilizador"
         verbose_name_plural = "Actividades do Utilizador"
-        ordering = ["-criado_em", "-id"]
+        ordering = ["-created_at", "-id"]
         indexes = [
-            models.Index(fields=["inquilino", "criado_em"]),
-            models.Index(fields=["inquilino", "usuario", "criado_em"]),
-            models.Index(fields=["inquilino", "status_code"]),
-            models.Index(fields=["inquilino", "view_basename", "criado_em"]),
+            models.Index(fields=["tenant", "created_at"]),
+            models.Index(fields=["tenant", "user", "created_at"]),
+            models.Index(fields=["tenant", "status_code"]),
+            models.Index(fields=["tenant", "view_basename", "created_at"]),
         ]
 
     def __str__(self) -> str:
-        u = getattr(self.usuario, "username", None) or "—"
-        return f"{u}: {self.metodo} {self.caminho} [{self.status_code}]"
+        u = getattr(self.user, "username", None) or "—"
+        return f"{u}: {self.method} {self.path} [{self.status_code}]"

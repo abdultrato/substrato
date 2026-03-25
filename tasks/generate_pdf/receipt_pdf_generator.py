@@ -35,18 +35,18 @@ def _formatar_dt(value) -> str:
 
 
 def _item_code(item) -> str:
-    exame = getattr(item, "exame", None) or getattr(item, "exame_medico", None)
-    if not exame:
+    exam = getattr(item, "exam", None) or getattr(item, "medical_exam", None)
+    if not exam:
         return ""
-    return getattr(exame, "codigo", "") or getattr(exame, "id_custom", "") or ""
+    return getattr(exam, "code", "") or getattr(exam, "custom_id", "") or ""
 
 
 def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     """
-    Gera PDF A5 do Recibo (documento separado da fatura).
+    Gera PDF A5 do Recibo (documento separado da invoice).
 
     Entrada: objeto Recibo
-    Saída: (bytes_pdf, nome_arquivo)
+    Saída: (bytes_pdf, name_file)
     """
 
     buffer = io.BytesIO()
@@ -75,21 +75,21 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
 
     story: list = []
 
-    fatura = getattr(recibo, "fatura", None)
-    pagamento = getattr(recibo, "pagamento", None)
-    paciente = getattr(fatura, "paciente", None) if fatura else None
+    invoice = getattr(recibo, "invoice", None)
+    payment = getattr(recibo, "payment", None)
+    patient = getattr(invoice, "patient", None) if invoice else None
 
     # Código de barras no header (repete em todas páginas)
     try:
         doc.barcode_value = (
-            f"PAC:{getattr(paciente, 'id_custom', '')}"
-            f"|REC:{getattr(recibo, 'numero', '')}"
-            f"|FAT:{getattr(fatura, 'id_custom', '') if fatura else ''}"
+            f"PAC:{getattr(patient, 'custom_id', '')}"
+            f"|REC:{getattr(recibo, 'number', '')}"
+            f"|FAT:{getattr(invoice, 'custom_id', '') if invoice else ''}"
         )
     except Exception:
         doc.barcode_value = None
 
-    usuario_documento = getattr(pagamento, "criado_por", None) or getattr(fatura, "criado_por", None)
+    user_documento = getattr(payment, "created_by", None) or getattr(invoice, "created_by", None)
 
     # ==========================
     # ESTILOS
@@ -107,49 +107,49 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     # ==========================
     # BLOCO ESQUERDA (PACIENTE)
     # ==========================
-    if paciente:
-        idade = getattr(paciente, "idade", None)
+    if patient:
+        idade = getattr(patient, "idade", None)
         idade_txt = idade() if callable(idade) else "—"
         left_lines = [
-            f"{bold('Paciente')}: {getattr(paciente, 'nome', '—')}",
-            f"{bold('Idade')}: {idade_txt}  -  {bold('Gênero')}: {getattr(paciente, 'genero', '—') or '—'}",
-            f"{bold('Documento')}: {getattr(paciente, 'tipo_documento', '—') or '—'}  {getattr(paciente, 'numero_id', '—') or '—'}",
-            f"{bold('Contacto')}: {getattr(paciente, 'contacto', '—') or '—'}",
+            f"{bold('Paciente')}: {getattr(patient, 'name', '—')}",
+            f"{bold('Idade')}: {idade_txt}  -  {bold('Gênero')}: {getattr(patient, 'gender', '—') or '—'}",
+            f"{bold('Documento')}: {getattr(patient, 'document_type', '—') or '—'}  {getattr(patient, 'document_number', '—') or '—'}",
+            f"{bold('Contacto')}: {getattr(patient, 'contact', '—') or '—'}",
         ]
-        if getattr(paciente, "email", None):
-            left_lines.append(f"{bold('E-mail')}: {paciente.email or '—'}")
-        if getattr(paciente, "proveniencia", None):
-            left_lines.append(f"{bold('Proveniência')}: {getattr(paciente, 'proveniencia', '—') or '—'}")
+        if getattr(patient, "email", None):
+            left_lines.append(f"{bold('E-mail')}: {patient.email or '—'}")
+        if getattr(patient, "provenance", None):
+            left_lines.append(f"{bold('Proveniência')}: {getattr(patient, 'provenance', '—') or '—'}")
     else:
         left_lines = [f"{bold('Paciente')}: —"]
 
     # ==========================
     # BLOCO DIREITA (RECIBO)
     # ==========================
-    metodo_txt = ""
+    method_txt = ""
     status_txt = ""
-    pago_em = None
-    if pagamento:
+    paid_at = None
+    if payment:
         try:
-            metodo_txt = pagamento.get_metodo_display()
+            method_txt = payment.get_method_display()
         except Exception:
-            metodo_txt = getattr(pagamento, "metodo", "") or ""
+            method_txt = getattr(payment, "method", "") or ""
         try:
-            status_txt = pagamento.get_status_display()
+            status_txt = payment.get_status_display()
         except Exception:
-            status_txt = getattr(pagamento, "status", "") or ""
-        pago_em = getattr(pagamento, "pago_em", None)
+            status_txt = getattr(payment, "status", "") or ""
+        paid_at = getattr(payment, "paid_at", None)
 
-    tecnico_texto = institutional_user_identity(usuario_documento)
+    technician_texto = institutional_user_identity(user_documento)
 
     right_lines = [
-        f"{bold('Recibo')}: {getattr(recibo, 'numero', '—')}",
-        f"{bold('Fatura')}: {getattr(fatura, 'id_custom', '—') if fatura else '—'}",
-        f"{bold('Pagamento')}: {getattr(pagamento, 'id_custom', getattr(pagamento, 'pk', '—')) if pagamento else '—'}",
-        f"{bold('Método')}: {metodo_txt or '—'}",
+        f"{bold('Recibo')}: {getattr(recibo, 'number', '—')}",
+        f"{bold('Fatura')}: {getattr(invoice, 'custom_id', '—') if invoice else '—'}",
+        f"{bold('Pagamento')}: {getattr(payment, 'custom_id', getattr(payment, 'pk', '—')) if payment else '—'}",
+        f"{bold('Método')}: {method_txt or '—'}",
         f"{bold('Status')}: {status_txt or '—'}",
-        f"{bold('Pago em')}: {_formatar_dt(pago_em) if pago_em else _formatar_dt(getattr(recibo, 'criado_em', None))}",
-        f"{bold('Emitido por')}: {tecnico_texto}",
+        f"{bold('Pago em')}: {_formatar_dt(paid_at) if paid_at else _formatar_dt(getattr(recibo, 'created_at', None))}",
+        f"{bold('Emitido por')}: {technician_texto}",
     ]
 
     info_table = montar_bloco_identificacao(
@@ -169,7 +169,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     story.append(Paragraph("ITENS PAGOS", style_section))
     story.append(Spacer(1, 0.12 * cm))
 
-    data = [
+    date = [
         [
             cell_paragraph("Descrição", is_bold=True),
             cell_paragraph("Qtd", is_bold=True),
@@ -178,46 +178,46 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
         ]
     ]
 
-    itens_qs = fatura.itens.select_related("exame", "exame_medico").all() if fatura else []
+    itens_qs = invoice.itens.select_related("exam", "medical_exam").all() if invoice else []
     subtotal_geral = Decimal("0.00")
 
     for item in itens_qs:
-        qtd = getattr(item, "quantidade", Decimal("1.00")) or Decimal("1.00")
-        preco_unit = getattr(item, "preco_unitario", Decimal("0.00")) or Decimal("0.00")
+        qtd = getattr(item, "quantity", Decimal("1.00")) or Decimal("1.00")
+        price_unit = getattr(item, "unit_price", Decimal("0.00")) or Decimal("0.00")
         try:
             qtd = Decimal(str(qtd))
         except Exception:
             qtd = Decimal("1.00")
         try:
-            preco_unit = Decimal(str(preco_unit))
+            price_unit = Decimal(str(price_unit))
         except Exception:
-            preco_unit = Decimal("0.00")
+            price_unit = Decimal("0.00")
 
-        total_linha = (qtd * preco_unit).quantize(Decimal("0.01"))
+        total_linha = (qtd * price_unit).quantize(Decimal("0.01"))
         subtotal_geral += total_linha
 
-        codigo = _item_code(item)
-        nome = ""
-        exame = getattr(item, "exame", None) or getattr(item, "exame_medico", None)
-        if exame:
-            nome = getattr(exame, "nome", "") or ""
-        exame_txt = f"{codigo.upper()} - {nome}" if codigo else (nome or "")
-        descricao = getattr(item, "descricao", None) or exame_txt or "—"
+        code = _item_code(item)
+        name = ""
+        exam = getattr(item, "exam", None) or getattr(item, "medical_exam", None)
+        if exam:
+            name = getattr(exam, "name", "") or ""
+        exam_txt = f"{code.upper()} - {name}" if code else (name or "")
+        description = getattr(item, "description", None) or exam_txt or "—"
 
-        data.append(
+        date.append(
             [
-                cell_paragraph(descricao),
+                cell_paragraph(description),
                 cell_paragraph(f"{qtd}".replace(".", ",")),
-                cell_paragraph(f"{preco_unit:,.2f} MZN".replace(",", " ")),
+                cell_paragraph(f"{price_unit:,.2f} MZN".replace(",", " ")),
                 cell_paragraph(f"{total_linha:,.2f} MZN".replace(",", " ")),
             ]
         )
 
-    if fatura and not fatura.itens.exists():
-        data.append([cell_paragraph("Nenhum item registrado.", is_bold=True), "", "", ""])
+    if invoice and not invoice.itens.exists():
+        date.append([cell_paragraph("Nenhum item registrado.", is_bold=True), "", "", ""])
 
     table = Table(
-        data,
+        date,
         colWidths=[
             usable_width * 0.55,
             usable_width * 0.10,
@@ -247,9 +247,9 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     # ==========================
     # RESUMO
     # ==========================
-    total_sem_iva = getattr(fatura, "subtotal", None) if fatura else None
-    total_iva = getattr(fatura, "iva_valor", None) if fatura else None
-    total_com_iva = getattr(fatura, "total", None) if fatura else None
+    total_sem_iva = getattr(invoice, "subtotal", None) if invoice else None
+    total_iva = getattr(invoice, "vat_amount", None) if invoice else None
+    total_com_iva = getattr(invoice, "total", None) if invoice else None
 
     def _as_money(v):
         if v is None:
@@ -265,7 +265,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
             [cell_paragraph("Total de IVA", is_bold=True), cell_paragraph(_as_money(total_iva))],
             [
                 cell_paragraph("Total pago", is_bold=True),
-                cell_paragraph(_as_money(getattr(recibo, "valor", total_com_iva))),
+                cell_paragraph(_as_money(getattr(recibo, "value", total_com_iva))),
             ],
         ],
         colWidths=[usable_width * 0.55, usable_width * 0.45],
@@ -292,19 +292,19 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
 
     doc.build(
         story,
-        onFirstPage=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, usuario_documento), draw_line_full_width(c, d)),
+        onFirstPage=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
+        onLaterPages=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
         canvasmaker=NumberedCanvas,
     )
 
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    nome_paciente = getattr(paciente, "nome", "paciente").replace("/", "-") if paciente else "paciente"
-    filename = f"{getattr(recibo, 'numero', 'recibo')}_{nome_paciente}.pdf"
+    name_patient = getattr(patient, "name", "patient").replace("/", "-") if patient else "patient"
+    filename = f"{getattr(recibo, 'number', 'recibo')}_{name_patient}.pdf"
 
     return pdf_bytes, filename
 
 
-_codigo_item = _item_code
+_code_item = _item_code
 gerar_pdf_recibo = generate_receipt_pdf

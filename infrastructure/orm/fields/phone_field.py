@@ -17,15 +17,15 @@ class PhoneField(models.CharField):
         if not value:
             return value
 
-        valor = re.sub(r"\D", "", value)
+        value = re.sub(r"\D", "", value)
 
-        if len(valor) != 9:
+        if len(value) != 9:
             raise ValidationError("Telefone deve conter 9 dígitos.")
 
-        if not valor.startswith(("82", "83", "84", "85", "86", "87")):
+        if not value.startswith(("82", "83", "84", "85", "86", "87")):
             raise ValidationError("Número inválido para Moçambique.")
 
-        return valor
+        return value
 
 TelefoneField = PhoneField
 

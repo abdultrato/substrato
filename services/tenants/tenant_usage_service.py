@@ -51,7 +51,7 @@ class TenantUsageService:
     def usage_percentage(tenant):
         usage = TenantUsageService.get_requests(tenant)
         plan = getattr(tenant, "plan", None)
-        limit = getattr(plan, "limite_requisicoes_mes", 0) or 0
+        limit = getattr(plan, "monthly_request_limit", 0) or 0
 
         if not limit:
             return 0
@@ -60,7 +60,7 @@ class TenantUsageService:
 
 
 TenantUsageService._key = TenantUsageService._cache_key
-TenantUsageService.incrementar_requisicao = TenantUsageService.increment_request
+TenantUsageService.incrementar_request = TenantUsageService.increment_request
 TenantUsageService.obter_requisicoes = TenantUsageService.get_requests
 TenantUsageService.resetar_requisicoes = TenantUsageService.reset_requests
 TenantUsageService.percentual_uso = TenantUsageService.usage_percentage

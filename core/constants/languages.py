@@ -3,7 +3,7 @@ from django.db import models
 
 class Language(models.TextChoices):
     """
-    ISO 639-1 — Códigos internacionais de idioma.
+    ISO 639-1 — Códigos internacionais de language.
     """
 
     PT = "pt", "Português"

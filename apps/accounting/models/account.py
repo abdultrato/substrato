@@ -11,12 +11,15 @@ from core.models.base import CoreModel
 class Account(
     CoreModel,
 ):
-    prefixo = "CNT"
+    prefix = "CNT"
     # Alias direto para facilitar acesso via Conta.Tipo.*
     Tipo = TipoConta
 
-    tipo = models.CharField(
-        "Tipo de conta",
+    type = models.CharField(
+
+        "Tipo de account",
+
+        db_column="tipo",
         max_length=3,
         choices=TipoConta.choices,
         default=TipoConta.DESPESA,
@@ -24,17 +27,18 @@ class Account(
     )
 
     class Meta:
+        db_table = "contabilidade_conta"
         indexes = [
             models.Index(
                 fields=[
-                    "inquilino",
-                    "id_custom",
+                    "tenant",
+                    "custom_id",
                 ],
             ),
             models.Index(
                 fields=[
-                    "inquilino",
-                    "tipo",
+                    "tenant",
+                    "type",
                 ],
             ),
         ]
@@ -42,13 +46,13 @@ class Account(
         constraints = [
             models.UniqueConstraint(
                 fields=[
-                    "inquilino",
-                    "id_custom",
+                    "tenant",
+                    "custom_id",
                 ],
                 condition=Q(
-                    deletado=False,
+                    deleted=False,
                 ),
-                name="unique_codigo_conta_por_inquilino",
+                name="unique_code_account_por_tenant",
             ),
         ]
 
@@ -63,9 +67,9 @@ class Account(
                 pk=self.pk,
             )
 
-            if original.tipo != self.tipo and self.tem_movimentacao():
+            if original.type != self.type and self.tem_movimentacao():
                 raise ValidationError(
-                    "Não é permitido alterar o tipo de uma conta já utilizada.",
+                    "Não é permitido alterar o type de uma account já utilizada.",
                 )
 
         return super().save(
@@ -86,14 +90,14 @@ class Account(
     def tem_movimentacao(
         self,
     ):
-        # Verificar LedgerLine se estiver ativo
+        # Verificar LedgerLine se estiver active
         from apps.accounting.models.ledger_line import LedgerLine
 
         return LedgerLine.objects.filter(
-            conta_id=self.pk,
+            account_id=self.pk,
         ).exists()
 
     def __str__(
         self,
     ):
-        return f"{self.id_custom} - {self.nome}"
+        return f"{self.custom_id} - {self.name}"

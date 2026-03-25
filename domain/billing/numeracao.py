@@ -14,7 +14,7 @@ def generate_invoice_number(invoice):
     year = current_date.strftime("%Y")
     month = current_date.strftime("%m")
 
-    sequence = invoice.id_custom[-6:]
+    sequence = invoice.custom_id[-6:]
 
     return f"FAT-{year}{month}-{sequence}"
 
@@ -34,5 +34,5 @@ def generate_receipt_number(receipt):
     return f"REC-{year}{month}-{sequence}"
 
 
-gerar_numero_fatura = generate_invoice_number
-gerar_numero_recibo = generate_receipt_number
+gerar_number_invoice = generate_invoice_number
+gerar_number_recibo = generate_receipt_number

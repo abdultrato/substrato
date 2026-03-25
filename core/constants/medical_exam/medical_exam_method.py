@@ -3,7 +3,7 @@ from django.db import models
 
 class MedicalExamMethod(models.TextChoices):
     """
-    Modalidades/técnicas típicas de exames médicos (imagem/diagnóstico).
+    Modalidades/técnicas típicas de exams médicos (imagem/diagnóstico).
     Mantidas separadas dos métodos laboratoriais.
     """
 

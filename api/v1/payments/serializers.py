@@ -12,14 +12,14 @@ class PaymentSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
 
         instancia = self.instance or Payment()
-        for campo, valor in attrs.items():
-            setattr(instancia, campo, valor)
+        for campo, value in attrs.items():
+            setattr(instancia, campo, value)
 
-        if not instancia.inquilino_id:
+        if not instancia.tenant_id:
             req = self.context.get("request") if hasattr(self, "context") else None
-            inquilino = getattr(req, "inquilino", None)
-            if inquilino is not None:
-                instancia.inquilino = inquilino
+            tenant = getattr(req, "tenant", None)
+            if tenant is not None:
+                instancia.tenant = tenant
 
         try:
             instancia.clean()
@@ -50,22 +50,22 @@ class PaymentSerializer(serializers.ModelSerializer):
         # Voltar para pendente via API não é suportado (evita inconsistências).
         raise serializers.ValidationError({"status": "Transição de status não suportada."})
 
-    def create(self, validated_data):
+    def create(self, validated_date):
         # Se vier CONFIRMADO no payload, cria como PENDENTE e confirma via
-        # Aggregate Root para atualizar fatura/recibo.
-        desired_status = validated_data.get("status") or Payment.Status.PENDENTE
-        validated_data["status"] = Payment.Status.PENDENTE
+        # Aggregate Root para atualizar invoice/recibo.
+        desired_status = validated_date.get("status") or Payment.Status.PENDENTE
+        validated_date["status"] = Payment.Status.PENDENTE
 
-        instance = super().create(validated_data)
+        instance = super().create(validated_date)
 
         if desired_status != Payment.Status.PENDENTE:
             instance = self._apply_status_transition(instance, desired_status)
 
         return instance
 
-    def update(self, instance, validated_data):
-        desired_status = validated_data.pop("status", None)
-        instance = super().update(instance, validated_data)
+    def update(self, instance, validated_date):
+        desired_status = validated_date.pop("status", None)
+        instance = super().update(instance, validated_date)
         if desired_status is not None:
             instance = self._apply_status_transition(instance, desired_status)
         return instance
@@ -76,10 +76,10 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class ReceiptSerializer(serializers.ModelSerializer):
-    fatura_codigo = serializers.CharField(source="fatura.id_custom", read_only=True)
-    paciente_nome = serializers.CharField(source="fatura.paciente.nome", read_only=True)
-    pagamento_metodo = serializers.CharField(source="pagamento.get_metodo_display", read_only=True)
-    pagamento_status = serializers.CharField(source="pagamento.get_status_display", read_only=True)
+    invoice_code = serializers.CharField(source="invoice.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="invoice.patient.name", read_only=True)
+    payment_method = serializers.CharField(source="payment.get_method_display", read_only=True)
+    payment_status = serializers.CharField(source="payment.get_status_display", read_only=True)
 
     class Meta:
         model = Receipt
@@ -99,10 +99,10 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "pagamento": PaymentSerializer,
+    "payment": PaymentSerializer,
     "recibo": ReceiptSerializer,
     "reconciliacao": ReconciliationSerializer,
-    "transacao": TransactionSerializer,
+    "transaction": TransactionSerializer,
 }
 
 PagamentoSerializer = PaymentSerializer

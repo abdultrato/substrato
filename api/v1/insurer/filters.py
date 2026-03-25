@@ -12,23 +12,23 @@ class ProcedureAuthorizationFilter(SafeFilterSet):
     class Meta:
         model = ProcedureAuthorization
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "requisicao_id",
-            "plano",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "request_id",
+            "plan",
             "status",
-            "codigo_autorizacao",
-            "data_resposta",
+            "authorization_code",
+            "response_date",
         ]
 
 
@@ -41,21 +41,21 @@ class CoveragePlanFilter(SafeFilterSet):
     class Meta:
         model = CoveragePlan
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "seguradora",
-            "percentual_cobertura",
-            "exige_autorizacao",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "insurer",
+            "coverage_percentage",
+            "requires_authorization",
         ]
 
 
@@ -68,22 +68,22 @@ class InsurerFilter(SafeFilterSet):
     class Meta:
         model = Insurer
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "nome",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "codigo_externo",
+            "tenant",
+            "custom_id",
+            "description",
+            "name",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "external_code",
             "email",
-            "telefone",
-            "ativa",
+            "phone",
+            "active",
         ]
 
 
@@ -94,7 +94,7 @@ class InsurerFilter(SafeFilterSet):
 FILTER_MAP = {
     "autorizacaoprocedimento": ProcedureAuthorizationFilter,
     "planocobertura": CoveragePlanFilter,
-    "seguradora": InsurerFilter,
+    "insurer": InsurerFilter,
 }
 
 AutorizacaoProcedimentoFilter = ProcedureAuthorizationFilter

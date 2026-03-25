@@ -6,11 +6,11 @@ from .requests import LabRequestItemViewSet, LabRequestViewSet, RequisicaoAnalis
 from .results import ResultadoItemViewSet, ResultItemViewSet
 
 VIEWSET_MAP = {
-    "exame": LabExamViewSet,
+    "exam": LabExamViewSet,
     "examemedico": MedicalExamViewSet,
     "examecampo": LabExamFieldViewSet,
     "examemedicocampo": MedicalExamFieldViewSet,
-    "paciente": PatientViewSet,
+    "patient": PatientViewSet,
     "requisicaoanalise": LabRequestViewSet,
     "requisicaoitem": LabRequestItemViewSet,
     "resultadoitem": ResultItemViewSet,

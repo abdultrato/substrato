@@ -16,8 +16,8 @@ class PasswordResetTokenViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     filterset_class = PasswordResetTokenFilter
     permission_classes = [IsAuthenticated]
     search_fields = []
-    ordering_fields = ["user", "token", "criado_em", "usado"]
-    ordering = ["-criado_em"]
+    ordering_fields = ["user", "token", "created_at", "used"]
+    ordering = ["-created_at"]
 
 
 class ProfessionalProfileViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -25,17 +25,17 @@ class ProfessionalProfileViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     serializer_class = ProfessionalProfileSerializer
     filterset_class = ProfessionalProfileFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["cargo", "registro_profissional", "departamento"]
+    search_fields = ["role", "professional_registration", "department"]
     ordering_fields = [
-        "usuario",
-        "cargo",
-        "registro_profissional",
-        "departamento",
-        "ativo",
-        "criado_em",
-        "atualizado_em",
+        "user",
+        "role",
+        "professional_registration",
+        "department",
+        "active",
+        "created_at",
+        "updated_at",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -43,7 +43,7 @@ class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
     serializer_class = UserSerializer
     filterset_class = UserFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["email", "telefone", "password", "first_name", "last_name"]
+    search_fields = ["email", "phone", "password", "first_name", "last_name"]
     ordering_fields = [
         "password",
         "last_login",
@@ -54,16 +54,16 @@ class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
         "is_active",
         "date_joined",
         "email",
-        "telefone",
-        # Usa `criado_em` do CoreModel; `data_criacao` nao existe no model.
-        "criado_em",
+        "phone",
+        # Usa `created_at` do CoreModel; `date_criacao` nao existe no model.
+        "created_at",
     ]
 
 
 VIEWSET_MAP = {
     "passwordresettoken": PasswordResetTokenViewSet,
     "perfilprofissional": ProfessionalProfileViewSet,
-    "usuario": UserViewSet,
+    "user": UserViewSet,
 }
 
 __all__ = [

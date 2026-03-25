@@ -4,35 +4,44 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Receipt(models.Model):
-    fatura = models.ForeignKey(
+    invoice = models.ForeignKey(
         "faturamento.Invoice",
+        db_column="fatura_id",
         verbose_name="Fatura",
         on_delete=models.PROTECT,
         related_name="recibos",
         db_index=True,
     )
-    pagamento = models.OneToOneField(
+    payment = models.OneToOneField(
         "pagamentos.Payment",
+        db_column="pagamento_id",
         verbose_name="Pagamento",
         on_delete=models.PROTECT,
         related_name="recibo",
         db_index=True,
     )
 
-    numero = models.CharField("Número do recibo", max_length=60, db_index=True)
-    valor = MoneyField(verbose_name="Valor")
+    number = models.CharField("Número do recibo", 
 
-    criado_em = models.DateTimeField("Criado em", auto_now_add=True, db_index=True)
+        db_column="numero",
+
+         max_length=60, db_index=True)
+    value = MoneyField(
+        db_column="valor",
+        verbose_name="Valor")
+
+    created_at = models.DateTimeField("Criado em", db_column="criado_em", auto_now_add=True, db_index=True)
 
     class Meta:
-        ordering = ["-criado_em"]
+        db_table = "pagamentos_recibo"
+        ordering = ["-created_at"]
         verbose_name = "Recibo"
         verbose_name_plural = "Recibos"
         indexes = [
-            models.Index(fields=["fatura", "criado_em"]),
-            models.Index(fields=["numero"]),
+            models.Index(fields=["invoice", "created_at"]),
+            models.Index(fields=["number"]),
         ]
 
     def __str__(self) -> str:
-        return self.numero
+        return self.number
 

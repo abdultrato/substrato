@@ -12,26 +12,26 @@ class InvoiceFilter(SafeFilterSet):
     class Meta:
         model = Invoice
         fields = [
-            "inquilino",
-            "id_custom",
-            "descricao",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "requisicao",
-            "cirurgia",
-            "paciente",
+            "tenant",
+            "custom_id",
+            "description",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "request",
+            "surgery",
+            "patient",
             "subtotal",
-            "iva_valor",
+            "vat_amount",
             "total",
-            "valor_seguro",
-            "valor_paciente",
-            "estado",
+            "insurance_amount",
+            "patient_amount",
+            "status",
         ]
 
 
@@ -44,21 +44,21 @@ class InvoiceItemFilter(SafeFilterSet):
     class Meta:
         model = InvoiceItem
         fields = [
-            "inquilino",
-            "id_custom",
-            "ordem",
-            "ativo",
-            "deletado",
-            "deletado_em",
-            "criado_em",
-            "atualizado_em",
-            "criado_por",
-            "atualizado_por",
-            "fatura",
-            "exame",
-            "descricao",
-            "quantidade",
-            "preco_unitario",
+            "tenant",
+            "custom_id",
+            "order",
+            "active",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "invoice",
+            "exam",
+            "description",
+            "quantity",
+            "unit_price",
         ]
 
 
@@ -71,10 +71,10 @@ class InvoiceHistoryFilter(SafeFilterSet):
     class Meta:
         model = InvoiceHistory
         fields = [
-            "fatura",
-            "descricao",
-            "tipo_evento",
-            "criado_em",
+            "invoice",
+            "description",
+            "event_type",
+            "created_at",
         ]
 
 
@@ -83,7 +83,7 @@ class InvoiceHistoryFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "fatura": InvoiceFilter,
+    "invoice": InvoiceFilter,
     "faturaitem": InvoiceItemFilter,
     "historicofatura": InvoiceHistoryFilter,
 }

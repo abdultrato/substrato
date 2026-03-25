@@ -30,38 +30,38 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     serializer_class = LabRequestSerializer
     filterset_class = LabRequestFilter
     permission_classes = [IsAuthenticated]
-    # LabRequest does not expose `nome`/`descricao`/`ativo`/`ordem`/`observacoes`/`status`.
+    # LabRequest does not expose `name`/`description`/`active`/`order`/`notes`/`status`.
     # Keep search focused on request code, patient, and state.
     search_fields = [
-        "id_custom",
-        "paciente__id_custom",
-        "paciente__nome",
-        "paciente__numero_id",
-        "analista__username",
-        "tipo",
-        "estado",
-        "status_clinico",
-        "empresa_solicitante__nome",
-        "empresa_executora_externa__nome",
+        "custom_id",
+        "patient__custom_id",
+        "patient__name",
+        "patient__document_number",
+        "analyst__username",
+        "type",
+        "status",
+        "clinical_status",
+        "requesting_company__name",
+        "external_executing_company__name",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "paciente",
-        "analista",
-        "tipo",
-        "estado",
-        "status_clinico",
-        "possui_resultado_critico",
-        "versao",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "patient",
+        "analyst",
+        "type",
+        "status",
+        "clinical_status",
+        "has_critical_result",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     @action(detail=True, methods=["get"], url_path="pdf_resultados", url_name="pdf-resultados")
     def results_pdf(self, request, pk=None):
@@ -91,12 +91,12 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         request_record = self.get_object()
         # Result PDFs only apply to the laboratory workflow.
-        if request_record.tipo != request_record.Tipo.LABORATORIO:
+        if request_record.type != request_record.Tipo.LABORATORIO:
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
-        result = getattr(request_record, "resultado", None)
-        if not result or not result.itens.filter(estado=ResultState.VALIDATED).exists():
-            raise ValidationError("Não é possível emitir PDF sem nenhum resultado validado.")
+        result = getattr(request_record, "result", None)
+        if not result or not result.itens.filter(status=ResultState.VALIDATED).exists():
+            raise ValidationError("Não é possível emitir PDF sem nenhum result validado.")
 
         from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 
@@ -105,32 +105,32 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
 
-    @action(detail=True, methods=["get"], url_path="resultado_itens", url_name="resultado-itens")
+    @action(detail=True, methods=["get"], url_path="result_itens", url_name="result-itens")
     def result_items(self, request, pk=None):
         """
         Return LAB result items with derived fields for inline entry/validation.
         """
         request_record = self.get_object()
 
-        if request_record.tipo != request_record.Tipo.LABORATORIO:
+        if request_record.type != request_record.Tipo.LABORATORIO:
             raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
 
         from apps.clinical.models.result import Result
 
         result, _ = Result.objects.get_or_create(
-            requisicao=request_record,
-            defaults={"inquilino": request_record.inquilino},
+            request=request_record,
+            defaults={"tenant": request_record.tenant},
         )
 
         qs = result.itens.select_related(
-            "exame_campo",
-            "exame_campo__exame",
-            "resultado",
-            "resultado__requisicao",
-            "resultado__requisicao__paciente",
+            "exam_field",
+            "exam_field__exam",
+            "result",
+            "result__request",
+            "result__request__patient",
         ).order_by(
-            "exame_campo__exame__nome",
-            "exame_campo__nome",
+            "exam_field__exam__name",
+            "exam_field__name",
             "id",
         )
 
@@ -138,23 +138,23 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         summary = {
             "total": qs.count(),
-            "pendente": qs.filter(estado=ResultState.PENDING).count(),
-            "em_analise": qs.filter(estado=ResultState.IN_ANALYSIS).count(),
-            "aguardando_validacao": qs.filter(estado=ResultState.AWAITING_VALIDATION).count(),
-            "validado": qs.filter(estado=ResultState.VALIDATED).count(),
-            "rejeitado": qs.filter(estado=ResultState.REJECTED).count(),
+            "pendente": qs.filter(status=ResultState.PENDING).count(),
+            "em_analise": qs.filter(status=ResultState.IN_ANALYSIS).count(),
+            "aguardando_validacao": qs.filter(status=ResultState.AWAITING_VALIDATION).count(),
+            "validado": qs.filter(status=ResultState.VALIDATED).count(),
+            "rejeitado": qs.filter(status=ResultState.REJECTED).count(),
         }
 
         return Response(
             {
-                "requisicao": {
+                "request": {
                     "id": request_record.id,
-                    "id_custom": request_record.id_custom,
-                    "paciente": request_record.paciente_id,
-                    "paciente_nome": request_record.paciente.nome,
-                    "estado": request_record.estado,
-                    "status_clinico": request_record.status_clinico,
-                    "possui_resultado_critico": request_record.possui_resultado_critico,
+                    "custom_id": request_record.custom_id,
+                    "patient": request_record.patient_id,
+                    "patient_name": request_record.patient.name,
+                    "status": request_record.status,
+                    "clinical_status": request_record.clinical_status,
+                    "has_critical_result": request_record.has_critical_result,
                 },
                 "resumo": summary,
                 "itens": items,
@@ -173,30 +173,30 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     serializer_class = LabRequestItemSerializer
     filterset_class = LabRequestItemFilter
     permission_classes = [IsAuthenticated]
-    # LabRequestItem does not expose `nome`/`descricao`/`ativo`/`ordem`.
+    # LabRequestItem does not expose `name`/`description`/`active`/`order`.
     search_fields = [
-        "id_custom",
-        "requisicao__id_custom",
-        "exame__id_custom",
-        "exame__nome",
-        "exame_medico__id_custom",
-        "exame_medico__nome",
+        "custom_id",
+        "request__custom_id",
+        "exam__custom_id",
+        "exam__name",
+        "medical_exam__custom_id",
+        "medical_exam__name",
     ]
     ordering_fields = [
-        "inquilino",
-        "deletado",
-        "deletado_em",
-        "criado_por",
-        "atualizado_por",
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "requisicao",
-        "exame",
-        "exame_medico",
-        "versao",
+        "tenant",
+        "deleted",
+        "deleted_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "request",
+        "exam",
+        "medical_exam",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 RequisicaoAnaliseViewSet = LabRequestViewSet

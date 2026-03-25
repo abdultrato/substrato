@@ -10,21 +10,27 @@ from core.models import CoreModel
 
 class TenantCoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
     """
-    Override de plano por inquilino.
+    Override de plan por tenant.
 
-    Se existir registro ativo para (inquilino, plano_global), usa-se este
+    Se existir record active para (tenant, global_plan), usa-se este
     percentual no calculo de coparticipacao.
     """
 
-    prefixo = "TPL"
+    prefix = "TPL"
 
-    plano_global = models.ForeignKey(
+    global_plan = models.ForeignKey(
+
         "seguradora.CoveragePlan",
+
+        db_column="plano_global_id",
         on_delete=models.CASCADE,
         related_name="overrides_por_tenant",
     )
 
-    percentual_override = models.DecimalField(
+    override_percentage = models.DecimalField(
+
+        db_column="percentual_override",
+
         max_digits=5,
         decimal_places=2,
         blank=True,
@@ -33,26 +39,29 @@ class TenantCoveragePlan(DescricaoMixin, OrdemMixin, CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Se vazio, usa o percentual do plano global.",
+        help_text="Se vazio, usa o percentual do plan global.",
     )
 
     # Compatibilidade com servicos/filters gerados
-    ativo = models.BooleanField(default=True, db_index=True)
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "seguradora_tenantplanocobertura"
         verbose_name = "Plano por Tenant"
         verbose_name_plural = "Planos por Tenant"
         constraints = [
             models.UniqueConstraint(
-                fields=["inquilino", "plano_global"],
-                name="uniq_tenant_plano_global",
+                fields=["tenant", "global_plan"],
+                name="uniq_tenant_global_plan",
             )
         ]
 
     def percentual_final(self) -> Decimal:
-        if self.percentual_override is None:
-            return self.plano_global.percentual_final()
-        return self.percentual_override
+        if self.override_percentage is None:
+            return self.global_plan.percentual_final()
+        return self.override_percentage
 
     def __str__(self) -> str:
-        return f"{self.inquilino_id} - {self.plano_global_id}"
+        return f"{self.tenant_id} - {self.global_plan_id}"

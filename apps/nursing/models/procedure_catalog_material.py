@@ -14,48 +14,65 @@ class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):
     Materiais padrão utilizados por um item do catálogo.
     """
 
-    fonte_inquilino = "catalogo"
-    prefixo = "PCM"
+    fonte_tenant = "catalog"
+    prefix = "PCM"
 
-    catalogo = models.ForeignKey(
+    catalog = models.ForeignKey(
+
         "enfermagem.ProcedureCatalog",
+
+        db_column="catalogo_id",
         on_delete=models.CASCADE,
         related_name="materiais_padrao",
         db_index=True,
     )
 
-    produto = models.ForeignKey(
+    product = models.ForeignKey(
+
         "farmacia.Product",
+
+        db_column="produto_id",
         on_delete=models.PROTECT,
-        related_name="materiais_padrao_procedimento",
+        related_name="materiais_padrao_procedure",
         db_index=True,
     )
 
-    quantidade_padrao = models.DecimalField(
+    default_quantity = models.DecimalField(
+
+        db_column="quantidade_padrao",
+
         max_digits=10,
         decimal_places=2,
         default=Decimal("1.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
 
-    custo_unitario_padrao = MoneyField(
+    default_unit_cost = MoneyField(
+
+        db_column="custo_unitario_padrao",
+
         default=Decimal("0.00"),
     )
 
-    observacao = models.TextField(blank=True, default="")
+    observation = models.TextField(
+
+        db_column="observacao",
+
+        blank=True, default="")
 
     class Meta:
+        db_table = "enfermagem_procedimentocatalogomaterial"
         verbose_name = "Material de Procedimento"
         verbose_name_plural = "Materiais de Procedimentos"
-        ordering = ["catalogo", "produto"]
+        ordering = ["catalog", "product"]
         constraints = [
             models.UniqueConstraint(
-                fields=["catalogo", "produto"],
-                condition=Q(deletado=False),
-                name="unique_material_padrao_por_catalogo",
+                fields=["catalog", "product"],
+                condition=Q(deleted=False),
+                name="unique_material_padrao_por_catalog",
             )
         ]
 
     def __str__(self):
-        return f"{self.produto} ({self.catalogo})"
+        return f"{self.product} ({self.catalog})"
 

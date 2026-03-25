@@ -13,7 +13,7 @@ class AccountingService:
     def create_entry(
         *,
         description: str,
-        data=None,
+        date=None,
         accounting_date=None,
         movements: list,
         external_reference: str = "",
@@ -22,33 +22,33 @@ class AccountingService:
         if len(movements) < 2:
             raise ValidationError("Accounting entries require at least two movements.")
 
-        entry_date = data or accounting_date
+        entry_date = date or accounting_date
         if not entry_date:
             raise ValidationError("Entry date is required.")
 
         entry = LegacyEntry.objects.create(
-            nome=(description or "Accounting Entry")[:120],
-            descricao=description,
-            data=entry_date,
-            referencia_externa=external_reference,
-            inquilino=tenant,
+            name=(description or "Accounting Entry")[:120],
+            description=description,
+            date=entry_date,
+            external_reference=external_reference,
+            tenant=tenant,
         )
 
         total_debit = Decimal("0.00")
         total_credit = Decimal("0.00")
 
         for index, movement in enumerate(movements, start=1):
-            account = movement["conta"]
-            debit = movement.get("debito", Decimal("0.00"))
-            credit = movement.get("credito", Decimal("0.00"))
+            account = movement["account"]
+            debit = movement.get("debit", Decimal("0.00"))
+            credit = movement.get("credit", Decimal("0.00"))
 
             LegacyMovement.objects.create(
-                nome=f"Line {index} - {getattr(account, 'nome', account)}"[:120],
-                lancamento=entry,
-                conta=account,
-                debito=debit,
-                credito=credit,
-                inquilino=tenant,
+                name=f"Line {index} - {getattr(account, 'name', account)}"[:120],
+                entry=entry,
+                account=account,
+                debit=debit,
+                credit=credit,
+                tenant=tenant,
             )
 
             total_debit += debit
@@ -57,11 +57,11 @@ class AccountingService:
         if total_debit != total_credit:
             raise ValidationError("Unbalanced accounting entry.")
 
-        entry.confirmado = True
-        entry.save(update_fields=["confirmado"])
+        entry.confirmed = True
+        entry.save(update_fields=["confirmed"])
 
         return entry
 
 
 ServicoContabilidade = AccountingService
-AccountingService.criar_lancamento = AccountingService.create_entry
+AccountingService.criar_entry = AccountingService.create_entry

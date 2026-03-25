@@ -53,7 +53,7 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
     """
     Gera PDF A5 do Relatório de Estatísticas (Dashboard/Analytics).
     Entrada: dict payload no mesmo formato do endpoint /dashboard/analytics/
-    Saída: (bytes_pdf, nome_arquivo)
+    Saída: (bytes_pdf, name_file)
     """
 
     buffer = io.BytesIO()
@@ -88,7 +88,7 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
     except Exception:
         doc.barcode_value = None
 
-    usuario_documento = (
+    user_documento = (
         getattr(getattr(request, "user", None), "is_authenticated", False) and getattr(request, "user", None)
     ) or None
 
@@ -103,7 +103,7 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
         f"{bold('Período')}: {_fmt_range(inicio_iso)} até {_fmt_range(fim_iso)}",
     ]
     right_lines = [
-        f"{bold('Emitido por')}: {institutional_user_identity(usuario_documento)}",
+        f"{bold('Emitido por')}: {institutional_user_identity(user_documento)}",
     ]
 
     story.append(
@@ -147,12 +147,12 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
     def add_top_section(title: str, headers: list[str], rows: list[list[str]]):
         story.append(Paragraph(title, style_section))
         story.append(Spacer(1, 0.12 * cm))
-        data = [[cell_paragraph(h, is_bold=True) for h in headers]]
+        date = [[cell_paragraph(h, is_bold=True) for h in headers]]
         for r in rows:
-            data.append([cell_paragraph(v) for v in r])
-        if len(data) == 1:
-            data.append([cell_paragraph("Sem dados.", is_bold=True)] + [""] * (len(headers) - 1))
-        table = Table(data, colWidths=[usable_width / len(headers)] * len(headers))
+            date.append([cell_paragraph(v) for v in r])
+        if len(date) == 1:
+            date.append([cell_paragraph("Sem dados.", is_bold=True)] + [""] * (len(headers) - 1))
+        table = Table(date, colWidths=[usable_width / len(headers)] * len(headers))
         table.setStyle(
             TableStyle(
                 [
@@ -169,18 +169,18 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
         story.append(table)
         story.append(Spacer(1, 0.18 * cm))
 
-    top_exames = (payload or {}).get("top_exames") or []
+    top_exams = (payload or {}).get("top_exams") or []
     add_top_section(
         "EXAMES MAIS SOLICITADOS",
         ["Tipo", "Exame", "Total"],
-        [[str(r.get("tipo") or "—"), str(r.get("nome") or "—"), str(r.get("total") or 0)] for r in top_exames],
+        [[str(r.get("type") or "—"), str(r.get("name") or "—"), str(r.get("total") or 0)] for r in top_exams],
     )
 
-    top_procs = (payload or {}).get("top_procedimentos") or []
+    top_procs = (payload or {}).get("top_procedures") or []
     add_top_section(
         "PROCEDIMENTOS MAIS SOLICITADOS",
         ["Procedimento", "Total"],
-        [[str(r.get("catalogo__nome") or "—"), str(r.get("total") or 0)] for r in top_procs],
+        [[str(r.get("catalog__name") or "—"), str(r.get("total") or 0)] for r in top_procs],
     )
 
     top_meds = (payload or {}).get("top_medicamentos") or []
@@ -189,19 +189,19 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
         ["Medicamento", "Quantidade", "Pedidos"],
         [
             [
-                str(r.get("produto__nome") or "—"),
-                str(r.get("total_quantidade") or 0),
+                str(r.get("product__name") or "—"),
+                str(r.get("total_quantity") or 0),
                 str(r.get("total_pedidos") or 0),
             ]
             for r in top_meds
         ],
     )
 
-    top_cons = (payload or {}).get("top_consultas") or []
+    top_cons = (payload or {}).get("top_consultations") or []
     add_top_section(
         "CONSULTAS MAIS MARCADAS",
         ["Consulta", "Total"],
-        [[str(r.get("tipo") or "—"), str(r.get("total") or 0)] for r in top_cons],
+        [[str(r.get("type") or "—"), str(r.get("total") or 0)] for r in top_cons],
     )
 
     append_fim(story)
@@ -210,8 +210,8 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
 
     doc.build(
         story,
-        onFirstPage=lambda c, d: on_page(c, d, usuario=usuario_documento),
-        onLaterPages=lambda c, d: on_page(c, d, usuario=usuario_documento),
+        onFirstPage=lambda c, d: on_page(c, d, user=user_documento),
+        onLaterPages=lambda c, d: on_page(c, d, user=user_documento),
         canvasmaker=NumberedCanvas,
     )
 

@@ -2,7 +2,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.clinical.models.requisicao import Requisicao
+from apps.clinical.models.request import Requisicao
 
 
 class ConfigChoicesView(APIView):
@@ -11,6 +11,6 @@ class ConfigChoicesView(APIView):
     def get(self, request):
         return Response(
             {
-                "status_requisicao": Requisicao.Status.choices,
+                "status_request": Requisicao.Status.choices,
             }
         )

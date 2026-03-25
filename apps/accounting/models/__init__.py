@@ -6,12 +6,23 @@ from .ledger_line import LedgerLine
 from .legacy_entry import LegacyEntry
 from .legacy_movement import LegacyMovement
 
+ConciliacaoFinanceira = FinancialReconciliation
+Conta = Account
+Lancamento = LegacyEntry
+Movimento = LegacyMovement
+SaldoConta = AccountBalance
+
 __all__ = [
+    "ConciliacaoFinanceira",
+    "Conta",
     "Account",
     "AccountBalance",
     "FinancialReconciliation",
+    "Lancamento",
     "LedgerEntry",
     "LedgerLine",
     "LegacyEntry",
     "LegacyMovement",
+    "Movimento",
+    "SaldoConta",
 ]

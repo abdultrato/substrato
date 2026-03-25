@@ -15,7 +15,7 @@ class LedgerAlreadyReversedError(
 @transaction.atomic
 def execute(
     ledger_entry_id: int,
-    motivo: str,
+    reason: str,
     idempotency_key: str | None = None,
 ):
 
@@ -26,7 +26,7 @@ def execute(
     original = (
         LedgerEntry.objects.select_for_update()
         .select_related(
-            "inquilino",
+            "tenant",
         )
         .prefetch_related(
             "linhas",
@@ -36,9 +36,9 @@ def execute(
         )
     )
 
-    if original.revertido:
+    if original.reversed:
         raise LedgerAlreadyReversedError(
-            "LedgerEntry já foi revertido.",
+            "LedgerEntry já foi reversed.",
         )
 
     # =====================================================
@@ -48,17 +48,17 @@ def execute(
     linhas_invertidas = []
 
     for linha in original.linhas.all():
-        natureza_invertida = "C" if linha.natureza == "D" else "D"
+        nature_invertida = "C" if linha.nature == "D" else "D"
 
         linhas_invertidas.append(
             type(
                 "LinhaDTO",
                 (),
                 {
-                    "conta": linha.conta,
-                    "valor": linha.valor,
-                    "natureza": natureza_invertida,
-                    "conta_id": linha.conta_id,
+                    "account": linha.account,
+                    "value": linha.value,
+                    "nature": nature_invertida,
+                    "account_id": linha.account_id,
                 },
             )(),
         )
@@ -68,9 +68,9 @@ def execute(
     # =====================================================
 
     reverso = register_entry(
-        inquilino=original.inquilino,
-        descricao=f"REVERSÃO: {original.descricao}",
-        data_contabil=timezone.localdate(),
+        tenant=original.tenant,
+        description=f"REVERSÃO: {original.description}",
+        accounting_date=timezone.localdate(),
         linhas=linhas_invertidas,
         idempotency_key=idempotency_key,
     )
@@ -79,14 +79,14 @@ def execute(
     # 🔗 VINCULAR REVERSÃO
     # =====================================================
 
-    original.revertido = True
-    original.reverso_de_id = reverso.id
-    original.motivo_reversao = motivo
+    original.reversed = True
+    original.reversal_of_id = reverso.id
+    original.reversal_reason = reason
     original.save(
         update_fields=[
-            "revertido",
-            "reverso_de",
-            "motivo_reversao",
+            "reversed",
+            "reversal_of",
+            "reversal_reason",
         ],
     )
 

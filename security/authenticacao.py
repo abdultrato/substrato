@@ -24,19 +24,19 @@ def _session_timeout_seconds() -> int:
 class JWTAuth(JWTAuthentication):
     def authenticate(self, request):
         # 1) Tenta header Authorization padrão.
-        resultado = super().authenticate(request)
+        result = super().authenticate(request)
 
         # 2) Se não houver header, tenta cookie HttpOnly 'access_token'.
-        if resultado is None:
+        if result is None:
             raw_token = request.COOKIES.get("access_token")
             if raw_token:
                 validated_token = self.get_validated_token(raw_token)
                 user = self.get_user(validated_token)
-                resultado = (user, validated_token)
+                result = (user, validated_token)
 
-        if resultado:
-            user, _token = resultado
-            request.usuario_autenticado = user
+        if result:
+            user, _token = result
+            request.user_autenticado = user
 
             session_id = _token.get("sid") if hasattr(_token, "get") else None
             if not session_id:
@@ -58,4 +58,4 @@ class JWTAuth(JWTAuthentication):
             except Exception:
                 cache.set(key, session_id, timeout=_session_timeout_seconds())
 
-        return resultado
+        return result

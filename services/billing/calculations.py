@@ -17,7 +17,7 @@ def calculate_totals(invoice):
             line_total = getattr(item, "total", d("0.00"))
         subtotal += line_total
 
-        if getattr(item, "aplica_iva", not getattr(item, "isento_iva", False)):
+        if getattr(item, "applies_vat", not getattr(item, "isento_iva", False)):
             vat_amount = (line_total * IVA_PERCENT).quantize(d("0.01"))
             vat_total += vat_amount
 
@@ -28,11 +28,11 @@ def calculate_totals(invoice):
     total_insurer_value = d("0.00")
 
     for insurance in invoice.seguros.all():
-        percentage = insurance.percentual_cobertura / d("100")
+        percentage = insurance.coverage_percentage / d("100")
         covered_value = (total * percentage).quantize(d("0.01"))
 
-        insurance.valor_coberto = covered_value
-        insurance.save(update_fields=["valor_coberto"])
+        insurance.value_coberto = covered_value
+        insurance.save(update_fields=["value_coberto"])
 
         total_insurer_value += covered_value
 
@@ -42,19 +42,19 @@ def calculate_totals(invoice):
     patient_value = (total - total_insurer_value).quantize(d("0.01"))
 
     invoice.subtotal = subtotal
-    invoice.iva_valor = vat_total
+    invoice.vat_amount = vat_total
     invoice.total = total
-    invoice.valor_seguro = total_insurer_value
-    invoice.valor_paciente = patient_value
+    invoice.insurance_amount = total_insurer_value
+    invoice.patient_amount = patient_value
 
     invoice.save(
         update_fields=[
             "subtotal",
-            "iva_valor",
+            "vat_amount",
             "total",
-            "valor_seguro",
-            "valor_paciente",
-            "atualizado_em",
+            "insurance_amount",
+            "patient_amount",
+            "updated_at",
         ]
     )
 

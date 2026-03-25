@@ -22,38 +22,38 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     filterset_class = InvoiceFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "paciente__id_custom",
-        "paciente__nome",
-        "requisicao__id_custom",
-        "consulta__id_custom",
-        "venda__numero",
-        "estado",
-        "origem",
+        "custom_id",
+        "patient__custom_id",
+        "patient__name",
+        "request__custom_id",
+        "consultation__custom_id",
+        "sale__number",
+        "status",
+        "origin",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "requisicao",
-        "paciente",
-        "consulta",
-        "venda",
-        "origem",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "request",
+        "patient",
+        "consultation",
+        "sale",
+        "origin",
         "subtotal",
-        "iva_valor",
+        "vat_amount",
         "total",
-        "valor_seguro",
-        "valor_paciente",
-        "estado",
-        "versao",
+        "insurance_amount",
+        "patient_amount",
+        "status",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     @action(detail=True, methods=["post"])
     @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
@@ -65,13 +65,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
     def void(self, request, pk=None):
         invoice = self.get_object()
-        if invoice.estado != Invoice.Estado.CANCELADA:
-            invoice.estado = Invoice.Estado.CANCELADA
-            invoice.save(update_fields=["estado"])
+        if invoice.status != Invoice.Estado.CANCELADA:
+            invoice.status = Invoice.Estado.CANCELADA
+            invoice.save(update_fields=["status"])
             try:
                 history_lines = [
-                    f"Origem: {invoice.get_origem_display()}",
-                    f"Paciente: {getattr(invoice.paciente, 'nome', '-')}",
+                    f"Origem: {invoice.get_origin_display()}",
+                    f"Paciente: {getattr(invoice.patient, 'name', '-')}",
                     f"Total com IVA: {getattr(invoice, 'total', 0):.2f}",
                 ]
                 invoice.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=history_lines)
@@ -82,18 +82,18 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(
         detail=True,
         methods=["post"],
-        url_path="confirmar_pagamento",
-        url_name="confirmar_pagamento",
+        url_path="confirmar_payment",
+        url_name="confirmar_payment",
     )
     def confirm_payment(self, request, pk=None):
         invoice = self.get_object()
         payment = (
-            invoice.pagamentos.filter(status=Payment.Status.PENDENTE, deletado=False)
-            .order_by("-criado_em")
+            invoice.pagamentos.filter(status=Payment.Status.PENDENTE, deleted=False)
+            .order_by("-created_at")
             .first()
         )
         if not payment:
-            raise ValidationError("Nenhum pagamento pendente para confirmar.")
+            raise ValidationError("Nenhum payment pendente para confirmar.")
 
         try:
             payment.confirm()
@@ -118,37 +118,37 @@ class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     filterset_class = InvoiceItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
-        "id_custom",
-        "descricao",
-        "fatura__id_custom",
-        "exame__nome",
-        "exame_medico__nome",
-        "item_venda__nome",
-        "tipo_item",
+        "custom_id",
+        "description",
+        "invoice__custom_id",
+        "exam__name",
+        "medical_exam__name",
+        "sale_item__name",
+        "item_type",
     ]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "fatura",
-        "exame",
-        "exame_medico",
-        "item_venda",
-        "procedimento_item",
-        "procedimento_material",
-        "descricao",
-        "quantidade",
-        "preco_unitario",
-        "iva_percentual",
-        "tipo_item",
-        "versao",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "invoice",
+        "exam",
+        "medical_exam",
+        "sale_item",
+        "procedure_item",
+        "procedure_material",
+        "description",
+        "quantity",
+        "unit_price",
+        "vat_percentage",
+        "item_type",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -156,13 +156,13 @@ class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     serializer_class = InvoiceHistorySerializer
     filterset_class = InvoiceHistoryFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["descricao", "tipo_evento"]
-    ordering_fields = ["fatura", "descricao", "tipo_evento", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["description", "event_type"]
+    ordering_fields = ["invoice", "description", "event_type", "created_at"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
-    "fatura": InvoiceViewSet,
+    "invoice": InvoiceViewSet,
     "faturaitem": InvoiceItemViewSet,
     "historicofatura": InvoiceHistoryViewSet,
 }

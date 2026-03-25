@@ -3,9 +3,9 @@ from domain.clinical.patient_rules import validate_age
 
 
 class PatientService:
-    def register(self, data):
-        validate_age(data["data_nascimento"])
-        return Patient.objects.create(**data)
+    def register(self, date):
+        validate_age(date["birth_date"])
+        return Patient.objects.create(**date)
 
 
 ServicoPaciente = PatientService

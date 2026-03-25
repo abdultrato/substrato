@@ -20,50 +20,66 @@ class PaymentHistory(CoreModel):
 
     TipoEvento = EventType
 
-    pagamento = models.ForeignKey(
+    payment = models.ForeignKey(
+
         "pagamentos.Payment",
+
+        db_column="pagamento_id",
         on_delete=models.CASCADE,
         related_name="historico",
         verbose_name="Pagamento",
     )
 
-    tipo_evento = models.CharField(
+    event_type = models.CharField(
+
+        db_column="tipo_evento",
+
         verbose_name="Tipo de evento",
         max_length=15,
         choices=EventType.choices,
         db_index=True,
     )
 
-    valor = MoneyField(
+    value = MoneyField(
+
+        db_column="valor",
+
         verbose_name="Valor",
         null=True,
         blank=True,
     )
 
-    descricao = models.CharField(
+    description = models.CharField(
+
+        db_column="descricao",
+
         verbose_name="Descrição",
         max_length=255,
         blank=True,
     )
 
-    referencia_externa = models.CharField(
+    external_reference = models.CharField(
+
+        db_column="referencia_externa",
+
         verbose_name="Referência externa",
         max_length=120,
         blank=True,
     )
 
     class Meta:
+        db_table = "pagamentos_historicopagamento"
         verbose_name = "Histórico de Pagamento"
         verbose_name_plural = "Histórico de Pagamentos"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["pagamento"]),
-            models.Index(fields=["tipo_evento"]),
-            models.Index(fields=["criado_em"]),
+            models.Index(fields=["payment"]),
+            models.Index(fields=["event_type"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.tipo_evento} - {self.pagamento_id}"
+        return f"{self.event_type} - {self.payment_id}"
 
     def save(self, *args, **kwargs):
         """

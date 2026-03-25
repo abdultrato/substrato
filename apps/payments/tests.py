@@ -23,25 +23,25 @@ from core.constants.laboratory.sector import Setor
 
 
 def _tenant():
-    return Tenant.objects.create(identificador="tn-pay", nome="Tenant Pay")
+    return Tenant.objects.create(identifier="tn-pay", name="Tenant Pay")
 
 
 def _patient(tenant):
     return Patient.objects.create(
-        inquilino=tenant,
-        nome="Paciente Pay",
-        genero="Masculino",
-        endereco_rua="Rua P",
+        tenant=tenant,
+        name="Paciente Pay",
+        gender="Masculino",
+        address_street="Rua P",
     )
 
 
 def _exam(tenant):
     return LabExam.objects.create(
-        inquilino=tenant,
-        nome="Glicose",
-        preco=Decimal("20.00"),
-        metodo=Metodo.ENZIMATICO,
-        setor=Setor.BIOQUIMICA,
+        tenant=tenant,
+        name="Glicose",
+        price=Decimal("20.00"),
+        method=Metodo.ENZIMATICO,
+        sector=Setor.BIOQUIMICA,
     )
 
 
@@ -50,24 +50,24 @@ def _horario_normal():
 
 
 def _invoice_with_exam(tenant, patient, exam):
-    req = LabRequest.objects.create(inquilino=tenant, paciente=patient)
-    req.criado_em = _horario_normal()
-    req.save(update_fields=["criado_em"])
-    LabRequestItem.objects.create(inquilino=tenant, requisicao=req, exame=exam)
+    req = LabRequest.objects.create(tenant=tenant, patient=patient)
+    req.created_at = _horario_normal()
+    req.save(update_fields=["created_at"])
+    LabRequestItem.objects.create(tenant=tenant, request=req, exam=exam)
     fat = Invoice.objects.create(
-        inquilino=tenant,
-        paciente=patient,
-        requisicao=req,
-        origem=Invoice.Origem.CLINICO,
+        tenant=tenant,
+        patient=patient,
+        request=req,
+        origin=Invoice.Origem.CLINICO,
     )
     item = InvoiceItem.objects.create(
-        inquilino=tenant,
-        fatura=fat,
-        tipo_item=InvoiceItem.TipoItem.EXAME,
-        exame=exam,
+        tenant=tenant,
+        invoice=fat,
+        item_type=InvoiceItem.TipoItem.EXAME,
+        exam=exam,
     )
     item._preencher_de_referencia()
-    item.save(update_fields=["descricao", "preco_unitario", "quantidade"])
+    item.save(update_fields=["description", "unit_price", "quantity"])
     fat.persistir_totais()
     return fat
 
@@ -77,31 +77,31 @@ def test_payment_confirm_generates_receipt():
     tenant = _tenant()
     patient = _patient(tenant)
     exam = _exam(tenant)
-    fatura = _invoice_with_exam(tenant, patient, exam)
+    invoice = _invoice_with_exam(tenant, patient, exam)
 
-    # Emite fatura para permitir atualização de estado/pagamento
-    fatura.estado = Invoice.Estado.EMITIDA
-    fatura.save(update_fields=["estado"])
+    # Emite invoice para permitir atualização de status/payment
+    invoice.status = Invoice.Estado.EMITIDA
+    invoice.save(update_fields=["status"])
 
-    pagamento = Payment.objects.create(
-        inquilino=tenant,
-        fatura=fatura,
-        valor=fatura.total,
-        metodo=Payment.Method.DINHEIRO,
+    payment = Payment.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        value=invoice.total,
+        method=Payment.Method.DINHEIRO,
     )
 
-    pagamento.confirm()
-    fatura.refresh_from_db()
-    fatura.gerar_recibo_automatico(pagamento)
+    payment.confirm()
+    invoice.refresh_from_db()
+    invoice.gerar_recibo_automatico(payment)
 
-    fatura.refresh_from_db()
-    recibo = Receipt.objects.filter(pagamento=pagamento).first()
+    invoice.refresh_from_db()
+    recibo = Receipt.objects.filter(payment=payment).first()
 
-    assert pagamento.status == Payment.Status.CONFIRMADO
-    assert pagamento.pago_em is not None
+    assert payment.status == Payment.Status.CONFIRMADO
+    assert payment.paid_at is not None
     assert recibo is not None
-    assert recibo.fatura == fatura
-    assert fatura.estado in {Invoice.Estado.EMITIDA, Invoice.Estado.PAGA}
+    assert recibo.invoice == invoice
+    assert invoice.status in {Invoice.Estado.EMITIDA, Invoice.Estado.PAGA}
 
 
 @pytest.mark.django_db
@@ -109,21 +109,21 @@ def test_payment_refund_requires_confirmed_status():
     tenant = _tenant()
     patient = _patient(tenant)
     exam = _exam(tenant)
-    fatura = _invoice_with_exam(tenant, patient, exam)
+    invoice = _invoice_with_exam(tenant, patient, exam)
 
-    pagamento = Payment.objects.create(
-        inquilino=tenant,
-        fatura=fatura,
-        valor=fatura.total,
-        metodo=Payment.Method.DINHEIRO,
+    payment = Payment.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        value=invoice.total,
+        method=Payment.Method.DINHEIRO,
     )
 
     with pytest.raises(ValidationError):
-        pagamento.estornar()
+        payment.estornar()
 
-    pagamento.confirm()
-    pagamento.estornar()
-    assert pagamento.status == Payment.Status.ESTORNADO
+    payment.confirm()
+    payment.estornar()
+    assert payment.status == Payment.Status.ESTORNADO
 
 
 @pytest.mark.django_db
@@ -131,46 +131,46 @@ def test_insurance_payment_requires_insurer_and_authorization():
     tenant = _tenant()
     patient = _patient(tenant)
     exam = _exam(tenant)
-    fatura = _invoice_with_exam(tenant, patient, exam)
+    invoice = _invoice_with_exam(tenant, patient, exam)
 
-    pagamento = Payment(
-        inquilino=tenant,
-        nome="Pagamento Seguro",
-        fatura=fatura,
-        valor=fatura.total,
-        metodo=Payment.Method.SEGURO_SAUDE,
+    payment = Payment(
+        tenant=tenant,
+        name="Pagamento Seguro",
+        invoice=invoice,
+        value=invoice.total,
+        method=Payment.Method.SEGURO_SAUDE,
     )
 
     with pytest.raises(ValidationError):
-        pagamento.full_clean()
+        payment.full_clean()
 
-    seguradora = Insurer.objects.create(inquilino=tenant, nome="Seguradora Teste")
-    plano = CoveragePlan.objects.create(inquilino=tenant, seguradora=seguradora, nome="Plano Teste")
+    insurer = Insurer.objects.create(tenant=tenant, name="Seguradora Teste")
+    plan = CoveragePlan.objects.create(tenant=tenant, insurer=insurer, name="Plano Teste")
 
-    pagamento.seguradora = seguradora
-    pagamento.plano_cobertura = plano
-    pagamento.numero_autorizacao = "AUT-123"
-    pagamento.full_clean()
+    payment.insurer = insurer
+    payment.coverage_plan = plan
+    payment.authorization_number = "AUT-123"
+    payment.full_clean()
 
 
 @pytest.mark.django_db
 def test_transaction_and_reconciliation():
     trans = Transaction.objects.create(
-        referencia_externa="TX123",
+        external_reference="TX123",
         gateway="local",
         status="PEN",
     )
-    rec = Reconciliation.objects.create(transacao=trans)
+    rec = Reconciliation.objects.create(transaction=trans)
     rec.confirm()
     rec.refresh_from_db()
-    assert rec.confirmado is True
-    assert rec.data_confirmacao is not None
+    assert rec.confirmed is True
+    assert rec.confirmation_date is not None
 
 
-_paciente = _patient
-_exame = _exam
-_fatura_com_exame = _invoice_with_exam
-test_pagamento_confirma_gera_recibo = test_payment_confirm_generates_receipt
-test_pagamento_estorno_exige_confirmado = test_payment_refund_requires_confirmed_status
-test_pagamento_seguro_exige_seguradora_e_autorizacao = test_insurance_payment_requires_insurer_and_authorization
-test_transacao_e_reconciliacao = test_transaction_and_reconciliation
+_patient = _patient
+_exam = _exam
+_invoice_com_exam = _invoice_with_exam
+test_payment_confirma_gera_recibo = test_payment_confirm_generates_receipt
+test_payment_estorno_exige_confirmed = test_payment_refund_requires_confirmed_status
+test_payment_seguro_exige_insurer_e_autorizacao = test_insurance_payment_requires_insurer_and_authorization
+test_transaction_e_reconciliacao = test_transaction_and_reconciliation

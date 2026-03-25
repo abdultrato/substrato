@@ -13,26 +13,35 @@ class Holiday(NoNameCoreModel):
     Nota: o percent de acréscimo é configurado por tenant (ConfiguracaoInquilino).
     """
 
-    prefixo = "FER"
+    prefix = "FER"
 
-    data = models.DateField(db_index=True)
-    descricao = models.CharField(max_length=255, blank=True, default="")
-    ativo = models.BooleanField(default=True, db_index=True)
+    date = models.DateField(
+
+        db_column="data",
+
+        db_index=True)
+    description = models.CharField(
+        db_column="descricao",
+        max_length=255, blank=True, default="")
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
 
     class Meta:
+        db_table = "consultas_feriado"
         verbose_name = "Feriado"
         verbose_name_plural = "Feriados"
-        ordering = ["-data", "-criado_em"]
-        unique_together = ("inquilino", "data")
+        ordering = ["-date", "-created_at"]
+        unique_together = ("tenant", "date")
         indexes = [
-            models.Index(fields=["inquilino", "data"]),
-            models.Index(fields=["inquilino", "ativo", "data"]),
+            models.Index(fields=["tenant", "date"]),
+            models.Index(fields=["tenant", "active", "date"]),
         ]
 
     def clean(self):
         super().clean()
-        if not self.data:
-            raise ValidationError({"data": "Informe a data do feriado."})
+        if not self.date:
+            raise ValidationError({"date": "Informe a date do feriado."})
 
     def __str__(self) -> str:
-        return f"{self.data} {self.descricao}".strip()
+        return f"{self.date} {self.description}".strip()

@@ -1,28 +1,28 @@
 from domain.billing.calculadora import calcular_totais
 
 
-def executar(fatura):
+def executar(invoice):
 
-    itens = fatura.itens.all()
+    itens = invoice.itens.all()
 
-    resultado = calcular_totais(
+    result = calcular_totais(
         itens=itens,
         isento_iva=False,
         cobertura_seguro=0,
     )
 
-    fatura.subtotal = resultado["subtotal"]
-    fatura.iva_valor = resultado["iva_valor"]
-    fatura.total = resultado["total"]
-    fatura.valor_seguro = resultado["valor_seguro"]
-    fatura.valor_paciente = resultado["valor_paciente"]
+    invoice.subtotal = result["subtotal"]
+    invoice.vat_amount = result["vat_amount"]
+    invoice.total = result["total"]
+    invoice.insurance_amount = result["insurance_amount"]
+    invoice.patient_amount = result["patient_amount"]
 
-    fatura.save(
+    invoice.save(
         update_fields=[
             "subtotal",
-            "iva_valor",
+            "vat_amount",
             "total",
-            "valor_seguro",
-            "valor_paciente",
+            "insurance_amount",
+            "patient_amount",
         ]
     )

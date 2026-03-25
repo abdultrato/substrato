@@ -13,9 +13,9 @@ class AuthorizationService:
             return None
 
         authorization = ProcedureAuthorization.objects.create(
-            nome=f"Authorization {request_id}",
-            requisicao_id=request_id,
-            plano=plan,
+            name=f"Authorization {request_id}",
+            request_id=request_id,
+            plan=plan,
         )
 
         event_bus.publish_after_commit(

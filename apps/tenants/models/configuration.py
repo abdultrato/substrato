@@ -6,32 +6,49 @@ from core.models.base import NoNameCoreModel
 
 
 class TenantConfiguration(NoNameCoreModel):
-    prefixo = "CFG"
+    prefix = "CFG"
 
-    inquilino = models.OneToOneField(
+    tenant = models.OneToOneField(
         "inquilinos.Tenant",
+        db_column="inquilino_id",
         on_delete=models.CASCADE,
         related_name="configuracao",
         db_index=True,
     )
 
-    fuso_horario = models.CharField(max_length=80, default="Africa/Maputo")
-    moeda = models.CharField(max_length=10, default="MZN")
-    idioma = models.CharField(max_length=10, default="pt")
+    time_zone = models.CharField(
 
-    permite_multi_unidade = models.BooleanField(default=False)
-    limite_usuarios = models.PositiveIntegerField(default=1)
+        db_column="fuso_horario",
 
-    # Consultas: acréscimo percentual aplicado quando a data for marcada como feriado.
-    acrescimo_percentual_consulta_feriado = models.DecimalField(
+        max_length=80, default="Africa/Maputo")
+    currency = models.CharField(
+        db_column="moeda",
+        max_length=10, default="MZN")
+    language = models.CharField(
+        db_column="idioma",
+        max_length=10, default="pt")
+
+    allows_multi_unit = models.BooleanField(
+
+        db_column="permite_multi_unidade",
+
+        default=False)
+    user_limit = models.PositiveIntegerField(
+        db_column="limite_usuarios",
+        default=1)
+
+    # Consultas: acréscimo percentual aplicado quando a date for marcada como feriado.
+    holiday_consultation_percentage_surcharge = models.DecimalField(
+        db_column="acrescimo_percentual_consulta_feriado",
         max_digits=6,
         decimal_places=2,
         default=Decimal("0.00"),
     )
 
     class Meta:
+        db_table = "inquilinos_configuracaoinquilino"
         verbose_name = "Configuração do Inquilino"
         verbose_name_plural = "Configurações do Inquilino"
 
     def __str__(self) -> str:
-        return f"Config {self.inquilino_id}"
+        return f"Config {self.tenant_id}"

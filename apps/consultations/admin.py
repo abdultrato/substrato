@@ -6,44 +6,44 @@ from .models.medical_consultation import MedicalConsultation
 
 
 class CoreAdmin(admin.ModelAdmin):
-    list_filter = ("deletado",)
-    search_fields = ("id_custom",)
-    readonly_fields = ("criado_em", "atualizado_em")
-    ordering = ("-criado_em",)
+    list_filter = ("deleted",)
+    search_fields = ("custom_id",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
 
 
 @admin.register(MedicalConsultation)
 class MedicalConsultationAdmin(CoreAdmin):
     list_display = (
-        "agendada_para",
-        "paciente",
-        "medico",
-        "especialidade",
-        "tipo",
-        "estado",
-        "preco",
-        "tipo_horario",
-        "feriado_manual",
+        "scheduled_for",
+        "patient",
+        "doctor",
+        "specialty",
+        "type",
+        "status",
+        "price",
+        "schedule_type",
+        "manual_holiday",
     )
-    list_filter = ("estado", "tipo_horario", "feriado_manual", "tipo")
-    search_fields = ("tipo", "paciente__nome", "medico__nome")
-    ordering = ("-agendada_para", "-criado_em")
+    list_filter = ("status", "schedule_type", "manual_holiday", "type")
+    search_fields = ("type", "patient__name", "doctor__name")
+    ordering = ("-scheduled_for", "-created_at")
 
 
 @admin.register(ConsultationSpecialty)
 class ConsultationSpecialtyAdmin(CoreAdmin):
-    list_display = ("nome", "preco_base", "iva_percentual", "ativo", "inquilino", "criado_em")
-    list_filter = ("ativo",)
-    search_fields = ("nome",)
-    ordering = ("nome",)
+    list_display = ("name", "base_price", "vat_percentage", "active", "tenant", "created_at")
+    list_filter = ("active",)
+    search_fields = ("name",)
+    ordering = ("name",)
 
 
 @admin.register(Holiday)
 class HolidayAdmin(CoreAdmin):
-    list_display = ("data", "descricao", "ativo", "inquilino", "criado_em")
-    list_filter = ("ativo", "data")
-    search_fields = ("descricao",)
-    ordering = ("-data", "-criado_em")
+    list_display = ("date", "description", "active", "tenant", "created_at")
+    list_filter = ("active", "date")
+    search_fields = ("description",)
+    ordering = ("-date", "-created_at")
 
 
 ConsultaMedicaAdmin = MedicalConsultationAdmin

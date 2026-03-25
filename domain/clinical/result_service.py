@@ -13,70 +13,70 @@ STATUS_COLORS = {
 class ResultService:
     @staticmethod
     def interpret(result_item):
-        field = result_item.exame_campo
+        field = result_item.exam_field
 
         indicator = None
         new_color = None
         new_alert = None
 
         patient = None
-        if result_item.resultado and result_item.resultado.requisicao:
-            patient = result_item.resultado.requisicao.paciente
+        if result_item.result and result_item.result.request:
+            patient = result_item.result.request.patient
 
         if patient:
             reference = ClinicalReferenceResolver.resolve(field, patient)
 
             if reference:
-                value = str(result_item.resultado_valor) if result_item.resultado_valor is not None else None
-                data = ReferenceInterpreter.interpret(value, reference)
+                value = str(result_item.result_value) if result_item.result_value is not None else None
+                date = ReferenceInterpreter.interpret(value, reference)
 
-                if data:
-                    indicator = data.get("status_clinico")
-                    new_color = data.get("cor_laudo")
-                    new_alert = data.get("alerta_critico")
+                if date:
+                    indicator = date.get("clinical_status")
+                    new_color = date.get("report_color")
+                    new_alert = date.get("critical_alert")
 
         if indicator is None:
-            indicator = field.interpretar_resultado(result_item.resultado_valor)
+            indicator = field.interpretar_result(result_item.result_value)
 
         if indicator is None:
             return
 
-        result_item.status_clinico = indicator
+        result_item.clinical_status = indicator
 
         if new_color:
-            result_item.cor_laudo = new_color
+            result_item.report_color = new_color
         else:
-            result_item.cor_laudo = STATUS_COLORS.get(indicator)
+            result_item.report_color = STATUS_COLORS.get(indicator)
 
         if new_alert is not None:
-            result_item.alerta_critico = bool(new_alert)
+            result_item.critical_alert = bool(new_alert)
         elif "CRITICO" in indicator:
-            result_item.alerta_critico = True
+            result_item.critical_alert = True
 
         ResultService._delta_check(result_item)
         ResultService._auto_validate(result_item)
 
     @staticmethod
     def _delta_check(result_item):
-        field = result_item.exame_campo
+        field = result_item.exam_field
 
-        if not field.delta_max:
+        if not field.max_delta:
             return
 
         patient = None
-        if result_item.resultado and result_item.resultado.requisicao:
-            patient = result_item.resultado.requisicao.paciente
+        if result_item.result and result_item.result.request:
+            patient = result_item.result.request.patient
 
         if not patient:
             return
 
         previous = (
             result_item.__class__.objects.filter(
-                resultado__requisicao__paciente=patient,
-                exame_campo=field,
+                result__request__patient=patient,
+                exam_field=field,
             )
             .exclude(pk=result_item.pk)
-            .order_by("-criado_em")
+            .order_by("-created_at")
             .first()
         )
 
@@ -84,15 +84,15 @@ class ResultService:
             return
 
         try:
-            current = float(result_item.resultado_valor)
-            older = float(previous.resultado_valor)
+            current = float(result_item.result_value)
+            older = float(previous.result_value)
         except Exception:
             return
 
         delta = abs(current - older)
 
-        if delta > field.delta_max:
-            result_item.alerta_critico = True
+        if delta > field.max_delta:
+            result_item.critical_alert = True
 
     @staticmethod
     def _auto_validate(result_item):

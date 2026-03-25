@@ -5,18 +5,18 @@ class OrderMixin(models.Model):
     """
     Defines logical ordering.
 
-    ✔ usado para layout de laudos
+    ✔ used para layout de laudos
     ✔ ordenação clínica
     """
 
-    ordem = models.PositiveIntegerField(
+    order = models.PositiveIntegerField(
         default=1,
         db_index=True,
     )
 
     class Meta:
         abstract = True
-        ordering = ["ordem"]
+        ordering = ["order"]
 
 
 OrdemMixin = OrderMixin

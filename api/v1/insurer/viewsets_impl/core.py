@@ -15,27 +15,27 @@ class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQu
     serializer_class = ProcedureAuthorizationSerializer
     filterset_class = ProcedureAuthorizationFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "descricao", "status", "codigo_autorizacao"]
+    search_fields = ["custom_id", "name", "description", "status", "authorization_code"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "descricao",
-        "nome",
-        "ordem",
-        "ativo",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "requisicao_id",
-        "plano",
+        "tenant",
+        "custom_id",
+        "description",
+        "name",
+        "order",
+        "active",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "request_id",
+        "plan",
         "status",
-        "codigo_autorizacao",
-        "data_resposta",
+        "authorization_code",
+        "response_date",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -43,25 +43,25 @@ class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
     serializer_class = CoveragePlanSerializer
     filterset_class = CoveragePlanFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "descricao"]
+    search_fields = ["custom_id", "name", "description"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "descricao",
-        "nome",
-        "ordem",
-        "ativo",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "seguradora",
-        "percentual_cobertura",
-        "exige_autorizacao",
+        "tenant",
+        "custom_id",
+        "description",
+        "name",
+        "order",
+        "active",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "insurer",
+        "coverage_percentage",
+        "requires_authorization",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class InsurerViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -69,32 +69,32 @@ class InsurerViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     serializer_class = InsurerSerializer
     filterset_class = InsurerFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "email", "telefone", "descricao", "codigo_externo"]
+    search_fields = ["custom_id", "name", "email", "phone", "description", "external_code"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "descricao",
-        "nome",
-        "ordem",
-        "ativo",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "codigo_externo",
+        "tenant",
+        "custom_id",
+        "description",
+        "name",
+        "order",
+        "active",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "external_code",
         "email",
-        "telefone",
-        "ativa",
+        "phone",
+        "active",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
     "autorizacaoprocedimento": ProcedureAuthorizationViewSet,
     "planocobertura": CoveragePlanViewSet,
-    "seguradora": InsurerViewSet,
+    "insurer": InsurerViewSet,
 }
 
 __all__ = [

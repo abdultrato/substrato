@@ -12,13 +12,13 @@ class ClinicalStatus:
 class ReferenceRange:
     minimo: float | None = None
     maximo: float | None = None
-    critico_baixo: float | None = None
-    critico_alto: float | None = None
+    critical_low: float | None = None
+    critical_high: float | None = None
 
 
 def interpret(value: float | None, reference: ReferenceRange | None) -> str:
     """
-    Interpreta um valor laboratorial com base no intervalo clínico.
+    Interpreta um value laboratorial com base no intervalo clínico.
     """
 
     if value is None:
@@ -27,10 +27,10 @@ def interpret(value: float | None, reference: ReferenceRange | None) -> str:
     if reference is None:
         return ClinicalStatus.NORMAL
 
-    if reference.critico_baixo is not None and value <= reference.critico_baixo:
+    if reference.critical_low is not None and value <= reference.critical_low:
         return ClinicalStatus.CRITICAL
 
-    if reference.critico_alto is not None and value >= reference.critico_alto:
+    if reference.critical_high is not None and value >= reference.critical_high:
         return ClinicalStatus.CRITICAL
 
     if reference.minimo is not None and value < reference.minimo:

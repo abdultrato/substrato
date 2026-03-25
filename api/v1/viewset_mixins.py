@@ -39,8 +39,8 @@ def _iter_fields(value: object) -> list[str]:
 def _resolve_field_path(model, path: str) -> bool:
     """
     Validate a Django ORM field path like:
-    - "nome"
-    - "paciente__nome"
+    - "name"
+    - "patient__name"
 
     Returns True if Django can resolve the path via model meta traversal.
     """
@@ -173,18 +173,18 @@ class ValidatedSearchOrderingMixin:
 
 class TenantScopedQuerysetMixin:
     """
-    Automatically applies `inquilino` (tenant) scoping when present on the request.
+    Automatically applies `tenant` (tenant) scoping when present on the request.
 
     Besides filtering the queryset, it also forces the correct tenant on CREATE/UPDATE
-    to avoid payload-based tenant injection (for example `{"inquilino": 999}`).
+    to avoid payload-based tenant injection (for example `{"tenant": 999}`).
     """
 
-    tenant_field_name = "inquilino"
+    tenant_field_name = "tenant"
 
     def _get_request_tenant(self):
-        return getattr(getattr(self, "request", None), "inquilino", None)
+        return getattr(getattr(self, "request", None), "tenant", None)
 
-    _get_request_inquilino = _get_request_tenant
+    _get_request_tenant = _get_request_tenant
 
     def _get_model_from_queryset(self, qs):
         return getattr(qs, "model", None)
@@ -259,7 +259,7 @@ class TenantScopedQuerysetMixin:
             if val_id is None and isinstance(val, int):
                 val_id = val
             if req_tenant_id is not None and val_id is not None and val_id != req_tenant_id:
-                raise PermissionDenied("Não é permitido alterar o tenant do registro.")
+                raise PermissionDenied("Não é permitido alterar o tenant do record.")
 
         # Force the correct tenant when saving.
         try:

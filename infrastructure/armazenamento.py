@@ -1,8 +1,8 @@
 class Armazenamento:
-    def salvar(self, arquivo):
+    def salvar(self, file):
         pass
 
-    def get_url(self, arquivo):
-        return f"/media/{arquivo}"
+    def get_url(self, file):
+        return f"/media/{file}"
 
     obter_url = get_url

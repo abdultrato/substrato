@@ -17,57 +17,73 @@ class Tenant(
     SoftDeleteMixin,
     BaseModel,
 ):
-    prefixo = "TN"
+    prefix = "TN"
 
     class StatusComercial(models.TextChoices):
         TRIAL = "TRIAL", "Trial"
         ATIVO = "ATIVO", "Ativo"
         SUSPENSO = "SUSPENSO", "Suspenso"
 
-    identificador = models.SlugField(max_length=80, unique=True, db_index=True)
-    dominio = models.CharField(max_length=255, blank=True, null=True, db_index=True)
-    ativo = models.BooleanField(default=True, db_index=True)
+    identifier = models.SlugField(
 
-    status_comercial = models.CharField(
+        db_column="identificador",
+
+        max_length=80, unique=True, db_index=True)
+    domain = models.CharField(
+        db_column="dominio",
+        max_length=255, blank=True, null=True, db_index=True)
+    active = models.BooleanField(
+        db_column="ativo",
+        default=True, db_index=True)
+
+    commercial_status = models.CharField(
+
+        db_column="status_comercial",
+
         max_length=10,
         choices=StatusComercial.choices,
         default=StatusComercial.TRIAL,
         db_index=True,
     )
-    trial_ate = models.DateField(blank=True, null=True)
-    bloqueado_em = models.DateTimeField(blank=True, null=True)
+    trial_until = models.DateField(
+        db_column="trial_ate",
+        blank=True, null=True)
+    blocked_at = models.DateTimeField(
+        db_column="bloqueado_em",
+        blank=True, null=True)
 
     class Meta:
+        db_table = "inquilinos_inquilino"
         verbose_name = "Inquilino"
         verbose_name_plural = "Inquilinos"
         indexes = [
-            models.Index(fields=["identificador"]),
-            models.Index(fields=["dominio"]),
-            models.Index(fields=["ativo"]),
+            models.Index(fields=["identifier"]),
+            models.Index(fields=["domain"]),
+            models.Index(fields=["active"]),
         ]
 
     def esta_bloqueado(self) -> bool:
-        return self.bloqueado_em is not None
+        return self.blocked_at is not None
 
     def esta_em_trial(self) -> bool:
-        if self.status_comercial != Tenant.StatusComercial.TRIAL:
+        if self.commercial_status != Tenant.StatusComercial.TRIAL:
             return False
-        if not self.trial_ate:
+        if not self.trial_until:
             return True
         hoje = timezone.localdate()
-        return self.trial_ate >= hoje
+        return self.trial_until >= hoje
 
     def get_active_subscription(self):
-        return self.assinaturas.filter(status="ATIVA").order_by("-data_inicio").first()
+        return self.assinaturas.filter(status="ATIVA").order_by("-start_date").first()
 
     @property
     def plan(self):
         assinatura = self.get_active_subscription()
-        return getattr(assinatura, "plano", None)
+        return getattr(assinatura, "plan", None)
 
     def __str__(self) -> str:
-        return self.nome or self.identificador
+        return self.name or self.identifier
 
 
-Tenant.obter_assinatura_ativa = Tenant.get_active_subscription
-Tenant.plano = Tenant.plan
+Tenant.obter_assinatura_active = Tenant.get_active_subscription
+Tenant.plan = Tenant.plan

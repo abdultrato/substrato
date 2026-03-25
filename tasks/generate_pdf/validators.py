@@ -3,40 +3,40 @@ import re
 from django.core.exceptions import ValidationError
 
 
-def apenas_numeros(valor: str | None):
-    if not valor:
-        return valor
-    return re.sub(r"\D", "", valor)
+def apenas_numeros(value: str | None):
+    if not value:
+        return value
+    return re.sub(r"\D", "", value)
 
 
-def validate_percentage(valor):
-    if valor is None:
-        return valor
+def validate_percentage(value):
+    if value is None:
+        return value
 
-    if valor < 0 or valor > 100:
+    if value < 0 or value > 100:
         raise ValidationError("Valor deve estar entre 0 e 100.")
 
-    return valor
+    return value
 
 
-def validate_minimum_text(valor: str, minimo=3):
-    if not valor or len(valor.strip()) < minimo:
+def validate_minimum_text(value: str, minimo=3):
+    if not value or len(value.strip()) < minimo:
         raise ValidationError(f"Deve conter pelo menos {minimo} caracteres.")
-    return valor
+    return value
 
 
-def validate_code(valor: str):
-    if not valor:
-        return valor
+def validate_code(value: str):
+    if not value:
+        return value
 
-    valor = valor.strip().upper()
+    value = value.strip().upper()
 
-    if not re.match(r"^[A-Z0-9\-]+$", valor):
+    if not re.match(r"^[A-Z0-9\-]+$", value):
         raise ValidationError("Código inválido.")
 
-    return valor
+    return value
 
 
 validar_percentual = validate_percentage
 validar_texto_minimo = validate_minimum_text
-validar_codigo = validate_code
+validar_code = validate_code

@@ -14,30 +14,39 @@ from infrastructure.orm.fields.sector_field import SectorField
 
 class LabExam(PropagarInquilinoMixin, CoreModel):
     """
-    Cadastro de exames laboratoriais.
+    Cadastro de exams laboratoriais.
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "EXA"
+    fonte_tenant = "patient"
+    prefix = "EXA"
 
     # =====================================================
     # CAMPOS
     # =====================================================
 
-    trl_horas = models.PositiveIntegerField(
-        verbose_name="Tempo de resposta (em horas)",
+    turnaround_hours = models.PositiveIntegerField(
+
+        db_column="trl_horas",
+
+        verbose_name="Tempo de response (em hours)",
         default=24,
-        help_text="Tempo de resposta em horas.",
+        help_text="Tempo de response em hours.",
     )
 
-    preco = MoneyField(
-        verbose_name="Preço do exame",
+    price = MoneyField(
+
+        db_column="preco",
+
+        verbose_name="Preço do exam",
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="Preço do exame.",
+        help_text="Preço do exam.",
     )
 
-    iva_percentual = models.DecimalField(
+    vat_percentage = models.DecimalField(
+
+        db_column="iva_percentual",
+
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
@@ -46,22 +55,25 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao exame (0 a 100).",
+        help_text="Taxa de IVA aplicada ao exam (0 a 100).",
     )
 
-    aplica_iva_por_padrao = models.BooleanField(
+    applies_vat_by_default = models.BooleanField(
+
+        db_column="aplica_iva_por_padrao",
+
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este exame normalmente não deve ter IVA.",
+        help_text="Desmarque se este exam normalmente não deve ter IVA.",
     )
 
-    metodo = MethodField(
-        verbose_name="Método do exame",
+    method = MethodField(
+        verbose_name="Método do exam",
         db_index=True,
     )
 
-    setor = SectorField(
-        verbose_name="Setor do exame",
+    sector = SectorField(
+        verbose_name="Setor do exam",
         db_index=True,
     )
 
@@ -74,26 +86,26 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
         verbose_name = "Exame"
         verbose_name_plural = "Exames"
 
-        ordering = ["nome", "criado_em"]
+        ordering = ["name", "created_at"]
 
         indexes = [
-            models.Index(fields=["setor", "deletado"]),
-            models.Index(fields=["metodo"]),
+            models.Index(fields=["sector", "deleted"]),
+            models.Index(fields=["method"]),
         ]
 
         constraints = [
             models.UniqueConstraint(
-                fields=["setor", "nome"],
-                condition=Q(deletado=False),
-                name="unique_nome_exame_por_setor_nao_deletado",
+                fields=["sector", "name"],
+                condition=Q(deleted=False),
+                name="unique_name_exam_por_sector_nao_deleted",
             ),
             models.CheckConstraint(
-                check=Q(trl_horas__gt=0),
-                name="trl_horas_positivo",
+                check=Q(turnaround_hours__gt=0),
+                name="turnaround_hours_positivo",
             ),
             models.CheckConstraint(
-                check=Q(preco__gte=0),
-                name="preco_nao_negativo",
+                check=Q(price__gte=0),
+                name="price_nao_negativo",
             ),
         ]
 
@@ -106,17 +118,17 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
 
         erros = {}
 
-        if not self.nome:
-            erros["nome"] = "O exame deve possuir um nome."
+        if not self.name:
+            erros["name"] = "O exam deve possuir um name."
 
-        if self.preco is None:
-            erros["preco"] = "O exame deve possuir um preço."
+        if self.price is None:
+            erros["price"] = "O exam deve possuir um preço."
 
-        if self.preco == Decimal("0.00"):
-            erros["preco"] = "Exame não pode ter preço zero."
+        if self.price == Decimal("0.00"):
+            erros["price"] = "Exame não pode ter preço zero."
 
-        if self.trl_horas <= 0:
-            erros["trl_horas"] = "TRL deve ser maior que zero."
+        if self.turnaround_hours <= 0:
+            erros["turnaround_hours"] = "TRL deve ser maior que zero."
 
         if erros:
             raise ValidationError(erros)
@@ -126,5 +138,5 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
     # =====================================================
 
     def __str__(self):
-        return f"{self.nome or 'exame sem nome'}"
+        return f"{self.name or 'exam sem name'}"
 

@@ -33,7 +33,7 @@ def clear_tenant():
     _tenant_ctx.set(None)
 
 
-set_inquilino = set_tenant
-get_inquilino = get_tenant
-reset_inquilino = reset_tenant
-clear_inquilino = clear_tenant
+set_tenant = set_tenant
+get_tenant = get_tenant
+reset_tenant = reset_tenant
+clear_tenant = clear_tenant

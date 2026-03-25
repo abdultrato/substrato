@@ -23,13 +23,13 @@ class TenantMiddleware:
         try:
             return self._handle(request)
         except OperationalError:
-            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
     def _handle(self, request):
         if request.path.startswith("/health/") or request.path.startswith("/metrics"):
             token = set_tenant(None)
             request.tenant = None
-            request.inquilino = None
+            request.tenant = None
             try:
                 return self.get_response(request)
             finally:
@@ -39,7 +39,7 @@ class TenantMiddleware:
             connection.close_if_unusable_or_obsolete()
             connection.ensure_connection()
         except OperationalError:
-            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         if settings.DEBUG:
             tenant = self._resolve_debug_tenant(request)
@@ -48,7 +48,7 @@ class TenantMiddleware:
 
             token = set_tenant(tenant)
             request.tenant = tenant
-            request.inquilino = tenant
+            request.tenant = tenant
             try:
                 return self.get_response(request)
             finally:
@@ -56,20 +56,20 @@ class TenantMiddleware:
 
         host = request.get_host().split(":")[0].lower().strip()
         if not host:
-            return JsonResponse({"erro": "Host inválido."}, status=400)
+            return JsonResponse({"error": "Host inválido."}, status=400)
 
         try:
             connection.close_if_unusable_or_obsolete()
             connection.ensure_connection()
         except OperationalError:
-            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         tenant = self._resolve_tenant(host)
 
         if not tenant and not settings.DEBUG and os.getenv("TENANT_FALLBACK_DEFAULT", "").lower() in {"1", "true", "yes"}:
-            tenant = Tenant.objects.filter(ativo=True).order_by("id").first()
+            tenant = Tenant.objects.filter(active=True).order_by("id").first()
             if tenant:
-                cache.set(f"tenant_domain:{host}", tenant.id, self.CACHE_TIMEOUT)
+                self._cache_set(f"tenant_domain:{host}", tenant.id, self.CACHE_TIMEOUT)
 
         if not tenant and request.path.startswith("/api/v1/equipment_integrations/equipment/"):
             try:
@@ -79,26 +79,26 @@ class TenantMiddleware:
                     request.headers.get("X-Integration-Key") or request.META.get("HTTP_X_INTEGRATION_KEY") or ""
                 ).strip()
                 credential = IntegrationCredential.validate_key(raw_key)
-                if credential and getattr(credential, "equipamento_id", None):
-                    tenant = credential.equipamento.inquilino
+                if credential and getattr(credential, "equipment_id", None):
+                    tenant = credential.equipment.tenant
             except Exception:
                 tenant = None
 
         token = set_tenant(tenant)
         request.tenant = tenant
-        request.inquilino = tenant
+        request.tenant = tenant
 
         try:
             if not tenant:
                 if request.path.startswith("/api/v1/equipment_integrations/equipment/"):
                     return self.get_response(request)
-                return JsonResponse({"erro": "Tenant não encontrado."}, status=404)
+                return JsonResponse({"error": "Tenant não encontrado."}, status=404)
 
-            if not tenant.ativo:
-                return JsonResponse({"erro": "Tenant inativo."}, status=403)
+            if not tenant.active:
+                return JsonResponse({"error": "Tenant inativo."}, status=403)
 
             if tenant.esta_bloqueado():
-                return JsonResponse({"erro": "Tenant bloqueado ou inadimplente."}, status=403)
+                return JsonResponse({"error": "Tenant bloqueado ou inadimplente."}, status=403)
 
             return self.get_response(request)
         finally:
@@ -115,42 +115,62 @@ class TenantMiddleware:
 
         try:
             if host:
-                tenant = Tenant.objects.filter(dominio=host).order_by("id").first()
+                tenant = Tenant.objects.filter(domain=host).order_by("id").first()
 
             if not tenant:
-                tenant = Tenant.objects.filter(ativo=True).order_by("id").first()
+                tenant = Tenant.objects.filter(active=True).order_by("id").first()
 
             if not tenant:
                 try:
                     tenant = Tenant.objects.create(
-                        nome="Tenant Local",
-                        identificador="local",
-                        dominio=host or "localhost",
-                        ativo=True,
-                        status_comercial=Tenant.StatusComercial.TRIAL,
+                        name="Tenant Local",
+                        identifier="local",
+                        domain=host or "localhost",
+                        active=True,
+                        commercial_status=Tenant.StatusComercial.TRIAL,
                     )
                 except Exception:
-                    tenant = Tenant.objects.filter(identificador="local").order_by("id").first()
+                    tenant = Tenant.objects.filter(identifier="local").order_by("id").first()
         except OperationalError:
-            return JsonResponse({"erro": "Base de dados indisponível."}, status=503)
+            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         return tenant
 
     def _resolve_tenant(self, host):
         cache_key = f"tenant_domain:{host}"
-        tenant_id = cache.get(cache_key)
+        tenant_id = self._cache_get(cache_key)
 
         if tenant_id:
-            tenant = Tenant.objects.only("id", "ativo").filter(id=tenant_id, ativo=True).first()
+            tenant = Tenant.objects.only("id", "active").filter(id=tenant_id, active=True).first()
             if tenant:
                 return tenant
-            cache.delete(cache_key)
+            self._cache_delete(cache_key)
 
-        tenant = Tenant.objects.only("id", "ativo").filter(dominio=host, ativo=True).first()
+        tenant = Tenant.objects.only("id", "active").filter(domain=host, active=True).first()
         if tenant:
-            cache.set(cache_key, tenant.id, self.CACHE_TIMEOUT)
+            self._cache_set(cache_key, tenant.id, self.CACHE_TIMEOUT)
 
         return tenant
+
+    def _cache_get(self, key, default=None):
+        try:
+            return cache.get(key, default)
+        except Exception:
+            return default
+
+    def _cache_set(self, key, value, timeout):
+        try:
+            cache.set(key, value, timeout)
+        except Exception:
+            return None
+        return value
+
+    def _cache_delete(self, key):
+        try:
+            cache.delete(key)
+        except Exception:
+            return None
+        return key
 
 
 InquilinoMiddleware = TenantMiddleware

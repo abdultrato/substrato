@@ -6,14 +6,14 @@ from .models.company import Company
 @admin.register(Company)
 class EmpresaAdmin(admin.ModelAdmin):
     list_display = (
-        "id_custom",
-        "nome",
+        "custom_id",
+        "name",
         "nuit",
-        "telefone1",
+        "phone1",
         "email",
-        "ativo",
-        "criado_em",
+        "active",
+        "created_at",
     )
-    list_filter = ("ativo",)
-    search_fields = ("id_custom", "nome", "nuit", "telefone1", "email")
-    ordering = ("nome",)
+    list_filter = ("active",)
+    search_fields = ("custom_id", "name", "nuit", "phone1", "email")
+    ordering = ("name",)

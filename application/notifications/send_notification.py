@@ -15,40 +15,40 @@ CHANNELS = {
 
 
 @transaction.atomic
-def send_notification(destino: str, mensagem: str, canal: str):
+def send_notification(destino: str, message: str, channel: str):
 
-    if canal not in CHANNELS:
-        raise ValueError(f"Canal inválido: {canal}")
+    if channel not in CHANNELS:
+        raise ValueError(f"Canal inválido: {channel}")
 
-    notificacao = Notification.objects.create(
-        destinatario=destino,
-        mensagem=mensagem,
-        canal=canal,
+    notification = Notification.objects.create(
+        recipient=destino,
+        message=message,
+        channel=channel,
     )
 
     try:
-        resposta = CHANNELS[canal].enviar(destino, mensagem)
+        response = CHANNELS[channel].enviar(destino, message)
 
         DeliveryLog.objects.create(
-            notificacao=notificacao,
+            notification=notification,
             status="sucesso",
-            resposta=str(resposta),
+            response=str(response),
         )
 
-        notificacao.enviada = True
-        notificacao.save(update_fields=["enviada"])
+        notification.sent = True
+        notification.save(update_fields=["sent"])
 
-    except Exception as erro:
+    except Exception as error:
         DeliveryLog.objects.create(
-            notificacao=notificacao,
-            status="erro",
-            resposta=str(erro),
+            notification=notification,
+            status="error",
+            response=str(error),
         )
 
-        raise DeliveryFailure(str(erro)) from erro
+        raise DeliveryFailure(str(error)) from error
 
-    return notificacao
+    return notification
 
 
 CANAIS = CHANNELS
-enviar_notificacao = send_notification
+enviar_notification = send_notification

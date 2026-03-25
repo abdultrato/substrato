@@ -3,19 +3,19 @@ from decimal import ROUND_HALF_UP, Decimal
 
 class Money:
     def __init__(self, value):
-        self.valor = Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        self.value = Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        if self.valor < 0:
+        if self.value < 0:
             raise ValueError("Valor monetário não pode ser negativo.")
 
     def __add__(self, other):
-        return Money(self.valor + other.valor)
+        return Money(self.value + other.value)
 
     def __sub__(self, other):
-        return Money(self.valor - other.valor)
+        return Money(self.value - other.value)
 
     def __str__(self):
-        return f"{self.valor:.2f}"
+        return f"{self.value:.2f}"
 
 
 Dinheiro = Money

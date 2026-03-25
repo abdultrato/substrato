@@ -9,23 +9,35 @@ class NursingEvolution(PropagarInquilinoMixin, CoreModel):
     Evolução clínica observada pela enfermagem.
     """
 
-    fonte_inquilino = "paciente"
-    prefixo = "EVO"
+    fonte_tenant = "patient"
+    prefix = "EVO"
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         on_delete=models.CASCADE,
         related_name="evolucoes_enfermagem",
     )
 
-    observacao = models.TextField(verbose_name="Evolução clínica")
+    observation = models.TextField(
 
-    data_evolucao = models.DateTimeField(auto_now_add=True, verbose_name="Data da evolução")
+        db_column="observacao",
+
+        verbose_name="Evolução clínica")
+
+    evolution_date = models.DateTimeField(
+
+        db_column="data_evolucao",
+
+        auto_now_add=True, verbose_name="Data da evolução")
 
     class Meta:
+        db_table = "enfermagem_evolucaoenfermagem"
         verbose_name = "Evolução de Enfermagem"
         verbose_name_plural = "Evoluções de Enfermagem"
-        ordering = ["-data_evolucao"]
+        ordering = ["-evolution_date"]
 
     def __str__(self):
-        return f"Evolução - {self.paciente}"
+        return f"Evolução - {self.patient}"

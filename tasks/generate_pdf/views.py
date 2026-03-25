@@ -15,24 +15,24 @@ logger = logging.getLogger("pdf.views")
 
 
 @staff_member_required
-def result_pdf(request, id_custom):
+def result_pdf(request, custom_id):
     """
     Gera o PDF institucional de resultados laboratoriais.
     """
 
     try:
-        requisicao = get_object_or_404(
+        request = get_object_or_404(
             LabRequest.objects.select_related(
-                "paciente",
-                "analista",
+                "patient",
+                "analyst",
             ).prefetch_related(
-                "resultado__itens__exame_campo__exame",
+                "result__itens__exam_field__exam",
             ),
-            id_custom=id_custom,
+            custom_id=custom_id,
         )
 
         pdf_bytes, filename = generate_results_pdf(
-            requisicao,
+            request,
             apenas_validados=True,
         )
 
@@ -55,14 +55,14 @@ def result_pdf(request, id_custom):
 # =========================================================
 
 
-def request_pdf(request, requisicao_id):
+def request_pdf(request, request_id):
     try:
-        requisicao = get_object_or_404(
-            LabRequest.objects.select_related("paciente"),
-            id=requisicao_id,
+        request = get_object_or_404(
+            LabRequest.objects.select_related("patient"),
+            id=request_id,
         )
 
-        pdf_bytes, filename = generate_request_pdf(requisicao)
+        pdf_bytes, filename = generate_request_pdf(request)
 
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -78,15 +78,15 @@ def request_pdf(request, requisicao_id):
 # =========================================================
 
 
-def results_pdf(request, requisicao_id):
+def results_pdf(request, request_id):
     try:
-        requisicao = get_object_or_404(
-            LabRequest.objects.select_related("paciente"),
-            id=requisicao_id,
+        request = get_object_or_404(
+            LabRequest.objects.select_related("patient"),
+            id=request_id,
         )
 
         pdf_bytes, filename = generate_results_pdf(
-            requisicao,
+            request,
             apenas_validados=True,
         )
 
@@ -105,28 +105,28 @@ def results_pdf(request, requisicao_id):
 
 
 @staff_member_required
-def request_invoice_pdf(request, id_custom):
+def request_invoice_pdf(request, custom_id):
     try:
-        requisicao = (
-            LabRequest.objects.select_related("paciente", "analista")
-            .prefetch_related("exames")
-            .get(id_custom=id_custom)
+        request = (
+            LabRequest.objects.select_related("patient", "analyst")
+            .prefetch_related("exams")
+            .get(custom_id=custom_id)
         )
     except LabRequest.DoesNotExist:
         raise Http404("Requisição não encontrada") from None
     except Exception as err:
-        logger.exception("Erro ao buscar requisição para fatura.")
+        logger.exception("Erro ao buscar requisição para invoice.")
         raise Http404("Erro interno.") from err
 
     try:
-        pdf_content, filename = generate_invoice_pdf(requisicao)
+        pdf_content, filename = generate_invoice_pdf(request)
 
         response = HttpResponse(pdf_content, content_type="application/pdf")
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
     except Exception as err:
-        logger.exception("Erro ao gerar PDF da fatura por requisição.")
+        logger.exception("Erro ao gerar PDF da invoice por requisição.")
         raise Http404("Erro ao gerar documento.") from err
 
 
@@ -136,30 +136,30 @@ def request_invoice_pdf(request, id_custom):
 
 
 @staff_member_required
-def invoice_pdf(request, fatura_id_custom):
+def invoice_pdf(request, invoice_custom_id):
     try:
-        fatura = get_object_or_404(
-            Invoice.objects.select_related("paciente", "requisicao"),
-            id_custom=fatura_id_custom,
+        invoice = get_object_or_404(
+            Invoice.objects.select_related("patient", "request"),
+            custom_id=invoice_custom_id,
         )
 
         # garante consistência financeira
-        if hasattr(fatura, "recalcular_totais"):
-            fatura.recalcular_totais(save=True)
+        if hasattr(invoice, "recalcular_totais"):
+            invoice.recalcular_totais(save=True)
 
-        pdf_content, filename = generate_invoice_pdf(fatura, request=request)
+        pdf_content, filename = generate_invoice_pdf(invoice, request=request)
 
         response = HttpResponse(pdf_content, content_type="application/pdf")
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
     except Exception as err:
-        logger.exception("Erro ao gerar PDF da fatura.")
+        logger.exception("Erro ao gerar PDF da invoice.")
         raise Http404("Não foi possível gerar o documento.") from err
 
 
-resultado_pdf = result_pdf
-pdf_requisicao = request_pdf
+result_pdf = result_pdf
+pdf_request = request_pdf
 pdf_resultados = results_pdf
-fatura_requisicao_pdf = request_invoice_pdf
-fatura_pdf = invoice_pdf
+invoice_request_pdf = request_invoice_pdf
+invoice_pdf = invoice_pdf

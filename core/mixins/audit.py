@@ -7,25 +7,29 @@ from infrastructure.context.request_user import get_current_user
 
 
 class AuditMixin(models.Model):
-    criado_em = models.DateTimeField(
+    created_at = models.DateTimeField(
+        db_column="criado_em",
         auto_now_add=True,
         db_index=True,
     )
 
-    atualizado_em = models.DateTimeField(
+    updated_at = models.DateTimeField(
+        db_column="atualizado_em",
         auto_now=True,
     )
 
-    criado_por = models.ForeignKey(
+    created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        db_column="criado_por_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="%(class)s_criado",
     )
 
-    atualizado_por = models.ForeignKey(
+    updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        db_column="atualizado_por_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -40,10 +44,10 @@ class AuditMixin(models.Model):
         is_create = not self.pk
 
         if actor and getattr(actor, "is_authenticated", False):
-            if is_create and not self.criado_por_id:
-                self.criado_por = actor
+            if is_create and not self.created_by_id:
+                self.created_by = actor
 
-            self.atualizado_por = actor
+            self.updated_by = actor
 
             update_fields = kwargs.get("update_fields")
 
@@ -51,13 +55,61 @@ class AuditMixin(models.Model):
                 fields = set(update_fields)
 
                 if is_create:
-                    fields.add("criado_por")
+                    fields.add("created_by")
 
-                fields.add("atualizado_por")
+                fields.add("updated_by")
 
                 kwargs["update_fields"] = list(fields)
 
         super().save(*args, **kwargs)
+
+    @property
+    def criado_em(self):
+        return self.created_at
+
+    @criado_em.setter
+    def criado_em(self, value):
+        self.created_at = value
+
+    @property
+    def atualizado_em(self):
+        return self.updated_at
+
+    @atualizado_em.setter
+    def atualizado_em(self, value):
+        self.updated_at = value
+
+    @property
+    def criado_por(self):
+        return self.created_by
+
+    @criado_por.setter
+    def criado_por(self, value):
+        self.created_by = value
+
+    @property
+    def criado_por_id(self):
+        return self.created_by_id
+
+    @criado_por_id.setter
+    def criado_por_id(self, value):
+        self.created_by_id = value
+
+    @property
+    def atualizado_por(self):
+        return self.updated_by
+
+    @atualizado_por.setter
+    def atualizado_por(self, value):
+        self.updated_by = value
+
+    @property
+    def atualizado_por_id(self):
+        return self.updated_by_id
+
+    @atualizado_por_id.setter
+    def atualizado_por_id(self, value):
+        self.updated_by_id = value
 
 
 AuditoriaMixin = AuditMixin

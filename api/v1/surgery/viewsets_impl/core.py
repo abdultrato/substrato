@@ -15,34 +15,34 @@ from ..serializers import SurgerySerializer, SurgicalProcedureSerializer
 
 
 class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Surgery.objects.select_related("paciente", "cirurgiao").prefetch_related("procedimentos").all()
+    queryset = Surgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
     serializer_class = SurgerySerializer
     filterset_class = SurgeryFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "procedimento", "paciente__nome", "cirurgiao__username"]
-    ordering_fields = ["agendada_para", "criado_em", "estado"]
-    ordering = ["-agendada_para", "-criado_em"]
+    search_fields = ["custom_id", "procedure", "patient__name", "surgeon__username"]
+    ordering_fields = ["scheduled_for", "created_at", "status"]
+    ordering = ["-scheduled_for", "-created_at"]
 
-    @action(detail=True, methods=["post"], url_path="criar_fatura", url_name="criar-fatura")
+    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
     def create_invoice(self, request, pk=None):
         surgery = self.get_object()
 
-        if hasattr(surgery, "fatura") and getattr(surgery, "fatura", None):
-            invoice = surgery.fatura
+        if hasattr(surgery, "invoice") and getattr(surgery, "invoice", None):
+            invoice = surgery.invoice
         else:
             invoice = Invoice(
-                inquilino=surgery.inquilino,
-                origem=Invoice.Origem.CIRURGIA,
-                cirurgia=surgery,
-                paciente=surgery.paciente,
+                tenant=surgery.tenant,
+                origin=Invoice.Origem.CIRURGIA,
+                surgery=surgery,
+                patient=surgery.patient,
             )
             invoice.full_clean()
             invoice.save()
 
-        if invoice.estado != Invoice.Estado.RASCUNHO:
-            raise ValidationError("A fatura vinculada já foi emitida/paga/cancelada.")
+        if invoice.status != Invoice.Estado.RASCUNHO:
+            raise ValidationError("A invoice vinculada já foi emitida/paga/cancelada.")
 
-        invoice.sincronizar_itens_da_origem()
+        invoice.sincronizar_itens_da_origin()
 
         emit = (request.data or {}).get("emitir", True)
         if emit:
@@ -50,10 +50,10 @@ class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         return Response(
             {
-                "cirurgia_id": surgery.id,
-                "fatura_id": invoice.id,
-                "fatura_codigo": invoice.id_custom,
-                "fatura_estado": invoice.estado,
+                "surgery_id": surgery.id,
+                "invoice_id": invoice.id,
+                "invoice_code": invoice.custom_id,
+                "invoice_status": invoice.status,
                 "total": str(invoice.total),
             },
             status=status.HTTP_200_OK,
@@ -65,13 +65,13 @@ class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     serializer_class = SurgicalProcedureSerializer
     filterset_class = SurgicalProcedureFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "descricao"]
-    ordering_fields = ["nome", "ativo", "criado_em"]
-    ordering = ["nome"]
+    search_fields = ["custom_id", "name", "description"]
+    ordering_fields = ["name", "active", "created_at"]
+    ordering = ["name"]
 
 
 VIEWSET_MAP = {
-    "cirurgia": SurgeryViewSet,
+    "surgery": SurgeryViewSet,
     "procedimentocirurgico": SurgicalProcedureViewSet,
 }
 

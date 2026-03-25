@@ -7,16 +7,16 @@ from apps.maintenance.models.maintenance import Maintenance
 
 CORE_READ_ONLY_FIELDS = [
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 ]
 
 
@@ -29,89 +29,89 @@ def _get_ultima_inspecao(obj: Equipment):
 
 
 class EquipamentoSerializer(serializers.ModelSerializer):
-    estado = serializers.SerializerMethodField()
-    estado_atual = serializers.SerializerMethodField()
-    estado_atual_label = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    status_atual = serializers.SerializerMethodField()
+    status_atual_label = serializers.SerializerMethodField()
     ultima_inspecao = serializers.SerializerMethodField()
 
-    def get_estado(self, obj: Equipment) -> str:
-        return obj.estado_atual_label or obj.estado_atual or ""
+    def get_status(self, obj: Equipment) -> str:
+        return obj.status_atual_label or obj.status_atual or ""
 
-    def get_estado_atual(self, obj: Equipment) -> str:
-        return obj.estado_atual
+    def get_status_atual(self, obj: Equipment) -> str:
+        return obj.status_atual
 
-    def get_estado_atual_label(self, obj: Equipment) -> str:
-        return obj.estado_atual_label
+    def get_status_atual_label(self, obj: Equipment) -> str:
+        return obj.status_atual_label
 
     def get_ultima_inspecao(self, obj: Equipment):
         ultima = _get_ultima_inspecao(obj)
-        return ultima.data if ultima else None
+        return ultima.date if ultima else None
 
     class Meta:
         model = Equipment
         fields = "__all__"
         read_only_fields = [
             *CORE_READ_ONLY_FIELDS,
-            "estado",
-            "estado_atual",
-            "estado_atual_label",
+            "status",
+            "status_atual",
+            "status_atual_label",
             "ultima_inspecao",
         ]
         extra_kwargs = {
-            "nome": {"required": True},
-            "numero_serie": {"required": True},
+            "name": {"required": True},
+            "serial_number": {"required": True},
         }
 
 
 class InspecaoDiariaSerializer(serializers.ModelSerializer):
-    descricao = serializers.SerializerMethodField(method_name="get_description")
-    estado = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField(method_name="get_description")
+    status = serializers.SerializerMethodField()
 
     def get_description(self, obj: DailyInspection) -> str:
-        equipamento = getattr(obj, "equipamento", None)
-        if equipamento:
-            nome = equipamento.nome or equipamento.numero_serie or f"Equipamento {equipamento.pk}"
-            return f"{nome} - {obj.data}"
-        return str(obj.data)
+        equipment = getattr(obj, "equipment", None)
+        if equipment:
+            name = equipment.name or equipment.serial_number or f"Equipamento {equipment.pk}"
+            return f"{name} - {obj.date}"
+        return str(obj.date)
 
-    def get_estado(self, obj: DailyInspection) -> str:
+    def get_status(self, obj: DailyInspection) -> str:
         try:
-            return obj.get_funcionamento_display()
+            return obj.get_operation_status_display()
         except Exception:
-            return obj.funcionamento or ""
+            return obj.operation_status or ""
 
     class Meta:
         model = DailyInspection
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "descricao", "estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "description", "status"]
 
 
 class ManutencaoSerializer(serializers.ModelSerializer):
-    estado = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
-    def get_estado(self, obj: Maintenance) -> str:
+    def get_status(self, obj: Maintenance) -> str:
         return "Executada" if obj.executada else "Programada"
 
     class Meta:
         model = Maintenance
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "status"]
 
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
-    estado = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
-    def get_estado(self, obj: Incident) -> str:
-        return "Resolvida" if obj.resolvido else "Pendente"
+    def get_status(self, obj: Incident) -> str:
+        return "Resolvida" if obj.resolved else "Pendente"
 
     class Meta:
         model = Incident
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "status"]
 
 
 SERIALIZER_MAP = {
-    "equipamento": EquipamentoSerializer,
+    "equipment": EquipamentoSerializer,
     "inspecaodiaria": InspecaoDiariaSerializer,
     "manutencao": ManutencaoSerializer,
     "ocorrencia": OcorrenciaSerializer,

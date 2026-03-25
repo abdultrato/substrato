@@ -6,18 +6,18 @@ from django.db import models
 from core.models.base import NoNameCoreModel
 
 
-def _sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data or b"").hexdigest()
+def _sha256_bytes(date: bytes) -> str:
+    return hashlib.sha256(date or b"").hexdigest()
 
 
 def _upload_path(instance: "IntegrationDocument", filename: str) -> str:
-    tenant = getattr(instance, "inquilino_id", None) or "sem-tenant"
-    msg = getattr(instance, "mensagem_id", None) or "sem-msg"
+    tenant = getattr(instance, "tenant_id", None) or "sem-tenant"
+    msg = getattr(instance, "message_id", None) or "sem-msg"
     return f"integracoes_equipamentos/{tenant}/{msg}/{filename}"
 
 
 class IntegrationMessage(NoNameCoreModel):
-    prefixo = "MSG"
+    prefix = "MSG"
 
     class Direction(models.TextChoices):
         ENTRADA = "IN", "Entrada"
@@ -31,14 +31,18 @@ class IntegrationMessage(NoNameCoreModel):
     Direcao = Direction
     Estado = Status
 
-    equipamento = models.ForeignKey(
+    equipment = models.ForeignKey(
+
         "integracoes_equipamentos.IntegrationEquipment",
+
+        db_column="equipamento_id",
         on_delete=models.PROTECT,
         related_name="mensagens",
         db_index=True,
     )
-    ordem = models.ForeignKey(
+    order = models.ForeignKey(
         "integracoes_equipamentos.IntegrationOrder",
+        db_column="ordem_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -46,13 +50,18 @@ class IntegrationMessage(NoNameCoreModel):
         db_index=True,
     )
 
-    direcao = models.CharField(
+    direction = models.CharField(
+
+        db_column="direcao",
+
         max_length=3,
         choices=Direction.choices,
         default=Direction.ENTRADA,
         db_index=True,
     )
-    protocolo = models.CharField(max_length=20, blank=True, default="", db_index=True)
+    protocol = models.CharField(
+        db_column="protocolo",
+        max_length=20, blank=True, default="", db_index=True)
     message_id = models.CharField(max_length=120, blank=True, default="", db_index=True)
     content_type = models.CharField(max_length=120, blank=True, default="")
 
@@ -60,24 +69,33 @@ class IntegrationMessage(NoNameCoreModel):
     payload_json = models.JSONField(default=dict, blank=True)
     payload_raw = models.TextField(blank=True, default="")
 
-    estado = models.CharField(
+    status = models.CharField(
+
+        db_column="estado",
+
         max_length=4,
         choices=Status.choices,
         default=Status.RECEBIDA,
         db_index=True,
     )
-    erro = models.TextField(blank=True, default="")
+    error = models.TextField(
+        db_column="erro",
+        blank=True, default="")
 
-    processado_em = models.DateTimeField(null=True, blank=True)
+    processed_at = models.DateTimeField(
+
+        db_column="processado_em",
+
+        null=True, blank=True)
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaomensagem"
         verbose_name = "Mensagem (Integração)"
         verbose_name_plural = "Mensagens (Integração)"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "equipamento", "estado"]),
-            models.Index(fields=["equipamento", "direcao", "criado_em"]),
+            models.Index(fields=["tenant", "equipment", "status"]),
+            models.Index(fields=["equipment", "direction", "created_at"]),
         ]
 
     @classmethod
@@ -95,17 +113,17 @@ class IntegrationMessage(NoNameCoreModel):
     ) -> "IntegrationMessage":
         raw_body = raw_body or b""
         return cls.objects.create(
-            inquilino=equipment.inquilino,
-            equipamento=equipment,
-            ordem=order,
-            direcao=direction,
-            protocolo=protocol or "",
+            tenant=equipment.tenant,
+            equipment=equipment,
+            order=order,
+            direction=direction,
+            protocol=protocol or "",
             message_id=message_id or "",
             content_type=content_type or "",
             sha256=_sha256_bytes(raw_body),
             payload_raw=raw_body.decode("utf-8", errors="replace"),
             payload_json=payload_json or {},
-            estado=cls.Status.RECEBIDA,
+            status=cls.Status.RECEBIDA,
         )
 
 
@@ -113,16 +131,20 @@ IntegrationMessage.criar_de_payload = IntegrationMessage.create_from_payload
 
 
 class IntegrationDocument(NoNameCoreModel):
-    prefixo = "DOC"
+    prefix = "DOC"
 
-    mensagem = models.ForeignKey(
+    message = models.ForeignKey(
+
         IntegrationMessage,
+
+        db_column="mensagem_id",
         on_delete=models.CASCADE,
         related_name="documentos",
         db_index=True,
     )
-    ordem_item = models.ForeignKey(
+    order_item = models.ForeignKey(
         "integracoes_equipamentos.IntegrationOrderItem",
+        db_column="ordem_item_id",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -130,7 +152,11 @@ class IntegrationDocument(NoNameCoreModel):
         db_index=True,
     )
 
-    arquivo = models.FileField(upload_to=_upload_path)
+    file = models.FileField(
+
+        db_column="arquivo",
+
+        upload_to=_upload_path)
     filename = models.CharField(max_length=255, blank=True, default="")
     content_type = models.CharField(max_length=120, blank=True, default="")
     sha256 = models.CharField(max_length=64, blank=True, default="", db_index=True)
@@ -139,21 +165,21 @@ class IntegrationDocument(NoNameCoreModel):
         db_table = "integracoes_equipamentos_integracaodocumento"
         verbose_name = "Documento (Integração)"
         verbose_name_plural = "Documentos (Integração)"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.mensagem_id:
-            self.inquilino_id = self.mensagem.inquilino_id
+        if not self.tenant_id and self.message_id:
+            self.tenant_id = self.message.tenant_id
 
-        if not self.filename and getattr(self.arquivo, "name", None):
-            self.filename = self.arquivo.name.rsplit("/", 1)[-1]
+        if not self.filename and getattr(self.file, "name", None):
+            self.filename = self.file.name.rsplit("/", 1)[-1]
 
-        if self.arquivo and not self.sha256:
+        if self.file and not self.sha256:
             try:
-                self.arquivo.seek(0)
-                data = self.arquivo.read()
-                self.arquivo.seek(0)
-                self.sha256 = _sha256_bytes(data or b"")
+                self.file.seek(0)
+                date = self.file.read()
+                self.file.seek(0)
+                self.sha256 = _sha256_bytes(date or b"")
             except Exception:
                 pass
 

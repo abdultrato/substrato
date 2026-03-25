@@ -13,18 +13,18 @@ from .services import NotificationService
 
 
 def _resolve_invoice_patient(invoice):
-    patient = getattr(invoice, "paciente", None)
+    patient = getattr(invoice, "patient", None)
     if patient:
         return patient
 
-    origin = getattr(invoice, "origem", None)
+    origin = getattr(invoice, "origin", None)
     if origin == Invoice.Origem.CLINICO:
-        request = getattr(invoice, "requisicao", None)
-        return getattr(request, "paciente", None)
+        request = getattr(invoice, "request", None)
+        return getattr(request, "patient", None)
 
     if origin == Invoice.Origem.ENFERMAGEM:
-        procedure = getattr(invoice, "procedimento", None)
-        return getattr(procedure, "paciente", None)
+        procedure = getattr(invoice, "procedure", None)
+        return getattr(procedure, "patient", None)
 
     return None
 
@@ -32,58 +32,58 @@ def _resolve_invoice_patient(invoice):
 @receiver(
     post_save,
     sender=ResultItem,
-    dispatch_uid="notificacoes.resultado_disponivel",
+    dispatch_uid="notificacoes.result_disponivel",
 )
 def notify_result(sender, instance, created, **kwargs):
-    if instance.estado != ResultState.VALIDATED:
+    if instance.status != ResultState.VALIDATED:
         return
 
     # Notify only after the last result item is validated.
-    if instance.resultado.itens.exclude(estado=ResultState.VALIDATED).exists():
+    if instance.result.itens.exclude(status=ResultState.VALIDATED).exists():
         return
 
-    patient = instance.resultado.requisicao.paciente
+    patient = instance.result.request.patient
     if not patient:
         return
 
-    request_code = instance.resultado.requisicao.id_custom or instance.resultado.requisicao_id
-    result_code = instance.resultado.id_custom or instance.resultado_id
+    request_code = instance.result.request.custom_id or instance.result.request_id
+    result_code = instance.result.custom_id or instance.result_id
     subject = "Resultado disponível"
-    message = f"Seu resultado {result_code} da requisição {request_code} já está disponível para consulta."
+    message = f"Seu result {result_code} da requisição {request_code} já está disponível para consultation."
 
     NotificationService().send_to_patient(
         patient=patient,
         subject=subject,
         message=message,
         event_type=Notification.EventType.RESULTADO_DISPONIVEL,
-        referencia_externa=f"resultado:{instance.resultado_id}:validado",
+        external_reference=f"result:{instance.result_id}:validado",
     )
 
 
 @receiver(
     post_save,
     sender=Invoice,
-    dispatch_uid="notificacoes.fatura_emitida",
+    dispatch_uid="notificacoes.invoice_emitida",
 )
 def notify_invoice_issued(sender, instance, created, **kwargs):
-    if instance.estado != Invoice.Estado.EMITIDA:
+    if instance.status != Invoice.Estado.EMITIDA:
         return
 
     patient = _resolve_invoice_patient(instance)
     if not patient:
         return
 
-    invoice_code = instance.id_custom or instance.pk
+    invoice_code = instance.custom_id or instance.pk
     total_amount = instance.total or Decimal("0.00")
     subject = "Fatura emitida"
-    message = f"A sua fatura {invoice_code} foi emitida. Valor total: {total_amount:.2f}."
+    message = f"A sua invoice {invoice_code} foi emitida. Valor total: {total_amount:.2f}."
 
     NotificationService().send_to_patient(
         patient=patient,
         subject=subject,
         message=message,
         event_type=Notification.EventType.FATURA_EMITIDA,
-        referencia_externa=f"fatura:{instance.pk}:emitida",
+        external_reference=f"invoice:{instance.pk}:emitida",
     )
 
 
@@ -96,14 +96,14 @@ def notify_receipt_generated(sender, instance, created, **kwargs):
     if not created:
         return
 
-    patient = _resolve_invoice_patient(instance.fatura)
+    patient = _resolve_invoice_patient(instance.invoice)
     if not patient:
         return
 
-    invoice_code = instance.fatura.id_custom or instance.fatura_id
+    invoice_code = instance.invoice.custom_id or instance.invoice_id
     subject = "Recibo disponível"
     message = (
-        f"Seu recibo {instance.numero} foi gerado para a fatura {invoice_code}. Valor recebido: {instance.valor:.2f}."
+        f"Seu recibo {instance.number} foi gerado para a invoice {invoice_code}. Valor recebido: {instance.value:.2f}."
     )
 
     NotificationService().send_to_patient(
@@ -111,11 +111,11 @@ def notify_receipt_generated(sender, instance, created, **kwargs):
         subject=subject,
         message=message,
         event_type=Notification.EventType.RECIBO_GERADO,
-        referencia_externa=f"recibo:{instance.pk}:gerado",
+        external_reference=f"recibo:{instance.pk}:gerado",
     )
 
 
-_resolver_paciente_fatura = _resolve_invoice_patient
-notificar_resultado = notify_result
-notificar_fatura_emitida = notify_invoice_issued
+_resolver_patient_invoice = _resolve_invoice_patient
+notificar_result = notify_result
+notificar_invoice_emitida = notify_invoice_issued
 notificar_recibo_gerado = notify_receipt_generated

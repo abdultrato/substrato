@@ -1,4 +1,4 @@
-# dominio/faturamento/calculadora.py
+# domain/faturamento/calculadora.py
 
 from decimal import Decimal
 

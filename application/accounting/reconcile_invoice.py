@@ -11,13 +11,13 @@ from apps.accounting.models.financial_reconciliation import FinancialReconciliat
 
 @transaction.atomic
 def execute(
-    fatura,
-    valor_recebido,
-    referencia_externa=None,
+    invoice,
+    received_amount,
+    external_reference=None,
 ):
 
-    valor_recebido = Decimal(
-        valor_recebido,
+    received_amount = Decimal(
+        received_amount,
     ).quantize(
         Decimal(
             "0.01",
@@ -27,35 +27,35 @@ def execute(
 
     # 🔐 Lock pessimista no saldo
     saldo = AccountBalance.objects.select_for_update().get(
-        conta=fatura.conta_recebivel,
+        account=invoice.account_recebivel,
     )
 
-    valor_contabil = saldo.saldo_atual.quantize(
+    accounting_value = saldo.current_balance.quantize(
         Decimal(
             "0.01",
         ),
         rounding=ROUND_HALF_UP,
     )
 
-    divergencia = (valor_contabil - valor_recebido).quantize(
+    discrepancy = (accounting_value - received_amount).quantize(
         Decimal(
             "0.01",
         ),
         rounding=ROUND_HALF_UP,
     )
 
-    conciliado = divergencia == Decimal(
+    reconciled = discrepancy == Decimal(
         "0.00",
     )
 
     return FinancialReconciliation.objects.create(
-        inquilino=fatura.inquilino,
-        fatura=fatura,
-        valor_contabil=valor_contabil,
-        valor_recebido=valor_recebido,
-        divergencia=divergencia,
-        conciliado=conciliado,
-        referencia_externa=referencia_externa,
+        tenant=invoice.tenant,
+        invoice=invoice,
+        accounting_value=accounting_value,
+        received_amount=received_amount,
+        discrepancy=discrepancy,
+        reconciled=reconciled,
+        external_reference=external_reference,
     )
 
 

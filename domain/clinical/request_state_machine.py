@@ -23,7 +23,7 @@ class RequestStateMachine:
     @classmethod
     def validate(cls, current_state, new_state):
         if current_state in RequestState.TERMINAL:
-            raise InvalidRequestTransition("Requisição em estado final é imutável.")
+            raise InvalidRequestTransition("Requisição em status final é imutável.")
 
         allowed = cls.TRANSITIONS.get(current_state, set())
         if new_state not in allowed:

@@ -5,42 +5,42 @@ from apps.surgery.models.surgical_procedure import SurgicalProcedure
 
 CORE_READ_ONLY_FIELDS = (
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 )
 
 
 class SurgerySerializer(serializers.ModelSerializer):
-    paciente_nome = serializers.CharField(source="paciente.nome", read_only=True)
-    cirurgiao_nome = serializers.SerializerMethodField(method_name="get_surgeon_name")
-    procedimentos_nomes = serializers.SerializerMethodField(method_name="get_procedure_names")
-    fatura_id = serializers.SerializerMethodField(method_name="get_invoice_id")
-    fatura_codigo = serializers.SerializerMethodField(method_name="get_invoice_code")
-    fatura_estado = serializers.SerializerMethodField(method_name="get_invoice_status")
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    surgeon_name = serializers.SerializerMethodField(method_name="get_surgeon_name")
+    procedures_nomes = serializers.SerializerMethodField(method_name="get_procedure_names")
+    invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
+    invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
+    invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
 
     class Meta:
         model = Surgery
         fields = "__all__"
         read_only_fields = (
             *CORE_READ_ONLY_FIELDS,
-            "paciente_nome",
-            "cirurgiao_nome",
-            "procedimentos_nomes",
-            "fatura_id",
-            "fatura_codigo",
-            "fatura_estado",
+            "patient_name",
+            "surgeon_name",
+            "procedures_nomes",
+            "invoice_id",
+            "invoice_code",
+            "invoice_status",
         )
 
     def get_surgeon_name(self, obj: Surgery) -> str:
-        u = getattr(obj, "cirurgiao", None)
+        u = getattr(obj, "surgeon", None)
         if not u:
             return ""
         try:
@@ -50,13 +50,13 @@ class SurgerySerializer(serializers.ModelSerializer):
 
     def get_procedure_names(self, obj: Surgery) -> list[str]:
         try:
-            return list(obj.procedimentos.values_list("nome", flat=True))
+            return list(obj.procedures.values_list("name", flat=True))
         except Exception:
             return []
 
     def _get_invoice(self, obj: Surgery):
         try:
-            return getattr(obj, "fatura", None)
+            return getattr(obj, "invoice", None)
         except Exception:
             return None
 
@@ -66,11 +66,11 @@ class SurgerySerializer(serializers.ModelSerializer):
 
     def get_invoice_code(self, obj: Surgery) -> str:
         f = self._get_invoice(obj)
-        return getattr(f, "id_custom", "") if f else ""
+        return getattr(f, "custom_id", "") if f else ""
 
     def get_invoice_status(self, obj: Surgery) -> str:
         f = self._get_invoice(obj)
-        return getattr(f, "estado", "") if f else ""
+        return getattr(f, "status", "") if f else ""
 
 
 class SurgicalProcedureSerializer(serializers.ModelSerializer):
@@ -81,7 +81,7 @@ class SurgicalProcedureSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "cirurgia": SurgerySerializer,
+    "surgery": SurgerySerializer,
     "procedimentocirurgico": SurgicalProcedureSerializer,
 }
 

@@ -12,7 +12,7 @@ class MaintenanceModeView(APIView):
         return Response({"maintenance_mode": SystemConfigurationService.is_in_maintenance()})
 
     def post(self, request):
-        enabled = bool(request.data.get("enabled", False))
+        enabled = bool(request.date.get("enabled", False))
         SystemConfigurationService.set_maintenance(enabled)
 
         return Response({"maintenance_mode": SystemConfigurationService.is_in_maintenance()})

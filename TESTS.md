@@ -16,6 +16,16 @@ tests/
 
 ## 🚀 Começar com Testes
 
+### Execução Recomendada Neste Ambiente
+
+Em Windows + Python 3.14, prefira rodar a suíte via:
+
+```bash
+python runtests.py -q
+```
+
+Esse entrypoint local aplica o bootstrap necessário antes de carregar plugins do `pytest`.
+
 ### Instalar Dependências
 
 ```bash

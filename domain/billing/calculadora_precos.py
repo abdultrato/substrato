@@ -1,2 +1,2 @@
-def calcular_subtotal(quantidade, preco_unitario):
-    return quantidade * preco_unitario
+def calcular_subtotal(quantity, unit_price):
+    return quantity * unit_price

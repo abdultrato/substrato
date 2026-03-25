@@ -6,7 +6,7 @@ from core.models.base import NoNameCoreModel
 
 
 class ReceptionCheckin(NoNameCoreModel):
-    prefixo = "CHK"
+    prefix = "CHK"
 
     class Priority(models.TextChoices):
         URGENTE = "URG", "Urgente"
@@ -24,31 +24,43 @@ class ReceptionCheckin(NoNameCoreModel):
     Prioridade = Priority
     Estado = Status
 
-    paciente = models.ForeignKey(
+    patient = models.ForeignKey(
+
         "clinico.Patient",
+
+        db_column="paciente_id",
         on_delete=models.PROTECT,
         related_name="checkins",
         db_index=True,
     )
 
-    requisicao = models.OneToOneField(
+    request = models.OneToOneField(
+
         "clinico.LabRequest",
+
+        db_column="requisicao_id",
         on_delete=models.PROTECT,
         related_name="checkin",
         null=True,
         blank=True,
     )
 
-    fatura = models.OneToOneField(
+    invoice = models.OneToOneField(
+
         "faturamento.Invoice",
+
+        db_column="fatura_id",
         on_delete=models.PROTECT,
         related_name="checkin",
         null=True,
         blank=True,
     )
 
-    atendente = models.ForeignKey(
+    attendant = models.ForeignKey(
+
         "identidade.User",
+
+        db_column="atendente_id",
         on_delete=models.SET_NULL,
         related_name="checkins_recepcao",
         null=True,
@@ -56,34 +68,53 @@ class ReceptionCheckin(NoNameCoreModel):
         db_index=True,
     )
 
-    prioridade = models.CharField(
+    priority = models.CharField(
+
+        db_column="prioridade",
+
         max_length=5,
         choices=Priority.choices,
         default=Priority.NORMAL,
         db_index=True,
     )
-    estado = models.CharField(
+    status = models.CharField(
+        db_column="estado",
         max_length=6,
         choices=Status.choices,
         default=Status.AGUARDANDO,
         db_index=True,
     )
 
-    motivo = models.CharField(max_length=255, blank=True, default="")
-    observacoes = models.TextField(blank=True, default="")
+    reason = models.CharField(
 
-    chegou_em = models.DateTimeField(default=timezone.now, db_index=True)
-    chamado_em = models.DateTimeField(null=True, blank=True)
-    concluido_em = models.DateTimeField(null=True, blank=True)
+        db_column="motivo",
+
+        max_length=255, blank=True, default="")
+    notes = models.TextField(
+        db_column="observacoes",
+        blank=True, default="")
+
+    arrived_at = models.DateTimeField(
+
+        db_column="chegou_em",
+
+        default=timezone.now, db_index=True)
+    called_at = models.DateTimeField(
+        db_column="chamado_em",
+        null=True, blank=True)
+    completed_at = models.DateTimeField(
+        db_column="concluido_em",
+        null=True, blank=True)
 
     class Meta:
+        db_table = "recepcao_checkinrecepcao"
         verbose_name = "Check-in"
         verbose_name_plural = "Check-ins"
-        ordering = ["-chegou_em"]
+        ordering = ["-arrived_at"]
         indexes = [
-            models.Index(fields=["inquilino", "chegou_em"]),
-            models.Index(fields=["inquilino", "estado"]),
-            models.Index(fields=["inquilino", "prioridade"]),
+            models.Index(fields=["tenant", "arrived_at"]),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["tenant", "priority"]),
         ]
 
     # =====================================================
@@ -91,51 +122,51 @@ class ReceptionCheckin(NoNameCoreModel):
     # =====================================================
 
     def start_care(self, attendant=None):
-        if self.estado in {self.Status.CONCLUIDO, self.Status.CANCELADO}:
-            raise ValidationError("Check-in já foi finalizado.")
+        if self.status in {self.Status.CONCLUIDO, self.Status.CANCELADO}:
+            raise ValidationError("Check-in já foi finalized.")
 
         if attendant is not None:
-            self.atendente = attendant
+            self.attendant = attendant
 
-        self.estado = self.Status.EM_ATENDIMENTO
-        if not self.chamado_em:
-            self.chamado_em = timezone.now()
+        self.status = self.Status.EM_ATENDIMENTO
+        if not self.called_at:
+            self.called_at = timezone.now()
 
-        self.save(update_fields=["atendente", "estado", "chamado_em"])
+        self.save(update_fields=["attendant", "status", "called_at"])
 
     def register_request(self, request):
-        if self.requisicao_id:
+        if self.request_id:
             return
-        self.requisicao = request
-        self.estado = self.Status.REQUISICAO_CRIADA
-        self.save(update_fields=["requisicao", "estado"])
+        self.request = request
+        self.status = self.Status.REQUISICAO_CRIADA
+        self.save(update_fields=["request", "status"])
 
     def register_invoice(self, invoice):
-        if self.fatura_id:
+        if self.invoice_id:
             return
-        self.fatura = invoice
-        self.estado = self.Status.FATURA_VINCULADA
-        self.save(update_fields=["fatura", "estado"])
+        self.invoice = invoice
+        self.status = self.Status.FATURA_VINCULADA
+        self.save(update_fields=["invoice", "status"])
 
     def concluir(self):
-        if self.estado == self.Status.CANCELADO:
+        if self.status == self.Status.CANCELADO:
             raise ValidationError("Check-in cancelado não pode ser concluído.")
-        self.estado = self.Status.CONCLUIDO
-        self.concluido_em = timezone.now()
-        self.save(update_fields=["estado", "concluido_em"])
+        self.status = self.Status.CONCLUIDO
+        self.completed_at = timezone.now()
+        self.save(update_fields=["status", "completed_at"])
 
     def cancelar(self):
-        if self.estado == self.Status.CONCLUIDO:
+        if self.status == self.Status.CONCLUIDO:
             raise ValidationError("Check-in concluído não pode ser cancelado.")
-        self.estado = self.Status.CANCELADO
-        self.concluido_em = timezone.now()
-        self.save(update_fields=["estado", "concluido_em"])
+        self.status = self.Status.CANCELADO
+        self.completed_at = timezone.now()
+        self.save(update_fields=["status", "completed_at"])
 
     def __str__(self) -> str:
-        return self.id_custom or f"Checkin {self.pk}"
+        return self.custom_id or f"Checkin {self.pk}"
 
 
 ReceptionCheckin.iniciar_atendimento = ReceptionCheckin.start_care
-ReceptionCheckin.registrar_requisicao = ReceptionCheckin.register_request
-ReceptionCheckin.registrar_fatura = ReceptionCheckin.register_invoice
+ReceptionCheckin.registrar_request = ReceptionCheckin.register_request
+ReceptionCheckin.registrar_invoice = ReceptionCheckin.register_invoice
 CheckinRecepcao = ReceptionCheckin

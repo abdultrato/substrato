@@ -9,13 +9,13 @@ from ..serializers import PregnancySerializer
 
 
 class PregnancyViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Pregnancy.objects.select_related("paciente", "medico_responsavel").all()
+    queryset = Pregnancy.objects.select_related("patient", "responsible_doctor").all()
     serializer_class = PregnancySerializer
     filterset_class = PregnancyFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "paciente__nome", "medico_responsavel__nome"]
-    ordering_fields = ["criado_em", "estado", "data_prevista_parto"]
-    ordering = ["-criado_em", "-id"]
+    search_fields = ["custom_id", "patient__name", "responsible_doctor__name"]
+    ordering_fields = ["created_at", "status", "expected_delivery_date"]
+    ordering = ["-created_at", "-id"]
 
 
 VIEWSET_MAP = {

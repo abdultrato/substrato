@@ -26,7 +26,7 @@ class InsurerSerializer(serializers.ModelSerializer):
 SERIALIZER_MAP = {
     "autorizacaoprocedimento": ProcedureAuthorizationSerializer,
     "planocobertura": CoveragePlanSerializer,
-    "seguradora": InsurerSerializer,
+    "insurer": InsurerSerializer,
 }
 
 AutorizacaoProcedimentoSerializer = ProcedureAuthorizationSerializer

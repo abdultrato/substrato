@@ -9,11 +9,11 @@ class AddressField(models.JSONField):
     Estrutura padrão:
     {
         "rua": "",
-        "numero": "",
+        "number": "",
         "bairro": "",
         "cidade": "",
         "provincia": "",
-        "codigo_postal": "",
+        "code_postal": "",
         "pais": "Moçambique",
         "complemento": ""
     }
@@ -21,11 +21,11 @@ class AddressField(models.JSONField):
 
     estrutura_padrao = {
         "rua": "",
-        "numero": "",
+        "number": "",
         "bairro": "",
         "cidade": "",
         "provincia": "",
-        "codigo_postal": "",
+        "code_postal": "",
         "pais": "Moçambique",
         "complemento": "",
     }
@@ -48,9 +48,9 @@ class AddressField(models.JSONField):
 
         campos_validos = set(self.estrutura_padrao.keys())
 
-        for chave in value:
-            if chave not in campos_validos:
-                raise ValidationError(f"Campo de endereço inválido: {chave}")
+        for key in value:
+            if key not in campos_validos:
+                raise ValidationError(f"Campo de endereço inválido: {key}")
 
     def get_prep_value(self, value):
         """

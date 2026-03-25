@@ -37,7 +37,7 @@ class StandardPagination(PageNumberPagination):
     def get_page_size(self, request):
         return get_page_size(request, self.page_size, self.max_page_size)
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, date):
         return Response(
             {
                 "total": self.page.paginator.count,
@@ -46,7 +46,7 @@ class StandardPagination(PageNumberPagination):
                 "total_pages": self.page.paginator.num_pages,
                 "next": self.get_next_link(),
                 "previous": self.get_previous_link(),
-                "results": data,
+                "results": date,
             }
         )
 
@@ -63,12 +63,12 @@ class LargeDatasetPagination(PageNumberPagination):
 
     page_size = 50
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, date):
         return Response(
             {
                 "page": self.page.number,
                 "has_next": self.page.has_next(),
-                "results": data,
+                "results": date,
             }
         )
 

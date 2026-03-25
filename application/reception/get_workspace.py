@@ -13,85 +13,85 @@ from apps.reception.models.reception_checkin import ReceptionCheckin
 from domain.clinical.result_state import ResultState
 
 
-def execute(inquilino):
+def execute(tenant):
     hoje = timezone.localdate()
 
     checkins_hoje = ReceptionCheckin.objects.filter(
-        inquilino=inquilino,
-        chegou_em__date=hoje,
+        tenant=tenant,
+        arrived_at__date=hoje,
     )
 
     fila = (
         checkins_hoje.exclude(
-            estado__in=[
+            status__in=[
                 ReceptionCheckin.Status.CONCLUIDO,
                 ReceptionCheckin.Status.CANCELADO,
             ]
         )
-        .select_related("paciente", "requisicao", "fatura", "atendente")
+        .select_related("patient", "request", "invoice", "attendant")
         .annotate(
-            prioridade_ordem=Case(
-                When(prioridade=ReceptionCheckin.Priority.URGENTE, then=Value(0)),
-                When(prioridade=ReceptionCheckin.Priority.PREFERENCIAL, then=Value(1)),
+            priority_order=Case(
+                When(priority=ReceptionCheckin.Priority.URGENTE, then=Value(0)),
+                When(priority=ReceptionCheckin.Priority.PREFERENCIAL, then=Value(1)),
                 default=Value(2),
                 output_field=IntegerField(),
             ),
-            estado_ordem=Case(
-                When(estado=ReceptionCheckin.Status.AGUARDANDO, then=Value(0)),
-                When(estado=ReceptionCheckin.Status.EM_ATENDIMENTO, then=Value(1)),
-                When(estado=ReceptionCheckin.Status.REQUISICAO_CRIADA, then=Value(2)),
-                When(estado=ReceptionCheckin.Status.FATURA_VINCULADA, then=Value(3)),
+            status_order=Case(
+                When(status=ReceptionCheckin.Status.AGUARDANDO, then=Value(0)),
+                When(status=ReceptionCheckin.Status.EM_ATENDIMENTO, then=Value(1)),
+                When(status=ReceptionCheckin.Status.REQUISICAO_CRIADA, then=Value(2)),
+                When(status=ReceptionCheckin.Status.FATURA_VINCULADA, then=Value(3)),
                 default=Value(4),
                 output_field=IntegerField(),
             ),
         )
-        .order_by("estado_ordem", "prioridade_ordem", "chegou_em")[:12]
+        .order_by("status_order", "priority_order", "arrived_at")[:12]
     )
 
     recebido_hoje = (
         Payment.objects.filter(
-            fatura__inquilino=inquilino,
+            invoice__tenant=tenant,
             status=Payment.Status.CONFIRMADO,
-            pago_em__date=hoje,
-        ).aggregate(total=Coalesce(Sum("valor"), Decimal("0.00")))
+            paid_at__date=hoje,
+        ).aggregate(total=Coalesce(Sum("value"), Decimal("0.00")))
     )["total"]
 
     return {
-        "data": str(hoje),
+        "date": str(hoje),
         "resumo": {
             "checkins_hoje": checkins_hoje.count(),
-            "na_fila": checkins_hoje.filter(estado=ReceptionCheckin.Status.AGUARDANDO).count(),
-            "em_atendimento": checkins_hoje.filter(estado=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
-            "pacientes_novos": Patient.objects.filter(inquilino=inquilino, criado_em__date=hoje).count(),
+            "na_fila": checkins_hoje.filter(status=ReceptionCheckin.Status.AGUARDANDO).count(),
+            "em_atendimento": checkins_hoje.filter(status=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
+            "pacientes_novos": Patient.objects.filter(tenant=tenant, created_at__date=hoje).count(),
             "requisicoes_pendentes": LabRequest.objects.filter(
-                inquilino=inquilino,
-                estado=ResultState.PENDING,
+                tenant=tenant,
+                status=ResultState.PENDING,
             ).count(),
             "faturas_em_aberto": Invoice.objects.filter(
-                inquilino=inquilino,
-                estado=Invoice.Estado.EMITIDA,
+                tenant=tenant,
+                status=Invoice.Estado.EMITIDA,
             ).count(),
             "recibos_gerados_hoje": Receipt.objects.filter(
-                fatura__inquilino=inquilino,
-                criado_em__date=hoje,
+                invoice__tenant=tenant,
+                created_at__date=hoje,
             ).count(),
             "recebido_hoje": recebido_hoje,
         },
         "fila": [
             {
                 "id": item.id,
-                "id_custom": item.id_custom,
-                "paciente_id": item.paciente_id,
-                "paciente_nome": item.paciente.nome,
-                "paciente_codigo": item.paciente.id_custom,
-                "prioridade": item.get_prioridade_display(),
-                "estado": item.get_estado_display(),
-                "chegou_em": item.chegou_em.isoformat(),
-                "atendente": getattr(item.atendente, "username", "") if item.atendente_id else "",
-                "requisicao_id": item.requisicao_id,
-                "requisicao_codigo": item.requisicao.id_custom if item.requisicao_id else "",
-                "fatura_id": item.fatura_id,
-                "fatura_codigo": item.fatura.id_custom if item.fatura_id else "",
+                "custom_id": item.custom_id,
+                "patient_id": item.patient_id,
+                "patient_name": item.patient.name,
+                "patient_code": item.patient.custom_id,
+                "priority": item.get_priority_display(),
+                "status": item.get_status_display(),
+                "arrived_at": item.arrived_at.isoformat(),
+                "attendant": getattr(item.attendant, "username", "") if item.attendant_id else "",
+                "request_id": item.request_id,
+                "request_code": item.request.custom_id if item.request_id else "",
+                "invoice_id": item.invoice_id,
+                "invoice_code": item.invoice.custom_id if item.invoice_id else "",
             }
             for item in fila
         ],

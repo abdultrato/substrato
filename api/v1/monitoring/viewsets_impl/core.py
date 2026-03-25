@@ -9,17 +9,17 @@ from ..serializers import SystemErrorSerializer
 
 
 class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = SystemError.objects.select_related("usuario").all()
+    queryset = SystemError.objects.select_related("user").all()
     serializer_class = SystemErrorSerializer
     filterset_class = SystemErrorFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["caminho", "exception_class", "mensagem", "usuario__username"]
-    ordering_fields = ["criado_em", "status_code", "exception_class"]
-    ordering = ["-criado_em", "-id"]
+    search_fields = ["path", "exception_class", "message", "user__username"]
+    ordering_fields = ["created_at", "status_code", "exception_class"]
+    ordering = ["-created_at", "-id"]
 
 
 VIEWSET_MAP = {
-    "erro": SystemErrorViewSet,
+    "error": SystemErrorViewSet,
 }
 
 __all__ = [

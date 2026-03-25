@@ -6,16 +6,16 @@ from django.db import transaction
 
 
 class ServiceResult:
-    def __init__(self, success: bool, data=None, error: str | None = None):
+    def __init__(self, success: bool, date=None, error: str | None = None):
         self.success = success
-        self.data = data
+        self.date = date
         self.error = error
 
 
 class BaseService:
     @classmethod
-    def ok(cls, data=None):
-        return ServiceResult(True, data=data)
+    def ok(cls, date=None):
+        return ServiceResult(True, date=date)
 
     @classmethod
     def fail(cls, message: str):

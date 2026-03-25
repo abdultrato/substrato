@@ -31,7 +31,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email")
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    nome = factory.Faker("name")
+    name = factory.Faker("name")
     is_active = True
     is_staff = False
     is_superuser = False
@@ -78,10 +78,10 @@ class TenantFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Tenant
 
-    nome = factory.Faker("company")
-    identificador = factory.Faker("slug")
-    dominio = factory.Faker("domain_name")
-    ativo = True
+    name = factory.Faker("company")
+    identifier = factory.Faker("slug")
+    domain = factory.Faker("domain_name")
+    active = True
 
 
 # ============================================================================
@@ -95,40 +95,40 @@ class PatientFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Patient
 
-    nome = factory.Faker("name")
+    name = factory.Faker("name")
     email = factory.Faker("email")
-    data_nascimento = factory.Faker("date_of_birth")
-    contacto = factory.LazyFunction(lambda: fake.phone_number())
-    genero = factory.Faker("word", word_list=["Masculino", "Femenino"])
-    endereco_rua = factory.LazyFunction(lambda: fake.street_name())
-    endereco_cidade = factory.LazyFunction(lambda: fake.city())
-    ativo = True
+    birth_date = factory.Faker("date_of_birth")
+    contact = factory.LazyFunction(lambda: fake.phone_number())
+    gender = factory.Faker("word", word_list=["Masculino", "Femenino"])
+    address_street = factory.LazyFunction(lambda: fake.street_name())
+    address_city = factory.LazyFunction(lambda: fake.city())
+    active = True
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         """Override para adicionar tenant automaticamente"""
-        if "inquilino" not in kwargs:
-            kwargs["inquilino"] = TenantFactory()
+        if "tenant" not in kwargs:
+            kwargs["tenant"] = TenantFactory()
         return super()._create(model_class, *args, **kwargs)
 
 
 class ExamFactory(factory.django.DjangoModelFactory):
-    """Factory para criar exames"""
+    """Factory para criar exams"""
 
     class Meta:
         model = LabExam
 
-    nome = factory.Faker("word")
-    preco = factory.Faker("pyfloat", left_digits=3, right_digits=2, positive=True)
-    metodo = factory.Faker("word", word_list=["ELISA", "PCR", "Colorimetrico"])
-    setor = factory.Faker("word")
-    paciente = factory.SubFactory(PatientFactory)
+    name = factory.Faker("word")
+    price = factory.Faker("pyfloat", left_digits=3, right_digits=2, positive=True)
+    method = factory.Faker("word", word_list=["ELISA", "PCR", "Colorimetrico"])
+    sector = factory.Faker("word")
+    patient = factory.SubFactory(PatientFactory)
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         """Override para adicionar tenant automaticamente"""
-        if "inquilino" not in kwargs:
-            kwargs["inquilino"] = kwargs.get("paciente").inquilino
+        if "tenant" not in kwargs:
+            kwargs["tenant"] = kwargs.get("patient").tenant
         return super()._create(model_class, *args, **kwargs)
 
 
@@ -149,28 +149,28 @@ class BatchFactory:
         return tenant, usuarios
 
     @staticmethod
-    def create_patients_with_exams(num_pacientes=5, exames_por_paciente=3):
-        """Cria pacientes com exames"""
+    def create_patients_with_exams(num_pacientes=5, exams_por_patient=3):
+        """Cria pacientes com exams"""
         tenant = TenantFactory()
         pacientes = []
-        exames = []
+        exams = []
 
         for _ in range(num_pacientes):
-            paciente = PatientFactory(inquilino=tenant)
-            pacientes.append(paciente)
+            patient = PatientFactory(tenant=tenant)
+            pacientes.append(patient)
 
-            for _ in range(exames_por_paciente):
-                exame = ExamFactory(paciente=paciente, inquilino=tenant)
-                exames.append(exame)
+            for _ in range(exams_por_patient):
+                exam = ExamFactory(patient=patient, tenant=tenant)
+                exams.append(exam)
 
-        return tenant, pacientes, exames
+        return tenant, pacientes, exams
 
 
 InquilinoFactory = TenantFactory
 PacienteFactory = PatientFactory
 ExameFactory = ExamFactory
 BatchFactory.criar_tenant_com_usuarios = staticmethod(BatchFactory.create_tenant_with_users)
-BatchFactory.criar_pacientes_com_exames = staticmethod(BatchFactory.create_patients_with_exams)
+BatchFactory.criar_pacientes_com_exams = staticmethod(BatchFactory.create_patients_with_exams)
 
 
 # ============================================================================
@@ -206,32 +206,32 @@ def tenant_with_users(tenant):
 
 @pytest.fixture(name="patient")
 def patient_fixture(tenant):
-    """Cria um paciente"""
-    return PatientFactory(inquilino=tenant)
+    """Cria um patient"""
+    return PatientFactory(tenant=tenant)
 
 
-@pytest.fixture(name="paciente")
+@pytest.fixture(name="patient")
 def legacy_patient_fixture(tenant):
-    return PatientFactory(inquilino=tenant)
+    return PatientFactory(tenant=tenant)
 
 
 @pytest.fixture(name="exam")
 def exam_fixture(patient):
-    """Cria um exame"""
-    return ExamFactory(paciente=patient, inquilino=patient.inquilino)
+    """Cria um exam"""
+    return ExamFactory(patient=patient, tenant=patient.tenant)
 
 
-@pytest.fixture(name="exame")
-def legacy_exam_fixture(paciente):
-    return ExamFactory(paciente=paciente, inquilino=paciente.inquilino)
+@pytest.fixture(name="exam")
+def legacy_exam_fixture(patient):
+    return ExamFactory(patient=patient, tenant=patient.tenant)
 
 
 @pytest.fixture(name="patients_batch")
 def patients_batch_fixture(tenant):
     """Cria múltiplos pacientes"""
-    return [PatientFactory(inquilino=tenant) for _ in range(5)]
+    return [PatientFactory(tenant=tenant) for _ in range(5)]
 
 
 @pytest.fixture(name="pacientes_batch")
 def legacy_patients_batch_fixture(tenant):
-    return [PatientFactory(inquilino=tenant) for _ in range(5)]
+    return [PatientFactory(tenant=tenant) for _ in range(5)]

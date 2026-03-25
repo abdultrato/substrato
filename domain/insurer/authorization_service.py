@@ -1,7 +1,7 @@
 class AuthorizationService:
     @staticmethod
     def requires_authorization(plan):
-        return plan.exige_autorizacao
+        return plan.requires_authorization
 
 
 ServicoAutorizacao = AuthorizationService

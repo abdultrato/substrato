@@ -104,15 +104,15 @@ def _safe_choice_value(model, field_name: str):
 
 
 def _ensure_local_tenant() -> Tenant:
-    tenant = Tenant.objects.filter(identificador="local").order_by("id").first()
+    tenant = Tenant.objects.filter(identifier="local").order_by("id").first()
     if tenant:
         return tenant
     return Tenant.objects.create(
-        identificador="local",
-        nome="Tenant Local",
-        dominio="localhost",
-        ativo=True,
-        status_comercial=Tenant.StatusComercial.TRIAL,
+        identifier="local",
+        name="Tenant Local",
+        domain="localhost",
+        active=True,
+        commercial_status=Tenant.StatusComercial.TRIAL,
     )
 
 
@@ -122,15 +122,15 @@ def ensure_tenants(n: int, faker: Faker) -> list[Tenant]:
 
     while len(tenants) < n:
         idx = len(tenants) + 1
-        identificador = f"seed-tenant-{idx:04d}"
+        identifier = f"seed-tenant-{idx:04d}"
         obj, created = Tenant.objects.get_or_create(
-            identificador=identificador,
+            identifier=identifier,
             defaults={
-                "nome": f"Clínica {faker.city()} {idx}",
-                "dominio": f"tenant{idx}.localhost",
-                "ativo": True,
-                "status_comercial": Tenant.StatusComercial.TRIAL,
-                "trial_ate": timezone.localdate() + timedelta(days=30),
+                "name": f"Clínica {faker.city()} {idx}",
+                "domain": f"tenant{idx}.localhost",
+                "active": True,
+                "commercial_status": Tenant.StatusComercial.TRIAL,
+                "trial_until": timezone.localdate() + timedelta(days=30),
             },
         )
         if created:
@@ -144,20 +144,20 @@ def ensure_tenants(n: int, faker: Faker) -> list[Tenant]:
 def ensure_config_uso(tenants: Iterable[Tenant]) -> None:
     for idx, tenant in enumerate(tenants, start=1):
         TenantConfiguration.objects.get_or_create(
-            inquilino=tenant,
+            tenant=tenant,
             defaults={
-                "fuso_horario": "Africa/Maputo",
-                "moeda": "MZN",
-                "idioma": "pt",
-                "permite_multi_unidade": idx % 2 == 0,
-                "limite_usuarios": 10 + idx,
+                "time_zone": "Africa/Maputo",
+                "currency": "MZN",
+                "language": "pt",
+                "allows_multi_unit": idx % 2 == 0,
+                "user_limit": 10 + idx,
             },
         )
         TenantUsage.objects.get_or_create(
-            inquilino=tenant,
+            tenant=tenant,
             defaults={
-                "usuarios_ativos": 3 + idx,
-                "requisicoes_mes_atual": 20 * idx,
+                "active_users": 3 + idx,
+                "current_month_requests": 20 * idx,
             },
         )
 
@@ -166,19 +166,19 @@ def ensure_subscription_plans(n: int) -> list[SubscriptionPlan]:
     tipos = [c[0] for c in SubscriptionPlan.TipoPlano.choices]
     while _count(SubscriptionPlan) < n:
         idx = _count(SubscriptionPlan) + 1
-        tipo = tipos[(idx - 1) % len(tipos)]
+        type = tipos[(idx - 1) % len(tipos)]
         SubscriptionPlan.objects.create(
-            nome=f"Plano {tipo} {idx}",
-            descricao=f"Plano de assinatura seed ({tipo})",
-            ordem=idx,
-            tipo=tipo,
-            limite_usuarios=5 + idx,
-            limite_requisicoes_mes=1000 + 10 * idx,
-            preco_mensal=Decimal("0.00") if tipo == SubscriptionPlan.TipoPlano.FREE else Decimal("1990.00"),
-            preco_excedente_requisicao=Decimal("5.00"),
-            suporte_prioritario=tipo == SubscriptionPlan.TipoPlano.PRO,
-            permite_multi_unidade=tipo != SubscriptionPlan.TipoPlano.FREE,
-            ativo=True,
+            name=f"Plano {type} {idx}",
+            description=f"Plano de assinatura seed ({type})",
+            order=idx,
+            type=type,
+            user_limit=5 + idx,
+            monthly_request_limit=1000 + 10 * idx,
+            monthly_price=Decimal("0.00") if type == SubscriptionPlan.TipoPlano.FREE else Decimal("1990.00"),
+            request_overage_price=Decimal("5.00"),
+            priority_support=type == SubscriptionPlan.TipoPlano.PRO,
+            allows_multi_unit=type != SubscriptionPlan.TipoPlano.FREE,
+            active=True,
         )
     return list(SubscriptionPlan.objects.order_by("id")[:n])
 
@@ -186,26 +186,26 @@ def ensure_subscription_plans(n: int) -> list[SubscriptionPlan]:
 def ensure_assinaturas(n: int, tenants: list[Tenant], planos: list[SubscriptionPlan]) -> None:
     # Garante pelo menos 1 assinatura por tenant (e no minimo n no total).
     for idx, tenant in enumerate(tenants, start=1):
-        if not TenantSubscription.objects.filter(inquilino=tenant).exists():
-            plano = planos[(idx - 1) % len(planos)]
+        if not TenantSubscription.objects.filter(tenant=tenant).exists():
+            plan = planos[(idx - 1) % len(planos)]
             TenantSubscription.objects.create(
-                inquilino=tenant,
-                plano=plano,
+                tenant=tenant,
+                plan=plan,
                 status=TenantSubscription.Status.ATIVA,
-                ciclo=TenantSubscription.Ciclo.MENSAL,
-                data_inicio=timezone.localdate() - timedelta(days=10 * idx),
+                cycle=TenantSubscription.Ciclo.MENSAL,
+                start_date=timezone.localdate() - timedelta(days=10 * idx),
             )
 
     while _count(TenantSubscription) < n:
         idx = _count(TenantSubscription) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        plano = planos[(idx - 1) % len(planos)]
+        plan = planos[(idx - 1) % len(planos)]
         TenantSubscription.objects.create(
-            inquilino=tenant,
-            plano=plano,
+            tenant=tenant,
+            plan=plan,
             status=TenantSubscription.Status.ATIVA,
-            ciclo=TenantSubscription.Ciclo.MENSAL,
-            data_inicio=timezone.localdate() - timedelta(days=idx),
+            cycle=TenantSubscription.Ciclo.MENSAL,
+            start_date=timezone.localdate() - timedelta(days=idx),
         )
 
 
@@ -223,11 +223,11 @@ def ensure_feature_flags(n: int, tenants: list[Tenant]) -> None:
     while _count(TenantFeatureFlag) < n:
         idx = _count(TenantFeatureFlag) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        chave = f"{chaves_base[(idx - 1) % len(chaves_base)]}_{idx:02d}"
+        key = f"{chaves_base[(idx - 1) % len(chaves_base)]}_{idx:02d}"
         TenantFeatureFlag.objects.get_or_create(
-            inquilino=tenant,
-            chave=chave,
-            defaults={"ativo": idx % 3 != 0},
+            tenant=tenant,
+            key=key,
+            defaults={"active": idx % 3 != 0},
         )
 
 
@@ -251,12 +251,12 @@ def ensure_users(n: int, tenants: list[Tenant], password: str, faker: Faker) -> 
             username=username,
             email=email,
             password=password,
-            nome=f"{first_name} {last_name}",
+            name=f"{first_name} {last_name}",
             first_name=first_name,
             last_name=last_name,
-            telefone=_moz_phone(idx),
+            phone=_moz_phone(idx),
             is_active=True,
-            inquilino=tenant,
+            tenant=tenant,
         )
 
     return list(User.objects.order_by("id")[:n])
@@ -265,11 +265,11 @@ def ensure_users(n: int, tenants: list[Tenant], password: str, faker: Faker) -> 
 def ensure_professional_profiles(users: list[User], faker: Faker) -> None:
     for idx, user in enumerate(users, start=1):
         ProfessionalProfile.objects.get_or_create(
-            usuario=user,
+            user=user,
             defaults={
-                "cargo": random.choice(["Analista", "Enfermeiro", "Recepcionista", "Farmacêutico"]),
-                "registro_profissional": f"REG-{idx:06d}",
-                "departamento": random.choice(["Laboratório", "Recepção", "Enfermagem", "Farmácia"]),
+                "role": random.choice(["Analista", "Enfermeiro", "Recepcionista", "Farmacêutico"]),
+                "professional_registration": f"REG-{idx:06d}",
+                "department": random.choice(["Laboratório", "Recepção", "Enfermagem", "Farmácia"]),
             },
         )
 
@@ -282,16 +282,16 @@ def ensure_password_reset_tokens(n: int, users: list[User]) -> None:
 
 
 def ensure_product_categories(n: int, tenants: list[Tenant], faker: Faker) -> list[ProductCategory]:
-    # CategoriaProduto possui unique (inquilino, nome)
+    # CategoriaProduto possui unique (tenant, name)
     while _count(ProductCategory) < n:
         idx = _count(ProductCategory) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
-            nome = f"Categoria {faker.word().title()} {idx}"
+            name = f"Categoria {faker.word().title()} {idx}"
             ProductCategory.objects.get_or_create(
-                inquilino=tenant,
-                nome=nome,
-                defaults={"descricao": f"Categoria seed {idx}"},
+                tenant=tenant,
+                name=name,
+                defaults={"description": f"Categoria seed {idx}"},
             )
 
     return list(ProductCategory.objects.order_by("id")[:n])
@@ -305,14 +305,14 @@ def ensure_produtos(
     while _count(Product) < n:
         idx = _count(Product) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        categoria = next((c for c in categorias if c.inquilino_id == tenant.id), None)
+        category = next((c for c in categorias if c.tenant_id == tenant.id), None)
         with tenant_ctx(tenant):
             Product.objects.create(
-                inquilino=tenant,
-                nome=f"{faker.word().title()} {faker.word().title()} {idx}",
-                categoria=categoria,
-                tipo=tipos[(idx - 1) % len(tipos)],
-                preco_venda=Decimal("25.00") + Decimal(idx),
+                tenant=tenant,
+                name=f"{faker.word().title()} {faker.word().title()} {idx}",
+                category=category,
+                type=tipos[(idx - 1) % len(tipos)],
+                sale_price=Decimal("25.00") + Decimal(idx),
             )
 
     return list(Product.objects.order_by("id")[:n])
@@ -321,17 +321,17 @@ def ensure_produtos(
 def ensure_lotes(n: int, produtos: list[Product]) -> list[Lot]:
     while _count(Lot) < n:
         idx = _count(Lot) + 1
-        produto = produtos[(idx - 1) % len(produtos)]
-        numero_lote = f"SEED-{produto.id or 0}-{idx:04d}"
-        with tenant_ctx(produto.inquilino):
-            if Lot.objects.filter(produto=produto, numero_lote=numero_lote).exists():
+        product = produtos[(idx - 1) % len(produtos)]
+        lot_number = f"SEED-{product.id or 0}-{idx:04d}"
+        with tenant_ctx(product.tenant):
+            if Lot.objects.filter(product=product, lot_number=lot_number).exists():
                 continue
             Lot.objects.create(
-                inquilino=produto.inquilino,
-                produto=produto,
-                numero_lote=numero_lote,
-                validade=timezone.localdate() + timedelta(days=365 + idx),
-                quantidade_inicial=1000,
+                tenant=product.tenant,
+                product=product,
+                lot_number=lot_number,
+                expiration_date=timezone.localdate() + timedelta(days=365 + idx),
+                initial_quantity=1000,
             )
     return list(Lot.objects.order_by("id")[:n])
 
@@ -341,162 +341,162 @@ def ensure_vendas(n: int, tenants: list[Tenant]) -> list[Sale]:
         idx = _count(Sale) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
-            numero = f"VEND-SEED-{tenant.id}-{idx:06d}"
-            if Sale.objects.filter(inquilino=tenant, numero=numero).exists():
+            number = f"VEND-SEED-{tenant.id}-{idx:06d}"
+            if Sale.objects.filter(tenant=tenant, number=number).exists():
                 continue
             Sale.objects.create(
-                inquilino=tenant,
-                numero=numero,
+                tenant=tenant,
+                number=number,
             )
     return list(Sale.objects.order_by("id")[:n])
 
 
-def ensure_itens_venda(n: int, vendas: list[Sale], produtos: list[Product]) -> list[SaleItem]:
-    # Cria itens garantindo estoque (ItemVenda baixa do lote automaticamente).
+def ensure_itens_sale(n: int, vendas: list[Sale], produtos: list[Product]) -> list[SaleItem]:
+    # Cria itens garantindo estoque (ItemVenda baixa do lot automaticamente).
     while _count(SaleItem) < n:
         idx = _count(SaleItem) + 1
-        venda = vendas[(idx - 1) % len(vendas)]
+        sale = vendas[(idx - 1) % len(vendas)]
 
-        produtos_tenant = [p for p in produtos if p.inquilino_id == venda.inquilino_id]
+        produtos_tenant = [p for p in produtos if p.tenant_id == sale.tenant_id]
         if not produtos_tenant:
             break
 
-        # Escolhe um produto que não esteja na venda.
-        produto = next(
+        # Escolhe um product que não esteja na sale.
+        product = next(
             (
                 p
                 for p in produtos_tenant
-                if not SaleItem.objects.filter(venda=venda, produto=p, deletado=False).exists()
+                if not SaleItem.objects.filter(sale=sale, product=p, deleted=False).exists()
             ),
             None,
         )
-        if produto is None:
+        if product is None:
             continue
 
-        with tenant_ctx(venda.inquilino):
+        with tenant_ctx(sale.tenant):
             SaleItem.objects.create(
-                inquilino=venda.inquilino,
-                venda=venda,
-                produto=produto,
-                quantidade=1,
+                tenant=sale.tenant,
+                sale=sale,
+                product=product,
+                quantity=1,
             )
     return list(SaleItem.objects.order_by("id")[:n])
 
 
 def ensure_inventory_movements(n: int, lotes: list[Lot]) -> None:
-    # MovimentoEstoque ja e criado por vendas/procedimentos. Este passo so completa se faltar.
+    # MovimentoEstoque ja e criado por vendas/procedures. Este passo so completa se faltar.
     while _count(InventoryMovement) < n and lotes:
         idx = _count(InventoryMovement) + 1
-        lote = lotes[(idx - 1) % len(lotes)]
-        with tenant_ctx(lote.inquilino):
+        lot = lotes[(idx - 1) % len(lotes)]
+        with tenant_ctx(lot.tenant):
             InventoryMovement.objects.create(
-                inquilino=lote.inquilino,
-                lote=lote,
-                tipo=TipoMovimento.ENTRADA,
-                origem=OrigemMovimento.AJUSTE,
-                quantidade=5,
+                tenant=lot.tenant,
+                lot=lot,
+                type=TipoMovimento.ENTRADA,
+                origin=OrigemMovimento.AJUSTE,
+                quantity=5,
             )
 
 
 def ensure_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
-    metodo = _safe_choice_value(LabExam, "metodo")
-    setor = _safe_choice_value(LabExam, "setor")
+    method = _safe_choice_value(LabExam, "method")
+    sector = _safe_choice_value(LabExam, "sector")
 
     while _count(LabExam) < n:
         idx = _count(LabExam) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             LabExam.objects.create(
-                inquilino=tenant,
-                nome=f"{faker.word().title()} {faker.word().title()} ({idx})",
-                trl_horas=24 + (idx % 24),
-                preco=Decimal("150.00") + Decimal(idx),
-                metodo=metodo,
-                setor=setor,
+                tenant=tenant,
+                name=f"{faker.word().title()} {faker.word().title()} ({idx})",
+                turnaround_hours=24 + (idx % 24),
+                price=Decimal("150.00") + Decimal(idx),
+                method=method,
+                sector=sector,
             )
     return list(LabExam.objects.order_by("id")[:n])
 
 
-def ensure_exam_fields(n: int, exames: list[LabExam], faker: Faker) -> list[LabExamField]:
-    tipo = _safe_choice_value(LabExamField, "tipo")
-    unidade = _safe_choice_value(LabExamField, "unidade")
+def ensure_exam_fields(n: int, exams: list[LabExam], faker: Faker) -> list[LabExamField]:
+    type = _safe_choice_value(LabExamField, "type")
+    unit = _safe_choice_value(LabExamField, "unit")
 
     while _count(LabExamField) < n:
         idx = _count(LabExamField) + 1
-        exame = exames[(idx - 1) % len(exames)]
-        with tenant_ctx(exame.inquilino):
+        exam = exams[(idx - 1) % len(exams)]
+        with tenant_ctx(exam.tenant):
             LabExamField.objects.create(
-                inquilino=exame.inquilino,
-                exame=exame,
-                nome=f"{faker.word().title()} {idx}",
-                tipo=tipo,
-                unidade=unidade,
-                referencia_min=Decimal("4.00"),
-                referencia_max=Decimal("10.00"),
-                critico_min=Decimal("2.00"),
-                critico_max=Decimal("20.00"),
-                delta_max=Decimal("10.00"),
+                tenant=exam.tenant,
+                exam=exam,
+                name=f"{faker.word().title()} {idx}",
+                type=type,
+                unit=unit,
+                reference_min=Decimal("4.00"),
+                reference_max=Decimal("10.00"),
+                critical_min=Decimal("2.00"),
+                critical_max=Decimal("20.00"),
+                max_delta=Decimal("10.00"),
             )
     return list(LabExamField.objects.order_by("id")[:n])
 
 
 def ensure_medical_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[MedicalExam]:
-    metodo = _safe_choice_value(MedicalExam, "metodo")
-    setor = _safe_choice_value(MedicalExam, "setor")
+    method = _safe_choice_value(MedicalExam, "method")
+    sector = _safe_choice_value(MedicalExam, "sector")
 
     while _count(MedicalExam) < n:
         idx = _count(MedicalExam) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             MedicalExam.objects.create(
-                inquilino=tenant,
-                nome=f"Exame Imagem {faker.word().title()} {idx}",
-                trl_horas=24 + (idx % 24),
-                preco=Decimal("500.00") + Decimal(5 * idx),
-                metodo=metodo,
-                setor=setor,
+                tenant=tenant,
+                name=f"Exame Imagem {faker.word().title()} {idx}",
+                turnaround_hours=24 + (idx % 24),
+                price=Decimal("500.00") + Decimal(5 * idx),
+                method=method,
+                sector=sector,
             )
     return list(MedicalExam.objects.order_by("id")[:n])
 
 
-def ensure_medical_exam_fields(n: int, exames: list[MedicalExam], faker: Faker) -> list[MedicalExamField]:
+def ensure_medical_exam_fields(n: int, exams: list[MedicalExam], faker: Faker) -> list[MedicalExamField]:
     while _count(MedicalExamField) < n:
         idx = _count(MedicalExamField) + 1
-        exame = exames[(idx - 1) % len(exames)]
-        tipos_permitidos = list(exame.tipos_resultado_permitidos)
-        tipo = random.choice(tipos_permitidos) if tipos_permitidos else _safe_choice_value(MedicalExamField, "tipo")
-        with tenant_ctx(exame.inquilino):
+        exam = exams[(idx - 1) % len(exams)]
+        tipos_permitidos = list(exam.tipos_result_permitidos)
+        type = random.choice(tipos_permitidos) if tipos_permitidos else _safe_choice_value(MedicalExamField, "type")
+        with tenant_ctx(exam.tenant):
             MedicalExamField.objects.create(
-                inquilino=exame.inquilino,
-                exame=exame,
-                nome=f"Parâmetro {faker.word().title()} {idx}",
-                tipo=tipo,
+                tenant=exam.tenant,
+                exam=exam,
+                name=f"Parâmetro {faker.word().title()} {idx}",
+                type=type,
             )
     return list(MedicalExamField.objects.order_by("id")[:n])
 
 
 def ensure_patients(n: int, tenants: list[Tenant], faker: Faker) -> list[Patient]:
-    genero = _safe_choice_value(Patient, "genero")
-    raca = _safe_choice_value(Patient, "raca_origem")
-    tipo_documento = _safe_choice_value(Patient, "tipo_documento")
-    proveniencia = _safe_choice_value(Patient, "proveniencia")
+    gender = _safe_choice_value(Patient, "gender")
+    raca = _safe_choice_value(Patient, "race_origin")
+    document_type = _safe_choice_value(Patient, "document_type")
+    provenance = _safe_choice_value(Patient, "provenance")
 
     while _count(Patient) < n:
         idx = _count(Patient) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        nome = faker.name()
-        email = f"paciente{idx:04d}@example.com"
-        numero_id = f"SEED-BI-{idx:06d}"
+        name = faker.name()
+        email = f"patient{idx:04d}@example.com"
+        document_number = f"SEED-BI-{idx:06d}"
         with tenant_ctx(tenant):
             Patient.objects.create(
-                inquilino=tenant,
-                nome=nome,
-                endereco_rua=faker.street_name(),
-                endereco_numero=str(faker.building_number()),
-                endereco_bairro=faker.city_suffix(),
-                endereco_cidade=faker.city(),
+                tenant=tenant,
+                name=name,
+                address_street=faker.street_name(),
+                address_number=str(faker.building_number()),
+                address_neighborhood=faker.city_suffix(),
+                address_city=faker.city(),
                 # `pt_PT` não expõe `state()`. Usamos uma lista simples para ficar realista (MZ).
-                endereco_provincia=random.choice(
+                address_province=random.choice(
                     [
                         "Maputo",
                         "Gaza",
@@ -510,15 +510,15 @@ def ensure_patients(n: int, tenants: list[Tenant], faker: Faker) -> list[Patient
                         "Niassa",
                     ]
                 ),
-                endereco_pais="MZ",
-                genero=genero,
-                raca_origem=raca,
-                tipo_documento=tipo_documento,
-                numero_id=numero_id,
-                contacto=_moz_phone(1000 + idx),
+                address_country="MZ",
+                gender=gender,
+                race_origin=raca,
+                document_type=document_type,
+                document_number=document_number,
+                contact=_moz_phone(1000 + idx),
                 email=email,
-                proveniencia=proveniencia,
-                data_nascimento=date(1990, 1, 1) + timedelta(days=30 * idx),
+                provenance=provenance,
+                birth_date=date(1990, 1, 1) + timedelta(days=30 * idx),
             )
     return list(Patient.objects.order_by("id")[:n])
 
@@ -526,60 +526,60 @@ def ensure_patients(n: int, tenants: list[Tenant], faker: Faker) -> list[Patient
 def ensure_requests(n: int, pacientes: list[Patient], users: list[User]) -> list[LabRequest]:
     while _count(LabRequest) < n:
         idx = _count(LabRequest) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        analista = users[(idx - 1) % len(users)]
-        with tenant_ctx(paciente.inquilino):
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        analyst = users[(idx - 1) % len(users)]
+        with tenant_ctx(patient.tenant):
             LabRequest.objects.create(
-                paciente=paciente,
-                analista=analista,
+                patient=patient,
+                analyst=analyst,
             )
     return list(LabRequest.objects.order_by("id")[:n])
 
 
 def ensure_request_items(
-    n: int, requisicoes: list[LabRequest], exames: list[LabExam], exames_medicos: list[MedicalExam]
+    n: int, requisicoes: list[LabRequest], exams: list[LabExam], exams_medicos: list[MedicalExam]
 ) -> None:
-    # Garante pelo menos 1 exame laboratorial por requisição (gera `ResultadoItem` e itens de fatura).
+    # Garante pelo menos 1 exam laboratorial por requisição (gera `ResultadoItem` e itens de invoice).
     for req in requisicoes:
-        if LabRequestItem.objects.filter(requisicao=req, exame__isnull=False, deletado=False).exists():
+        if LabRequestItem.objects.filter(request=req, exam__isnull=False, deleted=False).exists():
             continue
-        exame = next((e for e in exames if e.inquilino_id == req.inquilino_id), None)
-        if exame is None:
+        exam = next((e for e in exams if e.tenant_id == req.tenant_id), None)
+        if exam is None:
             continue
-        with tenant_ctx(req.inquilino):
-            if not LabRequestItem.objects.filter(requisicao=req, exame=exame).exists():
-                LabRequestItem.objects.create(requisicao=req, exame=exame)
+        with tenant_ctx(req.tenant):
+            if not LabRequestItem.objects.filter(request=req, exam=exam).exists():
+                LabRequestItem.objects.create(request=req, exam=exam)
 
-    # Completa o total de itens (opcionalmente incluindo exames médicos) até atingir `n`.
+    # Completa o total de itens (opcionalmente incluindo exams médicos) até atingir `n`.
     while _count(LabRequestItem) < n and requisicoes:
         idx = _count(LabRequestItem) + 1
         req = requisicoes[(idx - 1) % len(requisicoes)]
-        with tenant_ctx(req.inquilino):
-            # Alterna para incluir alguns exames médicos sem quebrar resultado/faturamento.
-            if idx % 3 == 0 and exames_medicos:
-                exame_med = next((e for e in exames_medicos if e.inquilino_id == req.inquilino_id), None)
-                if exame_med is None:
+        with tenant_ctx(req.tenant):
+            # Alterna para incluir alguns exams médicos sem quebrar result/faturamento.
+            if idx % 3 == 0 and exams_medicos:
+                exam_med = next((e for e in exams_medicos if e.tenant_id == req.tenant_id), None)
+                if exam_med is None:
                     continue
-                if LabRequestItem.objects.filter(requisicao=req, exame_medico=exame_med).exists():
+                if LabRequestItem.objects.filter(request=req, medical_exam=exam_med).exists():
                     continue
-                LabRequestItem.objects.create(requisicao=req, exame_medico=exame_med)
+                LabRequestItem.objects.create(request=req, medical_exam=exam_med)
                 continue
 
-            exame = next((e for e in exames if e.inquilino_id == req.inquilino_id), None)
-            if exame is None:
+            exam = next((e for e in exams if e.tenant_id == req.tenant_id), None)
+            if exam is None:
                 continue
-            if LabRequestItem.objects.filter(requisicao=req, exame=exame).exists():
+            if LabRequestItem.objects.filter(request=req, exam=exam).exists():
                 continue
-            LabRequestItem.objects.create(requisicao=req, exame=exame)
+            LabRequestItem.objects.create(request=req, exam=exam)
 
 
 def ensure_results(requisicoes: list[LabRequest], users: list[User]) -> list[Result]:
     for idx, req in enumerate(requisicoes, start=1):
         Result.objects.get_or_create(
-            requisicao=req,
+            request=req,
             defaults={
-                "inquilino": req.inquilino,
-                "analista": users[(idx - 1) % len(users)],
+                "tenant": req.tenant,
+                "analyst": users[(idx - 1) % len(users)],
             },
         )
     return list(Result.objects.order_by("id"))
@@ -589,68 +589,68 @@ def ensure_referencias(n: int, campos: list[LabExamField], faker: Faker) -> list
     while _count(ClinicalReference) < n and campos:
         idx = _count(ClinicalReference) + 1
         campo = campos[(idx - 1) % len(campos)]
-        with tenant_ctx(campo.inquilino):
+        with tenant_ctx(campo.tenant):
             ClinicalReference.objects.create(
-                inquilino=campo.inquilino,
-                nome=f"Referência {faker.word().title()} {idx}",
-                exame_campo=campo,
-                idade_minima_dias=0,
-                idade_maxima_dias=36500,
-                valor_minimo=Decimal("4.00"),
-                valor_maximo=Decimal("10.00"),
-                critico_baixo=Decimal("2.00"),
-                critico_alto=Decimal("20.00"),
+                tenant=campo.tenant,
+                name=f"Referência {faker.word().title()} {idx}",
+                exam_field=campo,
+                minimum_age_days=0,
+                maximum_age_days=36500,
+                minimum_value=Decimal("4.00"),
+                maximum_value=Decimal("10.00"),
+                critical_low=Decimal("2.00"),
+                critical_high=Decimal("20.00"),
             )
     return list(ClinicalReference.objects.order_by("id")[:n])
 
 
 def ensure_result_values(n: int) -> None:
     # Preenche alguns valores para ficar mais "real" (sem forcar validacao).
-    itens = list(ResultItem.objects.filter(resultado_valor__isnull=True).order_by("id")[:n])
+    itens = list(ResultItem.objects.filter(result_value__isnull=True).order_by("id")[:n])
     for idx, item in enumerate(itens, start=1):
-        with tenant_ctx(item.inquilino):
-            item.resultado_valor = Decimal("6.00") + Decimal(idx % 3)
-            item.save(update_fields=["resultado_valor"])
+        with tenant_ctx(item.tenant):
+            item.result_value = Decimal("6.00") + Decimal(idx % 3)
+            item.save(update_fields=["result_value"])
 
 
 def ensure_clinical_events(n: int, pacientes: list[Patient], requisicoes: list[LabRequest]) -> None:
     while _count(ClinicalEvent) < n and pacientes and requisicoes:
         idx = _count(ClinicalEvent) + 1
         req = requisicoes[(idx - 1) % len(requisicoes)]
-        paciente = req.paciente
-        with tenant_ctx(req.inquilino):
+        patient = req.patient
+        with tenant_ctx(req.tenant):
             ClinicalEvent.objects.create(
-                inquilino=req.inquilino,
-                paciente=paciente,
-                requisicao=req,
-                tipo_evento=TipoEventoClinico.REQUISICAO_CRIADA,
-                descricao=f"Evento clínico seed para {paciente.nome}.",
-                nome=f"Evento {idx}",
+                tenant=req.tenant,
+                patient=patient,
+                request=req,
+                event_type=TipoEventoClinico.REQUISICAO_CRIADA,
+                description=f"Evento clínico seed para {patient.name}.",
+                name=f"Evento {idx}",
             )
 
 
 def ensure_clinical_history(n: int, pacientes: list[Patient], faker: Faker) -> None:
     while ClinicalHistory.objects.count() < n and pacientes:
         idx = ClinicalHistory.objects.count() + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
+        patient = pacientes[(idx - 1) % len(pacientes)]
         ClinicalHistory.objects.create(
-            paciente=paciente,
-            descricao=f"Histórico clínico: {faker.sentence(nb_words=10)}",
+            patient=patient,
+            description=f"Histórico clínico: {faker.sentence(nb_words=10)}",
         )
 
 
 def ensure_nursing_records(n: int, pacientes: list[Patient], faker: Faker) -> list[NursingRecord]:
-    prioridade = _safe_choice_value(NursingRecord, "prioridade")
+    priority = _safe_choice_value(NursingRecord, "priority")
     while _count(NursingRecord) < n and pacientes:
         idx = _count(NursingRecord) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        with tenant_ctx(paciente.inquilino):
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        with tenant_ctx(patient.tenant):
             NursingRecord.objects.create(
-                inquilino=paciente.inquilino,
-                nome=f"Registro Enfermagem {idx}",
-                paciente=paciente,
-                prioridade=prioridade,
-                observacao=faker.sentence(nb_words=12),
+                tenant=patient.tenant,
+                name=f"Registro Enfermagem {idx}",
+                patient=patient,
+                priority=priority,
+                observation=faker.sentence(nb_words=12),
             )
     return list(NursingRecord.objects.order_by("id")[:n])
 
@@ -658,91 +658,91 @@ def ensure_nursing_records(n: int, pacientes: list[Patient], faker: Faker) -> li
 def ensure_signals_vitais(n: int, registros: list[NursingRecord]) -> list[NursingVitalSign]:
     while _count(NursingVitalSign) < n and registros:
         idx = _count(NursingVitalSign) + 1
-        registro = registros[(idx - 1) % len(registros)]
-        with tenant_ctx(registro.inquilino):
+        record = registros[(idx - 1) % len(registros)]
+        with tenant_ctx(record.tenant):
             NursingVitalSign.objects.create(
-                inquilino=registro.inquilino,
-                nome=f"Sinais Vitais {idx}",
-                registro=registro,
-                temperatura_c=Decimal("36.5"),
-                frequencia_cardiaca=70 + (idx % 20),
-                frequencia_respiratoria=18 + (idx % 4),
-                saturacao_oxigenio=97,
-                pressao_arterial="120/80",
+                tenant=record.tenant,
+                name=f"Sinais Vitais {idx}",
+                record=record,
+                temperature_c=Decimal("36.5"),
+                heart_rate=70 + (idx % 20),
+                respiratory_rate=18 + (idx % 4),
+                oxygen_saturation=97,
+                blood_pressure="120/80",
             )
     return list(NursingVitalSign.objects.order_by("id")[:n])
 
 
-def ensure_procedimentos(n: int, pacientes: list[Patient], users: list[User], faker: Faker) -> list[Procedure]:
+def ensure_procedures(n: int, pacientes: list[Patient], users: list[User], faker: Faker) -> list[Procedure]:
     while _count(Procedure) < n and pacientes:
         idx = _count(Procedure) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        profissional = users[(idx - 1) % len(users)] if users else None
-        with tenant_ctx(paciente.inquilino):
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        professional = users[(idx - 1) % len(users)] if users else None
+        with tenant_ctx(patient.tenant):
             Procedure.objects.create(
-                inquilino=paciente.inquilino,
-                paciente=paciente,
-                profissional=profissional,
-                observacoes=faker.sentence(nb_words=12),
+                tenant=patient.tenant,
+                patient=patient,
+                professional=professional,
+                notes=faker.sentence(nb_words=12),
             )
     return list(Procedure.objects.order_by("id")[:n])
 
 
-def ensure_catalogos_procedimento(n: int, tenants: list[Tenant], faker: Faker) -> list[ProcedureCatalog]:
+def ensure_catalogos_procedure(n: int, tenants: list[Tenant], faker: Faker) -> list[ProcedureCatalog]:
     while _count(ProcedureCatalog) < n:
         idx = _count(ProcedureCatalog) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             ProcedureCatalog.objects.create(
-                inquilino=tenant,
-                nome=f"Procedimento {faker.word().title()} {idx}",
-                descricao=f"Descrição seed {idx}",
-                preco_padrao=Decimal("350.00") + Decimal(idx),
+                tenant=tenant,
+                name=f"Procedimento {faker.word().title()} {idx}",
+                description=f"Descrição seed {idx}",
+                default_price=Decimal("350.00") + Decimal(idx),
             )
     return list(ProcedureCatalog.objects.order_by("id")[:n])
 
 
-def ensure_catalogo_materiais(
+def ensure_catalog_materiais(
     n: int, catalogos: list[ProcedureCatalog], produtos: list[Product], faker: Faker
 ) -> None:
-    # Gera 1 material padrao por catalogo ate atingir n.
+    # Gera 1 material padrao por catalog ate atingir n.
     while _count(ProcedureCatalogMaterial) < n and catalogos and produtos:
         idx = _count(ProcedureCatalogMaterial) + 1
-        catalogo = catalogos[(idx - 1) % len(catalogos)]
-        produto = next((p for p in produtos if p.inquilino_id == catalogo.inquilino_id), None)
-        if produto is None:
+        catalog = catalogos[(idx - 1) % len(catalogos)]
+        product = next((p for p in produtos if p.tenant_id == catalog.tenant_id), None)
+        if product is None:
             continue
-        with tenant_ctx(catalogo.inquilino):
+        with tenant_ctx(catalog.tenant):
             ProcedureCatalogMaterial.objects.get_or_create(
-                catalogo=catalogo,
-                produto=produto,
+                catalog=catalog,
+                product=product,
                 defaults={
-                    "inquilino": catalogo.inquilino,
-                    "quantidade_padrao": Decimal("1.00"),
-                    "custo_unitario_padrao": produto.preco_venda,
-                    "observacao": f"Material padrão seed {idx}",
+                    "tenant": catalog.tenant,
+                    "default_quantity": Decimal("1.00"),
+                    "default_unit_cost": product.sale_price,
+                    "observation": f"Material padrão seed {idx}",
                 },
             )
 
 
-def ensure_procedimento_itens(
-    n: int, procedimentos: list[Procedure], catalogos: list[ProcedureCatalog]
+def ensure_procedure_itens(
+    n: int, procedures: list[Procedure], catalogos: list[ProcedureCatalog]
 ) -> list[ProcedureItem]:
-    # Usa catalogo para gerar materiais automaticamente.
-    while _count(ProcedureItem) < n and procedimentos:
+    # Usa catalog para gerar materiais automaticamente.
+    while _count(ProcedureItem) < n and procedures:
         idx = _count(ProcedureItem) + 1
-        proc = procedimentos[(idx - 1) % len(procedimentos)]
-        catalogo = next((c for c in catalogos if c.inquilino_id == proc.inquilino_id), None)
-        with tenant_ctx(proc.inquilino):
+        proc = procedures[(idx - 1) % len(procedures)]
+        catalog = next((c for c in catalogos if c.tenant_id == proc.tenant_id), None)
+        with tenant_ctx(proc.tenant):
             ProcedureItem.objects.create(
-                inquilino=proc.inquilino,
-                procedimento=proc,
-                catalogo=catalogo,
-                descricao="" if catalogo else f"Serviço seed {idx}",
-                quantidade=1,
-                preco_unitario=Decimal("0.00"),
-                realizado=True,
-                observacao="",
+                tenant=proc.tenant,
+                procedure=proc,
+                catalog=catalog,
+                description="" if catalog else f"Serviço seed {idx}",
+                quantity=1,
+                unit_price=Decimal("0.00"),
+                performed=True,
+                observation="",
             )
     return list(ProcedureItem.objects.order_by("id")[:n])
 
@@ -750,75 +750,75 @@ def ensure_procedimento_itens(
 def ensure_evolucoes(n: int, pacientes: list[Patient], faker: Faker) -> None:
     while _count(NursingEvolution) < n and pacientes:
         idx = _count(NursingEvolution) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        with tenant_ctx(paciente.inquilino):
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        with tenant_ctx(patient.tenant):
             NursingEvolution.objects.create(
-                inquilino=paciente.inquilino,
-                paciente=paciente,
-                nome=f"Evolução {idx}",
-                observacao=faker.paragraph(nb_sentences=3),
+                tenant=patient.tenant,
+                patient=patient,
+                name=f"Evolução {idx}",
+                observation=faker.paragraph(nb_sentences=3),
             )
 
 
 def ensure_prescricoes(n: int, pacientes: list[Patient], faker: Faker) -> None:
     while _count(NursingPrescription) < n and pacientes:
         idx = _count(NursingPrescription) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        with tenant_ctx(paciente.inquilino):
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        with tenant_ctx(patient.tenant):
             NursingPrescription.objects.create(
-                inquilino=paciente.inquilino,
-                paciente=paciente,
-                nome=f"Prescrição {idx}",
-                descricao=faker.sentence(nb_words=12),
-                ativo=idx % 5 != 0,
+                tenant=patient.tenant,
+                patient=patient,
+                name=f"Prescrição {idx}",
+                description=faker.sentence(nb_words=12),
+                active=idx % 5 != 0,
             )
 
 
 def ensure_invoices(
-    n: int, requisicoes: list[LabRequest], vendas: list[Sale], procedimentos: list[Procedure]
+    n: int, requisicoes: list[LabRequest], vendas: list[Sale], procedures: list[Procedure]
 ) -> list[Invoice]:
     # Cria faturas clinico primeiro
     for req in requisicoes:
         Invoice.objects.get_or_create(
-            requisicao=req,
+            request=req,
             defaults={
-                "inquilino": req.inquilino,
-                "origem": Invoice.Origem.CLINICO,
-                "paciente": req.paciente,
+                "tenant": req.tenant,
+                "origin": Invoice.Origem.CLINICO,
+                "patient": req.patient,
             },
         )
 
     # Cria faturas de farmacia e enfermagem se faltar para atingir n
     while _count(Invoice) < n and vendas:
         idx = _count(Invoice) + 1
-        venda = vendas[(idx - 1) % len(vendas)]
+        sale = vendas[(idx - 1) % len(vendas)]
         Invoice.objects.get_or_create(
-            venda=venda,
+            sale=sale,
             defaults={
-                "inquilino": venda.inquilino,
-                "origem": Invoice.Origem.FARMACIA,
+                "tenant": sale.tenant,
+                "origin": Invoice.Origem.FARMACIA,
             },
         )
 
-    while _count(Invoice) < n and procedimentos:
+    while _count(Invoice) < n and procedures:
         idx = _count(Invoice) + 1
-        proc = procedimentos[(idx - 1) % len(procedimentos)]
+        proc = procedures[(idx - 1) % len(procedures)]
         Invoice.objects.get_or_create(
-            procedimento=proc,
+            procedure=proc,
             defaults={
-                "inquilino": proc.inquilino,
-                "origem": Invoice.Origem.ENFERMAGEM,
-                "paciente": proc.paciente,
+                "tenant": proc.tenant,
+                "origin": Invoice.Origem.ENFERMAGEM,
+                "patient": proc.patient,
             },
         )
 
     # Sincroniza itens para todas as faturas em rascunho
-    for fatura in Invoice.objects.order_by("id")[:n]:
-        if fatura.estado == fatura.Estado.RASCUNHO:
+    for invoice in Invoice.objects.order_by("id")[:n]:
+        if invoice.status == invoice.Estado.RASCUNHO:
             try:
-                fatura.sincronizar_itens_da_origem()
+                invoice.sincronizar_itens_da_origin()
             except Exception:
-                # Se alguma origem nao estiver pronta (ex.: venda sem itens), segue adiante.
+                # Se alguma origin nao estiver pronta (ex.: sale sem itens), segue adiante.
                 continue
 
     return list(Invoice.objects.order_by("id"))
@@ -827,40 +827,40 @@ def ensure_invoices(
 def ensure_invoice_history(n: int, faturas: list[Invoice]) -> None:
     while _count(InvoiceHistory) < n and faturas:
         idx = _count(InvoiceHistory) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
-        with tenant_ctx(fatura.inquilino):
+        invoice = faturas[(idx - 1) % len(faturas)]
+        with tenant_ctx(invoice.tenant):
             InvoiceHistory.objects.create(
-                inquilino=fatura.inquilino,
-                nome=f"Histórico {idx}",
-                fatura=fatura,
-                tipo_evento="SEED",
-                descricao="Evento de histórico (seed)",
+                tenant=invoice.tenant,
+                name=f"Histórico {idx}",
+                invoice=invoice,
+                event_type="SEED",
+                description="Evento de histórico (seed)",
             )
 
 
 def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
-    metodo = _safe_choice_value(Payment, "metodo")
+    method = _safe_choice_value(Payment, "method")
 
     while _count(Payment) < n and faturas:
         idx = _count(Payment) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
-        valor = fatura.total if fatura.total and fatura.total > 0 else Decimal("100.00")
-        with tenant_ctx(fatura.inquilino):
-            pagamento = Payment.objects.create(
-                inquilino=fatura.inquilino,
-                nome=f"Pagamento {idx}",
-                fatura=fatura,
-                valor=valor,
-                metodo=metodo,
-                referencia_externa=f"PG-SEED-{idx:06d}",
+        invoice = faturas[(idx - 1) % len(faturas)]
+        value = invoice.total if invoice.total and invoice.total > 0 else Decimal("100.00")
+        with tenant_ctx(invoice.tenant):
+            payment = Payment.objects.create(
+                tenant=invoice.tenant,
+                name=f"Pagamento {idx}",
+                invoice=invoice,
+                value=value,
+                method=method,
+                external_reference=f"PG-SEED-{idx:06d}",
             )
             # Emite e confirma alguns pagamentos para gerar recibos automaticamente.
-            if idx % 2 == 0 and fatura.estado == fatura.Estado.RASCUNHO:
+            if idx % 2 == 0 and invoice.status == invoice.Estado.RASCUNHO:
                 with suppress(Exception):
-                    fatura.emitir()
-            if idx % 3 == 0 and pagamento.status == pagamento.Status.PENDENTE:
+                    invoice.emitir()
+            if idx % 3 == 0 and payment.status == payment.Status.PENDENTE:
                 with suppress(Exception):
-                    pagamento.confirm()
+                    payment.confirm()
 
     return list(Payment.objects.order_by("id")[:n])
 
@@ -868,16 +868,16 @@ def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
 def ensure_payment_history(n: int, pagamentos: list[Payment]) -> None:
     while _count(PaymentHistory) < n and pagamentos:
         idx = _count(PaymentHistory) + 1
-        pagamento = pagamentos[(idx - 1) % len(pagamentos)]
-        with tenant_ctx(pagamento.inquilino):
+        payment = pagamentos[(idx - 1) % len(pagamentos)]
+        with tenant_ctx(payment.tenant):
             PaymentHistory.objects.create(
-                inquilino=pagamento.inquilino,
-                nome=f"Hist Pag {idx}",
-                pagamento=pagamento,
-                tipo_evento=PaymentHistory.EventType.CRIADO,
-                valor=pagamento.valor,
-                descricao="Pagamento criado (seed)",
-                referencia_externa=pagamento.referencia_externa,
+                tenant=payment.tenant,
+                name=f"Hist Pag {idx}",
+                payment=payment,
+                event_type=PaymentHistory.EventType.CRIADO,
+                value=payment.value,
+                description="Pagamento criado (seed)",
+                external_reference=payment.external_reference,
             )
 
 
@@ -885,10 +885,10 @@ def ensure_transactions(n: int) -> list[Transaction]:
     while _count(Transaction) < n:
         idx = _count(Transaction) + 1
         Transaction.objects.create(
-            referencia_externa=f"TX-SEED-{idx:06d}",
+            external_reference=f"TX-SEED-{idx:06d}",
             gateway="SEED_GATEWAY",
             status="confirmada" if idx % 2 == 0 else "pendente",
-            resposta_gateway={"seed": idx},
+            gateway_response={"seed": idx},
         )
     return list(Transaction.objects.order_by("id")[:n])
 
@@ -898,10 +898,10 @@ def ensure_reconciliacoes(n: int, transacoes: list[Transaction]) -> list[Reconci
         idx = _count(Reconciliation) + 1
         tx = transacoes[(idx - 1) % len(transacoes)]
         Reconciliation.objects.get_or_create(
-            transacao=tx,
+            transaction=tx,
             defaults={
-                "confirmado": idx % 2 == 0,
-                "data_confirmacao": timezone.now() if idx % 2 == 0 else None,
+                "confirmed": idx % 2 == 0,
+                "confirmation_date": timezone.now() if idx % 2 == 0 else None,
             },
         )
     return list(Reconciliation.objects.order_by("id")[:n])
@@ -910,30 +910,30 @@ def ensure_reconciliacoes(n: int, transacoes: list[Transaction]) -> list[Reconci
 def ensure_recibos(n: int, pagamentos: list[Payment]) -> list[Receipt]:
     while _count(Receipt) < n and pagamentos:
         idx = _count(Receipt) + 1
-        pag = next((p for p in pagamentos if not Receipt.objects.filter(pagamento=p).exists()), None)
+        pag = next((p for p in pagamentos if not Receipt.objects.filter(payment=p).exists()), None)
         if pag is None:
             break
         Receipt.objects.create(
-            fatura=pag.fatura,
-            pagamento=pag,
-            numero=f"RCB-SEED-{idx:06d}",
-            valor=pag.valor,
+            invoice=pag.invoice,
+            payment=pag,
+            number=f"RCB-SEED-{idx:06d}",
+            value=pag.value,
         )
     return list(Receipt.objects.order_by("id")[:n])
 
 
 def ensure_contabilidade(n: int, tenants: list[Tenant], faturas: list[Invoice]) -> None:
-    tipo_conta = _safe_choice_value(Account, "tipo")
+    type_account = _safe_choice_value(Account, "type")
 
     # Para conseguir gerar Movimentos/LedgerLines, precisamos de pelo menos 2 contas por tenant.
     for tenant in tenants:
         with tenant_ctx(tenant):
-            while Account.objects.filter(inquilino=tenant).count() < 2:
+            while Account.objects.filter(tenant=tenant).count() < 2:
                 idx = _count(Account) + 1
                 Account.objects.create(
-                    inquilino=tenant,
-                    nome=f"Conta {idx}",
-                    tipo=tipo_conta,
+                    tenant=tenant,
+                    name=f"Conta {idx}",
+                    type=type_account,
                 )
     # E garante no mínimo `n` no total (caso `n` seja maior que 2 * tenants).
     while _count(Account) < n:
@@ -941,52 +941,52 @@ def ensure_contabilidade(n: int, tenants: list[Tenant], faturas: list[Invoice]) 
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             Account.objects.create(
-                inquilino=tenant,
-                nome=f"Conta {idx}",
-                tipo=tipo_conta,
+                tenant=tenant,
+                name=f"Conta {idx}",
+                type=type_account,
             )
 
     # Precisamos do conjunto completo para garantir 2 contas por tenant na criação de movimentos/linhas.
-    contas = list(Account.objects.order_by("inquilino_id", "id"))
+    contas = list(Account.objects.order_by("tenant_id", "id"))
 
     while _count(LegacyEntry) < n:
         idx = _count(LegacyEntry) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             LegacyEntry.objects.create(
-                inquilino=tenant,
-                nome=f"Lançamento {idx}",
-                descricao="Lançamento seed",
-                referencia_externa=f"LANC-SEED-{idx:06d}",
+                tenant=tenant,
+                name=f"Lançamento {idx}",
+                description="Lançamento seed",
+                external_reference=f"LANC-SEED-{idx:06d}",
             )
 
     lancamentos = list(LegacyEntry.objects.order_by("id")[:n])
 
     for idx, lanc in enumerate(lancamentos, start=1):
-        contas_tenant = [c for c in contas if c.inquilino_id == lanc.inquilino_id]
+        contas_tenant = [c for c in contas if c.tenant_id == lanc.tenant_id]
         if len(contas_tenant) < 2:
             continue
-        debito = contas_tenant[0]
-        credito = contas_tenant[-1]
+        debit = contas_tenant[0]
+        credit = contas_tenant[-1]
 
-        with tenant_ctx(lanc.inquilino):
-            if not LegacyMovement.objects.filter(lancamento=lanc, debito__gt=0).exists():
+        with tenant_ctx(lanc.tenant):
+            if not LegacyMovement.objects.filter(entry=lanc, debit__gt=0).exists():
                 LegacyMovement.objects.create(
-                    inquilino=lanc.inquilino,
-                    nome=f"Mov D {idx}",
-                    lancamento=lanc,
-                    conta=debito,
-                    debito=Decimal("100.00"),
-                    credito=Decimal("0.00"),
+                    tenant=lanc.tenant,
+                    name=f"Mov D {idx}",
+                    entry=lanc,
+                    account=debit,
+                    debit=Decimal("100.00"),
+                    credit=Decimal("0.00"),
                 )
-            if not LegacyMovement.objects.filter(lancamento=lanc, credito__gt=0).exists():
+            if not LegacyMovement.objects.filter(entry=lanc, credit__gt=0).exists():
                 LegacyMovement.objects.create(
-                    inquilino=lanc.inquilino,
-                    nome=f"Mov C {idx}",
-                    lancamento=lanc,
-                    conta=credito,
-                    debito=Decimal("0.00"),
-                    credito=Decimal("100.00"),
+                    tenant=lanc.tenant,
+                    name=f"Mov C {idx}",
+                    entry=lanc,
+                    account=credit,
+                    debit=Decimal("0.00"),
+                    credit=Decimal("100.00"),
                 )
 
     while _count(LedgerEntry) < n:
@@ -994,57 +994,57 @@ def ensure_contabilidade(n: int, tenants: list[Tenant], faturas: list[Invoice]) 
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             LedgerEntry.objects.create(
-                inquilino=tenant,
-                nome=f"Ledger Entry {idx}",
-                referencia_externa=f"LED-REF-{idx:06d}",
+                tenant=tenant,
+                name=f"Ledger Entry {idx}",
+                external_reference=f"LED-REF-{idx:06d}",
                 idempotency_key=f"LED-IDEMP-{idx:06d}",
-                data_contabil=timezone.localdate(),
-                descricao="Entry seed",
+                accounting_date=timezone.localdate(),
+                description="Entry seed",
             )
 
     entries = list(LedgerEntry.objects.order_by("id")[:n])
 
     for idx, entry in enumerate(entries, start=1):
-        contas_tenant = [c for c in contas if c.inquilino_id == entry.inquilino_id]
+        contas_tenant = [c for c in contas if c.tenant_id == entry.tenant_id]
         if len(contas_tenant) < 2:
             continue
-        debito = contas_tenant[0]
-        credito = contas_tenant[-1]
-        with tenant_ctx(entry.inquilino):
-            if not LedgerLine.objects.filter(entry=entry, natureza="D").exists():
+        debit = contas_tenant[0]
+        credit = contas_tenant[-1]
+        with tenant_ctx(entry.tenant):
+            if not LedgerLine.objects.filter(entry=entry, nature="D").exists():
                 LedgerLine.objects.create(
-                    inquilino=entry.inquilino,
-                    nome=f"LL D {idx}",
+                    tenant=entry.tenant,
+                    name=f"LL D {idx}",
                     entry=entry,
-                    conta=debito,
-                    valor=Decimal("50.00"),
-                    natureza="D",
+                    account=debit,
+                    value=Decimal("50.00"),
+                    nature="D",
                 )
-            if not LedgerLine.objects.filter(entry=entry, natureza="C").exists():
+            if not LedgerLine.objects.filter(entry=entry, nature="C").exists():
                 LedgerLine.objects.create(
-                    inquilino=entry.inquilino,
-                    nome=f"LL C {idx}",
+                    tenant=entry.tenant,
+                    name=f"LL C {idx}",
                     entry=entry,
-                    conta=credito,
-                    valor=Decimal("50.00"),
-                    natureza="C",
+                    account=credit,
+                    value=Decimal("50.00"),
+                    nature="C",
                 )
 
-    for conta in contas:
-        AccountBalance.objects.get_or_create(conta=conta)
+    for account in contas:
+        AccountBalance.objects.get_or_create(account=account)
 
     # Conciliações financeiras (contabilidade) vinculadas a faturas.
     while _count(FinancialReconciliation) < n and faturas:
         idx = _count(FinancialReconciliation) + 1
-        fatura = faturas[(idx - 1) % len(faturas)]
-        with tenant_ctx(fatura.inquilino):
+        invoice = faturas[(idx - 1) % len(faturas)]
+        with tenant_ctx(invoice.tenant):
             FinancialReconciliation.objects.create(
-                inquilino=fatura.inquilino,
-                nome=f"Conciliação {idx}",
-                fatura=fatura,
-                valor_contabil=fatura.total or Decimal("100.00"),
-                valor_recebido=fatura.total or Decimal("100.00"),
-                referencia_externa=f"CON-SEED-{idx:06d}",
+                tenant=invoice.tenant,
+                name=f"Conciliação {idx}",
+                invoice=invoice,
+                accounting_value=invoice.total or Decimal("100.00"),
+                received_amount=invoice.total or Decimal("100.00"),
+                external_reference=f"CON-SEED-{idx:06d}",
             )
 
 
@@ -1054,14 +1054,14 @@ def ensure_insurer(n: int, tenants: list[Tenant]) -> None:
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
             Insurer.objects.create(
-                inquilino=tenant,
-                nome=f"Seguradora {idx}",
-                descricao="Seguradora seed",
-                ordem=idx,
-                codigo_externo=f"SEG-{idx:06d}",
+                tenant=tenant,
+                name=f"Seguradora {idx}",
+                description="Seguradora seed",
+                order=idx,
+                external_code=f"SEG-{idx:06d}",
                 email=f"seg{idx:04d}@example.com",
-                telefone=_moz_phone(2000 + idx),
-                ativa=True,
+                phone=_moz_phone(2000 + idx),
+                active=True,
             )
 
     seguradoras = list(Insurer.objects.order_by("id")[: max(n, 1)])
@@ -1069,16 +1069,16 @@ def ensure_insurer(n: int, tenants: list[Tenant]) -> None:
     while _count(CoveragePlan) < n:
         idx = _count(CoveragePlan) + 1
         seg = seguradoras[(idx - 1) % len(seguradoras)]
-        with tenant_ctx(seg.inquilino):
+        with tenant_ctx(seg.tenant):
             CoveragePlan.objects.create(
-                inquilino=seg.inquilino,
-                nome=f"Plano Cobertura {idx}",
-                descricao="Plano seed",
-                ordem=idx,
-                seguradora=seg,
-                percentual_cobertura=Decimal("80.00"),
-                exige_autorizacao=idx % 2 == 0,
-                ativo=True,
+                tenant=seg.tenant,
+                name=f"Plano Cobertura {idx}",
+                description="Plano seed",
+                order=idx,
+                insurer=seg,
+                coverage_percentage=Decimal("80.00"),
+                requires_authorization=idx % 2 == 0,
+                active=True,
             )
 
     planos = list(CoveragePlan.objects.order_by("id")[: max(n, 1)])
@@ -1087,17 +1087,17 @@ def ensure_insurer(n: int, tenants: list[Tenant]) -> None:
     while _count(TenantCoveragePlan) < n:
         idx = _count(TenantCoveragePlan) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
-        plano_global = planos[(idx - 1) % len(planos)]
+        global_plan = planos[(idx - 1) % len(planos)]
         with tenant_ctx(tenant):
             TenantCoveragePlan.objects.get_or_create(
-                inquilino=tenant,
-                plano_global=plano_global,
+                tenant=tenant,
+                global_plan=global_plan,
                 defaults={
-                    "nome": f"Override {idx}",
-                    "descricao": "Override seed",
-                    "ordem": idx,
-                    "percentual_override": Decimal("75.00") if idx % 2 == 0 else None,
-                    "ativo": True,
+                    "name": f"Override {idx}",
+                    "description": "Override seed",
+                    "order": idx,
+                    "override_percentage": Decimal("75.00") if idx % 2 == 0 else None,
+                    "active": True,
                 },
             )
 
@@ -1105,18 +1105,18 @@ def ensure_insurer(n: int, tenants: list[Tenant]) -> None:
     requisicoes = list(LabRequest.objects.order_by("id")[: max(n, 1)])
     while _count(ProcedureAuthorization) < n and planos and requisicoes:
         idx = _count(ProcedureAuthorization) + 1
-        plano = planos[(idx - 1) % len(planos)]
+        plan = planos[(idx - 1) % len(planos)]
         req = requisicoes[(idx - 1) % len(requisicoes)]
-        with tenant_ctx(plano.inquilino):
+        with tenant_ctx(plan.tenant):
             ProcedureAuthorization.objects.create(
-                inquilino=plano.inquilino,
-                nome=f"Autorização {idx}",
-                descricao="Autorização seed",
-                ordem=idx,
-                requisicao_id=req.id_custom or str(req.id),
-                plano=plano,
+                tenant=plan.tenant,
+                name=f"Autorização {idx}",
+                description="Autorização seed",
+                order=idx,
+                request_id=req.custom_id or str(req.id),
+                plan=plan,
                 status=ProcedureAuthorization.Status.PENDENTE,
-                codigo_autorizacao=f"AUT-{idx:06d}",
+                authorization_code=f"AUT-{idx:06d}",
             )
 
 
@@ -1124,29 +1124,29 @@ def ensure_notifications(n: int, pacientes: list[Patient], faker: Faker) -> None
     while NotificationTemplate.objects.count() < n:
         idx = NotificationTemplate.objects.count() + 1
         NotificationTemplate.objects.create(
-            nome=f"Template {idx}",
-            conteudo=faker.text(max_nb_chars=200),
+            name=f"Template {idx}",
+            content=faker.text(max_nb_chars=200),
         )
 
     templates = list(NotificationTemplate.objects.order_by("id")[:n])
 
     while Notification.objects.count() < n:
         idx = Notification.objects.count() + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)] if pacientes else None
+        patient = pacientes[(idx - 1) % len(pacientes)] if pacientes else None
         tpl = templates[(idx - 1) % len(templates)] if templates else None
         msg = faker.sentence(nb_words=12)
         if tpl:
-            msg = f"[{tpl.nome}] {msg}"
+            msg = f"[{tpl.name}] {msg}"
         Notification.objects.create(
-            paciente=paciente,
-            destinatario=f"destinatario{idx:04d}@example.com",
-            canal=Notification.Channel.EMAIL,
-            assunto=f"Notificação {idx}",
-            tipo_evento=Notification.EventType.GENERICA,
-            referencia_externa=f"NTF-SEED-{idx:06d}",
-            mensagem=msg,
-            enviada=idx % 2 == 0,
-            enviado_em=timezone.now() if idx % 2 == 0 else None,
+            patient=patient,
+            recipient=f"recipient{idx:04d}@example.com",
+            channel=Notification.Channel.EMAIL,
+            subject=f"Notificação {idx}",
+            event_type=Notification.EventType.GENERICA,
+            external_reference=f"NTF-SEED-{idx:06d}",
+            message=msg,
+            sent=idx % 2 == 0,
+            sent_at=timezone.now() if idx % 2 == 0 else None,
         )
 
     notifs = list(Notification.objects.order_by("id")[:n])
@@ -1154,9 +1154,9 @@ def ensure_notifications(n: int, pacientes: list[Patient], faker: Faker) -> None
         idx = DeliveryLog.objects.count() + 1
         notif = notifs[(idx - 1) % len(notifs)]
         DeliveryLog.objects.create(
-            notificacao=notif,
-            status="enviado" if notif.enviada else "pendente",
-            resposta=f"Resposta seed {idx}",
+            notification=notif,
+            status="enviado" if notif.sent else "pendente",
+            response=f"Resposta seed {idx}",
         )
 
 
@@ -1170,23 +1170,23 @@ def ensure_checkins(
 ) -> None:
     while _count(ReceptionCheckin) < n and pacientes:
         idx = _count(ReceptionCheckin) + 1
-        paciente = pacientes[(idx - 1) % len(pacientes)]
-        atendente = users[(idx - 1) % len(users)] if users else None
+        patient = pacientes[(idx - 1) % len(pacientes)]
+        attendant = users[(idx - 1) % len(users)] if users else None
         req = requisicoes[(idx - 1) % len(requisicoes)] if requisicoes else None
         fat = None
         if faturas and req is not None:
-            fat = next((f for f in faturas if f.requisicao_id == req.id), None)
-        with tenant_ctx(paciente.inquilino):
+            fat = next((f for f in faturas if f.request_id == req.id), None)
+        with tenant_ctx(patient.tenant):
             ReceptionCheckin.objects.create(
-                inquilino=paciente.inquilino,
-                paciente=paciente,
-                requisicao=req if idx % 2 == 0 else None,
-                fatura=fat if idx % 3 == 0 else None,
-                atendente=atendente,
-                prioridade=random.choice([c[0] for c in ReceptionCheckin.Priority.choices]),
-                estado=random.choice([c[0] for c in ReceptionCheckin.Status.choices]),
-                motivo=faker.sentence(nb_words=8),
-                observacoes=faker.sentence(nb_words=12),
+                tenant=patient.tenant,
+                patient=patient,
+                request=req if idx % 2 == 0 else None,
+                invoice=fat if idx % 3 == 0 else None,
+                attendant=attendant,
+                priority=random.choice([c[0] for c in ReceptionCheckin.Priority.choices]),
+                status=random.choice([c[0] for c in ReceptionCheckin.Status.choices]),
+                reason=faker.sentence(nb_words=8),
+                notes=faker.sentence(nb_words=12),
             )
 
 
@@ -1215,7 +1215,7 @@ class Command(BaseCommand):
     help = "Gera dados hipotéticos (demo) no banco (10 por app/model por padrão)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--n", type=int, default=10, help="Mínimo de registros por modelo.")
+        parser.add_argument("--n", type=int, default=10, help="Mínimo de registros por model.")
         parser.add_argument(
             "--password",
             default="Seed@123456",
@@ -1257,16 +1257,16 @@ class Command(BaseCommand):
         produtos = ensure_produtos(n, tenants, categorias, faker)
         lotes = ensure_lotes(n, produtos)
         vendas = ensure_vendas(n, tenants)
-        ensure_itens_venda(n, vendas, produtos)
+        ensure_itens_sale(n, vendas, produtos)
         ensure_inventory_movements(n, lotes)
 
-        exames = ensure_exams(n, tenants, faker)
-        campos = ensure_exam_fields(n, exames, faker)
-        exames_med = ensure_medical_exams(n, tenants, faker)
-        ensure_medical_exam_fields(n, exames_med, faker)
+        exams = ensure_exams(n, tenants, faker)
+        campos = ensure_exam_fields(n, exams, faker)
+        exams_med = ensure_medical_exams(n, tenants, faker)
+        ensure_medical_exam_fields(n, exams_med, faker)
         pacientes = ensure_patients(n, tenants, faker)
         requisicoes = ensure_requests(n, pacientes, users)
-        ensure_request_items(n, requisicoes, exames, exames_med)
+        ensure_request_items(n, requisicoes, exams, exams_med)
         ensure_results(requisicoes, users)
         ensure_referencias(n, campos, faker)
         ensure_result_values(n)
@@ -1275,16 +1275,16 @@ class Command(BaseCommand):
 
         registros = ensure_nursing_records(n, pacientes, faker)
         ensure_signals_vitais(n, registros)
-        procedimentos = ensure_procedimentos(n, pacientes, users, faker)
-        catalogos = ensure_catalogos_procedimento(n, tenants, faker)
-        ensure_catalogo_materiais(n, catalogos, produtos, faker)
-        ensure_procedimento_itens(n, procedimentos, catalogos)
-        # ProcedimentoItem cria materiais automaticamente (e movimentos), garantindo ProcedimentoMaterial/valor.
+        procedures = ensure_procedures(n, pacientes, users, faker)
+        catalogos = ensure_catalogos_procedure(n, tenants, faker)
+        ensure_catalog_materiais(n, catalogos, produtos, faker)
+        ensure_procedure_itens(n, procedures, catalogos)
+        # ProcedimentoItem cria materiais automaticamente (e movimentos), garantindo ProcedimentoMaterial/value.
         _ = list(ProcedureMaterial.objects.order_by("id")[:n])
         ensure_evolucoes(n, pacientes, faker)
         ensure_prescricoes(n, pacientes, faker)
 
-        faturas = ensure_invoices(n, requisicoes, vendas, procedimentos)
+        faturas = ensure_invoices(n, requisicoes, vendas, procedures)
         ensure_invoice_history(n, faturas)
 
         # Recepcao usa requisicoes/faturas

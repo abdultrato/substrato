@@ -1,18 +1,18 @@
 class ValidateRequest:
     @staticmethod
-    def execute(requisicao, usuario):
+    def execute(request, user):
 
-        if requisicao.status != requisicao.Status.AGUARDANDO_VALIDACAO:
+        if request.status != request.Status.AGUARDANDO_VALIDACAO:
             raise ValueError("Requisição não está pronta para validação.")
 
-        if requisicao.possui_resultado_critico:
+        if request.has_critical_result:
             raise ValueError("Existem resultados críticos.")
 
-        requisicao.status = requisicao.Status.VALIDADA
-        requisicao.analista = usuario
-        requisicao.save(update_fields=["status", "analista"])
+        request.status = request.Status.VALIDADA
+        request.analyst = user
+        request.save(update_fields=["status", "analyst"])
 
-        return requisicao
+        return request
 
 
 ValidarRequisicao = ValidateRequest

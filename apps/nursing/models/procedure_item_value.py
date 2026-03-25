@@ -9,33 +9,40 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class ProcedureItemValue(PropagarInquilinoMixin, NoNameCoreModel):
     """
-    Valor unitário efetivo de um item de procedimento.
+    Valor unitário efetivo de um item de procedure.
     """
 
-    fonte_inquilino = "item"
-    prefixo = "PIV"
+    fonte_tenant = "item"
+    prefix = "PIV"
 
     item = models.OneToOneField(
         "enfermagem.ProcedureItem",
         on_delete=models.CASCADE,
-        related_name="valor",
+        related_name="value",
         db_index=True,
     )
 
-    preco_unitario = MoneyField(
+    unit_price = MoneyField(
+
+        db_column="preco_unitario",
+
         default=Decimal("0.00"),
     )
 
-    ativo = models.BooleanField(
+    active = models.BooleanField(
+
+        db_column="ativo",
+
         default=True,
         db_index=True,
     )
 
     class Meta:
+        db_table = "enfermagem_procedimentoitemvalor"
         verbose_name = "Valor do Item de Procedimento"
         verbose_name_plural = "Valores dos Itens de Procedimento"
-        ordering = ["-criado_em"]
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.item_id} - {self.preco_unitario}"
+        return f"{self.item_id} - {self.unit_price}"
 

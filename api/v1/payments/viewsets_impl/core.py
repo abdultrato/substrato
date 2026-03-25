@@ -18,29 +18,29 @@ class PaymentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     serializer_class = PaymentSerializer
     filterset_class = PaymentFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "metodo", "status", "referencia_externa", "numero_autorizacao"]
+    search_fields = ["custom_id", "name", "method", "status", "external_reference", "authorization_number"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "nome",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "fatura",
-        "valor",
-        "metodo",
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "invoice",
+        "value",
+        "method",
         "status",
-        "referencia_externa",
-        "seguradora",
-        "plano_cobertura",
-        "numero_autorizacao",
-        "pago_em",
-        "versao",
+        "external_reference",
+        "insurer",
+        "coverage_plan",
+        "authorization_number",
+        "paid_at",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -48,16 +48,16 @@ class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     serializer_class = ReceiptSerializer
     filterset_class = ReceiptFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["numero"]
-    ordering_fields = ["fatura", "pagamento", "numero", "valor", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["number"]
+    ordering_fields = ["invoice", "payment", "number", "value", "created_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        inquilino = getattr(self.request, "inquilino", None)
-        if inquilino is not None:
+        tenant = getattr(self.request, "tenant", None)
+        if tenant is not None:
             # Receipt has no own tenant field; filter via the related invoice tenant.
-            queryset = queryset.filter(fatura__inquilino=inquilino)
+            queryset = queryset.filter(invoice__tenant=tenant)
         return queryset
 
     @action(detail=True, methods=["get"])
@@ -77,8 +77,8 @@ class ReconciliationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     filterset_class = ReconciliationFilter
     permission_classes = [IsAuthenticated]
     search_fields = []
-    ordering_fields = ["transacao", "confirmado", "data_confirmacao", "criado_em"]
-    ordering = ["-criado_em"]
+    ordering_fields = ["transaction", "confirmed", "confirmation_date", "created_at"]
+    ordering = ["-created_at"]
 
 
 class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -86,16 +86,16 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     serializer_class = TransactionSerializer
     filterset_class = TransactionFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["referencia_externa", "gateway", "status"]
-    ordering_fields = ["referencia_externa", "gateway", "status", "resposta_gateway", "criado_em"]
-    ordering = ["-criado_em"]
+    search_fields = ["external_reference", "gateway", "status"]
+    ordering_fields = ["external_reference", "gateway", "status", "gateway_response", "created_at"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
-    "pagamento": PaymentViewSet,
+    "payment": PaymentViewSet,
     "recibo": ReceiptViewSet,
     "reconciliacao": ReconciliationViewSet,
-    "transacao": TransactionViewSet,
+    "transaction": TransactionViewSet,
 }
 
 __all__ = [

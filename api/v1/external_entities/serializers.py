@@ -4,16 +4,16 @@ from apps.external_entities.models.company import Company
 
 CORE_READ_ONLY_FIELDS = [
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 ]
 
 
@@ -23,7 +23,7 @@ class EmpresaSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
         extra_kwargs = {
-            "nome": {"required": True},
+            "name": {"required": True},
         }
 
 

@@ -29,25 +29,25 @@ class TenantConfigurationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     serializer_class = TenantConfigurationSerializer
     filterset_class = TenantConfigurationFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "fuso_horario", "moeda", "idioma"]
+    search_fields = ["custom_id", "time_zone", "currency", "language"]
     ordering_fields = [
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "inquilino",
-        "fuso_horario",
-        "moeda",
-        "idioma",
-        "permite_multi_unidade",
-        "limite_usuarios",
-        "acrescimo_percentual_consulta_feriado",
-        "versao",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "tenant",
+        "time_zone",
+        "currency",
+        "language",
+        "allows_multi_unit",
+        "user_limit",
+        "holiday_consultation_percentage_surcharge",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class FeatureFlagTenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -55,21 +55,21 @@ class FeatureFlagTenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     serializer_class = FeatureFlagTenantSerializer
     filterset_class = FeatureFlagTenantFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "chave"]
+    search_fields = ["custom_id", "key"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "chave",
-        "ativo",
-        "versao",
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "key",
+        "active",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class TenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -77,25 +77,25 @@ class TenantViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mod
     serializer_class = TenantSerializer
     filterset_class = TenantFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "identificador", "dominio", "status_comercial"]
+    search_fields = ["custom_id", "name", "identifier", "domain", "commercial_status"]
     ordering_fields = [
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "identificador",
-        "nome",
-        "dominio",
-        "ativo",
-        "status_comercial",
-        "trial_ate",
-        "bloqueado_em",
-        "versao",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "identifier",
+        "name",
+        "domain",
+        "active",
+        "commercial_status",
+        "trial_until",
+        "blocked_at",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class SubscriptionPlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -103,28 +103,28 @@ class SubscriptionPlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     serializer_class = SubscriptionPlanSerializer
     filterset_class = SubscriptionPlanFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "nome", "descricao", "tipo"]
+    search_fields = ["custom_id", "name", "description", "type"]
     ordering_fields = [
-        "id_custom",
-        "descricao",
-        "nome",
-        "ordem",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "tipo",
-        "limite_usuarios",
-        "limite_requisicoes_mes",
-        "preco_mensal",
-        "preco_excedente_requisicao",
-        "suporte_prioritario",
-        "permite_multi_unidade",
-        "ativo",
+        "custom_id",
+        "description",
+        "name",
+        "order",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "type",
+        "user_limit",
+        "monthly_request_limit",
+        "monthly_price",
+        "request_overage_price",
+        "priority_support",
+        "allows_multi_unit",
+        "active",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 class TenantUsageViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -132,27 +132,27 @@ class TenantUsageViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     serializer_class = TenantUsageSerializer
     filterset_class = TenantUsageFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "inquilino__nome", "inquilino__identificador"]
+    search_fields = ["custom_id", "tenant__name", "tenant__identifier"]
     ordering_fields = [
-        "id_custom",
-        "deletado",
-        "deletado_em",
-        "criado_em",
-        "atualizado_em",
-        "criado_por",
-        "atualizado_por",
-        "inquilino",
-        "usuarios_ativos",
-        "requisicoes_mes_atual",
-        "versao",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "tenant",
+        "active_users",
+        "current_month_requests",
+        "version",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
 
 VIEWSET_MAP = {
     "configuracaoinquilino": TenantConfigurationViewSet,
     "featureflagtenant": FeatureFlagTenantViewSet,
-    "inquilino": TenantViewSet,
+    "tenant": TenantViewSet,
     "planoassinatura": SubscriptionPlanViewSet,
     "usotenant": TenantUsageViewSet,
 }

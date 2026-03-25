@@ -1,5 +1,17 @@
 from django.utils.timezone import now
-from prometheus_client import Histogram
+
+try:
+    from prometheus_client import Histogram
+except ImportError:
+    class Histogram:  # type: ignore[override]
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
+
+        def observe(self, *args, **kwargs):
+            return None
 
 START_TIME = now()
 
@@ -10,8 +22,8 @@ _metrics = {
 }
 
 INVOICE_RECALCULATION_DURATION = Histogram(
-    "substrato_recalculo_fatura_duration_seconds",
-    "Tempo de recalculo de totais por fatura",
+    "substrato_recalculo_invoice_duration_seconds",
+    "Tempo de recalculo de totais por invoice",
     ["tenant_id"],
     buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5),
 )
@@ -72,6 +84,6 @@ def log_slow_request(
 
 
 FATURA_RECALCULO_DURATION = INVOICE_RECALCULATION_DURATION
-registrar_requisicao = register_request
-registrar_erro = register_error
+registrar_request = register_request
+registrar_error = register_error
 obter_metricas = get_runtime_metrics

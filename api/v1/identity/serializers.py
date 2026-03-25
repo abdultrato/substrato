@@ -6,16 +6,16 @@ from apps.identity.models.user import User
 
 CORE_READ_ONLY_FIELDS = (
     "id",
-    "id_custom",
-    "inquilino",
-    "criado_por",
-    "atualizado_por",
-    "criado_em",
-    "atualizado_em",
-    "deletado",
-    "deletado_em",
-    "deletado_por",
-    "versao",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
 )
 
 
@@ -39,9 +39,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
-    def create(self, validated_data):
-        password = validated_data.pop("password", None)
-        user = super().create(validated_data)
+    def create(self, validated_date):
+        password = validated_date.pop("password", None)
+        user = super().create(validated_date)
         if password:
             user.set_password(password)
         else:
@@ -49,9 +49,9 @@ class UserSerializer(serializers.ModelSerializer):
         user.save(update_fields=["password"])
         return user
 
-    def update(self, instance, validated_data):
-        password = validated_data.pop("password", None)
-        user = super().update(instance, validated_data)
+    def update(self, instance, validated_date):
+        password = validated_date.pop("password", None)
+        user = super().update(instance, validated_date)
         if password:
             user.set_password(password)
             user.save(update_fields=["password"])
@@ -61,7 +61,7 @@ class UserSerializer(serializers.ModelSerializer):
 SERIALIZER_MAP = {
     "passwordresettoken": PasswordResetTokenSerializer,
     "perfilprofissional": ProfessionalProfileSerializer,
-    "usuario": UserSerializer,
+    "user": UserSerializer,
 }
 
 PerfilProfissionalSerializer = ProfessionalProfileSerializer

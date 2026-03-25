@@ -15,36 +15,36 @@ class AccountingEvent:
 @dataclass(frozen=True)
 class LedgerEntryCreated:
     entry_id: int
-    inquilino_id: int
-    data_contabil: str
-    descricao: str
-    referencia_externa: str
-    total_debito: Decimal
-    total_credito: Decimal
+    tenant_id: int
+    accounting_date: str
+    description: str
+    external_reference: str
+    total_debit: Decimal
+    total_credit: Decimal
 
 
 @dataclass(frozen=True)
 class LedgerEntryReversed:
     entry_original_id: int
     entry_reverso_id: int
-    inquilino_id: int
-    motivo: str
+    tenant_id: int
+    reason: str
 
 
 @dataclass(frozen=True)
 class AccountDeactivated:
-    conta_id: int
-    inquilino_id: int
+    account_id: int
+    tenant_id: int
 
 
 @dataclass(frozen=True)
 class ReconciliationCompleted:
-    fatura_id: int
-    inquilino_id: int
-    valor_contabil: Decimal
-    valor_recebido: Decimal
-    divergencia: Decimal
-    conciliado: bool
+    invoice_id: int
+    tenant_id: int
+    accounting_value: Decimal
+    received_amount: Decimal
+    discrepancy: Decimal
+    reconciled: bool
 
 
 EventoContabil = AccountingEvent

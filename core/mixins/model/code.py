@@ -8,22 +8,23 @@ class CodeMixin(models.Model):
     Enterprise code generation with a prefix.
     """
 
-    id_custom = models.CharField(
+    custom_id = models.CharField(
+        db_column="id_custom",
         max_length=30,
         unique=True,
         db_index=True,
         editable=False,
-        verbose_name="ordem",
+        verbose_name="Código",
     )
 
-    prefixo = None  # Deve ser definido no model
+    prefix = None  # Deve ser definido no model
 
     class Meta:
         abstract = True
 
     def _resolve_prefix(self):
-        if self.prefixo:
-            return str(self.prefixo).strip().upper()
+        if self.prefix:
+            return str(self.prefix).strip().upper()
 
         class_name = self.__class__.__name__
         return (class_name[:3] or "MOD").upper()
@@ -33,11 +34,11 @@ class CodeMixin(models.Model):
         return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
 
     def save(self, *args, **kwargs):
-        if not self.id_custom:
-            self.id_custom = self.generate_code()
+        if not self.custom_id:
+            self.custom_id = self.generate_code()
         super().save(*args, **kwargs)
 
 
 CodigoMixin = CodeMixin
-CodeMixin._resolver_prefixo = CodeMixin._resolve_prefix
-CodeMixin.gerar_codigo = CodeMixin.generate_code
+CodeMixin._resolver_prefix = CodeMixin._resolve_prefix
+CodeMixin.gerar_code = CodeMixin.generate_code

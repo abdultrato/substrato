@@ -1,7 +1,7 @@
 class TaxAuthority:
-    def send_invoice(self, data):
+    def send_invoice(self, date):
         pass
 
 
 AutoridadeFiscal = TaxAuthority
-TaxAuthority.enviar_fatura = TaxAuthority.send_invoice
+TaxAuthority.enviar_invoice = TaxAuthority.send_invoice

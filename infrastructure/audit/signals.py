@@ -8,7 +8,7 @@ from infrastructure.middleware.request_user import get_current_user
 @receiver(pre_save)
 def populate_audit_fields(sender, instance, **kwargs):
     """
-    Preenche criado_por e atualizado_por automaticamente.
+    Preenche created_by e updated_by automaticamente.
     """
 
     if not issubclass(sender, AuditModel):
@@ -19,11 +19,11 @@ def populate_audit_fields(sender, instance, **kwargs):
     if not user or not user.is_authenticated:
         return
 
-    if not instance.pk and hasattr(instance, "criado_por"):
-        instance.criado_por = user
+    if not instance.pk and hasattr(instance, "created_by"):
+        instance.created_by = user
 
-    if hasattr(instance, "atualizado_por"):
-        instance.atualizado_por = user
+    if hasattr(instance, "updated_by"):
+        instance.updated_by = user
 
 
 preencher_auditoria = populate_audit_fields

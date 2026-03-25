@@ -48,5 +48,5 @@ def apply_contract_price(base_price, contract_price=None):
 
 aplicar_desconto_percentual = apply_percentage_discount
 aplicar_acrescimo_percentual = apply_percentage_surcharge
-calcular_preco_item = calculate_item_price
-aplicar_preco_contratual = apply_contract_price
+calcular_price_item = calculate_item_price
+aplicar_price_contratual = apply_contract_price

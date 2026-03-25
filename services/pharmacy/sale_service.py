@@ -8,12 +8,12 @@ class SaleService:
     @transaction.atomic
     def add_item(sale, product, quantity, unit_price=None):
         return SaleItem.objects.create(
-            nome=f"Item {product.nome}",
-            inquilino=getattr(sale, "inquilino", None),
-            venda=sale,
-            produto=product,
-            quantidade=quantity,
-            preco_unitario=unit_price if unit_price is not None else product.preco_venda,
+            name=f"Item {product.name}",
+            tenant=getattr(sale, "tenant", None),
+            sale=sale,
+            product=product,
+            quantity=quantity,
+            unit_price=unit_price if unit_price is not None else product.sale_price,
         )
 
 

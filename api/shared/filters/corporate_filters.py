@@ -20,7 +20,7 @@ class CorporateFilterBackend:
     - Aplica filtros automáticos por query string.
     """
 
-    tenant_field = "inquilino"
+    tenant_field = "tenant"
 
     def filter_queryset(self, request, queryset, view):
 
@@ -33,7 +33,7 @@ class CorporateFilterBackend:
 
     def _apply_tenant_filter(self, request, queryset):
 
-        tenant = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
 
         if tenant is None:
             return queryset.none()
@@ -154,7 +154,7 @@ class CorporateQueryCacheMixin:
         if request.method != "GET":
             return super().dispatch(request, *args, **kwargs)
 
-        tenant = getattr(request, "inquilino", None)
+        tenant = getattr(request, "tenant", None)
         user_id = getattr(request.user, "id", "anon")
 
         raw_key = f"{tenant.id if tenant else 'no'}:{user_id}:{request.get_full_path()}"
@@ -167,7 +167,7 @@ class CorporateQueryCacheMixin:
         response = super().dispatch(request, *args, **kwargs)
 
         # Armazena dados serializados
-        if hasattr(response, "data"):
+        if hasattr(response, "date"):
             cache.set(cache_key, response, self.cache_timeout)
 
         return response

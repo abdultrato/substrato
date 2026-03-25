@@ -4,12 +4,18 @@ from .patient import Patient
 
 
 class ClinicalHistory(models.Model):
-    paciente = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    descricao = models.TextField()
-    data_evento = models.DateTimeField(auto_now_add=True)
+    patient = models.ForeignKey(Patient, 
+        db_column="paciente_id",
+         on_delete=models.CASCADE)
+    description = models.TextField(
+        db_column="descricao",
+        )
+    event_date = models.DateTimeField(
+        db_column="data_evento",
+        auto_now_add=True)
 
     class Meta:
         db_table = "clinico_historicoclinico"
 
     def __str__(self):
-        return f"Histórico {self.paciente}"
+        return f"Histórico {self.patient}"

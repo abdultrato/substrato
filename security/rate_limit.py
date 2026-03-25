@@ -3,10 +3,10 @@ import time
 from django.core.cache import cache
 
 
-def permitido(chave: str, limite=5, intervalo=60):
+def permitido(key: str, limite=5, intervalo=60):
 
     agora = time.time()
-    registros = cache.get(chave, [])
+    registros = cache.get(key, [])
 
     registros = [t for t in registros if agora - t < intervalo]
 
@@ -15,6 +15,6 @@ def permitido(chave: str, limite=5, intervalo=60):
 
     registros.append(agora)
 
-    cache.set(chave, registros, timeout=intervalo)
+    cache.set(key, registros, timeout=intervalo)
 
     return True

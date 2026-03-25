@@ -5,7 +5,7 @@ from core.internationalization.language_service import list_iso_languages
 
 class LanguageField(models.CharField):
     """
-    Campo de idioma baseado em ISO 639-1.
+    Campo de language baseado em ISO 639-1.
     Ex: pt, en, fr, es
     """
 

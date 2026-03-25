@@ -10,7 +10,7 @@ from ..serializers import MedicalResultFileSerializer
 
 
 @extend_schema(
-    description="Arquivos/links gerados para exames médicos (imagens, laudos, DICOM).",
+    description="Arquivos/links gerados para exams médicos (imagens, laudos, DICOM).",
     tags=["Clínico - Resultados Médicos"],
 )
 class MedicalResultFileViewSet(
@@ -22,19 +22,19 @@ class MedicalResultFileViewSet(
     serializer_class = MedicalResultFileSerializer
     filterset_class = MedicalResultFileFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["id_custom", "descricao", "tipo"]
+    search_fields = ["custom_id", "description", "type"]
     ordering_fields = [
-        "inquilino",
-        "id_custom",
-        "criado_em",
-        "atualizado_em",
-        "exame_medico",
-        "tipo",
+        "tenant",
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "medical_exam",
+        "type",
     ]
-    ordering = ["-criado_em"]
+    ordering = ["-created_at"]
 
     @extend_schema(
-        description="Lista arquivos (PDF/imagens) associados a um exame médico.",
+        description="Lista arquivos (PDF/imagens) associados a um exam médico.",
         parameters=[
             OpenApiParameter("search", OpenApiTypes.STR, OpenApiParameter.QUERY),
             OpenApiParameter("ordering", OpenApiTypes.STR, OpenApiParameter.QUERY),

@@ -32,4 +32,4 @@ class TenantDatabaseRouter:
 
 
 obter_particao_temporal = get_temporal_partition
-nome_tabela_particionada = get_partitioned_table_name
+name_tabela_particionada = get_partitioned_table_name

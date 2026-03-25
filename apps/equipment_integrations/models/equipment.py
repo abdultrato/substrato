@@ -8,11 +8,11 @@ class IntegrationEquipment(CoreModel):
     Equipamento integrado ao sistema (analisadores, ECG, modalidades de imagem, etc).
 
     Observação: a "integração enterprise" normalmente é feita via middleware (HL7/ASTM/DICOM),
-    mas este modelo permite cadastrar o equipamento, credenciais e roteamento para um
+    mas este model permite cadastrar o equipment, credenciais e roteamento para um
     pipeline de integração.
     """
 
-    prefixo = "EQP"
+    prefix = "EQP"
 
     class Modalidade(models.TextChoices):
         ECG = "ECG", "Eletrocardiograma"
@@ -29,24 +29,40 @@ class IntegrationEquipment(CoreModel):
         DICOM = "DICOM", "DICOM"
         FILE_DROP = "FILE_DROP", "File drop (pasta)"
 
-    modalidade = models.CharField(
+    modality = models.CharField(
+
+        db_column="modalidade",
+
         max_length=20,
         choices=Modalidade.choices,
         default=Modalidade.OUTRO,
         db_index=True,
     )
-    protocolo = models.CharField(
+    protocol = models.CharField(
+        db_column="protocolo",
         max_length=20,
         choices=Protocolo.choices,
         default=Protocolo.HTTP_JSON,
         db_index=True,
     )
 
-    fabricante = models.CharField(max_length=120, blank=True, default="")
-    modelo = models.CharField(max_length=120, blank=True, default="")
-    numero_serie = models.CharField(max_length=120, blank=True, default="", db_index=True)
+    manufacturer = models.CharField(
 
-    ativo = models.BooleanField(default=True, db_index=True)
+        db_column="fabricante",
+
+        max_length=120, blank=True, default="")
+    model = models.CharField(
+        db_column="modelo",
+        max_length=120, blank=True, default="")
+    serial_number = models.CharField(
+        db_column="numero_serie",
+        max_length=120, blank=True, default="", db_index=True)
+
+    active = models.BooleanField(
+
+        db_column="ativo",
+
+        default=True, db_index=True)
 
     # Configuração flexível (host/port, parâmetros de parsing, etc).
     config = models.JSONField(default=dict, blank=True)
@@ -55,12 +71,12 @@ class IntegrationEquipment(CoreModel):
         db_table = "integracoes_equipamentos_integracaoequipamento"
         verbose_name = "Equipamento (Integração)"
         verbose_name_plural = "Equipamentos (Integração)"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "modalidade"]),
-            models.Index(fields=["inquilino", "protocolo"]),
-            models.Index(fields=["inquilino", "ativo"]),
+            models.Index(fields=["tenant", "modality"]),
+            models.Index(fields=["tenant", "protocol"]),
+            models.Index(fields=["tenant", "active"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or f"Equipamento {self.pk}"
+        return self.name or f"Equipamento {self.pk}"

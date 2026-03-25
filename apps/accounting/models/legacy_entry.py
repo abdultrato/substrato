@@ -9,20 +9,31 @@ class LegacyEntry(CoreModel):
     Lançamento contábil legado (mantido por compatibilidade).
     """
 
-    prefixo = "LAN"
+    prefix = "LAN"
 
-    descricao = models.TextField("Descrição", blank=True, default="")
-    data = models.DateField("Data", default=timezone.localdate, db_index=True)
-    referencia_externa = models.CharField("Referência externa", max_length=120, blank=True, default="", db_index=True)
-    confirmado = models.BooleanField("Confirmado", default=False, db_index=True)
+    description = models.TextField("Descrição", 
+
+        db_column="descricao",
+
+         blank=True, default="")
+    date = models.DateField("Data", 
+        db_column="data",
+         default=timezone.localdate, db_index=True)
+    external_reference = models.CharField("Referência externa", 
+        db_column="referencia_externa",
+         max_length=120, blank=True, default="", db_index=True)
+    confirmed = models.BooleanField("Confirmado", 
+        db_column="confirmado",
+         default=False, db_index=True)
 
     class Meta:
-        ordering = ["-data", "-criado_em"]
+        db_table = "contabilidade_lancamento"
+        ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=["inquilino", "data"]),
-            models.Index(fields=["inquilino", "confirmado"]),
-            models.Index(fields=["referencia_externa"]),
+            models.Index(fields=["tenant", "date"]),
+            models.Index(fields=["tenant", "confirmed"]),
+            models.Index(fields=["external_reference"]),
         ]
 
     def __str__(self) -> str:
-        return self.nome or self.referencia_externa or f"Lancamento {self.pk}"
+        return self.name or self.external_reference or f"Lancamento {self.pk}"

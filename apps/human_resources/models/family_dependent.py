@@ -11,7 +11,7 @@ class FamilyDependent(CoreModel):
     Agregado familiar que vive com o funcionário (dependente).
     """
 
-    prefixo = "AGF"
+    prefix = "AGF"
 
     class Parentesco(models.TextChoices):
         CONJUGE = "CONJUGE", "Cônjuge"
@@ -20,42 +20,60 @@ class FamilyDependent(CoreModel):
         IRMAO = "IRMAO", "Irmão(ã)"
         OUTRO = "OUTRO", "Outro"
 
-    funcionario = models.ForeignKey(
+    employee = models.ForeignKey(
+
         "recursos_humanos.Employee",
+
+        db_column="funcionario_id",
         verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="agregados_familiares",
         db_index=True,
     )
 
-    parentesco = models.CharField(
-        verbose_name="Grau de parentesco",
+    relationship = models.CharField(
+
+        db_column="parentesco",
+
+        verbose_name="Grau de relationship",
         max_length=20,
         choices=Parentesco.choices,
         default=Parentesco.OUTRO,
         db_index=True,
     )
 
-    data_nascimento = models.DateField(
+    birth_date = models.DateField(
+
+        db_column="data_nascimento",
+
         verbose_name="Data de nascimento",
         null=True,
         blank=True,
     )
 
-    telefone = models.CharField(
+    phone = models.CharField(
+
+        db_column="telefone",
+
         verbose_name="Telefone",
         max_length=30,
         blank=True,
         default="",
     )
 
-    vive_com_funcionario = models.BooleanField(
+    lives_with_employee = models.BooleanField(
+
+        db_column="vive_com_funcionario",
+
         verbose_name="Vive com o funcionário",
         default=True,
         db_index=True,
     )
 
-    observacoes = models.TextField(
+    notes = models.TextField(
+
+        db_column="observacoes",
+
         verbose_name="Observações",
         blank=True,
         default="",
@@ -65,25 +83,25 @@ class FamilyDependent(CoreModel):
         db_table = "recursos_humanos_agregadofamiliar"
         verbose_name = "Agregado Familiar"
         verbose_name_plural = "Agregados Familiares"
-        ordering = ["nome"]
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=["inquilino", "funcionario"]),
-            models.Index(fields=["inquilino", "parentesco"]),
+            models.Index(fields=["tenant", "employee"]),
+            models.Index(fields=["tenant", "relationship"]),
         ]
 
     def clean(self):
         super().clean()
 
-        if self.funcionario_id and self.inquilino_id and self.funcionario.inquilino_id != self.inquilino_id:
+        if self.employee_id and self.tenant_id and self.employee.tenant_id != self.tenant_id:
             raise ValidationError(
-                {"funcionario": "Funcionário e agregado familiar devem pertencer ao mesmo inquilino."}
+                {"employee": "Funcionário e agregado familiar devem pertencer ao mesmo tenant."}
             )
 
     def save(self, *args, **kwargs):
-        if not self.inquilino_id and self.funcionario_id:
-            self.inquilino_id = self.funcionario.inquilino_id
+        if not self.tenant_id and self.employee_id:
+            self.tenant_id = self.employee.tenant_id
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.nome} ({self.parentesco})".strip()
+        return f"{self.name} ({self.relationship})".strip()

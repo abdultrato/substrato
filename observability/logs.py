@@ -15,5 +15,5 @@ def warning(msg):
     logger.warning(msg)
 
 
-erro = error
+error = error
 aviso = warning

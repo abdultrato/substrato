@@ -14,7 +14,7 @@ class MessagingService:
 
 def get_messaging_service(channel: str | None = None) -> MessagingService:
     """
-    Retoma serviço de comunicação baseado no canal.
+    Retoma serviço de comunicação baseado no channel.
     """
 
     channel = channel or getattr(settings, "DEFAULT_MESSAGING_CHANNEL", "sms")

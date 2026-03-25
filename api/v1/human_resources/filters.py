@@ -13,60 +13,60 @@ from apps.human_resources.models.work_schedule import WorkSchedule
 class JobTitleFilter(SafeFilterSet):
     class Meta:
         model = JobTitle
-        fields = ["nome", "criado_em"]
+        fields = ["name", "created_at"]
 
 
 class EmployeeFilter(SafeFilterSet):
     class Meta:
         model = Employee
-        fields = ["cargo", "profissao", "estado", "data_admissao", "criado_em"]
+        fields = ["role", "profession", "status", "admission_date", "created_at"]
 
 
 class FamilyDependentFilter(SafeFilterSet):
     class Meta:
         model = FamilyDependent
-        fields = ["funcionario", "parentesco", "vive_com_funcionario", "criado_em"]
+        fields = ["employee", "relationship", "lives_with_employee", "created_at"]
 
 
 class WorkScheduleFilter(SafeFilterSet):
     class Meta:
         model = WorkSchedule
-        fields = ["funcionario", "dia_semana", "ativo"]
+        fields = ["employee", "weekday", "active"]
 
 
 class AbsenceFilter(SafeFilterSet):
     class Meta:
         model = Absence
-        fields = ["funcionario", "data", "justificada"]
+        fields = ["employee", "date", "justified"]
 
 
 class VacationFilter(SafeFilterSet):
     class Meta:
         model = Vacation
-        fields = ["funcionario", "estado", "data_inicio"]
+        fields = ["employee", "status", "start_date"]
 
 
 class TerminationFilter(SafeFilterSet):
     class Meta:
         model = Termination
-        fields = ["funcionario", "tipo", "data"]
+        fields = ["employee", "type", "date"]
 
 
 class OvertimeFilter(SafeFilterSet):
     class Meta:
         model = Overtime
-        fields = ["funcionario", "data"]
+        fields = ["employee", "date"]
 
 
 class PayrollFilter(SafeFilterSet):
     class Meta:
         model = Payroll
-        fields = ["funcionario", "ano", "mes", "fechado"]
+        fields = ["employee", "year", "month", "closed"]
 
 
 FILTER_MAP = {
-    "cargo": JobTitleFilter,
-    "funcionario": EmployeeFilter,
+    "role": JobTitleFilter,
+    "employee": EmployeeFilter,
     "agregadofamiliar": FamilyDependentFilter,
     "horario": WorkScheduleFilter,
     "falta": AbsenceFilter,

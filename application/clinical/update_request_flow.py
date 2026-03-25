@@ -3,13 +3,13 @@ from domain.clinical.request_rules import RequestFlow
 
 class UpdateRequestFlow:
     @staticmethod
-    def execute(requisicao):
+    def execute(request):
 
-        novo_status = RequestFlow.determine_status(requisicao)
+        novo_status = RequestFlow.determine_status(request)
 
-        requisicao.aplicar_status(novo_status)
+        request.aplicar_status(novo_status)
 
-        return requisicao
+        return request
 
 
 AtualizarFluxoRequisicao = UpdateRequestFlow
