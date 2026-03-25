@@ -197,14 +197,16 @@ class Invoice(NoNameCoreModel):
             )
         )["total"]
 
-        total = (subtotal or Decimal("0.00")) - (iva or Decimal("0.00"))
-        if total < Decimal("0.00"):
-            total = Decimal("0.00")
+        total = (subtotal or Decimal("0.00")) + (iva or Decimal("0.00"))
 
         self.subtotal = subtotal
         self.vat_amount = iva
         self.total = total
-        self.patient_amount = total - (self.insurance_amount or Decimal("0.00"))
+        insurance_amount = self.insurance_amount or Decimal("0.00")
+        if insurance_amount > total:
+            insurance_amount = total
+        self.insurance_amount = insurance_amount
+        self.patient_amount = max(total - insurance_amount, Decimal("0.00"))
 
     def persist_totals(self):
         self.recalculate_totals()
@@ -214,6 +216,7 @@ class Invoice(NoNameCoreModel):
             subtotal=self.subtotal,
             vat_amount=self.vat_amount,
             total=self.total,
+            insurance_amount=self.insurance_amount,
             patient_amount=self.patient_amount,
         )
 

@@ -45,13 +45,71 @@ VIEWSET_GROUPS = {
     "monitoring": MONITORING_VIEWSET_MAP,
 }
 
+ROUTE_GROUP_ALIASES = {
+    "accounting": "contabilidade",
+    "billing": "faturamento",
+    "clinical": "clinico",
+    "consultations": "consultas",
+    "payments": "pagamentos",
+}
+
+ROUTE_BASENAME_PREFIX_ALIASES = {
+    "consultations": "consultations",
+}
+
+ROUTE_SEGMENT_ALIASES = {
+    ("accounting", "account"): "conta",
+    ("accounting", "conciliacaofinanceira"): "conciliacaofinanceira",
+    ("accounting", "entry"): "lancamento",
+    ("accounting", "movimento"): "movimento",
+    ("billing", "faturaitem"): "faturaitem",
+    ("billing", "historicofatura"): "historicofatura",
+    ("billing", "invoice"): "fatura",
+    ("clinical", "exam"): "exame",
+    ("clinical", "examemedico"): "examemedico",
+    ("clinical", "examecampo"): "examecampo",
+    ("clinical", "examemedicocampo"): "examemedicocampo",
+    ("clinical", "patient"): "paciente",
+    ("clinical", "requisicaoanalise"): "requisicaoanalise",
+    ("clinical", "requisicaoitem"): "requisicaoitem",
+    ("clinical", "resultadomedicoarquivo"): "resultadomedicoarquivo",
+    ("clinical", "resultadoitem"): "resultadoitem",
+    ("consultations", "consultation"): "consulta",
+    ("consultations", "feriado"): "feriado",
+    ("consultations", "medicos"): "medicos",
+    ("consultations", "specialty"): "especialidade",
+    ("payments", "payment"): "pagamento",
+    ("payments", "recibo"): "recibo",
+    ("payments", "reconciliacao"): "reconciliacao",
+    ("payments", "transaction"): "transacao",
+}
+
 
 def register_routes(router):
+    registered_routes: set[tuple[str, str]] = set()
+
+    def _register(route: str, basename: str, viewset):
+        key = (route, basename)
+        if key in registered_routes:
+            return
+        # Enforce RBAC uniformly for all registered ViewSets.
+        viewset.permission_classes = [RBACPermission]
+        router.register(route, viewset, basename=basename)
+        registered_routes.add(key)
+
     for prefix, viewsets in VIEWSET_GROUPS.items():
         for model_name, viewset in sorted(viewsets.items()):
             route = f"{prefix}/{model_name}"
             basename = f"{prefix}-{model_name}"
-            # Enforce RBAC uniformly for all registered ViewSets.
-            viewset.permission_classes = [RBACPermission]
-            router.register(route, viewset, basename=basename)
+            _register(route, basename, viewset)
+
+            alias_prefix = ROUTE_GROUP_ALIASES.get(prefix)
+            alias_segment = ROUTE_SEGMENT_ALIASES.get((prefix, model_name))
+            if alias_prefix and alias_segment:
+                alias_basename_prefix = ROUTE_BASENAME_PREFIX_ALIASES.get(prefix, alias_prefix)
+                _register(
+                    f"{alias_prefix}/{alias_segment}",
+                    f"{alias_basename_prefix}-{model_name}",
+                    viewset,
+                )
     return router

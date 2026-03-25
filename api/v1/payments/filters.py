@@ -10,6 +10,16 @@ from apps.payments.models.transaction import Transaction
 
 
 class PaymentFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "estado": "status",
+        "fatura": "invoice",
+        "metodo": "method",
+        "numero_autorizacao": "authorization_number",
+        "plano_cobertura": "coverage_plan",
+        "seguradora": "insurer",
+        "valor": "value",
+    }
+
     class Meta:
         model = Payment
         fields = [
@@ -43,6 +53,13 @@ class PaymentFilter(SafeFilterSet):
 
 
 class ReceiptFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "fatura": "invoice",
+        "numero": "number",
+        "pagamento": "payment",
+        "valor": "value",
+    }
+
     class Meta:
         model = Receipt
         fields = [
@@ -60,6 +77,12 @@ class ReceiptFilter(SafeFilterSet):
 
 
 class ReconciliationFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "confirmado": "confirmed",
+        "data_confirmacao": "confirmation_date",
+        "transacao": "transaction",
+    }
+
     class Meta:
         model = Reconciliation
         fields = [
@@ -76,9 +99,16 @@ class ReconciliationFilter(SafeFilterSet):
 
 
 class TransactionFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "referencia_externa": "external_reference",
+        "resposta_gateway": "gateway_response",
+        "transacao": "external_reference",
+    }
+
     class Meta:
         model = Transaction
         fields = [
+            "gateway_response",
             "external_reference",
             "gateway",
             "status",

@@ -1,10 +1,18 @@
 import django_filters
 
+from api.v1.compat import normalize_legacy_input
+
 
 class SafeFilterSet(django_filters.FilterSet):
     """
     FilterSet que ignora campos inexistentes definidos em _meta.fields.
     """
+
+    legacy_filter_aliases: dict[str, str] = {}
+
+    def __init__(self, data=None, *args, **kwargs):
+        normalized_data = normalize_legacy_input(data, self.legacy_filter_aliases)
+        super().__init__(normalized_data, *args, **kwargs)
 
     @classmethod
     def get_filters(cls):

@@ -146,7 +146,7 @@ export default function FaturasPage() {
 
   const carregarPagamentosPendentes = useCallback(async (faturaId: number) => {
     try {
-      const res = await apiFetch<any>(`/pagamentos/?fatura=${faturaId}&status=PEN`)
+      const res = await apiFetch<any>(`/pagamentos/pagamento/?fatura=${faturaId}&status=PEN`)
       const lista = res && res.results ? res.results : res
       const pendentes = Array.isArray(lista) ? lista : []
       setTemPagamentoPendente(pendentes.length > 0)
@@ -426,7 +426,7 @@ export default function FaturasPage() {
                 <div className="text-foreground">{selectedFatura.origem || "-"}</div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (com IVA)</div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (sem IVA)</div>
                 <div className="text-foreground"><MoneyValue value={selectedFatura.subtotal} /></div>
               </div>
               <div>
@@ -438,7 +438,7 @@ export default function FaturasPage() {
                 <div className="text-foreground"><MoneyValue value={selectedFatura.iva_valor} /></div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Total (sem IVA)</div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Total (com IVA)</div>
                 <div className="text-foreground"><MoneyValue value={selectedFatura.total} /></div>
               </div>
               <div>

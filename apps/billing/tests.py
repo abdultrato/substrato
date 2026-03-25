@@ -95,8 +95,38 @@ def test_clinical_invoice_recalculates_totals():
     invoice.refresh_from_db()
 
     assert invoice.subtotal == exam.price
-    assert invoice.total == invoice.subtotal - invoice.vat_amount
+    assert invoice.total == invoice.subtotal + invoice.vat_amount
     assert invoice.patient_amount == invoice.total
+
+
+@pytest.mark.django_db
+def test_invoice_caps_patient_balance_when_insurance_exceeds_total():
+    tenant = _tenant()
+    patient = _patient(tenant)
+
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        origin=Invoice.Origin.MIXED,
+        insurance_amount=Decimal("999.00"),
+    )
+
+    InvoiceItem.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.AJUSTE,
+        description="Ajuste manual",
+        quantity=Decimal("1.00"),
+        unit_price=Decimal("10.00"),
+        applies_vat=False,
+    )
+
+    invoice.persist_totals()
+    invoice.refresh_from_db()
+
+    assert invoice.total == Decimal("10.00")
+    assert invoice.insurance_amount == invoice.total
+    assert invoice.patient_amount == Decimal("0.00")
 
 
 @pytest.mark.django_db

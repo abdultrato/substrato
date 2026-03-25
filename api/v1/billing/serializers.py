@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
@@ -19,15 +20,64 @@ CORE_READ_ONLY_FIELDS = [
     "version",
 ]
 
+INVOICE_LEGACY_ALIASES = {
+    "cirurgia": "surgery",
+    "consulta": "consultation",
+    "criado_em": "created_at",
+    "id_custom": "custom_id",
+    "iva_valor": "vat_amount",
+    "origem": "origin",
+    "paciente": "patient",
+    "procedimento": "procedure",
+    "procedimentos": "procedures",
+    "requisicao": "request",
+    "valor_paciente": "patient_amount",
+    "valor_seguro": "insurance_amount",
+    "venda": "sale",
+}
 
-class InvoiceSerializer(serializers.ModelSerializer):
+INVOICE_ITEM_LEGACY_ALIASES = {
+    "aplica_iva": "applies_vat",
+    "criado_em": "created_at",
+    "descricao": "description",
+    "exame": "exam",
+    "exame_medico": "medical_exam",
+    "fatura": "invoice",
+    "id_custom": "custom_id",
+    "item_venda": "sale_item",
+    "iva_percentual": "vat_percentage",
+    "iva_valor": "vat_amount",
+    "material_procedimento": "procedure_material",
+    "preco_unitario": "unit_price",
+    "procedimento_item": "procedure_item",
+    "procedimento_material": "procedure_material",
+    "quantidade": "quantity",
+    "tipo_item": "item_type",
+}
+
+INVOICE_HISTORY_LEGACY_ALIASES = {
+    "criado_em": "created_at",
+    "descricao": "description",
+    "fatura": "invoice",
+    "id_custom": "custom_id",
+    "tipo_evento": "event_type",
+}
+
+
+class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = INVOICE_LEGACY_ALIASES
+    legacy_output_aliases = INVOICE_LEGACY_ALIASES
+
     class Meta:
         model = Invoice
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class InvoiceItemSerializer(serializers.ModelSerializer):
+class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = INVOICE_ITEM_LEGACY_ALIASES
+    legacy_output_aliases = INVOICE_ITEM_LEGACY_ALIASES
+
     def _remove_existing_items(self, *, invoice, item_type, reference):
         if not invoice or not reference:
             return
@@ -126,7 +176,10 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class InvoiceHistorySerializer(serializers.ModelSerializer):
+class InvoiceHistorySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = INVOICE_HISTORY_LEGACY_ALIASES
+    legacy_output_aliases = INVOICE_HISTORY_LEGACY_ALIASES
+
     class Meta:
         model = InvoiceHistory
         fields = "__all__"

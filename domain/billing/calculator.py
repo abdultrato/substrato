@@ -23,9 +23,7 @@ def calculate_totals(items, vat_exempt: bool = False, insurance_coverage: Decima
             vat_item = (line_total * VAT_PERCENT).quantize(Decimal("0.01"))
             vat_total += vat_item
 
-    total = (subtotal - vat_total).quantize(Decimal("0.01"))
-    if total < Decimal("0.00"):
-        total = Decimal("0.00")
+    total = (subtotal + vat_total).quantize(Decimal("0.01"))
 
     coverage = Decimal(str(insurance_coverage or 0))
     if coverage > Decimal("1.00"):
@@ -36,6 +34,8 @@ def calculate_totals(items, vat_exempt: bool = False, insurance_coverage: Decima
         insurance_amount = total
 
     patient_amount = (total - insurance_amount).quantize(Decimal("0.01"))
+    if patient_amount < Decimal("0.00"):
+        patient_amount = Decimal("0.00")
 
     return {
         "subtotal": subtotal,

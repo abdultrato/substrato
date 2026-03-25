@@ -9,6 +9,17 @@ from apps.billing.models.invoice_items import InvoiceItem
 
 
 class InvoiceFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "estado": "status",
+        "fatura": "custom_id",
+        "id_custom": "custom_id",
+        "iva_valor": "vat_amount",
+        "origem": "origin",
+        "paciente": "patient",
+        "valor_paciente": "patient_amount",
+        "valor_seguro": "insurance_amount",
+    }
+
     class Meta:
         model = Invoice
         fields = [
@@ -26,6 +37,7 @@ class InvoiceFilter(SafeFilterSet):
             "request",
             "surgery",
             "patient",
+            "origin",
             "subtotal",
             "vat_amount",
             "total",
@@ -41,6 +53,17 @@ class InvoiceFilter(SafeFilterSet):
 
 
 class InvoiceItemFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "aplica_iva": "applies_vat",
+        "descricao": "description",
+        "fatura": "invoice",
+        "id_custom": "custom_id",
+        "iva_percentual": "vat_percentage",
+        "preco_unitario": "unit_price",
+        "quantidade": "quantity",
+        "tipo_item": "item_type",
+    }
+
     class Meta:
         model = InvoiceItem
         fields = [
@@ -59,6 +82,9 @@ class InvoiceItemFilter(SafeFilterSet):
             "description",
             "quantity",
             "unit_price",
+            "applies_vat",
+            "vat_percentage",
+            "item_type",
         ]
 
 
@@ -68,6 +94,10 @@ class InvoiceItemFilter(SafeFilterSet):
 
 
 class InvoiceHistoryFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "fatura": "invoice",
+    }
+
     class Meta:
         model = InvoiceHistory
         fields = [

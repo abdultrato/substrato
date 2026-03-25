@@ -21,9 +21,7 @@ def calculate_totals(invoice):
             vat_amount = (line_total * VAT_PERCENT).quantize(d("0.01"))
             vat_total += vat_amount
 
-    total = (subtotal - vat_total).quantize(d("0.01"))
-    if total < d("0.00"):
-        total = d("0.00")
+    total = (subtotal + vat_total).quantize(d("0.01"))
 
     total_insurer_value = d("0.00")
 
@@ -40,6 +38,8 @@ def calculate_totals(invoice):
         total_insurer_value = total
 
     patient_value = (total - total_insurer_value).quantize(d("0.01"))
+    if patient_value < d("0.00"):
+        patient_value = d("0.00")
 
     invoice.subtotal = subtotal
     invoice.vat_amount = vat_total

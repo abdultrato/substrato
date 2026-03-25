@@ -1,13 +1,57 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
+PAYMENT_LEGACY_ALIASES = {
+    "criado_em": "created_at",
+    "dados_seguro": "insurance_date",
+    "estado": "status",
+    "fatura": "invoice",
+    "id_custom": "custom_id",
+    "metodo": "method",
+    "nome": "name",
+    "numero_autorizacao": "authorization_number",
+    "pago_em": "paid_at",
+    "plano_cobertura": "coverage_plan",
+    "seguradora": "insurer",
+    "valor": "value",
+}
 
-class PaymentSerializer(serializers.ModelSerializer):
+RECEIPT_LEGACY_ALIASES = {
+    "codigo_fatura": "invoice_code",
+    "criado_em": "created_at",
+    "estado_pagamento": "payment_status",
+    "fatura": "invoice",
+    "metodo_pagamento": "payment_method",
+    "nome_paciente": "patient_name",
+    "numero": "number",
+    "pagamento": "payment",
+    "valor": "value",
+}
+
+RECONCILIATION_LEGACY_ALIASES = {
+    "confirmado": "confirmed",
+    "criado_em": "created_at",
+    "data_confirmacao": "confirmation_date",
+    "transacao": "transaction",
+}
+
+TRANSACTION_LEGACY_ALIASES = {
+    "criado_em": "created_at",
+    "referencia_externa": "external_reference",
+    "resposta_gateway": "gateway_response",
+}
+
+
+class PaymentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = PAYMENT_LEGACY_ALIASES
+    legacy_output_aliases = PAYMENT_LEGACY_ALIASES
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
 
@@ -75,7 +119,10 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ReceiptSerializer(serializers.ModelSerializer):
+class ReceiptSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = RECEIPT_LEGACY_ALIASES
+    legacy_output_aliases = RECEIPT_LEGACY_ALIASES
+
     invoice_code = serializers.CharField(source="invoice.custom_id", read_only=True)
     patient_name = serializers.CharField(source="invoice.patient.name", read_only=True)
     payment_method = serializers.CharField(source="payment.get_method_display", read_only=True)
@@ -86,13 +133,19 @@ class ReceiptSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ReconciliationSerializer(serializers.ModelSerializer):
+class ReconciliationSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = RECONCILIATION_LEGACY_ALIASES
+    legacy_output_aliases = RECONCILIATION_LEGACY_ALIASES
+
     class Meta:
         model = Reconciliation
         fields = "__all__"
 
 
-class TransactionSerializer(serializers.ModelSerializer):
+class TransactionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = TRANSACTION_LEGACY_ALIASES
+    legacy_output_aliases = TRANSACTION_LEGACY_ALIASES
+
     class Meta:
         model = Transaction
         fields = "__all__"

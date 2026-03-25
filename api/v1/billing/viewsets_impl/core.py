@@ -55,7 +55,6 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ]
     ordering = ["-created_at"]
 
-    @action(detail=True, methods=["post"])
     @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
     def issue(self, request, pk=None):
         invoice = self.get_object()
@@ -87,6 +86,10 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     )
     def confirm_payment(self, request, pk=None):
         invoice = self.get_object()
+        invoice = self._confirm_pending_payment(invoice)
+        return Response(self.get_serializer(invoice).data)
+
+    def _confirm_pending_payment(self, invoice: Invoice) -> Invoice:
         payment = (
             invoice.pagamentos.filter(status=Payment.Status.PENDING, deleted=False)
             .order_by("-created_at")
@@ -101,6 +104,17 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raise ValidationError(str(exc)) from exc
 
         invoice.refresh_from_db()
+        return invoice
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="confirmar_pagamento",
+        url_name="confirmar_pagamento",
+    )
+    def confirm_payment_legacy(self, request, pk=None):
+        invoice = self.get_object()
+        invoice = self._confirm_pending_payment(invoice)
         return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["get"])

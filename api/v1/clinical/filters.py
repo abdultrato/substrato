@@ -59,6 +59,13 @@ class MedicalExamFilter(SafeFilterSet):
 
 
 class LabExamFieldFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "exame": "exam",
+        "nome": "name",
+        "tipo": "type",
+        "unidade": "unit",
+    }
+
     class Meta:
         model = LabExamField
         fields = [
@@ -76,6 +83,12 @@ class LabExamFieldFilter(SafeFilterSet):
 
 
 class MedicalExamFieldFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "exame": "exam",
+        "nome": "name",
+        "tipo": "type",
+    }
+
     class Meta:
         model = MedicalExamField
         fields = [
@@ -98,6 +111,17 @@ class MedicalExamFieldFilter(SafeFilterSet):
 
 class PatientFilter(SafeFilterSet):
     address = django_filters.CharFilter(field_name="address", lookup_expr="icontains")
+    legacy_filter_aliases = {
+        "contacto": "contact",
+        "data_nascimento": "birth_date",
+        "genero": "gender",
+        "morada": "address",
+        "nome": "name",
+        "numero_id": "document_number",
+        "proveniencia": "provenance",
+        "raca_origem": "race_origin",
+        "tipo_documento": "document_type",
+    }
 
     class Meta:
         model = Patient
@@ -129,6 +153,14 @@ class PatientFilter(SafeFilterSet):
 
 
 class LabRequestFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "analista": "analyst",
+        "estado": "status",
+        "paciente": "patient",
+        "status_clinico": "clinical_status",
+        "tipo": "type",
+    }
+
     class Meta:
         model = LabRequest
         fields = [
@@ -153,6 +185,12 @@ class LabRequestFilter(SafeFilterSet):
 
 
 class LabRequestItemFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "exame": "exam",
+        "exame_medico": "medical_exam",
+        "requisicao": "request",
+    }
+
     class Meta:
         model = LabRequestItem
         fields = [
@@ -174,6 +212,15 @@ class LabRequestItemFilter(SafeFilterSet):
 
 
 class ResultItemFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "campo_exame": "exam_field",
+        "data_validacao": "validation_date",
+        "estado": "status",
+        "requisicao": "request",
+        "status_clinico": "clinical_status",
+        "validado_por": "validated_by",
+    }
+
     class Meta:
         model = ResultItem
         fields = [
@@ -196,6 +243,14 @@ class ResultItemFilter(SafeFilterSet):
 
 
 class MedicalResultFileFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "exame_medico": "medical_exam",
+        "item_requisicao": "request_item",
+        "requisicao": "request",
+        "resultado": "result",
+        "tipo": "type",
+    }
+
     class Meta:
         model = MedicalResultFile
         fields = [
