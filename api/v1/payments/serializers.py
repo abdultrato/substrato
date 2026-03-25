@@ -7,6 +7,20 @@ from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
+CORE_READ_ONLY_FIELDS = [
+    "id",
+    "custom_id",
+    "tenant",
+    "created_by",
+    "updated_by",
+    "created_at",
+    "updated_at",
+    "deleted",
+    "deleted_at",
+    "deleted_by",
+    "version",
+]
+
 PAYMENT_LEGACY_ALIASES = {
     "criado_em": "created_at",
     "dados_seguro": "insurance_date",
@@ -117,6 +131,7 @@ class PaymentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = Payment
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 class ReceiptSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

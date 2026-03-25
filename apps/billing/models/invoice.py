@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models import Case, DecimalField, F, Sum, Value, When
+from django.db.models import DecimalField, Sum
 from django.db.models.functions import Coalesce
 
 from apps.clinical.models.lab_request import LabRequest
@@ -170,34 +170,11 @@ class Invoice(NoNameCoreModel):
         )
 
     def recalculate_totals(self):
-        linha_expr = F("quantity") * F("unit_price")
-        subtotal = self.itens.aggregate(
-            total=Coalesce(
-                Sum(
-                    linha_expr,
-                    output_field=DecimalField(max_digits=12, decimal_places=2),
-                ),
-                Decimal("0.00"),
-            )
-        )["total"]
+        items = list(self.itens.filter(deleted=False))
 
-        iva_expr = Case(
-            When(
-                applies_vat=True,
-                then=linha_expr * Coalesce(F("vat_percentage"), Value(Decimal("0.00"))) / Value(Decimal("100.00")),
-            ),
-            default=Value(Decimal("0.00")),
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
-
-        iva = self.itens.aggregate(
-            total=Coalesce(
-                Sum(iva_expr, output_field=DecimalField(max_digits=12, decimal_places=2)),
-                Decimal("0.00"),
-            )
-        )["total"]
-
-        total = (subtotal or Decimal("0.00")) + (iva or Decimal("0.00"))
+        subtotal = sum((item.total_sem_iva for item in items), Decimal("0.00")).quantize(Decimal("0.01"))
+        iva = sum((item.vat_amount for item in items), Decimal("0.00")).quantize(Decimal("0.01"))
+        total = (subtotal + iva).quantize(Decimal("0.01"))
 
         self.subtotal = subtotal
         self.vat_amount = iva

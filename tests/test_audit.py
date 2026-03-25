@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -9,10 +10,10 @@ from apps.tenants.models.tenant import Tenant
 from observability.audit import ActiveUsersView, register_event
 
 
-def test_register_event_logs_structured_context(caplog):
+def test_register_event_logs_structured_context():
     user = SimpleNamespace(id=42)
 
-    with caplog.at_level("INFO", logger="tenant_audit"):
+    with patch("observability.audit.logger.info") as logger_info:
         register_event(
             user=user,
             tenant_id=7,
@@ -21,12 +22,16 @@ def test_register_event_logs_structured_context(caplog):
             status_code=201,
         )
 
-    record = next(record for record in caplog.records if record.getMessage() == "AUDIT")
-    assert record.user_id == 42
-    assert record.tenant_id == 7
-    assert record.endpoint == "/api/v1/faturamento/fatura/"
-    assert record.method == "POST"
-    assert record.status == 201
+    logger_info.assert_called_once_with(
+        "AUDIT",
+        extra={
+            "user_id": 42,
+            "tenant_id": 7,
+            "endpoint": "/api/v1/faturamento/fatura/",
+            "method": "POST",
+            "status": 201,
+        },
+    )
 
 
 @pytest.mark.django_db

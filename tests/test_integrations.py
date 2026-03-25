@@ -147,17 +147,17 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
         "/api/v1/pagamentos/pagamento/",
         {
             "fatura": invoice_id,
-            "nome": "Pagamento front",
+            "nome": "Pagamento Front",
             "valor": "10.00",
             "metodo": "DIN",
         },
         format="json",
     )
 
-    assert payment_response.status_code == 201
+    assert payment_response.status_code == 201, _response_data(payment_response)
     payment_payload = _response_data(payment_response)
     assert payment_payload["fatura"] == invoice_id
-    assert payment_payload["nome"] == "Pagamento front"
+    assert payment_payload["nome"] == "Pagamento Front"
     assert payment_payload["valor"] == "10.00"
     assert payment_payload["estado"] == "PEN"
 

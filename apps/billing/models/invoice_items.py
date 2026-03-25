@@ -473,6 +473,7 @@ class InvoiceItem(NoNameCoreModel):
         self.full_clean()
 
         super().save(*args, **kwargs)
+        self.invoice.persist_totals()
         self._schedule_recalculation()
 
     def delete(self, *args, **kwargs):

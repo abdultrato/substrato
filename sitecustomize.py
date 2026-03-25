@@ -46,6 +46,47 @@ def _patch_django_timezone_utc() -> None:
         django_timezone.utc = UTC
 
 
+def _patch_django_filters_choice_iterator() -> None:
+    try:
+        from django import forms
+        import django_filters.fields as django_filter_fields
+    except Exception:
+        return
+
+    if hasattr(forms.ChoiceField, "_get_choices") and hasattr(forms.ChoiceField, "_set_choices"):
+        return
+
+    mixin = django_filter_fields.ChoiceIteratorMixin
+    if getattr(mixin, "_substrato_choice_compat", False):
+        return
+
+    getter = getattr(forms.ChoiceField.choices, "fget", None)
+    setter = getattr(forms.ChoiceField.choices, "fset", None)
+    if getter is None or setter is None:
+        return
+
+    def _get_choices(self):
+        if hasattr(self, "_choices"):
+            return self._choices
+
+        queryset = getattr(self, "queryset", None)
+        if queryset is not None:
+            return self.iterator(self)
+
+        return getter(self)
+
+    def _set_choices(self, value):
+        setter(self, value)
+        choices = self.iterator(self, self._choices)
+        self._choices = self.widget.choices = choices
+
+    mixin._get_choices = _get_choices
+    mixin._set_choices = _set_choices
+    mixin.choices = property(_get_choices, _set_choices)
+    mixin._substrato_choice_compat = True
+
+
 _patch_legacy_ast_aliases()
 _patch_pkgutil_find_loader()
 _patch_django_timezone_utc()
+_patch_django_filters_choice_iterator()

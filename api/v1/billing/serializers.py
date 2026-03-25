@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -24,6 +26,7 @@ INVOICE_LEGACY_ALIASES = {
     "cirurgia": "surgery",
     "consulta": "consultation",
     "criado_em": "created_at",
+    "estado": "status",
     "id_custom": "custom_id",
     "iva_valor": "vat_amount",
     "origem": "origin",
@@ -77,6 +80,13 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
 class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = INVOICE_ITEM_LEGACY_ALIASES
     legacy_output_aliases = INVOICE_ITEM_LEGACY_ALIASES
+
+    @staticmethod
+    def _format_money(value):
+        try:
+            return str(Decimal(value).quantize(Decimal("0.01")))
+        except Exception:
+            return None
 
     def _remove_existing_items(self, *, invoice, item_type, reference):
         if not invoice or not reference:
@@ -153,22 +163,13 @@ class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     total_com_iva = serializers.SerializerMethodField(method_name="get_total_with_tax")
 
     def get_total_before_tax(self, obj):
-        try:
-            return str(obj.total_sem_iva)
-        except Exception:
-            return None
+        return self._format_money(getattr(obj, "total_sem_iva", None))
 
     def get_tax_amount(self, obj):
-        try:
-            return str(obj.vat_amount)
-        except Exception:
-            return None
+        return self._format_money(getattr(obj, "vat_amount", None))
 
     def get_total_with_tax(self, obj):
-        try:
-            return str(obj.total_com_iva)
-        except Exception:
-            return None
+        return self._format_money(getattr(obj, "total_com_iva", None))
 
     class Meta:
         model = InvoiceItem
