@@ -35,6 +35,7 @@ class ProfessionalProfile(models.Model):
     atualizado_em = models.DateTimeField(verbose_name="Atualizado em", auto_now=True)
 
     class Meta:
+        db_table = "identidade_perfilprofissional"
         ordering = ["-criado_em"]
         verbose_name = "Perfil Profissional"
         verbose_name_plural = "Perfis Profissionais"

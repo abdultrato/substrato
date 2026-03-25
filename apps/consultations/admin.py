@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from .models.medical_consultation import MedicalConsultation
 from .models.consultation_specialty import ConsultationSpecialty
 from .models.holiday import Holiday
+from .models.medical_consultation import MedicalConsultation
 
 
 class CoreAdmin(admin.ModelAdmin):

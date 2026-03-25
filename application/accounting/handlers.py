@@ -3,9 +3,9 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 
 from domain.accounting.exceptions import (
+    AccountingDomainError,
     AccountTypeChangeNotAllowedError,
     AccountWithBalanceCannotBeDeactivatedError,
-    AccountingDomainError,
     ClosedAccountingPeriodError,
     ImmutableLedgerError,
     InactiveAccountError,

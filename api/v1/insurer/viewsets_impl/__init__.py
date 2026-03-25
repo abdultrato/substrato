@@ -1,19 +1,19 @@
 from .core import (
     VIEWSET_MAP,
-    ProcedureAuthorizationViewSet,
+    AutorizacaoProcedimentoViewSet,
     CoveragePlanViewSet,
     InsurerViewSet,
-    AutorizacaoProcedimentoViewSet,
     PlanoCoberturaViewSet,
+    ProcedureAuthorizationViewSet,
     SeguradoraViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "ProcedureAuthorizationViewSet",
+    "AutorizacaoProcedimentoViewSet",
     "CoveragePlanViewSet",
     "InsurerViewSet",
-    "AutorizacaoProcedimentoViewSet",
     "PlanoCoberturaViewSet",
+    "ProcedureAuthorizationViewSet",
     "SeguradoraViewSet",
 ]

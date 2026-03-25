@@ -1,6 +1,6 @@
-from .models import PrescriptionItem, MedicalRecordEntry
+from .models import MedicalRecordEntry, PrescriptionItem
 
 __all__ = [
-    "PrescriptionItem",
     "MedicalRecordEntry",
+    "PrescriptionItem",
 ]

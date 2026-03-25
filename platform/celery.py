@@ -2,6 +2,8 @@ import os
 
 from celery import Celery
 
+import sitecustomize  # noqa: F401
+
 # Celery precisa do DJANGO_SETTINGS_MODULE para carregar settings do Django
 # quando rodamos `celery -A platform ...` no container.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings.development")

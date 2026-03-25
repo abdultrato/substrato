@@ -51,6 +51,5 @@ class Incident(PropagarInquilinoMixin, NoNameCoreModel):
     def clean(self):
         super().clean()
 
-        if self.equipamento_id and self.inquilino_id:
-            if self.equipamento.inquilino_id != self.inquilino_id:
-                raise ValidationError({"equipamento": "Equipamento e ocorrência devem pertencer ao mesmo inquilino."})
+        if self.equipamento_id and self.inquilino_id and self.equipamento.inquilino_id != self.inquilino_id:
+            raise ValidationError({"equipamento": "Equipamento e ocorrência devem pertencer ao mesmo inquilino."})

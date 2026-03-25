@@ -35,6 +35,7 @@ class WorkSchedule(NoNameCoreModel):
     ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
+        db_table = "recursos_humanos_horariotrabalho"
         verbose_name = "Horário de Trabalho"
         verbose_name_plural = "Horários de Trabalho"
         ordering = ["funcionario", "dia_semana", "hora_inicio"]

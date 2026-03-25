@@ -23,16 +23,16 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
-from apps.clinical.models.patient import Patient
+from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.patient import Patient
 from apps.consultations.models.medical_consultation import MedicalConsultation
-from apps.nursing.models.ward import WardAdmission
 from apps.nursing.models.procedure_item import ProcedureItem
-from apps.pharmacy.models.sale_item import SaleItem
-from apps.pharmacy.models.product import Product
-from apps.billing.models.invoice import Invoice
+from apps.nursing.models.ward import WardAdmission
 from apps.payments.models.payment import Payment
+from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.sale_item import SaleItem
 from domain.clinical.request_state import RequestState
 
 

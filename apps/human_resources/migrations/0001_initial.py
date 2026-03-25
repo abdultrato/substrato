@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                 ('aumento_salarial', infrastructure.orm.fields.money_field.MoneyField(decimal_places=2, default=Decimal('0.00'), help_text='Valor adicional por promoção/aumento (somado ao salário nominal).', max_digits=12, verbose_name='Aumento salarial')),
                 ('horas_base_mes', models.PositiveSmallIntegerField(default=176, help_text='Horas contratuais base por mês (ex.: 176).', verbose_name='Horas base (mês)')),
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
-                ('cargo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='funcionarios', to='human_resources.cargo', verbose_name='Cargo')),
+                ('cargo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='funcionarios', to='recursos_humanos.cargo', verbose_name='Cargo')),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
@@ -98,7 +98,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='folhas_pagamento', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='folhas_pagamento', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -124,7 +124,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ferias', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ferias', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -149,7 +149,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='faltas', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='faltas', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -174,7 +174,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dispensas', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dispensas', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -202,7 +202,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='agregados_familiares', to='human_resources.funcionario', verbose_name='Funcionário')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='agregados_familiares', to='recursos_humanos.funcionario', verbose_name='Funcionário')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -228,7 +228,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='horarios', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='horarios', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={
@@ -255,7 +255,7 @@ class Migration(migrations.Migration):
                 ('atualizado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL)),
                 ('criado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL)),
                 ('deletado_por', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='horas_extras', to='human_resources.funcionario')),
+                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='horas_extras', to='recursos_humanos.funcionario')),
                 ('inquilino', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino')),
             ],
             options={

@@ -2,10 +2,10 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
-from domain.clinical.result_state import ResultState
-from domain.clinical.result_state_machine import ResultStateMachine
 from core.constants.laboratory.clinical_status import StatusClinico
 from core.models.base import NoNameCoreModel
+from domain.clinical.result_state import ResultState
+from domain.clinical.result_state_machine import ResultStateMachine
 
 from .lab_exam import LabExam
 from .patient import Patient
@@ -57,7 +57,7 @@ class LabRequest(NoNameCoreModel):
 
     exames = models.ManyToManyField(
         LabExam,
-        through="RequisicaoItem",
+        through="LabRequestItem",
     )
 
     analista = models.ForeignKey(
@@ -89,6 +89,7 @@ class LabRequest(NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "clinico_requisicaoanalise"
         ordering = ["-criado_em"]
         verbose_name = "Requisição de exame"
         verbose_name_plural = "Requisições de exames"

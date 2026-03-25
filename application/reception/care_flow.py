@@ -3,17 +3,17 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_exam import LabExam
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
-from apps.billing.models.invoice import Invoice
+from apps.insurer.models.coverage_plan import CoveragePlan
+from apps.insurer.models.insurer import Insurer
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.reception.models.reception_checkin import ReceptionCheckin
-from apps.insurer.models.coverage_plan import CoveragePlan
-from apps.insurer.models.insurer import Insurer
 
 
 def _quantize_value(valor):

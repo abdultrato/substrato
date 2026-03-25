@@ -1,24 +1,24 @@
+from api.v1.accounting.viewsets import VIEWSET_MAP as ACCOUNTING_VIEWSET_MAP
 from api.v1.audit.viewsets import VIEWSET_MAP as AUDIT_VIEWSET_MAP
-from api.v1.surgery.viewsets import VIEWSET_MAP as SURGERY_VIEWSET_MAP
+from api.v1.billing.viewsets import VIEWSET_MAP as BILLING_VIEWSET_MAP
 from api.v1.clinical.viewsets import VIEWSET_MAP as CLINICAL_VIEWSET_MAP
 from api.v1.consultations.viewsets import VIEWSET_MAP as CONSULTATIONS_VIEWSET_MAP
-from api.v1.accounting.viewsets import VIEWSET_MAP as ACCOUNTING_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
-from api.v1.nursing.viewsets import VIEWSET_MAP as NURSING_VIEWSET_MAP
 from api.v1.equipment.viewsets import VIEWSET_MAP as EQUIPMENT_VIEWSET_MAP
 from api.v1.external_entities.viewsets import VIEWSET_MAP as EXTERNAL_ENTITIES_VIEWSET_MAP
-from api.v1.pharmacy.viewsets import VIEWSET_MAP as PHARMACY_VIEWSET_MAP
-from api.v1.billing.viewsets import VIEWSET_MAP as BILLING_VIEWSET_MAP
+from api.v1.human_resources.viewsets import VIEWSET_MAP as HUMAN_RESOURCES_VIEWSET_MAP
 from api.v1.identity.viewsets import VIEWSET_MAP as IDENTITY_VIEWSET_MAP
-from api.v1.tenants.viewsets import VIEWSET_MAP as TENANTS_VIEWSET_MAP
+from api.v1.insurer.viewsets import VIEWSET_MAP as INSURER_VIEWSET_MAP
 from api.v1.maternity.viewsets import VIEWSET_MAP as MATERNITY_VIEWSET_MAP
+from api.v1.medical_records.viewsets import VIEWSET_MAP as MEDICAL_RECORDS_VIEWSET_MAP
 from api.v1.monitoring.viewsets import VIEWSET_MAP as MONITORING_VIEWSET_MAP
 from api.v1.notifications.viewsets import VIEWSET_MAP as NOTIFICATIONS_VIEWSET_MAP
+from api.v1.nursing.viewsets import VIEWSET_MAP as NURSING_VIEWSET_MAP
 from api.v1.payments.viewsets import VIEWSET_MAP as PAYMENTS_VIEWSET_MAP
-from api.v1.medical_records.viewsets import VIEWSET_MAP as MEDICAL_RECORDS_VIEWSET_MAP
+from api.v1.pharmacy.viewsets import VIEWSET_MAP as PHARMACY_VIEWSET_MAP
 from api.v1.reception.viewsets import VIEWSET_MAP as RECEPTION_VIEWSET_MAP
-from api.v1.human_resources.viewsets import VIEWSET_MAP as HUMAN_RESOURCES_VIEWSET_MAP
-from api.v1.insurer.viewsets import VIEWSET_MAP as INSURER_VIEWSET_MAP
+from api.v1.surgery.viewsets import VIEWSET_MAP as SURGERY_VIEWSET_MAP
+from api.v1.tenants.viewsets import VIEWSET_MAP as TENANTS_VIEWSET_MAP
 from security.permissions.rbac import RBACPermission
 
 VIEWSET_GROUPS = {

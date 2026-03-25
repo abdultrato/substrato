@@ -2,9 +2,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
-from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 
 from ..filters import CoveragePlanFilter, InsurerFilter, ProcedureAuthorizationFilter
 from ..serializers import CoveragePlanSerializer, InsurerSerializer, ProcedureAuthorizationSerializer
@@ -99,9 +99,9 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "ProcedureAuthorizationViewSet",
     "CoveragePlanViewSet",
     "InsurerViewSet",
+    "ProcedureAuthorizationViewSet",
 ]
 
 AutorizacaoProcedimentoViewSet = ProcedureAuthorizationViewSet

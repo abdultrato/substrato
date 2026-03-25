@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Employee(CoreModel):
@@ -89,6 +89,7 @@ class Employee(CoreModel):
     )
 
     class Meta:
+        db_table = "recursos_humanos_funcionario"
         verbose_name = "Funcionário"
         verbose_name_plural = "Funcionários"
         ordering = ["nome"]

@@ -12,67 +12,67 @@ from django.db import transaction
 from django.utils import timezone
 from faker import Faker
 
-from apps.clinical.models.clinical_event import ClinicalEvent
-from apps.clinical.models.lab_exam import LabExam
-from apps.clinical.models.lab_exam_field import LabExamField
-from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
-from apps.clinical.models.clinical_history import ClinicalHistory
-from apps.clinical.models.patient import Patient
-from apps.clinical.models.clinical_reference import ClinicalReference
-from apps.clinical.models.lab_request import LabRequest
-from apps.clinical.models.lab_request_item import LabRequestItem
-from apps.clinical.models.result import Result
-from apps.clinical.models.result_item import ResultItem
-from apps.accounting.models.financial_reconciliation import FinancialReconciliation
 from apps.accounting.models.account import Account
-from apps.accounting.models.legacy_entry import LegacyEntry
+from apps.accounting.models.account_balance import AccountBalance
+from apps.accounting.models.financial_reconciliation import FinancialReconciliation
 from apps.accounting.models.ledger_entry import LedgerEntry
 from apps.accounting.models.ledger_line import LedgerLine
+from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
-from apps.accounting.models.account_balance import AccountBalance
+from apps.billing.models.invoice import Invoice
+from apps.billing.models.invoice_history import InvoiceHistory
+from apps.clinical.models.clinical_event import ClinicalEvent
+from apps.clinical.models.clinical_history import ClinicalHistory
+from apps.clinical.models.clinical_reference import ClinicalReference
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.lab_exam_field import LabExamField
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.result import Result
+from apps.clinical.models.result_item import ResultItem
+from apps.identity.models.password_reset_token import PasswordResetToken
+from apps.identity.models.professional_profile import ProfessionalProfile
+from apps.identity.models.user import User
+from apps.insurer.models.coverage_plan import CoveragePlan
+from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
+from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
+from apps.notifications.models.delivery_log import DeliveryLog
+from apps.notifications.models.notification import Notification
+from apps.notifications.models.notification_template import NotificationTemplate
 from apps.nursing.models import (
     NursingEvolution,
     NursingPrescription,
+    NursingRecord,
+    NursingVitalSign,
     Procedure,
     ProcedureCatalog,
     ProcedureCatalogMaterial,
     ProcedureItem,
     ProcedureMaterial,
-    NursingRecord,
-    NursingVitalSign,
 )
-from apps.pharmacy.models.product_category import ProductCategory
-from apps.pharmacy.models.sale_item import SaleItem
-from apps.pharmacy.models.lot import Lot
-from apps.pharmacy.models.inventory_movement import InventoryMovement, OrigemMovimento, TipoMovimento
-from apps.pharmacy.models.product import Product
-from apps.pharmacy.models.sale import Sale
-from apps.billing.models.invoice import Invoice
-from apps.billing.models.invoice_history import InvoiceHistory
-from apps.identity.models.password_reset_token import PasswordResetToken
-from apps.identity.models.professional_profile import ProfessionalProfile
-from apps.identity.models.user import User
-from apps.tenants.models.subscription import TenantSubscription
-from apps.tenants.models.configuration import TenantConfiguration
-from apps.tenants.models.feature_flags import TenantFeatureFlag
-from apps.tenants.models.tenant import Tenant
-from apps.tenants.models.subscription_plan import SubscriptionPlan
-from apps.tenants.models.tenant_usage import TenantUsage
-from apps.notifications.models.delivery_log import DeliveryLog
-from apps.notifications.models.notification import Notification
-from apps.notifications.models.notification_template import NotificationTemplate
-from apps.payments.models.payment_history import PaymentHistory
 from apps.payments.models.payment import Payment
+from apps.payments.models.payment_history import PaymentHistory
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
+from apps.pharmacy.models.inventory_movement import InventoryMovement, OrigemMovimento, TipoMovimento
+from apps.pharmacy.models.lot import Lot
+from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ProductCategory
+from apps.pharmacy.models.sale import Sale
+from apps.pharmacy.models.sale_item import SaleItem
 from apps.reception.models.reception_checkin import ReceptionCheckin
-from apps.insurer.models.procedure_authorization import ProcedureAuthorization
-from apps.insurer.models.coverage_plan import CoveragePlan
-from apps.insurer.models.insurer import Insurer
-from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
-from infrastructure.context.tenant import reset_tenant, set_tenant
+from apps.tenants.models.configuration import TenantConfiguration
+from apps.tenants.models.feature_flags import TenantFeatureFlag
+from apps.tenants.models.subscription import TenantSubscription
+from apps.tenants.models.subscription_plan import SubscriptionPlan
+from apps.tenants.models.tenant import Tenant
+from apps.tenants.models.tenant_usage import TenantUsage
 from core.constants.clinical_event_type import TipoEventoClinico
+from infrastructure.context.tenant import reset_tenant, set_tenant
 
 
 @contextmanager

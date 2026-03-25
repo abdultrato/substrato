@@ -5,11 +5,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.money_field import MoneyField
-from infrastructure.orm.fields.method_field import MethodField
-from infrastructure.orm.fields.sector_field import SectorField
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
+from infrastructure.orm.fields.method_field import MethodField
+from infrastructure.orm.fields.money_field import MoneyField
+from infrastructure.orm.fields.sector_field import SectorField
 
 
 class LabExam(PropagarInquilinoMixin, CoreModel):
@@ -70,6 +70,7 @@ class LabExam(PropagarInquilinoMixin, CoreModel):
     # =====================================================
 
     class Meta:
+        db_table = "clinico_exame"
         verbose_name = "Exame"
         verbose_name_plural = "Exames"
 

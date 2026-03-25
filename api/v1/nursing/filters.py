@@ -1,10 +1,9 @@
 from api.core.filters import SafeFilterSet
 from apps.nursing.models import (
-    WardBed,
-    Ward,
     NursingEvolution,
-    WardAdmission,
     NursingPrescription,
+    NursingRecord,
+    NursingVitalSign,
     Procedure,
     ProcedureCatalog,
     ProcedureCatalogMaterial,
@@ -12,8 +11,9 @@ from apps.nursing.models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
-    NursingRecord,
-    NursingVitalSign,
+    Ward,
+    WardAdmission,
+    WardBed,
 )
 
 

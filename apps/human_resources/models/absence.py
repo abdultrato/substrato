@@ -26,6 +26,7 @@ class Absence(NoNameCoreModel):
     justificada = models.BooleanField(default=False, db_index=True)
 
     class Meta:
+        db_table = "recursos_humanos_falta"
         verbose_name = "Falta"
         verbose_name_plural = "Faltas"
         ordering = ["-data", "-criado_em"]

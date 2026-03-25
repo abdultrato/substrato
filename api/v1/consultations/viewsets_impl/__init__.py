@@ -1,23 +1,23 @@
 from .core import (
-    ConsultationSpecialtyViewSet,
-    DoctorsViewSet,
-    HolidayViewSet,
-    MedicalConsultationViewSet,
     VIEWSET_MAP,
     ConsultaMedicaViewSet,
+    ConsultationSpecialtyViewSet,
+    DoctorsViewSet,
     EspecialidadeConsultaViewSet,
     FeriadoViewSet,
+    HolidayViewSet,
+    MedicalConsultationViewSet,
     MedicosViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "MedicalConsultationViewSet",
-    "ConsultationSpecialtyViewSet",
-    "HolidayViewSet",
-    "DoctorsViewSet",
     "ConsultaMedicaViewSet",
+    "ConsultationSpecialtyViewSet",
+    "DoctorsViewSet",
     "EspecialidadeConsultaViewSet",
     "FeriadoViewSet",
+    "HolidayViewSet",
+    "MedicalConsultationViewSet",
     "MedicosViewSet",
 ]

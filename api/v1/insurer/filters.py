@@ -1,7 +1,7 @@
 from api.core.filters import SafeFilterSet
-from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 
 # =====================================================
 # PROCEDURE AUTHORIZATIONS

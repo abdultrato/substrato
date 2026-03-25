@@ -4,12 +4,12 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
-from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.inventory_movement import (
     InventoryMovement,
     OrigemMovimento,
     TipoMovimento,
 )
+from apps.pharmacy.models.lot import Lot
 from core.models.base import NoNameCoreModel
 
 

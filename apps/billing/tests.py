@@ -5,27 +5,27 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
+from apps.billing.models.invoice import Invoice
+from apps.billing.models.invoice_items import InvoiceItem
 from apps.clinical.models.lab_exam import LabExam
-from apps.clinical.models.medical_exam import MedicalExam
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.medical_exam import MedicalExam
+from apps.clinical.models.patient import Patient
 from apps.nursing.models import (
     Procedure,
     ProcedureCatalog,
     ProcedureCatalogMaterial,
     ProcedureItem,
 )
-from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
-from apps.billing.models.invoice import Invoice
-from apps.billing.models.invoice_items import InvoiceItem
+from apps.pharmacy.models.product_category import ProductCategory
 from apps.tenants.models.tenant import Tenant
-from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
-from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
 from core.constants.laboratory.method import Metodo
 from core.constants.laboratory.sector import Setor
+from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
+from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
 
 
 def _tenant():
@@ -62,7 +62,7 @@ def _medical_exam(tenant):
 
 
 def _horario_normal():
-    return timezone.make_aware(datetime(2024, 1, 2, 10, 0))
+    return datetime(2024, 1, 2, 10, 0, tzinfo=timezone.get_current_timezone())
 
 
 @pytest.mark.django_db

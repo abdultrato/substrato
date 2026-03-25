@@ -52,6 +52,7 @@ class IntegrationEquipment(CoreModel):
     config = models.JSONField(default=dict, blank=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaoequipamento"
         verbose_name = "Equipamento (Integração)"
         verbose_name_plural = "Equipamentos (Integração)"
         ordering = ["nome"]

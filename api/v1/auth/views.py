@@ -1,10 +1,10 @@
+from contextlib import suppress
 from datetime import timedelta
-import uuid
 import os
+import uuid
 
 from django.conf import settings
-from django.contrib.auth import logout as django_logout
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout as django_logout
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -12,12 +12,12 @@ from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import serializers, status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -233,13 +233,11 @@ class SessionTokenRefreshSerializer(TokenRefreshSerializer):
         refresh_ttl = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
         _allow_refresh(int(user_id), str(new_refresh.get("jti")), refresh_ttl)
 
-        data = {
+        return {
             "access": str(new_refresh.access_token),
             "refresh": str(new_refresh),
             "session_id": session_id,
         }
-
-        return data
 
 
 class UserMeSerializer(serializers.Serializer):
@@ -325,10 +323,8 @@ class LogoutView(APIView):
             pass
 
         # Remove sessão Django vinculada ao request, se existir.
-        try:
+        with suppress(Exception):
             django_logout(request)
-        except Exception:
-            pass
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
         _clear_jwt_cookies(response)

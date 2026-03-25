@@ -43,6 +43,7 @@ class IntegrationOrder(NoNameCoreModel):
     observacao = models.TextField(blank=True, default="")
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaoordem"
         verbose_name = "Ordem (Integração)"
         verbose_name_plural = "Ordens (Integração)"
         ordering = ["-criado_em"]
@@ -98,6 +99,7 @@ class IntegrationOrderItem(NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaoordemitem"
         verbose_name = "Item de ordem (Integração)"
         verbose_name_plural = "Itens de ordem (Integração)"
         ordering = ["-criado_em"]

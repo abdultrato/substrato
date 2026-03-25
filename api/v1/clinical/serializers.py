@@ -10,15 +10,15 @@ from rest_framework import serializers
 
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_exam_field import LabExamField
-from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
-from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
 from apps.clinical.models.medical_result_file import (
     MedicalResultFile,
     validar_arquivo_medico_por_tipo,
 )
+from apps.clinical.models.patient import Patient
+from apps.clinical.models.result_item import ResultItem
 from core.constants.provenance import Proveniencia
 
 CORE_READ_ONLY_FIELDS = [

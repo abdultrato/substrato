@@ -1,23 +1,23 @@
 from .models import (
+    Absence,
+    Employee,
     FamilyDependent,
     JobTitle,
-    Termination,
-    Absence,
-    Vacation,
-    Payroll,
-    Employee,
     Overtime,
+    Payroll,
+    Termination,
+    Vacation,
     WorkSchedule,
 )
 
 __all__ = [
+    "Absence",
+    "Employee",
     "FamilyDependent",
     "JobTitle",
-    "Termination",
-    "Absence",
-    "Vacation",
-    "Payroll",
-    "Employee",
     "Overtime",
+    "Payroll",
+    "Termination",
+    "Vacation",
     "WorkSchedule",
 ]

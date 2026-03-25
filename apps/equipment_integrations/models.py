@@ -1,8 +1,8 @@
 from .models import (
+    IntegrationAnalyteMapping,
     IntegrationCredential,
     IntegrationDocument,
     IntegrationEquipment,
-    IntegrationAnalyteMapping,
     IntegrationMessage,
     IntegrationOrder,
     IntegrationOrderItem,
@@ -10,10 +10,10 @@ from .models import (
 )
 
 __all__ = [
+    "IntegrationAnalyteMapping",
     "IntegrationCredential",
     "IntegrationDocument",
     "IntegrationEquipment",
-    "IntegrationAnalyteMapping",
     "IntegrationMessage",
     "IntegrationOrder",
     "IntegrationOrderItem",

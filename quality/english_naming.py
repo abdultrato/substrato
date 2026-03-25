@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import argparse
 import ast
+from dataclasses import dataclass
 import os
+from pathlib import Path
 import re
 import sys
 import unicodedata
-from dataclasses import dataclass
-from pathlib import Path
 
 PORTUGUESE_TO_ENGLISH = {
     "acao": "action",
@@ -518,18 +518,18 @@ def main(argv: list[str] | None = None) -> int:
 
     findings = scan_repository(root, targets=targets)
     if not findings:
-        print("No Portuguese naming violations found.")
+        sys.stdout.write("No Portuguese naming violations found.\n")
         return 0
 
-    print(f"Found {len(findings)} Portuguese naming violations in {root}.")
+    sys.stdout.write(f"Found {len(findings)} Portuguese naming violations in {root}.\n")
 
     visible_findings = findings[: args.limit]
     for finding in visible_findings:
-        print(f" - {finding.format(root)}")
+        sys.stdout.write(f" - {finding.format(root)}\n")
 
     remaining = len(findings) - len(visible_findings)
     if remaining > 0:
-        print(f" - ... {remaining} more findings not shown")
+        sys.stdout.write(f" - ... {remaining} more findings not shown\n")
 
     return 1
 

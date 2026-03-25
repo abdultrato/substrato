@@ -5,19 +5,19 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
-from apps.clinical.models.lab_exam import LabExam
-from apps.clinical.models.patient import Patient
-from apps.clinical.models.lab_request import LabRequest
-from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
-from apps.tenants.models.tenant import Tenant
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.patient import Patient
+from apps.insurer.models.coverage_plan import CoveragePlan
+from apps.insurer.models.insurer import Insurer
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
-from apps.insurer.models.coverage_plan import CoveragePlan
-from apps.insurer.models.insurer import Insurer
+from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Metodo
 from core.constants.laboratory.sector import Setor
 
@@ -46,7 +46,7 @@ def _exam(tenant):
 
 
 def _horario_normal():
-    return timezone.make_aware(datetime(2024, 1, 2, 10, 0))
+    return datetime(2024, 1, 2, 10, 0, tzinfo=timezone.get_current_timezone())
 
 
 def _invoice_with_exam(tenant, patient, exam):

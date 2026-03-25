@@ -18,8 +18,8 @@ from application.reception.care_flow import (
     registrar_pagamento_para_checkin as register_payment_for_checkin,
 )
 from application.reception.get_workspace import execute as get_workspace_data
-from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
 from apps.reception.models.reception_checkin import ReceptionCheckin
 
 from ..filters import ReceptionCheckinFilter

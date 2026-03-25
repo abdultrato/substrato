@@ -2,20 +2,20 @@
 
 from .viewsets_impl import (
     VIEWSET_MAP,
+    AutorizacaoProcedimentoViewSet,
     CoveragePlanViewSet,
     InsurerViewSet,
-    ProcedureAuthorizationViewSet,
-    AutorizacaoProcedimentoViewSet,
     PlanoCoberturaViewSet,
+    ProcedureAuthorizationViewSet,
     SeguradoraViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "ProcedureAuthorizationViewSet",
+    "AutorizacaoProcedimentoViewSet",
     "CoveragePlanViewSet",
     "InsurerViewSet",
-    "AutorizacaoProcedimentoViewSet",
     "PlanoCoberturaViewSet",
+    "ProcedureAuthorizationViewSet",
     "SeguradoraViewSet",
 ]

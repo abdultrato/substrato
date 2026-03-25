@@ -4,8 +4,8 @@ from rest_framework.viewsets import ModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.tenants.models.configuration import TenantConfiguration
 from apps.tenants.models.feature_flags import TenantFeatureFlag
-from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.subscription_plan import SubscriptionPlan
+from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.tenant_usage import TenantUsage
 
 from ..filters import (
@@ -159,11 +159,11 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "TenantConfigurationViewSet",
     "FeatureFlagTenantViewSet",
-    "TenantViewSet",
     "SubscriptionPlanViewSet",
+    "TenantConfigurationViewSet",
     "TenantUsageViewSet",
+    "TenantViewSet",
 ]
 
 ConfiguracaoInquilinoViewSet = TenantConfigurationViewSet

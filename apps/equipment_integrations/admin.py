@@ -1,10 +1,10 @@
 from django.contrib import admin
 
 from .models import (
+    IntegrationAnalyteMapping,
     IntegrationCredential,
     IntegrationDocument,
     IntegrationEquipment,
-    IntegrationAnalyteMapping,
     IntegrationMessage,
     IntegrationOrder,
     IntegrationOrderItem,

@@ -1,7 +1,7 @@
-from .models import Invoice, InvoiceItem, InvoiceHistory
+from .models import Invoice, InvoiceHistory, InvoiceItem
 
 __all__ = [
     "Invoice",
-    "InvoiceItem",
     "InvoiceHistory",
+    "InvoiceItem",
 ]

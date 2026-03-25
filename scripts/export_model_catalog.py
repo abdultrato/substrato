@@ -22,6 +22,8 @@ from pathlib import Path
 import sys
 from typing import Any
 
+import sitecustomize  # noqa: F401
+
 ROOT = Path(__file__).resolve().parent.parent
 # Rodando como "python scripts/..." faz o sys.path[0] apontar para /scripts.
 # Garantimos que o root do projeto esteja no path para importar "platform", "apps", etc.

@@ -4,9 +4,8 @@ from decimal import Decimal
 
 from django.db import models
 
-from infrastructure.orm.fields.money_field import MoneyField
-
 from core.models.base import CoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class SurgicalProcedure(CoreModel):

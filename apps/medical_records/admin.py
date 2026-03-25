@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models.prescription_item import PrescriptionItem
 from .models.medical_record_entry import MedicalRecordEntry
+from .models.prescription_item import PrescriptionItem
 
 
 class CoreAdmin(admin.ModelAdmin):

@@ -29,6 +29,7 @@ class Overtime(NoNameCoreModel):
     observacoes = models.CharField(max_length=255, blank=True, default="")
 
     class Meta:
+        db_table = "recursos_humanos_horaextra"
         verbose_name = "Hora Extra"
         verbose_name_plural = "Horas Extras"
         ordering = ["-data", "-criado_em"]

@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 related_name="gestacoes_responsavel",
-                to="human_resources.funcionario",
+                to="recursos_humanos.funcionario",
                 verbose_name="Médico/Ginecologista responsável",
             ),
         ),

@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
 from apps.equipment.models.equipment import Equipment
+from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
-from apps.incidents.models.incident import Incident
 
 CORE_READ_ONLY_FIELDS = [
     "id",
@@ -22,9 +22,9 @@ CORE_READ_ONLY_FIELDS = [
 
 def _get_ultima_inspecao(obj: Equipment):
     if hasattr(obj, "_ultima_inspecao_cache"):
-        return getattr(obj, "_ultima_inspecao_cache")
+        return obj._ultima_inspecao_cache
     ultima = obj.ultima_inspecao()
-    setattr(obj, "_ultima_inspecao_cache", ultima)
+    obj._ultima_inspecao_cache = ultima
     return ultima
 
 
@@ -50,7 +50,8 @@ class EquipamentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipment
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + [
+        read_only_fields = [
+            *CORE_READ_ONLY_FIELDS,
             "estado",
             "estado_atual",
             "estado_atual_label",
@@ -82,7 +83,7 @@ class InspecaoDiariaSerializer(serializers.ModelSerializer):
     class Meta:
         model = DailyInspection
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["descricao", "estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "descricao", "estado"]
 
 
 class ManutencaoSerializer(serializers.ModelSerializer):
@@ -94,7 +95,7 @@ class ManutencaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Maintenance
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "estado"]
 
 
 class OcorrenciaSerializer(serializers.ModelSerializer):
@@ -106,7 +107,7 @@ class OcorrenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["estado"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "estado"]
 
 
 SERIALIZER_MAP = {

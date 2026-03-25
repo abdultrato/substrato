@@ -8,6 +8,8 @@ from django.db.models import (
 from core.constants.genero import Genero
 from core.models.base import CoreModel
 
+from .lab_exam_field import LabExamField
+
 
 class ClinicalReference(CoreModel):
     """
@@ -24,7 +26,7 @@ class ClinicalReference(CoreModel):
     prefixo = "REF"
 
     exame_campo = models.ForeignKey(
-        "ExameCampo",
+        LabExamField,
         on_delete=models.CASCADE,
         related_name="referencias",
     )
@@ -78,6 +80,7 @@ class ClinicalReference(CoreModel):
     )
 
     class Meta:
+        db_table = "clinico_referenciaclinica"
         ordering = [
             "exame_campo",
             "sexo",

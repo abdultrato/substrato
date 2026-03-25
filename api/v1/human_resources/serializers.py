@@ -1,13 +1,13 @@
 from rest_framework import serializers
 
+from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
-from apps.human_resources.models.termination import Termination
-from apps.human_resources.models.absence import Absence
-from apps.human_resources.models.vacation import Vacation
-from apps.human_resources.models.payroll import Payroll
-from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.overtime import Overtime
+from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.termination import Termination
+from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
 
 

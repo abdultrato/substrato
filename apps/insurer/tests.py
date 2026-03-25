@@ -2,10 +2,10 @@ from decimal import Decimal
 
 import pytest
 
-from apps.tenants.models.tenant import Tenant
-from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
+from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():

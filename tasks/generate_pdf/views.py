@@ -4,8 +4,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 
-from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
 
 from .invoice_pdf_generator import generate_invoice_pdf
 from .request_pdf_generator import generate_request_pdf

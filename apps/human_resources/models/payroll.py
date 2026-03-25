@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 
-from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import NoNameCoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Payroll(NoNameCoreModel):
@@ -39,6 +39,7 @@ class Payroll(NoNameCoreModel):
     fechado = models.BooleanField(default=False, db_index=True)
 
     class Meta:
+        db_table = "recursos_humanos_folhapagamento"
         verbose_name = "Folha de Pagamento"
         verbose_name_plural = "Folhas de Pagamento"
         ordering = ["-ano", "-mes", "-criado_em"]

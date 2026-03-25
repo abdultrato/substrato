@@ -1,8 +1,9 @@
+from contextlib import suppress
+
 from django.conf import settings
 from django.core.cache import cache
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
 
 SESSION_CACHE_PREFIX = "auth:sid:"
 
@@ -46,10 +47,8 @@ class JWTAuth(JWTAuthentication):
 
             if stored_session_id is None:
                 # Cache ausente ou vazio: rehidrata e segue para não bloquear login.
-                try:
+                with suppress(Exception):
                     cache.set(key, session_id, timeout=_session_timeout_seconds())
-                except Exception:
-                    pass
             elif stored_session_id != session_id:
                 raise AuthenticationFailed("Sessão expirada ou revogada.")
 

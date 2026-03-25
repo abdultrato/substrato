@@ -3,15 +3,15 @@
 from .viewsets_impl import (
     VIEWSET_MAP,
     MedicalRecordEntryViewSet,
-    PrescriptionItemViewSet,
     PrescricaoItemViewSet,
+    PrescriptionItemViewSet,
     RegistroProntuarioViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "PrescriptionItemViewSet",
     "MedicalRecordEntryViewSet",
     "PrescricaoItemViewSet",
+    "PrescriptionItemViewSet",
     "RegistroProntuarioViewSet",
 ]

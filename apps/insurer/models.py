@@ -1,13 +1,13 @@
 from .models import (
-    ProcedureAuthorization,
     CoveragePlan,
     Insurer,
+    ProcedureAuthorization,
     TenantCoveragePlan,
 )
 
 __all__ = [
-    "ProcedureAuthorization",
     "CoveragePlan",
     "Insurer",
+    "ProcedureAuthorization",
     "TenantCoveragePlan",
 ]

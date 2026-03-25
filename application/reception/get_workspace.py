@@ -4,9 +4,9 @@ from django.db.models import Case, IntegerField, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from apps.clinical.models.patient import Patient
-from apps.clinical.models.lab_request import LabRequest
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.patient import Patient
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.reception.models.reception_checkin import ReceptionCheckin

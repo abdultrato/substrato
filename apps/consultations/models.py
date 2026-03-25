@@ -1,7 +1,7 @@
-from .models import MedicalConsultation, ConsultationSpecialty, Holiday
+from .models import ConsultationSpecialty, Holiday, MedicalConsultation
 
 __all__ = [
-    "MedicalConsultation",
     "ConsultationSpecialty",
     "Holiday",
+    "MedicalConsultation",
 ]

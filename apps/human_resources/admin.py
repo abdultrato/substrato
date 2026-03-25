@@ -1,13 +1,13 @@
 from django.contrib import admin
 
+from .models.absence import Absence
+from .models.employee import Employee
 from .models.family_dependent import FamilyDependent
 from .models.job_title import JobTitle
-from .models.termination import Termination
-from .models.absence import Absence
-from .models.vacation import Vacation
-from .models.payroll import Payroll
-from .models.employee import Employee
 from .models.overtime import Overtime
+from .models.payroll import Payroll
+from .models.termination import Termination
+from .models.vacation import Vacation
 from .models.work_schedule import WorkSchedule
 
 

@@ -3,12 +3,12 @@ from django.db.models import Case, F, IntegerField, Min, Sum, When
 from django.db.models.functions import Coalesce
 from django.utils.html import format_html, format_html_join
 
-from .models.product_category import ProductCategory
-from .models.sale_item import SaleItem
-from .models.lot import Lot
 from .models.inventory_movement import InventoryMovement
+from .models.lot import Lot
 from .models.product import Product
+from .models.product_category import ProductCategory
 from .models.sale import Sale
+from .models.sale_item import SaleItem
 
 # =========================================================
 # PRODUTO

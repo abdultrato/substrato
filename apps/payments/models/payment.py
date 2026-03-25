@@ -2,8 +2,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import CoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Payment(CoreModel):
@@ -128,9 +128,8 @@ class Payment(CoreModel):
         if not (self.numero_autorizacao or "").strip():
             erros["numero_autorizacao"] = "Informe o número de autorização do seguro."
 
-        if self.seguradora_id and self.inquilino_id:
-            if self.seguradora.inquilino_id != self.inquilino_id:
-                erros["seguradora"] = "Seguradora deve pertencer ao mesmo inquilino."
+        if self.seguradora_id and self.inquilino_id and self.seguradora.inquilino_id != self.inquilino_id:
+            erros["seguradora"] = "Seguradora deve pertencer ao mesmo inquilino."
 
         if self.plano_cobertura_id:
             if self.inquilino_id and self.plano_cobertura.inquilino_id != self.inquilino_id:

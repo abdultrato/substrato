@@ -4,11 +4,11 @@ from django.db import IntegrityError
 from django.utils import timezone
 import pytest
 
-from apps.tenants.models.subscription import TenantSubscription
 from apps.tenants.models.configuration import TenantConfiguration
 from apps.tenants.models.feature_flags import TenantFeatureFlag
-from apps.tenants.models.tenant import Tenant
+from apps.tenants.models.subscription import TenantSubscription
 from apps.tenants.models.subscription_plan import SubscriptionPlan
+from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.tenant_usage import TenantUsage
 
 

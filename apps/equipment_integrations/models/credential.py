@@ -50,6 +50,7 @@ class IntegrationCredential(NoNameCoreModel):
     revogada_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaocredencial"
         verbose_name = "Credencial (Equipamento)"
         verbose_name_plural = "Credenciais (Equipamentos)"
         ordering = ["-criado_em"]

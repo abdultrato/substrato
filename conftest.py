@@ -8,6 +8,8 @@ import django
 from django.contrib.auth import get_user_model
 import pytest
 
+import sitecustomize  # noqa: F401
+
 # Setup Django (pytest-django will manage DB lifecycle)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings.development")
 django.setup()

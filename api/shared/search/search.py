@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.patient import Patient
 
 
 class GlobalSearchView(APIView):

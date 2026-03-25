@@ -150,7 +150,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='requisicaoanalise',
             name='exames',
-            field=models.ManyToManyField(through='clinico.LabRequestItem', to='clinico.exame'),
+            field=models.ManyToManyField(through='clinico.RequisicaoItem', to='clinico.exame'),
         ),
         migrations.AddField(
             model_name='requisicaoanalise',

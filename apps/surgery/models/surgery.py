@@ -7,9 +7,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from infrastructure.orm.fields.money_field import MoneyField
-
 from core.models.base import NoNameCoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 User = settings.AUTH_USER_MODEL
 

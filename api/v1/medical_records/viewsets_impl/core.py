@@ -2,8 +2,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
-from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
+from apps.medical_records.models.prescription_item import PrescriptionItem
 
 from ..filters import MedicalRecordEntryFilter, PrescriptionItemFilter
 from ..serializers import MedicalRecordEntrySerializer, PrescricaoItemSerializer
@@ -42,8 +42,8 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "PrescriptionItemViewSet",
     "MedicalRecordEntryViewSet",
+    "PrescriptionItemViewSet",
 ]
 
 RegistroProntuarioViewSet = MedicalRecordEntryViewSet

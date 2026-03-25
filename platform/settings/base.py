@@ -1,4 +1,5 @@
 from datetime import timedelta
+from importlib.util import find_spec
 import os
 from pathlib import Path
 import socket
@@ -28,6 +29,10 @@ def get_env(name, default=None, required=False):
         raise ImproperlyConfigured(f"{name} is required")
 
     return value
+
+
+def _module_available(module_name: str) -> bool:
+    return find_spec(module_name) is not None
 
 
 # =========================================================
@@ -77,15 +82,15 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "django_prometheus",
-    "django_celery_beat",
+    *(["django_prometheus"] if _module_available("django_prometheus") else []),
+    *(["django_celery_beat"] if _module_available("django_celery_beat") else []),
     # CountryField + traducoes de paises.
     "django_countries",
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
     "corsheaders",
-    "drf_spectacular",
+    *(["drf_spectacular"] if _module_available("drf_spectacular") else []),
 ]
 
 LOCAL_APPS = [
@@ -245,24 +250,24 @@ JAZZMIN_SETTINGS = {
         "cirurgia.cirurgia": "fas fa-procedures",
         "cirurgia.procedimentocirurgico": "fas fa-syringe",
         "integracoes_equipamentos": "fas fa-microchip",
-        "equipment_integrations.integracaoequipamento": "fas fa-microscope",
-        "equipment_integrations.integracaocredencial": "fas fa-key",
-        "equipment_integrations.integracaodocumento": "fas fa-file-alt",
-        "equipment_integrations.integracaomapeamentoanalito": "fas fa-project-diagram",
-        "equipment_integrations.integracaomensagem": "fas fa-envelope-open-text",
-        "equipment_integrations.integracaoordem": "fas fa-tasks",
-        "equipment_integrations.integracaoordemitem": "fas fa-list-ol",
-        "equipment_integrations.integracaoroteamento": "fas fa-route",
+        "integracoes_equipamentos.integrationequipment": "fas fa-microscope",
+        "integracoes_equipamentos.integrationcredential": "fas fa-key",
+        "integracoes_equipamentos.integrationdocument": "fas fa-file-alt",
+        "integracoes_equipamentos.integrationanalytemapping": "fas fa-project-diagram",
+        "integracoes_equipamentos.integrationmessage": "fas fa-envelope-open-text",
+        "integracoes_equipamentos.integrationorder": "fas fa-tasks",
+        "integracoes_equipamentos.integrationorderitem": "fas fa-list-ol",
+        "integracoes_equipamentos.integrationrouting": "fas fa-route",
         "recursos_humanos": "fas fa-users",
-        "human_resources.funcionario": "fas fa-user-tie",
-        "human_resources.cargo": "fas fa-briefcase",
-        "human_resources.agregadofamiliar": "fas fa-user-friends",
-        "human_resources.falta": "fas fa-user-times",
-        "human_resources.ferias": "fas fa-umbrella-beach",
-        "human_resources.folhapagamento": "fas fa-file-invoice",
-        "human_resources.dispensa": "fas fa-user-slash",
-        "human_resources.horaextra": "fas fa-clock",
-        "human_resources.horariotrabalho": "fas fa-calendar-alt",
+        "recursos_humanos.employee": "fas fa-user-tie",
+        "recursos_humanos.jobtitle": "fas fa-briefcase",
+        "recursos_humanos.familydependent": "fas fa-user-friends",
+        "recursos_humanos.absence": "fas fa-user-times",
+        "recursos_humanos.vacation": "fas fa-umbrella-beach",
+        "recursos_humanos.payroll": "fas fa-file-invoice",
+        "recursos_humanos.termination": "fas fa-user-slash",
+        "recursos_humanos.overtime": "fas fa-clock",
+        "recursos_humanos.workschedule": "fas fa-calendar-alt",
         "monitoramento": "fas fa-heartbeat",
         "monitoramento.errosistema": "fas fa-bug",
     },
@@ -354,24 +359,24 @@ JAZZMIN_SETTINGS = {
         "auditoria_atividades",
         "audit_activities.atividadeusuario",
         "integracoes_equipamentos",
-        "equipment_integrations.integracaoequipamento",
-        "equipment_integrations.integracaodocumento",
-        "equipment_integrations.integracaocredencial",
-        "equipment_integrations.integracaomapeamentoanalito",
-        "equipment_integrations.integracaomensagem",
-        "equipment_integrations.integracaoordem",
-        "equipment_integrations.integracaoordemitem",
-        "equipment_integrations.integracaoroteamento",
+        "integracoes_equipamentos.integrationequipment",
+        "integracoes_equipamentos.integrationdocument",
+        "integracoes_equipamentos.integrationcredential",
+        "integracoes_equipamentos.integrationanalytemapping",
+        "integracoes_equipamentos.integrationmessage",
+        "integracoes_equipamentos.integrationorder",
+        "integracoes_equipamentos.integrationorderitem",
+        "integracoes_equipamentos.integrationrouting",
         "recursos_humanos",
-        "human_resources.funcionario",
-        "human_resources.cargo",
-        "human_resources.agregadofamiliar",
-        "human_resources.horariotrabalho",
-        "human_resources.ferias",
-        "human_resources.falta",
-        "human_resources.dispensa",
-        "human_resources.folhapagamento",
-        "human_resources.horaextra",
+        "recursos_humanos.employee",
+        "recursos_humanos.jobtitle",
+        "recursos_humanos.familydependent",
+        "recursos_humanos.workschedule",
+        "recursos_humanos.vacation",
+        "recursos_humanos.absence",
+        "recursos_humanos.termination",
+        "recursos_humanos.payroll",
+        "recursos_humanos.overtime",
         "monitoramento",
         "monitoramento.errosistema",
         "inquilinos",
@@ -417,7 +422,7 @@ JAZZMIN_UI_TWEAKS = {
 # =========================================================
 
 MIDDLEWARE = [
-    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    *(["django_prometheus.middleware.PrometheusBeforeMiddleware"] if _module_available("django_prometheus") else []),
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -439,7 +444,7 @@ MIDDLEWARE = [
     "infrastructure.middleware.audit.TenantAuditMiddleware",
     # logging
     "infrastructure.middleware.performance.APILoggingMiddleware",
-    "django_prometheus.middleware.PrometheusAfterMiddleware",
+    *(["django_prometheus.middleware.PrometheusAfterMiddleware"] if _module_available("django_prometheus") else []),
 ]
 
 # =========================================================
@@ -454,6 +459,9 @@ def _sqlite_databases():
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+            "TEST": {
+                "SERIALIZE": False,
+            },
         }
     }
 
@@ -476,7 +484,11 @@ else:
     try:
         DATABASES = {
             "default": {
-                "ENGINE": "django_prometheus.db.backends.postgresql",
+                "ENGINE": (
+                    "django_prometheus.db.backends.postgresql"
+                    if _module_available("django_prometheus")
+                    else "django.db.backends.postgresql"
+                ),
                 "NAME": get_env("DB_NAME", required=True),
                 "USER": get_env("DB_USER", required=True),
                 "PASSWORD": get_env("DB_PASSWORD", required=True),
@@ -593,7 +605,11 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": (
+        "drf_spectacular.openapi.AutoSchema"
+        if _module_available("drf_spectacular")
+        else "rest_framework.schemas.openapi.AutoSchema"
+    ),
     "EXCEPTION_HANDLER": "api.v1.exceptions.custom_exception_handler",
     # Habilita escopos de throttling; usamos para login.
     "DEFAULT_THROTTLE_CLASSES": [

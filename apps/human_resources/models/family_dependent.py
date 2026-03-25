@@ -62,6 +62,7 @@ class FamilyDependent(CoreModel):
     )
 
     class Meta:
+        db_table = "recursos_humanos_agregadofamiliar"
         verbose_name = "Agregado Familiar"
         verbose_name_plural = "Agregados Familiares"
         ordering = ["nome"]

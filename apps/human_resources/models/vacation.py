@@ -38,6 +38,7 @@ class Vacation(NoNameCoreModel):
     observacoes = models.TextField(blank=True, default="")
 
     class Meta:
+        db_table = "recursos_humanos_ferias"
         verbose_name = "Férias"
         verbose_name_plural = "Férias"
         ordering = ["-data_inicio", "-criado_em"]

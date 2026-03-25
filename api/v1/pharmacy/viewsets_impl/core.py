@@ -2,11 +2,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
-from apps.pharmacy.models.sale_item import SaleItem
-from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.inventory_movement import InventoryMovement
+from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
+from apps.pharmacy.models.sale_item import SaleItem
 
 from ..filters import InventoryMovementFilter, LotFilter, ProductFilter, SaleFilter, SaleItemFilter
 from ..serializers import (
@@ -153,10 +153,10 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "SaleItemViewSet",
-    "LotViewSet",
     "InventoryMovementViewSet",
+    "LotViewSet",
     "ProductViewSet",
+    "SaleItemViewSet",
     "SaleViewSet",
 ]
 

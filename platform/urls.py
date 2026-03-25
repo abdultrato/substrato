@@ -1,11 +1,21 @@
+from importlib.util import find_spec
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import HttpResponse, JsonResponse
 from django.urls import include, path
 from django.views.decorators.http import require_GET
-from django_prometheus.exports import ExportToDjangoView
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+
+if find_spec("django_prometheus"):
+    from django_prometheus.exports import ExportToDjangoView
+else:
+    ExportToDjangoView = None
+
+if find_spec("drf_spectacular"):
+    from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+else:
+    SpectacularAPIView = SpectacularRedocView = SpectacularSwaggerView = None
 
 
 @require_GET
@@ -60,6 +70,9 @@ def prometheus_metrics(request):
         if auth != f"Bearer {token}":
             return HttpResponse(status=404)
 
+    if ExportToDjangoView is None:
+        return JsonResponse({"status": "unavailable", "detail": "django-prometheus not installed."}, status=503)
+
     return ExportToDjangoView(request)
 
 
@@ -74,11 +87,14 @@ urlpatterns = [
     # API
     path("api/", include("api.urls")),
     path("pdf/", include("tasks.generate_pdf.urls")),
-    # OpenAPI Schema & Documentation
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
+
+if SpectacularAPIView is not None:
+    urlpatterns += [
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+        path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

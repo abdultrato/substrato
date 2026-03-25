@@ -18,6 +18,7 @@ class JobTitle(CoreModel):
     eh_medico = models.BooleanField(default=False, db_index=True)
 
     class Meta:
+        db_table = "recursos_humanos_cargo"
         verbose_name = "Cargo"
         verbose_name_plural = "Cargos"
         ordering = ["nome"]

@@ -1,7 +1,7 @@
-from .prescription_item import PrescriptionItem
 from .medical_record_entry import MedicalRecordEntry
+from .prescription_item import PrescriptionItem
 
 __all__ = [
-    "PrescriptionItem",
     "MedicalRecordEntry",
+    "PrescriptionItem",
 ]

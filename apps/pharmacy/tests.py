@@ -6,12 +6,12 @@ from django.utils import timezone
 import pytest
 
 from apps.clinical.models.patient import Patient
-from apps.pharmacy.models.product_category import ProductCategory
-from apps.pharmacy.models.sale_item import SaleItem
-from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
+from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.sale import Sale
+from apps.pharmacy.models.sale_item import SaleItem
 from apps.tenants.models.tenant import Tenant
 
 

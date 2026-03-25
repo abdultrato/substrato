@@ -18,10 +18,10 @@ from rest_framework.views import APIView
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.equipment_integrations.models import (
+    IntegrationAnalyteMapping,
     IntegrationCredential,
     IntegrationDocument,
     IntegrationEquipment,
-    IntegrationAnalyteMapping,
     IntegrationMessage,
     IntegrationOrder,
     IntegrationOrderItem,

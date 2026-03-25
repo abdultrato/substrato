@@ -1,8 +1,8 @@
 from apps.insurer.models.procedure_authorization import ProcedureAuthorization
-from domain.insurer.events import AutorizacaoSolicitadaEvent as AuthorizationRequestedEvent
 from domain.insurer.authorization_rules import (
     deve_solicitar_autorizacao as should_request_authorization,
 )
+from domain.insurer.events import AutorizacaoSolicitadaEvent as AuthorizationRequestedEvent
 from events.bus import event_bus
 
 

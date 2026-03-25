@@ -77,6 +77,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
     )
 
     class Meta:
+        db_table = "clinico_examecampo"
         verbose_name = "parâmetro"
         verbose_name_plural = "parâmetros do exame"
 

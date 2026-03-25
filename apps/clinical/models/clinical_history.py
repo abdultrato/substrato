@@ -8,5 +8,8 @@ class ClinicalHistory(models.Model):
     descricao = models.TextField()
     data_evento = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = "clinico_historicoclinico"
+
     def __str__(self):
         return f"Histórico {self.paciente}"

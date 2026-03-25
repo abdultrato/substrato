@@ -1,21 +1,21 @@
 from . import (
-    clinical,
-    shared,
     accounting,
-    pharmacy,
     billing,
+    clinical,
+    insurer,
     notifications,
     payments,
-    insurer,
+    pharmacy,
+    shared,
 )
 
 __all__ = [
-    "clinical",
-    "shared",
     "accounting",
-    "pharmacy",
     "billing",
+    "clinical",
+    "insurer",
     "notifications",
     "payments",
-    "insurer",
+    "pharmacy",
+    "shared",
 ]

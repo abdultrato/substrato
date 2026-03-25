@@ -10,6 +10,8 @@ from apps.clinical.models.patient import Patient
 from apps.nursing.models import (
     NursingEvolution,
     NursingPrescription,
+    NursingRecord,
+    NursingVitalSign,
     Procedure,
     ProcedureCatalog,
     ProcedureCatalogMaterial,
@@ -17,12 +19,10 @@ from apps.nursing.models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
-    NursingRecord,
-    NursingVitalSign,
 )
-from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ProductCategory
 from apps.tenants.models.tenant import Tenant
 
 

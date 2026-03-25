@@ -9,12 +9,12 @@ from django.utils import timezone
 from apps.consultations.utils.pricing import (
     calcular_multiplicador_preco,
     calculate_schedule_type,
-    is_feriado,
     get_local_datetime,
     get_tenant_timezone,
+    is_feriado,
 )
-from infrastructure.orm.fields.money_field import MoneyField
 from core.models.base import NoNameCoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class MedicalConsultation(NoNameCoreModel):

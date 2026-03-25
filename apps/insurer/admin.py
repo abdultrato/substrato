@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models.procedure_authorization import ProcedureAuthorization
 from .models.coverage_plan import CoveragePlan
 from .models.insurer import Insurer
+from .models.procedure_authorization import ProcedureAuthorization
 
 # =====================================================
 # SEGURADORA

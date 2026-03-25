@@ -1,8 +1,8 @@
 from rest_framework import serializers
 
-from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 
 
 class ProcedureAuthorizationSerializer(serializers.ModelSerializer):

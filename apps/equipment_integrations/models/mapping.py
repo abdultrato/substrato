@@ -33,6 +33,7 @@ class IntegrationAnalyteMapping(CoreModel):
     ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaomapeamentoanalito"
         verbose_name = "Mapeamento de analito"
         verbose_name_plural = "Mapeamentos de analitos"
         ordering = ["equipamento", "codigo"]

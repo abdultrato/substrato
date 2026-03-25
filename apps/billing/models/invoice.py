@@ -1,3 +1,4 @@
+from contextlib import suppress
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -5,8 +6,8 @@ from django.db import models, transaction
 from django.db.models import Case, DecimalField, F, Sum, Value, When
 from django.db.models.functions import Coalesce
 
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.patient import Patient
 from core.models.base import NoNameCoreModel
 
 
@@ -533,10 +534,8 @@ class Invoice(NoNameCoreModel):
         elif self.origem == self.Origem.CIRURGIA:
             descricao = "Cirurgia"
             nomes = []
-            try:
+            with suppress(Exception):
                 nomes = list(self.cirurgia.procedimentos.values_list("nome", flat=True))
-            except Exception:
-                pass
             if nomes:
                 descricao = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
             elif getattr(self.cirurgia, "procedimento", "").strip():

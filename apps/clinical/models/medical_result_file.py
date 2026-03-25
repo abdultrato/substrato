@@ -1,14 +1,16 @@
+from contextlib import suppress
 import os
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from PIL import Image
+
 from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
 
-from .medical_exam import MedicalExam
 from .lab_request_item import LabRequestItem
+from .medical_exam import MedicalExam
 from .result import Result
 
 
@@ -48,10 +50,8 @@ def _ler_bytes(arquivo, tamanho=4, offset=0):
         return arquivo.read(tamanho) or b""
     finally:
         if pos is not None:
-            try:
+            with suppress(Exception):
                 arquivo.seek(pos)
-            except Exception:
-                pass
 
 
 def _validate_image(arquivo):
@@ -67,10 +67,8 @@ def _validate_image(arquivo):
         raise ValidationError("Arquivo de imagem inválido.") from err
     finally:
         if pos is not None:
-            try:
+            with suppress(Exception):
                 arquivo.seek(pos)
-            except Exception:
-                pass
 
 
 def _validate_pdf(arquivo):

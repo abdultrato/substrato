@@ -34,6 +34,7 @@ class Termination(NoNameCoreModel):
     motivo = models.TextField(blank=True, default="")
 
     class Meta:
+        db_table = "recursos_humanos_dispensa"
         verbose_name = "Dispensa"
         verbose_name_plural = "Dispensas"
         ordering = ["-data", "-criado_em"]

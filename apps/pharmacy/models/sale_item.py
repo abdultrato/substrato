@@ -105,12 +105,12 @@ class SaleItem(CoreModel):
 
     def consume_inventory(self):
 
-        from apps.pharmacy.models.lot import Lot
         from apps.pharmacy.models.inventory_movement import (
             InventoryMovement,
             MovementOrigin,
             MovementType,
         )
+        from apps.pharmacy.models.lot import Lot
 
         restante = self.quantidade
 

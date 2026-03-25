@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
 import shutil
 import unittest
-from pathlib import Path
 
 from quality.english_naming import find_portuguese_tokens, scan_repository, split_identifier
 

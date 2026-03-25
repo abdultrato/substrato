@@ -2,6 +2,8 @@
 import os
 import sys
 
+import sitecustomize  # noqa: F401
+
 
 def main():
     os.environ.setdefault(

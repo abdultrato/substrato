@@ -4,8 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.tenants.models.subscription import TenantSubscription
-from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.subscription_plan import SubscriptionPlan
+from apps.tenants.models.tenant import Tenant
 
 
 class CreateTenantUseCase:

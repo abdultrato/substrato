@@ -27,6 +27,7 @@ class Result(NoNameCoreModel):
     finalizado = models.BooleanField(default=False)
 
     class Meta:
+        db_table = "clinico_resultado"
         ordering = ["-criado_em"]
 
     # -----------------------------------------------------

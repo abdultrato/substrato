@@ -8,10 +8,10 @@ from django.utils.safestring import mark_safe
 from .forms_admin import ResultItemInlineFormSet
 from .models.lab_exam import LabExam
 from .models.lab_exam_field import LabExamField
-from .models.medical_exam import MedicalExam, MedicalExamField
-from .models.patient import Patient
 from .models.lab_request import LabRequest
 from .models.lab_request_item import LabRequestItem
+from .models.medical_exam import MedicalExam, MedicalExamField
+from .models.patient import Patient
 from .models.result import Result
 from .models.result_item import ResultItem
 

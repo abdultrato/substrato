@@ -2,8 +2,8 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.billing.models.invoice import Invoice
-from apps.billing.models.invoice_items import InvoiceItem
 from apps.billing.models.invoice_history import InvoiceHistory
+from apps.billing.models.invoice_items import InvoiceItem
 
 CORE_READ_ONLY_FIELDS = [
     "id",

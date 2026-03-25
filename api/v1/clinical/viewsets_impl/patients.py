@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
-from apps.clinical.models.patient import Patient
 from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.patient import Patient
 
 from ..filters import PatientFilter
 from ..serializers import LabRequestSerializer, PatientSerializer
@@ -209,8 +209,8 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             InternamentoEnfermariaSerializer,
             ProcedimentoSerializer,
         )
-        from apps.nursing.models.ward import WardAdmission
         from apps.nursing.models.procedure import Procedure
+        from apps.nursing.models.ward import WardAdmission
 
         qs_procedimentos = (
             Procedure.objects.filter(

@@ -7,12 +7,12 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from core.mixins.tenant_propagation import PropagarInquilinoMixin
+from core.models.base import NoNameCoreModel
 from domain.clinical.events import ResultValidatedEvent
 from domain.clinical.result_state import ResultState
 from domain.clinical.result_state_machine import ResultStateMachine
 from events.bus import event_bus
-from core.mixins.tenant_propagation import PropagarInquilinoMixin
-from core.models.base import NoNameCoreModel
 
 from .lab_exam_field import LabExamField
 from .result import Result
@@ -65,6 +65,7 @@ class ResultItem(PropagarInquilinoMixin, NoNameCoreModel):
     data_validacao = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        db_table = "clinico_resultadoitem"
         unique_together = ("resultado", "exame_campo")
 
     # =====================================================

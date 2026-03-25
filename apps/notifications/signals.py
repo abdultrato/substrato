@@ -3,8 +3,8 @@ from decimal import Decimal
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from apps.clinical.models.result_item import ResultItem
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.result_item import ResultItem
 from apps.payments.models.receipt import Receipt
 from domain.clinical.result_state import ResultState
 

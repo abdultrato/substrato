@@ -304,8 +304,8 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "MedicalConsultationViewSet",
     "DoctorsViewSet",
+    "MedicalConsultationViewSet",
 ]
 
 # Backwards-compatible aliases while imports are migrated module by module.

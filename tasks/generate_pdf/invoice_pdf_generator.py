@@ -15,22 +15,22 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from apps.billing.models.invoice_items import InvoiceItem
+
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,
     append_fim,
     bold,
     cell_paragraph,
-    draw_line_full_width,
     document_section_style,
     document_title_style,
+    draw_line_full_width,
     institutional_user_identity,
     montar_bloco_identificacao,
     on_page,
     pdf_encryption,
 )
-
-from apps.billing.models.invoice_items import InvoiceItem
 
 logger = logging.getLogger(__name__)
 

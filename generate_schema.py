@@ -8,6 +8,8 @@ import json
 import os
 import sys
 
+import sitecustomize  # noqa: F401
+
 # Adiciona o diretório do projeto ao path
 sys.path.insert(0, os.path.dirname(__file__))
 

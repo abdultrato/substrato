@@ -1,8 +1,8 @@
 from api.core.filters import SafeFilterSet
 from apps.equipment.models.equipment import Equipment
+from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
-from apps.incidents.models.incident import Incident
 
 
 class EquipamentoFilter(SafeFilterSet):

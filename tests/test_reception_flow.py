@@ -10,8 +10,8 @@ from application.reception.care_flow import (
 )
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
-from apps.tenants.models.tenant import Tenant
 from apps.reception.models.reception_checkin import ReceptionCheckin
+from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Metodo
 from core.constants.laboratory.sector import Setor
 

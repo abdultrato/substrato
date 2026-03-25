@@ -1,6 +1,8 @@
 # infraestrutura/processamento/batch_processing.py
 
 from collections.abc import Callable
+
+
 def process_in_batches(
     queryset,
     batch_size: int = 500,

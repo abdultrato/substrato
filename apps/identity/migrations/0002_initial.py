@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='perfilprofissional',
             name='funcionario',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='perfil_profissional_rh', to='human_resources.funcionario', verbose_name='Funcionário (RH)'),
+            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='perfil_profissional_rh', to='recursos_humanos.funcionario', verbose_name='Funcionário (RH)'),
         ),
         migrations.AddField(
             model_name='perfilprofissional',
@@ -33,32 +33,32 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='password_reset_tokens', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='atualizado_por',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_atualizado', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='criado_por',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_criado', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='deletado_por',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='%(class)s_deletado', to=settings.AUTH_USER_MODEL),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='groups',
             field=models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups'),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='inquilino',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='%(class)ss', to='inquilinos.inquilino'),
         ),
         migrations.AddField(
-            model_name='usuario',
+            model_name='user',
             name='user_permissions',
             field=models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions'),
         ),

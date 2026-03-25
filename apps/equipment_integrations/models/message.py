@@ -71,6 +71,7 @@ class IntegrationMessage(NoNameCoreModel):
     processado_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaomensagem"
         verbose_name = "Mensagem (Integração)"
         verbose_name_plural = "Mensagens (Integração)"
         ordering = ["-criado_em"]
@@ -135,6 +136,7 @@ class IntegrationDocument(NoNameCoreModel):
     sha256 = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaodocumento"
         verbose_name = "Documento (Integração)"
         verbose_name_plural = "Documentos (Integração)"
         ordering = ["-criado_em"]

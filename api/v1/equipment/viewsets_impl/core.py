@@ -3,9 +3,9 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.equipment.models.equipment import Equipment
+from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
-from apps.incidents.models.incident import Incident
 
 from ..filters import EquipamentoFilter, InspecaoDiariaFilter, ManutencaoFilter, OcorrenciaFilter
 from ..serializers import (

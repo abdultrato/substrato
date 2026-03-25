@@ -2,12 +2,12 @@
 
 from .viewsets_impl import (
     VIEWSET_MAP,
-    SystemErrorViewSet,
     ErroSistemaViewSet,
+    SystemErrorViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
-    "SystemErrorViewSet",
     "ErroSistemaViewSet",
+    "SystemErrorViewSet",
 ]

@@ -4,9 +4,9 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.money_field import MoneyField
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
+from infrastructure.orm.fields.money_field import MoneyField
 
 
 class ProcedureCatalogMaterial(PropagarInquilinoMixin, NoNameCoreModel):

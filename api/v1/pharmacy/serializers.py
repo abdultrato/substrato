@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from apps.pharmacy.models.sale_item import SaleItem
-from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.inventory_movement import InventoryMovement
+from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
+from apps.pharmacy.models.sale_item import SaleItem
 
 
 class SaleItemSerializer(serializers.ModelSerializer):

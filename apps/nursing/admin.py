@@ -7,6 +7,8 @@ from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 
 from .models import (
+    NursingRecord,
+    NursingVitalSign,
     Procedure,
     ProcedureCatalog,
     ProcedureCatalogMaterial,
@@ -14,8 +16,6 @@ from .models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
-    NursingRecord,
-    NursingVitalSign,
 )
 
 

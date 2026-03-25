@@ -41,6 +41,7 @@ class IntegrationRouting(NoNameCoreModel):
     ativo = models.BooleanField(default=True, db_index=True)
 
     class Meta:
+        db_table = "integracoes_equipamentos_integracaoroteamento"
         verbose_name = "Roteamento (Integração)"
         verbose_name_plural = "Roteamentos (Integração)"
         ordering = ["-criado_em"]

@@ -14,7 +14,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
     fonte_inquilino = "paciente"
 
     requisicao = models.ForeignKey(
-        "RequisicaoAnalise",
+        "LabRequest",
         on_delete=models.CASCADE,
         related_name="itens",
     )
@@ -36,6 +36,7 @@ class LabRequestItem(PropagarInquilinoMixin, NoNameCoreModel):
     )
 
     class Meta:
+        db_table = "clinico_requisicaoitem"
         indexes = [
             models.Index(fields=["requisicao", "exame"]),
             models.Index(fields=["requisicao", "exame_medico"]),

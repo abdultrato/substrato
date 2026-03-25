@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
-from apps.accounting.models.financial_reconciliation import FinancialReconciliation
 from apps.accounting.models.account import Account
+from apps.accounting.models.financial_reconciliation import FinancialReconciliation
 from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
 
@@ -164,8 +164,8 @@ VIEWSET_MAP = {
 
 __all__ = [
     "VIEWSET_MAP",
-    "FinancialReconciliationViewSet",
     "AccountViewSet",
+    "FinancialReconciliationViewSet",
     "LedgerEntryViewSet",
     "LedgerMovementViewSet",
 ]

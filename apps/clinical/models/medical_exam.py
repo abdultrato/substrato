@@ -5,14 +5,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from infrastructure.orm.fields.money_field import MoneyField
-from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
-from infrastructure.orm.fields.medical_exam_sector_field import MedicalExamSectorField
 from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
 from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
-
+from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
+from infrastructure.orm.fields.medical_exam_sector_field import MedicalExamSectorField
+from infrastructure.orm.fields.money_field import MoneyField
 
 TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO = {
     MetodoExameMedico.ULTRASSONOGRAFIA: {
@@ -142,6 +141,7 @@ class MedicalExam(PropagarInquilinoMixin, CoreModel):
     )
 
     class Meta:
+        db_table = "clinico_examemedico"
         verbose_name = "Exame médico"
         verbose_name_plural = "Exames médicos"
         ordering = ["nome", "criado_em"]
@@ -214,6 +214,7 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
     )
 
     class Meta:
+        db_table = "clinico_examemedicocampo"
         verbose_name = "parâmetro de exame médico"
         verbose_name_plural = "parâmetros de exame médico"
 

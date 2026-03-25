@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
+from apps.medical_records.models.prescription_item import PrescriptionItem
 
 CORE_READ_ONLY_FIELDS = (
     "id",
