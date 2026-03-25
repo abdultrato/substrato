@@ -124,7 +124,10 @@ class Surgery(NoNameCoreModel):
     def clean(self):
         super().clean()
 
-        if not self.procedures.exists() and not (self.procedure or "").strip():
+        has_free_text_procedure = bool((self.procedure or "").strip())
+        has_catalog_procedures = bool(self.pk and self.procedures.exists())
+
+        if not has_catalog_procedures and not has_free_text_procedure:
             raise ValidationError(
                 {"procedures": "Informe ao menos um procedure cirúrgico (catálogo) ou preencha o texto livre."}
             )

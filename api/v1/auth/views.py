@@ -53,12 +53,12 @@ def _cookie_domain(request):
                 origin_host = origin.split("://", 1)[-1].split("/", 1)[0].split(":")[0].strip()
             except Exception:
                 origin_host = ""
-            if origin_host in {"localhost", "127.0.0.1"}:
+            if origin_host == "localhost":
                 return "localhost"
             # Para IPs/domínios diferentes, use cookie host-only.
             return None
         host = (request.get_host() or "").split(":")[0].strip()
-        if host in {"localhost", "127.0.0.1"}:
+        if host == "localhost":
             return "localhost"
         return None
     return None

@@ -1,4 +1,6 @@
 from . import (
+    clinical_event,
+    clinical_history,
     lab_exam as lab_exam,
     lab_exam_field as lab_exam_field,
     lab_request as lab_request,
@@ -8,6 +10,8 @@ from . import (
     result as result,
     result_item as result_item,
 )
+from .clinical_event import ClinicalEvent
+from .clinical_history import ClinicalHistory
 from .clinical_reference import ClinicalReference
 from .lab_exam import LabExam
 from .lab_exam_field import LabExamField
@@ -38,6 +42,8 @@ ExameCampo = LabExamField
 Paciente = Patient
 
 __all__ = [
+    "ClinicalEvent",
+    "ClinicalHistory",
     "ClinicalReference",
     "Exame",
     "ExameCampo",
@@ -57,6 +63,8 @@ __all__ = [
     "Resultado",
     "ResultadoItem",
     "ResultadoMedicoArquivo",
+    "clinical_event",
+    "clinical_history",
     "exam",
     "exam",
     "exam_field",
