@@ -30,6 +30,11 @@ type FaturaItem = {
   iva_percentual?: string | number
   total_com_iva?: string | number
   tipo_item?: string
+  exame?: number | string | null
+  exame_medico?: number | string | null
+  procedimento_item?: number | string | null
+  procedimento_material?: number | string | null
+  item_venda?: number | string | null
 }
 
 const PAGAMENTO_METODOS = [
@@ -465,6 +470,7 @@ export default function FaturaRascunhoPage() {
     faturaId,
     numeroAutorizacao,
     pagamentoMetodo,
+    pagamentoNomePadrao,
     pagamentoPlano,
     pagamentoSeguradora,
     pagamentoValor,

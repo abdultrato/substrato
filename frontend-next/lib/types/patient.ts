@@ -31,6 +31,7 @@ export type Patient = {
   tipo_documento: string
   numero_id: string
   contacto: string
+  proveniencia: string
   endereco_rua: string
   endereco_numero: string
   endereco_bairro: string
@@ -45,7 +46,12 @@ export type Patient = {
   criado_em: string
 }>
 
-export type PatientCreateDTO = Omit<Patient, "id" | "custom_id" | "origin_company_name" | "created_at">
+export type PatientCreateDTO = Partial<
+  Omit<Patient, "id" | "custom_id" | "origin_company_name" | "created_at">
+> & {
+  name?: string
+  nome?: string
+}
 export type PatientUpdateDTO = Partial<PatientCreateDTO>
 
 export type Paciente = Patient

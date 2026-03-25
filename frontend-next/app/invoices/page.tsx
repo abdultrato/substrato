@@ -17,10 +17,13 @@ type FaturaRow = Record<string, any>
 type FaturaItem = {
   id: number
   descricao?: string
+  tipo_item?: string
   quantidade?: string | number
   preco_unitario?: string | number
   aplica_iva?: boolean
   iva_percentual?: string | number
+  iva_valor?: string | number
+  total_sem_iva?: string | number
   total_com_iva?: string | number
 }
 

@@ -2,10 +2,11 @@
 
 import {useEffect, useState} from "react";
 import {getUser, isAuthenticated, logout} from "@/lib/auth";
+import type { SessionUser } from "@/lib/session";
 
 export default function UserMenu() {
     const [ready, setReady] = useState(false);
-    const [user, setUser] = useState<string | null>(null);
+    const [user, setUser] = useState<SessionUser | null>(null);
 
     useEffect(() => {
         setUser(getUser());
@@ -18,7 +19,7 @@ export default function UserMenu() {
 
     return (
         <div style={{display: "flex", gap: 10, alignItems: "center"}}>
-            <span>👤 {user}</span>
+            <span>👤 {user?.full_name || user?.username || "Usuário"}</span>
             <button className="btn-secondary" onClick={logout}>
                 Sair
             </button>

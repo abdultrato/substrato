@@ -4,8 +4,8 @@ import {
     criarExame,
     atualizarExame,
     deletarExame,
-} from "@/lib/api/exame"
-import { Exame } from "@/lib/types/exame"
+} from "@/lib/api/exam"
+import { Exame } from "@/lib/types/exam"
 
 export function useExames () {
     const [exames, setExames] = useState<Exame[]>( [] )

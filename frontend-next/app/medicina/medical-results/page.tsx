@@ -10,7 +10,7 @@ import {
   getTiposResultadoMedicoPorMetodo,
   tipoResultadoMedicoAcceptMap,
   tipoResultadoMedicoOptions,
-} from "@/lib/constants/exame-medico"
+} from "@/lib/constants/medical-exam"
 import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoResumo = {

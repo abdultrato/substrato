@@ -24,9 +24,14 @@ export type Entity = {
   ativo: boolean
 }>
 
-export type EntityCreateDTO = Omit<Entity, "id">
+export type EntityCreateDTO = Partial<Omit<Entity, "id">> & {
+  name?: string
+  nome?: string
+}
 export type EntityUpdateDTO = Partial<EntityCreateDTO>
 
+export type EntityList = Entity
 export type Entidade = Entity
+export type EntidadeList = EntityList
 export type EntidadeCreateDTO = EntityCreateDTO
 export type EntidadeUpdateDTO = EntityUpdateDTO

@@ -5,8 +5,8 @@ import {
     emitirFatura,
     anularFatura,
     gerarPdfFatura,
-} from "@/lib/api/fatura"
-import { Fatura } from "@/lib/types/fatura"
+} from "@/lib/api/invoice"
+import { Fatura } from "@/lib/types/invoice"
 
 export function useFaturas () {
     const [faturas, setFaturas] = useState<Fatura[]>( [] )

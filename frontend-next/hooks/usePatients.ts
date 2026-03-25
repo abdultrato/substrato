@@ -4,8 +4,8 @@ import {
     criarPaciente,
     atualizarPaciente,
     deletarPaciente,
-} from "@/lib/api/paciente"
-import { Paciente, PacienteCreateDTO, PacienteUpdateDTO } from "@/lib/types/paciente"
+} from "@/lib/api/patient"
+import { Paciente, PacienteCreateDTO, PacienteUpdateDTO } from "@/lib/types/patient"
 
 export function usePacientes () {
     const [pacientes, setPacientes] = useState<Paciente[]>( [] )
