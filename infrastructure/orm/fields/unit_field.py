@@ -8,6 +8,4 @@ class UnitField(models.CharField):
         kwargs.setdefault("null", True)
         super().__init__(*args, **kwargs)
 
-UnidadeField = UnitField
-
 

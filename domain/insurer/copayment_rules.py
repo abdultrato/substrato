@@ -1,4 +1,7 @@
 def calculate_copayment(total_value, coverage_percentage):
+    """
+    Calcula coparticipação (seguradora + patient) a partir do percentual de cobertura.
+    """
     insurer_value = (total_value * coverage_percentage) / 100
     patient_value = total_value - insurer_value
 
@@ -6,6 +9,4 @@ def calculate_copayment(total_value, coverage_percentage):
         "insurer": insurer_value,
         "patient": patient_value,
     }
-
-
-calcular_coparticipacao = calculate_copayment
+__all__ = ["calculate_copayment"]

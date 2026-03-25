@@ -20,7 +20,7 @@ class UpgradePlanUseCase:
     @transaction.atomic
     def execute(tenant, novo_type_plan: str, imediato: bool = True):
 
-        assinatura_atual = tenant.obter_assinatura_active()
+        assinatura_atual = tenant.get_active_subscription()
 
         if not assinatura_atual:
             raise Exception("Tenant não possui assinatura active.")

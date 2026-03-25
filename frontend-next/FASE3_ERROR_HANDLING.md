@@ -76,7 +76,7 @@ def custom_exception_handler(exc, context):
 
 ### Integration with Django
 
-Update `plataforma/settings.py`:
+Update `platform/settings/base.py`:
 
 ```python
 REST_FRAMEWORK = {
@@ -375,7 +375,7 @@ npm run test:ui                    # UI mode
 
 ## Error Handling Checklist
 
-- [ ] Update `plataforma/settings.py` with exception handler
+- [ ] Update `platform/settings/base.py` with exception handler
 - [ ] Test backend returns RFC 7807 format:
   ```bash
   curl -X POST http://localhost:8000/api/v1/pacientes/ \

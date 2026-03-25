@@ -12,7 +12,7 @@
 
 ### 1️⃣ Configurar Exception Handler no Backend
 
-**Arquivo:** `plataforma/settings.py`
+**Arquivo:** `platform/settings/base.py`
 
 Adicionar/verificar em `REST_FRAMEWORK`:
 ```python

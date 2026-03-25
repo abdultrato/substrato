@@ -6,8 +6,8 @@ from django.db import models, transaction
 
 from apps.pharmacy.models.inventory_movement import (
     InventoryMovement,
-    OrigemMovimento,
-    TipoMovimento,
+    MovementOrigin,
+    MovementType,
 )
 from apps.pharmacy.models.lot import Lot
 from core.models.base import NoNameCoreModel
@@ -223,8 +223,8 @@ class ProcedureMaterial(NoNameCoreModel):
             movimento = InventoryMovement.objects.create(
                 name=(f"Consumo {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
                 lot=lot,
-                type=TipoMovimento.SAIDA,
-                origin=OrigemMovimento.PROCEDIMENTO,
+                type=MovementType.SAIDA,
+                origin=MovementOrigin.PROCEDIMENTO,
                 quantity=self.quantity,
                 tenant=self.tenant,
             )
@@ -245,8 +245,8 @@ class ProcedureMaterial(NoNameCoreModel):
             InventoryMovement.objects.create(
                 name=(f"Estorno {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
                 lot=self.lot,
-                type=TipoMovimento.ENTRADA,
-                origin=OrigemMovimento.PROCEDIMENTO,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.PROCEDIMENTO,
                 quantity=self.quantity,
                 tenant=self.tenant,
             )

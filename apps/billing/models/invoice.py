@@ -670,15 +670,6 @@ class Invoice(NoNameCoreModel):
         except Exception:
             pass
 
-    registrar_historico = register_history
-    recalcular_totais = recalculate_totals
-    value_pago_confirmed = confirmed_paid_amount
-    _number_recibo_padrao = _default_receipt_number
-    gerar_recibo_automatico = generate_automatic_receipt
-    atualizar_status_payment = update_payment_status
-    referencia_origin = source_reference
-    _validar_origin = _validate_source
-    emitir = issue
 
     # ==========================================
     # BLOQUEIO DE ALTERAÇÃO

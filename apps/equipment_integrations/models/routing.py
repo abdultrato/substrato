@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.sector import Sector
 from core.models.base import NoNameCoreModel
 
 
@@ -43,7 +43,7 @@ class IntegrationRouting(NoNameCoreModel):
         db_column="setor",
 
         max_length=40,
-        choices=Setor.choices,
+        choices=Sector.choices,
         db_index=True,
     )
 

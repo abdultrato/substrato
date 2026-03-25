@@ -14,8 +14,6 @@ class Product(CoreModel):
         MATERIAL = "MAT", "Material"
         OUTRO = "OUT", "Outro"
 
-    TipoProduto = ProductType
-
     category = models.ForeignKey(
 
         "farmacia.ProductCategory",

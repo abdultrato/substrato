@@ -13,4 +13,4 @@ def register_request(request, patient):
         )
 
 
-registrar_request = register_request
+__all__ = ["register_request"]

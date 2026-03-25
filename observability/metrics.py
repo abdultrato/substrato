@@ -83,7 +83,12 @@ def log_slow_request(
         )
 
 
-FATURA_RECALCULO_DURATION = INVOICE_RECALCULATION_DURATION
-registrar_request = register_request
-registrar_error = register_error
-obter_metricas = get_runtime_metrics
+__all__ = [
+    "INVOICE_RECALCULATION_DURATION",
+    "START_TIME",
+    "get_metrics",
+    "get_runtime_metrics",
+    "log_slow_request",
+    "register_error",
+    "register_request",
+]

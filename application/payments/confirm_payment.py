@@ -6,4 +6,4 @@ def confirm_payment(payment: Payment):
     return payment
 
 
-confirmar_payment = confirm_payment
+__all__ = ["confirm_payment"]

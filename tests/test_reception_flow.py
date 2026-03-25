@@ -12,8 +12,8 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.sector import Sector
 
 
 @pytest.mark.django_db
@@ -32,8 +32,8 @@ def test_reception_flow_billing_payment():
         tenant=tenant,
         name="Hemograma",
         price=Decimal("25.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
     )
 
     checkin = open_checkin(
@@ -47,7 +47,7 @@ def test_reception_flow_billing_payment():
         exam_ids=[exam.id],
     )
 
-    invoice = create_invoice_for_checkin(checkin=checkin, emitir=True)
+    invoice = create_invoice_for_checkin(checkin=checkin, issue=True)
 
     payment, receipt = register_payment_for_checkin(
         checkin=checkin,
@@ -67,5 +67,3 @@ def test_reception_flow_billing_payment():
     assert checkin.invoice_id == invoice.id
     assert checkin.request_id == request.id
 
-
-test_fluxo_recepcao_faturamento_payment = test_reception_flow_billing_payment

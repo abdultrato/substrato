@@ -1,4 +1,4 @@
-from domain.insurer.copayment_rules import calcular_coparticipacao as calculate_copayment
+from domain.insurer.copayment_rules import calculate_copayment
 from services.insurer.plan_resolution_service import PlanResolutionService
 
 
@@ -9,6 +9,3 @@ class CopaymentService:
         percentage = effective_plan.percentual_final()
         return calculate_copayment(total_value, percentage)
 
-
-ServicoCoparticipacao = CopaymentService
-CopaymentService.calcular = CopaymentService.calculate

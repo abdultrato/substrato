@@ -38,4 +38,4 @@ class Sector(models.TextChoices):
     OUTRO = "Outro", "Outro"
 
 
-Setor = Sector
+__all__ = ["Sector"]

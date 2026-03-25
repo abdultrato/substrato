@@ -3,11 +3,11 @@ from rest_framework import serializers
 from api.v1.compat import LegacyAliasSerializerMixin
 from apps.payments.models.payment import Payment
 from apps.reception.models.reception_checkin import ReceptionCheckin
-from core.constants.document_types import TipoDocumento
-from core.constants.gender import Genero
+from core.constants.document_types import DocumentType
+from core.constants.gender import Gender
 from core.constants.laboratory.clinical_status import StatusClinico
-from core.constants.provenance import Proveniencia
-from core.constants.race_origin import RacaOrigem
+from core.constants.provenance import Provenance
+from core.constants.race_origin import RaceOrigin
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -128,13 +128,13 @@ class PatientFlowSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=120)
     address = serializers.CharField(max_length=150)
     birth_date = serializers.DateField(required=False, allow_null=True)
-    gender = serializers.ChoiceField(choices=Genero.choices, required=False)
-    race_origin = serializers.ChoiceField(choices=RacaOrigem.choices, required=False)
-    document_type = serializers.ChoiceField(choices=TipoDocumento.choices, required=False)
+    gender = serializers.ChoiceField(choices=Gender.choices, required=False)
+    race_origin = serializers.ChoiceField(choices=RaceOrigin.choices, required=False)
+    document_type = serializers.ChoiceField(choices=DocumentType.choices, required=False)
     document_number = serializers.CharField(max_length=50, required=False, allow_blank=True, allow_null=True)
     contact = serializers.CharField(max_length=30, required=False, allow_blank=True, allow_null=True)
     email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
-    provenance = serializers.ChoiceField(choices=Proveniencia.choices, required=False)
+    provenance = serializers.ChoiceField(choices=Provenance.choices, required=False)
     pregnant = serializers.BooleanField(required=False)
     gestational_age_weeks = serializers.IntegerField(required=False, allow_null=True, min_value=0)
 
@@ -197,13 +197,3 @@ SERIALIZER_MAP = {
     "checkin": ReceptionCheckinSerializer,
 }
 
-
-CheckinRecepcaoSerializer = ReceptionCheckinSerializer
-VincularRequisicaoSerializer = LinkRequestSerializer
-VincularFaturaSerializer = LinkInvoiceSerializer
-CriarRequisicaoRecepcaoSerializer = CreateReceptionRequestSerializer
-CriarFaturaRecepcaoSerializer = CreateReceptionInvoiceSerializer
-RegistrarPagamentoRecepcaoSerializer = RegisterReceptionPaymentSerializer
-PacienteFluxoSerializer = PatientFlowSerializer
-CheckinFluxoSerializer = CheckinFlowSerializer
-FluxoAtendimentoCreateSerializer = CareFlowCreateSerializer

@@ -15,4 +15,4 @@ class MedicalExamResultType(models.TextChoices):
     NUMERICO = "NUMERICO", "Valor numérico"
 
 
-TipoResultadoExameMedico = MedicalExamResultType
+__all__ = ["MedicalExamResultType"]

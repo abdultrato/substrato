@@ -19,5 +19,4 @@ def get_country_name(iso_code):
         return None
 
 
-listar_paises_iso = list_iso_countries
-obter_name_pais = get_country_name
+__all__ = ["list_iso_countries", "get_country_name"]

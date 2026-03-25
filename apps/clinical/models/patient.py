@@ -2,10 +2,10 @@ from django.db import models
 from django.utils import timezone
 from django_countries.fields import CountryField
 
-from core.constants.document_types import TipoDocumento
-from core.constants.gender import Genero
-from core.constants.provenance import Proveniencia
-from core.constants.race_origin import RacaOrigem
+from core.constants.document_types import DocumentType
+from core.constants.gender import Gender
+from core.constants.provenance import Provenance
+from core.constants.race_origin import RaceOrigin
 from core.models.base import CoreModel
 from infrastructure.orm.fields.email_field import NormalizedEmailField
 from infrastructure.orm.fields.phone_field import PhoneField
@@ -51,9 +51,9 @@ class Patient(CoreModel):
 
         verbose_name="Gênero",
         max_length=10,
-        choices=Genero.choices,
+        choices=Gender.choices,
         db_index=True,
-        default=Genero.FEMENINO,
+        default=Gender.FEMALE,
     )
 
     race_origin = models.CharField(
@@ -62,8 +62,8 @@ class Patient(CoreModel):
 
         verbose_name="Raça / Origem",
         max_length=20,
-        choices=RacaOrigem.choices,
-        default=RacaOrigem.NEGRA,
+        choices=RaceOrigin.choices,
+        default=RaceOrigin.BLACK,
     )
 
     document_type = models.CharField(
@@ -72,8 +72,8 @@ class Patient(CoreModel):
 
         verbose_name="Tipo de documento",
         max_length=50,
-        choices=TipoDocumento.choices,
-        default=TipoDocumento.BI,
+        choices=DocumentType.choices,
+        default=DocumentType.BI,
     )
 
     document_number = models.CharField(
@@ -179,9 +179,9 @@ class Patient(CoreModel):
 
         verbose_name="Proveniência",
         max_length=50,
-        choices=Proveniencia.choices,
+        choices=Provenance.choices,
         blank=True,
-        default=Proveniencia.CLINICA_EXTERNA,
+        default=Provenance.CLINICA_EXTERNA,
     )
 
     origin_company = models.ForeignKey(
@@ -339,4 +339,3 @@ class Patient(CoreModel):
 
     def __str__(self):
         return f"{self.custom_id} - {self.name}"
-

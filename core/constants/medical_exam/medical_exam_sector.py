@@ -20,4 +20,4 @@ class MedicalExamSector(models.TextChoices):
     OUTRO = "Outro", "Outro"
 
 
-SetorExameMedico = MedicalExamSector
+__all__ = ["MedicalExamSector"]

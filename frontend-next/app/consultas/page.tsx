@@ -25,7 +25,7 @@ type PrecoPreview = {
   especialidade_nome?: string
   preco_base?: string
   feriado_manual?: boolean
-  eh_feriado?: boolean
+  is_holiday?: boolean
   tipo_horario?: string
   multiplicador_preco?: string
   preco_final?: string

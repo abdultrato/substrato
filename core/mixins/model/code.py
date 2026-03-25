@@ -41,4 +41,3 @@ class CodeMixin(models.Model):
 
 CodigoMixin = CodeMixin
 CodeMixin._resolver_prefix = CodeMixin._resolve_prefix
-CodeMixin.gerar_code = CodeMixin.generate_code

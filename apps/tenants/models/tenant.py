@@ -85,5 +85,4 @@ class Tenant(
         return self.name or self.identifier
 
 
-Tenant.obter_assinatura_active = Tenant.get_active_subscription
 Tenant.plan = Tenant.plan

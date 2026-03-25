@@ -42,5 +42,4 @@ def idempotent(prefix: str, timeout: int = 3600):
     return decorator
 
 
-gerar_key_idempotente = generate_idempotency_key
 idempotente = idempotent

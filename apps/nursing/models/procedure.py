@@ -114,5 +114,3 @@ class Procedure(NoNameCoreModel):
     def __str__(self):
         return f"{self.custom_id} - {self.patient.name}"
 
-
-Procedure.recalcular_totais = Procedure.recalculate_totals

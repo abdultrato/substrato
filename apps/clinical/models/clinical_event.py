@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
-from core.constants.clinical_event_type import TipoEventoClinico
+from core.constants.clinical_event_type import ClinicalEventType
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 
@@ -60,7 +60,7 @@ class ClinicalEvent(PropagarInquilinoMixin, CoreModel):
         db_column="tipo_evento",
 
         max_length=50,
-        choices=TipoEventoClinico.choices,
+        choices=ClinicalEventType.choices,
         db_index=True,
     )
 

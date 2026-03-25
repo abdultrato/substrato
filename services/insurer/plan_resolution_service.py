@@ -16,5 +16,4 @@ class PlanResolutionService:
         return custom_plan
 
 
-ServicoResolucaoPlano = PlanResolutionService
-PlanResolutionService.obter_plan_efetivo = PlanResolutionService.get_effective_plan
+__all__ = ["PlanResolutionService"]

@@ -167,6 +167,5 @@ class ReceptionCheckin(NoNameCoreModel):
 
 
 ReceptionCheckin.iniciar_atendimento = ReceptionCheckin.start_care
-ReceptionCheckin.registrar_request = ReceptionCheckin.register_request
 ReceptionCheckin.registrar_invoice = ReceptionCheckin.register_invoice
 CheckinRecepcao = ReceptionCheckin

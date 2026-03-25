@@ -44,6 +44,5 @@ class RequestFlow:
 
 CalculadoraRequisicao = RequestCalculator
 FluxoRequisicao = RequestFlow
-RequestCalculator.calcular_total = staticmethod(RequestCalculator.calculate_total)
 RequestFlow.determinar_status = staticmethod(RequestFlow.determine_status)
 RequestFlow.atualizar = staticmethod(RequestFlow.determine_status)

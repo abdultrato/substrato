@@ -18,10 +18,10 @@ from apps.equipment_integrations.models import (
     IntegrationRouting,
 )
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.result_type import TipoResultado
-from core.constants.laboratory.sector import Setor
-from core.constants.laboratory.units import UnidadePadrao
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.result_type import ResultType
+from core.constants.laboratory.sector import Sector
+from core.constants.laboratory.units import DefaultUnit
 
 
 def _tenant():
@@ -42,8 +42,8 @@ def _exam(tenant):
         tenant=tenant,
         name="Hemograma",
         price=Decimal("30.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
     )
 
 
@@ -65,7 +65,7 @@ def test_request_item_creates_integration_order_by_sector():
         tenant=tenant,
         equipment=equipment,
         exam_type=IntegrationRouting.ExamType.LABORATORIO,
-        sector=Setor.HEMATOLOGIA,
+        sector=Sector.HEMATOLOGIA,
         active=True,
     )
 
@@ -87,8 +87,8 @@ def test_http_inbox_applies_result_by_mapping():
         tenant=tenant,
         exam=exam,
         name="Hemoglobina",
-        type=TipoResultado.NUMERICO,
-        unit=UnidadePadrao.G_DL,
+        type=ResultType.NUMERICO,
+        unit=DefaultUnit.G_DL,
     )
 
     equipment = IntegrationEquipment.objects.create(
@@ -101,7 +101,7 @@ def test_http_inbox_applies_result_by_mapping():
         tenant=tenant,
         equipment=equipment,
         exam_type=IntegrationRouting.ExamType.LABORATORIO,
-        sector=Setor.HEMATOLOGIA,
+        sector=Sector.HEMATOLOGIA,
         active=True,
     )
 

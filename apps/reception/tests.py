@@ -12,8 +12,8 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.sector import Sector
 
 
 def _tenant():
@@ -34,8 +34,8 @@ def _exam(tenant):
         tenant=tenant,
         name="Raio-X",
         price=Decimal("50.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.RADIOLOGIA if hasattr(Setor, "RADIOLOGIA") else Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.RADIOLOGIA if hasattr(Sector, "RADIOLOGIA") else Sector.HEMATOLOGIA,
     )
 
 
@@ -49,7 +49,7 @@ def test_checkin_basic_flow():
 
     request = create_request_for_checkin(checkin=checkin, exam_ids=[exam.id])
 
-    invoice = create_invoice_for_checkin(checkin=checkin, emitir=True)
+    invoice = create_invoice_for_checkin(checkin=checkin, issue=True)
 
     payment, receipt = register_payment_for_checkin(checkin=checkin, value=Decimal("50.00"))
 
@@ -60,8 +60,3 @@ def test_checkin_basic_flow():
     assert checkin.invoice_id == invoice.id
     assert payment.status in {payment.Status.CONFIRMADO, payment.Status.PENDENTE}
     assert receipt is None or receipt.value == payment.value
-
-
-_patient = _patient
-_exam = _exam
-test_checkin_fluxo_basico = test_checkin_basic_flow

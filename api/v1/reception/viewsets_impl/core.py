@@ -11,11 +11,11 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
 from application.reception.care_flow import (
-    criar_invoice_para_checkin as create_invoice_for_checkin,
-    criar_request_para_checkin as create_request_for_checkin,
-    executar_fluxo_completo as execute_full_flow,
-    obter_resumo_atendimento as get_care_summary,
-    registrar_payment_para_checkin as register_payment_for_checkin,
+    create_invoice_for_checkin,
+    create_request_for_checkin,
+    execute_full_flow,
+    get_care_summary,
+    register_payment_for_checkin,
 )
 from application.reception.get_workspace import execute as get_workspace_date
 from apps.billing.models.invoice import Invoice
@@ -55,7 +55,6 @@ class TenantAwareMixin:
                 raise ValidationError(exc.messages) from exc
             raise ValidationError(str(exc)) from exc
 
-    executar_seguro = execute_safely
 
 
 class ReceptionWorkspaceViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):

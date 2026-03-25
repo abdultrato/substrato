@@ -22,5 +22,4 @@ def get_language_name(iso_code):
         return None
 
 
-listar_idiomas_iso = list_iso_languages
-obter_name_language = get_language_name
+__all__ = ["list_iso_languages", "get_language_name"]

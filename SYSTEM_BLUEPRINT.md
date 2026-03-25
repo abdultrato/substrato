@@ -53,35 +53,35 @@ The repository is a single workspace containing backend, frontend, infrastructur
 
 | Path | Responsibility |
 | --- | --- |
-| `plataforma/` | Django project package: settings, WSGI/ASGI entrypoints, URL root, Celery app wiring. |
+| `platform/` | Django project package: settings, WSGI/ASGI entrypoints, URL root, Celery app wiring. |
 | `api/` | REST API implementation: `api/v1/` is the active DRF API; `api/endpoints/` contains legacy/unused endpoints. |
-| `aplicativos/` | Main Django apps (bounded contexts): clinico, recepcao, faturamento, pagamentos, farmacia, enfermagem, prontuario, maternidade, cirurgia, consultas, contabilidade, identidade, inquilinos, entidades, seguradora, notificacoes, auditoria_atividades, monitoramento, integracoes_equipamentos, recursos_humanos. |
-| `aplicacao/` | Application/use-case orchestration (service functions coordinating multiple apps, transactions, invariants). |
-| `dominio/` | Domain rules and state machines (business logic that should remain framework-light). |
-| `servicos/` | Cross-cutting services (billing, tenant usage limits, notifications, reports) used by apps/API. |
-| `nucleo/` | Shared core building blocks: base models/mixins, constants/enums, value objects, ORM helpers. |
-| `infrastrutura/` | Infrastructure concerns: middleware, cache, DB router, custom ORM fields, queue helpers, resilience utilities. |
-| `eventos/` | In-process event bus and event handler registration; used to decouple domain actions. |
-| `tarefas/` | Celery tasks and PDF generators (ReportLab), cleanup scripts, seeding helpers (some legacy). |
-| `integracoes/` | External integration adapters (messaging, payments, government/insurance, HL7/FHIR stubs, storage stubs). |
+| `apps/` | Main Django apps (bounded contexts): accounting, audit_activities, billing, clinical, consultations, equipment, equipment_integrations, external_entities, human_resources, identity, incidents, inspections, insurer, maintenance, maternity, medical_records, monitoring, notifications, nursing, payments, pharmacy, reception, surgery, tenants. |
+| `application/` | Application/use-case orchestration (service functions coordinating multiple apps, transactions, invariants). |
+| `domain/` | Domain rules and state machines (business logic that should remain framework-light). |
+| `services/` | Cross-cutting services (billing, tenant usage limits, notifications, reports) used by apps/API. |
+| `core/` | Shared core building blocks: base models/mixins, constants/enums, value objects, ORM helpers. |
+| `infrastructure/` | Infrastructure concerns: middleware, cache, DB router, custom ORM fields, queue helpers, resilience utilities. |
+| `events/` | In-process event bus and event handler registration; used to decouple domain actions. |
+| `tasks/` | Celery tasks and PDF generators (ReportLab), cleanup scripts, seeding helpers (some legacy). |
+| `integrations/` | External integration adapters (messaging, payments, government/insurance, HL7/FHIR stubs, storage stubs). |
 | `frontend-next/` | Next.js 14 (App Router) frontend: pages, components, Tailwind, API client, RBAC UI. |
 | `scripts/` | Operational scripts: backups, reset DB+migrations (dev), RBAC user creation wrapper, DB init SQL, schema conversion. |
 | `kubernetes/` | Kubernetes manifests (base deployment/service/HPA, Postgres statefulset, configmap/secret, ingress). |
 | `monitoring/` | Prometheus and Grafana provisioning/config for observability. |
-| `observabilidade/` | Observability utilities (audit log helpers, metrics, health, logging helpers). |
+| `observability/` | Observability utilities (audit log helpers, metrics, health, logging helpers). |
 | `templates/` | Django templates (mostly used by Admin/Jazzmin overrides, if any). |
 | `static/` | Static assets (images/logo, CSS inputs, etc). |
 | `staticfiles/` | Collected static output (runtime artifact). |
 | `media/` | User uploads (profile photos, generated files) (runtime artifact). |
 | `logs/` | Log files (runtime artifact; JSON/rotating logs). |
 | `backups/` | Backup archives produced by scripts (runtime artifact). |
-| `arquivos/`, `artefatos/` | Assets and previews (e.g., logos/images, PDF previews). |
-| `sistema/`, `usuarios/`, `auditoria/`, `configuracao/` | Legacy/utility modules not part of primary Django apps; treat as internal tooling/tech debt unless referenced. |
+| `files/`, `artefatos/` | Assets and previews (e.g., logos/images, PDF previews). |
+| `system/`, `users/`, `audit/`, `configuration/` | Legacy/utility modules not part of primary Django apps; treat as internal tooling/tech debt unless referenced. |
 
 ### Key entrypoints and configuration files
-- `manage.py`: standard Django entrypoint (defaults to `DJANGO_SETTINGS_MODULE=plataforma.settings`).
-- `plataforma/urls.py`: routes `/admin/`, `/api/`, `/pdf/`, OpenAPI docs, and health probes.
-- `plataforma/settings/base.py`: installed apps, middleware, DB/cache/JWT/email/notifications settings.
+- `manage.py`: standard Django entrypoint (defaults to `DJANGO_SETTINGS_MODULE=platform.settings`).
+- `platform/urls.py`: routes `/admin/`, `/api/`, `/pdf/`, OpenAPI docs, and health probes.
+- `platform/settings/base.py`: installed apps, middleware, DB/cache/JWT/email/notifications settings.
 - `docker-compose.yml`, `docker-compose.prod.yml`: dev/prod container topology.
 - `Dockerfile`, `Dockerfile.frontend`, `entrypoint.sh`: container build and startup logic.
 - `frontend-next/next.config.js`: reverse proxy rewrites and trailing slash handling.
@@ -94,11 +94,11 @@ The repository is a single workspace containing backend, frontend, infrastructur
 ### Architectural style
 - **Modular monolith**: all business modules are Django apps inside one backend runtime.
 - **Layered / DDD-inspired separation (intended)**.
-- Domain: `dominio/` holds business rules/state machines.
-- Application: `aplicacao/` orchestrates use-cases across aggregates.
-- Apps: `aplicativos/` contains persistence models and app-local behavior.
-- Services: `servicos/` provides cross-module services.
-- Infrastructure: `infrastrutura/` handles cross-cutting technical concerns.
+- Domain: `domain/` holds business rules/state machines.
+- Application: `application/` orchestrates use-cases across aggregates.
+- Apps: `apps/` contains persistence models and app-local behavior.
+- Services: `services/` provides cross-module services.
+- Infrastructure: `infrastructure/` handles cross-cutting technical concerns.
 - **Event-driven inside the monolith**: an in-process event bus is used to publish domain events after DB commits.
 - **Async processing**: Celery workers run tasks (PDF generation, cleanup, future notification fan-out).
 - **Multi-tenant**: tenant context is resolved per request and used in models, queries, and usage limits.
@@ -114,15 +114,15 @@ The repository is a single workspace containing backend, frontend, infrastructur
 Boundaries are expressed as Django apps (e.g., `clinico`, `faturamento`, `pagamentos`). They remain deployable as one backend process but are organized to reduce coupling.
 
 ### Dependency relationships (intended)
-- `api/v1/*` depends on serializers/viewsets that depend on `aplicativos/*` models and `aplicacao/*` use-cases.
-- `aplicativos/*` models depend on `nucleo/*` and sometimes call `dominio/*` rules.
-- `dominio/*` should be mostly independent and imported by apps/services.
-- `infrastrutura/*` is referenced by settings/middleware and core model mixins (tenant/user context, cache).
-- `eventos/*` can be triggered from domain/app code and then handled by services/apps.
+- `api/v1/*` depends on serializers/viewsets that depend on `apps/*` models and `application/*` use-cases.
+- `apps/*` models depend on `core/*` and sometimes call `domain/*` rules.
+- `domain/*` should be mostly independent and imported by apps/services.
+- `infrastructure/*` is referenced by settings/middleware and core model mixins (tenant/user context, cache).
+- `events/*` can be triggered from domain/app code and then handled by services/apps.
 
 ### Notable tech debt (architectural)
-- Legacy/unused code exists under `api/endpoints/` and some files in `tarefas/` that import non-existent modules (likely old prototypes). These should be quarantined or removed to reduce confusion.
-- Naming is mixed (`modelos/` vs `models/` in some apps; `infrastrutura` spelling), which affects discoverability.
+- Legacy/unused code exists under `api/endpoints/` and some files in `tasks/` that import non-existent modules (likely old prototypes). These should be quarantined or removed to reduce confusion.
+- Naming mixes Portuguese domain labels (app labels/API paths) with English folder names, which affects discoverability.
 
 ---
 
@@ -130,7 +130,7 @@ Boundaries are expressed as Django apps (e.g., `clinico`, `faturamento`, `pagame
 
 ### Frameworks and libraries used
 - Django 4.2 + Django REST Framework
-- Authentication: SimpleJWT (JWT access/refresh), custom user model (`AUTH_USER_MODEL=identidade.Usuario`)
+- Authentication: SimpleJWT (JWT access/refresh), custom user model (`AUTH_USER_MODEL=identidade.User`)
 - OpenAPI: drf-spectacular (`/api/schema/`, `/api/docs/`, `/api/redoc/`)
 - Async: Celery 5.4 + django-celery-beat + Redis
 - Observability: django-prometheus, structured logging, persisted audit/error models
@@ -175,19 +175,19 @@ Frontend (Node, `frontend-next/package.json`):
 | `lucide-react` | Icons | `^0.263.0` |
 | `vitest` | Unit tests | `^1.0.0` |
 
-Note on optional dependencies: `requirements.txt` includes packages such as `django-axes`, `django-import-export`, `django-select2`, `django-simple-history`, `crispy-bootstrap5`, and others that are not currently configured in `INSTALLED_APPS` in `plataforma/settings/base.py`. Treat them as optional/future until explicitly wired.
+Note on optional dependencies: `requirements.txt` includes packages such as `django-axes`, `django-import-export`, `django-select2`, `django-simple-history`, `crispy-bootstrap5`, and others that are not currently configured in `INSTALLED_APPS` in `platform/settings/base.py`. Treat them as optional/future until explicitly wired.
 
-### Domain layer (`dominio/`)
+### Domain layer (`domain/`)
 - Clinical result state machine (`ResultadoStateMachine`) enforcing allowed transitions.
 - Clinical result interpretation service (`ServicoResultado`) computing status symbols/colors/critical alerts using patient-aware reference resolution.
 - Domain events (e.g., `ResultadoValidadoEvent`) published after commit.
 
-### Services layer (`aplicacao/` and `servicos/`)
+### Services layer (`application/` and `services/`)
 - Use-case orchestration is implemented as transactional functions.
-- Example: reception workflow in `aplicacao/recepcao/fluxo_atendimento.py` orchestrates check-in -> requisition -> invoice -> payment -> receipt.
-- Tenant usage/rate limiting service (`servicos/inquilinos/tenant_usage_service.py`) updates Redis counters.
+- Example: reception workflow in `application/reception/care_flow.py` orchestrates check-in -> requisition -> invoice -> payment -> receipt.
+- Tenant usage/rate limiting service (`services/tenants/tenant_usage_service.py`) updates Redis counters.
 
-### Infrastructure layer (`infrastrutura/`)
+### Infrastructure layer (`infrastructure/`)
 - Tenant resolution middleware (`InquilinoMiddleware`) in DEBUG: auto-selects/creates a local tenant to avoid null tenant issues.
 - Tenant resolution middleware (`InquilinoMiddleware`) in production: resolves tenant by Host domain; equipment integrations can also set tenant via `X-Integration-Key`.
 - User context middleware (`RequestUserMiddleware`) stores current user in a `ContextVar` for auditing/soft-delete attribution.
@@ -250,71 +250,71 @@ Note on optional dependencies: `requirements.txt` includes packages such as `dja
 This section maps the functional modules to the codebase and explains interactions.
 
 ### Authentication and users
-- App: `aplicativos/identidade`
+- App: `apps/identity`
 - API: `api/v1/auth/*`, `api/v1/identidade/*`
-- Model: `identidade.Usuario` extends `AbstractUser` plus corporate fields (`nome`, `telefone`, `foto`, tenant scope).
+- Model: `identidade.User` extends `AbstractUser` plus corporate fields (`nome`, `telefone`, `foto`, tenant scope).
 - Password reset and profile updates are implemented as API endpoints; notifications can send reset codes via email/WhatsApp when configured.
 
 ### Tenants (multi-tenant SaaS)
-- App: `aplicativos/inquilinos`
-- Infra: `infrastrutura/middleware/inquilino.py`, `nucleo/mixins/escopo_inquilino.py`
+- App: `apps/tenants`
+- Infra: `infrastructure/middleware/tenant.py`, `core/mixins/tenant_scope.py`
 - Features: plans, subscriptions, feature flags, per-tenant usage/limits.
 
 ### Reception (check-in workflow)
-- App: `aplicativos/recepcao`
-- Use-case: `aplicacao/recepcao/fluxo_atendimento.py`
+- App: `apps/reception`
+- Use-case: `application/reception/care_flow.py`
 - Interaction: creates `CheckinRecepcao`, then `RequisicaoAnalise`, then `Fatura`, then `Pagamento` and `Recibo`.
 
 ### Clinical/Lab (patients, requisitions, results)
-- App: `aplicativos/clinico`
+- App: `apps/clinical`
 - API: `api/v1/clinico/*`
 - Interaction: reception and doctors create requisitions; laboratory enters results and validates them; validation updates requisition state and can trigger downstream actions (events, finalization).
 
 ### Consultations (appointments)
-- App: `aplicativos/consultas`
+- App: `apps/consultations`
 - Features: scheduled consultations, medical professional assignment, specialty-based pricing, holiday surcharge (`Feriado` + tenant config).
 - Billing integration: `Fatura` can be created with origin `CONSULTA` and syncs an invoice item from consultation price.
 
 ### Cardex (Prontuario)
-- App: `aplicativos/prontuario`
+- App: `apps/medical_records`
 - Features: clinical notes (symptoms, diagnosis, report) and structured prescription items (medication, dosage unit, interval/doses rules).
 - Interaction: patient "historia clinica" API aggregates cardex + requisitions + consultations + nursing + ward admissions + pharmacy + invoices/receipts.
 
 ### Nursing and ward management
-- App: `aplicativos/enfermagem`
+- App: `apps/nursing`
 - Features: nursing records, vital signs, prescriptions, procedures (catalog + items + materials), ward/beds/admissions, ward dashboard endpoints.
 - Billing integration: invoices can sync from performed procedures/materials; stock consumption integrates with pharmacy lots.
 
 ### Pharmacy
-- App: `aplicativos/farmacia` (note: uses `models/` subpackage, unlike most apps using `modelos/`)
+- App: `apps/pharmacy`
 - Features: products and lots, FEFO stock consumption via movements, sales and sale items, invoice sync from sales.
 
 ### Billing and payments
-- Apps: `aplicativos/faturamento`, `aplicativos/pagamentos`
+- Apps: `apps/billing`, `apps/payments`
 - Features: multi-origin invoices, computed totals and IVA, emission immutability, payment transitions, automatic receipt creation on full payment.
 - Documents: invoice and receipt PDFs are generated with barcode/QR and item-level details.
 
 ### Accounting
-- App: `aplicativos/contabilidade`
+- App: `apps/accounting`
 - Features: accounts, journal entries, reconciliation, ledger-like records (details vary by model set).
 - Interaction: consumes read-only financial data from invoices/payments; can register accounting entries.
 
 ### External entities and insurance
-- Apps: `aplicativos/entidades`, `aplicativos/seguradora`
+- Apps: `apps/external_entities`, `apps/insurer`
 - Features: external companies (NUIT, contacts, banking details) and insurer plan/authorization models.
 - Interaction: requisitions and patient profiles can reference companies; billing can later incorporate insurer splits.
 
 ### Notifications
-- App: `aplicativos/notificacoes`
-- Integrations: `integracoes/mensageria/*`
+- App: `apps/notifications`
+- Integrations: `integrations/messaging/*`
 - Features: templates, logs, idempotent delivery by external reference, channel enable/disable by settings.
 
 ### Monitoring and audit
-- Apps: `aplicativos/monitoramento`, `aplicativos/auditoria_atividades`
+- Apps: `apps/monitoring`, `apps/audit_activities`
 - Infra: middleware persists errors and activity; Prometheus metrics are exposed.
 
 ### Equipment integrations
-- App: `aplicativos/integracoes_equipamentos`
+- App: `apps/equipment_integrations`
 - API: `/api/v1/integracoes/equipamentos/<equipamento_id_custom>/(worklist|resultados)`
 - Auth: `X-Integration-Key` validated against `IntegracaoCredencial` (hashed with server pepper).
 - Features: worklist order retrieval, result ingestion, analyte mapping, document attachments, message idempotency.
@@ -334,10 +334,10 @@ This section maps the functional modules to the codebase and explains interactio
 - Equipment integrations (HTTP JSON) for worklist and results inbox using API key auth.
 
 ### Partially implemented / stubs (present in repo but not fully wired)
-- Payment gateways under `integracoes/pagamentos/` (Mpesa/e-Mola/mKesh/Stripe/PayPal) show intended direction, but there are inconsistencies (missing base classes/imports) indicating unfinished integration wiring.
-- Laboratory standards stubs: HL7/FHIR placeholders under `integracoes/laboratorio/`.
-- Government and insurer stubs under `integracoes/governo/` and `integracoes/seguradoras/`.
-- Object storage stubs under `integracoes/armazenamento/` (S3/Backblaze).
+- Payment gateways under `integrations/payments/` (Mpesa/e-Mola/mKesh/Stripe/PayPal) show intended direction, but there are inconsistencies (missing base classes/imports) indicating unfinished integration wiring.
+- Laboratory standards stubs: HL7/FHIR placeholders under `integrations/laboratory/`.
+- Government and insurer stubs under `integrations/government/` and `integrations/insurers/`.
+- Object storage stubs under `integrations/storage/` (S3/Backblaze).
 
 ### Messaging systems and async
 - Celery with Redis broker/result backend is the primary async mechanism.
@@ -495,11 +495,11 @@ Production (`docker-compose.prod.yml`) provides:
 flowchart LR
   U[Users / Staff] --> B[Browser]
   B --> N[Next.js Frontend\nfrontend-next]
-  N -->|/api/v1/*| A[Django + DRF API\nplataforma + api/v1]
+  N -->|/api/v1/*| A[Django + DRF API\nplatform + api/v1]
   N -->|/admin/* (proxy)| ADM[Django Admin\nJazzmin + Tailwind CSS]
   A --> PG[(PostgreSQL)]
   A --> R[(Redis)]
-  A -->|publish_after_commit| EB[In-process EventBus\n(eventos/bus.py)]
+  A -->|publish_after_commit| EB[In-process EventBus\n(events/bus.py)]
   A -->|enqueue| C[Celery Worker]
   C --> R
   C --> PG
@@ -515,14 +515,14 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph Core
-    NUC[nucleo/*\nBase models, mixins, constants]
-    INF[infrastrutura/*\nMiddleware, cache, DB router]
-    DOM[dominio/*\nRules, state machines, events]
-    EVT[eventos/*\nEvent bus + handlers]
-    SRV[servicos/*\nCross-cutting services]
+    NUC[core/*\nBase models, mixins, constants]
+    INF[infrastructure/*\nMiddleware, cache, DB router]
+    DOM[domain/*\nRules, state machines, events]
+    EVT[events/*\nEvent bus + handlers]
+    SRV[services/*\nCross-cutting services]
   end
 
-  subgraph Apps["aplicativos/* (Django apps)"]
+  subgraph Apps["apps/* (Django apps)"]
     ID[identidade]
     TEN[inquilinos]
     CLI[clinico]

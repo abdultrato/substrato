@@ -3,7 +3,7 @@ from decimal import Decimal
 
 def apply_percentage_discount(value, percentage):
     """
-    Applies a percentage discount to a value.
+    Aplica um desconto percentual a um valor.
     """
     if not percentage:
         return value
@@ -15,7 +15,7 @@ def apply_percentage_discount(value, percentage):
 
 def apply_percentage_surcharge(value, percentage):
     """
-    Applies a percentage surcharge to a value.
+    Aplica um acréscimo percentual a um valor.
     """
     if not percentage:
         return value
@@ -27,7 +27,7 @@ def apply_percentage_surcharge(value, percentage):
 
 def calculate_item_price(base_price, quantity=1, discount_percent=0, surcharge_percent=0):
     """
-    Calculates a final item price using quantity, discounts, and surcharges.
+    Calcula o preço final do item considerando quantity, descontos e acréscimos.
     """
 
     quantity = Decimal(quantity or 1)
@@ -39,14 +39,16 @@ def calculate_item_price(base_price, quantity=1, discount_percent=0, surcharge_p
 
 def apply_contract_price(base_price, contract_price=None):
     """
-    Returns the contract price when available.
+    Retorna o preço contratual quando disponível.
     """
     if contract_price is not None:
         return Decimal(contract_price).quantize(Decimal("0.01"))
     return Decimal(base_price).quantize(Decimal("0.01"))
 
 
-aplicar_desconto_percentual = apply_percentage_discount
-aplicar_acrescimo_percentual = apply_percentage_surcharge
-calcular_price_item = calculate_item_price
-aplicar_price_contratual = apply_contract_price
+__all__ = [
+    "apply_percentage_discount",
+    "apply_percentage_surcharge",
+    "calculate_item_price",
+    "apply_contract_price",
+]

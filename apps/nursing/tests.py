@@ -55,7 +55,7 @@ def _product(tenant):
     return Product.objects.create(
         tenant=tenant,
         name="Soro",
-        type=Product.TipoProduto.MATERIAL,
+        type=Product.ProductType.MATERIAL,
         sale_price=Decimal("5.00"),
         category=cat,
     )

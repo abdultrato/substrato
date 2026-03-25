@@ -5,8 +5,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
-from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
+from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
+from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
@@ -14,80 +14,80 @@ from infrastructure.orm.fields.medical_exam_sector_field import MedicalExamSecto
 from infrastructure.orm.fields.money_field import MoneyField
 
 TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO = {
-    MetodoExameMedico.ULTRASSONOGRAFIA: {
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
-        TipoResultadoExameMedico.VIDEO,
+    MedicalExamMethod.ULTRASSONOGRAFIA: {
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
+        MedicalExamResultType.VIDEO,
     },
-    MetodoExameMedico.RAIOX_CONVENCIONAL: {
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.RAIOX_CONVENCIONAL: {
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.TOMOGRAFIA: {
-        TipoResultadoExameMedico.DICOM,
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.TOMOGRAFIA: {
+        MedicalExamResultType.DICOM,
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.RESSONANCIA: {
-        TipoResultadoExameMedico.DICOM,
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.RESSONANCIA: {
+        MedicalExamResultType.DICOM,
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.MAMOGRAFIA: {
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.MAMOGRAFIA: {
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.DENSITOMETRIA: {
-        TipoResultadoExameMedico.RELATORIO_PDF,
-        TipoResultadoExameMedico.IMAGEM,
+    MedicalExamMethod.DENSITOMETRIA: {
+        MedicalExamResultType.RELATORIO_PDF,
+        MedicalExamResultType.IMAGEM,
     },
-    MetodoExameMedico.ECOCARDIOGRAMA: {
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
-        TipoResultadoExameMedico.VIDEO,
+    MedicalExamMethod.ECOCARDIOGRAMA: {
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
+        MedicalExamResultType.VIDEO,
     },
-    MetodoExameMedico.ELETROCARDIOGRAMA: {
-        TipoResultadoExameMedico.RELATORIO_PDF,
-        TipoResultadoExameMedico.IMAGEM,
+    MedicalExamMethod.ELETROCARDIOGRAMA: {
+        MedicalExamResultType.RELATORIO_PDF,
+        MedicalExamResultType.IMAGEM,
     },
-    MetodoExameMedico.HOLTER: {
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.HOLTER: {
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.MAPA: {
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.MAPA: {
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.EEG: {
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.EEG: {
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.ENDOSCOPIA: {
-        TipoResultadoExameMedico.VIDEO,
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.ENDOSCOPIA: {
+        MedicalExamResultType.VIDEO,
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.COLONOSCOPIA: {
-        TipoResultadoExameMedico.VIDEO,
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.COLONOSCOPIA: {
+        MedicalExamResultType.VIDEO,
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.ANGIOGRAFIA: {
-        TipoResultadoExameMedico.DICOM,
-        TipoResultadoExameMedico.IMAGEM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.ANGIOGRAFIA: {
+        MedicalExamResultType.DICOM,
+        MedicalExamResultType.IMAGEM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
-    MetodoExameMedico.MEDICINA_NUCLEAR: {
-        TipoResultadoExameMedico.DICOM,
-        TipoResultadoExameMedico.RELATORIO_PDF,
+    MedicalExamMethod.MEDICINA_NUCLEAR: {
+        MedicalExamResultType.DICOM,
+        MedicalExamResultType.RELATORIO_PDF,
     },
 }
 
 
 def allowed_result_types_for_method(method):
     if not method:
-        return set(TipoResultadoExameMedico.values)
+        return set(MedicalExamResultType.values)
     tipos = TIPOS_RESULTADO_POR_METODO_EXAME_MEDICO.get(method)
     if tipos:
         return set(tipos)
-    return set(TipoResultadoExameMedico.values)
+    return set(MedicalExamResultType.values)
 
 
 class MedicalExam(PropagarInquilinoMixin, CoreModel):
@@ -227,7 +227,7 @@ class MedicalExamField(PropagarInquilinoMixin, CoreModel):
         db_column="tipo",
 
         max_length=20,
-        choices=TipoResultadoExameMedico.choices,
+        choices=MedicalExamResultType.choices,
         verbose_name="Tipo de parâmetro/file",
     )
 

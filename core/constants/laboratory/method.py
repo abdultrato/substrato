@@ -57,4 +57,4 @@ class Method(models.TextChoices):
     )
 
 
-Metodo = Method
+__all__ = ["Method"]

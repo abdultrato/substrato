@@ -19,8 +19,6 @@ class MovementOrigin(models.TextChoices):
     AJUSTE = "AJUS", "Ajuste"
 
 
-TipoMovimento = MovementType
-OrigemMovimento = MovementOrigin
 
 
 class InventoryMovement(CoreModel):
@@ -140,9 +138,9 @@ class InventoryMovement(CoreModel):
 
         # valida saldo
         if self.type == MovementType.SAIDA:
-            saldo = self.lot_balance()
+            balance = self.lot_balance()
 
-            if self.quantity > saldo:
+            if self.quantity > balance:
                 raise ValidationError("Estoque insuficiente.")
 
     # =====================================
@@ -150,7 +148,7 @@ class InventoryMovement(CoreModel):
     # =====================================
 
     @property
-    def quantity_assinada(self):
+    def signed_quantity(self):
 
         if self.type == MovementType.SAIDA:
             return -self.quantity
@@ -165,8 +163,8 @@ class InventoryMovement(CoreModel):
         if not self.name and self.lot_id:
             if self.origin == MovementOrigin.VENDA and self.sale_item_id:
                 sale = self.sale_item.sale
-                referencia = sale.number or sale.custom_id
-                self.name = f"Venda {referencia} - Lote {self.lot.lot_number}"
+                reference = sale.number or sale.custom_id
+                self.name = f"Venda {reference} - Lote {self.lot.lot_number}"
             elif self.origin == MovementOrigin.PROCEDIMENTO:
                 self.name = f"Procedimento - Lote {self.lot.lot_number}"
             else:
@@ -179,5 +177,3 @@ class InventoryMovement(CoreModel):
     def __str__(self):
         return f"{self.lot} - {self.type} ({self.quantity})"
 
-
-InventoryMovement.saldo_lot = InventoryMovement.lot_balance

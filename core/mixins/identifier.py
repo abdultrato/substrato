@@ -52,4 +52,3 @@ class IdentifierMixin(models.Model):
 
 
 IdentificadorMixin = IdentifierMixin
-IdentifierMixin.gerar_identifier = IdentifierMixin.generate_identifier

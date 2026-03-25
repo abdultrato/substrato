@@ -7,7 +7,7 @@ from apps.accounting.services.registrar_ledger_entry import executar
 
 @transaction.atomic
 def issue_invoice(invoice):
-    invoice.emitir()
+    invoice.issue()
 
     total = invoice.total
 
@@ -32,5 +32,3 @@ def issue_invoice(invoice):
         idempotency_key=f"invoice-{invoice.id}",
     )
 
-
-emitir_invoice = issue_invoice

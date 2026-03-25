@@ -3,7 +3,7 @@ from datetime import datetime
 
 def get_temporal_partition(value: datetime):
     """
-    Return a year/month partition key.
+    Retorna a chave de partição ano/mês.
     """
     return f"{value.year}_{str(value.month).zfill(2)}"
 
@@ -31,5 +31,8 @@ class TenantDatabaseRouter:
         return None
 
 
-obter_particao_temporal = get_temporal_partition
-name_tabela_particionada = get_partitioned_table_name
+__all__ = [
+    "TenantDatabaseRouter",
+    "get_partitioned_table_name",
+    "get_temporal_partition",
+]

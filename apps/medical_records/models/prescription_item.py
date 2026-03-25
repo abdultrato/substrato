@@ -124,7 +124,7 @@ class PrescriptionItem(NoNameCoreModel):
             try:
                 from apps.pharmacy.models.product import Product
 
-                if self.medication.type != Product.TipoProduto.MEDICAMENTO:
+                if self.medication.type != Product.ProductType.MEDICAMENTO:
                     raise ValidationError({"medication": "Selecione um product do type Medicamento."})
             except Exception:
                 # Fallback: se não houver type/enum, não bloqueia.

@@ -8,4 +8,4 @@ class ResultType(models.TextChoices):
     TEXTO = "TEXTO", "Texto Livre"
 
 
-TipoResultado = ResultType
+__all__ = ["ResultType"]

@@ -15,5 +15,4 @@ def verify_system():
     }
 
 
-verificar_banco = verify_database
-verificar_sistema = verify_system
+__all__ = ["verify_database", "verify_system"]

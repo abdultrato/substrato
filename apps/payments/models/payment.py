@@ -26,8 +26,6 @@ class Payment(CoreModel):
         SEGURO_SAUDE = "SEG", "Seguro de Saúde"
         OUTRO = "OUT", "Outro"
 
-    Metodo = Method
-
     class Status(models.TextChoices):
         PENDENTE = "PEN", "Pendente"
         CONFIRMADO = "CON", "Confirmado"
@@ -211,9 +209,7 @@ class Payment(CoreModel):
 
     def _update_invoice(self, payment=None):
         if self.invoice_id:
-            self.invoice.atualizar_status_payment(payment=payment)
+            self.invoice.update_payment_status(payment=payment)
 
 
-Payment.confirmar = Payment.confirm
 Payment._atualizar_invoice = Payment._update_invoice
-

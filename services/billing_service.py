@@ -11,7 +11,7 @@ from services.tenants.tenant_usage_service import TenantUsageService
 
 class BillingService:
     """
-    Processes tenant overage charges once per billing period.
+    Processa cobranças de excedente do tenant por período de faturamento.
     """
 
     EXTRA_REQUEST_UNIT_PRICE = Decimal("2.00")
@@ -86,9 +86,3 @@ class BillingService:
         today = timezone.now().date()
         return today.strftime("%Y-%m")
 
-
-BillingService.EXCEDENTE_PRECO_UNITARIO = BillingService.EXTRA_REQUEST_UNIT_PRICE
-BillingService.processar_cobranca_mensal = BillingService.process_monthly_charge
-BillingService._processar = BillingService._process_charge
-BillingService._calcular_value_excedente = BillingService._calculate_extra_value
-BillingService._periodo_atual = BillingService._current_period

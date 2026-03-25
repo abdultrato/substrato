@@ -210,11 +210,11 @@ grep "@extend_schema" api/v1/clinico/viewsets.py | wc -l
 
 ### Integration Test 1: Exception Handler Configuration
 
-**File:** `plataforma/settings.py`
+**File:** `platform/settings/base.py`
 
 ```bash
 # Check configuration
-grep "EXCEPTION_HANDLER" plataforma/settings.py
+grep "EXCEPTION_HANDLER" platform/settings/base.py
 # Expected: 'api.v1.exceptions.custom_exception_handler'
 ```
 

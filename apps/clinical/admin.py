@@ -698,7 +698,7 @@ class LabRequestAdmin(CoreAdmin):
 
     def launch_result(self, obj):
 
-        result = obj.obter_result()
+        result = obj.get_result()
 
         if not result:
             return "—"

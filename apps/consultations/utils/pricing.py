@@ -6,15 +6,15 @@ from zoneinfo import ZoneInfo
 from django.apps import apps
 from django.utils import timezone
 
-HORARIO_NORMAL = "NORMAL"
-HORARIO_FORA_EXPEDIENTE = "FORA_EXPEDIENTE"
-HORARIO_FIM_SEMANA = "FIM_SEMANA"
-HORARIO_FERIADO_MANUAL = "FERIADO_MANUAL"
+SCHEDULE_NORMAL = "NORMAL"
+SCHEDULE_AFTER_HOURS = "FORA_EXPEDIENTE"
+SCHEDULE_WEEKEND = "FIM_SEMANA"
+SCHEDULE_MANUAL_HOLIDAY = "FERIADO_MANUAL"
 
 
 def get_tenant_timezone(tenant):
     """
-    Return the tenant ZoneInfo or None to use the default timezone.
+    Retorna a ZoneInfo do tenant ou None para usar o timezone padrão.
     """
     try:
         cfg = getattr(tenant, "configuracao", None)
@@ -26,61 +26,81 @@ def get_tenant_timezone(tenant):
         return None
 
 
-def get_local_datetime(tenant, date_hora):
+def get_local_datetime(tenant, date_time):
+    """
+    Converte a data/hora para o timezone do tenant.
+    """
     tz = get_tenant_timezone(tenant)
-    if not date_hora:
+    if not date_time:
         return None
-    if timezone.is_aware(date_hora):
-        return timezone.localtime(date_hora, tz) if tz else timezone.localtime(date_hora)
-    return timezone.make_aware(date_hora, tz) if tz else timezone.make_aware(date_hora)
+    if timezone.is_aware(date_time):
+        return timezone.localtime(date_time, tz) if tz else timezone.localtime(date_time)
+    return timezone.make_aware(date_time, tz) if tz else timezone.make_aware(date_time)
 
 
-def is_feriado(tenant, date_hora) -> bool:
+def is_holiday(tenant, date_time) -> bool:
+    """
+    Verifica se a data/hora informada cai em feriado cadastrado.
+    """
     tenant_id = getattr(tenant, "id", None)
-    if not tenant_id or not date_hora:
+    if not tenant_id or not date_time:
         return False
 
     tz = get_tenant_timezone(tenant)
-    if timezone.is_aware(date_hora):
-        local_date = timezone.localtime(date_hora, tz).date() if tz else timezone.localtime(date_hora).date()
+    if timezone.is_aware(date_time):
+        local_date = timezone.localtime(date_time, tz).date() if tz else timezone.localtime(date_time).date()
     else:
-        local_date = date_hora.date()
+        local_date = date_time.date()
 
     Holiday = apps.get_model("consultas", "Feriado")
     return Holiday.objects.filter(tenant_id=tenant_id, date=local_date, active=True).exists()
 
 
-def calculate_schedule_type(tenant, date_hora, manual_holiday: bool = False) -> str:
-    dt_local = get_local_datetime(tenant, date_hora)
+def calculate_schedule_type(tenant, date_time, manual_holiday: bool = False) -> str:
+    """
+    Classifica o horário (normal, fora de expediente, fim de semana ou feriado).
+    """
+    dt_local = get_local_datetime(tenant, date_time)
     if not dt_local:
-        return HORARIO_NORMAL
+        return SCHEDULE_NORMAL
 
     if dt_local.weekday() >= 5:
-        return HORARIO_FIM_SEMANA
+        return SCHEDULE_WEEKEND
 
     if dt_local.hour >= 19 or dt_local.hour < 8:
-        return HORARIO_FORA_EXPEDIENTE
+        return SCHEDULE_AFTER_HOURS
 
     if manual_holiday:
-        return HORARIO_FERIADO_MANUAL
+        return SCHEDULE_MANUAL_HOLIDAY
 
-    return HORARIO_NORMAL
+    return SCHEDULE_NORMAL
 
 
-def calcular_price_multiplier(tenant, date_hora, manual_holiday: bool = False) -> Decimal:
-    type = calculate_schedule_type(tenant, date_hora, manual_holiday=manual_holiday)
+def calculate_price_multiplier(tenant, date_time, manual_holiday: bool = False) -> Decimal:
+    """
+    Calcula multiplicador de preço com base em horário e feriados.
+    """
+    schedule_type = calculate_schedule_type(tenant, date_time, manual_holiday=manual_holiday)
 
     # 200% (2x) para fim de semana, fora de expediente ou feriado manual.
-    if type in {HORARIO_FIM_SEMANA, HORARIO_FORA_EXPEDIENTE, HORARIO_FERIADO_MANUAL}:
+    if schedule_type in {SCHEDULE_WEEKEND, SCHEDULE_AFTER_HOURS, SCHEDULE_MANUAL_HOLIDAY}:
         return Decimal("2.00")
 
     # Mantem compatibilidade: feriado cadastrado em tabela tambem dobra.
-    if is_feriado(tenant, date_hora):
+    if is_holiday(tenant, date_time):
         return Decimal("2.00")
 
     return Decimal("1.00")
 
 
-obter_timezone_tenant = get_tenant_timezone
-obter_datetime_local = get_local_datetime
-calcular_schedule_type = calculate_schedule_type
+__all__ = [
+    "SCHEDULE_AFTER_HOURS",
+    "SCHEDULE_MANUAL_HOLIDAY",
+    "SCHEDULE_NORMAL",
+    "SCHEDULE_WEEKEND",
+    "calculate_price_multiplier",
+    "calculate_schedule_type",
+    "get_local_datetime",
+    "get_tenant_timezone",
+    "is_holiday",
+]

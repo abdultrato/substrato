@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
 
-from apps.consultations.utils.pricing import calcular_price_multiplier
+from apps.consultations.utils.pricing import calculate_price_multiplier
 from core.models.base import NoNameCoreModel
 
 
@@ -252,7 +252,7 @@ class InvoiceItem(NoNameCoreModel):
 
         try:
             tenant = getattr(self.invoice, "tenant", None) or getattr(self, "tenant", None)
-            multiplier = calcular_price_multiplier(tenant, date_ref, manual_holiday=False)
+            multiplier = calculate_price_multiplier(tenant, date_ref, manual_holiday=False)
             return (base_price * multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except Exception:
             return base_price

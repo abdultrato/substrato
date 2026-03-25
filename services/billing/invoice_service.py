@@ -4,13 +4,13 @@ from django.db import transaction
 
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
-from domain.billing.pricing import calcular_price_item as calculate_item_price
+from domain.billing.pricing import calculate_item_price
 from services.base import BaseService
 
 
 class InvoiceService(BaseService):
     """
-    Application service for invoice operations.
+    Serviço de aplicação para operações de invoice.
     """
 
     @classmethod
@@ -41,8 +41,8 @@ class InvoiceService(BaseService):
         line_total = calculate_item_price(
             base_price=unit_price,
             quantity=quantity,
-            desconto_percentual=discount_percent,
-            acrescimo_percentual=surcharge_percent,
+            discount_percent=discount_percent,
+            surcharge_percent=surcharge_percent,
         )
         calculated_unit_price = (
             (line_total / quantity).quantize(Decimal("0.01")) if quantity else Decimal("0.00")
@@ -92,11 +92,3 @@ class InvoiceService(BaseService):
     def _refresh_totals(invoice: Invoice):
         invoice.persistir_totais()
 
-
-FaturaService = InvoiceService
-InvoiceService.criar = InvoiceService.create
-InvoiceService.adicionar_item = InvoiceService.add_item
-InvoiceService.emitir = InvoiceService.issue
-InvoiceService.registrar_payment = InvoiceService.register_payment
-InvoiceService.anular = InvoiceService.cancel
-InvoiceService._recalcular_totais = InvoiceService._refresh_totals

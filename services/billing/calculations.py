@@ -1,11 +1,11 @@
 from decimal import Decimal as d
 
-IVA_PERCENT = d("0.16")  # ajustar conforme legislação vigente
+VAT_PERCENT = d("0.16")  # ajustar conforme legislação vigente
 
 
 def calculate_totals(invoice):
     """
-    Recalculates invoice totals, VAT, and insurer coverage values.
+    Recalcula totais da invoice, IVA e valores de cobertura da seguradora.
     """
 
     subtotal = d("0.00")
@@ -18,7 +18,7 @@ def calculate_totals(invoice):
         subtotal += line_total
 
         if getattr(item, "applies_vat", not getattr(item, "isento_iva", False)):
-            vat_amount = (line_total * IVA_PERCENT).quantize(d("0.01"))
+            vat_amount = (line_total * VAT_PERCENT).quantize(d("0.01"))
             vat_total += vat_amount
 
     total = (subtotal - vat_total).quantize(d("0.01"))
@@ -59,4 +59,4 @@ def calculate_totals(invoice):
     )
 
 
-calcular_totais = calculate_totals
+__all__ = ["calculate_totals", "VAT_PERCENT"]

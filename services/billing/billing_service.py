@@ -1,6 +1,6 @@
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
-from domain.billing.calculadora_precos import calcular_subtotal as calculate_subtotal
+from domain.billing.price_calculator import calculate_subtotal
 
 
 class InvoiceBuilderService:
@@ -47,8 +47,3 @@ class InvoiceBuilderService:
 
         return invoice
 
-
-ServicoFaturamento = InvoiceBuilderService
-InvoiceBuilderService.criar_invoice = InvoiceBuilderService.create_invoice
-InvoiceBuilderService.adicionar_item = InvoiceBuilderService.add_item
-InvoiceBuilderService.gerar_invoice = InvoiceBuilderService.generate_invoice

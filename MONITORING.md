@@ -30,7 +30,7 @@ pip install django-prometheus
 ### Configurar Django
 
 ```python
-# plataforma/settings/base.py
+# platform/settings/base.py
 
 INSTALLED_APPS += ['django_prometheus']
 
@@ -80,7 +80,7 @@ pip install sentry-sdk
 ### Configurar Django
 
 ```python
-# plataforma/settings/production.py
+# platform/settings/production.py
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -129,7 +129,7 @@ Acessar: https://sentry.io/organizations/seu-org/
 ### Estrutura de Logs
 
 ```python
-# Django configured em plataforma/settings/logging.py
+# Django configured em platform/settings/logging.py
 
 LOGGING = {
     'version': 1,
@@ -297,35 +297,50 @@ receivers:
 ### Liveness & Readiness Probes
 
 ```python
-# infrastrutura/health.py
+# platform/urls.py
 
 from django.http import JsonResponse
-from django.core.cache import cache
-from django.db import connection
+from django.views.decorators.http import require_GET
 
+@require_GET
 def health_live(request):
-    """Liveness probe - servidor ainda está rodando?"""
-    return JsonResponse({'status': 'alive'})
+    # Liveness probe: processo respondeu (sem depender de serviços externos).
+    return JsonResponse({"status": "ok"})
 
+@require_GET
 def health_ready(request):
-    """Readiness probe - servidor está pronto para servir requisições?"""
+    # Readiness probe: depende de DB e Redis estarem acessíveis.
+    status_code = 200
+    checks = {"database": False, "redis": False}
+
     try:
-        # Testar banco de dados
+        from django.db import connection
+
         connection.ensure_connection()
-        
-        # Testar cache
-        cache.set('health_check', 'ok', 1)
-        cache.get('health_check')
-        
-        return JsonResponse({'status': 'ready'})
-    except Exception as e:
-        return JsonResponse({'status': 'not_ready', 'error': str(e)}, status=503)
+        checks["database"] = True
+    except Exception:
+        status_code = 503
+
+    try:
+        from django.conf import settings
+        import redis
+
+        r = redis.from_url(getattr(settings, "REDIS_URL", "redis://localhost:6379/0"))
+        r.ping()
+        checks["redis"] = True
+    except Exception:
+        status_code = 503
+
+    return JsonResponse(
+        {"status": "ok" if status_code == 200 else "error", **checks},
+        status=status_code,
+    )
 ```
 
 ### URLs
 
 ```python
-# plataforma/urls.py
+# platform/urls.py
 path('health/live', health_live),
 path('health/ready', health_ready),
 ```

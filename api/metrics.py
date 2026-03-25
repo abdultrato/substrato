@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from observability.metricas import obter_metricas
-from observability.saude_sistema import verificar_sistema
+from observability.metrics import get_runtime_metrics
+from observability.system_health import verify_system
 
 
 class BaseSystemAPIView(APIView):
@@ -45,7 +45,7 @@ class SystemHealthAPI(BaseSystemAPIView):
 
     def get(self, request):
         try:
-            system_result = verificar_sistema()
+            system_result = verify_system()
 
             http_status = (
                 status.HTTP_200_OK
@@ -73,7 +73,7 @@ class MetricsAPI(BaseSystemAPIView):
             metrics_date = cache.get(self.CACHE_KEY)
 
             if not metrics_date:
-                metrics_date = obter_metricas()
+                metrics_date = get_runtime_metrics()
                 cache.set(self.CACHE_KEY, metrics_date, self.CACHE_TIMEOUT)
 
             return self.success(metrics_date)

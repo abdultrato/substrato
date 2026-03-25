@@ -16,4 +16,4 @@ class DocumentType(models.TextChoices):
     OUTRO = "OUT", "Outro"
 
 
-TipoDocumento = DocumentType
+__all__ = ["DocumentType"]

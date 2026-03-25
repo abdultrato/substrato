@@ -16,4 +16,4 @@ class DefaultUnit(models.TextChoices):
     FL = "fl", "fl"
 
 
-UnidadePadrao = DefaultUnit
+__all__ = ["DefaultUnit"]

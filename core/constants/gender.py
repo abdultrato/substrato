@@ -1,3 +1,13 @@
-from .genero import Genero
+from django.db import models
 
-__all__ = ["Genero"]
+
+class Gender(models.TextChoices):
+    """
+    Enumeração de gênero.
+    """
+
+    MALE = "Masculino", "Masculino"
+    FEMALE = "Femenino", "Femenino"
+
+
+__all__ = ["Gender"]

@@ -25,4 +25,4 @@ class MedicalExamMethod(models.TextChoices):
     OUTRO = "OUT", "Outro"
 
 
-MetodoExameMedico = MedicalExamMethod
+__all__ = ["MedicalExamMethod"]

@@ -127,7 +127,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         )
 
         # Reuse the model pricing rules (holiday + percentage uplift).
-        consultation._sincronizar_specialty_e_price(None)
+        consultation._sync_specialty_and_price(None)
 
         try:
             currency = getattr(getattr(tenant, "configuracao", None), "currency", "MZN")
@@ -140,7 +140,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 "specialty_name": specialty.name,
                 "base_price": str(specialty.base_price or Decimal("0.00")),
                 "manual_holiday": bool(manual_holiday),
-                "eh_feriado": bool(consultation._is_feriado()),
+                "is_holiday": bool(consultation._is_holiday()),
                 "schedule_type": consultation.schedule_type,
                 "price_multiplier": str(consultation.price_multiplier or Decimal("1.00")),
                 "price_final": str(consultation.price or Decimal("0.00")),
@@ -224,7 +224,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         invoice.sincronizar_itens_da_origin()
 
         if should_issue:
-            invoice.emitir()
+            invoice.issue()
 
         return Response(
             {

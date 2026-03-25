@@ -129,10 +129,10 @@ def create_invoice_for_checkin(
     *,
     checkin,
     issue=True,
-    emitir=None,
+    **legacy_kwargs,
 ):
-    if emitir is not None:
-        issue = emitir
+    if legacy_kwargs.get("emitir") is not None:
+        issue = legacy_kwargs.get("emitir")
 
     if checkin.invoice_id:
         raise ValidationError("Check-in já possui invoice vinculada.")
@@ -151,7 +151,7 @@ def create_invoice_for_checkin(
     invoice.sincronizar_itens_da_origin()
 
     if issue:
-        invoice.emitir()
+        invoice.issue()
 
     checkin.register_invoice(invoice)
     return invoice
@@ -169,10 +169,10 @@ def register_payment_for_checkin(
     authorization_number="",
     insurance_date=None,
     confirm=True,
-    confirmar=None,
+    **legacy_kwargs,
 ):
-    if confirmar is not None:
-        confirm = confirmar
+    if legacy_kwargs.get("confirmar") is not None:
+        confirm = legacy_kwargs.get("confirmar")
 
     if not checkin.invoice_id:
         raise ValidationError("Check-in não possui invoice vinculada.")
@@ -478,9 +478,3 @@ def execute_full_flow(
 
 _quantizar_value = _quantize_value
 _resolver_patient = _resolve_patient
-abrir_checkin = open_checkin
-criar_request_para_checkin = create_request_for_checkin
-criar_invoice_para_checkin = create_invoice_for_checkin
-registrar_payment_para_checkin = register_payment_for_checkin
-obter_resumo_atendimento = get_care_summary
-executar_fluxo_completo = execute_full_flow

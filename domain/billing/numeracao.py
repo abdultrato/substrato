@@ -3,7 +3,7 @@ from django.utils import timezone
 
 def generate_invoice_number(invoice):
     """
-    Generates a readable sequential invoice number.
+    Gera um número sequencial legível para a invoice.
 
     Formato sugerido:
     FAT-ANO-MES-SEQUENCIAL
@@ -21,7 +21,7 @@ def generate_invoice_number(invoice):
 
 def generate_receipt_number(receipt):
     """
-    Generates a readable receipt number.
+    Gera um número legível para o recibo.
     """
 
     current_date = timezone.now()
@@ -34,5 +34,4 @@ def generate_receipt_number(receipt):
     return f"REC-{year}{month}-{sequence}"
 
 
-gerar_number_invoice = generate_invoice_number
-gerar_number_recibo = generate_receipt_number
+__all__ = ["generate_invoice_number", "generate_receipt_number"]

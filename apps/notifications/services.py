@@ -240,6 +240,5 @@ class NotificationService:
 ServicoNotificacao = NotificationService
 CANAIS = CHANNELS
 NotificationService._channel_active = NotificationService._legacy_active_channel
-NotificationService._obter_existente = NotificationService._legacy_get_existing
 NotificationService.enviar = NotificationService._legacy_send
 NotificationService.enviar_para_patient = NotificationService._legacy_send_to_patient

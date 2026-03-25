@@ -46,7 +46,7 @@ class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         emit = (request.data or {}).get("emitir", True)
         if emit:
-            invoice.emitir()
+            invoice.issue()
 
         return Response(
             {

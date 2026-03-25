@@ -5,7 +5,7 @@ from django.db.models import (
     Q,
 )
 
-from core.constants.gender import Genero
+from core.constants.gender import Gender
 from core.models.base import CoreModel
 
 from .lab_exam_field import LabExamField
@@ -39,7 +39,7 @@ class ClinicalReference(CoreModel):
         db_column="sexo",
 
         max_length=10,
-        choices=Genero.choices,
+        choices=Gender.choices,
         null=True,
         blank=True,
         help_text="Se vazio, aplica-se a ambos os sexos.",

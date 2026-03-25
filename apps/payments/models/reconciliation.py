@@ -40,5 +40,3 @@ class Reconciliation(models.Model):
     def __str__(self) -> str:
         return f"{self.transaction_id} - {'ok' if self.confirmed else 'pendente'}"
 
-
-Reconciliation.confirmar = Reconciliation.confirm

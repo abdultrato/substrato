@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.geography.country_service import listar_paises_iso
+from core.constants.geography.country_service import list_iso_countries
 
 
 class CountryField(models.CharField):
@@ -11,10 +11,8 @@ class CountryField(models.CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("max_length", 2)
-        kwargs.setdefault("choices", listar_paises_iso())
+        kwargs.setdefault("choices", list_iso_countries())
         kwargs.setdefault("default", "MZ")
         super().__init__(*args, **kwargs)
-
-PaisField = CountryField
 
 

@@ -348,7 +348,6 @@ class LabRequest(NoNameCoreModel):
     _verificar_status_terminal = _verify_terminal_state
     adicionar_exam = add_exam
     adicionar_medical_exam = add_medical_exam
-    obter_result = get_result
     criar_result = create_result
     exams_medicos = medical_exams
     atualizar_clinical_status = update_clinical_status

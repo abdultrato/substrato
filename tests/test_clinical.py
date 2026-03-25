@@ -12,10 +12,10 @@ from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.result_type import TipoResultado
-from core.constants.laboratory.sector import Setor
-from core.constants.laboratory.units import UnidadePadrao
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.result_type import ResultType
+from core.constants.laboratory.sector import Sector
+from core.constants.laboratory.units import DefaultUnit
 
 
 def _tenant():
@@ -37,8 +37,8 @@ def _exam(tenant):
         tenant=tenant,
         name="Hemograma",
         price=Decimal("15.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
         turnaround_hours=4,
     )
 
@@ -48,8 +48,8 @@ def _campo(exam):
         tenant=exam.tenant,
         exam=exam,
         name="Hemoglobina",
-        type=TipoResultado.NUMERICO,
-        unit=UnidadePadrao.G_DL,
+        type=ResultType.NUMERICO,
+        unit=DefaultUnit.G_DL,
     )
 
 
@@ -86,16 +86,10 @@ def test_exam_rejects_zero_price():
         tenant=tenant,
         name="Exame Zero",
         price=Decimal("0.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
         turnaround_hours=1,
     )
     with pytest.raises(DjangoValidationError):
         exam.full_clean()
 
-
-_patient = _patient
-_exam = _exam
-test_patient_idade_calculo = test_patient_age_calculation
-test_request_cria_result_e_itens = test_request_creates_result_and_items
-test_exam_validacao_price_zero = test_exam_rejects_zero_price

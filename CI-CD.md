@@ -241,7 +241,7 @@ docker logs
 **Solução**:
 ```bash
 # Rodar com mesma config da CI
-DJANGO_SETTINGS_MODULE=plataforma.settings.development \
+DJANGO_SETTINGS_MODULE=platform.settings.development \
 DB_ENGINE=postgres pytest
 ```
 

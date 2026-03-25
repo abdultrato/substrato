@@ -24,7 +24,7 @@ class TenantLimitMiddleware:
             TenantUsageService.increment_request(tenant)
             return self.get_response(request)
 
-        assinatura = tenant.obter_assinatura_active()
+        assinatura = tenant.get_active_subscription()
 
         if not assinatura:
             return JsonResponse(

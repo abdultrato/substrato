@@ -18,8 +18,8 @@ from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.sector import Setor
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.sector import Sector
 
 
 def _tenant():
@@ -40,8 +40,8 @@ def _exam(tenant):
         tenant=tenant,
         name="Glicose",
         price=Decimal("20.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.BIOQUIMICA,
+        method=Method.ENZIMATICO,
+        sector=Sector.BIOQUIMICA,
     )
 
 
@@ -92,7 +92,7 @@ def test_payment_confirm_generates_receipt():
 
     payment.confirm()
     invoice.refresh_from_db()
-    invoice.gerar_recibo_automatico(payment)
+    invoice.generate_automatic_receipt(payment)
 
     invoice.refresh_from_db()
     recibo = Receipt.objects.filter(payment=payment).first()

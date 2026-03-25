@@ -7,4 +7,4 @@ class ProductType(models.TextChoices):
     OUTRO = "OUT", "Outro"
 
 
-TipoProduto = ProductType
+__all__ = ["ProductType"]

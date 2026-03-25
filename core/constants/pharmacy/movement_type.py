@@ -7,4 +7,4 @@ class MovementType(models.TextChoices):
     AJUSTE = "AJU", "Ajuste"
 
 
-TipoMovimento = MovementType
+__all__ = ["MovementType"]

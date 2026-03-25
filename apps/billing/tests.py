@@ -22,10 +22,10 @@ from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
 from apps.tenants.models.tenant import Tenant
-from core.constants.laboratory.method import Metodo
-from core.constants.laboratory.sector import Setor
-from core.constants.medical_exam.medical_exam_method import MetodoExameMedico
-from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.sector import Sector
+from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
+from core.constants.medical_exam.medical_exam_sector import MedicalExamSector
 
 
 def _tenant():
@@ -46,8 +46,8 @@ def _exam(tenant):
         tenant=tenant,
         name="Hemograma",
         price=Decimal("30.00"),
-        method=Metodo.ENZIMATICO,
-        sector=Setor.HEMATOLOGIA,
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
     )
 
 
@@ -56,8 +56,8 @@ def _medical_exam(tenant):
         tenant=tenant,
         name="Ecografia abdominal",
         price=Decimal("150.00"),
-        method=MetodoExameMedico.ULTRASSONOGRAFIA,
-        sector=SetorExameMedico.RADIOLOGIA,
+        method=MedicalExamMethod.ULTRASSONOGRAFIA,
+        sector=MedicalExamSector.RADIOLOGIA,
     )
 
 
@@ -188,7 +188,7 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
     product = Product.objects.create(
         tenant=tenant,
         name="Soro",
-        type=Product.TipoProduto.MATERIAL,
+        type=Product.ProductType.MATERIAL,
         sale_price=Decimal("5.00"),
         category=cat,
     )
@@ -221,7 +221,7 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
     invoice.sincronizar_itens_da_origin()
 
     with pytest.raises(ValidationError) as exc:
-        invoice.emitir()
+        invoice.issue()
 
     assert "Estoque insuficiente" in str(exc.value)
     assert "itens" in getattr(exc.value, "message_dict", {})
@@ -234,7 +234,7 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
         initial_quantity=10,
     )
 
-    invoice.emitir()
+    invoice.issue()
     invoice.refresh_from_db()
     assert invoice.status == Invoice.Estado.EMITIDA
 

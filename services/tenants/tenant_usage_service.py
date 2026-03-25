@@ -61,6 +61,5 @@ class TenantUsageService:
 
 TenantUsageService._key = TenantUsageService._cache_key
 TenantUsageService.incrementar_request = TenantUsageService.increment_request
-TenantUsageService.obter_requisicoes = TenantUsageService.get_requests
 TenantUsageService.resetar_requisicoes = TenantUsageService.reset_requests
 TenantUsageService.percentual_uso = TenantUsageService.usage_percentage

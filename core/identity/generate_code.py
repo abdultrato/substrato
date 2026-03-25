@@ -45,4 +45,4 @@ def generate_code(prefix: str, model, attempts: int = 5) -> str:
     raise RuntimeError("Failed to generate a unique code.")
 
 
-gerar_code = generate_code
+__all__ = ["generate_code"]

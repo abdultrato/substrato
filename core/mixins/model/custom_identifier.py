@@ -66,4 +66,3 @@ class CustomIdentifierMixin(models.Model):
 
 
 IdentificadorMixin = CustomIdentifierMixin
-CustomIdentifierMixin.gerar_identifier = CustomIdentifierMixin.generate_identifier

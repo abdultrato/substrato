@@ -1,6 +1,6 @@
 from django.db import models
 
-from core.constants.medical_exam.medical_exam_sector import SetorExameMedico
+from core.constants.medical_exam.medical_exam_sector import MedicalExamSector
 
 
 class MedicalExamSectorField(models.CharField):
@@ -10,16 +10,14 @@ class MedicalExamSectorField(models.CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("max_length", 40)
-        kwargs.setdefault("choices", SetorExameMedico.choices)
+        kwargs.setdefault("choices", MedicalExamSector.choices)
         kwargs.setdefault("blank", True)
         kwargs.setdefault("null", True)
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
-        kwargs["choices"] = SetorExameMedico.choices
+        kwargs["choices"] = MedicalExamSector.choices
         return name, path, args, kwargs
-
-SetorExameMedicoField = MedicalExamSectorField
 
 

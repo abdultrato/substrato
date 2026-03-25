@@ -15,5 +15,4 @@ class InsurerIntegrationService:
         return getattr(mod, cls)()
 
 
-ServicoIntegracaoSeguradora = InsurerIntegrationService
-InsurerIntegrationService.obter_adapter = InsurerIntegrationService.get_adapter
+__all__ = ["InsurerIntegrationService"]

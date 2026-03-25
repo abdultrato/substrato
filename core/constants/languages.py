@@ -17,4 +17,4 @@ class Language(models.TextChoices):
     SW = "sw", "Suaíli"
 
 
-Idioma = Language
+__all__ = ["Language"]

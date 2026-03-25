@@ -20,7 +20,7 @@ from apps.clinical.models.medical_result_file import (
 )
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
-from core.constants.provenance import Proveniencia
+from core.constants.provenance import Provenance
 
 CORE_READ_ONLY_FIELDS = [
     "id",
@@ -306,7 +306,7 @@ class PatientSerializer(serializers.ModelSerializer):
         empresa = (
             date.get("origin_company") if "origin_company" in date else getattr(self.instance, "origin_company", None)
         )
-        if provenance == Proveniencia.MEDICINA_OCUPACIONAL and not empresa:
+        if provenance == Provenance.MEDICINA_OCUPACIONAL and not empresa:
             raise serializers.ValidationError(
                 {"origin_company": "Empresa é obrigatória quando a proveniência é Medicina Ocupacional."}
             )

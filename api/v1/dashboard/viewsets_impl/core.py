@@ -200,7 +200,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             )["total"]
         )
 
-        value_pago_confirmed = qs_pagamentos.filter(
+        confirmed_paid_value = qs_pagamentos.filter(
             status=Payment.Status.CONFIRMADO,
             paid_at__isnull=False,
             paid_at__gte=inicio,
@@ -285,7 +285,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             deleted=False,
             created_at__gte=inicio,
             created_at__lte=fim,
-            product__type=Product.TipoProduto.MEDICAMENTO,
+            product__type=Product.ProductType.MEDICAMENTO,
         )
         if tenant is not None:
             base_meds = base_meds.filter(tenant=tenant)
@@ -323,7 +323,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
                 "Faturas (no período)": faturas_total,
                 "Faturas pagas (no período)": faturas_pagas,
                 "Valor faturado (no período)": value_faturado,
-                "Valor pago confirmed (no período)": value_pago_confirmed,
+                "Valor pago confirmado (no período)": confirmed_paid_value,
                 "Internamentos ativos (agora)": internamentos_ativos,
                 "Camas ocupadas (agora)": camas_ocupadas,
             },

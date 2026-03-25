@@ -58,7 +58,7 @@ from apps.payments.models.payment_history import PaymentHistory
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
-from apps.pharmacy.models.inventory_movement import InventoryMovement, OrigemMovimento, TipoMovimento
+from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
@@ -71,7 +71,7 @@ from apps.tenants.models.subscription import TenantSubscription
 from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.tenant_usage import TenantUsage
-from core.constants.clinical_event_type import TipoEventoClinico
+from core.constants.clinical_event_type import ClinicalEventType
 from infrastructure.context.tenant import reset_tenant, set_tenant
 
 
@@ -300,7 +300,7 @@ def ensure_product_categories(n: int, tenants: list[Tenant], faker: Faker) -> li
 def ensure_produtos(
     n: int, tenants: list[Tenant], categorias: list[ProductCategory], faker: Faker
 ) -> list[Product]:
-    tipos = [c[0] for c in Product.TipoProduto.choices]
+    tipos = [c[0] for c in Product.ProductType.choices]
 
     while _count(Product) < n:
         idx = _count(Product) + 1
@@ -392,8 +392,8 @@ def ensure_inventory_movements(n: int, lotes: list[Lot]) -> None:
             InventoryMovement.objects.create(
                 tenant=lot.tenant,
                 lot=lot,
-                type=TipoMovimento.ENTRADA,
-                origin=OrigemMovimento.AJUSTE,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.AJUSTE,
                 quantity=5,
             )
 
@@ -623,7 +623,7 @@ def ensure_clinical_events(n: int, pacientes: list[Patient], requisicoes: list[L
                 tenant=req.tenant,
                 patient=patient,
                 request=req,
-                event_type=TipoEventoClinico.REQUISICAO_CRIADA,
+                event_type=ClinicalEventType.REQUISICAO_CRIADA,
                 description=f"Evento clínico seed para {patient.name}.",
                 name=f"Evento {idx}",
             )
@@ -857,7 +857,7 @@ def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
             # Emite e confirma alguns pagamentos para gerar recibos automaticamente.
             if idx % 2 == 0 and invoice.status == invoice.Estado.RASCUNHO:
                 with suppress(Exception):
-                    invoice.emitir()
+                    invoice.issue()
             if idx % 3 == 0 and payment.status == payment.Status.PENDENTE:
                 with suppress(Exception):
                     payment.confirm()
@@ -1301,4 +1301,3 @@ class Command(BaseCommand):
         ensure_notifications(n, pacientes, faker)
 
         report(n)
-

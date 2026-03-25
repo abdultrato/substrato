@@ -1,5 +1,5 @@
-from .storage import calcular_uso_local
+from .storage import calculate_local_usage
 
 __all__ = [
-    "calcular_uso_local",
+    "calculate_local_usage",
 ]

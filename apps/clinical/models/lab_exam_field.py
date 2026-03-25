@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from django.db import models
 
-from core.constants.laboratory.result_type import TipoResultado
-from core.constants.laboratory.units import UnidadePadrao
+from core.constants.laboratory.result_type import ResultType
+from core.constants.laboratory.units import DefaultUnit
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import CoreModel
 
@@ -28,7 +28,7 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
         db_column="tipo",
 
         max_length=20,
-        choices=TipoResultado.choices,
+        choices=ResultType.choices,
         verbose_name="Tipo de parâmetro",
     )
 
@@ -37,8 +37,8 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
         db_column="unidade",
 
         max_length=30,
-        choices=UnidadePadrao.choices,
-        default=UnidadePadrao.P_UL,
+        choices=DefaultUnit.choices,
+        default=DefaultUnit.P_UL,
         verbose_name="Unidade de medida",
     )
 
@@ -156,6 +156,3 @@ class LabExamField(PropagarInquilinoMixin, CoreModel):
             return "↑"
 
         return "N"
-
-    referencia = reference
-    interpretar_result = interpret_result

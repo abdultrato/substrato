@@ -59,7 +59,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
     def issue(self, request, pk=None):
         invoice = self.get_object()
-        invoice.emitir()
+        invoice.issue()
         return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
@@ -74,7 +74,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                     f"Paciente: {getattr(invoice.patient, 'name', '-')}",
                     f"Total com IVA: {getattr(invoice, 'total', 0):.2f}",
                 ]
-                invoice.registrar_historico("CANCELAMENTO", "Fatura cancelada", linhas=history_lines)
+                invoice.register_history("CANCELAMENTO", "Fatura cancelada", linhas=history_lines)
             except Exception:
                 pass
         return Response(self.get_serializer(invoice).data)

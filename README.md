@@ -28,21 +28,21 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 ---
 
 ## 2) Principais Domínios e Funcionalidades
-- **Identidade** (`aplicativos/identidade`): usuários com vínculo obrigatório a inquilino; permissões e auditoria.
-- **Inquilinos** (`aplicativos/inquilinos`): planos, assinaturas, flags de feature e métricas de uso.
-- **Clínico** (`aplicativos/clinico`): pacientes, exames, requisições, resultados.
-- **Prontuário (Cardex)** (`aplicativos/prontuario`): registros clínicos, sintomas/diagnóstico e prescrição estruturada (itens).
-- **Maternidade** (`aplicativos/maternidade`): acompanhamento de gestação (MVP) com campos adicionais (berçário, cama, partos, cesarianas).
-- **Enfermagem** (`aplicativos/enfermagem`): procedimentos, materiais, sinais vitais e evolução; integração com faturamento.
-- **Enfermaria** (`aplicativos/enfermagem`): gestão de enfermaria/camas/internamentos + dashboard (ocupação e próximas medicações).
-- **Farmácia** (`aplicativos/farmacia`): produtos, lotes, estoque, vendas.
-- **Faturamento** (`aplicativos/faturamento`): faturas multi‑origem, itens (exame, farmácia, enfermagem, ajustes), estados (rascunho, emitida, paga).
-- **Pagamentos** (`aplicativos/pagamentos`): pagamentos, transações, recibos automáticos (1 por fatura) e PDF do recibo.
-- **Contabilidade** (`aplicativos/contabilidade`): contas, lançamentos, movimentos (débito/crédito), conciliação.
-- **Recepção** (`aplicativos/recepcao`): fluxo check‑in → requisição → fatura → pagamento (testado end‑to‑end).
-- **Seguradora** (`aplicativos/seguradora`): seguradoras, planos, autorizações de procedimento.
-- **Notificações** (`aplicativos/notificacoes`): templates, log de envio, canais (e‑mail/SMS/WhatsApp) com idempotência por referência.
-- **Entidades externas** (`aplicativos/entidades`): empresas para medicina ocupacional e requisições/terceirizações.
+- **Identidade** (`apps/identity`): usuários com vínculo obrigatório a inquilino; permissões e auditoria.
+- **Inquilinos** (`apps/tenants`): planos, assinaturas, flags de feature e métricas de uso.
+- **Clínico** (`apps/clinical`): pacientes, exames, requisições, resultados.
+- **Prontuário (Cardex)** (`apps/medical_records`): registros clínicos, sintomas/diagnóstico e prescrição estruturada (itens).
+- **Maternidade** (`apps/maternity`): acompanhamento de gestação (MVP) com campos adicionais (berçário, cama, partos, cesarianas).
+- **Enfermagem** (`apps/nursing`): procedimentos, materiais, sinais vitais e evolução; integração com faturamento.
+- **Enfermaria** (`apps/nursing`): gestão de enfermaria/camas/internamentos + dashboard (ocupação e próximas medicações).
+- **Farmácia** (`apps/pharmacy`): produtos, lotes, estoque, vendas.
+- **Faturamento** (`apps/billing`): faturas multi‑origem, itens (exame, farmácia, enfermagem, ajustes), estados (rascunho, emitida, paga).
+- **Pagamentos** (`apps/payments`): pagamentos, transações, recibos automáticos (1 por fatura) e PDF do recibo.
+- **Contabilidade** (`apps/accounting`): contas, lançamentos, movimentos (débito/crédito), conciliação.
+- **Recepção** (`apps/reception`): fluxo check‑in → requisição → fatura → pagamento (testado end‑to‑end).
+- **Seguradora** (`apps/insurer`): seguradoras, planos, autorizações de procedimento.
+- **Notificações** (`apps/notifications`): templates, log de envio, canais (e‑mail/SMS/WhatsApp) com idempotência por referência.
+- **Entidades externas** (`apps/external_entities`): empresas para medicina ocupacional e requisições/terceirizações.
 - **Dashboard/Estatísticas** (`api/v1/dashboard` + frontend): KPIs, gráficos e exportação de relatórios (PDF/CSV/Word).
 
 ---
@@ -51,13 +51,13 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 ```
 Cliente Web (Next.js) ──────► API DRF (Django)
                                 │
-                                ├─ Aplicação (aplicacao/) – orquestra casos de uso
+                                ├─ Aplicação (application/) – orquestra casos de uso
                                 │
-                                ├─ Domínio (dominio/) – regras puras, eventos
+                                ├─ Domínio (domain/) – regras puras, eventos
                                 │
-                                ├─ Infra (infrastrutura/) – ORM, cache, middlewares
+                                ├─ Infra (infrastructure/) – ORM, cache, middlewares
                                 │
-                                ├─ Integrações (integracoes/) – e-mail, SMS, WhatsApp, pagamentos
+                                ├─ Integrações (integrations/) – e-mail, SMS, WhatsApp, pagamentos
                                 │
                                 └─ Tarefas (Celery) – filas assíncronas (redis)
 
@@ -190,7 +190,7 @@ docker compose -f docker-compose.prod.yml up -d traefik backend frontend celery 
 ### Backend
 ```bash
 pytest
-pytest aplicativos/notificacoes/tests.py    # exemplo por app
+pytest apps/notifications/tests.py    # exemplo por app
 ```
 Cobertura atual: suíte completa de 46 testes cobre fluxos de clínica, recepção→faturamento→pagamento, contabilidade, enfermagem, farmácia, seguradora, notificações e inquilinos.
 
@@ -211,7 +211,7 @@ npm test
 - Frontend: TypeScript estrito; formulários auto‑tipados a partir do OpenAPI.
 - Convenções:
   - Regras de domínio fora de `api/`.
-  - Adapters externos isolados em `integracoes/`.
+  - Adapters externos isolados em `integrations/`.
   - Tasks Celery não contêm regra de domínio, apenas orquestração.
 
 ---
@@ -228,7 +228,7 @@ npm test
 ---
 
 ## 10) Referências Rápidas
-- **Apps principais:** `aplicativos/` (clinico, prontuario, maternidade, enfermagem, farmacia, faturamento, pagamentos, contabilidade, consultas, recepcao, entidades, seguradora, notificacoes, inquilinos, identidade).
+- **Apps principais:** `apps/` (clinical, medical_records, maternity, nursing, pharmacy, billing, payments, accounting, consultations, reception, external_entities, insurer, notifications, tenants, identity).
 - **OpenAPI UI:** `http://localhost:8000/api/docs/` e `http://localhost:8000/api/redoc/`.
 - **Schema para o frontend:** `python generate_schema.py` (gera `frontend-next/schema.json`).
 - **Documentos:** `API-DOCS.md`, `DOCKER-QUICK-START.md`, `CI-CD.md`, `MONITORING.md`, `PROXIMOS_PASSOS.md`.
@@ -247,4 +247,3 @@ npm test
 - Habilitar métricas (Prometheus/Grafana já previsto no compose).
 - SSL end‑to‑end com Traefik e DNS configurado.
 - Backups automatizados do Postgres e rotação de logs.
-

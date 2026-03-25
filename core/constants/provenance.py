@@ -17,4 +17,4 @@ class Provenance(models.TextChoices):
     OUTRO = "Outro", "Outro"
 
 
-Proveniencia = Provenance
+__all__ = ["Provenance"]

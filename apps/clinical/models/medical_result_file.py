@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from PIL import Image
 
-from core.constants.medical_exam.medical_exam_result_type import TipoResultadoExameMedico
+from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
 from core.mixins.tenant_propagation import PropagarInquilinoMixin
 from core.models.base import NoNameCoreModel
 
@@ -25,10 +25,10 @@ def _medical_result_upload_to(instance, filename):
 
 
 EXTENSOES_POR_TIPO = {
-    TipoResultadoExameMedico.RELATORIO_PDF: {"pdf"},
-    TipoResultadoExameMedico.IMAGEM: {"jpg", "jpeg", "png", "webp", "tif", "tiff", "bmp", "gif"},
-    TipoResultadoExameMedico.DICOM: {"dcm", "dicom"},
-    TipoResultadoExameMedico.VIDEO: {"mp4", "mov", "avi", "mkv", "webm"},
+    MedicalExamResultType.RELATORIO_PDF: {"pdf"},
+    MedicalExamResultType.IMAGEM: {"jpg", "jpeg", "png", "webp", "tif", "tiff", "bmp", "gif"},
+    MedicalExamResultType.DICOM: {"dcm", "dicom"},
+    MedicalExamResultType.VIDEO: {"mp4", "mov", "avi", "mkv", "webm"},
 }
 
 
@@ -87,9 +87,9 @@ def validate_medical_file_for_type(file, type):
             exts_fmt = ", ".join(sorted(exts))
             ext_fmt = ext or "desconhecida"
             raise ValidationError(f"Extensão '{ext_fmt}' inválida. Permitidas: {exts_fmt}.")
-    if type == TipoResultadoExameMedico.IMAGEM:
+    if type == MedicalExamResultType.IMAGEM:
         _validate_image(file)
-    if type == TipoResultadoExameMedico.RELATORIO_PDF:
+    if type == MedicalExamResultType.RELATORIO_PDF:
         _validate_pdf(file)
 
 
@@ -130,8 +130,8 @@ class MedicalResultFile(PropagarInquilinoMixin, NoNameCoreModel):
         db_column="tipo",
 
         max_length=20,
-        choices=TipoResultadoExameMedico.choices,
-        default=TipoResultadoExameMedico.IMAGEM,
+        choices=MedicalExamResultType.choices,
+        default=MedicalExamResultType.IMAGEM,
         verbose_name="Tipo de file",
     )
 

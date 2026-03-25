@@ -1,17 +1,15 @@
 from django.db import transaction
 
-from domain.billing.calculos import calcular_total
+from domain.billing.calculator import calculate_totals
 
 
 @transaction.atomic
 def recalculate_invoice_total(invoice):
-    itens = invoice.itens.all()
-    total = calcular_total(itens)
+    items = invoice.itens.all()
+    totals = calculate_totals(items=items)
+    total = totals["total"]
 
     invoice.total = total
     invoice.save(update_fields=["total"])
 
     return total
-
-
-recalcular_total_invoice = recalculate_invoice_total

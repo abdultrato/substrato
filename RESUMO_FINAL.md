@@ -221,7 +221,7 @@ Frontend Zod re-validation ← Response validation
 1. Review FASE5: Enhanced serializers
 2. Review api/v1/exceptions.py: Error handler
 3. Review FASE3: RFC 7807 format
-4. Update plataforma/settings.py for exception handler
+4. Update platform/settings/base.py for exception handler
 5. Test validation with curl examples
 
 ### For DevOps/QA
@@ -291,7 +291,7 @@ Frontend Zod re-validation ← Response validation
 ## 🚨 Outstanding Items
 
 ### FASE 3
-- [ ] Apply exception handler in `plataforma/settings.py`
+- [ ] Apply exception handler in `platform/settings/base.py`
 ```python
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'api.v1.exceptions.custom_exception_handler',

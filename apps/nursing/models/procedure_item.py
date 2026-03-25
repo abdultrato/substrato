@@ -246,4 +246,3 @@ class ProcedureItem(NoNameCoreModel):
 
 ProcedureItem._aplicar_defaults_catalog = ProcedureItem._apply_catalog_defaults
 ProcedureItem._upsert_value = ProcedureItem._upsert_value
-ProcedureItem._gerar_materiais_padrao = ProcedureItem._generate_default_materials

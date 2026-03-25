@@ -30,4 +30,4 @@ class ClinicalEventType(models.TextChoices):
     DIAGNOSTICO = "diagnóstico", "Diagnóstico"
 
 
-TipoEventoClinico = ClinicalEventType
+__all__ = ["ClinicalEventType"]

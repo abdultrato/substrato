@@ -1,13 +1,8 @@
-from .partitioning import (
-    get_partitioned_table_name,
-    get_temporal_partition,
-    name_tabela_particionada,
-    obter_particao_temporal,
-)
+from .partitioning import get_partitioned_table_name, get_temporal_partition
 
 __all__ = [
     "get_partitioned_table_name",
     "get_temporal_partition",
-    "name_tabela_particionada",
-    "obter_particao_temporal",
+    "get_partitioned_table_name",
+    "get_temporal_partition",
 ]

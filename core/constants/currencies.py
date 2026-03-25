@@ -1,9 +1,9 @@
 from django.db import models
 
 
-class Moeda(models.TextChoices):
+class Currency(models.TextChoices):
     """
-    ISO 4217 — Códigos internacionais de currency.
+    ISO 4217 — Códigos internacionais de moeda.
     """
 
     MZN = "MZN", "Metical Moçambicano"
@@ -13,6 +13,9 @@ class Moeda(models.TextChoices):
     GBP = "GBP", "Libra Esterlina"
     BRL = "BRL", "Real Brasileiro"
     CNY = "CNY", "Yuan Chinês"
-    INR = "INR", "Rupia Indiana"
+    INR = "INR", "Rúpia Indiana"
     JPY = "JPY", "Iene Japonês"
     AUD = "AUD", "Dólar Australiano"
+
+
+__all__ = ["Currency"]

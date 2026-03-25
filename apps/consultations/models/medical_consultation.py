@@ -7,11 +7,11 @@ from django.db import models
 from django.utils import timezone
 
 from apps.consultations.utils.pricing import (
-    calcular_price_multiplier,
+    calculate_price_multiplier,
     calculate_schedule_type,
     get_local_datetime,
     get_tenant_timezone,
-    is_feriado,
+    is_holiday,
 )
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
@@ -172,8 +172,8 @@ class MedicalConsultation(NoNameCoreModel):
         """
         return get_tenant_timezone(self.tenant)
 
-    def _is_feriado(self) -> bool:
-        return is_feriado(self.tenant, self.scheduled_for)
+    def _is_holiday(self) -> bool:
+        return is_holiday(self.tenant, self.scheduled_for)
 
     def _tenant_local_datetime(self):
         return get_local_datetime(self.tenant, self.scheduled_for)
@@ -181,10 +181,10 @@ class MedicalConsultation(NoNameCoreModel):
     def _current_schedule_type(self) -> str:
         return calculate_schedule_type(self.tenant, self.scheduled_for, manual_holiday=self.manual_holiday)
 
-    def _price_multiplier_atual(self) -> Decimal:
-        return calcular_price_multiplier(self.tenant, self.scheduled_for, manual_holiday=self.manual_holiday)
+    def _current_price_multiplier(self) -> Decimal:
+        return calculate_price_multiplier(self.tenant, self.scheduled_for, manual_holiday=self.manual_holiday)
 
-    def _sincronizar_specialty_e_price(self, update_fields: set[str] | None = None) -> None:
+    def _sync_specialty_and_price(self, update_fields: set[str] | None = None) -> None:
         """
         Se houver specialty, sincroniza:
         - type = specialty.name
@@ -203,7 +203,7 @@ class MedicalConsultation(NoNameCoreModel):
         base = specialty.base_price if specialty.base_price is not None else Decimal("0.00")
 
         self.schedule_type = self._current_schedule_type()
-        self.price_multiplier = self._price_multiplier_atual()
+        self.price_multiplier = self._current_price_multiplier()
 
         try:
             final = (base * self.price_multiplier).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -224,7 +224,7 @@ class MedicalConsultation(NoNameCoreModel):
             if update_set is not None:
                 update_set.add("tenant")
 
-        self._sincronizar_specialty_e_price(update_set)
+        self._sync_specialty_and_price(update_set)
 
         if update_set is not None:
             kwargs["update_fields"] = list(update_set)
@@ -235,6 +235,4 @@ class MedicalConsultation(NoNameCoreModel):
     def __str__(self) -> str:
         return f"{self.custom_id} - {self.patient.name} ({self.type})"
 
-
-MedicalConsultation._schedule_type_atual = MedicalConsultation._current_schedule_type
 

@@ -1,14 +1,14 @@
-from domain.billing.calculadora import calcular_totais
+from domain.billing.calculator import calculate_totals
 
 
-def executar(invoice):
+def execute(invoice):
 
-    itens = invoice.itens.all()
+    items = invoice.itens.all()
 
-    result = calcular_totais(
-        itens=itens,
-        isento_iva=False,
-        cobertura_seguro=0,
+    result = calculate_totals(
+        items=items,
+        vat_exempt=False,
+        insurance_coverage=0,
     )
 
     invoice.subtotal = result["subtotal"]
