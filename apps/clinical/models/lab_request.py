@@ -178,7 +178,7 @@ class LabRequest(NoNameCoreModel):
                 raise ValidationError("Exame já adicionado à requisição.") from err
 
     def add_medical_exam(self, medical_exam):
-        if self.type != self.Tipo.EXAME_MEDICO:
+        if self.type != self.Type.MEDICAL_EXAM:
             raise ValidationError("Esta requisição é laboratorial e não aceita exams médicos.")
 
         if not self._esta_editavel():

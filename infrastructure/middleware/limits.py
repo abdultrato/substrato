@@ -20,7 +20,7 @@ class TenantLimitMiddleware:
             return self.get_response(request)
 
         # Trial ignora limite
-        if tenant.esta_em_trial():
+        if tenant.is_in_trial():
             TenantUsageService.increment_request(tenant)
             return self.get_response(request)
 

@@ -244,7 +244,7 @@ class Invoice(NoNameCoreModel):
         return f"REC-{fat_ref}"
 
     def generate_automatic_receipt(self, payment):
-        if not payment or payment.status != payment.Status.CONFIRMADO:
+        if not payment or payment.status != payment.Status.CONFIRMED:
             return None
 
         from apps.payments.models.receipt import Receipt

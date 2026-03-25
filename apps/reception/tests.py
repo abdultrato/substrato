@@ -58,5 +58,5 @@ def test_checkin_basic_flow():
 
     assert checkin.request_id == request.id
     assert checkin.invoice_id == invoice.id
-    assert payment.status in {payment.Status.CONFIRMADO, payment.Status.PENDENTE}
+    assert payment.status in {payment.Status.CONFIRMED, payment.Status.PENDING}
     assert receipt is None or receipt.value == payment.value

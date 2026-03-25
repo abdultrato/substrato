@@ -60,10 +60,10 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         # garante compatibilidade com o type/sector da requisição
         if self.request_id:
-            type = getattr(self.request, "type", None)
-            if type == self.request.Tipo.LABORATORIO and self.medical_exam_id:
+            request_type = getattr(self.request, "type", None)
+            if request_type == self.request.Type.LABORATORY and self.medical_exam_id:
                 raise ValidationError("Esta requisição é laboratorial e não aceita exams médicos.")
-            if type == self.request.Tipo.EXAME_MEDICO and self.exam_id:
+            if request_type == self.request.Type.MEDICAL_EXAM and self.exam_id:
                 raise ValidationError("Esta requisição é de exams médicos e não aceita exams laboratoriais.")
 
             # defesa: evita cross-tenant por ID

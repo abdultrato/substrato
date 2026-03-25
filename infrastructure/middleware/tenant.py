@@ -97,7 +97,7 @@ class TenantMiddleware:
             if not tenant.active:
                 return JsonResponse({"error": "Tenant inativo."}, status=403)
 
-            if tenant.esta_bloqueado():
+            if tenant.is_blocked():
                 return JsonResponse({"error": "Tenant bloqueado ou inadimplente."}, status=403)
 
             return self.get_response(request)
@@ -127,7 +127,7 @@ class TenantMiddleware:
                         identifier="local",
                         domain=host or "localhost",
                         active=True,
-                        commercial_status=Tenant.StatusComercial.TRIAL,
+                        commercial_status=Tenant.CommercialStatus.TRIAL,
                     )
                 except Exception:
                     tenant = Tenant.objects.filter(identifier="local").order_by("id").first()

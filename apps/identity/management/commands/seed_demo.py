@@ -858,7 +858,7 @@ def ensure_payments(n: int, faturas: list[Invoice]) -> list[Payment]:
             if idx % 2 == 0 and invoice.status == invoice.Status.DRAFT:
                 with suppress(Exception):
                     invoice.issue()
-            if idx % 3 == 0 and payment.status == payment.Status.PENDENTE:
+            if idx % 3 == 0 and payment.status == payment.Status.PENDING:
                 with suppress(Exception):
                     payment.confirm()
 
