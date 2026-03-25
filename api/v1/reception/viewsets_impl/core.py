@@ -156,7 +156,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         self.execute_safely(
             create_invoice_for_checkin,
             checkin=checkin,
-            emitir=payload.validated_data.get("emitir", True),
+            issue=payload.validated_data.get("issue", True),
         )
         return Response(get_care_summary(checkin))
 
@@ -177,7 +177,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
             coverage_plan_id=payload.validated_data.get("coverage_plan_id"),
             authorization_number=payload.validated_data.get("authorization_number", ""),
             insurance_date=payload.validated_data.get("insurance_date"),
-            confirmar=payload.validated_data.get("confirmar", True),
+            confirm=payload.validated_data.get("confirm", True),
         )
         return Response(get_care_summary(checkin))
 

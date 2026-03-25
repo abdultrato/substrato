@@ -1,6 +1,12 @@
-export type Fatura = {
+export type InvoiceSummary = {
   id: number
-  codigo?: string
-  cliente?: string
-  valor?: number
-}
+  code?: string
+  customer?: string
+  value?: number
+} & Partial<{
+  codigo: string
+  cliente: string
+  valor: number
+}>
+
+export type Fatura = InvoiceSummary

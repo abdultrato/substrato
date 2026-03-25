@@ -8,6 +8,7 @@ from django.utils.translation import override
 from django_countries import countries
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin, append_legacy_aliases, normalize_legacy_input
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_exam_field import LabExamField
 from apps.clinical.models.lab_request import LabRequest
@@ -91,6 +92,49 @@ class PatientSerializer(serializers.ModelSerializer):
     """
 
     origin_company_name = serializers.CharField(source="origin_company.name", read_only=True)
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "data_nascimento": "birth_date",
+        "genero": "gender",
+        "raca_origem": "race_origin",
+        "tipo_documento": "document_type",
+        "numero_id": "document_number",
+        "contacto": "contact",
+        "morada": "address",
+        "empresa_origem": "origin_company",
+        "endereco_rua": "address_street",
+        "endereco_numero": "address_number",
+        "endereco_bairro": "address_neighborhood",
+        "endereco_cidade": "address_city",
+        "endereco_provincia": "address_province",
+        "endereco_codigo_postal": "address_postal_code",
+        "endereco_pais": "address_country",
+        "endereco_complemento": "address_complement",
+        "criado_em": "created_at",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "data_nascimento": "birth_date",
+        "genero": "gender",
+        "raca_origem": "race_origin",
+        "tipo_documento": "document_type",
+        "numero_id": "document_number",
+        "contacto": "contact",
+        "morada": "address",
+        "empresa_origem": "origin_company",
+        "empresa_origem_nome": "origin_company_name",
+        "endereco_rua": "address_street",
+        "endereco_numero": "address_number",
+        "endereco_bairro": "address_neighborhood",
+        "endereco_cidade": "address_city",
+        "endereco_provincia": "address_province",
+        "endereco_codigo_postal": "address_postal_code",
+        "endereco_pais": "address_country",
+        "endereco_complemento": "address_complement",
+        "criado_em": "created_at",
+    }
 
     class Meta:
         model = Patient
@@ -166,6 +210,8 @@ class PatientSerializer(serializers.ModelSerializer):
         }
 
     def to_internal_value(self, date):
+        date = normalize_legacy_input(date, self.legacy_input_aliases)
+
         """
         Compat:
         - Antes, `address` era JSON (rua/number/bairro/cidade/provincia/...).
@@ -222,6 +268,10 @@ class PatientSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(date)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return append_legacy_aliases(data, self.legacy_output_aliases)
+
     def validate_email(self, value):
         """Validação adicional de email."""
         if (
@@ -263,11 +313,34 @@ class PatientSerializer(serializers.ModelSerializer):
         return date
 
 
-class LabExamSerializer(serializers.ModelSerializer):
+class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para a entidade Exame com validação robusta.
     Inclui validação de preço e tempo de response.
     """
+
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "trl_horas": "turnaround_hours",
+        "preco": "price",
+        "metodo": "method",
+        "setor": "sector",
+        "ativo": "active",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "trl_horas": "turnaround_hours",
+        "preco": "price",
+        "metodo": "method",
+        "setor": "sector",
+        "ativo": "active",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+    }
 
     class Meta:
         model = LabExam
@@ -327,11 +400,37 @@ class LabExamSerializer(serializers.ModelSerializer):
         return value
 
 
-class MedicalExamSerializer(serializers.ModelSerializer):
+class MedicalExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """Serializer para Exame Médico (imagem/diagnóstico)."""
 
-    tipos_result_permitidos = serializers.SerializerMethodField(method_name="get_allowed_result_types")
-    tipos_result_cadastrados = serializers.SerializerMethodField(method_name="get_registered_result_types")
+    allowed_result_types = serializers.SerializerMethodField(method_name="get_allowed_result_types")
+    registered_result_types = serializers.SerializerMethodField(method_name="get_registered_result_types")
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "trl_horas": "turnaround_hours",
+        "preco": "price",
+        "metodo": "method",
+        "setor": "sector",
+        "ativo": "active",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "trl_horas": "turnaround_hours",
+        "preco": "price",
+        "metodo": "method",
+        "setor": "sector",
+        "ativo": "active",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+        "tipos_result_permitidos": "allowed_result_types",
+        "tipos_result_cadastrados": "registered_result_types",
+        "tipos_resultado_permitidos": "allowed_result_types",
+        "tipos_resultado_cadastrados": "registered_result_types",
+    }
 
     def get_allowed_result_types(self, obj):
         return sorted(obj.tipos_result_permitidos)
@@ -387,12 +486,12 @@ class MedicalExamFieldSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LabRequestSerializer(serializers.ModelSerializer):
+class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para requisições (por sector).
 
     - LAB: aceita `exams` (laboratoriais)
-    - MED: aceita `exams_medicos`
+    - MED: aceita `medical_exams`
     """
 
     # DRF marca ManyToMany com `through` como read-only por padrão. Mantemos a
@@ -403,11 +502,36 @@ class LabRequestSerializer(serializers.ModelSerializer):
         required=False,
     )
 
-    exams_medicos = serializers.PrimaryKeyRelatedField(
+    medical_exams = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=MedicalExam.objects.all(),
         required=False,
     )
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "paciente": "patient",
+        "tipo": "type",
+        "estado": "status",
+        "status_clinico": "clinical_status",
+        "empresa_solicitante": "requesting_company",
+        "empresa_executora_externa": "external_executing_company",
+        "analista": "analyst",
+        "exams_medicos": "medical_exams",
+        "itens": "items",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "paciente_nome": "patient_name",
+        "paciente_codigo": "patient_code",
+        "empresa_solicitante_nome": "requesting_company_name",
+        "empresa_executora_externa_nome": "external_executing_company_name",
+        "tipo": "type",
+        "estado": "status",
+        "status_clinico": "clinical_status",
+        "possui_resultado_critico": "has_critical_result",
+        "exams_medicos": "medical_exams",
+        "itens": "items",
+    }
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
@@ -429,7 +553,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
                 "medical_exam_name",
             ]
 
-    itens = LabRequestItemSummarySerializer(many=True, read_only=True)
+    items = LabRequestItemSummarySerializer(source="itens", many=True, read_only=True)
 
     class Meta:
         model = LabRequest
@@ -440,7 +564,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
             "patient_code",
             "requesting_company_name",
             "external_executing_company_name",
-            "itens",
+            "items",
             "has_critical_result",
         ]
         extra_kwargs = {
@@ -459,7 +583,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
         type = attrs.get("type") or getattr(self.instance, "type", None) or LabRequest.Tipo.LABORATORIO
 
         exams = attrs.get("exams", None)
-        exams_medicos = attrs.get("exams_medicos", None)
+        medical_exams = attrs.get("medical_exams", None)
         requesting_company = attrs.get("requesting_company", None)
         external_executing_company = attrs.get("external_executing_company", None)
 
@@ -479,8 +603,8 @@ class LabRequestSerializer(serializers.ModelSerializer):
 
         # Regra: requisição por sector, sem mistura.
         if type == LabRequest.Tipo.LABORATORIO:
-            if exams_medicos:
-                raise serializers.ValidationError({"exams_medicos": "Requisição LAB não aceita exams médicos."})
+            if medical_exams:
+                raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
         elif type == LabRequest.Tipo.EXAME_MEDICO:
             if exams:
                 raise serializers.ValidationError({"exams": "Requisição MED não aceita exams laboratoriais."})
@@ -491,15 +615,15 @@ class LabRequestSerializer(serializers.ModelSerializer):
         if self.instance is None:
             if type == LabRequest.Tipo.LABORATORIO and not exams:
                 raise serializers.ValidationError({"exams": "Informe ao menos um exam laboratorial."})
-            if type == LabRequest.Tipo.EXAME_MEDICO and not exams_medicos:
-                raise serializers.ValidationError({"exams_medicos": "Informe ao menos um exam médico."})
+            if type == LabRequest.Tipo.EXAME_MEDICO and not medical_exams:
+                raise serializers.ValidationError({"medical_exams": "Informe ao menos um exam médico."})
 
         return attrs
 
     def create(self, validated_date):
-        # `exams` (LAB) é ManyToMany com `through`. `exams_medicos` (MED) é derivado dos itens.
+        # `exams` (LAB) é ManyToMany com `through`. `medical_exams` (MED) é derivado dos itens.
         exams = validated_date.pop("exams", [])
-        exams_medicos = validated_date.pop("exams_medicos", [])
+        medical_exams = validated_date.pop("medical_exams", [])
 
         type = validated_date.get("type") or LabRequest.Tipo.LABORATORIO
 
@@ -518,7 +642,7 @@ class LabRequestSerializer(serializers.ModelSerializer):
             for exam in exams:
                 request.add_exam(exam)
         elif type == LabRequest.Tipo.EXAME_MEDICO:
-            for medical_exam in exams_medicos:
+            for medical_exam in medical_exams:
                 request.add_medical_exam(medical_exam)
 
         return request
@@ -530,13 +654,13 @@ class LabRequestSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"type": "Tipo/sector da requisição é imutável."})
 
         exams = validated_date.pop("exams", None)
-        exams_medicos = validated_date.pop("exams_medicos", None)
+        medical_exams = validated_date.pop("medical_exams", None)
 
         instance = super().update(instance, validated_date)
 
         if instance.type == LabRequest.Tipo.LABORATORIO:
-            if exams_medicos is not None:
-                raise serializers.ValidationError({"exams_medicos": "Requisição LAB não aceita exams médicos."})
+            if medical_exams is not None:
+                raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
             if exams is not None:
                 desejados = {e.id for e in exams}
                 atuais = set(instance.itens.filter(exam__isnull=False).values_list("exam_id", flat=True))
@@ -553,8 +677,8 @@ class LabRequestSerializer(serializers.ModelSerializer):
         elif instance.type == LabRequest.Tipo.EXAME_MEDICO:
             if exams is not None:
                 raise serializers.ValidationError({"exams": "Requisição MED não aceita exams laboratoriais."})
-            if exams_medicos is not None:
-                desejados = {e.id for e in exams_medicos}
+            if medical_exams is not None:
+                desejados = {e.id for e in medical_exams}
                 atuais = set(
                     instance.itens.filter(medical_exam__isnull=False).values_list("medical_exam_id", flat=True)
                 )
@@ -610,7 +734,7 @@ class ResultItemSerializer(serializers.ModelSerializer):
         }
 
 
-class LaboratoryResultItemSerializer(serializers.ModelSerializer):
+class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer enxuto para a tela do laboratório.
 
@@ -623,7 +747,19 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     exam_field_name = serializers.CharField(source="exam_field.name", read_only=True)
     exam_field_unit = serializers.CharField(source="exam_field.unit", read_only=True)
     exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
-    exam_field_referencia = serializers.CharField(source="exam_field.referencia", read_only=True)
+    exam_field_reference = serializers.CharField(source="exam_field.referencia", read_only=True)
+    legacy_output_aliases = {
+        "paciente_nome": "patient_name",
+        "requisicao_id": "request_id",
+        "requisicao_codigo": "request_code",
+        "exame_id": "exam_id",
+        "exame_nome": "exam_name",
+        "exame_campo_nome": "exam_field_name",
+        "exame_campo_unidade": "exam_field_unit",
+        "exame_campo_tipo": "exam_field_type",
+        "exam_field_referencia": "exam_field_reference",
+        "exame_campo_referencia": "exam_field_reference",
+    }
 
     patient_name = serializers.CharField(source="result.request.patient.name", read_only=True)
     request_id = serializers.IntegerField(source="result.request_id", read_only=True)
@@ -644,7 +780,7 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "exam_field_name",
             "exam_field_unit",
             "exam_field_type",
-            "exam_field_referencia",
+            "exam_field_reference",
             "result_value",
             "clinical_status",
             "report_color",
@@ -668,7 +804,7 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "exam_field_name",
             "exam_field_unit",
             "exam_field_type",
-            "exam_field_referencia",
+            "exam_field_reference",
             "clinical_status",
             "report_color",
             "critical_alert",
@@ -680,9 +816,31 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
         ]
 
 
-class MedicalResultFileSerializer(serializers.ModelSerializer):
+class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
 
     file = serializers.FileField(required=True)
+    legacy_input_aliases = {
+        "arquivo": "file",
+        "tipo": "type",
+        "descricao": "description",
+        "requisicao_item": "request_item",
+        "exame_medico": "medical_exam",
+        "resultado": "result",
+        "id_custom": "custom_id",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+    }
+    legacy_output_aliases = {
+        "arquivo": "file",
+        "tipo": "type",
+        "descricao": "description",
+        "requisicao_item": "request_item",
+        "exame_medico": "medical_exam",
+        "resultado": "result",
+        "id_custom": "custom_id",
+        "criado_em": "created_at",
+        "atualizado_em": "updated_at",
+    }
 
     def validate(self, attrs):
         medical_exam = attrs.get("medical_exam") or getattr(self.instance, "medical_exam", None)

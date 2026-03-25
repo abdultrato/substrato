@@ -15,6 +15,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.equipment_integrations.models import (
@@ -88,15 +89,18 @@ class WorklistExamItemSerializer(serializers.Serializer):
     sector = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
-class WorklistOrderSerializer(serializers.Serializer):
+class WorklistOrderSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     accession = serializers.CharField()
     order_id = serializers.IntegerField()
     status = serializers.CharField()
     request_id = serializers.IntegerField()
     request_code = serializers.CharField()
     patient = WorklistPatientSerializer()
-    itens = WorklistExamItemSerializer(many=True)
+    items = WorklistExamItemSerializer(many=True)
     created_at = serializers.DateTimeField(required=False, allow_null=True)
+    legacy_output_aliases = {
+        "itens": "items",
+    }
 
 
 class WorklistResponseSerializer(serializers.Serializer):
@@ -117,11 +121,17 @@ class ResultsInboxDocumentSerializer(serializers.Serializer):
     request_item_id = serializers.IntegerField(required=False, allow_null=True)
 
 
-class ResultsInboxRequestSerializer(serializers.Serializer):
+class ResultsInboxRequestSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     message_id = serializers.CharField(required=False, allow_blank=True)
     accession = serializers.CharField()
     results = ResultsInboxResultSerializer(many=True, required=False)
-    documentos = ResultsInboxDocumentSerializer(many=True, required=False)
+    documents = ResultsInboxDocumentSerializer(many=True, required=False)
+    legacy_input_aliases = {
+        "documentos": "documents",
+    }
+    legacy_output_aliases = {
+        "documentos": "documents",
+    }
 
 
 class ResultsInboxAppliedSerializer(serializers.Serializer):
@@ -131,12 +141,16 @@ class ResultsInboxAppliedSerializer(serializers.Serializer):
     value = serializers.CharField()
 
 
-class ResultsInboxResponseSerializer(serializers.Serializer):
+class ResultsInboxResponseSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     message = serializers.CharField()
     order = serializers.CharField()
     order_status = serializers.CharField()
-    aplicados = ResultsInboxAppliedSerializer(many=True)
-    erros = serializers.ListField(child=serializers.CharField())
+    applied = ResultsInboxAppliedSerializer(many=True)
+    errors = serializers.ListField(child=serializers.CharField())
+    legacy_output_aliases = {
+        "aplicados": "applied",
+        "erros": "errors",
+    }
 
 
 class EquipmentWorklistView(APIView):
@@ -233,11 +247,11 @@ class EquipmentWorklistView(APIView):
             req = order.request
             pac = req.patient
 
-            itens = []
+            items = []
             for oi in order.itens.all():
                 ri = oi.request_item
                 if ri.exam_id:
-                    itens.append(
+                    items.append(
                         {
                             "request_item_id": ri.id,
                             "type": "LAB",
@@ -248,7 +262,7 @@ class EquipmentWorklistView(APIView):
                         }
                     )
                 elif ri.medical_exam_id:
-                    itens.append(
+                    items.append(
                         {
                             "request_item_id": ri.id,
                             "type": "MED",
@@ -274,24 +288,23 @@ class EquipmentWorklistView(APIView):
                         "gender": pac.gender,
                         "document_number": pac.document_number,
                     },
-                    "itens": itens,
+                    "items": items,
                     "created_at": order.created_at.isoformat() if order.created_at else None,
                 }
             )
 
-        return Response(
-            {
-                "equipment": {
-                    "id": equipment.id,
-                    "code": equipment.custom_id,
-                    "name": equipment.name,
-                    "modality": equipment.modality,
-                    "protocol": equipment.protocol,
-                },
-                "count": len(out),
-                "results": out,
-            }
-        )
+        payload = {
+            "equipment": {
+                "id": equipment.id,
+                "code": equipment.custom_id,
+                "name": equipment.name,
+                "modality": equipment.modality,
+                "protocol": equipment.protocol,
+            },
+            "count": len(out),
+            "results": out,
+        }
+        return Response(WorklistResponseSerializer(instance=payload).data)
 
 
 class EquipmentResultsInboxView(APIView):
@@ -305,7 +318,7 @@ class EquipmentResultsInboxView(APIView):
       "message_id": "uuid-externo-opcional",
       "accession": "ORD-....",
       "results": [{"code": "HB", "value": "13.2"}, ...],
-      "documentos": [{"filename":"ecg.pdf","content_type":"application/pdf","base64":"...","request_item_id": 123}]
+      "documents": [{"filename":"ecg.pdf","content_type":"application/pdf","base64":"...","request_item_id": 123}]
     }
     """
 
@@ -365,7 +378,9 @@ class EquipmentResultsInboxView(APIView):
 
         # DRF expõe o payload parseado em `request.data`.
         raw_body = request.body or b""
-        payload = request.data if isinstance(request.data, dict) else {}
+        payload_serializer = ResultsInboxRequestSerializer(data=request.data if isinstance(request.data, dict) else {})
+        payload_serializer.is_valid(raise_exception=True)
+        payload = payload_serializer.validated_data
 
         message_id = str(payload.get("message_id") or "").strip()
         accession = str(payload.get("accession") or "").strip()
@@ -417,14 +432,14 @@ class EquipmentResultsInboxView(APIView):
             message_id=message_id,
             content_type=content_type,
             raw_body=raw_body,
-            payload_json=payload if isinstance(payload, dict) else {},
+            payload_json=dict(payload) if isinstance(payload, dict) else {},
         )
 
         results = payload.get("results") or []
-        documentos = payload.get("documentos") or []
+        documents = payload.get("documents") or []
 
-        aplicados = []
-        erros = []
+        applied = []
+        errors = []
 
         try:
             # Garante Resultado (e itens) para a requisição.
@@ -445,7 +460,7 @@ class EquipmentResultsInboxView(APIView):
                 value_raw = (r or {}).get("value", None)
 
                 if not code:
-                    erros.append("Resultado sem 'code'.")
+                    errors.append("Resultado sem 'code'.")
                     continue
 
                 mapping = (
@@ -459,7 +474,7 @@ class EquipmentResultsInboxView(APIView):
                     .first()
                 )
                 if mapping is None:
-                    erros.append(f"Sem mapeamento para code '{code}'.")
+                    errors.append(f"Sem mapeamento para code '{code}'.")
                     continue
 
                 exam_field = mapping.exam_field
@@ -471,7 +486,7 @@ class EquipmentResultsInboxView(APIView):
                 ).first()
 
                 if item is None:
-                    erros.append(f"Campo '{exam_field.name}' não pertence à requisição desta order.")
+                    errors.append(f"Campo '{exam_field.name}' não pertence à requisição desta order.")
                     continue
 
                 try:
@@ -479,14 +494,14 @@ class EquipmentResultsInboxView(APIView):
                         raise InvalidOperation
                     value = Decimal(str(value_raw))
                 except (InvalidOperation, ValueError, TypeError):
-                    erros.append(f"Valor inválido para '{code}': {value_raw!r}.")
+                    errors.append(f"Valor inválido para '{code}': {value_raw!r}.")
                     continue
 
                 # Nota: ResultadoItem.save interpreta/alerta automaticamente.
                 item.result_value = value
                 item.save(update_fields=["result_value", "updated_at"])
 
-                aplicados.append(
+                applied.append(
                     {
                         "code": code,
                         "exam_field_id": exam_field.id,
@@ -496,7 +511,7 @@ class EquipmentResultsInboxView(APIView):
                 )
 
             # Anexos/documentos (PDF, imagens, etc).
-            for d in documentos if isinstance(documentos, list) else []:
+            for d in documents if isinstance(documents, list) else []:
                 filename = str((d or {}).get("filename") or "").strip() or "documento.bin"
                 ctype = str((d or {}).get("content_type") or "").strip() or "application/octet-stream"
                 b64 = (d or {}).get("base64") or ""
@@ -505,7 +520,7 @@ class EquipmentResultsInboxView(APIView):
                 try:
                     raw = base64.b64decode(b64, validate=True)
                 except (binascii.Error, ValueError):
-                    erros.append(f"Documento '{filename}' com base64 inválido.")
+                    errors.append(f"Documento '{filename}' com base64 inválido.")
                     continue
 
                 order_item = None
@@ -531,11 +546,11 @@ class EquipmentResultsInboxView(APIView):
 
             # Atualiza status da order de forma simples:
             # se houver erros, marca ERRO; senão, EXEC/DONE dependendo de completude.
-            if erros:
+            if errors:
                 order.status = IntegrationOrder.Estado.ERRO
                 order.save(update_fields=["status", "updated_at"])
                 msg.status = IntegrationMessage.Estado.ERRO
-                msg.error = "\n".join(erros)[:8000]
+                msg.error = "\n".join(errors)[:8000]
             else:
                 # Completa se todos os campos dos exams (LAB) tiverem value preenchido.
                 completo = True
@@ -573,15 +588,16 @@ class EquipmentResultsInboxView(APIView):
             msg.save(update_fields=["status", "error", "processed_at", "updated_at"])
             raise
 
+        payload = {
+            "message": msg.custom_id,
+            "order": order.custom_id,
+            "order_status": order.status,
+            "applied": applied,
+            "errors": errors,
+        }
         return Response(
-            {
-                "message": msg.custom_id,
-                "order": order.custom_id,
-                "order_status": order.status,
-                "aplicados": aplicados,
-                "erros": erros,
-            },
-            status=status.HTTP_200_OK if not erros else status.HTTP_400_BAD_REQUEST,
+            ResultsInboxResponseSerializer(instance=payload).data,
+            status=status.HTTP_200_OK if not errors else status.HTTP_400_BAD_REQUEST,
         )
 
 

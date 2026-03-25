@@ -17,10 +17,10 @@ import {
 } from "lucide-react"
 
 interface DashboardStats {
-    pacientes: number
-    requisicoes_pendentes: number
-    exames_hoje: number
-    faturamento_hoje: number
+    patients: number
+    pending_requests: number
+    exams_today: number
+    billing_today: number
 }
 
 type AnalyticsKpis = Record<string, any>
@@ -43,7 +43,7 @@ export default function DashboardPage () {
         async function load () {
             try {
                 const { data } = await http.get( "/dashboard/stats/" )
-                setStats( data )
+                setStats( normalizeDashboardStats( data ) )
             } catch {
                 setError( true )
             }
@@ -77,8 +77,8 @@ export default function DashboardPage () {
     if ( loading ) return null
 
     const alerts: { label: string; value: number | string }[] = []
-    if ( stats?.requisicoes_pendentes ) alerts.push( { label: "Requisições pendentes", value: stats.requisicoes_pendentes } )
-    if ( stats?.exames_hoje === 0 ) alerts.push( { label: "Sem exames hoje", value: "-" } )
+    if ( stats?.pending_requests ) alerts.push( { label: "Requisições pendentes", value: stats.pending_requests } )
+    if ( stats?.exams_today === 0 ) alerts.push( { label: "Sem exames hoje", value: "-" } )
     if ( kpis["Faturas em aberto"] ) alerts.push( { label: "Faturas em aberto", value: kpis["Faturas em aberto"] } )
 
     const funnel = [
@@ -110,25 +110,25 @@ export default function DashboardPage () {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <StatCard
                             title="Pacientes"
-                            value={stats.pacientes}
+                            value={stats.patients}
                             icon={Users}
                         />
 
                         <StatCard
                             title="Requisições Pendentes"
-                            value={stats.requisicoes_pendentes}
+                            value={stats.pending_requests}
                             icon={ClipboardList}
                         />
 
                         <StatCard
                             title="Exames Hoje"
-                            value={stats.exames_hoje}
+                            value={stats.exams_today}
                             icon={FlaskConical}
                         />
 
                         <StatCard
                             title="Faturamento Hoje"
-                            value={<MoneyValue value={stats.faturamento_hoje} />}
+                            value={<MoneyValue value={stats.billing_today} />}
                             icon={Receipt}
                         />
                     </div>
@@ -214,6 +214,15 @@ export default function DashboardPage () {
             </div>
         </AppLayout>
     )
+}
+
+function normalizeDashboardStats ( raw: any ): DashboardStats {
+    return {
+        patients: Number( raw?.patients ?? raw?.pacientes ?? 0 ),
+        pending_requests: Number( raw?.pending_requests ?? raw?.requisicoes_pendentes ?? 0 ),
+        exams_today: Number( raw?.exams_today ?? raw?.exams_hoje ?? raw?.exames_hoje ?? 0 ),
+        billing_today: Number( raw?.billing_today ?? raw?.faturamento_hoje ?? 0 ),
+    }
 }
 
 function StatCard ( {

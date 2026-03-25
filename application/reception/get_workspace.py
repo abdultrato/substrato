@@ -14,15 +14,15 @@ from domain.clinical.result_state import ResultState
 
 
 def execute(tenant):
-    hoje = timezone.localdate()
+    today = timezone.localdate()
 
-    checkins_hoje = ReceptionCheckin.objects.filter(
+    today_checkins = ReceptionCheckin.objects.filter(
         tenant=tenant,
-        arrived_at__date=hoje,
+        arrived_at__date=today,
     )
 
-    fila = (
-        checkins_hoje.exclude(
+    queue = (
+        today_checkins.exclude(
             status__in=[
                 ReceptionCheckin.Status.CONCLUIDO,
                 ReceptionCheckin.Status.CANCELADO,
@@ -48,36 +48,51 @@ def execute(tenant):
         .order_by("status_order", "priority_order", "arrived_at")[:12]
     )
 
-    recebido_hoje = (
+    received_today = (
         Payment.objects.filter(
             invoice__tenant=tenant,
             status=Payment.Status.CONFIRMADO,
-            paid_at__date=hoje,
+            paid_at__date=today,
         ).aggregate(total=Coalesce(Sum("value"), Decimal("0.00")))
     )["total"]
 
+    summary = {
+        "checkins_today": today_checkins.count(),
+        "queue_size": today_checkins.filter(status=ReceptionCheckin.Status.AGUARDANDO).count(),
+        "in_care": today_checkins.filter(status=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
+        "new_patients": Patient.objects.filter(tenant=tenant, created_at__date=today).count(),
+        "pending_requests": LabRequest.objects.filter(
+            tenant=tenant,
+            status=ResultState.PENDING,
+        ).count(),
+        "open_invoices": Invoice.objects.filter(
+            tenant=tenant,
+            status=Invoice.Estado.EMITIDA,
+        ).count(),
+        "receipts_generated_today": Receipt.objects.filter(
+            invoice__tenant=tenant,
+            created_at__date=today,
+        ).count(),
+        "received_today": received_today,
+    }
+    summary.update(
+        {
+            "checkins_hoje": summary["checkins_today"],
+            "na_fila": summary["queue_size"],
+            "em_atendimento": summary["in_care"],
+            "pacientes_novos": summary["new_patients"],
+            "requisicoes_pendentes": summary["pending_requests"],
+            "faturas_em_aberto": summary["open_invoices"],
+            "recibos_gerados_hoje": summary["receipts_generated_today"],
+            "recebido_hoje": summary["received_today"],
+        }
+    )
+
     return {
-        "date": str(hoje),
-        "resumo": {
-            "checkins_hoje": checkins_hoje.count(),
-            "na_fila": checkins_hoje.filter(status=ReceptionCheckin.Status.AGUARDANDO).count(),
-            "em_atendimento": checkins_hoje.filter(status=ReceptionCheckin.Status.EM_ATENDIMENTO).count(),
-            "pacientes_novos": Patient.objects.filter(tenant=tenant, created_at__date=hoje).count(),
-            "requisicoes_pendentes": LabRequest.objects.filter(
-                tenant=tenant,
-                status=ResultState.PENDING,
-            ).count(),
-            "faturas_em_aberto": Invoice.objects.filter(
-                tenant=tenant,
-                status=Invoice.Estado.EMITIDA,
-            ).count(),
-            "recibos_gerados_hoje": Receipt.objects.filter(
-                invoice__tenant=tenant,
-                created_at__date=hoje,
-            ).count(),
-            "recebido_hoje": recebido_hoje,
-        },
-        "fila": [
+        "date": str(today),
+        "summary": summary,
+        "resumo": summary,
+        "queue": [
             {
                 "id": item.id,
                 "custom_id": item.custom_id,
@@ -92,8 +107,37 @@ def execute(tenant):
                 "request_code": item.request.custom_id if item.request_id else "",
                 "invoice_id": item.invoice_id,
                 "invoice_code": item.invoice.custom_id if item.invoice_id else "",
+                "paciente_id": item.patient_id,
+                "paciente_nome": item.patient.name,
+                "paciente_codigo": item.patient.custom_id,
+                "prioridade": item.get_priority_display(),
+                "estado": item.get_status_display(),
+                "chegou_em": item.arrived_at.isoformat(),
+                "atendente": getattr(item.attendant, "username", "") if item.attendant_id else "",
+                "requisicao_id": item.request_id,
+                "requisicao_codigo": item.request.custom_id if item.request_id else "",
+                "fatura_id": item.invoice_id,
+                "fatura_codigo": item.invoice.custom_id if item.invoice_id else "",
             }
-            for item in fila
+            for item in queue
+        ],
+        "fila": [
+            {
+                "id": item.id,
+                "id_custom": item.custom_id,
+                "paciente_id": item.patient_id,
+                "paciente_nome": item.patient.name,
+                "paciente_codigo": item.patient.custom_id,
+                "prioridade": item.get_priority_display(),
+                "estado": item.get_status_display(),
+                "chegou_em": item.arrived_at.isoformat(),
+                "atendente": getattr(item.attendant, "username", "") if item.attendant_id else "",
+                "requisicao_id": item.request_id,
+                "requisicao_codigo": item.request.custom_id if item.request_id else "",
+                "fatura_id": item.invoice_id,
+                "fatura_codigo": item.invoice.custom_id if item.invoice_id else "",
+            }
+            for item in queue
         ],
     }
 

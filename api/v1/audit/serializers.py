@@ -1,16 +1,22 @@
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.identity.models.user import User
 
 
-class UserAuditSerializer(serializers.ModelSerializer):
+class UserAuditSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField(method_name="get_full_name")
-    grupos = serializers.SerializerMethodField(method_name="get_group_names")
+    groups = serializers.SerializerMethodField(method_name="get_group_names")
 
     # anotados no queryset
-    total_atividades = serializers.IntegerField(read_only=True)
-    ultima_atividade_em = serializers.DateTimeField(read_only=True)
+    total_activities = serializers.IntegerField(read_only=True)
+    last_activity_at = serializers.DateTimeField(read_only=True)
+    legacy_output_aliases = {
+        "grupos": "groups",
+        "total_atividades": "total_activities",
+        "ultima_atividade_em": "last_activity_at",
+    }
 
     class Meta:
         model = User
@@ -20,9 +26,9 @@ class UserAuditSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "name",
-            "grupos",
-            "total_atividades",
-            "ultima_atividade_em",
+            "groups",
+            "total_activities",
+            "last_activity_at",
         ]
 
     def get_full_name(self, obj: User) -> str:
@@ -40,6 +46,7 @@ class UserAuditSerializer(serializers.ModelSerializer):
 
 class UserActivitySerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField(method_name="get_user_name")
+    ip = serializers.CharField(read_only=True, allow_blank=True, allow_null=True)
 
     class Meta:
         model = UserActivity

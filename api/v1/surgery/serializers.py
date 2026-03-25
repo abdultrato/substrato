@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.surgery.models.surgery import Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 
@@ -18,13 +19,16 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class SurgerySerializer(serializers.ModelSerializer):
+class SurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     surgeon_name = serializers.SerializerMethodField(method_name="get_surgeon_name")
-    procedures_nomes = serializers.SerializerMethodField(method_name="get_procedure_names")
+    procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
+    legacy_output_aliases = {
+        "procedures_nomes": "procedure_names",
+    }
 
     class Meta:
         model = Surgery
@@ -33,7 +37,7 @@ class SurgerySerializer(serializers.ModelSerializer):
             *CORE_READ_ONLY_FIELDS,
             "patient_name",
             "surgeon_name",
-            "procedures_nomes",
+            "procedure_names",
             "invoice_id",
             "invoice_code",
             "invoice_status",

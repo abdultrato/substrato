@@ -22,52 +22,52 @@ import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-interface WorkspaceResumo {
-    checkins_hoje: number
-    na_fila: number
-    em_atendimento: number
-    pacientes_novos: number
-    requisicoes_pendentes: number
-    faturas_em_aberto: number
-    recibos_gerados_hoje: number
-    recebido_hoje: string
+interface ReceptionWorkspaceSummary {
+    checkins_today: number
+    queue_size: number
+    in_care: number
+    new_patients: number
+    pending_requests: number
+    open_invoices: number
+    receipts_generated_today: number
+    received_today: string
 }
 
-interface WorkspaceFilaItem {
+interface ReceptionQueueItem {
     id: number
-    id_custom: string
-    paciente_id: number
-    paciente_nome: string
-    paciente_codigo: string
-    prioridade: string
-    estado: string
-    chegou_em: string
-    atendente: string
-    requisicao_id: number | null
-    requisicao_codigo: string
-    fatura_id: number | null
-    fatura_codigo: string
+    custom_id: string
+    patient_id: number
+    patient_name: string
+    patient_code: string
+    priority: string
+    status: string
+    arrived_at: string
+    attendant: string
+    request_id: number | null
+    request_code: string
+    invoice_id: number | null
+    invoice_code: string
 }
 
-interface WorkspaceRecepcao {
-    data: string
-    resumo: WorkspaceResumo
-    fila: WorkspaceFilaItem[]
+interface ReceptionWorkspace {
+    date: string
+    summary: ReceptionWorkspaceSummary
+    queue: ReceptionQueueItem[]
 }
 
-const EMPTY_WORKSPACE: WorkspaceRecepcao = {
-    data: "",
-    resumo: {
-        checkins_hoje: 0,
-        na_fila: 0,
-        em_atendimento: 0,
-        pacientes_novos: 0,
-        requisicoes_pendentes: 0,
-        faturas_em_aberto: 0,
-        recibos_gerados_hoje: 0,
-        recebido_hoje: "0.00",
+const EMPTY_WORKSPACE: ReceptionWorkspace = {
+    date: "",
+    summary: {
+        checkins_today: 0,
+        queue_size: 0,
+        in_care: 0,
+        new_patients: 0,
+        pending_requests: 0,
+        open_invoices: 0,
+        receipts_generated_today: 0,
+        received_today: "0.00",
     },
-    fila: [],
+    queue: [],
 }
 
 const atalhos = [
@@ -114,15 +114,15 @@ export default function RecepcaoPage() {
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
-    const [workspace, setWorkspace] = useState<WorkspaceRecepcao>(EMPTY_WORKSPACE)
+    const [workspace, setWorkspace] = useState<ReceptionWorkspace>(EMPTY_WORKSPACE)
     const [erro, setErro] = useState<string | null>(null)
     const [carregando, setCarregando] = useState(true)
 
     useEffect(() => {
         async function carregarWorkspace() {
             try {
-                const data = await apiFetch<WorkspaceRecepcao>("/recepcao/workspace/")
-                setWorkspace(data || EMPTY_WORKSPACE)
+                const data = await apiFetch<any>("/recepcao/workspace/")
+                setWorkspace(normalizeReceptionWorkspace(data))
             } catch (error) {
                 setErro(
                     error instanceof Error
@@ -164,12 +164,12 @@ export default function RecepcaoPage() {
                 )}
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <ResumoCard title="Check-ins hoje" value={workspace.resumo.checkins_hoje} icon={Users} />
-                    <ResumoCard title="Na fila" value={workspace.resumo.na_fila} icon={ClipboardList} />
-                    <ResumoCard title="Em atendimento" value={workspace.resumo.em_atendimento} icon={UserPlus} />
+                    <ResumoCard title="Check-ins hoje" value={workspace.summary.checkins_today} icon={Users} />
+                    <ResumoCard title="Na fila" value={workspace.summary.queue_size} icon={ClipboardList} />
+                    <ResumoCard title="Em atendimento" value={workspace.summary.in_care} icon={UserPlus} />
                     <ResumoCard
                         title="Recebido hoje"
-                        value={<MoneyValue value={workspace.resumo.recebido_hoje} />}
+                        value={<MoneyValue value={workspace.summary.received_today} />}
                         icon={Receipt}
                     />
                 </div>
@@ -181,7 +181,7 @@ export default function RecepcaoPage() {
                     >
                         {carregando ? (
                             <div className="text-sm text-gray-500">Carregando fila...</div>
-                        ) : workspace.fila.length === 0 ? (
+                        ) : workspace.queue.length === 0 ? (
                             <div className="text-sm text-gray-500">
                                 Nenhum check-in aberto hoje. A recepção já pode começar a registrar entradas.
                             </div>
@@ -198,19 +198,19 @@ export default function RecepcaoPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {workspace.fila.map((item) => (
+                                        {workspace.queue.map((item) => (
                                             <tr key={item.id} className="border-b last:border-b-0">
                                                 <td className="py-2 pr-4">
-                                                    <div className="font-medium text-gray-900">{item.paciente_nome}</div>
-                                                    <div className="text-xs text-gray-500">{item.paciente_codigo}</div>
+                                                    <div className="font-medium text-gray-900">{item.patient_name}</div>
+                                                    <div className="text-xs text-gray-500">{item.patient_code}</div>
                                                 </td>
-                                                <td className="py-2 pr-4 text-gray-700">{item.prioridade}</td>
-                                                <td className="py-2 pr-4 text-gray-700">{item.estado}</td>
+                                                <td className="py-2 pr-4 text-gray-700">{item.priority}</td>
+                                                <td className="py-2 pr-4 text-gray-700">{item.status}</td>
                                                 <td className="py-2 pr-4 text-gray-700">
-                                                    {item.requisicao_codigo || "Pendente"}
+                                                    {item.request_code || "Pendente"}
                                                 </td>
                                                 <td className="py-2 text-gray-700">
-                                                    {item.fatura_codigo || "Pendente"}
+                                                    {item.invoice_code || "Pendente"}
                                                 </td>
                                             </tr>
                                         ))}
@@ -226,10 +226,10 @@ export default function RecepcaoPage() {
                             subtitle="Pendências que impactam diretamente o balcão."
                         >
                             <div className="space-y-3 text-sm">
-                                <IndicadorLinha label="Pacientes novos" value={workspace.resumo.pacientes_novos} />
-                                <IndicadorLinha label="Requisições pendentes" value={workspace.resumo.requisicoes_pendentes} />
-                                <IndicadorLinha label="Faturas em aberto" value={workspace.resumo.faturas_em_aberto} />
-                                <IndicadorLinha label="Recibos gerados hoje" value={workspace.resumo.recibos_gerados_hoje} />
+                                <IndicadorLinha label="Pacientes novos" value={workspace.summary.new_patients} />
+                                <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} />
+                                <IndicadorLinha label="Faturas em aberto" value={workspace.summary.open_invoices} />
+                                <IndicadorLinha label="Recibos gerados hoje" value={workspace.summary.receipts_generated_today} />
                             </div>
                         </Card>
 
@@ -269,6 +269,44 @@ export default function RecepcaoPage() {
             </div>
         </AppLayout>
     )
+}
+
+function normalizeReceptionWorkspace ( raw: any ): ReceptionWorkspace {
+    const summary = raw?.summary ?? raw?.resumo ?? {}
+    const queue = raw?.queue ?? raw?.fila ?? []
+
+    return {
+        date: String( raw?.date ?? raw?.data ?? "" ),
+        summary: {
+            checkins_today: Number( summary?.checkins_today ?? summary?.checkins_hoje ?? 0 ),
+            queue_size: Number( summary?.queue_size ?? summary?.na_fila ?? 0 ),
+            in_care: Number( summary?.in_care ?? summary?.em_atendimento ?? 0 ),
+            new_patients: Number( summary?.new_patients ?? summary?.pacientes_novos ?? 0 ),
+            pending_requests: Number( summary?.pending_requests ?? summary?.requisicoes_pendentes ?? 0 ),
+            open_invoices: Number( summary?.open_invoices ?? summary?.faturas_em_aberto ?? 0 ),
+            receipts_generated_today: Number(
+                summary?.receipts_generated_today ?? summary?.recibos_gerados_hoje ?? 0
+            ),
+            received_today: String( summary?.received_today ?? summary?.recebido_hoje ?? "0.00" ),
+        },
+        queue: Array.isArray( queue )
+            ? queue.map( ( item: any ) => ( {
+                id: Number( item?.id ?? 0 ),
+                custom_id: String( item?.custom_id ?? item?.id_custom ?? "" ),
+                patient_id: Number( item?.patient_id ?? item?.paciente_id ?? 0 ),
+                patient_name: String( item?.patient_name ?? item?.paciente_nome ?? "" ),
+                patient_code: String( item?.patient_code ?? item?.paciente_codigo ?? "" ),
+                priority: String( item?.priority ?? item?.prioridade ?? "" ),
+                status: String( item?.status ?? item?.estado ?? "" ),
+                arrived_at: String( item?.arrived_at ?? item?.chegou_em ?? "" ),
+                attendant: String( item?.attendant ?? item?.atendente ?? "" ),
+                request_id: item?.request_id ?? item?.requisicao_id ?? null,
+                request_code: String( item?.request_code ?? item?.requisicao_codigo ?? "" ),
+                invoice_id: item?.invoice_id ?? item?.fatura_id ?? null,
+                invoice_code: String( item?.invoice_code ?? item?.fatura_codigo ?? "" ),
+            } ) )
+            : [],
+    }
 }
 
 function ResumoCard({

@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.nursing.models import (
     NursingEvolution,
@@ -60,16 +61,22 @@ class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     permission_classes = [IsAuthenticated]
 
 
-class WardDashboardSummarySerializer(serializers.Serializer):
-    pacientes = serializers.IntegerField()
-    camas_total = serializers.IntegerField()
-    camas_ocupadas = serializers.IntegerField()
-    camas_livres = serializers.IntegerField()
+class WardDashboardSummarySerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    patients = serializers.IntegerField()
+    total_beds = serializers.IntegerField()
+    occupied_beds = serializers.IntegerField()
+    available_beds = serializers.IntegerField()
+    legacy_output_aliases = {
+        "pacientes": "patients",
+        "camas_total": "total_beds",
+        "camas_ocupadas": "occupied_beds",
+        "camas_livres": "available_beds",
+    }
 
 
-class WardDashboardBedSerializer(serializers.Serializer):
-    internamento_id = serializers.IntegerField()
-    internamento_code = serializers.CharField(allow_blank=True)
+class WardDashboardBedSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    admission_id = serializers.IntegerField()
+    admission_code = serializers.CharField(allow_blank=True)
     ward = serializers.CharField(allow_blank=True)
     bed_id = serializers.IntegerField()
     bed_number = serializers.CharField(allow_blank=True)
@@ -80,11 +87,29 @@ class WardDashboardBedSerializer(serializers.Serializer):
     estimated_observation_hours = serializers.IntegerField(required=False, allow_null=True)
     next_medication_at = serializers.DateTimeField(required=False, allow_null=True)
     next_medication_description = serializers.CharField(required=False, allow_blank=True)
+    legacy_output_aliases = {
+        "internamento_id": "admission_id",
+        "internamento_code": "admission_code",
+        "enfermaria": "ward",
+        "cama_id": "bed_id",
+        "cama_numero": "bed_number",
+        "paciente_id": "patient_id",
+        "paciente_nome": "patient_name",
+        "data_internamento": "admission_date",
+        "data_prevista_alta": "expected_discharge_date",
+        "tempo_estimado_observacao_horas": "estimated_observation_hours",
+        "proxima_medicacao_em": "next_medication_at",
+        "proxima_medicacao_descricao": "next_medication_description",
+    }
 
 
-class WardDashboardResponseSerializer(serializers.Serializer):
-    resumo = WardDashboardSummarySerializer()
-    camas = WardDashboardBedSerializer(many=True)
+class WardDashboardResponseSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    summary = WardDashboardSummarySerializer()
+    beds = WardDashboardBedSerializer(many=True)
+    legacy_output_aliases = {
+        "resumo": "summary",
+        "camas": "beds",
+    }
 
 
 class NursingRecordViewSet(TenantScopedModelViewSet):
@@ -459,16 +484,16 @@ class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
         if tenant is not None:
             intern_qs = intern_qs.filter(tenant=tenant)
 
-        total_camas = camas_qs.count()
-        camas_ocupadas = intern_qs.values("bed_id").distinct().count()
-        pacientes = intern_qs.values("patient_id").distinct().count()
+        total_beds = camas_qs.count()
+        occupied_beds = intern_qs.values("bed_id").distinct().count()
+        patients = intern_qs.values("patient_id").distinct().count()
 
-        camas = []
+        beds = []
         for it in intern_qs.order_by("bed__ward__name", "bed__number", "next_medication_at"):
-            camas.append(
+            beds.append(
                 {
-                    "internamento_id": it.id,
-                    "internamento_code": getattr(it, "custom_id", "") or "",
+                    "admission_id": it.id,
+                    "admission_code": getattr(it, "custom_id", "") or "",
                     "ward": getattr(getattr(it.bed, "ward", None), "name", "") or "",
                     "bed_id": it.bed_id,
                     "bed_number": getattr(it.bed, "number", "") or "",
@@ -482,17 +507,16 @@ class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
                 }
             )
 
-        return Response(
-            {
-                "resumo": {
-                    "pacientes": pacientes,
-                    "camas_total": total_camas,
-                    "camas_ocupadas": camas_ocupadas,
-                    "camas_livres": max(0, total_camas - camas_ocupadas),
-                },
-                "camas": camas,
-            }
-        )
+        payload = {
+            "summary": {
+                "patients": patients,
+                "total_beds": total_beds,
+                "occupied_beds": occupied_beds,
+                "available_beds": max(0, total_beds - occupied_beds),
+            },
+            "beds": beds,
+        }
+        return Response(WardDashboardResponseSerializer(instance=payload).data)
 
 
 VIEWSET_MAP = {

@@ -19,6 +19,7 @@ CORE_READ_ONLY_FIELDS = (
 
 class SystemErrorSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField(method_name="get_user_name")
+    ip = serializers.CharField(read_only=True, allow_blank=True, allow_null=True)
 
     class Meta:
         model = SystemError

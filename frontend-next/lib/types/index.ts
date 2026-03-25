@@ -1,7 +1,11 @@
-export * from './entidade'
-export * from './exame'
-export * from './paciente'
-export * from './requisicao'
-export * from './fatura'
-export type EntidadeList = import('./entidade').Entidade
-export type ExameList = import('./exame').Exame
+export * from "./entidade"
+export * from "./exam"
+export * from "./invoice"
+export * from "./patient"
+export * from "./request"
+
+export type EntityList = import("./entidade").Entity
+export type ExamList = import("./exam").Exam
+export type InvoiceList = import("./invoice").InvoiceSummary
+export type PatientList = import("./patient").Patient
+export type RequestList = import("./request").Request

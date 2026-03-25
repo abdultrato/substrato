@@ -15,30 +15,30 @@ import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoResumo = {
   id: number
-  id_custom?: string
-  tipo: string
-  resultado?: { id: number }
+  custom_id?: string
+  type: string
+  result?: { id: number }
 }
 
 type ExameMedicoResumo = {
   id: number
-  nome?: string
-  metodo?: string
-  tipos_resultado_permitidos?: string[]
-  tipos_resultado_cadastrados?: string[]
+  name?: string
+  method?: string
+  allowed_result_types?: string[]
+  registered_result_types?: string[]
 }
 
 type ArquivoRow = {
   id: number
-  id_custom?: string
-  resultado?: number
-  exame_medico?: number
-  exame_medico_nome?: string
-  tipo?: string
-  descricao?: string
-  arquivo?: string
-  criado_em?: string
-  requisicao?: number
+  custom_id?: string
+  result?: number
+  medical_exam?: number
+  medical_exam_name?: string
+  type?: string
+  description?: string
+  file?: string
+  created_at?: string
+  request?: number
 }
 
 function fmtDate(value: any): string {
@@ -75,7 +75,7 @@ export default function ResultadosMedicosPage() {
         page: 1,
         pageSize: 50,
       })
-      setArquivos(items)
+      setArquivos(items.map(normalizeMedicalFile))
     } catch (e: any) {
       setErro(e?.message || "Falha ao carregar anexos médicos.")
     }
@@ -84,7 +84,7 @@ export default function ResultadosMedicosPage() {
   async function loadExames() {
     try {
       const res = await apiFetchList<ExameMedicoResumo>("/clinico/examemedico/", { page: 1, pageSize: 200 })
-      setExames(res.items)
+      setExames(res.items.map(normalizeMedicalExam))
     } catch (e: any) {
       setErro(e?.message || "Falha ao carregar catálogo de exames médicos.")
     }
@@ -93,7 +93,7 @@ export default function ResultadosMedicosPage() {
   async function loadRequisicoes() {
     try {
       const res = await apiFetchList<RequisicaoResumo>("/requisicoes/?tipo=MED", { page: 1, pageSize: 200 })
-      setRequisicoes(res.items)
+      setRequisicoes(res.items.map(normalizeMedicalRequest))
     } catch (e: any) {
       setErro(e?.message || "Falha ao listar requisições de exames médicos.")
     }
@@ -101,7 +101,7 @@ export default function ResultadosMedicosPage() {
 
   const selectedResultadoId = useMemo(() => {
     const req = requisicoes.find((r) => String(r.id) === form.requisicaoId)
-    return req?.resultado?.id
+    return req?.result?.id
   }, [form.requisicaoId, requisicoes])
 
   const selectedExame = useMemo(
@@ -111,13 +111,13 @@ export default function ResultadosMedicosPage() {
 
   const tiposPermitidos = useMemo(() => {
     if (!selectedExame) return tipoResultadoMedicoOptions.map((opt) => opt.value)
-    if (selectedExame.tipos_resultado_cadastrados?.length) {
-      return selectedExame.tipos_resultado_cadastrados
+    if (selectedExame.registered_result_types?.length) {
+      return selectedExame.registered_result_types
     }
-    if (selectedExame.tipos_resultado_permitidos?.length) {
-      return selectedExame.tipos_resultado_permitidos
+    if (selectedExame.allowed_result_types?.length) {
+      return selectedExame.allowed_result_types
     }
-    return getTiposResultadoMedicoPorMetodo(selectedExame.metodo)
+    return getTiposResultadoMedicoPorMetodo(selectedExame.method)
   }, [selectedExame])
 
   const tipoOptions = useMemo(
@@ -156,13 +156,12 @@ export default function ResultadosMedicosPage() {
     }
 
     const formData = new FormData()
-    formData.append("arquivo", file)
-    formData.append("exame_medico", form.exameMedicoId)
-    formData.append("resultado", String(selectedResultadoId))
-    formData.append("requisicao", form.requisicaoId)
-    formData.append("tipo", form.tipo)
+    formData.append("file", file)
+    formData.append("medical_exam", form.exameMedicoId)
+    formData.append("result", String(selectedResultadoId))
+    formData.append("type", form.tipo)
     if (form.descricao.trim()) {
-      formData.append("descricao", form.descricao.trim())
+      formData.append("description", form.descricao.trim())
     }
 
     setLoading(true)
@@ -190,7 +189,7 @@ export default function ResultadosMedicosPage() {
     () =>
       arquivos.map((arquivo) => ({
         ...arquivo,
-        tipo_label: tipoResultadoMedicoOptions.find((o) => o.value === arquivo.tipo)?.label || arquivo.tipo,
+        tipo_label: tipoResultadoMedicoOptions.find((o) => o.value === arquivo.type)?.label || arquivo.type,
       })),
     [arquivos]
   )
@@ -215,7 +214,7 @@ export default function ResultadosMedicosPage() {
                 <option value="">Selecione</option>
                 {requisicoes.map((req) => (
                   <option key={req.id} value={req.id}>
-                    {req.id_custom || `#${req.id}`}
+                    {req.custom_id || `#${req.id}`}
                   </option>
                 ))}
               </select>
@@ -230,8 +229,8 @@ export default function ResultadosMedicosPage() {
               >
                 <option value="">Selecione</option>
                 {exames.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.nome || `Exame #${ex.id}`}
+                <option key={ex.id} value={ex.id}>
+                    {ex.name || `Exame #${ex.id}`}
                   </option>
                 ))}
               </select>
@@ -301,23 +300,23 @@ export default function ResultadosMedicosPage() {
                       className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <strong>{row.id_custom || `#${row.id}`}</strong>
+                        <strong>{row.custom_id || `#${row.id}`}</strong>
                         <span className="text-xs text-slate-500">{row.tipo_label}</span>
                       </div>
-                      <div className="text-sm text-slate-600">{row.exame_medico_nome || "Exame médico"}</div>
+                      <div className="text-sm text-slate-600">{row.medical_exam_name || "Exame médico"}</div>
                       <div className="text-sm text-slate-600">
-                        {row.descricao || "Sem descrição"} · Requisição #{row.requisicao || "-"}
+                        {row.description || "Sem descrição"} · Requisição #{row.request || "-"}
                       </div>
                       <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
                         <a
-                          href={row.arquivo}
+                          href={row.file}
                           target="_blank"
                           rel="noreferrer"
                           className="font-medium text-slate-900 underline"
                         >
                           Abrir arquivo
                         </a>
-                        <span>{fmtDate(row.criado_em)}</span>
+                        <span>{fmtDate(row.created_at)}</span>
                       </div>
                     </div>
                   ))}
@@ -329,4 +328,40 @@ export default function ResultadosMedicosPage() {
       </div>
     </AppLayout>
   )
+}
+
+function normalizeMedicalRequest(raw: any): RequisicaoResumo {
+  return {
+    id: Number(raw?.id ?? 0),
+    custom_id: raw?.custom_id ?? raw?.id_custom,
+    type: raw?.type ?? raw?.tipo ?? "",
+    result: raw?.result ?? raw?.resultado,
+  }
+}
+
+function normalizeMedicalExam(raw: any): ExameMedicoResumo {
+  return {
+    id: Number(raw?.id ?? 0),
+    name: raw?.name ?? raw?.nome,
+    method: raw?.method ?? raw?.metodo,
+    allowed_result_types:
+      raw?.allowed_result_types ?? raw?.tipos_resultado_permitidos ?? raw?.tipos_result_permitidos,
+    registered_result_types:
+      raw?.registered_result_types ?? raw?.tipos_resultado_cadastrados ?? raw?.tipos_result_cadastrados,
+  }
+}
+
+function normalizeMedicalFile(raw: any): ArquivoRow {
+  return {
+    id: Number(raw?.id ?? 0),
+    custom_id: raw?.custom_id ?? raw?.id_custom,
+    result: raw?.result ?? raw?.resultado,
+    medical_exam: raw?.medical_exam ?? raw?.exame_medico,
+    medical_exam_name: raw?.medical_exam_name ?? raw?.exame_medico_nome,
+    type: raw?.type ?? raw?.tipo,
+    description: raw?.description ?? raw?.descricao,
+    file: raw?.file ?? raw?.arquivo,
+    created_at: raw?.created_at ?? raw?.criado_em,
+    request: raw?.request ?? raw?.requisicao,
+  }
 }

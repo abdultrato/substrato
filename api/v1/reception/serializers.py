@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.payments.models.payment import Payment
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from core.constants.document_types import TipoDocumento
@@ -76,11 +77,13 @@ class CreateReceptionRequestSerializer(serializers.Serializer):
     )
 
 
-class CreateReceptionInvoiceSerializer(serializers.Serializer):
-    emitir = serializers.BooleanField(default=True)
+class CreateReceptionInvoiceSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    issue = serializers.BooleanField(default=True)
+    legacy_input_aliases = {"emitir": "issue"}
+    legacy_output_aliases = {"emitir": "issue"}
 
 
-class RegisterReceptionPaymentSerializer(serializers.Serializer):
+class RegisterReceptionPaymentSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     value = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -103,7 +106,9 @@ class RegisterReceptionPaymentSerializer(serializers.Serializer):
         allow_blank=True,
     )
     insurance_date = serializers.JSONField(required=False, allow_null=True)
-    confirmar = serializers.BooleanField(default=True)
+    confirm = serializers.BooleanField(default=True)
+    legacy_input_aliases = {"confirmar": "confirm"}
+    legacy_output_aliases = {"confirmar": "confirm"}
 
     def validate(self, attrs):
         method = attrs.get("method") or Payment.Method.DINHEIRO
@@ -134,30 +139,40 @@ class PatientFlowSerializer(serializers.Serializer):
     gestational_age_weeks = serializers.IntegerField(required=False, allow_null=True, min_value=0)
 
 
-class CheckinFlowSerializer(serializers.Serializer):
+class CheckinFlowSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     priority = serializers.ChoiceField(
         choices=ReceptionCheckin.Priority.choices,
         required=False,
     )
     reason = serializers.CharField(max_length=255, required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
-    iniciar_atendimento = serializers.BooleanField(default=False)
+    start_care = serializers.BooleanField(default=False)
+    legacy_input_aliases = {"iniciar_atendimento": "start_care"}
+    legacy_output_aliases = {"iniciar_atendimento": "start_care"}
 
 
-class CareFlowCreateSerializer(serializers.Serializer):
+class CareFlowCreateSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     patient_id = serializers.IntegerField(required=False, min_value=1)
     patient = PatientFlowSerializer(required=False)
     checkin = CheckinFlowSerializer(required=False)
     request = CreateReceptionRequestSerializer(required=False)
-    faturamento = CreateReceptionInvoiceSerializer(required=False)
+    billing = CreateReceptionInvoiceSerializer(required=False)
     payment = RegisterReceptionPaymentSerializer(required=False)
-    concluir_checkin = serializers.BooleanField(default=False)
+    complete_checkin = serializers.BooleanField(default=False)
+    legacy_input_aliases = {
+        "faturamento": "billing",
+        "concluir_checkin": "complete_checkin",
+    }
+    legacy_output_aliases = {
+        "faturamento": "billing",
+        "concluir_checkin": "complete_checkin",
+    }
 
     def validate(self, attrs):
         patient_id = attrs.get("patient_id")
         patient = attrs.get("patient")
         request = attrs.get("request")
-        faturamento = attrs.get("faturamento")
+        billing = attrs.get("billing")
         payment = attrs.get("payment")
 
         if not patient_id and not patient:
@@ -165,9 +180,9 @@ class CareFlowCreateSerializer(serializers.Serializer):
                 "Informe `patient_id` para usar um patient existente ou envie `patient` para criar um novo."
             )
 
-        if faturamento and not request:
+        if billing and not request:
             raise serializers.ValidationError(
-                {"faturamento": "Faturamento na abertura exige criar requisição no mesmo fluxo."}
+                {"billing": "Billing na abertura exige criar requisição no mesmo fluxo."}
             )
 
         if payment and not request:

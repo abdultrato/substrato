@@ -156,6 +156,8 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
                     "clinical_status": request_record.clinical_status,
                     "has_critical_result": request_record.has_critical_result,
                 },
+                "summary": summary,
+                "items": items,
                 "resumo": summary,
                 "itens": items,
             }

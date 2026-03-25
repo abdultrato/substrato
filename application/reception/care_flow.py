@@ -128,8 +128,12 @@ def create_request_for_checkin(
 def create_invoice_for_checkin(
     *,
     checkin,
-    emitir=True,
+    issue=True,
+    emitir=None,
 ):
+    if emitir is not None:
+        issue = emitir
+
     if checkin.invoice_id:
         raise ValidationError("Check-in já possui invoice vinculada.")
 
@@ -146,7 +150,7 @@ def create_invoice_for_checkin(
     invoice.save()
     invoice.sincronizar_itens_da_origin()
 
-    if emitir:
+    if issue:
         invoice.emitir()
 
     checkin.register_invoice(invoice)
@@ -164,8 +168,12 @@ def register_payment_for_checkin(
     coverage_plan_id=None,
     authorization_number="",
     insurance_date=None,
-    confirmar=True,
+    confirm=True,
+    confirmar=None,
 ):
+    if confirmar is not None:
+        confirm = confirmar
+
     if not checkin.invoice_id:
         raise ValidationError("Check-in não possui invoice vinculada.")
 
@@ -220,7 +228,7 @@ def register_payment_for_checkin(
     payment.full_clean()
     payment.save()
 
-    if confirmar:
+    if confirm:
         payment.confirm()
 
     recibo = Receipt.objects.filter(payment=payment).order_by("-created_at", "-id").first()
@@ -246,8 +254,8 @@ def get_care_summary(checkin):
 
     request = checkin.request
     invoice = checkin.invoice
-    pagamentos = list(invoice.pagamentos.order_by("-created_at")) if invoice else []
-    recibos = list(invoice.recibos.order_by("-created_at")) if invoice else []
+    payments = list(invoice.pagamentos.order_by("-created_at")) if invoice else []
+    receipts = list(invoice.recibos.order_by("-created_at")) if invoice else []
 
     return {
         "checkin": {
@@ -303,6 +311,17 @@ def get_care_summary(checkin):
                 "total": str(invoice.total),
                 "patient_amount": str(invoice.patient_amount),
                 "insurance_amount": str(invoice.insurance_amount),
+                "items": [
+                    {
+                        "id": item.id,
+                        "custom_id": item.custom_id,
+                        "description": item.description,
+                        "quantity": str(item.quantity),
+                        "unit_price": str(item.unit_price),
+                        "total": str(item.total),
+                    }
+                    for item in invoice.itens.filter(deleted=False)
+                ],
                 "itens": [
                     {
                         "id": item.id,
@@ -318,6 +337,34 @@ def get_care_summary(checkin):
             if invoice
             else None
         ),
+        "payments": [
+            {
+                "id": payment.id,
+                "custom_id": payment.custom_id,
+                "name": payment.name,
+                "value": str(payment.value),
+                "method": payment.method,
+                "method_display": payment.get_method_display(),
+                "status": payment.status,
+                "status_display": payment.get_status_display(),
+                "external_reference": payment.external_reference,
+                "insurer_id": payment.insurer_id,
+                "coverage_plan_id": payment.coverage_plan_id,
+                "authorization_number": payment.authorization_number,
+                "insurance_date": payment.insurance_date,
+                "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
+            }
+            for payment in payments
+        ],
+        "receipts": [
+            {
+                "id": recibo.id,
+                "number": recibo.number,
+                "value": str(recibo.value),
+                "created_at": recibo.created_at.isoformat() if recibo.created_at else None,
+            }
+            for recibo in receipts
+        ],
         "pagamentos": [
             {
                 "id": payment.id,
@@ -335,7 +382,7 @@ def get_care_summary(checkin):
                 "insurance_date": payment.insurance_date,
                 "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
             }
-            for payment in pagamentos
+            for payment in payments
         ],
         "recibos": [
             {
@@ -344,7 +391,7 @@ def get_care_summary(checkin):
                 "value": str(recibo.value),
                 "created_at": recibo.created_at.isoformat() if recibo.created_at else None,
             }
-            for recibo in recibos
+            for recibo in receipts
         ],
     }
 
@@ -358,10 +405,17 @@ def execute_full_flow(
     patient=None,
     checkin=None,
     request=None,
-    faturamento=None,
+    billing=None,
     payment=None,
-    concluir_checkin=False,
+    complete_checkin=False,
+    faturamento=None,
+    concluir_checkin=None,
 ):
+    if faturamento is not None:
+        billing = faturamento
+    if concluir_checkin is not None:
+        complete_checkin = concluir_checkin
+
     patient_obj = _resolve_patient(
         tenant=tenant,
         patient_id=patient_id,
@@ -369,7 +423,7 @@ def execute_full_flow(
     )
 
     dados_checkin = dict(checkin or {})
-    iniciar_atendimento = bool(dados_checkin.pop("iniciar_atendimento", False))
+    start_care = bool(dados_checkin.pop("start_care", dados_checkin.pop("iniciar_atendimento", False)))
 
     checkin_obj = open_checkin(
         tenant=tenant,
@@ -377,10 +431,10 @@ def execute_full_flow(
         priority=dados_checkin.get("priority"),
         reason=dados_checkin.get("reason", ""),
         notes=dados_checkin.get("notes", ""),
-        attendant=user if user and iniciar_atendimento else None,
+        attendant=user if user and start_care else None,
     )
 
-    if iniciar_atendimento:
+    if start_care:
         checkin_obj.start_care(attendant=user)
 
     request_obj = None
@@ -392,14 +446,14 @@ def execute_full_flow(
             clinical_status=dados_request.get("clinical_status"),
         )
 
-    if faturamento or payment:
+    if billing or payment:
         if not checkin_obj.request_id and not request_obj:
             raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
 
-        dados_faturamento = dict(faturamento or {})
+        billing_data = dict(billing or {})
         create_invoice_for_checkin(
             checkin=checkin_obj,
-            emitir=True if payment else dados_faturamento.get("emitir", True),
+            issue=True if payment else billing_data.get("issue", billing_data.get("emitir", True)),
         )
 
     if payment:
@@ -413,10 +467,10 @@ def execute_full_flow(
             coverage_plan_id=dados_payment.get("coverage_plan_id"),
             authorization_number=dados_payment.get("authorization_number", ""),
             insurance_date=dados_payment.get("insurance_date"),
-            confirmar=dados_payment.get("confirmar", True),
+            confirm=dados_payment.get("confirm", dados_payment.get("confirmar", True)),
         )
 
-    if concluir_checkin:
+    if complete_checkin:
         checkin_obj.concluir()
 
     return get_care_summary(checkin_obj)

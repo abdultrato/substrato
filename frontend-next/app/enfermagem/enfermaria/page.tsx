@@ -13,25 +13,25 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 type DashboardData = {
-  resumo: {
-    pacientes: number
-    camas_total: number
-    camas_ocupadas: number
-    camas_livres: number
+  summary: {
+    patients: number
+    total_beds: number
+    occupied_beds: number
+    available_beds: number
   }
-  camas: Array<{
-    internamento_id: number
-    internamento_codigo: string
-    enfermaria: string
-    cama_id: number
-    cama_numero: string
-    paciente_id: number
-    paciente_nome: string
-    data_internamento: string | null
-    data_prevista_alta: string | null
-    tempo_estimado_observacao_horas: number | null
-    proxima_medicacao_em: string | null
-    proxima_medicacao_descricao: string
+  beds: Array<{
+    admission_id: number
+    admission_code: string
+    ward: string
+    bed_id: number
+    bed_number: string
+    patient_id: number
+    patient_name: string
+    admission_date: string | null
+    expected_discharge_date: string | null
+    estimated_observation_hours: number | null
+    next_medication_at: string | null
+    next_medication_description: string
   }>
 }
 
@@ -53,9 +53,9 @@ export default function EnfermariaDashboardPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<DashboardData>("/enfermagem/enfermariadashboard/")
+        const res = await apiFetch<any>("/enfermagem/enfermariadashboard/")
         if (!mounted) return
-        setData(res)
+        setData(normalizeDashboardData(res))
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar dashboard da enfermaria.")
@@ -71,30 +71,30 @@ export default function EnfermariaDashboardPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Enfermaria", render: (r: any) => r.enfermaria || "—" },
-      { header: "Cama", render: (r: any) => r.cama_numero || "—" },
+      { header: "Enfermaria", render: (r: any) => r.ward || "—" },
+      { header: "Cama", render: (r: any) => r.bed_number || "—" },
       {
         header: "Paciente",
         render: (r: any) => (
           <Link
-            href={`/pacientes/${r.paciente_id}`}
+            href={`/pacientes/${r.patient_id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
-            {r.paciente_nome || "—"}
+            {r.patient_name || "—"}
           </Link>
         ),
       },
-      { header: "Internamento", render: (r: any) => r.internamento_codigo || r.internamento_id || "—" },
-      { header: "Internado em", render: (r: any) => fmtDateTime(r.data_internamento) },
-      { header: "Alta prevista", render: (r: any) => fmtDateTime(r.data_prevista_alta) },
+      { header: "Internamento", render: (r: any) => r.admission_code || r.admission_id || "—" },
+      { header: "Internado em", render: (r: any) => fmtDateTime(r.admission_date) },
+      { header: "Alta prevista", render: (r: any) => fmtDateTime(r.expected_discharge_date) },
       {
         header: "Próx. medicação",
         render: (r: any) =>
-          r.proxima_medicacao_em ? (
+          r.next_medication_at ? (
             <div>
-              <div className="font-medium text-[var(--text)]">{fmtDateTime(r.proxima_medicacao_em)}</div>
-              {r.proxima_medicacao_descricao ? (
-                <div className="text-xs text-[var(--gray-500)]">{r.proxima_medicacao_descricao}</div>
+              <div className="font-medium text-[var(--text)]">{fmtDateTime(r.next_medication_at)}</div>
+              {r.next_medication_description ? (
+                <div className="text-xs text-[var(--gray-500)]">{r.next_medication_description}</div>
               ) : null}
             </div>
           ) : (
@@ -105,7 +105,7 @@ export default function EnfermariaDashboardPage() {
     []
   )
 
-  const resumo = data?.resumo
+  const summary = data?.summary
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
@@ -150,17 +150,17 @@ export default function EnfermariaDashboardPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Pacientes" value={loading ? "..." : resumo?.pacientes ?? 0} />
-          <MetricCard label="Camas totais" value={loading ? "..." : resumo?.camas_total ?? 0} />
-          <MetricCard label="Camas ocupadas" value={loading ? "..." : resumo?.camas_ocupadas ?? 0} />
-          <MetricCard label="Camas livres" value={loading ? "..." : resumo?.camas_livres ?? 0} />
+          <MetricCard label="Pacientes" value={loading ? "..." : summary?.patients ?? 0} />
+          <MetricCard label="Camas totais" value={loading ? "..." : summary?.total_beds ?? 0} />
+          <MetricCard label="Camas ocupadas" value={loading ? "..." : summary?.occupied_beds ?? 0} />
+          <MetricCard label="Camas livres" value={loading ? "..." : summary?.available_beds ?? 0} />
         </div>
 
         <Card title="Camas ocupadas" subtitle="Lista de internamentos ativos (uma linha por cama ocupada).">
           {loading ? (
             <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
           ) : (
-            <DataTable columns={columns as any} data={data?.camas || []} emptyMessage="Nenhuma cama ocupada." />
+            <DataTable columns={columns as any} data={data?.beds || []} emptyMessage="Nenhuma cama ocupada." />
           )}
         </Card>
 
@@ -178,4 +178,36 @@ export default function EnfermariaDashboardPage() {
       </div>
     </AppLayout>
   )
+}
+
+function normalizeDashboardData(raw: any): DashboardData {
+  const summary = raw?.summary ?? raw?.resumo ?? {}
+  const beds = raw?.beds ?? raw?.camas ?? []
+
+  return {
+    summary: {
+      patients: Number(summary?.patients ?? summary?.pacientes ?? 0),
+      total_beds: Number(summary?.total_beds ?? summary?.camas_total ?? 0),
+      occupied_beds: Number(summary?.occupied_beds ?? summary?.camas_ocupadas ?? 0),
+      available_beds: Number(summary?.available_beds ?? summary?.camas_livres ?? 0),
+    },
+    beds: Array.isArray(beds)
+      ? beds.map((bed: any) => ({
+          admission_id: Number(bed?.admission_id ?? bed?.internamento_id ?? 0),
+          admission_code: String(bed?.admission_code ?? bed?.internamento_code ?? bed?.internamento_codigo ?? ""),
+          ward: String(bed?.ward ?? bed?.enfermaria ?? ""),
+          bed_id: Number(bed?.bed_id ?? bed?.cama_id ?? 0),
+          bed_number: String(bed?.bed_number ?? bed?.cama_numero ?? ""),
+          patient_id: Number(bed?.patient_id ?? bed?.paciente_id ?? 0),
+          patient_name: String(bed?.patient_name ?? bed?.paciente_nome ?? ""),
+          admission_date: bed?.admission_date ?? bed?.data_internamento ?? null,
+          expected_discharge_date: bed?.expected_discharge_date ?? bed?.data_prevista_alta ?? null,
+          estimated_observation_hours:
+            bed?.estimated_observation_hours ?? bed?.tempo_estimado_observacao_horas ?? null,
+          next_medication_at: bed?.next_medication_at ?? bed?.proxima_medicacao_em ?? null,
+          next_medication_description:
+            String(bed?.next_medication_description ?? bed?.proxima_medicacao_descricao ?? ""),
+        }))
+      : [],
+  }
 }

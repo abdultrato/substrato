@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
-import { Paciente, Exame, ExameMedico } from "@/lib/types";
+import { Patient, Exam, MedicalExam } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
@@ -15,88 +15,90 @@ export default function NovaRequisicaoPage () {
     const router = useRouter();
     const { user } = useAuth();
 
-    const [pacientes, setPacientes] = useState<Paciente[]>( [] );
+    const [patients, setPatients] = useState<Patient[]>( [] );
 
-    const [paciente, setPaciente] = useState( "" );
-    const [tipo, setTipo] = useState<"LAB" | "MED">( "LAB" );
-    const [selecionados, setSelecionados] = useState<Array<Exame | ExameMedico>>( [] );
+    const [patientId, setPatientId] = useState( "" );
+    const [type, setType] = useState<"LAB" | "MED">( "LAB" );
+    const [selectedExams, setSelectedExams] = useState<Array<Exam | MedicalExam>>( [] );
 
     const [query, setQuery] = useState("");
     const debouncedQuery = useDebounce(query, 250);
-    const [resultados, setResultados] = useState<Array<Exame | ExameMedico>>([]);
-    const [buscando, setBuscando] = useState(false);
-    const [erroBusca, setErroBusca] = useState<string | null>(null);
+    const [results, setResults] = useState<Array<Exam | MedicalExam>>([]);
+    const [searching, setSearching] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     const [erro, setErro] = useState<string | null>(null);
     const [salvando, setSalvando] = useState(false);
 
     useEffect( () => {
-        carregarPacientes();
+        loadPatients();
     }, [] );
 
     useEffect(() => {
         // ao trocar de setor, limpa seleção e resultados
-        setSelecionados([]);
-        setResultados([]);
+        setSelectedExams([]);
+        setResults([]);
         setQuery("");
-    }, [tipo]);
+    }, [type]);
 
-    async function carregarPacientes () {
-        setPacientes( await apiFetch( "/pacientes/" ) );
+    async function loadPatients () {
+        const data = await apiFetch<any>( "/pacientes/" );
+        const items = Array.isArray( data ) ? data : data?.results || [];
+        setPatients( items.map( normalizePatient ) );
     }
 
-    const selecionadosIds = useMemo(() => new Set(selecionados.map((x) => x.id)), [selecionados]);
+    const selectedExamIds = useMemo(() => new Set(selectedExams.map((x) => x.id)), [selectedExams]);
 
     useEffect(() => {
         let mounted = true;
         async function buscar() {
             const q = (debouncedQuery || "").trim();
             if (!q) {
-                setResultados([]);
-                setErroBusca(null);
+                setResults([]);
+                setSearchError(null);
                 return;
             }
             try {
-                setBuscando(true);
-                setErroBusca(null);
-                const endpointBase = tipo === "MED" ? "/exames-medicos/" : "/exames/";
+                setSearching(true);
+                setSearchError(null);
+                const endpointBase = type === "MED" ? "/exames-medicos/" : "/exames/";
                 const res = await apiFetch<any>(`${endpointBase}?search=${encodeURIComponent(q)}`);
                 const items = res && res.results ? res.results : res;
                 const list = Array.isArray(items) ? items : [];
                 if (!mounted) return;
                 // Remove os já selecionados e limita para não poluir a UI.
-                setResultados(list.filter((x) => x && !selecionadosIds.has(x.id)).slice(0, 12));
+                setResults(list.map(normalizeExam).filter((x) => x && !selectedExamIds.has(x.id)).slice(0, 12));
             } catch (e: any) {
                 if (!mounted) return;
-                setErroBusca(e?.message || "Falha ao buscar exames.");
+                setSearchError(e?.message || "Falha ao buscar exames.");
             } finally {
-                if (mounted) setBuscando(false);
+                if (mounted) setSearching(false);
             }
         }
         buscar();
         return () => {
             mounted = false;
         };
-    }, [debouncedQuery, tipo, selecionadosIds]);
+    }, [debouncedQuery, type, selectedExamIds]);
 
-    function adicionarExame ( ex: Exame | ExameMedico ) {
-        setSelecionados((prev) => (prev.some((p) => p.id === ex.id) ? prev : [...prev, ex]));
-        setResultados((prev) => prev.filter((p) => p.id !== ex.id));
+    function addExam ( exam: Exam | MedicalExam ) {
+        setSelectedExams((prev) => (prev.some((item) => item.id === exam.id) ? prev : [...prev, exam]));
+        setResults((prev) => prev.filter((item) => item.id !== exam.id));
     }
 
-    function removerExame ( id: number ) {
-        setSelecionados((prev) => prev.filter((p) => p.id !== id));
+    function removeExam ( id: number ) {
+        setSelectedExams((prev) => prev.filter((item) => item.id !== id));
     }
 
     async function salvar ( e: any ) {
         e.preventDefault();
         setErro(null);
         if ( salvando ) return;
-        if ( !paciente ) {
+        if ( !patientId ) {
             setErro( "Selecione um paciente." );
             return;
         }
-        if ( selecionados.length === 0 ) {
+        if ( selectedExams.length === 0 ) {
             setErro( "Adicione pelo menos um exame." );
             return;
         }
@@ -104,12 +106,12 @@ export default function NovaRequisicaoPage () {
         try {
             setSalvando(true);
             const payload: any = {
-                paciente: Number( paciente ),
-                tipo,
+                patient: Number( patientId ),
+                type,
             };
 
-            const ids = selecionados.map((x) => x.id);
-            if ( tipo === "MED" ) payload.exames_medicos = ids;
+            const ids = selectedExams.map((x) => x.id);
+            if ( type === "MED" ) payload.medical_exams = ids;
             else payload.exames = ids;
 
             const nova = await apiFetch( "/requisicoes/", {
@@ -161,19 +163,19 @@ export default function NovaRequisicaoPage () {
                 ) : null}
 
                 <label>Paciente</label>
-                <select value={paciente} onChange={e => setPaciente( e.target.value )} required>
+                <select value={patientId} onChange={e => setPatientId( e.target.value )} required>
                     <option value="">Selecione</option>
-                    {pacientes.map( p => (
+                    {patients.map( p => (
                         <option key={p.id} value={p.id}>
-                            {p.nome}
+                            {p.name || p.nome}
                         </option>
                     ) )}
                 </select>
 
                 <label>Setor</label>
                 <select
-                    value={tipo}
-                    onChange={(e) => setTipo(e.target.value as any)}
+                    value={type}
+                    onChange={(e) => setType(e.target.value as any)}
                 >
                     <option value="LAB">Laboratório</option>
                     {podeCriarExameMedico ? (
@@ -186,25 +188,25 @@ export default function NovaRequisicaoPage () {
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={tipo === "MED" ? "Buscar exame médico..." : "Buscar exame laboratorial..."}
+                    placeholder={type === "MED" ? "Buscar exame médico..." : "Buscar exame laboratorial..."}
                     style={{ marginBottom: 8 }}
                 />
 
-                {erroBusca ? (
+                {searchError ? (
                     <div style={{ color: "#b45309", fontSize: 13, marginBottom: 8 }}>
-                        {erroBusca}
+                        {searchError}
                     </div>
                 ) : null}
 
-                {buscando ? (
+                {searching ? (
                     <div style={{ fontSize: 13, color: "var(--gray-500)", marginBottom: 8 }}>
                         Buscando...
                     </div>
                 ) : null}
 
-                {resultados.length ? (
+                {results.length ? (
                     <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-                        {resultados.map((ex) => (
+                        {results.map((ex) => (
                             <div
                                 key={ex.id}
                                 style={{
@@ -218,17 +220,17 @@ export default function NovaRequisicaoPage () {
                                 }}
                             >
                                 <div style={{ fontSize: 13 }}>
-                                    <strong>{ex.nome}</strong>
-                                    {ex.id_custom ? (
+                                    <strong>{ex.name || ex.nome}</strong>
+                                    {ex.custom_id || ex.id_custom ? (
                                         <span style={{ marginLeft: 8, color: "var(--gray-500)" }}>
-                                            {ex.id_custom}
+                                            {ex.custom_id || ex.id_custom}
                                         </span>
                                     ) : null}
                                 </div>
                                 <button
                                     type="button"
                                     className="btn-secondary"
-                                    onClick={() => adicionarExame(ex)}
+                                    onClick={() => addExam(ex)}
                                 >
                                     Adicionar
                                 </button>
@@ -237,11 +239,11 @@ export default function NovaRequisicaoPage () {
                     </div>
                 ) : null}
 
-                <h3>Selecionados ({selecionados.length})</h3>
+                <h3>Selecionados ({selectedExams.length})</h3>
 
-                {selecionados.length ? (
+                {selectedExams.length ? (
                     <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-                        {selecionados.map((ex) => (
+                        {selectedExams.map((ex) => (
                             <div
                                 key={ex.id}
                                 style={{
@@ -255,17 +257,17 @@ export default function NovaRequisicaoPage () {
                                 }}
                             >
                                 <div style={{ fontSize: 13 }}>
-                                    <strong>{ex.nome}</strong>
-                                    {ex.id_custom ? (
+                                    <strong>{ex.name || ex.nome}</strong>
+                                    {ex.custom_id || ex.id_custom ? (
                                         <span style={{ marginLeft: 8, color: "var(--gray-500)" }}>
-                                            {ex.id_custom}
+                                            {ex.custom_id || ex.id_custom}
                                         </span>
                                     ) : null}
                                 </div>
                                 <button
                                     type="button"
                                     className="btn-danger"
-                                    onClick={() => removerExame(ex.id)}
+                                    onClick={() => removeExam(ex.id)}
                                 >
                                     Remover
                                 </button>
@@ -284,4 +286,22 @@ export default function NovaRequisicaoPage () {
             </form>
         </AppLayout>
     );
+}
+
+function normalizePatient ( raw: any ): Patient {
+    return {
+        id: Number( raw?.id ?? 0 ),
+        custom_id: raw?.custom_id ?? raw?.id_custom,
+        name: raw?.name ?? raw?.nome ?? "",
+        nome: raw?.nome,
+    }
+}
+
+function normalizeExam ( raw: any ): Exam | MedicalExam {
+    return {
+        id: Number( raw?.id ?? 0 ),
+        custom_id: raw?.custom_id ?? raw?.id_custom,
+        name: raw?.name ?? raw?.nome ?? "",
+        nome: raw?.nome,
+    }
 }

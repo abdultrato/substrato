@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 
@@ -18,7 +19,7 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class PrescricaoItemSerializer(serializers.ModelSerializer):
+class PrescriptionItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     medication_name = serializers.CharField(source="medication.name", read_only=True)
 
     class Meta:
@@ -27,12 +28,16 @@ class PrescricaoItemSerializer(serializers.ModelSerializer):
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "medication_name")
 
 
-class MedicalRecordEntrySerializer(serializers.ModelSerializer):
+class MedicalRecordEntrySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     doctor_name = serializers.SerializerMethodField(method_name="get_doctor_name")
-    consultations_codigos = serializers.SerializerMethodField(method_name="get_consultation_codes")
+    consultation_codes = serializers.SerializerMethodField(method_name="get_consultation_codes")
 
-    itens_prescription = PrescricaoItemSerializer(many=True, read_only=True)
+    prescription_items = PrescriptionItemSerializer(source="itens_prescription", many=True, read_only=True)
+    legacy_output_aliases = {
+        "consultations_codigos": "consultation_codes",
+        "itens_prescription": "prescription_items",
+    }
 
     class Meta:
         model = MedicalRecordEntry
@@ -41,8 +46,8 @@ class MedicalRecordEntrySerializer(serializers.ModelSerializer):
             *CORE_READ_ONLY_FIELDS,
             "patient_name",
             "doctor_name",
-            "consultations_codigos",
-            "itens_prescription",
+            "consultation_codes",
+            "prescription_items",
         )
 
     def get_doctor_name(self, obj: MedicalRecordEntry) -> str:
@@ -60,7 +65,8 @@ class MedicalRecordEntrySerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "record": MedicalRecordEntrySerializer,
-    "prescricaoitem": PrescricaoItemSerializer,
+    "prescricaoitem": PrescriptionItemSerializer,
 }
 
+PrescricaoItemSerializer = PrescriptionItemSerializer
 RegistroProntuarioSerializer = MedicalRecordEntrySerializer

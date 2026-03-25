@@ -7,6 +7,7 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
@@ -14,11 +15,17 @@ from domain.clinical.status_result import EstadoResultado
 from security.permissions.groups import IsAdminOrContabilidade
 
 
-class DashboardStatsSerializer(serializers.Serializer):
-    pacientes = serializers.IntegerField()
-    requisicoes_pendentes = serializers.IntegerField()
-    exams_hoje = serializers.IntegerField()
-    faturamento_hoje = serializers.FloatField()
+class DashboardStatsSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    patients = serializers.IntegerField()
+    pending_requests = serializers.IntegerField()
+    exams_today = serializers.IntegerField()
+    billing_today = serializers.FloatField()
+    legacy_output_aliases = {
+        "pacientes": "patients",
+        "requisicoes_pendentes": "pending_requests",
+        "exams_hoje": "exams_today",
+        "faturamento_hoje": "billing_today",
+    }
 
 
 class DashboardStatsView(APIView):
@@ -28,30 +35,29 @@ class DashboardStatsView(APIView):
     def get(self, request):
         tenant = getattr(request, "tenant", None)
 
-        pacientes_qs = Patient.objects.all()
-        requisicoes_qs = LabRequest.objects.all()
-        faturas_qs = Invoice.objects.all()
+        patients_qs = Patient.objects.all()
+        requests_qs = LabRequest.objects.all()
+        invoices_qs = Invoice.objects.all()
 
         if tenant is not None:
-            pacientes_qs = pacientes_qs.filter(tenant=tenant)
-            requisicoes_qs = requisicoes_qs.filter(tenant=tenant)
-            faturas_qs = faturas_qs.filter(tenant=tenant)
+            patients_qs = patients_qs.filter(tenant=tenant)
+            requests_qs = requests_qs.filter(tenant=tenant)
+            invoices_qs = invoices_qs.filter(tenant=tenant)
 
-        hoje = timezone.localdate()
+        today = timezone.localdate()
 
-        pacientes = pacientes_qs.count()
-        requisicoes_pendentes = requisicoes_qs.filter(status=EstadoResultado.PENDENTE).count()
-        exams_hoje = requisicoes_qs.filter(created_at__date=hoje).count()
+        patients = patients_qs.count()
+        pending_requests = requests_qs.filter(status=EstadoResultado.PENDENTE).count()
+        exams_today = requests_qs.filter(created_at__date=today).count()
 
-        faturamento_hoje = faturas_qs.filter(created_at__date=hoje).aggregate(total=Sum("total"))["total"] or Decimal(
+        billing_today = invoices_qs.filter(created_at__date=today).aggregate(total=Sum("total"))["total"] or Decimal(
             "0.00"
         )
 
-        return Response(
-            {
-                "pacientes": pacientes,
-                "requisicoes_pendentes": requisicoes_pendentes,
-                "exams_hoje": exams_hoje,
-                "faturamento_hoje": float(faturamento_hoje),
-            }
-        )
+        payload = {
+            "patients": patients,
+            "pending_requests": pending_requests,
+            "exams_today": exams_today,
+            "billing_today": float(billing_today),
+        }
+        return Response(DashboardStatsSerializer(instance=payload).data)
