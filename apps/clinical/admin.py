@@ -723,7 +723,7 @@ class LabRequestAdmin(CoreAdmin):
             return mark_safe('<span style="color:gray;">Ainda sem resultados</span>')
 
         result = obj.result
-        itens = result.itens.all()
+        itens = result.items.all()
 
         if not itens.exists():
             return mark_safe('<span style="color:gray;">Ainda sem resultados</span>')

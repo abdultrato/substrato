@@ -5,7 +5,7 @@ from domain.billing.calculator import calculate_totals
 
 @transaction.atomic
 def recalculate_invoice_total(invoice):
-    items = invoice.itens.all()
+    items = invoice.items.all()
     totals = calculate_totals(items=items)
     total = totals["total"]
 

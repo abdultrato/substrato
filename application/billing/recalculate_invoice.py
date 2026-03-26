@@ -3,7 +3,7 @@ from domain.billing.calculator import calculate_totals
 
 def execute(invoice):
 
-    items = invoice.itens.all()
+    items = invoice.items.all()
 
     result = calculate_totals(
         items=items,

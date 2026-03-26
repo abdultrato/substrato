@@ -95,7 +95,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
         result = getattr(request_record, "result", None)
-        if not result or not result.itens.filter(status=ResultState.VALIDATED).exists():
+        if not result or not result.items.filter(status=ResultState.VALIDATED).exists():
             raise ValidationError("Não é possível emitir PDF sem nenhum result validado.")
 
         from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
@@ -122,7 +122,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             defaults={"tenant": request_record.tenant},
         )
 
-        qs = result.itens.select_related(
+        qs = result.items.select_related(
             "exam_field",
             "exam_field__exam",
             "result",

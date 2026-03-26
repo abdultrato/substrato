@@ -202,7 +202,7 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     story.append(Paragraph("ITENS DA FATURA", style_section))
     story.append(Spacer(1, 0.12 * cm))
 
-    itens = list(invoice.itens.select_related("exam", "medical_exam").filter(deleted=False))
+    itens = list(invoice.items.select_related("exam", "medical_exam").filter(deleted=False))
     subtotal_geral = Decimal("0.00")
 
     for item in itens:

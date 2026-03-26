@@ -29,7 +29,7 @@ class InvoiceItem(NoNameCoreModel):
         db_column="invoice_id",
         verbose_name="Fatura",
         on_delete=models.CASCADE,
-        related_name="itens",
+        related_name="items",
     )
     item_type = models.CharField(
         db_column="item_type",
@@ -132,7 +132,7 @@ class InvoiceItem(NoNameCoreModel):
     class Meta:
         db_table = "faturamento_faturaitem"
         verbose_name = "Item de Fatura"
-        verbose_name_plural = "Itens de Fatura"
+        verbose_name_plural = "Invoice Items"
         constraints = [
             models.UniqueConstraint(
                 fields=["invoice", "exam"],
@@ -419,12 +419,12 @@ class InvoiceItem(NoNameCoreModel):
             raise ValidationError("Item e invoice devem pertencer ao mesmo tenant.")
 
         if self.exam_id and self.invoice.request_id:
-            existe_no_contexto = self.invoice.request.itens.filter(exam_id=self.exam_id).exists()
+            existe_no_contexto = self.invoice.request.items.filter(exam_id=self.exam_id).exists()
             if not existe_no_contexto:
                 raise ValidationError({"exam": "Exame não pertence à requisição da invoice."})
 
         if self.medical_exam_id and self.invoice.request_id:
-            existe_no_contexto = self.invoice.request.itens.filter(medical_exam_id=self.medical_exam_id).exists()
+            existe_no_contexto = self.invoice.request.items.filter(medical_exam_id=self.medical_exam_id).exists()
             if not existe_no_contexto:
                 raise ValidationError({"medical_exam": "Exame médico não pertence à requisição da invoice."})
 
@@ -464,7 +464,7 @@ class InvoiceItem(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         if self.invoice.status != self.invoice.Status.DRAFT:
-            raise ValidationError("Não é permitido alterar itens de invoice emitida.")
+            raise ValidationError("Not allowed to change items of an issued invoice.")
 
         if not self.tenant_id and self.invoice_id:
             self.tenant_id = self.invoice.tenant_id
@@ -478,7 +478,7 @@ class InvoiceItem(NoNameCoreModel):
 
     def delete(self, *args, **kwargs):
         if self.invoice.status != self.invoice.Status.DRAFT:
-            raise ValidationError("Não é permitido remover itens.")
+            raise ValidationError("Not allowed to remove items.")
 
         invoice = self.invoice
         super().delete(*args, **kwargs)

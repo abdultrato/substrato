@@ -663,13 +663,13 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
             if exams is not None:
                 desejados = {e.id for e in exams}
-                atuais = set(instance.itens.filter(exam__isnull=False).values_list("exam_id", flat=True))
+                atuais = set(instance.items.filter(exam__isnull=False).values_list("exam_id", flat=True))
 
                 remover = atuais - desejados
                 adicionar = desejados - atuais
 
                 if remover:
-                    instance.itens.filter(exam_id__in=remover).delete()
+                    instance.items.filter(exam_id__in=remover).delete()
 
                 for exam in LabExam.objects.filter(id__in=adicionar):
                     instance.add_exam(exam)
@@ -680,14 +680,14 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             if medical_exams is not None:
                 desejados = {e.id for e in medical_exams}
                 atuais = set(
-                    instance.itens.filter(medical_exam__isnull=False).values_list("medical_exam_id", flat=True)
+                    instance.items.filter(medical_exam__isnull=False).values_list("medical_exam_id", flat=True)
                 )
 
                 remover = atuais - desejados
                 adicionar = desejados - atuais
 
                 if remover:
-                    instance.itens.filter(medical_exam_id__in=remover).delete()
+                    instance.items.filter(medical_exam_id__in=remover).delete()
 
                 for medical_exam in MedicalExam.objects.filter(id__in=adicionar):
                     instance.add_medical_exam(medical_exam)

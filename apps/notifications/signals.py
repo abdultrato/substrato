@@ -39,7 +39,7 @@ def notify_result(sender, instance, created, **kwargs):
         return
 
     # Notify only after the last result item is validated.
-    if instance.result.itens.exclude(status=ResultState.VALIDATED).exists():
+    if instance.result.items.exclude(status=ResultState.VALIDATED).exists():
         return
 
     patient = instance.result.request.patient

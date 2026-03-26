@@ -1,16 +1,18 @@
-from system.models.configuration import SystemConfiguration
+from system.maintenance import ativar, desativar, esta_active
 
 
 class SystemConfigurationService:
     @staticmethod
     def is_in_maintenance() -> bool:
-        return SystemConfiguration.get().maintenance_mode
+        return esta_active()
 
     @staticmethod
     def set_maintenance(value: bool):
-        config = SystemConfiguration.get()
-        config.maintenance_mode = value
-        config.save(update_fields=["maintenance_mode"])
+        if value:
+            ativar()
+            return
+
+        desativar()
 
 
 ConfiguracaoSistemaService = SystemConfigurationService

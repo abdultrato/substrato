@@ -248,7 +248,7 @@ class EquipmentWorklistView(APIView):
             pac = req.patient
 
             items = []
-            for oi in order.itens.all():
+            for oi in order.items.all():
                 ri = oi.request_item
                 if ri.exam_id:
                     items.append(
@@ -450,7 +450,7 @@ class EquipmentResultsInboxView(APIView):
             )
 
             # Garante que os itens de result existam para cada item do pedido.
-            for oi in order.itens.select_related("request_item").all():
+            for oi in order.items.select_related("request_item").all():
                 with suppress(Exception):
                     oi.request_item._create_results()
 
@@ -554,7 +554,7 @@ class EquipmentResultsInboxView(APIView):
             else:
                 # Completa se todos os campos dos exams (LAB) tiverem value preenchido.
                 completo = True
-                for oi in order.itens.select_related("request_item__exam").all():
+                for oi in order.items.select_related("request_item__exam").all():
                     ri = oi.request_item
                     if not ri.exam_id:
                         continue

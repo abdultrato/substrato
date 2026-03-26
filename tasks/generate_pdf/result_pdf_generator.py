@@ -81,7 +81,7 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
 
     result = getattr(request, "result", None)
 
-    resultados_qs = result.itens.select_related("exam_field", "exam_field__exam") if result else []
+    resultados_qs = result.items.select_related("exam_field", "exam_field__exam") if result else []
 
     if apenas_validados and resultados_qs:
         resultados_qs = resultados_qs.filter(status=ResultState.VALIDATED)

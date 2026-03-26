@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from security.permissions.groups import IsAdmin
-from system.services.configuracao_service import ConfiguracaoSistemaService
+from system.services.configuration_service import ConfiguracaoSistemaService
 
 
 class MaintenanceModeView(APIView):

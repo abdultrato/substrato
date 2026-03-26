@@ -11,11 +11,11 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
+from .background_tasks import BackgroundTasksView
 from .backup import BackupDatabaseView
-from .limitacao import AnonBurstRateThrottle, BurstRateThrottle, SustainedRateThrottle
 from .maintenance import ativar, desativar, esta_active
-from .system import SystemInfoView
-from .tasks import BackgroundTasksView
+from .system_info import SystemInfoView
+from .throttling import AnonBurstRateThrottle, BurstRateThrottle, SustainedRateThrottle
 
 _LAZY_MODULES: dict[str, str] = {
     "api": "system.api",

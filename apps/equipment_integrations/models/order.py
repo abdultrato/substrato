@@ -26,14 +26,14 @@ class IntegrationOrder(NoNameCoreModel):
 
         db_column="equipment_id",
         on_delete=models.PROTECT,
-        related_name="ordens",
+        related_name="orders",
         db_index=True,
     )
     request = models.ForeignKey(
         "clinico.LabRequest",
         db_column="request_id",
         on_delete=models.PROTECT,
-        related_name="ordens_integracao",
+        related_name="integration_orders",
         db_index=True,
     )
 
@@ -95,14 +95,14 @@ class IntegrationOrderItem(NoNameCoreModel):
 
         db_column="order_id",
         on_delete=models.CASCADE,
-        related_name="itens",
+        related_name="items",
         db_index=True,
     )
     request_item = models.ForeignKey(
         "clinico.LabRequestItem",
         db_column="request_item_id",
         on_delete=models.PROTECT,
-        related_name="ordens_integracao_itens",
+        related_name="integration_order_items",
         db_index=True,
     )
 

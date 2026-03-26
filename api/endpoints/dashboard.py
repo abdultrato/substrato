@@ -4,24 +4,26 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
-from apps.clinical.models.request import Requisicao
 from apps.clinical.models.result import Result
-from apps.financeiro.models.invoice import Invoice
 
 
 class DashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        hoje = now().date()
+        today = now().date()
 
-        date = {
-            "pacientes_total": Patient.objects.count(),
-            "requisicoes_hoje": Requisicao.objects.filter(created_at__date=hoje).count(),
-            "resultados_pendentes": Result.objects.filter(clinical_status="").count(),
-            "faturamento_total": Invoice.objects.aggregate(total=Sum("total"))["total"] or 0,
-            "requisicoes_por_status": list(Requisicao.objects.values("status").annotate(total=Count("id")).order_by()),
+        data = {
+            "total_patients": Patient.objects.count(),
+            "requests_today": LabRequest.objects.filter(created_at__date=today).count(),
+            "pending_results": Result.objects.filter(finalized=False).count(),
+            "total_revenue": Invoice.objects.aggregate(total=Sum("total"))["total"] or 0,
+            "requests_by_status": list(
+                LabRequest.objects.values("status").annotate(total=Count("id")).order_by()
+            ),
         }
 
-        return Response(date)
+        return Response(data)

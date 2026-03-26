@@ -60,22 +60,22 @@ class Result(NoNameCoreModel):
         from .result_item import ResultItem
 
         # evita recriar itens se já existirem
-        if self.itens.exists():
+        if self.items.exists():
             return
 
-        itens = []
+        items_to_create = []
         tenant = self.tenant
 
-        request_itens = self.request.itens.select_related("exam").prefetch_related("exam__campos")
+        request_items = self.request.items.select_related("exam").prefetch_related("exam__campos")
 
-        for item in request_itens:
+        for item in request_items:
             # Requisições podem conter itens de exam médico (imagem) que não
             # geram `ResultadoItem`. Evita error quando `item.exam` é None.
             if not item.exam_id:
                 continue
 
             for campo in item.exam.campos.all():
-                itens.append(
+                items_to_create.append(
                     ResultItem(
                         result=self,
                         exam_field=campo,
@@ -83,8 +83,8 @@ class Result(NoNameCoreModel):
                     )
                 )
 
-        if itens:
-            ResultItem.objects.bulk_create(itens)
+        if items_to_create:
+            ResultItem.objects.bulk_create(items_to_create)
 
     _criar_itens = _create_items
 

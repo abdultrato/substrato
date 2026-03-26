@@ -74,7 +74,7 @@ class Invoice(NoNameCoreModel):
         db_table="faturamento_fatura_procedimentos",
         verbose_name="Procedimentos (Enfermagem)",
         blank=True,
-        related_name="faturas",
+        related_name="invoices",
         help_text="Pode associar múltiplos procedures de enfermagem à mesma invoice.",
     )
     consultation = models.OneToOneField(
@@ -103,7 +103,7 @@ class Invoice(NoNameCoreModel):
         db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
-        related_name="faturas",
+        related_name="invoices",
         null=True,
         blank=True,
     )
@@ -170,7 +170,7 @@ class Invoice(NoNameCoreModel):
         )
 
     def recalculate_totals(self):
-        items = list(self.itens.filter(deleted=False))
+        items = list(self.items.filter(deleted=False))
 
         subtotal = sum((item.total_sem_iva for item in items), Decimal("0.00")).quantize(Decimal("0.01"))
         iva = sum((item.vat_amount for item in items), Decimal("0.00")).quantize(Decimal("0.01"))
@@ -448,24 +448,24 @@ class Invoice(NoNameCoreModel):
 
     def sync_items_from_origin(self):
         if self.status != self.Status.DRAFT:
-            raise ValidationError("Somente faturas em rascunho podem sincronizar itens.")
+            raise ValidationError("Only draft invoices can sync items.")
 
         if self.origin == self.Origin.MIXED:
-            # Fatura mista não sincroniza itens automaticamente.
+            # Mixed invoices do not auto-sync items.
             self.persist_totals()
             return
 
         from apps.billing.models.invoice_items import InvoiceItem
 
-        for item in self.itens.filter(deleted=False):
+        for item in self.items.filter(deleted=False):
             item.delete()
 
         if self.origin == self.Origin.CLINICAL:
-            itens_request = self.request.itens.select_related(
+            request_items = self.request.items.select_related(
                 "exam",
                 "medical_exam",
             )
-            for item in itens_request:
+            for item in request_items:
                 if item.exam_id:
                     InvoiceItem.objects.create(
                         tenant=self.tenant,
@@ -483,8 +483,8 @@ class Invoice(NoNameCoreModel):
                     )
 
         elif self.origin == self.Origin.PHARMACY:
-            itens_sale = self.sale.itens.select_related("product")
-            for item in itens_sale:
+            sale_items = self.sale.itens.select_related("product")
+            for item in sale_items:
                 InvoiceItem.objects.create(
                     tenant=self.tenant,
                     invoice=self,
@@ -501,12 +501,12 @@ class Invoice(NoNameCoreModel):
 
             if not procedures:
                 raise ValidationError(
-                    {"procedures": "Informe ao menos um procedure de enfermagem para sincronizar itens."}
+                    {"procedures": "Provide at least one nursing procedure to sync items."}
                 )
 
             for proc in procedures:
-                itens_procedure = proc.itens.filter(performed=True)
-                for item in itens_procedure:
+                procedure_items = proc.itens.filter(performed=True)
+                for item in procedure_items:
                     InvoiceItem.objects.create(
                         tenant=self.tenant,
                         invoice=self,
@@ -567,12 +567,12 @@ class Invoice(NoNameCoreModel):
             linhas = [
                 f"Origem: {self.get_origin_display()}",
                 f"Paciente: {getattr(self.patient, 'name', '-')}",
-                f"Itens: {self.itens.filter(deleted=False).count()}",
+                f"Items: {self.items.filter(deleted=False).count()}",
                 f"Total sem IVA: {self.subtotal:.2f}",
                 f"IVA: {self.vat_amount:.2f}",
                 f"Total com IVA: {self.total:.2f}",
             ]
-            self.register_history("SINCRONIZACAO", "Itens sincronizados", linhas=linhas)
+            self.register_history("SINCRONIZACAO", "Items synchronized", linhas=linhas)
         except Exception:
             pass
 
@@ -583,10 +583,10 @@ class Invoice(NoNameCoreModel):
     @transaction.atomic
     def issue(self):
         if self.status != self.Status.DRAFT:
-            raise ValidationError("Somente faturas em rascunho podem ser emitidas.")
+            raise ValidationError("Only draft invoices can be issued.")
 
-        if not self.itens.filter(deleted=False).exists():
-            raise ValidationError("Fatura sem itens.")
+        if not self.items.filter(deleted=False).exists():
+            raise ValidationError("Invoice has no items.")
 
         if self.origin == self.Origin.NURSING:
             from apps.pharmacy.models.lot import Lot
@@ -627,7 +627,7 @@ class Invoice(NoNameCoreModel):
                             "Estoque insuficiente na farmácia para emitir a invoice. "
                             "Atualize o estoque e tente novamente."
                         ),
-                        "itens": faltas,
+                        "items": faltas,
                     }
                 )
 

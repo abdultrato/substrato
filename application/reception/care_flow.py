@@ -295,7 +295,7 @@ def get_care_summary(checkin):
                         "name": item.exam.name,
                         "price": str(item.exam.price),
                     }
-                    for item in request.itens.all()
+                    for item in request.items.all()
                 ],
             }
             if request
@@ -320,18 +320,7 @@ def get_care_summary(checkin):
                         "unit_price": str(item.unit_price),
                         "total": str(item.total),
                     }
-                    for item in invoice.itens.filter(deleted=False)
-                ],
-                "itens": [
-                    {
-                        "id": item.id,
-                        "custom_id": item.custom_id,
-                        "description": item.description,
-                        "quantity": str(item.quantity),
-                        "unit_price": str(item.unit_price),
-                        "total": str(item.total),
-                    }
-                    for item in invoice.itens.filter(deleted=False)
+                    for item in invoice.items.filter(deleted=False)
                 ],
             }
             if invoice

@@ -158,10 +158,10 @@ def test_clinical_invoice_syncs_medical_exam():
     invoice.sync_items_from_origin()
     invoice.refresh_from_db()
 
-    itens = list(invoice.itens.filter(deleted=False))
-    assert len(itens) == 1
+    items = list(invoice.items.filter(deleted=False))
+    assert len(items) == 1
 
-    item = itens[0]
+    item = items[0]
     assert item.item_type == InvoiceItem.TipoItem.EXAME_MEDICO
     assert item.medical_exam_id == medical_exam.id
     assert item.exam_id is None
@@ -254,7 +254,7 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
         invoice.issue()
 
     assert "Estoque insuficiente" in str(exc.value)
-    assert "itens" in getattr(exc.value, "message_dict", {})
+    assert "items" in getattr(exc.value, "message_dict", {})
 
     lot = Lot.objects.create(
         tenant=tenant,

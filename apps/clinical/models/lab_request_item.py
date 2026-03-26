@@ -19,7 +19,7 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="request_id",
         on_delete=models.CASCADE,
-        related_name="itens",
+        related_name="items",
     )
 
     exam = models.ForeignKey(
@@ -28,7 +28,7 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="exam_id",
         on_delete=models.PROTECT,
-        related_name="requisicoes",
+        related_name="lab_requests",
         null=True,
         blank=True,
     )
@@ -39,7 +39,7 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="medical_exam_id",
         on_delete=models.PROTECT,
-        related_name="requisicoes",
+        related_name="lab_requests",
         null=True,
         blank=True,
     )

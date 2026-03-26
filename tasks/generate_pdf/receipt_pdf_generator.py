@@ -178,7 +178,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
         ]
     ]
 
-    itens_qs = invoice.itens.select_related("exam", "medical_exam").all() if invoice else []
+    itens_qs = invoice.items.select_related("exam", "medical_exam").all() if invoice else []
     subtotal_geral = Decimal("0.00")
 
     for item in itens_qs:
@@ -213,7 +213,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
             ]
         )
 
-    if invoice and not invoice.itens.exists():
+    if invoice and not invoice.items.exists():
         date.append([cell_paragraph("Nenhum item registrado.", is_bold=True), "", "", ""])
 
     table = Table(

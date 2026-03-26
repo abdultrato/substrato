@@ -26,7 +26,7 @@ class LabRequest(NoNameCoreModel):
 
         db_column="patient_id",
         on_delete=models.CASCADE,
-        related_name="requisicoes",
+        related_name="lab_requests",
     )
 
     requesting_company = models.ForeignKey(
@@ -39,7 +39,7 @@ class LabRequest(NoNameCoreModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="requisicoes_solicitadas",
+        related_name="requested_lab_requests",
     )
 
     external_executing_company = models.ForeignKey(
@@ -52,7 +52,7 @@ class LabRequest(NoNameCoreModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="requisicoes_terceirizadas",
+        related_name="outsourced_lab_requests",
     )
 
     type = models.CharField(
@@ -79,7 +79,7 @@ class LabRequest(NoNameCoreModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="requisicoes_processadas",
+        related_name="processed_lab_requests",
     )
 
     status = models.CharField(
@@ -244,7 +244,7 @@ class LabRequest(NoNameCoreModel):
         """
         from .medical_exam import MedicalExam
 
-        return MedicalExam.objects.filter(requisicoes__request=self, requisicoes__deleted=False).distinct()
+        return MedicalExam.objects.filter(lab_requests__request=self, lab_requests__deleted=False).distinct()
 
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA
@@ -268,7 +268,7 @@ class LabRequest(NoNameCoreModel):
 
         if hasattr(self, "result"):
             result = self.result
-            itens = result.itens.all()
+            itens = result.items.all()
 
             stats = itens.aggregate(
                 total=models.Count("id"),

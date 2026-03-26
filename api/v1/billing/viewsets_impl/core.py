@@ -55,13 +55,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ]
     ordering = ["-created_at"]
 
-    @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
+    @action(detail=True, methods=["post"], url_path="issue", url_name="issue")
     def issue(self, request, pk=None):
         invoice = self.get_object()
         invoice.issue()
         return Response(self.get_serializer(invoice).data)
 
-    @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
+    @action(detail=True, methods=["post"], url_path="void", url_name="void")
     def void(self, request, pk=None):
         invoice = self.get_object()
         if invoice.status != Invoice.Status.CANCELED:
@@ -81,22 +81,27 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(
         detail=True,
         methods=["post"],
-        url_path="confirmar_payment",
-        url_name="confirmar_payment",
+        url_path="confirm-payment",
+        url_name="confirm-payment",
     )
     def confirm_payment(self, request, pk=None):
         invoice = self.get_object()
         invoice = self._confirm_pending_payment(invoice)
         return Response(self.get_serializer(invoice).data)
 
+    def _invoice_payments(self, invoice: Invoice):
+        payments_qs = getattr(invoice, "payments", None)
+        if payments_qs is None:
+            payments_qs = getattr(invoice, "pagamentos", None)
+        if payments_qs is None:
+            raise ValidationError("Invoice payments relation not available.")
+        return payments_qs
+
     def _confirm_pending_payment(self, invoice: Invoice) -> Invoice:
-        payment = (
-            invoice.pagamentos.filter(status=Payment.Status.PENDING, deleted=False)
-            .order_by("-created_at")
-            .first()
-        )
+        payments_qs = self._invoice_payments(invoice)
+        payment = payments_qs.filter(status=Payment.Status.PENDING, deleted=False).order_by("-created_at").first()
         if not payment:
-            raise ValidationError("Nenhum payment pendente para confirmar.")
+            raise ValidationError("No pending payment to confirm.")
 
         try:
             payment.confirm()
@@ -109,13 +114,23 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(
         detail=True,
         methods=["post"],
-        url_path="confirmar_pagamento",
-        url_name="confirmar_pagamento",
+        url_path="confirm-payment-legacy",
+        url_name="confirm-payment-legacy",
     )
     def confirm_payment_legacy(self, request, pk=None):
         invoice = self.get_object()
         invoice = self._confirm_pending_payment(invoice)
         return Response(self.get_serializer(invoice).data)
+
+    @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
+    def issue_legacy(self, request, pk=None):
+        # Legacy Portuguese alias.
+        return self.issue(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
+    def void_legacy(self, request, pk=None):
+        # Legacy Portuguese alias.
+        return self.void(request, pk)
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):

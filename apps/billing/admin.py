@@ -174,7 +174,7 @@ class InvoiceAdmin(CoreAdmin):
         if invoice.status != Invoice.Status.DRAFT:
             return
 
-        if invoice.itens.filter(deleted=False).exists():
+        if invoice.items.filter(deleted=False).exists():
             return
 
         try:

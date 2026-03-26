@@ -31,7 +31,7 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="result_id",
         on_delete=models.CASCADE,
-        related_name="itens",
+        related_name="items",
     )
 
     exam_field = models.ForeignKey(
@@ -40,7 +40,7 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="exam_field_id",
         on_delete=models.CASCADE,
-        related_name="resultados",
+        related_name="results",
     )
 
     # value numérico do result
@@ -85,7 +85,7 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
         verbose_name="Resultado",
         null=True,
         blank=True,
-        related_name="resultados_validados",
+        related_name="validated_results",
     )
 
     validation_date = models.DateTimeField(

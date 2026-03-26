@@ -415,29 +415,29 @@ class PasswordResetRequestView(APIView):
         ttl = _password_reset_ttl_minutes()
         message = f"Reposição de palavra-passe\nCódigo: {token_obj.token}\nValidade: {ttl} minutos."
 
-        channel = payload.get("channel")
-        canais = []
-        if channel:
-            canais = [channel]
+        selected_channel = payload.get("channel")
+        channels = []
+        if selected_channel:
+            channels = [selected_channel]
         else:
             if getattr(user, "email", None):
-                canais.append(Notification.Channel.EMAIL)
+                channels.append(Notification.Channel.EMAIL)
             if getattr(user, "phone", None):
-                canais.append(Notification.Channel.WHATSAPP)
+                channels.append(Notification.Channel.WHATSAPP)
 
         service = NotificationService()
-        for c in canais:
-            destino = user.email if c == Notification.Channel.EMAIL else str(user.phone)
-            if not destino:
+        for channel in channels:
+            destination = user.email if channel == Notification.Channel.EMAIL else str(user.phone)
+            if not destination:
                 continue
             # referência externa evita spam (idempotência por token+channel).
             service.send(
-                destination=destino,
+                destination=destination,
                 message=message,
-                channel=c,
+                channel=channel,
                 subject="Reposição de palavra-passe",
                 event_type=getattr(Notification.EventType, "PASSWORD_RESET", Notification.EventType.GENERICA),
-                external_reference=f"password_reset:{user.pk}:{token_obj.pk}:{c}",
+                external_reference=f"password_reset:{user.pk}:{token_obj.pk}:{channel}",
             )
 
         return Response(

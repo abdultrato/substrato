@@ -1,8 +1,8 @@
-from events.insurer.tipos import AUTORIZACAO_SOLICITADA
-from tasks.autorizacao_worker import processar_autorizacao_task
+from legacy.eventos.seguradora.tipos import AUTORIZACAO_SOLICITADA
+from tasks.authorization_worker import process_authorization_task
 
 ASSINANTES = {
     AUTORIZACAO_SOLICITADA: [
-        processar_autorizacao_task,
+        process_authorization_task,
     ],
 }

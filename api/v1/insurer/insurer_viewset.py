@@ -1,11 +1,8 @@
-from rest_framework.viewsets import ModelViewSet
+"""Compatibility module for legacy insurer imports."""
 
-from api.v1.clinical.serializers.base import BaseSerializer
-from apps.insurer.models.insurer import Insurer
+from .serializers import InsurerSerializer
+from .viewsets_impl.core import InsurerViewSet
 
-
-class InsurerViewSet(ModelViewSet):
-    queryset = Insurer.objects.all()
-    serializer_class = BaseSerializer
+__all__ = ["InsurerSerializer", "InsurerViewSet"]
 
 

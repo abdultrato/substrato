@@ -107,7 +107,17 @@ class HolidaySerializer(serializers.ModelSerializer):
 
 
 class CreateConsultationInvoiceSerializer(serializers.Serializer):
-    emitir = serializers.BooleanField(default=True)
+    issue = serializers.BooleanField(default=True, required=False)
+    emitir = serializers.BooleanField(default=None, required=False, write_only=True)
+
+    def validate(self, attrs):
+        # Portuguese alias support: prefer explicit `issue`, fall back to `emitir`.
+        if attrs.get("issue") is None and attrs.get("emitir") is not None:
+            attrs["issue"] = attrs["emitir"]
+        attrs.pop("emitir", None)
+        # Default to True when nothing was provided.
+        attrs.setdefault("issue", True)
+        return attrs
 
 
 class RescheduleConsultationSerializer(serializers.Serializer):

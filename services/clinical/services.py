@@ -1,9 +1,9 @@
-from ...apps.clinical.models.patient import Patient
+from apps.clinical.models.patient import Patient
 
 
 class ClinicalService:
-    def register_patient(self, date):
-        return Patient.objects.create(**date)
+    def register_patient(self, data):
+        return Patient.objects.create(**data)
 
     def update_request_status(self, request, status):
         request.status = status

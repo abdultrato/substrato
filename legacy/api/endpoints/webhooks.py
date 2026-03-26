@@ -5,11 +5,13 @@ import logging
 
 from django.conf import settings
 from django.core.cache import cache
-from events.publicador import publicar_evento
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
+
+from events.base_event import BaseEvent
+from events.bus import event_bus
 
 logger = logging.getLogger("webhooks")
 
@@ -38,7 +40,7 @@ class WebhookViewSet(ViewSet):
 
             cache.set(cache_key, True, timeout=3600)
 
-        publicar_evento("PAYMENT_RECEIVED", payload)
+        event_bus.publish(BaseEvent("PAYMENT_RECEIVED", payload))
 
         return Response({"status": "received"})
 

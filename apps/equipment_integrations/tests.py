@@ -74,7 +74,7 @@ def test_request_item_creates_integration_order_by_sector():
 
     order = IntegrationOrder.objects.get(equipment=equipment, request=req, deleted=False)
     assert order.status == IntegrationOrder.Status.PENDING
-    assert order.itens.filter(request_item=item, deleted=False).exists()
+    assert order.items.filter(request_item=item, deleted=False).exists()
 
 
 @pytest.mark.django_db

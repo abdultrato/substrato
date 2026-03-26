@@ -149,7 +149,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["get"], url_path="agenda", url_name="agenda")
+    @action(detail=False, methods=["get"], url_path="schedule", url_name="schedule")
     def schedule(self, request):
         """
         List consultations by doctor and time range.
@@ -196,13 +196,13 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         return Response(ser.data, status=status.HTTP_200_OK)
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
+    @action(detail=True, methods=["post"], url_path="create-invoice", url_name="create-invoice")
     def create_invoice(self, request, pk=None):
         consultation = self.get_object()
 
         payload = CreateConsultationInvoiceSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
-        should_issue = payload.validated_data.get("emitir", True)
+        should_issue = payload.validated_data.get("issue", True)
 
         if hasattr(consultation, "invoice") and getattr(consultation, "invoice", None):
             invoice = consultation.invoice
@@ -238,7 +238,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         )
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="remarcar", url_name="remarcar")
+    @action(detail=True, methods=["post"], url_path="reschedule", url_name="reschedule")
     def reschedule(self, request, pk=None):
         consultation = self.get_object()
 
@@ -257,7 +257,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         )
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
     def cancel(self, request, pk=None):
         consultation = self.get_object()
 
@@ -278,7 +278,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         )
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    @action(detail=True, methods=["post"], url_path="complete", url_name="complete")
     def complete(self, request, pk=None):
         consultation = self.get_object()
 
@@ -293,6 +293,27 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             MedicalConsultationSerializer(consultation).data,
             status=status.HTTP_200_OK,
         )
+
+    # Legacy Portuguese aliases
+    @action(detail=False, methods=["get"], url_path="agenda", url_name="agenda")
+    def schedule_legacy(self, request):
+        return self.schedule(request)
+
+    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
+    def create_invoice_legacy(self, request, pk=None):
+        return self.create_invoice(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="remarcar", url_name="remarcar")
+    def reschedule_legacy(self, request, pk=None):
+        return self.reschedule(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancel_legacy(self, request, pk=None):
+        return self.cancel(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def complete_legacy(self, request, pk=None):
+        return self.complete(request, pk)
 
 
 VIEWSET_MAP = {
