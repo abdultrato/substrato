@@ -1,4 +1,4 @@
-from . import constantes
+from . import constants
 from .utils import (
     cache,
     cache_keys,
@@ -16,7 +16,7 @@ from .utils import (
 __all__ = [
     "cache",
     "cache_keys",
-    "constantes",
+    "constants",
     "decorators",
     "docs",
     "env",
