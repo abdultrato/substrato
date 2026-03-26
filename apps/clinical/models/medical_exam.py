@@ -214,7 +214,7 @@ class MedicalExamField(TenantPropagationMixin, CoreModel):
 
     exam = models.ForeignKey(
 
-        "clinico.MedicalExam",
+        "clinical.MedicalExam",
 
         db_column="exam_id",
         on_delete=models.CASCADE,

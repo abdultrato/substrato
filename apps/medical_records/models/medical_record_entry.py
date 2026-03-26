@@ -29,7 +29,7 @@ class MedicalRecordEntry(NoNameCoreModel):
 
     patient = models.ForeignKey(
 
-        "clinico.Patient",
+        "clinical.Patient",
 
         db_column="patient_id",
         verbose_name="Paciente",

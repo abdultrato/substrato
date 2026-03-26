@@ -23,7 +23,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
     patient = models.ForeignKey(
 
-        "clinico.Patient",
+        "clinical.Patient",
 
         db_column="patient_id",
         on_delete=models.PROTECT,
@@ -33,7 +33,7 @@ class ReceptionCheckin(NoNameCoreModel):
 
     request = models.OneToOneField(
 
-        "clinico.LabRequest",
+        "clinical.LabRequest",
 
         db_column="request_id",
         on_delete=models.PROTECT,

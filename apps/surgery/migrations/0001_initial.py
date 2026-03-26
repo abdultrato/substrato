@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("clinico", "0001_initial"),
+        ("clinical", "0001_initial"),
         ("inquilinos", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
@@ -333,7 +333,7 @@ class Migration(migrations.Migration):
                         db_column="patient_id",
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="cirurgias",
-                        to="clinico.patient",
+                        to="clinical.patient",
                         verbose_name="Paciente",
                     ),
                 ),

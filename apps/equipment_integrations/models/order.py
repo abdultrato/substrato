@@ -30,7 +30,7 @@ class IntegrationOrder(NoNameCoreModel):
         db_index=True,
     )
     request = models.ForeignKey(
-        "clinico.LabRequest",
+        "clinical.LabRequest",
         db_column="request_id",
         on_delete=models.PROTECT,
         related_name="integration_orders",
@@ -99,7 +99,7 @@ class IntegrationOrderItem(NoNameCoreModel):
         db_index=True,
     )
     request_item = models.ForeignKey(
-        "clinico.LabRequestItem",
+        "clinical.LabRequestItem",
         db_column="request_item_id",
         on_delete=models.PROTECT,
         related_name="integration_order_items",

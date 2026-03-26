@@ -76,9 +76,9 @@ def _ensure_groups_permissions() -> None:
     # Recepcao: atendimento + faturamento + cadastro basico
     recepcao = _ensure_group(RBAC_GROUPS["RECEPCAO"])
     for app_label, model, actions in [
-        ("clinico", "patient", ["view", "add", "change"]),
-        ("clinico", "requisicaoanalise", ["view", "add", "change"]),
-        ("clinico", "requisicaoitem", ["view", "add", "change"]),
+        ("clinical", "patient", ["view", "add", "change"]),
+        ("clinical", "requisicaoanalise", ["view", "add", "change"]),
+        ("clinical", "requisicaoitem", ["view", "add", "change"]),
         ("recepcao", "checkinrecepcao", ["view", "add", "change"]),
         ("faturamento", "invoice", ["view", "add", "change"]),
         ("faturamento", "faturaitem", ["view", "add", "change"]),
@@ -90,19 +90,19 @@ def _ensure_groups_permissions() -> None:
     # Laboratorio: entry/validacao de resultados + consultation de requisicoes
     laboratorio = _ensure_group(RBAC_GROUPS["LABORATORIO"])
     for app_label, model, actions in [
-        ("clinico", "requisicaoanalise", ["view"]),
-        ("clinico", "requisicaoitem", ["view"]),
-        ("clinico", "result", ["view", "change"]),
-        ("clinico", "resultadoitem", ["view", "change"]),
+        ("clinical", "requisicaoanalise", ["view"]),
+        ("clinical", "requisicaoitem", ["view"]),
+        ("clinical", "result", ["view", "change"]),
+        ("clinical", "resultadoitem", ["view", "change"]),
     ]:
         _grant_group_model_perms(laboratorio, app_label=app_label, model=model, actions=actions)
 
     # Enfermagem: execucao de procedures e registos
     enfermagem = _ensure_group(RBAC_GROUPS["ENFERMAGEM"])
     for app_label, model, actions in [
-        ("clinico", "patient", ["view"]),
-        ("clinico", "requisicaoanalise", ["view"]),
-        ("clinico", "requisicaoitem", ["view"]),
+        ("clinical", "patient", ["view"]),
+        ("clinical", "requisicaoanalise", ["view"]),
+        ("clinical", "requisicaoitem", ["view"]),
         ("enfermagem", "procedure", ["view", "add", "change"]),
         ("enfermagem", "procedimentoitem", ["view", "add", "change"]),
         ("enfermagem", "procedimentomaterial", ["view", "add", "change"]),
@@ -114,11 +114,11 @@ def _ensure_groups_permissions() -> None:
     # Medicina: jornada clinica + requisicoes
     medicina = _ensure_group(RBAC_GROUPS["MEDICINA"])
     for app_label, model, actions in [
-        ("clinico", "patient", ["view"]),
-        ("clinico", "requisicaoanalise", ["view", "add", "change"]),
-        ("clinico", "requisicaoitem", ["view", "add", "change"]),
-        ("clinico", "exam", ["view"]),
-        ("clinico", "examemedico", ["view"]),
+        ("clinical", "patient", ["view"]),
+        ("clinical", "requisicaoanalise", ["view", "add", "change"]),
+        ("clinical", "requisicaoitem", ["view", "add", "change"]),
+        ("clinical", "exam", ["view"]),
+        ("clinical", "examemedico", ["view"]),
         ("consultas", "consultamedica", ["view", "add", "change"]),
     ]:
         _grant_group_model_perms(medicina, app_label=app_label, model=model, actions=actions)
@@ -131,18 +131,18 @@ def _ensure_groups_permissions() -> None:
         ("farmacia", "movimentoestoque", ["view", "add", "change"]),
         ("farmacia", "sale", ["view", "add", "change"]),
         ("farmacia", "itemvenda", ["view", "add", "change"]),
-        ("clinico", "patient", ["view"]),
+        ("clinical", "patient", ["view"]),
     ]:
         _grant_group_model_perms(farmacia, app_label=app_label, model=model, actions=actions)
 
     # Medicina Ocupacional: semelhante a medicina + pode criar patient
     ocupacional = _ensure_group(RBAC_GROUPS["MEDICINA_OCUPACIONAL"])
     for app_label, model, actions in [
-        ("clinico", "patient", ["view", "add", "change"]),
-        ("clinico", "requisicaoanalise", ["view", "add", "change"]),
-        ("clinico", "requisicaoitem", ["view", "add", "change"]),
-        ("clinico", "exam", ["view"]),
-        ("clinico", "examemedico", ["view"]),
+        ("clinical", "patient", ["view", "add", "change"]),
+        ("clinical", "requisicaoanalise", ["view", "add", "change"]),
+        ("clinical", "requisicaoitem", ["view", "add", "change"]),
+        ("clinical", "exam", ["view"]),
+        ("clinical", "examemedico", ["view"]),
         ("consultas", "consultamedica", ["view", "add", "change"]),
     ]:
         _grant_group_model_perms(ocupacional, app_label=app_label, model=model, actions=actions)

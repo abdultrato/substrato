@@ -703,7 +703,7 @@ class LabRequestAdmin(CoreAdmin):
             return "—"
 
         url = reverse(
-            "admin:clinico_result_change",
+            "admin:clinical_result_change",
             args=[result.id],
         )
 

@@ -30,7 +30,7 @@ class IntegrationAnalyteMapping(CoreModel):
 
     exam_field = models.ForeignKey(
 
-        "clinico.LabExamField",
+        "clinical.LabExamField",
 
         db_column="exam_field_id",
         on_delete=models.PROTECT,

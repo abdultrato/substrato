@@ -19,7 +19,7 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
 
     patient = models.ForeignKey(
 
-        "clinico.Patient",
+        "clinical.Patient",
 
         db_column="patient_id",
         on_delete=models.CASCADE,

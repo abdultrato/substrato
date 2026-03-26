@@ -42,7 +42,7 @@ class InvoiceItem(NoNameCoreModel):
 
     exam = models.ForeignKey(
 
-        "clinico.LabExam",
+        "clinical.LabExam",
 
         db_column="exam_id",
         verbose_name="Exame",
@@ -51,7 +51,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     medical_exam = models.ForeignKey(
-        "clinico.MedicalExam",
+        "clinical.MedicalExam",
         db_column="medical_exam_id",
         verbose_name="Exame médico",
         on_delete=models.PROTECT,

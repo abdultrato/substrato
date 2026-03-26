@@ -117,7 +117,7 @@ class Command(BaseCommand):
             ("manutencoes.Maintenance", self._create_maintenance, self._update_textual),
             ("ocorrencias.Incident", self._create_incident, self._update_textual),
             ("monitoramento.SystemError", self._create_system_error, self._update_textual),
-            ("clinico.MedicalResultFile", self._create_medical_result_file, self._update_medical_result_file),
+            ("clinical.MedicalResultFile", self._create_medical_result_file, self._update_medical_result_file),
             ("integracoes_equipamentos.IntegrationEquipment", self._create_integration_equipment, self._update_integration_equipment),
             ("integracoes_equipamentos.IntegrationCredential", self._create_integration_credential, self._update_integration_credential),
             ("integracoes_equipamentos.IntegrationRouting", self._create_integration_routing, self._update_integration_routing),
