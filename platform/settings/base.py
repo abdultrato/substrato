@@ -41,7 +41,7 @@ def _module_available(module_name: str) -> bool:
 
 SECRET_KEY = get_env("DJANGO_SECRET_KEY", required=True)
 
-DEBUG = get_env("DJANGO_DEBUG", "False").lower() == "true"
+DEBUG = get_env("DJANGO_DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = [
     host.strip() for host in get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()
@@ -428,6 +428,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "infrastructure.middleware.admin_path_alias.AdminPathAliasMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     # multi-tenant
     "infrastructure.middleware.tenant.TenantMiddleware",
