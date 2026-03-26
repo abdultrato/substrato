@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('farmacia', '0002_initial'),
         ('clinical', '0002_initial'),
-        ('cirurgia', '0002_initial'),
+        ('cirurgia', '0001_initial'),
         ('faturamento', '0001_initial'),
         ('inquilinos', '0001_initial'),
         ('enfermagem', '0002_initial'),
