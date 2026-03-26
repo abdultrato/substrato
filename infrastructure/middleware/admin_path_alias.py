@@ -1,64 +1,187 @@
 from typing import Dict
 
 
-# Map English admin slugs to existing app labels (Portuguese).
-ADMIN_SLUG_ALIASES: Dict[str, str] = {
-    "equipment-integrations": "integracoes_equipamentos",
-    "accounting": "contabilidade",
-    "external-entities": "entidades",
-    "human-resources": "recursos_humanos",
-    "audit-activities": "auditoria_atividades",
-    "maternity": "maternidade",
-    "incidents": "ocorrencias",
-    "pharmacy": "farmacia",
-    "inspections": "inspecoes",
-    "insurer": "seguradora",
-    "equipment": "equipamentos",
-    "tenants": "inquilinos",
-    "payments": "pagamentos",
-    "surgery": "cirurgia",
-    "identity": "identidade",
-    "monitoring": "monitoramento",
-    "nursing": "enfermagem",
-    "maintenance": "manutencoes",
-    "reception": "recepcao",
-    "consultations": "consultas",
-    "clinical": "clinico",
-    "medical-records": "prontuario",
-    "billing": "faturamento",
-    "notifications": "notificacoes",
-}
+def _with_hyphen_aliases(mapping: Dict[str, str]) -> Dict[str, str]:
+    """
+    Add hyphen-variants for slugs that use underscores.
+    Example: {"external_entities": "..."} -> also accepts "external-entities".
+    """
+    expanded = dict(mapping)
+    for key, target in list(mapping.items()):
+        if "_" in key:
+            hyphen_key = key.replace("_", "-")
+            expanded.setdefault(hyphen_key, target)
+    return expanded
+
+
+# Admin: English slugs -> existing Portuguese app labels (only when different).
+ADMIN_SLUG_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+    {
+        "equipment-integrations": "integracoes_equipamentos",
+        "accounting": "contabilidade",
+        "external-entities": "entidades",
+        "human-resources": "recursos_humanos",
+        "audit-activities": "auditoria_atividades",
+        "maternity": "maternidade",
+        "incidents": "ocorrencias",
+        "pharmacy": "farmacia",
+        "inspections": "inspecoes",
+        "insurer": "seguradora",
+        "equipment": "equipamentos",
+        "tenants": "inquilinos",
+        "payments": "pagamentos",
+        "surgery": "cirurgia",
+        "identity": "identidade",
+        "monitoring": "monitoramento",
+        "nursing": "enfermagem",
+        "maintenance": "manutencoes",
+        "reception": "recepcao",
+        "consultations": "consultas",
+        "clinical": "clinico",
+        "medical-records": "prontuario",
+        "billing": "faturamento",
+        "notifications": "notificacoes",
+    }
+)
+
+# Admin models: English slugs -> canonical model_name.
+ADMIN_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+    {
+        "nursing-vital-sign": "nursingvitalsign",
+        "vital-sign": "nursingvitalsign",
+        "sinal-vital": "nursingvitalsign",
+        "sinalvitalenfermagem": "nursingvitalsign",
+    }
+)
+
+# API: prefix aliases (third path segment: /api/v1/<prefix>/...)
+API_PREFIX_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+    {
+        "external-entities": "external_entities",
+        "human-resources": "human_resources",
+        "medical-records": "medical_records",
+        "equipment-integrations": "equipment_integrations",
+    }
+)
+
+# API: model/resource aliases (fourth segment: /api/v1/<prefix>/<model>/...)
+# API: model/resource aliases (fourth segment: /api/v1/<prefix>/<model>/...)
+# Keep the list tight to avoid accidental rewrites; extend as needed.
+API_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+    {
+        "company": "empresa",
+        "nursing-vital-sign": "sinalvitalenfermagem",
+        "vital-sign": "sinalvitalenfermagem",
+        "nursing-record": "registroenfermagem",
+        "family-group": "agregadofamiliar",
+        "care": "atendimento",
+        "activity": "atividade",
+        "procedure-authorization": "autorizacaoprocedimento",
+        "ward-bed": "camaenfermaria",
+        "tenant-settings": "configuracaoinquilino",
+        "daily-inspection": "daily_inspection",
+        "dispense": "dispensa",
+        "nursing-dashboard": "enfermariadashboard",
+        "nursing-evolution": "evolucaoenfermagem",
+        "absence": "falta",
+        "tenant-feature-flag": "featureflagtenant",
+        "vacation": "ferias",
+        "payroll": "folhapagamento",
+        "pregnancy": "gestacao",
+        "overtime": "horaextra",
+        "schedule": "horario",
+        "nursing-admission": "internamentoenfermaria",
+        "sales-item": "itemvenda",
+        "delivery-log": "logenvio",
+        "maintenance-pt": "manutencao",
+        "stock-movement": "movimentoestoque",
+        "occurrence": "ocorrencia",
+        "professional-profile": "perfilprofissional",
+        "subscription-plan": "planoassinatura",
+        "coverage-plan": "planocobertura",
+        "nursing-prescription": "prescricaoenfermagem",
+        "prescription-item": "prescricaoitem",
+        "procedure-catalog": "procedimentocatalogo",
+        "procedure-material-catalog": "procedimentocatalogomaterial",
+        "surgical-procedure": "procedimentocirurgico",
+        "procedure-item": "procedimentoitem",
+        "procedure-item-price": "procedimentoitemvalor",
+        "procedure-material": "procedimentomaterial",
+        "procedure-material-price": "procedimentomaterialvalor",
+        "nursing-vitals": "sinalvitalenfermagem",
+        "tenant-usage": "usotenant",
+        "users": "usuarios",
+        "financial-reconciliation": "financialreconciliation",
+        "invoice-history": "invoicehistory",
+        "invoice-item": "invoiceitem",
+        "password-reset-token": "passwordresettoken",
+        "medical-records": "medical_records",
+        "human-resources": "human_resources",
+    }
+)
 
 
 class AdminPathAliasMiddleware:
     """
-    Allow English admin URLs while keeping existing app labels/table names.
+    Path aliaser for admin and API.
 
-    Example:
-        /admin/equipment-integrations/ -> /admin/integracoes_equipamentos/
+    - Admin: allow English slugs (e.g., /admin/equipment-integrations/)
+    - API v1: allow English/Hyphen slugs (e.g., /api/v1/external-entities/company/)
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
+    def _apply_aliases(self, segment: str, mapping: Dict[str, str]) -> tuple[str, bool]:
+        key = segment.lower()
+        if key in mapping:
+            replacement = mapping[key]
+            return replacement, replacement != segment
+        return segment, False
+
     def __call__(self, request):
-        path = request.path_info
-        if not path.startswith("/admin/"):
-            return self.get_response(request)
+        path = request.path_info or "/"
+        original = path
+        parts = [p for p in path.split("/") if p != ""]
 
-        suffix = path[len("/admin/") :]
+        changed = False
 
-        for english_slug, app_label in ADMIN_SLUG_ALIASES.items():
-            # Match slug with or without trailing content.
-            if suffix == english_slug or suffix.startswith(f"{english_slug}/"):
-                new_suffix = app_label + suffix[len(english_slug) :]
-                new_path = "/admin/" + new_suffix
-                # Update request paths so URL resolver sees the Portuguese path.
-                request.path_info = new_path
-                request.META["PATH_INFO"] = new_path
-                # request.path is a @property (computed), but setting it
-                # avoids surprises in middlewares that read it directly.
-                request.path = new_path  # type: ignore[attr-defined]
-                break
+        # Admin: /admin/<app_label>/...
+        if parts[:1] == ["admin"] and len(parts) >= 2:
+            new_seg, hit = self._apply_aliases(parts[1], ADMIN_SLUG_ALIASES)
+            if hit:
+                parts[1] = new_seg
+                changed = True
+            if len(parts) >= 3:
+                new_model, hit = self._apply_aliases(parts[2], ADMIN_MODEL_ALIASES)
+                if hit:
+                    parts[2] = new_model
+                    changed = True
+
+        # API v1: /api/v1/<prefix>/<model>/...
+        if parts[:2] == ["api", "v1"] and len(parts) >= 3:
+            new_prefix, hit = self._apply_aliases(parts[2], API_PREFIX_ALIASES)
+            if hit:
+                parts[2] = new_prefix
+                changed = True
+            if len(parts) >= 4:
+                new_model, hit = self._apply_aliases(parts[3], API_MODEL_ALIASES)
+                if hit:
+                    parts[3] = new_model
+                    changed = True
+
+        if changed:
+            new_path = "/" + "/".join(parts)
+            if original.endswith("/") and not new_path.endswith("/"):
+                new_path += "/"
+            request.path_info = new_path
+            request.META["PATH_INFO"] = new_path
+            # Align .path with rewritten path to avoid template/context mismatches.
+            if hasattr(request, "path"):
+                try:
+                    request.path = new_path
+                except Exception:
+                    # Some request objects may not allow assignment; ignore.
+                    pass
 
         return self.get_response(request)
