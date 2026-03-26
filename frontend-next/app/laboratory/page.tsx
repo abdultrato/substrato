@@ -68,7 +68,7 @@ export default function LaboratorioPage() {
           apiFetch<any>("/requisicoes/?tipo=LAB&estado=pendente"),
           apiFetch<any>("/requisicoes/?tipo=LAB&estado=aguardando_validacao"),
           apiFetch<any>("/requisicoes/?tipo=LAB&possui_resultado_critico=true"),
-          apiFetch<any>("/clinico/resultadoitem/?estado=pendente"),
+          apiFetch<any>("/clinical/resultitem/?estado=pendente"),
         ])
 
         if (!mounted) return
@@ -102,7 +102,7 @@ export default function LaboratorioPage() {
           <div className="flex flex-wrap gap-2">
             {podeVerAdmin ? (
               <Link
-                href={`/admin/clinico/requisicaoanalise/${r.id}/change/`}
+                href={`/admin/clinico/labrequest/${r.id}/change/`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
@@ -136,7 +136,7 @@ export default function LaboratorioPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/requisicaoanalise/"
+                href="/admin/clinico/labrequest/"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 <Shield size={16} />
@@ -176,7 +176,7 @@ export default function LaboratorioPage() {
             <ActionTile
               title="Resultados (admin)"
               description="Lançar e validar resultados com rastreabilidade (Django admin)."
-              href="/admin/clinico/resultado/"
+              href="/admin/clinico/result/"
               icon={Shield}
             />
           ) : null}
@@ -206,3 +206,4 @@ export default function LaboratorioPage() {
     </AppLayout>
   )
 }
+

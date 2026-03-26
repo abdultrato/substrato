@@ -71,7 +71,7 @@ export default function ResultadosMedicosPage() {
 
   async function loadArquivos() {
     try {
-      const { items } = await apiFetchList<ArquivoRow>("/clinico/resultadomedicoarquivo/", {
+      const { items } = await apiFetchList<ArquivoRow>("/clinical/medicalresultfile/", {
         page: 1,
         pageSize: 50,
       })
@@ -83,7 +83,7 @@ export default function ResultadosMedicosPage() {
 
   async function loadExames() {
     try {
-      const res = await apiFetchList<ExameMedicoResumo>("/clinico/examemedico/", { page: 1, pageSize: 200 })
+      const res = await apiFetchList<ExameMedicoResumo>("/clinical/medicalexam/", { page: 1, pageSize: 200 })
       setExames(res.items.map(normalizeMedicalExam))
     } catch (e: any) {
       setErro(e?.message || "Falha ao carregar catálogo de exames médicos.")
@@ -166,7 +166,7 @@ export default function ResultadosMedicosPage() {
 
     setLoading(true)
     try {
-      const res = await fetch("/api/v1/clinico/resultadomedicoarquivo/", {
+      const res = await fetch("/api/v1/clinical/medicalresultfile/", {
         method: "POST",
         credentials: "include",
         body: formData,
@@ -365,3 +365,4 @@ function normalizeMedicalFile(raw: any): ArquivoRow {
     request: raw?.request ?? raw?.requisicao,
   }
 }
+

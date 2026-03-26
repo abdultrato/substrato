@@ -33,7 +33,7 @@ export default function ContabilidadeConciliacoesPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<any>("/contabilidade/conciliacaofinanceira/")
+        const res = await apiFetch<any>("/accounting/financialreconciliation/")
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
         setData(Array.isArray(items) ? items : [])
@@ -56,7 +56,7 @@ export default function ContabilidadeConciliacoesPage() {
         header: "Código",
         render: (c: ConciliacaoRow) => (
           <Link
-            href={`/recursos/contabilidade/conciliacaofinanceira/${c.id}`}
+            href={`/recursos/accounting/financialreconciliation/${c.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {c.id_custom || c.id || "-"}
@@ -84,7 +84,7 @@ export default function ContabilidadeConciliacoesPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/recursos/contabilidade/conciliacaofinanceira/novo"
+                href="/recursos/accounting/financialreconciliation/novo"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Novo
@@ -97,7 +97,7 @@ export default function ContabilidadeConciliacoesPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/conciliacaofinanceira/"
+                  href="/admin/contabilidade/financialreconciliation/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -126,3 +126,4 @@ export default function ContabilidadeConciliacoesPage() {
     </AppLayout>
   )
 }
+

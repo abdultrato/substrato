@@ -38,7 +38,7 @@ export default function LaboratorioResultadosPage() {
         setLoading(true)
         setErro(null)
         const res = await apiFetch<any>(
-          `/clinico/resultadoitem/?estado=${encodeURIComponent(estado)}`
+          `/clinical/resultitem/?estado=${encodeURIComponent(estado)}`
         )
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
@@ -111,4 +111,5 @@ export default function LaboratorioResultadosPage() {
     </AppLayout>
   )
 }
+
 

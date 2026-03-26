@@ -8,29 +8,10 @@ from .termination import Termination
 from .vacation import Vacation
 from .work_schedule import WorkSchedule
 
-AgregadoFamiliar = FamilyDependent
-Cargo = JobTitle
-Dispensa = Termination
-Falta = Absence
-Ferias = Vacation
-FolhaPagamento = Payroll
-Funcionario = Employee
-HoraExtra = Overtime
-HorarioTrabalho = WorkSchedule
-
 __all__ = [
     "Absence",
-    "AgregadoFamiliar",
-    "Cargo",
-    "Dispensa",
     "Employee",
-    "Falta",
     "FamilyDependent",
-    "Ferias",
-    "FolhaPagamento",
-    "Funcionario",
-    "HoraExtra",
-    "HorarioTrabalho",
     "JobTitle",
     "Overtime",
     "Payroll",

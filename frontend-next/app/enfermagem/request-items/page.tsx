@@ -29,8 +29,8 @@ export default function EnfermagemItensRequisicaoPage() {
         const [itemsRes, examesRes, examesMedicosRes] = await Promise.all([
           apiFetch<any>(
             requisicao
-              ? `/clinico/requisicaoitem/?requisicao=${encodeURIComponent(requisicao)}`
-              : "/clinico/requisicaoitem/"
+              ? `/clinical/labrequestitem/?requisicao=${encodeURIComponent(requisicao)}`
+              : "/clinical/labrequestitem/"
           ),
           apiFetch<any>("/exames/"),
           apiFetch<any>("/exames-medicos/"),
@@ -125,3 +125,4 @@ export default function EnfermagemItensRequisicaoPage() {
     </AppLayout>
   )
 }
+

@@ -292,7 +292,7 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             "recibos": ReceiptSerializer(qs_recibos[:limit], many=True).data,
         }
 
-    @extend_schema(operation_id="v1_clinico_patient_historia_clinica_por_id")
+    @extend_schema(operation_id="v1_clinical_patient_clinical_history_by_id")
     @action(detail=True, methods=["get"])
     def historia_clinica(self, request, pk=None):
         if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
@@ -301,12 +301,12 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         patient = self.get_object()
         return Response(self._montar_historia_clinica(request, patient))
 
-    @extend_schema(operation_id="v1_clinico_patient_historia_clinica_por_documento")
+    @extend_schema(operation_id="v1_clinical_patient_clinical_history_by_document")
     @action(detail=False, methods=["get"], url_path="historia_clinica")
     def historia_clinica_busca(self, request):
         """
         Busca História Clínica por número de documento.
-        Ex.: /api/v1/clinico/patient/historia_clinica/?document_number=...
+        Ex.: /api/v1/clinical/patient/historia_clinica/?document_number=...
         """
         if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")

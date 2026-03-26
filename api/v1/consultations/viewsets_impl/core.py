@@ -297,9 +297,9 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
 VIEWSET_MAP = {
     "consultation": MedicalConsultationViewSet,
-    "medicos": DoctorsViewSet,
+    "doctors": DoctorsViewSet,
+    "holiday": HolidayViewSet,
     "specialty": ConsultationSpecialtyViewSet,
-    "feriado": HolidayViewSet,
 }
 
 __all__ = [

@@ -5,7 +5,7 @@ class EquipmentIntegrationsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.equipment_integrations"
     label = "integracoes_equipamentos"
-    verbose_name = "Integrações (Equipamentos)"
+    verbose_name = "Equipment Integrations"
 
     def ready(self):
         # Register signals.

@@ -60,7 +60,7 @@ export default function MedicinaOcupacionalPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/paciente/?proveniencia__exact=Medicina+Ocupacional"
+                href="/admin/clinico/patient/?proveniencia__exact=Medicina+Ocupacional"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir no admin
@@ -127,3 +127,4 @@ export default function MedicinaOcupacionalPage() {
     </AppLayout>
   )
 }
+

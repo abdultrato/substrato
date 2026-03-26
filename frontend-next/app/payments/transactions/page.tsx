@@ -8,8 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type TransacaoRow = Record<string, any>
 
@@ -21,9 +20,6 @@ function fmtDateTime(value: any): string {
 }
 
 export default function PagamentosTransacoesPage() {
-    const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-
     const [erro, setErro] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<TransacaoRow[]>([])
@@ -38,7 +34,7 @@ export default function PagamentosTransacoesPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<TransacaoRow>("/pagamentos/transacao/", {
+                const { items, meta } = await apiFetchList<TransacaoRow>("/payments/transaction/", {
                     page,
                     pageSize,
                 })
@@ -70,7 +66,7 @@ export default function PagamentosTransacoesPage() {
                 header: "ID",
                 render: (t: TransacaoRow) => (
                     <Link
-                        href={`/recursos/pagamentos/transacao/${t.id}`}
+                        href={`/recursos/payments/transaction/${t.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {t.id || "-"}
@@ -94,7 +90,7 @@ export default function PagamentosTransacoesPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/pagamentos/transacao/novo"
+                                href="/recursos/payments/transaction/novo"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
@@ -111,14 +107,6 @@ export default function PagamentosTransacoesPage() {
                             >
                                 Voltar
                             </Link>
-                            {podeVerAdmin ? (
-                                <Link
-                                    href="/admin/pagamentos/transacao/"
-                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                                >
-                                    Admin
-                                </Link>
-                            ) : null}
                         </div>
                     }
                 />
@@ -164,3 +152,4 @@ export default function PagamentosTransacoesPage() {
         </AppLayout>
     )
 }
+

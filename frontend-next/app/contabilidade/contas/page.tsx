@@ -31,7 +31,7 @@ export default function ContabilidadeContasPage() {
       try {
         setLoading(true)
         setErro(null)
-        const { items, meta } = await apiFetchList<ContaRow>("/contabilidade/conta/", {
+        const { items, meta } = await apiFetchList<ContaRow>("/accounting/account/", {
           page,
           pageSize,
         })
@@ -63,7 +63,7 @@ export default function ContabilidadeContasPage() {
         header: "Código",
         render: (c: ContaRow) => (
           <Link
-            href={`/recursos/contabilidade/conta/${c.id}`}
+            href={`/recursos/accounting/account/${c.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {c.id_custom || c.id || "-"}
@@ -91,7 +91,7 @@ export default function ContabilidadeContasPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/recursos/contabilidade/conta/novo"
+                href="/recursos/accounting/account/novo"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Novo
@@ -104,7 +104,7 @@ export default function ContabilidadeContasPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/conta/"
+                  href="/admin/contabilidade/account/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -155,3 +155,4 @@ export default function ContabilidadeContasPage() {
     </AppLayout>
   )
 }
+

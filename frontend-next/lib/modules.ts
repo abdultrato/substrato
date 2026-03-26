@@ -17,14 +17,14 @@ export const MODULES: ModuleGroup[] = [
     key: "clinico",
     label: "Clínico",
     resources: [
-      { key: "paciente", label: "Pacientes", endpoint: "/clinico/paciente/", adminListHref: "/admin/clinico/paciente/" },
-      { key: "exame", label: "Exames", endpoint: "/clinico/exame/", adminListHref: "/admin/clinico/exame/" },
-      { key: "examemedico", label: "Exames Médicos", endpoint: "/clinico/examemedico/", adminListHref: "/admin/clinico/examemedico/" },
-      { key: "examecampo", label: "Campos de Exame", endpoint: "/clinico/examecampo/", adminListHref: "/admin/clinico/examecampo/" },
-      { key: "examemedicocampo", label: "Campos de Exame Médico", endpoint: "/clinico/examemedicocampo/", adminListHref: "/admin/clinico/examemedicocampo/" },
-      { key: "requisicaoanalise", label: "Requisições", endpoint: "/clinico/requisicaoanalise/", adminListHref: "/admin/clinico/requisicaoanalise/" },
-      { key: "requisicaoitem", label: "Itens de Requisição", endpoint: "/clinico/requisicaoitem/", adminListHref: "/admin/clinico/requisicaoitem/" },
-      { key: "resultadoitem", label: "Resultados", endpoint: "/clinico/resultadoitem/", adminListHref: "/admin/clinico/resultadoitem/" },
+      { key: "paciente", label: "Pacientes", endpoint: "/clinical/patient/", adminListHref: "/admin/clinico/patient/" },
+      { key: "exame", label: "Exames", endpoint: "/clinical/exam/", adminListHref: "/admin/clinico/labexam/" },
+      { key: "examemedico", label: "Exames Médicos", endpoint: "/clinical/medicalexam/", adminListHref: "/admin/clinico/medicalexam/" },
+      { key: "examecampo", label: "Campos de Exame", endpoint: "/clinical/examfield/", adminListHref: "/admin/clinico/labexamfield/" },
+      { key: "examemedicocampo", label: "Campos de Exame Médico", endpoint: "/clinical/medicalexamfield/" },
+      { key: "requisicaoanalise", label: "Requisições", endpoint: "/clinical/labrequest/", adminListHref: "/admin/clinico/labrequest/" },
+      { key: "requisicaoitem", label: "Itens de Requisição", endpoint: "/clinical/labrequestitem/" },
+      { key: "resultadoitem", label: "Resultados", endpoint: "/clinical/resultitem/" },
     ],
   },
   {
@@ -57,19 +57,19 @@ export const MODULES: ModuleGroup[] = [
     key: "faturamento",
     label: "Faturamento",
     resources: [
-      { key: "fatura", label: "Faturas", endpoint: "/faturamento/fatura/", adminListHref: "/admin/faturamento/fatura/" },
-      { key: "faturaitem", label: "Itens da Fatura", endpoint: "/faturamento/faturaitem/", adminListHref: "/admin/faturamento/faturaitem/" },
-      { key: "historicofatura", label: "Histórico", endpoint: "/faturamento/historicofatura/", adminListHref: "/admin/faturamento/historicofatura/" },
+      { key: "fatura", label: "Faturas", endpoint: "/billing/invoice/", adminListHref: "/admin/faturamento/invoice/" },
+      { key: "faturaitem", label: "Itens da Fatura", endpoint: "/billing/invoiceitem/" },
+      { key: "historicofatura", label: "Histórico", endpoint: "/billing/invoicehistory/" },
     ],
   },
   {
     key: "pagamentos",
     label: "Pagamentos",
     resources: [
-      { key: "pagamento", label: "Pagamentos", endpoint: "/pagamentos/pagamento/", adminListHref: "/admin/pagamentos/pagamento/" },
-      { key: "recibo", label: "Recibos", endpoint: "/pagamentos/recibo/", adminListHref: "/admin/pagamentos/recibo/" },
-      { key: "transacao", label: "Transações", endpoint: "/pagamentos/transacao/", adminListHref: "/admin/pagamentos/transacao/" },
-      { key: "reconciliacao", label: "Reconciliações", endpoint: "/pagamentos/reconciliacao/", adminListHref: "/admin/pagamentos/reconciliacao/" },
+      { key: "pagamento", label: "Pagamentos", endpoint: "/payments/payment/" },
+      { key: "recibo", label: "Recibos", endpoint: "/payments/receipt/" },
+      { key: "transacao", label: "Transações", endpoint: "/payments/transaction/" },
+      { key: "reconciliacao", label: "Reconciliações", endpoint: "/payments/reconciliation/" },
     ],
   },
   {
@@ -116,20 +116,20 @@ export const MODULES: ModuleGroup[] = [
     key: "contabilidade",
     label: "Contabilidade",
     resources: [
-      { key: "conta", label: "Contas", endpoint: "/contabilidade/conta/", adminListHref: "/admin/contabilidade/conta/" },
-      { key: "lancamento", label: "Lançamentos", endpoint: "/contabilidade/lancamento/", adminListHref: "/admin/contabilidade/lancamento/" },
-      { key: "movimento", label: "Movimentos", endpoint: "/contabilidade/movimento/", adminListHref: "/admin/contabilidade/movimento/" },
-      { key: "conciliacaofinanceira", label: "Conciliações", endpoint: "/contabilidade/conciliacaofinanceira/", adminListHref: "/admin/contabilidade/conciliacaofinanceira/" },
+      { key: "conta", label: "Contas", endpoint: "/accounting/account/", adminListHref: "/admin/contabilidade/account/" },
+      { key: "lancamento", label: "Lançamentos", endpoint: "/accounting/entry/", adminListHref: "/admin/contabilidade/legacyentry/" },
+      { key: "movimento", label: "Movimentos", endpoint: "/accounting/movement/", adminListHref: "/admin/contabilidade/legacymovement/" },
+      { key: "conciliacaofinanceira", label: "Conciliações", endpoint: "/accounting/financialreconciliation/", adminListHref: "/admin/contabilidade/financialreconciliation/" },
     ],
   },
   {
     key: "consultas",
     label: "Consultas",
     resources: [
-      { key: "consulta", label: "Consultas", endpoint: "/consultas/consulta/", adminListHref: "/admin/consultas/consultamedica/" },
-      { key: "medicos", label: "Médicos", endpoint: "/consultas/medicos/" },
-      { key: "especialidade", label: "Especialidades", endpoint: "/consultas/especialidade/", adminListHref: "/admin/consultas/especialidadeconsulta/" },
-      { key: "feriado", label: "Feriados", endpoint: "/consultas/feriado/", adminListHref: "/admin/consultas/feriado/" },
+      { key: "consulta", label: "Consultas", endpoint: "/consultations/consultation/", adminListHref: "/admin/consultas/medicalconsultation/" },
+      { key: "medicos", label: "Médicos", endpoint: "/consultations/doctors/" },
+      { key: "especialidade", label: "Especialidades", endpoint: "/consultations/specialty/", adminListHref: "/admin/consultas/consultationspecialty/" },
+      { key: "feriado", label: "Feriados", endpoint: "/consultations/holiday/", adminListHref: "/admin/consultas/holiday/" },
     ],
   },
   {
@@ -221,3 +221,4 @@ export function findModuleResource(
   if (!resource) return null
   return { group, resource }
 }
+

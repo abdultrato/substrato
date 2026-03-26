@@ -131,7 +131,7 @@ export default function FaturasPage() {
   const carregarItens = useCallback(async (faturaId: number) => {
     setCarregandoItens(true)
     try {
-      const res = await apiFetch<any>(`/faturamento/faturaitem/?fatura=${faturaId}`)
+      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${faturaId}`)
       const lista = res && res.results ? res.results : res
       setItens(Array.isArray(lista) ? lista : [])
       setItensFaturaId(faturaId)
@@ -146,7 +146,7 @@ export default function FaturasPage() {
 
   const carregarPagamentosPendentes = useCallback(async (faturaId: number) => {
     try {
-      const res = await apiFetch<any>(`/pagamentos/pagamento/?fatura=${faturaId}&status=PEN`)
+      const res = await apiFetch<any>(`/payments/payment/?fatura=${faturaId}&status=PEN`)
       const lista = res && res.results ? res.results : res
       const pendentes = Array.isArray(lista) ? lista : []
       setTemPagamentoPendente(pendentes.length > 0)
@@ -210,7 +210,7 @@ export default function FaturasPage() {
         return
       }
       try {
-        await apiFetch(`/faturamento/faturaitem/${item.id}/`, {
+        await apiFetch(`/billing/invoiceitem/${item.id}/`, {
           method: "PATCH",
           body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
         })
@@ -347,7 +347,7 @@ export default function FaturasPage() {
               ) : null}
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/faturamento/fatura/"
+                  href="/admin/faturamento/invoice/"
                   className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                 >
                   Abrir no admin
@@ -511,3 +511,4 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
+

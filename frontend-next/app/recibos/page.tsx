@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -8,26 +7,18 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import MoneyValue from "@/components/ui/MoneyValue"
-import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type ReciboRow = Record<string, any>
 
 async function abrirPdfRecibo(reciboId: number) {
-  const blob = await apiFetch<Blob>(`/pagamentos/recibo/${reciboId}/pdf/`, {
+  const blob = await apiFetch<Blob>(`/payments/receipt/${reciboId}/pdf/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
   window.open(url, "_blank", "noopener,noreferrer")
   setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
-}
-
-function money(v: any): string {
-  if (v === null || v === undefined || v === "") return "-"
-  const n = Number(v)
-  if (Number.isNaN(n)) return String(v)
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function fmtDate(value: any): string {
@@ -39,8 +30,6 @@ function fmtDate(value: any): string {
 
 export default function RecibosPage() {
   const { loading } = useAuthGuard()
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [recibos, setRecibos] = useState<ReciboRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
@@ -62,7 +51,7 @@ export default function RecibosPage() {
     try {
       setCarregando(true)
       setErro(null)
-      const res = await apiFetch<any>("/pagamentos/recibo/")
+      const res = await apiFetch<any>("/payments/receipt/")
       const items = res && (res as any).results ? (res as any).results : res
       setRecibos(Array.isArray(items) ? items : [])
     } catch (e: any) {
@@ -114,16 +103,7 @@ export default function RecibosPage() {
         <PageHeader
           title="Recibos"
           subtitle="Consultas e auditoria de pagamentos."
-          actions={
-            podeVerAdmin ? (
-              <Link
-                href="/admin/pagamentos/recibo/"
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Abrir no admin
-              </Link>
-            ) : null
-          }
+          actions={null}
         />
 
         {erro && (
@@ -141,3 +121,4 @@ export default function RecibosPage() {
     </AppLayout>
   )
 }
+

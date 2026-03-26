@@ -21,7 +21,7 @@ export default function ExameDetailPage () {
         const ex = await apiFetch<Exame>( `/exames/${id}/` );
         setExame( ex );
 
-        const r = await apiFetch<any>( `/clinico/examecampo/?exame=${id}` );
+        const r = await apiFetch<any>( `/clinical/examfield/?exame=${id}` );
         const data = r && (r as any).results ? (r as any).results : (r as any);
         setCampos( Array.isArray( data ) ? data : [] );
     }, [id] );
@@ -58,3 +58,4 @@ export default function ExameDetailPage () {
         </AppLayout>
     );
 }
+

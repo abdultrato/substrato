@@ -165,14 +165,6 @@ class BatchFactory:
 
         return tenant, pacientes, exams
 
-
-InquilinoFactory = TenantFactory
-PacienteFactory = PatientFactory
-ExameFactory = ExamFactory
-BatchFactory.criar_tenant_com_usuarios = staticmethod(BatchFactory.create_tenant_with_users)
-BatchFactory.criar_pacientes_com_exams = staticmethod(BatchFactory.create_patients_with_exams)
-
-
 # ============================================================================
 # PYTEST FIXTURES (integração com pytest)
 # ============================================================================
@@ -210,28 +202,13 @@ def patient_fixture(tenant):
     return PatientFactory(tenant=tenant)
 
 
-@pytest.fixture(name="patient")
-def legacy_patient_fixture(tenant):
-    return PatientFactory(tenant=tenant)
-
-
 @pytest.fixture(name="exam")
 def exam_fixture(patient):
     """Cria um exam"""
     return ExamFactory(patient=patient, tenant=patient.tenant)
 
 
-@pytest.fixture(name="exam")
-def legacy_exam_fixture(patient):
-    return ExamFactory(patient=patient, tenant=patient.tenant)
-
-
 @pytest.fixture(name="patients_batch")
 def patients_batch_fixture(tenant):
     """Cria múltiplos pacientes"""
-    return [PatientFactory(tenant=tenant) for _ in range(5)]
-
-
-@pytest.fixture(name="pacientes_batch")
-def legacy_patients_batch_fixture(tenant):
     return [PatientFactory(tenant=tenant) for _ in range(5)]

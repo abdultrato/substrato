@@ -11,38 +11,11 @@ from .procedure_material_value import ProcedureMaterialValue
 from .vital_sign import NursingVitalSign
 from .ward import Ward, WardAdmission, WardBed
 
-EvolucaoEnfermagem = NursingEvolution
-PrescricaoEnfermagem = NursingPrescription
-RegistroEnfermagem = NursingRecord
-SinalVitalEnfermagem = NursingVitalSign
-Enfermaria = Ward
-CamaEnfermaria = WardBed
-InternamentoEnfermaria = WardAdmission
-Procedimento = Procedure
-ProcedimentoCatalogo = ProcedureCatalog
-ProcedimentoCatalogoMaterial = ProcedureCatalogMaterial
-ProcedimentoItem = ProcedureItem
-ProcedimentoItemValor = ProcedureItemValue
-ProcedimentoMaterial = ProcedureMaterial
-ProcedimentoMaterialValor = ProcedureMaterialValue
-
 __all__ = [
-    "CamaEnfermaria",
-    "Enfermaria",
-    "EvolucaoEnfermagem",
-    "InternamentoEnfermaria",
     "NursingEvolution",
     "NursingPrescription",
     "NursingRecord",
     "NursingVitalSign",
-    "PrescricaoEnfermagem",
-    "Procedimento",
-    "ProcedimentoCatalogo",
-    "ProcedimentoCatalogoMaterial",
-    "ProcedimentoItem",
-    "ProcedimentoItemValor",
-    "ProcedimentoMaterial",
-    "ProcedimentoMaterialValor",
     "Procedure",
     "ProcedureCatalog",
     "ProcedureCatalogMaterial",
@@ -50,8 +23,6 @@ __all__ = [
     "ProcedureItemValue",
     "ProcedureMaterial",
     "ProcedureMaterialValue",
-    "RegistroEnfermagem",
-    "SinalVitalEnfermagem",
     "Ward",
     "WardAdmission",
     "WardBed",

@@ -156,10 +156,10 @@ class FinancialReconciliationViewSet(TenantOwnedViewSet):
 
 
 VIEWSET_MAP = {
-    "conciliacaofinanceira": FinancialReconciliationViewSet,
     "account": AccountViewSet,
     "entry": LedgerEntryViewSet,
-    "movimento": LedgerMovementViewSet,
+    "financialreconciliation": FinancialReconciliationViewSet,
+    "movement": LedgerMovementViewSet,
 }
 
 __all__ = [

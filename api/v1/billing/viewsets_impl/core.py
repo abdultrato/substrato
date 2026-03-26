@@ -177,8 +177,8 @@ class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
 
 VIEWSET_MAP = {
     "invoice": InvoiceViewSet,
-    "faturaitem": InvoiceItemViewSet,
-    "historicofatura": InvoiceHistoryViewSet,
+    "invoicehistory": InvoiceHistoryViewSet,
+    "invoiceitem": InvoiceItemViewSet,
 }
 
 __all__ = [

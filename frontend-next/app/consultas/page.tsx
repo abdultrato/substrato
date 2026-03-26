@@ -93,10 +93,10 @@ export default function ConsultasPage() {
 
   const carregar = useCallback(async () => {
     const [cons, pacs, meds, especs] = await Promise.all([
-      apiFetch<any>("/consultas/"),
+      apiFetch<any>("/consultations/"),
       apiFetch<any>("/pacientes/"),
-      apiFetch<any>("/consultas/medicos/"),
-      apiFetch<any>("/consultas/especialidade/"),
+      apiFetch<any>("/consultations/doctors/"),
+      apiFetch<any>("/consultations/specialty/"),
     ])
 
     const list = (v: any) => (v && v.results ? v.results : v) || []
@@ -159,7 +159,7 @@ export default function ConsultasPage() {
 
       if (feriado) payload.feriado_manual = true
 
-      await apiFetch("/consultas/", {
+      await apiFetch("/consultations/", {
         method: "POST",
         body: JSON.stringify(payload),
       })
@@ -187,7 +187,7 @@ export default function ConsultasPage() {
     if (!canWrite) return
     if (!confirm("Cancelar esta consulta?")) return
     try {
-      await apiFetch(`/consultas/${consultaId}/cancelar/`, {
+      await apiFetch(`/consultations/${consultaId}/cancelar/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
@@ -201,7 +201,7 @@ export default function ConsultasPage() {
     if (!canWrite) return
     if (!confirm("Marcar esta consulta como concluída?")) return
     try {
-      await apiFetch(`/consultas/${consultaId}/concluir/`, {
+      await apiFetch(`/consultations/${consultaId}/concluir/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
@@ -228,7 +228,7 @@ export default function ConsultasPage() {
     const value = Number.isNaN(d.getTime()) ? input : d.toISOString()
 
     try {
-      await apiFetch(`/consultas/${row.id}/remarcar/`, {
+      await apiFetch(`/consultations/${row.id}/remarcar/`, {
         method: "POST",
         body: JSON.stringify({ agendada_para: value }),
       })
@@ -340,7 +340,7 @@ export default function ConsultasPage() {
           params.set("agendada_para", value)
         }
         if (feriado) params.set("feriado_manual", "true")
-        const res = await apiFetch<PrecoPreview>(`/consultas/consulta/preco/?${params.toString()}`)
+        const res = await apiFetch<PrecoPreview>(`/consultations/consultation/preco/?${params.toString()}`)
         if (mounted) setPrecoPreview(res || null)
       } catch {
         if (mounted) setPrecoPreview(null)
@@ -517,3 +517,4 @@ export default function ConsultasPage() {
     </AppLayout>
   )
 }
+

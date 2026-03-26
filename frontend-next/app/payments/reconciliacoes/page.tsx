@@ -8,8 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type ReconcRow = Record<string, any>
 
@@ -21,9 +20,6 @@ function fmtDateTime(value: any): string {
 }
 
 export default function PagamentosReconciliacoesPage() {
-    const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-
     const [erro, setErro] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<ReconcRow[]>([])
@@ -38,7 +34,7 @@ export default function PagamentosReconciliacoesPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<ReconcRow>("/pagamentos/reconciliacao/", {
+                const { items, meta } = await apiFetchList<ReconcRow>("/payments/reconciliation/", {
                     page,
                     pageSize,
                 })
@@ -70,7 +66,7 @@ export default function PagamentosReconciliacoesPage() {
                 header: "ID",
                 render: (r: ReconcRow) => (
                     <Link
-                        href={`/recursos/pagamentos/reconciliacao/${r.id}`}
+                        href={`/recursos/payments/reconciliation/${r.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {r.id || "-"}
@@ -94,7 +90,7 @@ export default function PagamentosReconciliacoesPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/pagamentos/reconciliacao/novo"
+                                href="/recursos/payments/reconciliation/novo"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
@@ -111,14 +107,6 @@ export default function PagamentosReconciliacoesPage() {
                             >
                                 Voltar
                             </Link>
-                            {podeVerAdmin ? (
-                                <Link
-                                    href="/admin/pagamentos/reconciliacao/"
-                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                                >
-                                    Admin
-                                </Link>
-                            ) : null}
                         </div>
                     }
                 />
@@ -164,3 +152,4 @@ export default function PagamentosReconciliacoesPage() {
         </AppLayout>
     )
 }
+

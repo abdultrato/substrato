@@ -32,7 +32,7 @@ export default function ExamesMedicosPage() {
         setLoading(true)
         setErro(null)
         const { items, meta } = await apiFetchList<ExameMedicoRow>(
-          "/clinico/examemedico/",
+          "/clinical/medicalexam/",
           { page, pageSize }
         )
         const total = meta.total ?? items.length
@@ -76,7 +76,7 @@ export default function ExamesMedicosPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/examemedico/"
+                href="/admin/clinico/medicalexam/"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir no admin
@@ -126,3 +126,4 @@ export default function ExamesMedicosPage() {
     </AppLayout>
   )
 }
+

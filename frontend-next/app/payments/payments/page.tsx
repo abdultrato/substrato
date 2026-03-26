@@ -9,8 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import MoneyValue from "@/components/ui/MoneyValue"
 import { apiFetchList } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type PagamentoRow = Record<string, any>
 
@@ -21,17 +20,7 @@ function fmtDateTime(value: any): string {
     return d.toLocaleString()
 }
 
-function money(v: any): string {
-    if (v === null || v === undefined || v === "") return "-"
-    const n = Number(v)
-    if (Number.isNaN(n)) return String(v)
-    return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 export default function PagamentosListaPage() {
-    const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-
     const [erro, setErro] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<PagamentoRow[]>([])
@@ -46,7 +35,7 @@ export default function PagamentosListaPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<PagamentoRow>("/pagamentos/pagamento/", {
+                const { items, meta } = await apiFetchList<PagamentoRow>("/payments/payment/", {
                     page,
                     pageSize,
                 })
@@ -78,7 +67,7 @@ export default function PagamentosListaPage() {
                 header: "Código",
                 render: (p: PagamentoRow) => (
                     <Link
-                        href={`/recursos/pagamentos/pagamento/${p.id}`}
+                        href={`/recursos/payments/payment/${p.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {p.id_custom || p.id || "-"}
@@ -103,7 +92,7 @@ export default function PagamentosListaPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/pagamentos/pagamento/novo"
+                                href="/recursos/payments/payment/novo"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
@@ -120,14 +109,6 @@ export default function PagamentosListaPage() {
                             >
                                 Voltar
                             </Link>
-                            {podeVerAdmin ? (
-                                <Link
-                                    href="/admin/pagamentos/pagamento/"
-                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                                >
-                                    Admin
-                                </Link>
-                            ) : null}
                         </div>
                     }
                 />
@@ -173,3 +154,4 @@ export default function PagamentosListaPage() {
         </AppLayout>
     )
 }
+

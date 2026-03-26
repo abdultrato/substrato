@@ -1,4 +1,4 @@
-from .password_reset_token import PasswordResetConfirmView
+from .password_reset import PasswordResetConfirmView
 
 __all__ = [
     "PasswordResetConfirmView",

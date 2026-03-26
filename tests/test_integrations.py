@@ -68,7 +68,7 @@ def test_clinical_alias_route_exposes_frontend_patient_contract(api_client):
     patient = _patient(tenant)
     _authenticate_admin(tenant, api_client=api_client)
 
-    response = api_client.get(f"/api/v1/clinico/paciente/{patient.id}/")
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/")
 
     assert response.status_code == 200
     payload = _response_data(response)
@@ -84,7 +84,7 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     patient = _patient(tenant)
 
     invoice_response = api_client.post(
-        "/api/v1/faturamento/fatura/",
+        "/api/v1/billing/invoice/",
         {
             "paciente": patient.id,
             "origem": "MIX",
@@ -100,7 +100,7 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     invoice_id = invoice_payload["id"]
 
     item_response = api_client.post(
-        "/api/v1/faturamento/faturaitem/",
+        "/api/v1/billing/invoiceitem/",
         {
             "fatura": invoice_id,
             "tipo_item": "AJU",
@@ -126,7 +126,7 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert invoice.total == Decimal("11.60")
 
     update_response = api_client.patch(
-        f"/api/v1/faturamento/faturaitem/{item_payload['id']}/",
+        f"/api/v1/billing/invoiceitem/{item_payload['id']}/",
         {"aplica_iva": False},
         format="json",
     )
@@ -140,11 +140,11 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     invoice.refresh_from_db()
     assert invoice.total == Decimal("10.00")
 
-    issue_response = api_client.post(f"/api/v1/faturamento/fatura/{invoice_id}/emitir/")
+    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
     assert issue_response.status_code == 200
 
     payment_response = api_client.post(
-        "/api/v1/pagamentos/pagamento/",
+        "/api/v1/payments/payment/",
         {
             "fatura": invoice_id,
             "nome": "Pagamento Front",
@@ -161,12 +161,12 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert payment_payload["valor"] == "10.00"
     assert payment_payload["estado"] == "PEN"
 
-    confirm_response = api_client.post(f"/api/v1/faturamento/fatura/{invoice_id}/confirmar_pagamento/")
+    confirm_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirmar_pagamento/")
 
     assert confirm_response.status_code == 200
     assert _response_data(confirm_response)["estado"] == Invoice.Status.PAID
 
-    receipt_response = api_client.get(f"/api/v1/pagamentos/recibo/?fatura={invoice_id}")
+    receipt_response = api_client.get(f"/api/v1/payments/receipt/?fatura={invoice_id}")
 
     assert receipt_response.status_code == 200
     receipts = _payload_list(receipt_response)

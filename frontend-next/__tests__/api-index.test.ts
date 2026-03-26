@@ -17,7 +17,7 @@ describe("API facade contract", () => {
     vi.unstubAllGlobals()
   })
 
-  it("reescreve aliases amigaveis para os endpoints canonicamente usados pelo frontend", async () => {
+  it("reescreve aliases amigaveis para os endpoints canonicos em ingles", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {
         status: 200,
@@ -25,9 +25,9 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/faturas/")
+    await apiFetch("/invoices/")
 
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/faturamento/fatura/")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/billing/invoice/")
   })
 
   it("renova a sessao em 401 e repete o request original", async () => {
@@ -46,12 +46,12 @@ describe("API facade contract", () => {
         })
       )
 
-    const response = await apiFetch("/pacientes/1/")
+    const response = await apiFetch("/patients/1/")
 
     expect(response).toEqual({ id: 1, nome: "Paciente" })
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinico/paciente/1/")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/patient/1/")
     expect((global.fetch as any).mock.calls[1][0]).toBe("/api/v1/auth/refresh/")
-    expect((global.fetch as any).mock.calls[2][0]).toBe("/api/v1/clinico/paciente/1/")
+    expect((global.fetch as any).mock.calls[2][0]).toBe("/api/v1/clinical/patient/1/")
     expect(logout).not.toHaveBeenCalled()
   })
 
@@ -63,7 +63,7 @@ describe("API facade contract", () => {
       })
     )
 
-    await expect(apiFetch("/pacientes/", { method: "POST" })).rejects.toThrow("nome: Campo obrigatorio.")
+    await expect(apiFetch("/patients/", { method: "POST" })).rejects.toThrow("nome: Campo obrigatorio.")
   })
 
   it("extrai resultados e metadata de payloads paginados com wrapper data/meta", () => {
@@ -77,8 +77,8 @@ describe("API facade contract", () => {
           total_pages: 4,
         },
         links: {
-          next: "/api/v1/clinico/exame/?page=3",
-          previous: "/api/v1/clinico/exame/?page=1",
+          next: "/api/v1/clinical/exam/?page=3",
+          previous: "/api/v1/clinical/exam/?page=1",
         },
       },
     }
@@ -89,8 +89,8 @@ describe("API facade contract", () => {
       page: 2,
       perPage: 2,
       totalPages: 4,
-      next: "/api/v1/clinico/exame/?page=3",
-      previous: "/api/v1/clinico/exame/?page=1",
+      next: "/api/v1/clinical/exam/?page=3",
+      previous: "/api/v1/clinical/exam/?page=1",
     })
     expect(extractTotalCount(payload)).toBe(7)
   })
@@ -103,12 +103,12 @@ describe("API facade contract", () => {
       })
     )
 
-    const response = await apiFetchList("/pagamentos/pagamento/", {
+    const response = await apiFetchList("/payments/payment/", {
       page: 3,
       pageSize: 50,
     })
 
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/pagamentos/pagamento/?page=3&page_size=50")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/payment/?page=3&page_size=50")
     expect(response.items).toEqual([{ id: 9 }])
     expect(response.meta.total).toBe(1)
     expect(response.meta.totalPages).toBe(1)

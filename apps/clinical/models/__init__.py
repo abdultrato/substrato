@@ -23,30 +23,10 @@ from .patient import Patient
 from .result import Result
 from .result_item import ResultItem
 
-requisicao_analise = request_analise = lab_request
-requisicao_item = request_item = lab_request_item
-resultado = result
-resultado_item = result_item
-resultado_medico_arquivo = result_doctor_file = medical_result_file
-exame = exam = lab_exam
-exame_campo = exam_field = lab_exam_field
-paciente = patient
-
-RequisicaoAnalise = LabRequest
-RequisicaoItem = LabRequestItem
-Resultado = Result
-ResultadoItem = ResultItem
-ResultadoMedicoArquivo = MedicalResultFile
-Exame = LabExam
-ExameCampo = LabExamField
-Paciente = Patient
-
 __all__ = [
     "ClinicalEvent",
     "ClinicalHistory",
     "ClinicalReference",
-    "Exame",
-    "ExameCampo",
     "LabExam",
     "LabExamField",
     "LabRequest",
@@ -54,38 +34,17 @@ __all__ = [
     "MedicalExam",
     "MedicalExamField",
     "MedicalResultFile",
-    "Paciente",
     "Patient",
-    "RequisicaoAnalise",
-    "RequisicaoItem",
     "Result",
     "ResultItem",
-    "Resultado",
-    "ResultadoItem",
-    "ResultadoMedicoArquivo",
     "clinical_event",
     "clinical_history",
-    "exam",
-    "exam",
-    "exam_field",
-    "exam_field",
-    "exame",
-    "exame_campo",
     "lab_exam",
     "lab_exam_field",
     "lab_request",
     "lab_request_item",
     "medical_result_file",
-    "paciente",
     "patient",
-    "request_analise",
-    "request_item",
-    "requisicao_analise",
-    "requisicao_item",
     "result",
-    "result_doctor_file",
     "result_item",
-    "resultado",
-    "resultado_item",
-    "resultado_medico_arquivo",
 ]

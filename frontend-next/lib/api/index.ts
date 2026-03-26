@@ -15,28 +15,25 @@ export type ApiListMeta = {
 function rewriteUrl(url: string): string {
   const u = url.startsWith("/") ? url : `/${url}`
 
-  // Consultas: manter alias amigável (/consultas) apontando para o ViewSet
-  // real (/consultas/consulta), sem quebrar sub-recursos como /consultas/medicos,
-  // /consultas/especialidade, /consultas/feriado, etc.
-  if (u === "/consultas" || u === "/consultas/") return "/consultas/consulta"
-  if (u.startsWith("/consultas/")) {
-    const rest = u.slice("/consultas/".length)
+  // Friendly aliases kept at the UI layer, rewritten to the English API routes.
+  if (u === "/consultations" || u === "/consultations/") return "/consultations/consultation"
+  if (u.startsWith("/consultations/")) {
+    const rest = u.slice("/consultations/".length)
     const firstSeg = rest.split("/")[0] || ""
     const isNumericId = /^\d+$/.test(firstSeg)
-    const isConsultaCollectionAction = new Set(["agenda", "preco"]).has(firstSeg)
-    if (isNumericId || isConsultaCollectionAction) {
-      return u.replace("/consultas", "/consultas/consulta")
+    const isConsultationCollectionAction = new Set(["agenda", "preco"]).has(firstSeg)
+    if (isNumericId || isConsultationCollectionAction) {
+      return u.replace("/consultations", "/consultations/consultation")
     }
   }
 
-  // Legacy/friendly aliases used across the UI.
   const aliases: Array<[string, string]> = [
-    ["/pacientes", "/clinico/paciente"],
-    ["/exames", "/clinico/exame"],
-    ["/exames-medicos", "/clinico/examemedico"],
-    ["/requisicoes", "/clinico/requisicaoanalise"],
-    ["/faturas", "/faturamento/fatura"],
-    ["/entidades", "/entidades/empresa"],
+    ["/patients", "/clinical/patient"],
+    ["/exams", "/clinical/exam"],
+    ["/medical-exams", "/clinical/medicalexam"],
+    ["/lab-requests", "/clinical/labrequest"],
+    ["/invoices", "/billing/invoice"],
+    ["/companies", "/external_entities/company"],
   ]
 
   for (const [from, to] of aliases) {

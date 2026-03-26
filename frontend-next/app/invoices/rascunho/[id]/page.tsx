@@ -177,7 +177,7 @@ export default function FaturaRascunhoPage() {
 
   const carregarItens = useCallback(async (fatId: number) => {
     try {
-      const res = await apiFetch<any>(`/faturamento/faturaitem/?fatura=${fatId}`)
+      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${fatId}`)
       const lista = listFrom(res)
       setItens(lista as FaturaItem[])
     } catch (e: any) {
@@ -188,7 +188,7 @@ export default function FaturaRascunhoPage() {
 
   const carregarRecibo = useCallback(async (fatId: number) => {
     try {
-      const res = await apiFetch<any>(`/pagamentos/recibo/?fatura=${fatId}`)
+      const res = await apiFetch<any>(`/payments/receipt/?fatura=${fatId}`)
       const lista = listFrom(res)
       setRecibo(lista.length ? lista[0] : null)
     } catch {
@@ -200,7 +200,7 @@ export default function FaturaRascunhoPage() {
     try {
       const [exs, exsMed, prods] = await Promise.all([
         apiFetch<any>("/exames/"),
-        apiFetch<any>("/clinico/examemedico/"),
+        apiFetch<any>("/clinical/medicalexam/"),
         apiFetch<any>("/farmacia/produto/"),
       ])
       setExames(listFrom(exs))
@@ -232,7 +232,7 @@ export default function FaturaRascunhoPage() {
         apiFetch<any>(`/enfermagem/procedimento/?paciente=${pacienteId}`),
         apiFetch<any>(`/farmacia/venda/?paciente=${pacienteId}`),
         apiFetch<any>(`/cirurgia/cirurgia/?paciente=${pacienteId}`),
-        apiFetch<any>(`/consultas/consulta/?paciente=${pacienteId}`),
+        apiFetch<any>(`/consultations/consultation/?paciente=${pacienteId}`),
       ])
 
       const reqs = listFrom(reqRes)
@@ -248,7 +248,7 @@ export default function FaturaRascunhoPage() {
       setConsultas(cons)
 
       const reqItemsPairs = await Promise.all(
-        reqs.map((r) => apiFetch<any>(`/clinico/requisicaoitem/?requisicao=${r.id}`))
+        reqs.map((r) => apiFetch<any>(`/clinical/labrequestitem/?requisicao=${r.id}`))
       )
       const reqMap: Record<number, Row[]> = {}
       reqs.forEach((r, idx) => {
@@ -348,7 +348,7 @@ export default function FaturaRascunhoPage() {
     }
     try {
       setErro(null)
-      await apiFetch("/faturamento/faturaitem/", {
+      await apiFetch("/billing/invoiceitem/", {
         method: "POST",
         body: JSON.stringify({ ...payload, fatura: faturaId }),
       })
@@ -371,7 +371,7 @@ export default function FaturaRascunhoPage() {
     }
     if (!confirm("Remover item da fatura?")) return
     try {
-      await apiFetch(`/faturamento/faturaitem/${itemId}/`, { method: "DELETE" })
+      await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
       if (faturaId) await carregarItens(faturaId)
     } catch (e: any) {
       setErro(e?.message || "Falha ao remover item.")
@@ -385,7 +385,7 @@ export default function FaturaRascunhoPage() {
       return
     }
     try {
-      await apiFetch(`/faturamento/faturaitem/${item.id}/`, {
+      await apiFetch(`/billing/invoiceitem/${item.id}/`, {
         method: "PATCH",
         body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
       })
@@ -452,7 +452,7 @@ export default function FaturaRascunhoPage() {
           payload.dados_seguro = { observacoes: dadosSeguro.trim() }
         }
       }
-      await apiFetch("/pagamentos/pagamento/", {
+      await apiFetch("/payments/payment/", {
         method: "POST",
         body: JSON.stringify(payload),
       })
@@ -498,7 +498,7 @@ export default function FaturaRascunhoPage() {
   const baixarPdfRecibo = useCallback(async () => {
     if (!recibo?.id) return
     try {
-      const blob = await apiFetch<Blob>(`/pagamentos/recibo/${recibo.id}/pdf/`, {
+      const blob = await apiFetch<Blob>(`/payments/receipt/${recibo.id}/pdf/`, {
         method: "GET",
         responseType: "blob",
       })
@@ -532,7 +532,7 @@ export default function FaturaRascunhoPage() {
       return
     }
     try {
-      const res = await apiFetch<any>(`/clinico/examemedico/?search=${encodeURIComponent(q)}`)
+      const res = await apiFetch<any>(`/clinical/medicalexam/?search=${encodeURIComponent(q)}`)
       setSearchExameMedico(listFrom(res))
     } catch {
       setSearchExameMedico([])
@@ -1166,3 +1166,4 @@ export default function FaturaRascunhoPage() {
     </AppLayout>
   )
 }
+

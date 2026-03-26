@@ -39,7 +39,7 @@ export default function ContabilidadeMovimentosPage() {
         setLoading(true)
         setErro(null)
         const { items, meta } = await apiFetchList<MovimentoRow>(
-          "/contabilidade/movimento/",
+          "/accounting/movement/",
           { page, pageSize }
         )
         const total = meta.total ?? items.length
@@ -70,7 +70,7 @@ export default function ContabilidadeMovimentosPage() {
         header: "Código",
         render: (m: MovimentoRow) => (
           <Link
-            href={`/recursos/contabilidade/movimento/${m.id}`}
+            href={`/recursos/accounting/movement/${m.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {m.id_custom || m.id || "-"}
@@ -99,7 +99,7 @@ export default function ContabilidadeMovimentosPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/recursos/contabilidade/movimento/novo"
+                href="/recursos/accounting/movement/novo"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Novo
@@ -112,7 +112,7 @@ export default function ContabilidadeMovimentosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/movimento/"
+                  href="/admin/contabilidade/legacymovement/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -163,3 +163,4 @@ export default function ContabilidadeMovimentosPage() {
     </AppLayout>
   )
 }
+

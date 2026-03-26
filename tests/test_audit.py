@@ -17,7 +17,7 @@ def test_register_event_logs_structured_context():
         register_event(
             user=user,
             tenant_id=7,
-            path="/api/v1/faturamento/fatura/",
+            path="/api/v1/billing/invoice/",
             method="POST",
             status_code=201,
         )
@@ -27,7 +27,7 @@ def test_register_event_logs_structured_context():
         extra={
             "user_id": 42,
             "tenant_id": 7,
-            "endpoint": "/api/v1/faturamento/fatura/",
+            "endpoint": "/api/v1/billing/invoice/",
             "method": "POST",
             "status": 201,
         },

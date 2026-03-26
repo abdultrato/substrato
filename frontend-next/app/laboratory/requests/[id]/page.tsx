@@ -148,7 +148,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
   async function lancarItem(id: number) {
     setRowBusy(id, true)
     try {
-      const updated = await apiFetch<LabResultadoItem>(`/clinico/resultadoitem/${id}/lancar/`, {
+      const updated = await apiFetch<LabResultadoItem>(`/clinical/resultitem/${id}/lancar/`, {
         method: "POST",
       })
       updateItem(updated)
@@ -163,7 +163,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
 
     setRowBusy(id, true)
     try {
-      const updated = await apiFetch<LabResultadoItem>(`/clinico/resultadoitem/${id}/gravar/`, {
+      const updated = await apiFetch<LabResultadoItem>(`/clinical/resultitem/${id}/gravar/`, {
         method: "POST",
         body: JSON.stringify({ resultado_valor: value }),
       })
@@ -176,7 +176,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
   async function validarItem(id: number) {
     setRowBusy(id, true)
     try {
-      const updated = await apiFetch<LabResultadoItem>(`/clinico/resultadoitem/${id}/validar/`, {
+      const updated = await apiFetch<LabResultadoItem>(`/clinical/resultitem/${id}/validar/`, {
         method: "POST",
       })
       updateItem(updated)
@@ -444,3 +444,4 @@ export default function LaboratorioRequisicaoResultadosPage() {
     </AppLayout>
   )
 }
+

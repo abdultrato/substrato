@@ -152,7 +152,7 @@ export default function MedicinaPage() {
               <li>Cadastro de pacientes</li>
               <li>Requisição de análises laboratoriais</li>
               <li>Catálogo de exames laboratoriais</li>
-              <li>Geração de PDF de resultados (via API v1: <code>/api/v1/clinico/requisicaoanalise/&lt;id&gt;/pdf_resultados/</code>)</li>
+              <li>Geração de PDF de resultados (via API v1: <code>/api/v1/clinical/labrequest/&lt;id&gt;/pdf_resultados/</code>)</li>
             </ul>
 
             <div className="mt-4">
@@ -169,3 +169,4 @@ export default function MedicinaPage() {
     </AppLayout>
   )
 }
+

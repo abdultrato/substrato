@@ -47,10 +47,3 @@ def test_clinical_viewsets_do_not_raise_on_search_or_invalid_ordering():
         qs = of.filter_queryset(req, qs, view)
         list(qs[:1])
 
-
-test_clinico_viewsets_search_and_ordering_fields_are_valid = (
-    test_clinical_viewsets_search_and_ordering_fields_are_valid
-)
-test_clinico_viewsets_do_not_raise_on_search_or_invalid_ordering = (
-    test_clinical_viewsets_do_not_raise_on_search_or_invalid_ordering
-)

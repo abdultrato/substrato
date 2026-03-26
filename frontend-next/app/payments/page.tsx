@@ -10,13 +10,9 @@ import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 export default function PagamentosPage() {
-    const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
 
@@ -33,10 +29,10 @@ export default function PagamentosPage() {
                 setErro(null)
 
                 const [pags, recs, trans, recs2] = await Promise.all([
-                    apiFetch<any>("/pagamentos/pagamento/"),
-                    apiFetch<any>("/pagamentos/recibo/"),
-                    apiFetch<any>("/pagamentos/transacao/"),
-                    apiFetch<any>("/pagamentos/reconciliacao/"),
+                    apiFetch<any>("/payments/payment/"),
+                    apiFetch<any>("/payments/receipt/"),
+                    apiFetch<any>("/payments/transaction/"),
+                    apiFetch<any>("/payments/reconciliation/"),
                 ])
 
                 if (!mounted) return
@@ -63,16 +59,7 @@ export default function PagamentosPage() {
                 <PageHeader
                     title="Pagamentos"
                     subtitle="Pagamentos, transações, reconciliações e recibos."
-                    actions={
-                        podeVerAdmin ? (
-                            <Link
-                                href="/admin/pagamentos/pagamento/"
-                                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                            >
-                                Abrir no admin
-                            </Link>
-                        ) : null
-                    }
+                    actions={null}
                 />
 
                 {erro ? (
@@ -124,7 +111,7 @@ export default function PagamentosPage() {
                             Abrir recursos (Pagamentos)
                         </Link>
                         <Link
-                            href="/recursos/pagamentos/pagamento/novo"
+                            href="/recursos/payments/payment/novo"
                             className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                         >
                             Novo pagamento
@@ -135,3 +122,4 @@ export default function PagamentosPage() {
         </AppLayout>
     )
 }
+

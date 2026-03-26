@@ -96,8 +96,6 @@ VIEWSET_MAP = {
     "receipt": ReceiptViewSet,
     "reconciliation": ReconciliationViewSet,
     "transaction": TransactionViewSet,
-    "recibo": ReceiptViewSet,
-    "reconciliacao": ReconciliationViewSet,
 }
 
 __all__ = [

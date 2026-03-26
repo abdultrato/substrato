@@ -32,8 +32,8 @@ export default function ContabilidadePage() {
 
         const [fats, recs, lancs] = await Promise.all([
           apiFetch<any>("/faturas/"),
-          apiFetch<any>("/pagamentos/recibo/"),
-          apiFetch<any>("/contabilidade/lancamento/"),
+          apiFetch<any>("/payments/receipt/"),
+          apiFetch<any>("/accounting/entry/"),
         ])
 
         if (!mounted) return
@@ -156,3 +156,4 @@ export default function ContabilidadePage() {
     </AppLayout>
   )
 }
+
