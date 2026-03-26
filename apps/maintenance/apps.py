@@ -5,4 +5,4 @@ class MaintenanceConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.maintenance"
     label = "manutencoes"
-    verbose_name = "Maintenance"
+    verbose_name = "Manutenções"

@@ -7,6 +7,7 @@ from core.mixins.model.name import NameMixin
 from core.mixins.soft_delete import SoftDeleteMixin
 from core.mixins.versioning import VersioningMixin
 from core.models.base import BaseModel
+from core.models.managers import AllObjectsManager, ManagerAtivo
 
 
 class Tenant(
@@ -17,6 +18,9 @@ class Tenant(
     SoftDeleteMixin,
     BaseModel,
 ):
+    objects = ManagerAtivo()
+    all_objects = AllObjectsManager()
+
     prefix = "TN"
 
     class CommercialStatus(models.TextChoices):

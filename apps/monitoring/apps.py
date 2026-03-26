@@ -5,4 +5,4 @@ class MonitoringConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.monitoring"
     label = "monitoramento"
-    verbose_name = "Monitoring"
+    verbose_name = "Monitoramento e Indicadores"

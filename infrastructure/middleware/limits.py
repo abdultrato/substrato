@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import JsonResponse
 
 from services.tenants.tenant_usage_service import TenantUsageService
@@ -17,6 +18,10 @@ class TenantLimitMiddleware:
 
         # Sem tenant → segue fluxo
         if not tenant:
+            return self.get_response(request)
+
+        # Em DEBUG não aplicamos contagem/limite para acelerar o ambiente local.
+        if settings.DEBUG:
             return self.get_response(request)
 
         # Trial ignora limite

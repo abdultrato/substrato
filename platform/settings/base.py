@@ -244,6 +244,8 @@ JAZZMIN_SETTINGS = {
         "notificacoes.notificacao": "fas fa-paper-plane",
         "notificacoes.templatenotificacao": "fas fa-file-alt",
         "notificacoes.logenvio": "fas fa-clipboard-check",
+        "ocorrencias": "fas fa-exclamation-triangle",
+        "ocorrencias.incident": "fas fa-exclamation-triangle",
         "auditoria_atividades": "fas fa-clipboard-list",
         "audit_activities.atividadeusuario": "fas fa-user-clock",
         "cirurgia": "fas fa-procedures",

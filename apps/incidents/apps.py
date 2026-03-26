@@ -5,4 +5,4 @@ class IncidentsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.incidents"
     label = "ocorrencias"
-    verbose_name = "Incidents"
+    verbose_name = "Incidentes"

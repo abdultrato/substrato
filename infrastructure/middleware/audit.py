@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from apps.audit_activities.models.user_activity import UserActivity
 from observability.audit import register_event
 
@@ -49,6 +51,10 @@ class TenantAuditMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+
+        # Em ambiente de desenvolvimento, não registrar auditoria para reduzir overhead.
+        if settings.DEBUG:
+            return response
 
         tenant = getattr(request, "tenant", None)
 

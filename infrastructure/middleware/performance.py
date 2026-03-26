@@ -1,6 +1,7 @@
 import logging
 import time
 
+from django.conf import settings
 from observability.metrics import log_slow_request
 
 logger = logging.getLogger("api")
@@ -17,6 +18,10 @@ class APILoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+
+        # Em DEBUG, evita logging estruturado para reduzir latência durante dev.
+        if settings.DEBUG:
+            return self.get_response(request)
 
         start = time.perf_counter()
         status_code = 500

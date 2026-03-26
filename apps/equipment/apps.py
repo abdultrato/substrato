@@ -5,4 +5,4 @@ class EquipmentConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.equipment"
     label = "equipamentos"
-    verbose_name = "Equipment"
+    verbose_name = "Equipamentos da Infraestrutura"

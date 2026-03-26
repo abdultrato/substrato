@@ -5,4 +5,4 @@ class BillingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.billing"
     label = "faturamento"
-    verbose_name = "Billing"
+    verbose_name = "Faturamento"
