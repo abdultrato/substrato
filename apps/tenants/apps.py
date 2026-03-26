@@ -5,4 +5,4 @@ class TenantsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.tenants"
     label = "inquilinos"
-    verbose_name = "Inquilinos e Locações"
+    verbose_name = "Inquilinos e Locações de Hospitais"

@@ -5,4 +5,4 @@ class InsurerConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.insurer"
     label = "seguradora"
-    verbose_name = "Seguradora"
+    verbose_name = "Seguradoras de Saúde e Planos de Saúde"
