@@ -120,6 +120,12 @@ LOGGING = {
             "level": LOG_LEVEL,
             "propagate": False,
         },
+        # Eventos de domínio (silenciar logs de registro no startup)
+        "eventos": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
     "root": {
         "handlers": ["console"],

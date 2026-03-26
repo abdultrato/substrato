@@ -44,7 +44,8 @@ class EventBus:
 
         self._subscribers[event_type].append(handler)
 
-        logger.info(f"Handler {handler.__name__} registrado para {event_type.__name__}")
+        # Registro de handlers é útil só em DEBUG para evitar ruído no startup.
+        logger.debug(f"Handler {handler.__name__} registrado para {event_type.__name__}")
 
     # =====================================================
     # PUBLICAÇÃO IMEDIATA
