@@ -28,6 +28,8 @@ class LegacyEntry(CoreModel):
 
     class Meta:
         db_table = "contabilidade_lancamento"
+        verbose_name = "Lançamento legado"
+        verbose_name_plural = "Lançamentos legados"
         ordering = ["-date", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "date"]),

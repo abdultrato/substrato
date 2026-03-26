@@ -25,18 +25,16 @@ class ClinicalEvent(TenantPropagationMixin, CoreModel):
     prefix = "EVT"
 
     patient = models.ForeignKey(
-
         Patient,
-
+        verbose_name="Paciente",
         db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="eventos_clinicos",
     )
 
     request = models.ForeignKey(
-
         LabRequest,
-
+        verbose_name="Requisição",
         db_column="request_id",
         on_delete=models.CASCADE,
         null=True,
@@ -45,9 +43,8 @@ class ClinicalEvent(TenantPropagationMixin, CoreModel):
     )
 
     result = models.ForeignKey(
-
         ResultItem,
-
+        verbose_name="Resultado",
         db_column="result_id",
         on_delete=models.CASCADE,
         null=True,
@@ -56,22 +53,22 @@ class ClinicalEvent(TenantPropagationMixin, CoreModel):
     )
 
     event_type = models.CharField(
-
         db_column="event_type",
-
+        verbose_name="Tipo de evento",
         max_length=50,
         choices=ClinicalEventType.choices,
         db_index=True,
     )
 
     description = models.TextField(
-
         db_column="description",
-
+        verbose_name="Descrição",
         )
 
     class Meta:
         db_table = "clinico_eventoclinico"
+        verbose_name = "Evento clínico"
+        verbose_name_plural = "Eventos clínicos"
         ordering = ["-created_at"]
 
         indexes = [

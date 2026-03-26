@@ -25,9 +25,8 @@ class InventoryMovement(CoreModel):
     prefix = "MVESQ"
 
     lot = models.ForeignKey(
-
         "farmacia.Lot",
-
+        verbose_name="Lote",
         db_column="lot_id",
         on_delete=models.PROTECT,
         related_name="movimentos",
@@ -35,15 +34,15 @@ class InventoryMovement(CoreModel):
     )
 
     type = models.CharField(
-
         db_column="type",
-
+        verbose_name="Tipo",
         max_length=3,
         choices=MovementType.choices,
         db_index=True,
     )
     origin = models.CharField(
         db_column="origin",
+        verbose_name="Origem",
         max_length=4,
         choices=MovementOrigin.choices,
         default=MovementOrigin.AJUSTE,
@@ -51,9 +50,8 @@ class InventoryMovement(CoreModel):
     )
 
     sale_item = models.ForeignKey(
-
         "farmacia.SaleItem",
-
+        verbose_name="Item de venda",
         db_column="sale_item_id",
         on_delete=models.SET_NULL,
         null=True,
@@ -63,13 +61,14 @@ class InventoryMovement(CoreModel):
     )
 
     quantity = models.PositiveIntegerField(
-
         db_column="quantity",
-
+        verbose_name="Quantidade",
         validators=[MinValueValidator(1)])
 
     class Meta:
         db_table = "farmacia_movimentoestoque"
+        verbose_name = "Movimento de estoque"
+        verbose_name_plural = "Movimentos de estoque"
         ordering = ["-created_at"]
 
         indexes = [

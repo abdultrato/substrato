@@ -12,9 +12,8 @@ class Lot(CoreModel):
     prefix = "LOTE"
 
     product = models.ForeignKey(
-
         "farmacia.Product",
-
+        verbose_name="Produto",
         db_column="product_id",
         on_delete=models.PROTECT,
         related_name="lotes",
@@ -22,30 +21,29 @@ class Lot(CoreModel):
     )
 
     lot_number = models.CharField(
-
         db_column="lot_number",
-
+        verbose_name="Número do lote",
         max_length=100,
         db_index=True,
     )
 
     expiration_date = models.DateField(
-
         db_column="expiration_date",
-
+        verbose_name="Validade",
         db_index=True,
     )
 
     initial_quantity = models.PositiveIntegerField(
-
         db_column="initial_quantity",
-
+        verbose_name="Quantidade inicial",
         validators=[MinValueValidator(1)],
         help_text="Quantidade inicial do lot.",
     )
 
     class Meta:
         db_table = "farmacia_lote"
+        verbose_name = "Lote"
+        verbose_name_plural = "Lotes"
         ordering = ["expiration_date"]
 
         constraints = [

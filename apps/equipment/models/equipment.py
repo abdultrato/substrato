@@ -63,12 +63,12 @@ class Equipment(CoreModel):
     )
 
     manufacturer = models.CharField(
-
         db_column="manufacturer",
-
+        verbose_name="Fabricante",
         max_length=120, blank=True, default="")
     model = models.CharField(
         db_column="model",
+        verbose_name="Modelo",
         max_length=120, blank=True, default="")
 
     location = models.CharField("Localização",
@@ -81,9 +81,8 @@ class Equipment(CoreModel):
          max_length=120, blank=True, default="")
 
     active = models.BooleanField(
-
         db_column="active",
-
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:

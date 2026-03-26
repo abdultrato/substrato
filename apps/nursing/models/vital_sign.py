@@ -14,9 +14,8 @@ class NursingVitalSign(TenantPropagationMixin, CoreModel):
     prefix = "SVI"
 
     record = models.ForeignKey(
-
         "enfermagem.NursingRecord",
-
+        verbose_name="Registro",
         db_column="record_id",
         on_delete=models.CASCADE,
         related_name="signals_vitais",
@@ -31,6 +30,7 @@ class NursingVitalSign(TenantPropagationMixin, CoreModel):
     )
     blood_pressure = models.CharField(
         db_column="blood_pressure",
+        verbose_name="Pressão arterial",
         max_length=20, blank=True, default="")
 
     heart_rate = models.PositiveIntegerField(
@@ -52,9 +52,8 @@ class NursingVitalSign(TenantPropagationMixin, CoreModel):
         null=True, blank=True, verbose_name="Saturação de O₂ (%)")
 
     collected_at = models.DateTimeField(
-
         db_column="collected_at",
-
+        verbose_name="Coletado em",
         default=timezone.now, db_index=True)
 
     class Meta:

@@ -16,15 +16,15 @@ class LedgerLine(CoreModel):
 
     entry = models.ForeignKey(
         "contabilidade.LedgerEntry",
+        verbose_name="Lançamento",
         on_delete=models.PROTECT,
         related_name="linhas",
         db_index=True,
     )
 
     account = models.ForeignKey(
-
         "contabilidade.Account",
-
+        verbose_name="Conta",
         db_column="account_id",
         on_delete=models.PROTECT,
         db_index=True,
@@ -35,17 +35,15 @@ class LedgerLine(CoreModel):
     # ===============================
 
     value = models.DecimalField(
-
         db_column="value",
-
+        verbose_name="Valor",
         max_digits=18,
         decimal_places=2,
     )
 
     nature = models.CharField(
-
         db_column="nature",
-
+        verbose_name="Natureza",
         max_length=1,
         choices=[
             ("D", "Débito"),
@@ -55,6 +53,7 @@ class LedgerLine(CoreModel):
 
     created_at = models.DateTimeField(
         db_column="created_at",
+        verbose_name="Criado em",
         auto_now_add=True,
         db_index=True,
     )
@@ -65,6 +64,8 @@ class LedgerLine(CoreModel):
 
     class Meta:
         db_table = "contabilidade_ledgerline"
+        verbose_name = "Linha contábil"
+        verbose_name_plural = "Linhas contábeis"
         indexes = [
             models.Index(fields=["entry"]),
             models.Index(fields=["tenant", "account", "created_at"]),

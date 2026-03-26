@@ -16,18 +16,16 @@ class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     prefix = "PLC"
 
     insurer = models.ForeignKey(
-
         "seguradora.Insurer",
-
+        verbose_name="Seguradora",
         db_column="insurer_id",
         on_delete=models.PROTECT,
         related_name="planos",
     )
 
     coverage_percentage = models.DecimalField(
-
         db_column="coverage_percentage",
-
+        verbose_name="Percentual de cobertura",
         max_digits=5,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -39,14 +37,14 @@ class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     )
 
     requires_authorization = models.BooleanField(
-
         db_column="requires_authorization",
-
+        verbose_name="Requer autorização",
         default=False, db_index=True)
 
     # Compatibilidade com filtros/viewsets gerados
     active = models.BooleanField(
         db_column="active",
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:

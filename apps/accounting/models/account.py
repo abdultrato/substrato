@@ -28,6 +28,8 @@ class Account(
 
     class Meta:
         db_table = "contabilidade_conta"
+        verbose_name = "Conta contábil"
+        verbose_name_plural = "Contas contábeis"
         indexes = [
             models.Index(
                 fields=[

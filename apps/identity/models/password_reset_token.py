@@ -6,16 +6,23 @@ from django.db import models
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(
         "identidade.User",
+        verbose_name="Usuário",
         on_delete=models.CASCADE,
         related_name="password_reset_tokens",
         db_index=True,
     )
 
-    token = models.CharField(max_length=128, unique=True, db_index=True, blank=True)
+    token = models.CharField("Token", max_length=128, unique=True, db_index=True, blank=True)
     used = models.BooleanField(
         db_column="used",
+        verbose_name="Utilizado",
         default=False, db_index=True)
-    created_at = models.DateTimeField(db_column="created_at", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField(
+        db_column="created_at",
+        verbose_name="Criado em",
+        auto_now_add=True,
+        db_index=True,
+    )
 
     class Meta:
         ordering = ["-created_at"]

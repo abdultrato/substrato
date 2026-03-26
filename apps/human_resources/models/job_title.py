@@ -13,14 +13,14 @@ class JobTitle(CoreModel):
     prefix = "CRG"
 
     description = models.TextField(
-
         db_column="description",
-
+        verbose_name="Descrição",
         blank=True, default="")
 
     # Usado para filtrar médicos no agendamento de consultations.
     is_doctor = models.BooleanField(
         db_column="is_doctor",
+        verbose_name="É médico",
         default=False, db_index=True)
 
     class Meta:

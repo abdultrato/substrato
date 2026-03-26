@@ -69,6 +69,8 @@ class LegacyMovement(CoreModel):
 
     class Meta:
         db_table = "contabilidade_movimento"
+        verbose_name = "Movimento legado"
+        verbose_name_plural = "Movimentos legados"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["tenant", "entry"]),

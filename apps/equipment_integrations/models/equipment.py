@@ -30,9 +30,8 @@ class IntegrationEquipment(CoreModel):
         FILE_DROP = "FILE_DROP", "File drop (pasta)"
 
     modality = models.CharField(
-
         db_column="modality",
-
+        verbose_name="Modalidade",
         max_length=20,
         choices=Modalidade.choices,
         default=Modalidade.OUTRO,
@@ -40,6 +39,7 @@ class IntegrationEquipment(CoreModel):
     )
     protocol = models.CharField(
         db_column="protocol",
+        verbose_name="Protocolo",
         max_length=20,
         choices=Protocolo.choices,
         default=Protocolo.HTTP_JSON,
@@ -47,25 +47,25 @@ class IntegrationEquipment(CoreModel):
     )
 
     manufacturer = models.CharField(
-
         db_column="manufacturer",
-
+        verbose_name="Fabricante",
         max_length=120, blank=True, default="")
     model = models.CharField(
         db_column="model",
+        verbose_name="Modelo",
         max_length=120, blank=True, default="")
     serial_number = models.CharField(
         db_column="serial_number",
+        verbose_name="Número de série",
         max_length=120, blank=True, default="", db_index=True)
 
     active = models.BooleanField(
-
         db_column="active",
-
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     # Configuração flexível (host/port, parâmetros de parsing, etc).
-    config = models.JSONField(default=dict, blank=True)
+    config = models.JSONField(verbose_name="Configuração", default=dict, blank=True)
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaoequipamento"

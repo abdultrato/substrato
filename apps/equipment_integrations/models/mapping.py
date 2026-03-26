@@ -13,9 +13,8 @@ class IntegrationAnalyteMapping(CoreModel):
     prefix = "MAP"
 
     equipment = models.ForeignKey(
-
         "integracoes_equipamentos.IntegrationEquipment",
-
+        verbose_name="Equipamento",
         db_column="equipment_id",
         on_delete=models.CASCADE,
         related_name="mapeamentos_analitos",
@@ -23,15 +22,13 @@ class IntegrationAnalyteMapping(CoreModel):
     )
 
     code = models.CharField(
-
         db_column="code",
-
+        verbose_name="Código",
         max_length=80, db_index=True)
 
     exam_field = models.ForeignKey(
-
         "clinical.LabExamField",
-
+        verbose_name="Campo de exame",
         db_column="exam_field_id",
         on_delete=models.PROTECT,
         related_name="mapeamentos_integracao",
@@ -39,15 +36,13 @@ class IntegrationAnalyteMapping(CoreModel):
     )
 
     unit_override = models.CharField(
-
         db_column="unit_override",
-
+        verbose_name="Unidade (override)",
         max_length=30, blank=True, default="")
 
     active = models.BooleanField(
-
         db_column="active",
-
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:

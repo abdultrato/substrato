@@ -19,16 +19,14 @@ class ProductCategory(CoreModel):
     )
 
     description = models.TextField(
-
         db_column="description",
-
+        verbose_name="Descrição",
         blank=True,
     )
 
     parent_category = models.ForeignKey(
-
         "self",
-
+        verbose_name="Categoria pai",
         db_column="parent_category_id",
         null=True,
         blank=True,
@@ -39,6 +37,8 @@ class ProductCategory(CoreModel):
 
     class Meta:
         db_table = "farmacia_categoriaproduto"
+        verbose_name = "Categoria de Produto"
+        verbose_name_plural = "Categorias de Produto"
         ordering = ["name"]
 
         indexes = [

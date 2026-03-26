@@ -13,9 +13,8 @@ class NursingEvolution(TenantPropagationMixin, CoreModel):
     prefix = "EVO"
 
     patient = models.ForeignKey(
-
         "clinical.Patient",
-
+        verbose_name="Paciente",
         db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="evolucoes_enfermagem",

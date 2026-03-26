@@ -19,21 +19,20 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
         NEGADA = "NEGADA", "Negada"
 
     request_id = models.CharField(
-
         db_column="request_id",
-
+        verbose_name="ID da requisição",
         max_length=60, db_index=True)
 
     plan = models.ForeignKey(
-
         "seguradora.CoveragePlan",
-
+        verbose_name="Plano",
         db_column="plan_id",
         on_delete=models.PROTECT,
         related_name="autorizacoes",
     )
 
     status = models.CharField(
+        verbose_name="Status",
         max_length=20,
         choices=Status.choices,
         default=Status.PENDENTE,
@@ -41,9 +40,8 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
     )
 
     authorization_code = models.CharField(
-
         db_column="authorization_code",
-
+        verbose_name="Código de autorização",
         max_length=80,
         blank=True,
         null=True,
@@ -51,15 +49,22 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
     )
 
     response_date = models.DateTimeField(
-
         db_column="response_date",
-
+        verbose_name="Data da resposta",
         blank=True, null=True)
 
     # Compatibilidade com filtros/viewsets gerados
-    name = models.CharField(db_column="name", max_length=120, blank=True, null=True, db_index=True)
+    name = models.CharField(
+        "Nome",
+        db_column="name",
+        max_length=120,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
     active = models.BooleanField(
         db_column="active",
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:

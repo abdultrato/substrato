@@ -30,9 +30,8 @@ class SubscriptionPlan(
         BASIC = "BASIC", "Basic"
         PRO = "PRO", "Pro"
     type = models.CharField(
-
         db_column="type",
-
+        verbose_name="Tipo",
         max_length=10,
         choices=PlanType.choices,
         default=PlanType.FREE,
@@ -40,18 +39,17 @@ class SubscriptionPlan(
     )
 
     user_limit = models.PositiveIntegerField(
-
         db_column="user_limit",
-
+        verbose_name="Limite de usuários",
         default=1)
     monthly_request_limit = models.PositiveIntegerField(
         db_column="monthly_request_limit",
+        verbose_name="Limite de requisições mensais",
         default=0)
 
     monthly_price = models.DecimalField(
-
         db_column="monthly_price",
-
+        verbose_name="Preço mensal",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -59,6 +57,7 @@ class SubscriptionPlan(
     )
     request_overage_price = models.DecimalField(
         db_column="request_overage_price",
+        verbose_name="Preço por excesso",
         max_digits=18,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -66,18 +65,17 @@ class SubscriptionPlan(
     )
 
     priority_support = models.BooleanField(
-
         db_column="priority_support",
-
+        verbose_name="Suporte prioritário",
         default=False)
     allows_multi_unit = models.BooleanField(
         db_column="allows_multi_unit",
+        verbose_name="Permite multiunidade",
         default=False)
 
     active = models.BooleanField(
-
         db_column="active",
-
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:

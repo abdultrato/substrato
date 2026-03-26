@@ -132,6 +132,8 @@ class Payment(CoreModel):
 
     class Meta:
         db_table = "pagamentos_pagamento"
+        verbose_name = "Pagamento"
+        verbose_name_plural = "Pagamentos"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["invoice"]),

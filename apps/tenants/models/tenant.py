@@ -25,21 +25,21 @@ class Tenant(
         SUSPENDED = "SUSPENSO", "Suspenso"
 
     identifier = models.SlugField(
-
         db_column="identifier",
-
+        verbose_name="Identificador",
         max_length=80, unique=True, db_index=True)
     domain = models.CharField(
         db_column="domain",
+        verbose_name="Domínio",
         max_length=255, blank=True, null=True, db_index=True)
     active = models.BooleanField(
         db_column="active",
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     commercial_status = models.CharField(
-
         db_column="commercial_status",
-
+        verbose_name="Status comercial",
         max_length=10,
         choices=CommercialStatus.choices,
         default=CommercialStatus.TRIAL,
@@ -47,9 +47,11 @@ class Tenant(
     )
     trial_until = models.DateField(
         db_column="trial_until",
+        verbose_name="Trial até",
         blank=True, null=True)
     blocked_at = models.DateTimeField(
         db_column="blocked_at",
+        verbose_name="Bloqueado em",
         blank=True, null=True)
 
     class Meta:

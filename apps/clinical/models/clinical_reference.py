@@ -26,18 +26,16 @@ class ClinicalReference(CoreModel):
     prefix = "REF"
 
     exam_field = models.ForeignKey(
-
         LabExamField,
-
+        verbose_name="Campo de exame",
         db_column="exam_field_id",
         on_delete=models.CASCADE,
         related_name="referencias",
     )
 
     sex = models.CharField(
-
         db_column="sex",
-
+        verbose_name="Sexo",
         max_length=10,
         choices=Gender.choices,
         null=True,
@@ -46,27 +44,24 @@ class ClinicalReference(CoreModel):
     )
 
     minimum_age_days = models.PositiveIntegerField(
-
         db_column="minimum_age_days",
-
+        verbose_name="Idade mínima (dias)",
         null=True,
         blank=True,
         help_text="Idade mínima em dias.",
     )
 
     maximum_age_days = models.PositiveIntegerField(
-
         db_column="maximum_age_days",
-
+        verbose_name="Idade máxima (dias)",
         null=True,
         blank=True,
         help_text="Idade máxima em dias.",
     )
 
     minimum_value = models.DecimalField(
-
         db_column="minimum_value",
-
+        verbose_name="Valor mínimo",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -74,9 +69,8 @@ class ClinicalReference(CoreModel):
     )
 
     maximum_value = models.DecimalField(
-
         db_column="maximum_value",
-
+        verbose_name="Valor máximo",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -84,9 +78,8 @@ class ClinicalReference(CoreModel):
     )
 
     critical_low = models.DecimalField(
-
         db_column="critical_low",
-
+        verbose_name="Limite crítico baixo",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -94,9 +87,8 @@ class ClinicalReference(CoreModel):
     )
 
     critical_high = models.DecimalField(
-
         db_column="critical_high",
-
+        verbose_name="Limite crítico alto",
         max_digits=10,
         decimal_places=2,
         null=True,
@@ -105,6 +97,8 @@ class ClinicalReference(CoreModel):
 
     class Meta:
         db_table = "clinico_referenciaclinica"
+        verbose_name = "Referência clínica"
+        verbose_name_plural = "Referências clínicas"
         ordering = [
             "exam_field",
             "sex",

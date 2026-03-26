@@ -13,9 +13,8 @@ class SaleItem(CoreModel):
     prefix = "IVEND"
 
     sale = models.ForeignKey(
-
         "farmacia.Sale",
-
+        verbose_name="Venda",
         db_column="sale_id",
         on_delete=models.CASCADE,
         related_name="itens",
@@ -23,24 +22,21 @@ class SaleItem(CoreModel):
     )
 
     product = models.ForeignKey(
-
         "farmacia.Product",
-
+        verbose_name="Produto",
         db_column="product_id",
         on_delete=models.PROTECT,
         db_index=True,
     )
 
     quantity = models.PositiveIntegerField(
-
         db_column="quantity",
-
+        verbose_name="Quantidade",
         validators=[MinValueValidator(1)])
 
     unit_price = models.DecimalField(
-
         db_column="unit_price",
-
+        verbose_name="Preço unitário",
         max_digits=14,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],

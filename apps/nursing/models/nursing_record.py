@@ -18,18 +18,16 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
         BAIXA = "BAI", "Baixa"
 
     patient = models.ForeignKey(
-
         "clinical.Patient",
-
+        verbose_name="Paciente",
         db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="registros_enfermagem",
     )
 
     priority = models.CharField(
-
         db_column="priority",
-
+        verbose_name="Prioridade",
         max_length=3,
         choices=Prioridade.choices,
         default=Prioridade.NORMAL,
@@ -37,9 +35,8 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
     )
 
     observation = models.TextField(
-
         db_column="observation",
-
+        verbose_name="Observação",
         blank=True, default="")
 
     record_date = models.DateTimeField(

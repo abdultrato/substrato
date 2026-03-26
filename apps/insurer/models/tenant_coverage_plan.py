@@ -19,18 +19,16 @@ class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     prefix = "TPL"
 
     global_plan = models.ForeignKey(
-
         "seguradora.CoveragePlan",
-
+        verbose_name="Plano global",
         db_column="global_plan_id",
         on_delete=models.CASCADE,
         related_name="overrides_por_tenant",
     )
 
     override_percentage = models.DecimalField(
-
         db_column="override_percentage",
-
+        verbose_name="Percentual sobrescrito",
         max_digits=5,
         decimal_places=2,
         blank=True,
@@ -45,6 +43,7 @@ class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     # Compatibilidade com servicos/filters gerados
     active = models.BooleanField(
         db_column="active",
+        verbose_name="Ativo",
         default=True, db_index=True)
 
     class Meta:
