@@ -30,7 +30,7 @@ class BaseModelViewSet(mvs):
 
     def update(self, request, *args, **kwargs):
         response = super().update(request, *args, **kwargs)
-        return success(response.data, "Atualizado com sucesso")
+        return success(response.data, "atualizado com sucesso")
 
     def destroy(self, request, *args, **kwargs):
         super().destroy(request, *args, **kwargs)

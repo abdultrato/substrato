@@ -55,7 +55,7 @@ class IntegrationKeyPermission(BasePermission):
         cred = IntegrationCredential.validate_key(raw_key)
         if cred is None or not cred.active or cred.revoked_at:
             return False
-        request.integration_cred = cred
+        request.integration_cred= cred
         return True
 
 
