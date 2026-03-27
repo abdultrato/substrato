@@ -678,17 +678,8 @@ class LabRequestAdmin(CoreAdmin):
         return tuple(ro)
 
     def get_inline_instances(self, request, obj=None):
-        # Requisição por sector: mostrar os itens relevantes no change form.
-        inline_classes = []
-        if obj is None:
-            # No add form mostramos ambos para permitir escolher o type antes de salvar.
-            inline_classes = [RequestLabItemInline, RequestMedicalItemInline]
-        else:
-            if obj.type == LabRequest.Type.MEDICAL_EXAM:
-                inline_classes = [RequestMedicalItemInline]
-            else:
-                inline_classes = [RequestLabItemInline]
-
+        # Sempre permitir adicionar itens laboratoriais e médicos na mesma requisição.
+        inline_classes = [RequestLabItemInline, RequestMedicalItemInline]
         return [inline_class(self.model, self.admin_site) for inline_class in inline_classes]
 
     # -----------------------------------------------------

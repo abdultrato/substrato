@@ -467,6 +467,7 @@ MIDDLEWARE = [
     "infrastructure.middleware.limits.TenantLimitMiddleware",
     # auditoria
     "infrastructure.middleware.audit.TenantAuditMiddleware",
+    "infrastructure.middleware.user_activity.UserActivityMiddleware",
     # logging
     "infrastructure.middleware.performance.APILoggingMiddleware",
     *(["django_prometheus.middleware.PrometheusAfterMiddleware"] if _module_available("django_prometheus") else []),

@@ -18,6 +18,7 @@ class InvoiceItem(NoNameCoreModel):
         ITEM_VENDA = "FAR", "Item de farmácia"
         PROCEDIMENTO_ITEM = "PRC", "Serviço de enfermagem"
         PROCEDIMENTO_MATERIAL = "MAT", "Material de enfermagem"
+        CONSULTATION = "CON", "Consulta médica"
         AJUSTE = "AJU", "Ajuste manual"
 
     TipoItem = ItemType
@@ -27,13 +28,13 @@ class InvoiceItem(NoNameCoreModel):
         "faturamento.Invoice",
 
         db_column="invoice_id",
-        verbose_name="Fatura",
+        verbose_name="Fatura relacionada",
         on_delete=models.CASCADE,
         related_name="items",
     )
     item_type = models.CharField(
         db_column="item_type",
-        verbose_name="Tipo de item",
+        verbose_name="Tipo de item de fatura",
         max_length=3,
         choices=ItemType.choices,
         default=ItemType.EXAME,
@@ -45,7 +46,7 @@ class InvoiceItem(NoNameCoreModel):
         "clinical.LabExam",
 
         db_column="exam_id",
-        verbose_name="Exame",
+        verbose_name="Exame laboratorial",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -58,18 +59,35 @@ class InvoiceItem(NoNameCoreModel):
         null=True,
         blank=True,
     )
-    sale_item = models.ForeignKey(
-        "farmacia.SaleItem",
-        db_column="sale_item_id",
-        verbose_name="Item de sale",
+    consultation = models.ForeignKey(
+        "consultas.MedicalConsultation",
+        db_column="consultation_id",
+        verbose_name="Consulta médica",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
     )
+    sale_item = models.ForeignKey(
+        "farmacia.SaleItem",
+        db_column="sale_item_id",
+        verbose_name="Item de venda",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    product = models.ForeignKey(
+        "farmacia.Product",
+        db_column="product_id",
+        verbose_name="Produto",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="Produto vendido (quando não há referência direta ao item da venda).",
+    )
     procedure_item = models.ForeignKey(
         "enfermagem.ProcedureItem",
         db_column="procedure_item_id",
-        verbose_name="Item de procedure",
+        verbose_name="Procedimento de enfermagem",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -77,7 +95,7 @@ class InvoiceItem(NoNameCoreModel):
     procedure_material = models.ForeignKey(
         "enfermagem.ProcedureMaterial",
         db_column="procedure_material_id",
-        verbose_name="Material de procedure",
+        verbose_name="Material de procedimento de enfermagem",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -94,6 +112,7 @@ class InvoiceItem(NoNameCoreModel):
         max_digits=10,
         decimal_places=2,
         default=Decimal("1.00"),
+        help_text="Informe a quantidade do itens. Para itens de venda, a quantidade será preenchida automaticamente a partir do item de venda selecionado.",
     )
     unit_price = models.DecimalField(
         db_column="unit_price",
@@ -101,6 +120,7 @@ class InvoiceItem(NoNameCoreModel):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
+        help_text="Informe o preço unitário do item. Para exames, o preço será preenchido automaticamente a partir do cadastro do exame, podendo ser ajustado para casos específicos.",
     )
 
     applies_vat = models.BooleanField(
@@ -145,9 +165,19 @@ class InvoiceItem(NoNameCoreModel):
                 name="unique_medical_exam_por_invoice",
             ),
             models.UniqueConstraint(
+                fields=["invoice", "consultation"],
+                condition=Q(consultation__isnull=False, deleted=False),
+                name="unique_consulta_por_invoice",
+            ),
+            models.UniqueConstraint(
                 fields=["invoice", "sale_item"],
                 condition=Q(sale_item__isnull=False, deleted=False),
                 name="unique_sale_item_por_invoice",
+            ),
+            models.UniqueConstraint(
+                fields=["invoice", "product"],
+                condition=Q(product__isnull=False, deleted=False, sale_item__isnull=True),
+                name="unique_product_pharmacy_por_invoice",
             ),
             models.UniqueConstraint(
                 fields=["invoice", "procedure_item"],
@@ -380,13 +410,14 @@ class InvoiceItem(NoNameCoreModel):
             "exam": bool(self.exam_id),
             "medical_exam": bool(self.medical_exam_id),
             "sale_item": bool(self.sale_item_id),
+            "product": bool(getattr(self, "product_id", None)),
             "procedure_item": bool(self.procedure_item_id),
             "procedure_material": bool(self.procedure_material_id),
         }
         type_para_campo = {
             self.TipoItem.EXAME: "exam",
             self.TipoItem.EXAME_MEDICO: "medical_exam",
-            self.TipoItem.ITEM_VENDA: "sale_item",
+            self.TipoItem.ITEM_VENDA: "product",
             self.TipoItem.PROCEDIMENTO_ITEM: "procedure_item",
             self.TipoItem.PROCEDIMENTO_MATERIAL: "procedure_material",
             self.TipoItem.AJUSTE: None,
@@ -411,9 +442,7 @@ class InvoiceItem(NoNameCoreModel):
                 if campo != campo_esperado and informado:
                     raise ValidationError({campo: "Remova esta referência, ela não corresponde ao type."})
 
-        origin_esperada = self._origin_esperada()
-        if origin_esperada and self.invoice.origin != origin_esperada:
-            raise ValidationError("Tipo de item incompatível com a origin selecionada na invoice.")
+        # Sem restrição de origem: permite combinar múltiplos tipos na mesma invoice.
 
         if self.tenant_id and self.invoice_id and self.tenant_id != self.invoice.tenant_id:
             raise ValidationError("Item e invoice devem pertencer ao mesmo tenant.")

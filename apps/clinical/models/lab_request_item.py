@@ -58,19 +58,15 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
         if bool(self.exam) == bool(self.medical_exam):
             raise ValidationError("Informe um exam (laboratorial OU médico) por item.")
 
-        # garante compatibilidade com o type/sector da requisição
-        if self.request_id:
-            request_type = getattr(self.request, "type", None)
-            if request_type == self.request.Type.LABORATORY and self.medical_exam_id:
-                raise ValidationError("Esta requisição é laboratorial e não aceita exams médicos.")
-            if request_type == self.request.Type.MEDICAL_EXAM and self.exam_id:
-                raise ValidationError("Esta requisição é de exams médicos e não aceita exams laboratoriais.")
+        # Se a requisição ainda não foi salva, não há validações dependentes dela.
+        if not self.request_id:
+            return
 
-            # defesa: evita cross-tenant por ID
-            if self.exam_id and self.exam.tenant_id != self.request.tenant_id:
-                raise ValidationError("Exame não pertence ao mesmo tenant da requisição.")
-            if self.medical_exam_id and self.medical_exam.tenant_id != self.request.tenant_id:
-                raise ValidationError("Exame médico não pertence ao mesmo tenant da requisição.")
+        # defesa: evita cross-tenant por ID
+        if self.exam_id and self.exam.tenant_id != self.request.tenant_id:
+            raise ValidationError("Exame não pertence ao mesmo tenant da requisição.")
+        if self.medical_exam_id and self.medical_exam.tenant_id != self.request.tenant_id:
+            raise ValidationError("Exame médico não pertence ao mesmo tenant da requisição.")
 
         # evita duplicidade manualmente (já que removemos unique_together)
         qs = self.__class__.all_objects.filter(request=self.request)

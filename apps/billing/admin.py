@@ -71,6 +71,174 @@ class InvoiceItemInline(admin.TabularInline):
 
     total_linha.short_description = "Total (com IVA)"
 
+# =====================================================
+# FATURA ITEM INLINE POR TIPO
+# =====================================================
+
+
+class BaseTypedInvoiceItemInline(admin.TabularInline):
+    """
+    Inline especializado por tipo de item.
+    Subclasses devem definir:
+      - item_type_fixed (InvoiceItem.ItemType)
+      - fields relevantes para o tipo
+    """
+
+    model = InvoiceItem
+    extra = 1
+    readonly_fields = ("description", "unit_price", "vat_percentage", "iva_linha", "total_linha")
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        fixed_type = self.item_type_fixed
+
+        # Dynamically set the fixed item_type on each form instance before validation.
+        base_form = formset.form
+
+        class FixedTypeForm(base_form):
+            def __init__(self, *args, **kw):
+                super().__init__(*args, **kw)
+                self.instance.item_type = fixed_type
+
+        formset.form = FixedTypeForm
+        return formset
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(item_type=self.item_type_fixed)
+
+    def save_new(self, form, commit=True):
+        obj = super().save_new(form, commit=False)
+        obj.item_type = self.item_type_fixed
+        if commit:
+            obj.save()
+            form.save_m2m()
+        return obj
+
+    # Helpers iguais aos do inline original
+    def iva_linha(self, obj):
+        if not obj.pk:
+            return "-"
+        try:
+            return f"{obj.vat_amount:.2f}"
+        except Exception:
+            return "-"
+
+    iva_linha.short_description = "IVA"
+
+    def total_linha(self, obj):
+        if not obj.pk:
+            return "-"
+        try:
+            return f"{obj.total_com_iva:.2f}"
+        except Exception:
+            return f"{obj.total:.2f}"
+
+    total_linha.short_description = "Total (com IVA)"
+
+
+class InvoiceLabItemInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.EXAME
+    verbose_name = "Exame laboratorial"
+    verbose_name_plural = "Exames laboratoriais"
+    autocomplete_fields = ("exam",)
+    fields = (
+        "exam",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
+
+class InvoiceMedicalExamItemInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.EXAME_MEDICO
+    verbose_name = "Exame médico"
+    verbose_name_plural = "Exames médicos"
+    autocomplete_fields = ("medical_exam",)
+    fields = (
+        "medical_exam",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
+
+class InvoiceConsultationItemInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.CONSULTATION
+    verbose_name = "Consulta médica"
+    verbose_name_plural = "Consultas médicas"
+    autocomplete_fields = ("consultation",)
+    fields = (
+        "consultation",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
+
+class InvoicePharmacyItemInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.ITEM_VENDA
+    verbose_name = "Item de farmácia"
+    verbose_name_plural = "Itens de farmácia"
+    autocomplete_fields = ("product",)
+    raw_id_fields = ()
+    fields = (
+        "product",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
+
+class InvoiceProcedureItemInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.PROCEDIMENTO_ITEM
+    verbose_name = "Procedimento de enfermagem"
+    verbose_name_plural = "Procedimentos de enfermagem"
+    autocomplete_fields = ("procedure_item",)
+    fields = (
+        "procedure_item",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
+
+class InvoiceProcedureMaterialInline(BaseTypedInvoiceItemInline):
+    item_type_fixed = InvoiceItem.ItemType.PROCEDIMENTO_MATERIAL
+    verbose_name = "Material de enfermagem"
+    verbose_name_plural = "Materiais de enfermagem"
+    autocomplete_fields = ("procedure_material",)
+    fields = (
+        "procedure_material",
+        "description",
+        "quantity",
+        "unit_price",
+        "applies_vat",
+        "vat_percentage",
+        "iva_linha",
+        "total_linha",
+    )
+
 
 # =====================================================
 # FATURA
@@ -112,7 +280,6 @@ class InvoiceAdmin(CoreAdmin):
 
     readonly_fields = (
         "custom_id",
-        "patient",
         "subtotal",
         "vat_amount",
         "total",
@@ -127,18 +294,7 @@ class InvoiceAdmin(CoreAdmin):
             {
                 "fields": (
                     "custom_id",
-                    "origin",
-                    "request",
-                    "sale",
-                    "procedure",
-                    "procedures",
-                    "consultation",
                     "patient",
-                    "insurance_amount",
-                    "subtotal",
-                    "vat_amount",
-                    "total",
-                    "patient_amount",
                     "status",
                 )
             },
@@ -155,7 +311,14 @@ class InvoiceAdmin(CoreAdmin):
         ),
     )
 
-    inlines = [InvoiceItemInline]
+    inlines = [
+        InvoiceLabItemInline,
+        InvoiceMedicalExamItemInline,
+        InvoiceConsultationItemInline,
+        InvoicePharmacyItemInline,
+        InvoiceProcedureItemInline,
+        InvoiceProcedureMaterialInline,
+    ]
     actions = ("sync_origin_items",)
     filter_horizontal = ("procedures",)
 

@@ -77,6 +77,14 @@ class Invoice(NoNameCoreModel):
         related_name="invoices",
         help_text="Pode associar múltiplos procedures de enfermagem à mesma invoice.",
     )
+    consultations = models.ManyToManyField(
+        "consultas.MedicalConsultation",
+        db_table="faturamento_fatura_consultas",
+        verbose_name="Consultas médicas",
+        blank=True,
+        related_name="invoices",
+        help_text="Associa várias consultas (ex.: clínica geral e especialidade) a esta fatura.",
+    )
     consultation = models.OneToOneField(
         "consultas.MedicalConsultation",
         db_column="consultation_id",
@@ -184,6 +192,14 @@ class Invoice(NoNameCoreModel):
             insurance_amount = total
         self.insurance_amount = insurance_amount
         self.patient_amount = max(total - insurance_amount, Decimal("0.00"))
+
+    # ==========================================
+    # VALIDAÇÃO DE ORIGEM
+    # ==========================================
+
+    def clean(self):
+        # Permite combinações flexíveis de origem; não bloqueia por contagem de referências.
+        super().clean()
 
     def persist_totals(self):
         self.recalculate_totals()
@@ -299,152 +315,85 @@ class Invoice(NoNameCoreModel):
 
     @property
     def source_reference(self):
-        if self.origin == self.Origin.CLINICAL:
-            return self.request
-        if self.origin == self.Origin.PHARMACY:
-            return self.sale
-        if self.origin == self.Origin.NURSING:
-            if self.pk and self.procedures.exists():
-                return f"{self.procedures.count()} procedure(s)"
-            return self.procedure
-        if self.origin == self.Origin.CONSULTATION:
-            return self.consultation
-        if self.origin == self.Origin.SURGERY:
-            return self.surgery
-        if self.origin == self.Origin.MIXED:
+        """
+        Gera uma referência combinada, baseada nos vínculos diretos e nos itens da invoice.
+        Formato: tokens separados por " | ", por exemplo:
+        "REQ:REQ-123 | FAR:2 | EXA:3 | CON:1"
+        """
+        tokens = []
+
+        # Vínculos explícitos
+        if self.request_id:
+            tokens.append(f"REQ:{getattr(self.request, 'custom_id', None) or self.request_id}")
+        if self.sale_id:
+            tokens.append(f"SALE:{getattr(self.sale, 'number', None) or self.sale_id}")
+        if self.procedure_id:
+            tokens.append(f"PROC:{getattr(self.procedure, 'custom_id', None) or self.procedure_id}")
+        if self.pk and self.procedures.exists():
+            tokens.append(f"PROCS:{self.procedures.count()}")
+        if self.consultation_id:
+            tokens.append(f"CON:{getattr(self.consultation, 'custom_id', None) or self.consultation_id}")
+        if self.pk and hasattr(self, "consultations") and self.consultations.exists():
+            tokens.append(f"CONS:{self.consultations.count()}")
+        if self.surgery_id:
+            tokens.append(f"SURG:{getattr(self.surgery, 'custom_id', None) or self.surgery_id}")
+
+        # Itens: contar por tipo
+        try:
+            item_qs = self.items.filter(deleted=False)
+            if item_qs.exists():
+                type_map = {
+                    "EXA": "EXA",
+                    "EXM": "MED",
+                    "CON": "CON",
+                    "FAR": "FAR",
+                    "PRC": "ENF",
+                    "MAT": "MAT",
+                    "AJU": "AJU",
+                }
+                counts = {}
+                for item in item_qs.only("item_type"):
+                    prefix = type_map.get(item.item_type, item.item_type)
+                    counts[prefix] = counts.get(prefix, 0) + 1
+                tokens.extend([f"{k}:{v}" for k, v in counts.items()])
+        except Exception:
+            pass
+
+        if not tokens:
             return None
-        return None
+        return " | ".join(tokens)
 
     def _validate_source(self):
-        if self.origin == self.Origin.MIXED:
-            refs = []
-            if self.request_id:
-                refs.append(self.request)
-            if self.sale_id and getattr(self.sale, "patient_id", None):
-                refs.append(self.sale)
-            if self.procedure_id:
-                refs.append(self.procedure)
-            if self.consultation_id:
-                refs.append(self.consultation)
-            if self.surgery_id:
-                refs.append(self.surgery)
-            if self.pk and self.procedures.exists():
-                refs.extend(list(self.procedures.select_related("patient").all()))
+        """
+        Validação mínima: alinha paciente se possível e garante tenant consistente,
+        sem impor contagem ou exclusividade de referências.
+        """
+        refs = []
+        if self.request_id:
+            refs.append(self.request)
+        if self.sale_id:
+            refs.append(self.sale)
+        if self.consultation_id:
+            refs.append(self.consultation)
+        if self.surgery_id:
+            refs.append(self.surgery)
+        if self.procedure_id:
+            refs.append(self.procedure)
+        if self.pk and self.procedures.exists():
+            refs.extend(list(self.procedures.select_related("patient").all()))
 
-            if refs:
-                primeiro = refs[0]
-                patient_ref = getattr(primeiro, "patient", None)
-                patient_id = getattr(patient_ref, "id", None)
-                tenant_id = getattr(primeiro, "tenant_id", None)
+        # Alinhar paciente se ainda não definido
+        for ref in refs:
+            patient_ref = getattr(ref, "patient", None)
+            if patient_ref:
+                self.patient = self.patient or patient_ref
+                break
 
-                for ref in refs[1:]:
-                    ref_patient_id = getattr(getattr(ref, "patient", None), "id", None)
-                    if patient_id and ref_patient_id and ref_patient_id != patient_id:
-                        raise ValidationError({"patient": "Referências da invoice mista devem ser do mesmo patient."})
-                    ref_tenant_id = getattr(ref, "tenant_id", None)
-                    if tenant_id and ref_tenant_id and ref_tenant_id != tenant_id:
-                        raise ValidationError({"tenant": "Referências da invoice mista devem ser do mesmo tenant."})
-
-                if not self.patient_id and patient_ref is not None:
-                    self.patient = patient_ref
-
-            if self.patient_id and self.patient.tenant_id != self.tenant_id:
+        # Tenant consistency
+        if self.patient_id and self.tenant_id:
+            patient_tenant = getattr(self.patient, "tenant_id", None)
+            if patient_tenant not in (None, self.tenant_id):
                 raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
-            return
-
-        if self.origin == self.Origin.NURSING:
-            # Enfermagem: pode usar legado (procedure) OU múltiplos (procedures).
-            if self.procedure_id and self.pk and self.procedures.exists():
-                raise ValidationError(
-                    {"procedures": ("Use um: 'procedure (legado)' OU 'procedures (múltiplos)'.")}
-                )
-
-            if self.request_id:
-                raise ValidationError({"request": "Remova a requisição, não corresponde à origin Enfermagem."})
-            if self.sale_id:
-                raise ValidationError({"sale": "Remova a sale, não corresponde à origin Enfermagem."})
-            if self.consultation_id:
-                raise ValidationError({"consultation": "Remova a consultation, não corresponde à origin Enfermagem."})
-
-            if self.procedure_id:
-                self.patient = self.procedure.patient
-                if self.tenant_id and self.procedure.tenant_id != self.tenant_id:
-                    raise ValidationError({"procedure": "Procedimento e invoice devem pertencer ao mesmo tenant."})
-            elif self.pk:
-                procs = list(self.procedures.select_related("patient").all())
-                if not procs:
-                    raise ValidationError({"procedures": "Informe ao menos um procedure."})
-                patient_id = procs[0].patient_id
-                tenant_id = procs[0].tenant_id
-                for p in procs:
-                    if p.tenant_id != tenant_id:
-                        raise ValidationError(
-                            {"procedures": "Todos os procedures devem pertencer ao mesmo tenant."}
-                        )
-                    if p.patient_id != patient_id:
-                        raise ValidationError({"procedures": "Todos os procedures devem ser do mesmo patient."})
-                if self.tenant_id and tenant_id != self.tenant_id:
-                    raise ValidationError(
-                        {"procedures": "Procedimentos e invoice devem pertencer ao mesmo tenant."}
-                    )
-                self.patient = procs[0].patient
-
-        else:
-            # Demais origens (mantém regra: exatamente uma referência)
-            campos_origin = {
-                self.Origin.CLINICAL: "request",
-                self.Origin.PHARMACY: "sale",
-                self.Origin.NURSING: "procedure",
-                self.Origin.CONSULTATION: "consultation",
-                self.Origin.SURGERY: "surgery",
-            }
-            campo_esperado = campos_origin[self.origin]
-
-            vinculados = {
-                "request": bool(self.request_id),
-                "sale": bool(self.sale_id),
-                "procedure": bool(self.procedure_id),
-                "consultation": bool(self.consultation_id),
-                "surgery": bool(self.surgery_id),
-            }
-            if sum(vinculados.values()) != 1:
-                raise ValidationError("A invoice deve possuir exatamente uma referência de origin.")
-
-            if not vinculados[campo_esperado]:
-                raise ValidationError({campo_esperado: "Informe a referência compatível com a origin."})
-
-            for campo, informado in vinculados.items():
-                if campo != campo_esperado and informado:
-                    raise ValidationError({campo: "Remova esta referência, ela não corresponde à origin."})
-
-            if self.pk and self.procedures.exists():
-                raise ValidationError(
-                    {"procedures": "Remova os procedures, não correspondem à origin selecionada."}
-                )
-
-            if self.origin == self.Origin.CLINICAL and self.request_id:
-                self.patient = self.request.patient
-                if self.request.tenant_id != self.tenant_id:
-                    raise ValidationError({"request": "Requisição e invoice devem pertencer ao mesmo tenant."})
-
-        if self.origin == self.Origin.PHARMACY and self.sale_id:
-            if getattr(self.sale, "patient_id", None):
-                self.patient = self.sale.patient
-            if self.sale.tenant_id != self.tenant_id:
-                raise ValidationError({"sale": "Venda e invoice devem pertencer ao mesmo tenant."})
-
-        if self.origin == self.Origin.CONSULTATION and self.consultation_id:
-            self.patient = self.consultation.patient
-            if self.consultation.tenant_id != self.tenant_id:
-                raise ValidationError({"consultation": "Consulta e invoice devem pertencer ao mesmo tenant."})
-
-        if self.origin == self.Origin.SURGERY and self.surgery_id:
-            self.patient = self.surgery.patient
-            if self.surgery.tenant_id != self.tenant_id:
-                raise ValidationError({"surgery": "Cirurgia e invoice devem pertencer ao mesmo tenant."})
-
-        if self.patient_id and self.patient.tenant_id != self.tenant_id:
-            raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
 
     def sync_items_from_origin(self):
         if self.status != self.Status.DRAFT:
