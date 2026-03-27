@@ -155,6 +155,10 @@ class ProcedureMaterial(NoNameCoreModel):
         except ObjectDoesNotExist:
             pass
 
+        # Prefer price from the selected lot; fallback to product price; else zero.
+        if self.lot_id and self.lot.sale_price is not None:
+            return self.lot.sale_price
+
         if self.product_id and self.product.sale_price:
             return self.product.sale_price
 

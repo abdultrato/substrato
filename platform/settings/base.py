@@ -207,6 +207,7 @@ JAZZMIN_SETTINGS = {
         "enfermagem.procedimentomaterial": "fas fa-box",
         "enfermagem.procedimentomaterialvalor": "fas fa-tag",
         "farmacia": "fas fa-prescription-bottle-alt",
+        "farmacia.categoriapai": "fas fa-sitemap",
         "farmacia.categoriaproduto": "fas fa-tags",
         "farmacia.produto": "fas fa-pills",
         "farmacia.lote": "fas fa-barcode",
@@ -308,6 +309,7 @@ JAZZMIN_SETTINGS = {
         "enfermagem.procedimentoitemvalor",
         "enfermagem.procedimentomaterialvalor",
         "farmacia",
+        "farmacia.categoriapai",
         "farmacia.categoriaproduto",
         "farmacia.produto",
         "farmacia.lote",
@@ -413,6 +415,26 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-layer-group",
     "default_icon_children": "far fa-dot-circle",
 }
+
+# ---------------------------------------------------------
+# Compat: filtro legacy 'length_is' (Django 5 removeu)
+# ---------------------------------------------------------
+try:
+    from django.template import defaultfilters as _defaultfilters
+
+    if "length_is" not in _defaultfilters.register.filters:
+
+        def _length_is(value, expected_length):
+            try:
+                return len(value) == int(expected_length)
+            except Exception:
+                return False
+
+        _defaultfilters.register.filter("length_is", _length_is)
+        _defaultfilters.length_is = _length_is
+except Exception:
+    # Se o import falhar (ex.: antes do setup completo), ignoramos silenciosamente.
+    pass
 
 JAZZMIN_UI_TWEAKS = {
     # Keep the footer always visible (requested by product).

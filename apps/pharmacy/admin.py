@@ -1,14 +1,32 @@
 from django.contrib import admin
-from django.db.models import Case, F, IntegerField, Min, Sum, When
+from django.core.exceptions import ValidationError
+from django.forms import ValidationError as FormValidationError
+from django.forms.models import BaseInlineFormSet
+from decimal import Decimal
+
+from django.db.models import (
+    Case,
+    F,
+    IntegerField,
+    Min,
+    Sum,
+    When,
+    DecimalField,
+    ExpressionWrapper,
+    Value,
+    OuterRef,
+    Subquery,
+)
 from django.db.models.functions import Coalesce
 from django.utils.html import format_html, format_html_join
 
-from .models.inventory_movement import InventoryMovement
+from .models.inventory_movement import InventoryMovement, MovementType
 from .models.lot import Lot
 from .models.product import Product
-from .models.product_category import ProductCategory
+from .models.product_category import ParentCategory, ProductCategory
 from .models.sale import Sale
 from .models.sale_item import SaleItem
+from .models.lot import Lot  # for stock check in inline
 
 # =========================================================
 # PRODUTO
@@ -21,6 +39,7 @@ class ProductAdmin(admin.ModelAdmin):
         "custom_id",
         "name",
         "category",
+        "initial_stock",
         "sale_price",
         "vat_percentage",
         "applies_vat_by_default",
@@ -42,6 +61,8 @@ class ProductAdmin(admin.ModelAdmin):
         "version",
         "deleted_at",
         "deleted_by",
+        "initial_stock",
+        "inventory_total",
     )
 
     fieldsets = (
@@ -54,6 +75,15 @@ class ProductAdmin(admin.ModelAdmin):
                     "sale_price",
                     "vat_percentage",
                     "applies_vat_by_default",
+                )
+            },
+        ),
+        (
+            "Estoque",
+            {
+                "fields": (
+                    "initial_stock",
+                    "inventory_total",
                 )
             },
         ),
@@ -82,32 +112,55 @@ class ProductAdmin(admin.ModelAdmin):
 
         qs = super().get_queryset(request)
 
+        initial_lots = (
+            Lot.objects.filter(product=OuterRef("pk"))
+            .values("product")
+            .annotate(total=Sum("initial_quantity"))
+            .values("total")
+        )
+
+        movements = (
+            InventoryMovement.objects.filter(lot__product=OuterRef("pk"))
+            .values("lot__product")
+            .annotate(
+                total=Coalesce(
+                    Sum(
+                        Case(
+                            When(type=MovementType.SAIDA, then=-F("quantity")),
+                            default=F("quantity"),
+                            output_field=IntegerField(),
+                        )
+                    ),
+                    0,
+                )
+            )
+            .values("total")
+        )
+
         qs = qs.annotate(
-            quantity_lotes=Coalesce(
-                Sum("lotes__initial_quantity"),
-                0,
-            ),
-            movimentos_total=Coalesce(
-                Sum(
-                    Case(
-                        When(
-                            lotes__movimentos__type="SAI",
-                            then=-F("lotes__movimentos__quantity"),
-                        ),
-                        default=F("lotes__movimentos__quantity"),
-                        output_field=IntegerField(),
-                    )
-                ),
-                0,
-            ),
+            initial_stock_calc=Coalesce(Subquery(initial_lots), 0),
+            movements_total=Coalesce(Subquery(movements), 0),
             proximo_vencimento=Min("lotes__expiration_date"),
         )
 
-        return qs.annotate(inventory_total_calc=F("quantity_lotes") + F("movimentos_total"))
+        return qs.annotate(inventory_total_calc=F("initial_stock_calc") + F("movements_total"))
 
     # =========================
     # ESTOQUE
     # =========================
+
+    def initial_stock(self, obj):
+        """
+        Exibe o estoque inicial somando as quantidades de todos os lotes.
+        Usa o valor anotado (quantity_lotes) quando disponível para evitar
+        consultas extras.
+        """
+        if hasattr(obj, "initial_stock_calc"):
+            return obj.initial_stock_calc or 0
+        return obj.initial_stock
+
+    initial_stock.short_description = "Estoque inicial"
+    initial_stock.admin_order_field = "initial_stock_calc"
 
     def inventory_total(self, obj):
 
@@ -149,6 +202,7 @@ class LotAdmin(admin.ModelAdmin):
         "lot_number",
         "expiration_date",
         "initial_quantity",
+        "sale_price",
         "current_balance",
         "vencido_status",
     )
@@ -186,6 +240,7 @@ class LotAdmin(admin.ModelAdmin):
                     "lot_number",
                     "expiration_date",
                     "initial_quantity",
+                    "sale_price",
                 )
             },
         ),
@@ -282,6 +337,7 @@ class InventoryMovementAdmin(admin.ModelAdmin):
         "lot",
         "type",
         "origin",
+        "purchase_item",
         "sale_item",
         "quantity",
         "created_at",
@@ -311,6 +367,7 @@ class InventoryMovementAdmin(admin.ModelAdmin):
         "lot",
         "type",
         "origin",
+        "purchase_item",
         "sale_item",
         "quantity",
         "created_at",
@@ -328,6 +385,7 @@ class InventoryMovementAdmin(admin.ModelAdmin):
                     "lot",
                     "type",
                     "origin",
+                    "purchase_item",
                     "sale_item",
                     "quantity",
                 )
@@ -350,6 +408,13 @@ class InventoryMovementAdmin(admin.ModelAdmin):
 
     list_per_page = 50
 
+    def purchase_item(self, obj):
+        if obj.type == MovementType.ENTRADA:
+            return f"{obj.lot.product} - Lote {obj.lot.lot_number}"
+        return "-"
+
+    purchase_item.short_description = "Item de compra"
+
     def has_add_permission(self, request):
         return False
 
@@ -365,10 +430,11 @@ class InventoryMovementAdmin(admin.ModelAdmin):
 class ItemVendaInline(admin.TabularInline):
     model = SaleItem
     extra = 0
+    # formset set below after class definition
 
     autocomplete_fields = ("product",)
 
-    readonly_fields = ("total_linha_formatado",)
+    readonly_fields = ("unit_price", "total_linha_formatado",)
 
     fields = (
         "product",
@@ -387,6 +453,76 @@ class ItemVendaInline(admin.TabularInline):
     total_linha_formatado.short_description = "Total"
 
 
+class SaleItemInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+
+        for form in self.forms:
+            if form.cleaned_data.get("DELETE"):
+                continue
+            if not form.cleaned_data:
+                continue
+
+            product = form.cleaned_data.get("product")
+            qty = form.cleaned_data.get("quantity") or 0
+
+            if not product or qty <= 0:
+                continue
+
+            # Disponível por produto somando lotes não vencidos (FEFO helper)
+            available = 0
+            for lot in Lot.disponiveis(product):
+                saldo = getattr(lot, "saldo", None)
+                if callable(saldo):
+                    saldo = saldo()
+                elif saldo is None:
+                    saldo = lot.balance()
+                available += max(saldo, 0)
+
+            if qty > available:
+                msg = f"Estoque insuficiente para {product.name}: solicitado {qty}, disponível {available}."
+                form.add_error("quantity", msg)
+
+
+# attach custom formset to inline
+ItemVendaInline.formset = SaleItemInlineFormSet
+
+
+# =========================================================
+# ITEM DE VENDA (ADMIN DIRETO)
+# =========================================================
+
+
+@admin.register(SaleItem)
+class SaleItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "sale",
+        "product",
+        "quantity",
+        "unit_price",
+        "linha_total",
+        "created_at",
+    )
+
+    search_fields = ("sale__number", "product__name")
+    list_filter = ("product", "sale__created_at")
+    ordering = ("-created_at",)
+    readonly_fields = (
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
+    )
+
+    def linha_total(self, obj):
+        return f"{obj.total_linha:.2f}"
+
+    linha_total.short_description = "Total"
+
+
 # =========================================================
 # VENDA
 # =========================================================
@@ -397,6 +533,10 @@ class VendaAdmin(admin.ModelAdmin):
     list_display = (
         "number",
         "patient",
+        "total_items_quantity",
+        "unit_prices",
+        "total_items_amount",
+        "total_vat_amount",
         "total",
         "created_at",
     )
@@ -416,6 +556,10 @@ class VendaAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "number",
+        "total_items_quantity",
+        "unit_prices",
+        "total_items_amount",
+        "total_vat_amount",
         "total",
         "created_at",
         "created_by",
@@ -433,6 +577,10 @@ class VendaAdmin(admin.ModelAdmin):
                 "fields": (
                     "number",
                     "patient",
+                    "total_items_quantity",
+                    "unit_prices",
+                    "total_items_amount",
+                    "total_vat_amount",
                     "total",
                 )
             },
@@ -456,6 +604,144 @@ class VendaAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ("patient",)
 
+    # =========================
+    # QUERY OTIMIZADA
+    # =========================
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        total_items_expr = F("itens__quantity") * F("itens__unit_price")
+
+        vat_expr = ExpressionWrapper(
+            F("itens__quantity")
+            * F("itens__unit_price")
+            * F("itens__product__vat_percentage")
+            / Value(100),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+
+        qs = qs.annotate(
+            total_items_qty=Coalesce(Sum("itens__quantity"), 0),
+            total_items_amount=Coalesce(
+                Sum(
+                    total_items_expr,
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Decimal("0.00"),
+            ),
+            total_vat_amount=Coalesce(
+                Sum(
+                    Case(
+                        When(
+                            itens__product__applies_vat_by_default=True,
+                            then=vat_expr,
+                        ),
+                        default=Value(0),
+                        output_field=DecimalField(max_digits=14, decimal_places=2),
+                    ),
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
+                Decimal("0.00"),
+            ),
+        )
+        return qs.prefetch_related("itens__product")
+
+    # =========================
+    # CAMPOS COMPUTADOS
+    # =========================
+
+    def total_items_quantity(self, obj):
+        return obj.total_items_qty or 0
+
+    total_items_quantity.short_description = "Qtd. itens"
+    total_items_quantity.admin_order_field = "total_items_qty"
+
+    def total_items_amount(self, obj):
+        return f"{(obj.total_items_amount or Decimal('0.00')):.2f}"
+
+    total_items_amount.short_description = "Subtotal itens"
+    total_items_amount.admin_order_field = "total_items_amount"
+
+    def total_vat_amount(self, obj):
+        return f"{(obj.total_vat_amount or Decimal('0.00')):.2f}"
+
+    total_vat_amount.short_description = "Valor IVA"
+    total_vat_amount.admin_order_field = "total_vat_amount"
+
+    def unit_prices(self, obj):
+        qs = getattr(obj, "itens", None)
+        if qs is None:
+            return "-"
+        items = list(qs.all())
+        if not items:
+            return "-"
+        prices = [f"{(item.unit_price or Decimal('0.00')):.2f}" for item in items]
+        return "; ".join(prices)
+
+    unit_prices.short_description = "Preço unit."
+
+
+@admin.register(ParentCategory)
+class ParentCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "created_at")
+    search_fields = ("name",)
+    ordering = ("name",)
+    actions = ["criar_categorias_sugeridas"]
+    readonly_fields = (
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
+    )
+
+    fieldsets = (
+        (
+            "Categoria Pai",
+            {
+                "fields": (
+                    "name",
+                    "description",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                ),
+            },
+        ),
+    )
+
+    @admin.action(description="Criar categorias-pai sugeridas")
+    def criar_categorias_sugeridas(self, request, queryset):
+        existentes = set(
+            ParentCategory.objects.filter(name__in=ProductCategory.parent_category_references())
+            .values_list("name", flat=True)
+        )
+        criadas = 0
+        for name in ProductCategory.parent_category_references():
+            if name in existentes:
+                continue
+            ParentCategory.objects.create(name=name)
+            criadas += 1
+        if criadas:
+            self.message_user(request, f"{criadas} categoria(s) pai criada(s).")
+        else:
+            self.message_user(request, "Nenhuma categoria sugerida pendente.", level="info")
+
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
@@ -474,7 +760,15 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 
     list_per_page = 50
 
+    def purchase_item(self, obj):
+        if obj.type == MovementType.ENTRADA:
+            return f"{obj.lot.product} - Lote {obj.lot.lot_number}"
+        return "-"
+
+    purchase_item.short_description = "Item de compra"
+
     list_select_related = ("parent_category",)
+    autocomplete_fields = ("parent_category",)
 
     readonly_fields = (
         "parent_category_references",
@@ -501,7 +795,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
         (
             "Categorias-pai de Referência",
             {
-                "description": "Sugestões para classificação inicial (não salvas automaticamente no banco de dados).",
+                "description": "Sugestões para classificação inicial (não salvas automaticamente no banco de dados). Use o botão “+” ao lado de Categoria pai para criar se não existir.",
                 "fields": ("parent_category_references",),
             },
         ),

@@ -5,6 +5,37 @@ from django.db.models import Q
 from core.models.base import CoreModel
 
 
+class ParentCategory(CoreModel):
+    prefix = "CATGP"
+
+    description = models.TextField(
+        db_column="description",
+        verbose_name="Descrição",
+        blank=True,
+    )
+
+    class Meta:
+        db_table = "farmacia_categoriapai"
+        verbose_name = "Categoria Pai"
+        verbose_name_plural = "Categorias Pai"
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["deleted"], name="farmacia_ca_deleted_f9118c_idx"),
+            models.Index(fields=["version"], name="farmacia_ca_version_1fbd4d_idx"),
+            models.Index(fields=["tenant", "name"], name="farmacia_ca_tenant__b288fb_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "name"],
+                condition=Q(deleted=False),
+                name="unique_parent_category_por_tenant",
+            )
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class ProductCategory(CoreModel):
     prefix = "CATP"
     CATEGORIAS_PAI_REFERENCIA = (
@@ -25,7 +56,7 @@ class ProductCategory(CoreModel):
     )
 
     parent_category = models.ForeignKey(
-        "self",
+        "farmacia.ParentCategory",
         verbose_name="Categoria pai",
         db_column="parent_category_id",
         null=True,
@@ -62,6 +93,7 @@ class ProductCategory(CoreModel):
 
         super().clean()
 
+        # Com ParentCategory não há hierarquia recursiva; validação mantém segurança de dados.
         if self.parent_category and self.parent_category_id == self.id:
             raise ValidationError({"parent_category": "Categoria não pode ser pai de si mesma."})
 
@@ -74,14 +106,7 @@ class ProductCategory(CoreModel):
         """
         Retorna o nível da category na hierarquia.
         """
-        nivel = 0
-        pai = self.parent_category
-
-        while pai:
-            nivel += 1
-            pai = pai.parent_category
-
-        return nivel
+        return 1 if self.parent_category else 0
 
     @classmethod
     def parent_category_references(cls):

@@ -51,7 +51,7 @@ class InventoryMovement(CoreModel):
 
     sale_item = models.ForeignKey(
         "farmacia.SaleItem",
-        verbose_name="Item de venda",
+        verbose_name="Item de aquisição",
         db_column="sale_item_id",
         on_delete=models.SET_NULL,
         null=True,
@@ -112,7 +112,8 @@ class InventoryMovement(CoreModel):
         if not self.lot_id:
             raise ValidationError("Lote é obrigatório.")
 
-        if self.lot.vencido:
+        # Só bloqueia saídas para lotes vencidos; entradas/ajustes podem registrar histórico.
+        if self.type == MovementType.SAIDA and self.lot.vencido:
             raise ValidationError("Não é permitido movimentar lot vencido.")
 
         # valida tenant

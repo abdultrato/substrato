@@ -4,6 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from core.models.base import CoreModel
+from apps.pharmacy import utils
 
 
 class Product(CoreModel):
@@ -42,7 +43,7 @@ class Product(CoreModel):
 
         db_column="sale_price",
 
-        verbose_name="Preço de sale",
+        verbose_name="Preço de Venda",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
@@ -86,3 +87,21 @@ class Product(CoreModel):
 
     def __str__(self) -> str:
         return self.name or f"Produto {self.pk}"
+
+    # =========================================
+    # ESTOQUE
+    # =========================================
+
+    @property
+    def initial_stock(self) -> int:
+        """
+        Soma das quantidades iniciais de todos os lotes (ignora movimentações).
+        """
+        return utils.calculate_initial_stock(self)
+
+    @property
+    def inventory_total(self) -> int:
+        """
+        Estoque atual = entradas - saídas (via movimentos) + quantidades iniciais.
+        """
+        return utils.calculate_current_stock(self)

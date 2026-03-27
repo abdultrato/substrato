@@ -37,7 +37,8 @@ ADMIN_SLUG_ALIASES: Dict[str, str] = _with_hyphen_aliases(
         "maintenance": "manutencoes",
         "reception": "recepcao",
         "consultations": "consultas",
-        "clinical": "clinico",
+        # alias para suportar /admin/clinico/... (português)
+        "clinico": "clinical",
         "medical-records": "prontuario",
         "billing": "faturamento",
         "notifications": "notificacoes",
@@ -184,4 +185,26 @@ class AdminPathAliasMiddleware:
                     # Some request objects may not allow assignment; ignore.
                     pass
 
-        return self.get_response(request)
+        response = self.get_response(request)
+
+        # Rewrite outgoing admin HTML so links show the alias (English) instead of the canonical label.
+        if (
+            (request.path_info or "").startswith("/admin/")
+            and hasattr(response, "content")
+            and response.get("Content-Type", "").startswith("text/html")
+        ):
+            content = response.content
+            try:
+                text = content.decode(response.charset or "utf-8")
+            except Exception:
+                return response
+
+            for alias, target in ADMIN_SLUG_ALIASES.items():
+                if alias == target:
+                    continue
+                text = text.replace(f"/admin/{target}/", f"/admin/{alias}/")
+            response.content = text.encode(response.charset or "utf-8")
+            if response.has_header("Content-Length"):
+                response["Content-Length"] = str(len(response.content))
+
+        return response

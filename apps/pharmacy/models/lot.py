@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from core.models.base import CoreModel
+from decimal import Decimal
 
 
 class Lot(CoreModel):
@@ -40,6 +41,16 @@ class Lot(CoreModel):
         help_text="Quantidade inicial do lot.",
     )
 
+    sale_price = models.DecimalField(
+        db_column="sale_price",
+        verbose_name="Preço unitário",
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text="Preço de venda para itens deste lote.",
+    )
+
     class Meta:
         db_table = "farmacia_lote"
         verbose_name = "Lote"
@@ -64,9 +75,11 @@ class Lot(CoreModel):
     # =====================================================
 
     def save(self, *args, **kwargs):
+        # Nome default
         if not self.name and self.lot_number and self.product_id:
             self.name = f"Lote {self.lot_number} - {self.product.name}"
 
+        # Imutabilidade de campos críticos
         if self.pk:
             original = Lot.all_objects.get(pk=self.pk)
 
@@ -76,7 +89,16 @@ class Lot(CoreModel):
             if original.lot_number != self.lot_number:
                 raise ValidationError("Número do lot não pode ser alterado.")
 
+        # Sincroniza preço: se não informado, usa o do produto; se informado, propaga para o produto.
+        if self.sale_price is None:
+            self.sale_price = self.product.sale_price
+
         super().save(*args, **kwargs)
+
+        # Após salvar, mantém o preço do produto alinhado a este lote.
+        if self.product and self.product.sale_price != self.sale_price:
+            self.product.sale_price = self.sale_price
+            self.product.save(update_fields=["sale_price"])
 
     # =====================================================
     # PROPRIEDADES
@@ -144,6 +166,17 @@ class Lot(CoreModel):
             .filter(saldo__gt=0)
             .order_by("expiration_date")
         )
+
+    @classmethod
+    def sale_price_for_product(cls, product):
+        """
+        Returns the unit sale price based on the first available lot (FEFO).
+        Falls back to the product sale price if no lot has a price.
+        """
+        lot = cls.disponiveis(product).first()
+        if lot and lot.sale_price is not None:
+            return lot.sale_price
+        return getattr(product, "sale_price", Decimal("0.00"))
 
     def __str__(self):
 

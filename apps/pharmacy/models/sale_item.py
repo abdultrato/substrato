@@ -7,6 +7,7 @@ from django.db.models import DecimalField, F, Q, Sum
 from django.db.models.functions import Coalesce
 
 from core.models.base import CoreModel
+from apps.pharmacy.models.lot import Lot
 
 
 class SaleItem(CoreModel):
@@ -45,8 +46,8 @@ class SaleItem(CoreModel):
 
     class Meta:
         db_table = "farmacia_itemvenda"
-        verbose_name = "Item da Venda"
-        verbose_name_plural = "Itens da Venda"
+        verbose_name = "Item de Venda"
+        verbose_name_plural = "Itens de Venda"
 
         indexes = [
             models.Index(fields=["sale"]),
@@ -155,6 +156,11 @@ class SaleItem(CoreModel):
         if restante > 0:
             raise ValidationError("Estoque insuficiente.")
 
+    def _clear_inventory_movements(self):
+        from apps.pharmacy.models.inventory_movement import InventoryMovement
+
+        InventoryMovement.objects.filter(sale_item=self).delete()
+
     # ==========================================
     # SAVE
     # ==========================================
@@ -164,15 +170,31 @@ class SaleItem(CoreModel):
 
         criando = self.pk is None
 
-        if criando and not self.unit_price:
-            self.unit_price = self.product.sale_price
+        # Sempre herda o preço do lote disponível (FEFO). Se não houver, cai para o produto.
+        first_lot = Lot.disponiveis(self.product).first()
+        if first_lot:
+            self.unit_price = first_lot.sale_price
+        else:
+            self.unit_price = Lot.sale_price_for_product(self.product)
+
         if not self.name:
             self.name = f"Item {self.product.name}"
+
+        previous_qty = None
+        if not criando:
+            previous_qty = (
+                self.__class__.all_objects.filter(pk=self.pk).values_list("quantity", flat=True).first()
+            )
 
         super().save(*args, **kwargs)
 
         if criando:
             self.consume_inventory()
+        else:
+            # Recalcula movimentos conforme nova quantidade.
+            if previous_qty != self.quantity:
+                self._clear_inventory_movements()
+                self.consume_inventory()
 
         self.update_sale_total()
 
@@ -183,6 +205,8 @@ class SaleItem(CoreModel):
     def delete(self, *args, **kwargs):
 
         sale = self.sale
+        # Remover movimentos de estoque para devolver saldo.
+        self._clear_inventory_movements()
 
         super().delete(*args, **kwargs)
 

@@ -76,24 +76,6 @@ class User(AbstractUser, CoreModel):
         ordering = ["username"]
 
     def save(self, *args, **kwargs):
-        # Política: superuser deve ser exceção (ignora RBAC e atravessa tenants).
-        #
-        # Exceções permitidas:
-        # - allowlist explícita (variável SUBSTRATO_SUPERUSER_ALLOWLIST)
-        # - membros do grupo RBAC "Administrador"
-        allowlist = set(getattr(settings, "SUPERUSER_ALLOWLIST", []) or [])
-        is_admin_group = False
-        if getattr(self, "pk", None):
-            try:
-                from security.permissions.rbac import GROUPS as RBAC_GROUPS
-
-                is_admin_group = self.groups.filter(name=RBAC_GROUPS["ADMIN"]).exists()
-            except Exception:
-                is_admin_group = False
-
-        if getattr(self, "is_superuser", False) and (self.username not in allowlist) and (not is_admin_group):
-            self.is_superuser = False
-
         # Garantir associação a um tenant mesmo em ambientes sem contexto (ex.: createsuperuser)
         if not self.tenant_id:
             tenant = Tenant.objects.order_by("id").first()

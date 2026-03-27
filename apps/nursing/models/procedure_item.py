@@ -174,9 +174,9 @@ class ProcedureItem(NoNameCoreModel):
                 .first()
             )
 
-            custo = material_padrao.default_unit_cost
-            if custo in (None, Decimal("0.00")):
-                custo = material_padrao.product.sale_price
+            cost = material_padrao.default_unit_cost
+            if cost in (None, Decimal("0.00")):
+                cost = lot.sale_price if lot else material_padrao.product.sale_price
 
             if lot is None:
                 # Permite criar a requisição do procedure mesmo com falta de estoque.
@@ -188,7 +188,7 @@ class ProcedureItem(NoNameCoreModel):
                     product=material_padrao.product,
                     lot=None,
                     quantity=quantity_material_int,
-                    unit_cost=custo,
+                    unit_cost=cost,
                     observation=material_padrao.observation,
                 )
                 material.save(alocar_estoque=False)
@@ -200,7 +200,7 @@ class ProcedureItem(NoNameCoreModel):
                     product=material_padrao.product,
                     lot=lot,
                     quantity=quantity_material_int,
-                    unit_cost=custo,
+                    unit_cost=cost,
                     observation=material_padrao.observation,
                 )
 

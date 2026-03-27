@@ -75,10 +75,11 @@ class ProcedimentoMaterialInline(admin.TabularInline):
         "product",
         "quantity",
         "lot",
+        "unit_cost",
         "inventory_movement",
         "observation",
     )
-    readonly_fields = ("procedure_item", "lot", "inventory_movement")
+    readonly_fields = ("procedure_item", "lot", "unit_cost", "inventory_movement")
     autocomplete_fields = ("product",)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -429,6 +430,8 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "product",
         "lot",
         "quantity",
+        "unit_cost",
+        "linha_total",
         "inventory_movement",
         "created_at",
     )
@@ -457,6 +460,8 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     readonly_fields = (
         "custom_id",
         "lot",
+        "unit_cost",
+        "linha_total",
         "inventory_movement",
         "created_at",
         "updated_at",
@@ -475,6 +480,8 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
                     "product",
                     "lot",
                     "quantity",
+                    "unit_cost",
+                    "linha_total",
                     "inventory_movement",
                     "observation",
                 )
@@ -500,6 +507,11 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
             kwargs["queryset"] = _queryset_produtos_disponiveis()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def linha_total(self, obj):
+        return f"{obj.total_linha:.2f}"
+
+    linha_total.short_description = "Total"
 
 
 @admin.register(ProcedureItemValue)

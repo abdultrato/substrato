@@ -21,7 +21,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class ResultItem(TenantPropagationMixin, NoNameCoreModel):
-    tenant_source = "patient"
+    tenant_source = "user"
 
     prefix = "RES"
 
@@ -32,6 +32,7 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
         db_column="result_id",
         on_delete=models.CASCADE,
         related_name="items",
+        verbose_name="Resultado",
     )
 
     exam_field = models.ForeignKey(
@@ -40,33 +41,39 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="exam_field_id",
         on_delete=models.CASCADE,
-        related_name="results",
+        related_name="results", 
+        verbose_name="Campo do exame",
     )
 
     # value numérico do result
     result_value = models.DecimalField(
         db_column="result_value",
-        max_digits=12, decimal_places=2, null=True, blank=True)
+        verbose_name="Valor do resultado",
+        max_digits=12, decimal_places=2, 
+        null=True, blank=True)
 
     clinical_status = models.CharField(
-
+        verbose_name="Status clínico",
         db_column="clinical_status",
 
         max_length=20, blank=True)
 
     report_color = models.CharField(
+        verbose_name="Cor para relatório",
 
         db_column="report_color",
 
         max_length=20, blank=True, null=True)
 
     critical_alert = models.BooleanField(
+        verbose_name="Alerta crítico",
 
         db_column="critical_alert",
 
         default=False)
 
     status = models.CharField(
+        verbose_name="Status do resultado",
 
         db_column="status",
 
@@ -82,13 +89,25 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
 
         db_column="validated_by_id",
         on_delete=models.SET_NULL,
-        verbose_name="Resultado",
+        verbose_name="Validado por",
         null=True,
         blank=True,
         related_name="validated_results",
     )
 
+    # Usuário que registrou/editou o item (para propagação de tenant).
+    user = models.ForeignKey(
+        User,
+        db_column="user_id",
+        on_delete=models.SET_NULL,
+        verbose_name="Usuário",
+        null=True,
+        blank=True,
+        related_name="result_items",
+    )
+
     validation_date = models.DateTimeField(
+        verbose_name="Data de validação",
 
         db_column="validation_date",
 
@@ -113,8 +132,11 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
     # =====================================================
 
     def save(self, *args, **kwargs):
-        if not self.tenant and self.result:
-            self.tenant = self.result.tenant
+        if not self.tenant:
+            if self.user and getattr(self.user, "tenant_id", None):
+                self.tenant = self.user.tenant
+            elif self.result:
+                self.tenant = self.result.tenant
 
         previous_value = None
 
