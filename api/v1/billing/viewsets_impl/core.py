@@ -122,6 +122,18 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         invoice = self._confirm_pending_payment(invoice)
         return Response(self.get_serializer(invoice).data)
 
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="confirmar_pagamento",
+        url_name="confirmar_pagamento",
+    )
+    def confirm_payment_pt(self, request, pk=None):
+        """Alias em português para confirmar pagamento pendente."""
+        invoice = self.get_object()
+        invoice = self._confirm_pending_payment(invoice)
+        return Response(self.get_serializer(invoice).data)
+
     @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
     def issue_legacy(self, request, pk=None):
         # Legacy Portuguese alias.

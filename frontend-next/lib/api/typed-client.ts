@@ -4,7 +4,20 @@
  */
 
 import { ApiClient, createApiClient, type RetryOptions } from '@/lib/api/api-client'
-import { PacienteSchema, ExameSchema, type Paciente, type Exame } from '@/lib/validators/schemas'
+import {
+  PacienteSchema,
+  ExameSchema,
+  InvoiceSchema,
+  PaymentSchema,
+  CheckinSchema,
+  IntegrationOrderSchema,
+  type Paciente,
+  type Exame,
+  type Invoice,
+  type Payment,
+  type Checkin,
+  type IntegrationOrder,
+} from '@/lib/validators/schemas'
 import { PacientesQueryBuilder, ExamesQueryBuilder } from '@/lib/api/query-builder'
 
 /**
@@ -46,7 +59,7 @@ export class PacientesService {
    */
   async list(query?: PacientesQueryBuilder, retryOptions?: RetryOptions) {
     return this.client.get(
-      '/api/v1/pacientes/',
+      '/api/v1/clinical/patient/',
       PacienteSchema.array().transform(results => ({ results, count: results.length })),
       {
         params: query?.build(),
@@ -60,7 +73,7 @@ export class PacientesService {
    */
   async getById(id: number, retryOptions?: RetryOptions) {
     return this.client.get(
-      `/api/v1/pacientes/${id}/`,
+      `/api/v1/clinical/patient/${id}/`,
       PacienteSchema,
       { retryOptions }
     )
@@ -71,7 +84,7 @@ export class PacientesService {
    */
   async create(data: Omit<Paciente, 'id' | 'criado_em'>, retryOptions?: RetryOptions) {
     return this.client.post(
-      '/api/v1/pacientes/',
+      '/api/v1/clinical/patient/',
       PacienteSchema,
       data,
       { retryOptions: { maxRetries: 0, ...retryOptions } } // No retry for mutations
@@ -83,7 +96,7 @@ export class PacientesService {
    */
   async update(id: number, data: Partial<Paciente>, retryOptions?: RetryOptions) {
     return this.client.patch(
-      `/api/v1/pacientes/${id}/`,
+      `/api/v1/clinical/patient/${id}/`,
       PacienteSchema,
       data,
       { retryOptions: { maxRetries: 0, ...retryOptions } }
@@ -95,7 +108,7 @@ export class PacientesService {
    */
   async delete(id: number, retryOptions?: RetryOptions) {
     return this.client.delete(
-      `/api/v1/pacientes/${id}/`,
+      `/api/v1/clinical/patient/${id}/`,
       { retryOptions: { maxRetries: 0, ...retryOptions } }
     )
   }
@@ -142,7 +155,7 @@ export class ExamesService {
    */
   async list(query?: ExamesQueryBuilder, retryOptions?: RetryOptions) {
     return this.client.get(
-      '/api/v1/exames/',
+      '/api/v1/clinical/exam/',
       ExameSchema.array().transform(results => ({ results, count: results.length })),
       {
         params: query?.build(),
@@ -156,7 +169,7 @@ export class ExamesService {
    */
   async getById(id: number, retryOptions?: RetryOptions) {
     return this.client.get(
-      `/api/v1/exames/${id}/`,
+      `/api/v1/clinical/exam/${id}/`,
       ExameSchema,
       { retryOptions }
     )
@@ -167,7 +180,7 @@ export class ExamesService {
    */
   async create(data: Omit<Exame, 'id' | 'criado_em'>, retryOptions?: RetryOptions) {
     return this.client.post(
-      '/api/v1/exames/',
+      '/api/v1/clinical/exam/',
       ExameSchema,
       data,
       { retryOptions: { maxRetries: 0, ...retryOptions } }
@@ -179,7 +192,7 @@ export class ExamesService {
    */
   async update(id: number, data: Partial<Exame>, retryOptions?: RetryOptions) {
     return this.client.patch(
-      `/api/v1/exames/${id}/`,
+      `/api/v1/clinical/exam/${id}/`,
       ExameSchema,
       data,
       { retryOptions: { maxRetries: 0, ...retryOptions } }
@@ -191,7 +204,7 @@ export class ExamesService {
    */
   async delete(id: number, retryOptions?: RetryOptions) {
     return this.client.delete(
-      `/api/v1/exames/${id}/`,
+      `/api/v1/clinical/exam/${id}/`,
       { retryOptions: { maxRetries: 0, ...retryOptions } }
     )
   }
@@ -223,7 +236,91 @@ export class ExamesService {
 }
 
 /**
+ * Invoices (Billing)
+ */
+export class InvoicesService {
+  private client: ApiClient
+  constructor(baseURL: string = 'http://localhost:8000') {
+    this.client = createPacientesApiClient(baseURL)
+  }
+
+  async list(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/billing/invoice/', InvoiceSchema.array(), { retryOptions })
+  }
+
+  async retrieve(id: number, retryOptions?: RetryOptions) {
+    return this.client.get(`/api/v1/billing/invoice/${id}/`, InvoiceSchema, { retryOptions })
+  }
+
+  async issue(id: number, retryOptions?: RetryOptions) {
+    return this.client.post(`/api/v1/billing/invoice/${id}/issue/`, InvoiceSchema, undefined, {
+      retryOptions: { maxRetries: 0, ...retryOptions },
+    })
+  }
+}
+
+/**
+ * Payments
+ */
+export class PaymentsService {
+  private client: ApiClient
+  constructor(baseURL: string = 'http://localhost:8000') {
+    this.client = createPacientesApiClient(baseURL)
+  }
+
+  async create(data: any, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/payments/payment/', PaymentSchema, data, {
+      retryOptions: { maxRetries: 0, ...retryOptions },
+    })
+  }
+
+  async list(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/payments/payment/', PaymentSchema.array(), { retryOptions })
+  }
+}
+
+/**
+ * Reception check-ins
+ */
+export class ReceptionService {
+  private client: ApiClient
+  constructor(baseURL: string = 'http://localhost:8000') {
+    this.client = createPacientesApiClient(baseURL)
+  }
+
+  async listCheckins(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/reception/checkin/', CheckinSchema.array(), { retryOptions })
+  }
+
+  async retrieveCheckin(id: number, retryOptions?: RetryOptions) {
+    return this.client.get(`/api/v1/reception/checkin/${id}/`, CheckinSchema, { retryOptions })
+  }
+}
+
+/**
+ * Equipment integrations (worklist/resultados)
+ */
+export class EquipmentIntegrationsService {
+  private client: ApiClient
+  constructor(baseURL: string = 'http://localhost:8000') {
+    this.client = createPacientesApiClient(baseURL)
+  }
+
+  async worklist(equipmentCustomId: string, retryOptions?: RetryOptions) {
+    return this.client.get(
+      `/api/v1/integrations/equipments/${equipmentCustomId}/worklist/`,
+      IntegrationOrderSchema.array(),
+      { retryOptions }
+    )
+  }
+}
+
+/**
  * Instâncias singleton
  */
 export const pacientesService = new PacientesService()
 export const examesService = new ExamesService()
+export const invoicesService = new InvoicesService()
+export const paymentsService = new PaymentsService()
+export const receptionService = new ReceptionService()
+export const equipmentIntegrationsService = new EquipmentIntegrationsService()

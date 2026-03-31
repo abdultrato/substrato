@@ -120,6 +120,52 @@ export const RequisicaoAnaliseUpdateSchema = RequisicaoAnaliseCreateSchema.parti
 export type RequisicaoAnaliseUpdate = z.infer<typeof RequisicaoAnaliseUpdateSchema>
 
 /**
+ * Schema mínimo para Invoice (faturamento)
+ */
+export const InvoiceSchema = z.object({
+  id: z.number().int().readonly(),
+  custom_id: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  total: z.string().optional().nullable(),
+  patient: z.number().int().optional().nullable(),
+})
+export type Invoice = z.infer<typeof InvoiceSchema>
+
+/**
+ * Schema mínimo para Payment
+ */
+export const PaymentSchema = z.object({
+  id: z.number().int().readonly(),
+  invoice: z.number().int().optional().nullable(),
+  amount: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  method: z.string().optional().nullable(),
+})
+export type Payment = z.infer<typeof PaymentSchema>
+
+/**
+ * Schema mínimo para Check-in de recepção
+ */
+export const CheckinSchema = z.object({
+  id: z.number().int().readonly(),
+  patient: z.number().int().optional().nullable(),
+  status: z.string().optional().nullable(),
+  number: z.string().optional().nullable(),
+})
+export type Checkin = z.infer<typeof CheckinSchema>
+
+/**
+ * Schema mínimo para ordens de integração de equipamentos
+ */
+export const IntegrationOrderSchema = z.object({
+  id: z.number().int().readonly(),
+  custom_id: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  request: z.number().int().optional().nullable(),
+})
+export type IntegrationOrder = z.infer<typeof IntegrationOrderSchema>
+
+/**
  * Schema para Resposta de Token (Login)
  */
 export const TokenResponseSchema = z.object({

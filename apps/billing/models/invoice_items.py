@@ -446,7 +446,31 @@ class InvoiceItem(NoNameCoreModel):
                 if campo != campo_esperado and informado:
                     raise ValidationError({campo: "Remova esta referência, ela não corresponde ao type."})
 
-        # Sem restrição de origem: permite combinar múltiplos tipos na mesma invoice.
+        # Restrições por origem da fatura: mistura só é permitida em invoices MIXED.
+        origem_permitida = {
+            self.invoice.Origin.CLINICAL: {self.TipoItem.EXAME, self.TipoItem.EXAME_MEDICO},
+            self.invoice.Origin.PHARMACY: {self.TipoItem.ITEM_VENDA},
+            self.invoice.Origin.NURSING: {self.TipoItem.PROCEDIMENTO_ITEM, self.TipoItem.PROCEDIMENTO_MATERIAL},
+            self.invoice.Origin.CONSULTATION: {self.TipoItem.CONSULTATION},
+            self.invoice.Origin.SURGERY: {
+                self.TipoItem.PROCEDIMENTO_ITEM,
+                self.TipoItem.PROCEDIMENTO_MATERIAL,
+                self.TipoItem.EXAME_MEDICO,
+            },
+            self.invoice.Origin.MIXED: {
+                self.TipoItem.EXAME,
+                self.TipoItem.EXAME_MEDICO,
+                self.TipoItem.ITEM_VENDA,
+                self.TipoItem.PROCEDIMENTO_ITEM,
+                self.TipoItem.PROCEDIMENTO_MATERIAL,
+                self.TipoItem.CONSULTATION,
+                self.TipoItem.AJUSTE,
+            },
+        }
+
+        tipos_permitidos = origem_permitida.get(self.invoice.origin, origem_permitida[self.invoice.Origin.MIXED])
+        if self.item_type not in tipos_permitidos:
+            raise ValidationError({"item_type": "Tipo de item incompatível com a origem da fatura."})
 
         if self.tenant_id and self.invoice_id and self.tenant_id != self.invoice.tenant_id:
             raise ValidationError("Item e invoice devem pertencer ao mesmo tenant.")

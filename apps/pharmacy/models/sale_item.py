@@ -181,11 +181,12 @@ class SaleItem(CoreModel):
         criando = self.pk is None  # Flag para saber se é criação
 
         # Sempre herda o preço do lote disponível (FEFO). Se não houver, cai para o produto.
-        first_lot = Lot.disponiveis(self.product).first()  # Busca primeiro lote disponível
-        if first_lot:
-            self.unit_price = first_lot.sale_price  # Usa preço do lote
-        else:
-            self.unit_price = Lot.sale_price_for_product(self.product)  # Fallback para produto
+        if self.unit_price is None:
+            first_lot = Lot.disponiveis(self.product).first()  # Busca primeiro lote disponível
+            if first_lot:
+                self.unit_price = first_lot.sale_price  # Usa preço do lote
+            else:
+                self.unit_price = Lot.sale_price_for_product(self.product)  # Fallback para produto
 
         if not self.name:
             self.name = f"Item {self.product.name}"  # Nome default
