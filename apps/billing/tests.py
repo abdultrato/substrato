@@ -1,3 +1,5 @@
+"""Testes de faturamento com comentários explicativos."""
+
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -29,10 +31,12 @@ from core.constants.medical_exam.medical_exam_sector import MedicalExamSector
 
 
 def _tenant():
+    """Cria tenant de teste para faturamento."""
     return Tenant.objects.create(identifier="tn-fat", name="Tenant Fat")
 
 
 def _patient(tenant):
+    """Helper para criar paciente básico."""
     return Patient.objects.create(
         tenant=tenant,
         name="Paciente Fat",
@@ -42,6 +46,7 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    """Cria exame laboratorial padrão."""
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma",
@@ -52,6 +57,7 @@ def _exam(tenant):
 
 
 def _medical_exam(tenant):
+    """Cria exame médico padrão."""
     return MedicalExam.objects.create(
         tenant=tenant,
         name="Ecografia abdominal",
@@ -62,6 +68,7 @@ def _medical_exam(tenant):
 
 
 def _horario_normal():
+    """Retorna horário normal (sem multa de horário)."""
     return datetime(2024, 1, 2, 10, 0, tzinfo=timezone.get_current_timezone())
 
 

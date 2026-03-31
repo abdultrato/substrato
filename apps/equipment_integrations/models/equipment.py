@@ -1,3 +1,5 @@
+"""Equipamentos integrados (HL7/ASTM/DICOM/HTTP) e seus metadados."""
+
 from django.db import models
 
 from core.models.base import CoreModel
@@ -12,7 +14,7 @@ class IntegrationEquipment(CoreModel):
     pipeline de integração.
     """
 
-    prefix = "EQP"
+    prefix = "EQP"  # Prefixo para IDs amigáveis
 
     class Modalidade(models.TextChoices):
         ECG = "ECG", "Eletrocardiograma"

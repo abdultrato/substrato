@@ -17,3 +17,4 @@ class PlanResolutionService:
 
 
 __all__ = ["PlanResolutionService"]
+"""Resolve plano aplicável para paciente/procedimento."""

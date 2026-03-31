@@ -1,3 +1,5 @@
+"""QuerySets customizados usados pelos managers do core."""
+
 from django.db import models
 
 

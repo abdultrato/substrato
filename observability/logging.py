@@ -36,3 +36,4 @@ class APILoggingMiddleware:
 
 def enrich_log(record, request):
     record.tenant_id = getattr(request, "tenant", None)
+"""Configuração e utilidades de logging estruturado."""

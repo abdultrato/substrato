@@ -1,4 +1,4 @@
-# LOCAL: aplicativos/clinico/models/result_item.py
+"""Valores de resultado por campo de exame, com validação e eventos."""
 
 from decimal import Decimal, InvalidOperation
 
@@ -21,9 +21,11 @@ User = settings.AUTH_USER_MODEL
 
 
 class ResultItem(TenantPropagationMixin, NoNameCoreModel):
-    tenant_source = "user"
+    """Linha de resultado para um campo específico do exame."""
 
-    prefix = "RES"
+    tenant_source = "user"  # Propaga tenant via usuário responsável
+
+    prefix = "RES"  # Prefixo para IDs amigáveis
 
     result = models.ForeignKey(
 

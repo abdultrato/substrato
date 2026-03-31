@@ -1,1 +1,1 @@
-"""Accounting event subscribers."""
+"""Inscrição de handlers para eventos contábeis."""

@@ -8,13 +8,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class ProcedureCatalog(CoreModel):
-    """
-    Catálogo de procedures de enfermagem.
-
-    Usado como base para:
-    - value padrão (`default_price`)
-    - materiais padrão (`materiais_padrao`)
-    """
+    """Catálogo de procedimentos de enfermagem (preço e materiais padrão)."""
 
     prefix = "PCAT"
 

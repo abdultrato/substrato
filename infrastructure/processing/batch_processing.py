@@ -1,3 +1,5 @@
+"""Helpers para processar coleções em lotes com callbacks."""
+
 # infraestrutura/processamento/batch_processing.py
 
 from collections.abc import Callable

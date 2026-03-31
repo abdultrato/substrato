@@ -1,3 +1,5 @@
+"""Serviço central de cobrança recorrente e excedentes por tenant."""
+
 from decimal import Decimal
 
 from django.db import transaction

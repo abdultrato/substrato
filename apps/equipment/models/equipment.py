@@ -1,3 +1,5 @@
+"""Equipamento físico/operacional do hospital."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -6,11 +8,9 @@ from core.models.base import CoreModel
 
 
 class Equipment(CoreModel):
-    """
-    Equipamento físico/operacional da empresa.
-    """
+    """Dados de identificação e estado de um equipamento."""
 
-    prefix = "EQP"
+    prefix = "EQP"  # Prefixo para IDs amigáveis
 
     class AcquisitionStatus(models.TextChoices):
         NEW = "NOVO", "Novo"

@@ -1,3 +1,5 @@
+"""Serviço para ler/alterar o modo de manutenção do sistema."""
+
 from system.maintenance import ativar, desativar, esta_active
 
 

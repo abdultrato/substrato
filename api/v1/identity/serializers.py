@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
@@ -32,7 +32,7 @@ class ProfessionalProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
+    password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)  # Não retorna senha
 
     class Meta:
         model = User
@@ -40,6 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = CORE_READ_ONLY_FIELDS
 
     def create(self, validated_date):
+        # Criação: define senha ou bloqueia login se ausente.
         password = validated_date.pop("password", None)
         user = super().create(validated_date)
         if password:
@@ -50,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_date):
+        # Atualização: só mexe na senha se fornecida.
         password = validated_date.pop("password", None)
         user = super().update(instance, validated_date)
         if password:

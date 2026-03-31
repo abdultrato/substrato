@@ -119,3 +119,4 @@ class BaseRolePermission(permissions.BasePermission):
                 extra={"error": str(error)},
             )
             return False
+"""Classes base de permissões customizadas."""

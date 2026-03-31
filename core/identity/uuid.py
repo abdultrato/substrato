@@ -1,3 +1,5 @@
+"""Helpers de UUID (geração, normalização e validação)."""
+
 from uuid import UUID, uuid4
 
 

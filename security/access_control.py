@@ -9,3 +9,4 @@ def user_can_access(user, resource):
 
 
 user_pode_acessar = user_can_access
+"""Verificações simples de controle de acesso contextual."""

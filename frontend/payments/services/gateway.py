@@ -1,3 +1,5 @@
+"""Contrato de gateway de pagamento usado pelo frontend anterior."""
+
 class PagamentoGateway:
     """
     Compatibility shim for the old payment gateway contract.

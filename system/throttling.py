@@ -1,3 +1,5 @@
+"""Policies DRF de throttling padrão (burst/sustained, anônimos e usuários)."""
+
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 

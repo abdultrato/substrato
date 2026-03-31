@@ -17,3 +17,4 @@ class SaleService:
         )
 
 
+"""Processa vendas de itens de farmácia."""

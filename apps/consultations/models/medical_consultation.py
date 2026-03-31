@@ -1,3 +1,5 @@
+"""Consultas médicas com cálculo de preço por horário/feriado."""
+
 from __future__ import annotations
 
 from decimal import ROUND_HALF_UP, Decimal
@@ -19,14 +21,14 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class MedicalConsultation(NoNameCoreModel):
     """
-    App comercial: consultations médicas (marcação + record).
+    App comercial: consultas médicas (marcação + record).
 
     - Relaciona patient e médico
     - Guarda preço da consultation
     - Permite vincular faturamento (via Fatura.origin=CONSULTA)
     """
 
-    prefix = "CONS"
+    prefix = "CONS"  # Prefixo para IDs amigáveis
 
     class Status(models.TextChoices):
         SCHEDULED = "MARCADA", "Marcada"

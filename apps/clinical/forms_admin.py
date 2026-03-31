@@ -1,7 +1,11 @@
+"""Helpers de formset para agrupar itens de resultado por exame no admin."""
+
 from django.forms.models import BaseInlineFormSet
 
 
 class ResultItemInlineFormSet(BaseInlineFormSet):
+    """Formset que pré-carrega relações e expõe agrupamento por exame."""
+
     def get_queryset(self):
         qs = super().get_queryset()
 
@@ -9,7 +13,7 @@ class ResultItemInlineFormSet(BaseInlineFormSet):
             "exam_field__exam__name", "exam_field__name"
         )
 
-    # used para agrupar no template
+    # usado para agrupar no template
     def items_by_exam(self):
         grupos = {}
 
@@ -21,5 +25,6 @@ class ResultItemInlineFormSet(BaseInlineFormSet):
         return grupos
 
 
+# Aliases legados
 ResultadoItemInlineFormSet = ResultItemInlineFormSet
 itens_por_exam = ResultItemInlineFormSet.items_by_exam

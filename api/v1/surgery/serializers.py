@@ -1,3 +1,5 @@
+"""Serializers DRF para cirurgias e procedimentos cirúrgicos."""
+
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin

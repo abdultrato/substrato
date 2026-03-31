@@ -92,3 +92,4 @@ class InvoiceService(BaseService):
     def _refresh_totals(invoice: Invoice):
         invoice.persist_totals()
 
+"""Criação, atualização e envio de faturas no ciclo de cobrança."""

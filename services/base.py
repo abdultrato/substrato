@@ -1,3 +1,5 @@
+"""Classes utilitárias base para serviços (atomicidade, resultados)."""
+
 # servicos/base.py
 
 from functools import wraps
@@ -6,6 +8,8 @@ from django.db import transaction
 
 
 class ServiceResult:
+    """Objeto simples para carregar resultado de operações de serviço."""
+
     def __init__(self, success: bool, date=None, error: str | None = None):
         self.success = success
         self.date = date
@@ -13,6 +17,8 @@ class ServiceResult:
 
 
 class BaseService:
+    """Fornece helpers de sucesso/erro e decorador atômico."""
+
     @classmethod
     def ok(cls, date=None):
         return ServiceResult(True, date=date)

@@ -1,10 +1,10 @@
+"""Tipos de documento pessoais e institucionais (enum codificado)."""
+
 from django.db import models
 
 
 class DocumentType(models.TextChoices):
-    """
-    Tipos de documento pessoais e institucionais.
-    """
+    """Enum de documentos de identificação suportados."""
 
     BI = "BI", "Bilhete de Identidade"
     PASSAPORTE = "PASS", "Passaporte"

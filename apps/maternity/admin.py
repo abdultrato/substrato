@@ -21,6 +21,6 @@ class PregnancyAdmin(CoreAdmin):
     )
     list_filter = ("status",)
     search_fields = ("patient__name", "responsible_doctor__name")
-    ordering = ("-created_at", "-id")
+    ordering = ("-created_at", "-id")  # Registos mais recentes primeiro
 
 

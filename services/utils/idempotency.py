@@ -3,3 +3,4 @@ def build_idempotency_key(*parts):
     if not normalized:
         raise ValueError("É necessário informar pelo menos uma parte da chave.")
     return ":".join(normalized)
+"""Decoradores/helpers para idempotência em serviços."""

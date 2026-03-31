@@ -132,3 +132,4 @@ LOGGING = {
         "level": LOG_LEVEL,
     },
 }
+"""Configuração de logging (handlers, formatters, loggers) do projeto."""

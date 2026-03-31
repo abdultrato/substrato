@@ -12,7 +12,7 @@ class Vacation(NoNameCoreModel):
     Registo de férias (MVP).
     """
 
-    prefix = "FER"
+    prefix = "FER"  # Prefixo custom_id
 
     class Status(models.TextChoices):
         REQUESTED = "SOLIC", "Solicitada"
@@ -20,34 +20,36 @@ class Vacation(NoNameCoreModel):
         TAKEN = "GOZADA", "Gozada"
         CANCELED = "CANCEL", "Cancelada"
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário que goza férias
         "recursos_humanos.Employee",
-
         db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="ferias",
         db_index=True,
     )
 
-    start_date = models.DateField(
-
+    start_date = models.DateField(  # Início das férias
         db_column="start_date",
-
-        default=timezone.now, db_index=True)
-    end_date = models.DateField(
+        default=timezone.now,
+        db_index=True,
+    )
+    end_date = models.DateField(  # Fim das férias
         db_column="end_date",
-        default=timezone.now, db_index=True)
-    status = models.CharField(
+        default=timezone.now,
+        db_index=True,
+    )
+    status = models.CharField(  # Estado do pedido
         db_column="status",
         max_length=10,
         choices=Status.choices,
         default=Status.REQUESTED,
         db_index=True,
     )
-    notes = models.TextField(
+    notes = models.TextField(  # Observações/justificativa
         db_column="notes",
-        blank=True, default="")
+        blank=True,
+        default="",
+    )
 
     class Meta:
         db_table = "recursos_humanos_ferias"

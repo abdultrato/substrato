@@ -1,3 +1,5 @@
+"""Registro dinâmico de gateways de pagamento suportados."""
+
 from importlib import import_module
 
 from django.conf import settings

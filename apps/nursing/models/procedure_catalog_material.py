@@ -10,9 +10,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class ProcedureCatalogMaterial(TenantPropagationMixin, NoNameCoreModel):
-    """
-    Materiais padrão utilizados por um item do catálogo.
-    """
+    """Materiais padrão sugeridos para um procedimento do catálogo."""
 
     tenant_source = "catalog"
     prefix = "PCM"

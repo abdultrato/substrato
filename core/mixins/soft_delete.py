@@ -1,4 +1,4 @@
-# LOCAL: nucleo/mixins/soft_delete.py
+"""Soft delete com flag `deleted` e timestamps, preservando registros."""
 
 from django.db import models
 from django.utils import timezone

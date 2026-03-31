@@ -23,4 +23,4 @@ class InspecaoDiariaAdmin(admin.ModelAdmin):
         "equipment__name",
         "equipment__serial_number",
     )
-    ordering = ("-date",)
+    ordering = ("-date",)  # Mostra inspeções mais recentes primeiro

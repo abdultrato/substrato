@@ -1,3 +1,5 @@
+"""Handler para registrar histórico quando um resultado é validado."""
+
 from core.constants.clinical_event_type import ClinicalEventType
 
 

@@ -36,7 +36,7 @@ class MedicalRecordEntryAdmin(CoreAdmin):
     )
     list_filter = ("status",)
     search_fields = ("patient__name", "doctor__name", "diagnosis")
-    ordering = ("-care_start_at", "-created_at")
+    ordering = ("-care_start_at", "-created_at")  # Atendimentos mais recentes primeiro
 
     filter_horizontal = ("consultations",)
     inlines = [PrescricaoItemInline]

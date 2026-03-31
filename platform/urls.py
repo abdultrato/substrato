@@ -1,3 +1,5 @@
+"""Roteamento principal do projeto (admin, APIs, health checks, docs)."""
+
 from importlib.util import find_spec
 
 from django.conf import settings

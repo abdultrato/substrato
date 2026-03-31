@@ -1,0 +1,1 @@
+"""Utilitários genéricos de infraestrutura."""

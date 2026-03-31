@@ -7,3 +7,4 @@ def check_connection(probe: Callable[[], object]) -> bool:
     except Exception:
         return False
     return True
+"""Helpers para obter/reusar conexões externas (e.g., banco, serviços)."""

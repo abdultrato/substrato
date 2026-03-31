@@ -1,3 +1,5 @@
+"""Serviços para recuperar valores de referência clínicos por sexo/idade."""
+
 from django.db.models import Q
 
 from apps.clinical.models.clinical_reference import ClinicalReference

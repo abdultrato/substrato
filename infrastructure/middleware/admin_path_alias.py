@@ -1,3 +1,5 @@
+"""Middleware que permite aliases adicionais para a rota do admin do Django."""
+
 from typing import Dict
 
 

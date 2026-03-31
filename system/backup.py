@@ -1,3 +1,5 @@
+"""Rotinas de backup/restore simplificadas via processos externos."""
+
 import os
 import subprocess
 

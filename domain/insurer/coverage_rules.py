@@ -1,7 +1,7 @@
+"""Cálculo de valor coberto por percentual de plano."""
+
+
 def calculate_covered_value(total_value, percentage):
-    """
-    Calcula o valor coberto com base no percentual informado.
-    """
     return (total_value * percentage) / 100
 
 

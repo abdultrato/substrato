@@ -1,3 +1,5 @@
+"""Middleware que registra eventos de auditoria multi-tenant."""
+
 from django.conf import settings
 
 from apps.audit_activities.models.user_activity import UserActivity

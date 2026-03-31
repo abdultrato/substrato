@@ -1,3 +1,5 @@
+"""Value object de dinheiro com arredondamento HALF_UP."""
+
 from decimal import ROUND_HALF_UP, Decimal
 
 

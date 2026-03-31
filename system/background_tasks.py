@@ -1,3 +1,5 @@
+"""Endpoints para acompanhar tarefas em background e timestamps."""
+
 from django.utils.timezone import now
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response

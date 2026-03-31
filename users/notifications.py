@@ -21,3 +21,4 @@ class NotificationsView(APIView):
                 "requisicoes_hoje": requests_today,
             }
         )
+"""Funções de notificação específicas a eventos de usuários."""

@@ -8,9 +8,7 @@ from core.models.base import CoreModel, NoNameCoreModel
 
 
 class Ward(CoreModel):
-    """
-    Enfermaria (sector/ala) para gestão de camas e internamentos.
-    """
+    """Enfermaria/ala para gestão de camas e internamentos."""
 
     prefix = "ENF"
 
@@ -37,9 +35,7 @@ class Ward(CoreModel):
 
 
 class WardBed(NoNameCoreModel):
-    """
-    Cama vinculada a uma ward.
-    """
+    """Cama vinculada a uma enfermaria."""
 
     prefix = "CAMA"
 
@@ -101,11 +97,7 @@ class WardBed(NoNameCoreModel):
 
 
 class WardAdmission(NoNameCoreModel):
-    """
-    Internamento (ocupação) de uma bed por um patient.
-
-    MVP: inclui próxima medicação como campo (pode ser alimentado pela enfermagem).
-    """
+    """Internamento/ocupação de uma cama por um paciente (inclui próxima medicação)."""
 
     prefix = "INT"
 

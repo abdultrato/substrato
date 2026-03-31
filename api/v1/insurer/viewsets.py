@@ -8,11 +8,8 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
-    "CoveragePlanViewSet",
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "CoveragePlanViewSet",
     "InsurerViewSet",
-    "InsurerViewSet",
-    "ProcedureAuthorizationViewSet",
     "ProcedureAuthorizationViewSet",
 ]

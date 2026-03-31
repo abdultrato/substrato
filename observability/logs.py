@@ -17,3 +17,4 @@ def warning(msg):
 
 error = error
 aviso = warning
+"""Helpers para leitura/filtragem de logs operacionais."""

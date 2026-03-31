@@ -1,3 +1,5 @@
+"""Configuração do admin para Cirurgias e procedimentos cirúrgicos."""
+
 from django.contrib import admin
 
 from .models.surgery import Surgery
@@ -5,6 +7,7 @@ from .models.surgical_procedure import SurgicalProcedure
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base admin com filtros padrões e auditoria read-only."""
     list_filter = ("deleted",)
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
@@ -13,6 +16,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(Surgery)
 class CirurgiaAdmin(CoreAdmin):
+    """Administra cirurgias (agendamento, paciente, cirurgião, status)."""
     list_display = (
         "scheduled_for",
         "patient",
@@ -29,6 +33,7 @@ class CirurgiaAdmin(CoreAdmin):
     autocomplete_fields = ("patient", "surgeon", "procedures")
 
     def procedures_lista(self, obj):
+        """Lista resumida de procedimentos associados (fallback para texto livre)."""
         nomes = list(obj.procedures.values_list("name", flat=True)[:3])
         if not nomes and (obj.procedure or "").strip():
             return obj.procedure
@@ -41,6 +46,7 @@ class CirurgiaAdmin(CoreAdmin):
 
 @admin.register(SurgicalProcedure)
 class ProcedimentoCirurgicoAdmin(CoreAdmin):
+    """Catálogo de procedimentos cirúrgicos."""
     list_display = ("name", "base_price", "vat_percentage", "applies_vat_by_default", "active", "created_at")
     list_filter = ("active", "deleted")
     search_fields = ("name", "description", "custom_id")

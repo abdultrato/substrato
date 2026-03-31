@@ -24,3 +24,4 @@ class AuthorizationService:
         return authorization
 
 
+"""Fluxo de autorização de procedimentos junto à seguradora."""

@@ -14,23 +14,14 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
-    "AbsenceViewSet",
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "AbsenceViewSet",
     "EmployeeViewSet",
-    "EmployeeViewSet",
-    "FamilyDependentViewSet",
     "FamilyDependentViewSet",
     "JobTitleViewSet",
-    "JobTitleViewSet",
-    "OvertimeViewSet",
     "OvertimeViewSet",
     "PayrollViewSet",
-    "PayrollViewSet",
-    "TerminationViewSet",
     "TerminationViewSet",
     "VacationViewSet",
-    "VacationViewSet",
-    "WorkScheduleViewSet",
     "WorkScheduleViewSet",
 ]

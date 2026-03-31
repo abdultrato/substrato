@@ -1,5 +1,7 @@
-from datetime import timedelta
-from decimal import Decimal
+"""Testes de integração da app de farmácia com comentários em português."""
+
+from datetime import timedelta  # Para manipular datas de validade
+from decimal import Decimal  # Para valores monetários
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -16,10 +18,12 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():
+    """Cria tenant de teste."""
     return Tenant.objects.create(identifier="tn-far", name="Tenant Farmacia")
 
 
 def _product(tenant):
+    """Cria produto padrão para os testes."""
     cat = ProductCategory.objects.create(tenant=tenant, name="Categoria", description="")
     return Product.objects.create(
         tenant=tenant,
@@ -31,6 +35,7 @@ def _product(tenant):
 
 
 def _lot(product, expiration_date_days=30, quantity=10):
+    """Cria lote com quantidade e validade configuráveis."""
     return Lot.objects.create(
         tenant=product.tenant,
         product=product,
@@ -42,6 +47,7 @@ def _lot(product, expiration_date_days=30, quantity=10):
 
 @pytest.mark.django_db
 def test_product_required_fields():
+    """Verifica campos obrigatórios do produto."""
     tenant = _tenant()
     product = _product(tenant)
     assert product.tenant == tenant
@@ -50,6 +56,7 @@ def test_product_required_fields():
 
 @pytest.mark.django_db
 def test_lot_imutavel_number_e_quantity():
+    """Garante que número e quantidade inicial do lote são imutáveis."""
     tenant = _tenant()
     prod = _product(tenant)
     lot = _lot(prod, quantity=5)
@@ -64,6 +71,7 @@ def test_lot_imutavel_number_e_quantity():
 
 @pytest.mark.django_db
 def test_inventory_movement_output_reduces_lot():
+    """Confere que saída de estoque reduz o saldo do lote."""
     tenant = _tenant()
     prod = _product(tenant)
     lot = _lot(prod, quantity=5)
@@ -87,6 +95,7 @@ def test_inventory_movement_output_reduces_lot():
 
 @pytest.mark.django_db
 def test_sale_itens_e_total():
+    """Valida quantidade de itens e total calculado da venda."""
     tenant = _tenant()
     Patient.objects.create(tenant=tenant, name="Cliente", gender="Masculino", address_street="Rua Z")
     prod = _product(tenant)

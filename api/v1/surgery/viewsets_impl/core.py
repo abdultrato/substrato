@@ -1,3 +1,5 @@
+"""ViewSets da API v1 para cirurgias e catálogo cirúrgico."""
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError

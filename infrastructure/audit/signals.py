@@ -1,3 +1,5 @@
+"""Signals de auditoria para preencher campos created_by/updated_by."""
+
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 

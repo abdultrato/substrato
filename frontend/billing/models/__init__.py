@@ -1,3 +1,5 @@
+"""Aliases de modelos de faturamento expostos ao frontend antigo."""
+
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory as HistoricoFinanceiro
 from apps.clinical.models.lab_exam import LabExam

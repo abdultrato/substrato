@@ -12,6 +12,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class Procedure(NoNameCoreModel):
+    """Procedimento de enfermagem com itens de serviço e materiais."""
     prefix = "PROC"
 
     patient = models.ForeignKey(

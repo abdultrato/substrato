@@ -1,7 +1,5 @@
 class TenantPropagationMixin:
-    """
-    Automatically propagates the tenant from a related object.
-    """
+    """Propaga automaticamente o tenant de um campo relacionado (`tenant_source`)."""
 
     tenant_source = None
 

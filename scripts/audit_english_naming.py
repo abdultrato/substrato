@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Runner para checar convenções de nomes em inglês no código."""
 from pathlib import Path
 import sys
 

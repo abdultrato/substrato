@@ -92,3 +92,4 @@ __all__ = [
     "register_error",
     "register_request",
 ]
+"""Coleta e envio de métricas técnicas e de negócio."""

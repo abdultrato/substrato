@@ -1,3 +1,5 @@
+"""Mixin para timestamps `created_at` e `updated_at` auto-managed."""
+
 from django.db import models
 from django.utils import timezone
 

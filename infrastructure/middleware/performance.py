@@ -1,3 +1,5 @@
+"""Middleware que registra tempo de resposta e detecta requisições lentas."""
+
 import logging
 import time
 

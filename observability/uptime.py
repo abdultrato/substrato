@@ -20,3 +20,4 @@ class UptimeView(APIView):
                 "started_at": now().timestamp() - uptime_seconds,
             }
         )
+"""Helpers para verificação de uptime e disponibilidade."""

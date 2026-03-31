@@ -1,3 +1,5 @@
+"""Especialidade de consulta com preço base e IVA."""
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -12,12 +14,12 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 class ConsultationSpecialty(CoreModel):
     """
-    Especialidade / type de consultation com preço base.
+    Especialidade / tipo de consulta com preço base.
 
     O frontend usa esta tabela como "choices" na marcação.
     """
 
-    prefix = "ESP"
+    prefix = "ESP"  # Prefixo para IDs amigáveis
 
     description = models.TextField(
 

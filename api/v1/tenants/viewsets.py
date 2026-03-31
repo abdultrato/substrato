@@ -10,14 +10,10 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "FeatureFlagTenantViewSet",
     "SubscriptionPlanViewSet",
-    "SubscriptionPlanViewSet",
-    "TenantConfigurationViewSet",
     "TenantConfigurationViewSet",
     "TenantUsageViewSet",
-    "TenantUsageViewSet",
-    "TenantViewSet",
     "TenantViewSet",
 ]

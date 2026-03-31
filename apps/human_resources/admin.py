@@ -12,10 +12,10 @@ from .models.work_schedule import WorkSchedule
 
 
 class CoreAdmin(admin.ModelAdmin):
-    list_filter = ("deleted",)
-    search_fields = ("custom_id",)
-    readonly_fields = ("created_at", "updated_at")
-    ordering = ("-created_at",)
+    list_filter = ("deleted",)  # Reaproveita soft delete
+    search_fields = ("custom_id",)  # Busca rápida pelo ID amigável
+    readonly_fields = ("created_at", "updated_at")  # Campos de auditoria
+    ordering = ("-created_at",)  # Ordem padrão decrescente
 
 
 class FamilyDependentInline(admin.TabularInline):
@@ -33,8 +33,8 @@ class FamilyDependentInline(admin.TabularInline):
 
 @admin.register(JobTitle)
 class JobTitleAdmin(CoreAdmin):
-    list_display = ("name", "is_doctor", "tenant", "created_at")
-    list_filter = ("is_doctor",)
+    list_display = ("name", "is_doctor", "tenant", "created_at")  # Colunas visíveis
+    list_filter = ("is_doctor",)  # Filtra médicos
     search_fields = ("name",)
     ordering = ("name",)
 
@@ -45,7 +45,7 @@ class EmployeeAdmin(CoreAdmin):
     list_filter = ("status", "role")
     search_fields = ("name", "profession", "email", "phone")
     ordering = ("name",)
-    inlines = [FamilyDependentInline]
+    inlines = [FamilyDependentInline]  # Mostra dependentes na mesma tela
 
 
 @admin.register(FamilyDependent)
@@ -54,7 +54,7 @@ class FamilyDependentAdmin(CoreAdmin):
     list_filter = ("relationship", "lives_with_employee")
     search_fields = ("name", "employee__name")
     ordering = ("name",)
-    autocomplete_fields = ("employee",)
+    autocomplete_fields = ("employee",)  # Evita dropdowns grandes
 
 
 @admin.register(WorkSchedule)
@@ -98,4 +98,4 @@ class PayrollAdmin(CoreAdmin):
     ordering = ("-year", "-month", "-created_at")
 
 
-AgregadoFamiliarInline = FamilyDependentInline
+AgregadoFamiliarInline = FamilyDependentInline  # Alias legado

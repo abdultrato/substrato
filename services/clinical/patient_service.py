@@ -6,3 +6,4 @@ class PatientService:
     def register(self, date):
         validate_age(date["birth_date"])
         return Patient.objects.create(**date)
+"""Operações de conveniência relacionadas a pacientes."""

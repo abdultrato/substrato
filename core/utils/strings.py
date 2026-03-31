@@ -1,3 +1,5 @@
+"""Helpers de manipulação de strings (compactar, truncar)."""
+
 import re
 
 

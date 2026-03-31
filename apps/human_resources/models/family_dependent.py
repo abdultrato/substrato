@@ -11,7 +11,7 @@ class FamilyDependent(CoreModel):
     Agregado familiar que vive com o funcionário (dependente).
     """
 
-    prefix = "AGF"
+    prefix = "AGF"  # Prefixo de custom_id
 
     class Parentesco(models.TextChoices):
         CONJUGE = "CONJUGE", "Cônjuge"
@@ -20,10 +20,8 @@ class FamilyDependent(CoreModel):
         IRMAO = "IRMAO", "Irmão(ã)"
         OUTRO = "OUTRO", "Outro"
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário responsável
         "recursos_humanos.Employee",
-
         db_column="employee_id",
         verbose_name="Funcionário",
         on_delete=models.CASCADE,
@@ -31,10 +29,8 @@ class FamilyDependent(CoreModel):
         db_index=True,
     )
 
-    relationship = models.CharField(
-
+    relationship = models.CharField(  # Grau de parentesco
         db_column="relationship",
-
         verbose_name="Grau de relationship",
         max_length=20,
         choices=Parentesco.choices,
@@ -42,45 +38,37 @@ class FamilyDependent(CoreModel):
         db_index=True,
     )
 
-    birth_date = models.DateField(
-
+    birth_date = models.DateField(  # Data de nascimento do dependente
         db_column="birth_date",
-
         verbose_name="Data de nascimento",
         null=True,
         blank=True,
     )
 
-    phone = models.CharField(
-
+    phone = models.CharField(  # Contato do dependente
         db_column="phone",
-
         verbose_name="Telefone",
         max_length=30,
         blank=True,
         default="",
     )
 
-    lives_with_employee = models.BooleanField(
-
+    lives_with_employee = models.BooleanField(  # Mora na mesma residência
         db_column="lives_with_employee",
-
         verbose_name="Vive com o funcionário",
         default=True,
         db_index=True,
     )
 
-    notes = models.TextField(
-
+    notes = models.TextField(  # Observações internas
         db_column="notes",
-
         verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
-        db_table = "recursos_humanos_agregadofamiliar"
+        db_table = "recursos_humanos_agregadofamiliar"  # Nome legado
         verbose_name = "Agregado Familiar"
         verbose_name_plural = "Agregados Familiares"
         ordering = ["name"]

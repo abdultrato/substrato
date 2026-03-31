@@ -38,3 +38,4 @@ def __getattr__(name: str):
     value = getattr(import_module(module_name), attr_name)
     globals()[name] = value
     return value
+"""Utilidades e integrações de segurança (auth, ACL, crypto, rate limiting)."""

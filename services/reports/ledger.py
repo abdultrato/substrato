@@ -29,3 +29,4 @@ class LedgerService:
         )
 
 
+"""Exporta relatórios de lançamentos/razão."""

@@ -1,5 +1,5 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated  # Restringe acesso
+from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.human_resources.models.absence import Absence
@@ -37,7 +37,7 @@ from ..serializers import (
 
 
 class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # Autenticado + escopo tenant
 
 
 class JobTitleViewSet(TenantScopedModelViewSet):

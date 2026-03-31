@@ -1,3 +1,5 @@
+"""Modelo de exame médico (imagem/relatório) com regras de resultado."""
+
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -97,7 +99,7 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
     """
 
     tenant_source = "patient"
-    prefix = "EXM"
+    prefix = "EXM"  # Prefixo para IDs amigáveis
 
     turnaround_hours = models.PositiveIntegerField(
 

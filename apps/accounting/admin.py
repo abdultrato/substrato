@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para o módulo de contabilidade."""
+
 from django.contrib import admin
 from django.db.models import Sum
 
@@ -16,6 +18,7 @@ from .models.legacy_movement import LegacyMovement
 
 @admin.register(Account)
 class ContaAdmin(admin.ModelAdmin):
+    """Administra contas (somente leitura para exclusão)."""
     list_display = (
         "custom_id",
         "name",
@@ -41,6 +44,7 @@ class ContaAdmin(admin.ModelAdmin):
 
 
 class LedgerLineInline(admin.TabularInline):
+    """Exibe linhas contábeis de forma somente leitura dentro de LedgerEntry."""
     model = LedgerLine
     extra = 0
     can_delete = False
@@ -63,6 +67,7 @@ class LedgerLineInline(admin.TabularInline):
 
 @admin.register(LedgerEntry)
 class LedgerEntryAdmin(admin.ModelAdmin):
+    """Visualização de lançamentos contábeis imutáveis."""
     list_display = (
         "id",
         "accounting_date",
@@ -106,6 +111,7 @@ class LedgerEntryAdmin(admin.ModelAdmin):
 
 @admin.register(AccountBalance)
 class AccountBalanceAdmin(admin.ModelAdmin):
+    """Snapshot materializado de saldo por conta (somente leitura)."""
     list_display = (
         "account",
         "current_balance",
@@ -132,6 +138,7 @@ class AccountBalanceAdmin(admin.ModelAdmin):
 
 
 class LegacyMovementInline(admin.TabularInline):
+    """Inline de movimentos legados exibidos em LegacyEntry."""
     model = LegacyMovement
     extra = 0
     can_delete = False
@@ -153,6 +160,7 @@ class LegacyMovementInline(admin.TabularInline):
 
 @admin.register(LegacyEntry)
 class LegacyEntryAdmin(admin.ModelAdmin):
+    """Admin de lançamentos legados com totais agregados."""
     list_display = (
         "id",
         "description",
@@ -167,10 +175,10 @@ class LegacyEntryAdmin(admin.ModelAdmin):
     inlines = [LegacyMovementInline]
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request)  # Queryset base
         return qs.annotate(
-            total_deb=Sum("movimentos__debit"),
-            total_cred=Sum("movimentos__credit"),
+            total_deb=Sum("movimentos__debit"),  # Soma débitos
+            total_cred=Sum("movimentos__credit"),  # Soma créditos
         )
 
     def total_debitos(self, obj):
@@ -199,6 +207,7 @@ class LegacyEntryAdmin(admin.ModelAdmin):
 
 @admin.register(LegacyMovement)
 class LegacyMovementAdmin(admin.ModelAdmin):
+    """Admin de movimentos legados standalone (somente leitura)."""
     list_display = (
         "entry",
         "account",
@@ -228,6 +237,7 @@ class LegacyMovementAdmin(admin.ModelAdmin):
 
 @admin.register(FinancialReconciliation)
 class ConciliacaoFinanceiraAdmin(admin.ModelAdmin):
+    """Admin de conciliações financeiras (somente leitura)."""
     list_display = (
         "invoice",
         "accounting_value",

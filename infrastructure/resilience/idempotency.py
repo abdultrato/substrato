@@ -1,3 +1,5 @@
+"""Utilitários para tornar handlers idempotentes usando cache."""
+
 from functools import wraps
 from hashlib import sha256
 import json

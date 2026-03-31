@@ -1,3 +1,5 @@
+"""Views utilitárias para inspecionar/limpar cache."""
+
 from django.core.cache import cache
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response

@@ -4,7 +4,7 @@ from django.db import models
 
 
 class PasswordResetToken(models.Model):
-    user = models.ForeignKey(
+    user = models.ForeignKey(  # Dono do token
         "identidade.User",
         verbose_name="Usuário",
         on_delete=models.CASCADE,
@@ -12,12 +12,14 @@ class PasswordResetToken(models.Model):
         db_index=True,
     )
 
-    token = models.CharField("Token", max_length=128, unique=True, db_index=True, blank=True)
-    used = models.BooleanField(
+    token = models.CharField("Token", max_length=128, unique=True, db_index=True, blank=True)  # Segredo
+    used = models.BooleanField(  # Evita reuso
         db_column="used",
         verbose_name="Utilizado",
-        default=False, db_index=True)
-    created_at = models.DateTimeField(
+        default=False,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(  # Controle de expiração/ordenação
         db_column="created_at",
         verbose_name="Criado em",
         auto_now_add=True,

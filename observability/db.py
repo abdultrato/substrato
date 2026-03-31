@@ -22,3 +22,4 @@ class DatabaseStatusView(APIView):
                 "engine": connection.vendor,
             }
         )
+"""Checks e utilidades de saúde do banco de dados para monitoramento."""

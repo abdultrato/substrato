@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para consultas médicas."""
+
 from django.contrib import admin
 
 from .models.consultation_specialty import ConsultationSpecialty
@@ -6,6 +8,7 @@ from .models.medical_consultation import MedicalConsultation
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base comum com filtros e ordenação padrão."""
     list_filter = ("deleted",)
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
@@ -14,6 +17,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(MedicalConsultation)
 class MedicalConsultationAdmin(CoreAdmin):
+    """Administra consultas com filtros de status e tipo de agenda."""
     list_display = (
         "scheduled_for",
         "patient",
@@ -32,6 +36,7 @@ class MedicalConsultationAdmin(CoreAdmin):
 
 @admin.register(ConsultationSpecialty)
 class ConsultationSpecialtyAdmin(CoreAdmin):
+    """Administra especialidades de consulta e preços base."""
     list_display = ("name", "base_price", "vat_percentage", "active", "tenant", "created_at")
     list_filter = ("active",)
     search_fields = ("name",)
@@ -40,6 +45,7 @@ class ConsultationSpecialtyAdmin(CoreAdmin):
 
 @admin.register(Holiday)
 class HolidayAdmin(CoreAdmin):
+    """Administra feriados usados para precificação de consultas."""
     list_display = ("date", "description", "active", "tenant", "created_at")
     list_filter = ("active", "date")
     search_fields = ("description",)

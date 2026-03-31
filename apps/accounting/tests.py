@@ -1,3 +1,5 @@
+"""Testes básicos de contabilidade com comentários explicativos."""
+
 from decimal import Decimal
 
 import pytest
@@ -11,11 +13,13 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():
+    """Helper para criar tenant de teste."""
     return Tenant.objects.create(identifier="tn-cont", name="Tenant Cont")
 
 
 @pytest.mark.django_db
 def test_account_criacao():
+    """Garante criação de conta e tipo correto."""
     tenant = _tenant()
     account = Account.objects.create(
         tenant=tenant,
@@ -28,6 +32,7 @@ def test_account_criacao():
 
 @pytest.mark.django_db
 def test_entry_balances_with_movements():
+    """Confere débito e crédito gerados em movimentos legados."""
     tenant = _tenant()
     account_debit = Account.objects.create(tenant=tenant, name="Caixa", type=Account.Tipo.ATIVO)
     account_credit = Account.objects.create(tenant=tenant, name="Receita", type=Account.Tipo.RECEITA)
@@ -57,6 +62,7 @@ def test_entry_balances_with_movements():
 
 @pytest.mark.django_db
 def test_financial_reconciliation_filters_by_invoice():
+    """Valida cálculo de discrepância e status reconciled."""
     tenant = _tenant()
     account = Account.objects.create(tenant=tenant, name="Banco", type=Account.Tipo.ATIVO)
     entry = LegacyEntry.objects.create(tenant=tenant, description="Pagamento invoice")

@@ -1,3 +1,5 @@
+"""Calculadora de preços com IVA padrão."""
+
 from decimal import Decimal
 
 VAT_PERCENT = Decimal("0.16")

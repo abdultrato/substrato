@@ -1,3 +1,5 @@
+"""Value object de telefone com normalização básica."""
+
 import re
 
 

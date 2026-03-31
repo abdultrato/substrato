@@ -1,3 +1,5 @@
+"""Base para tarefas assíncronas com logging e timestamp."""
+
 import logging
 
 from django.utils import timezone

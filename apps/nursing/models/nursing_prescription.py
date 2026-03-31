@@ -5,9 +5,7 @@ from core.models.base import CoreModel
 
 
 class NursingPrescription(TenantPropagationMixin, CoreModel):
-    """
-    Prescrição de cuidados de enfermagem para um patient.
-    """
+    """Prescrição de cuidados de enfermagem para um paciente."""
 
     tenant_source = "patient"
     prefix = "PRE"

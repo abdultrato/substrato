@@ -1,3 +1,5 @@
+"""Funções de cálculo de valores, descontos e impostos de faturamento."""
+
 from decimal import Decimal as d
 
 VAT_PERCENT = d("0.16")  # ajustar conforme legislação vigente

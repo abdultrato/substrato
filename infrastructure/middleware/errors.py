@@ -1,3 +1,5 @@
+"""Middleware para capturar e persistir erros não tratados."""
+
 from __future__ import annotations
 
 import traceback as _traceback

@@ -16,3 +16,4 @@ def verify_system():
 
 
 __all__ = ["verify_database", "verify_system"]
+"""Rotinas para avaliar indicadores de saúde do sistema."""

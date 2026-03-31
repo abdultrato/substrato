@@ -1,7 +1,7 @@
+"""Cálculo de subtotal (quantidade x preço unitário)."""
+
+
 def calculate_subtotal(quantity, unit_price):
-    """
-    Calcula o subtotal simples (quantidade x preço unitário).
-    """
     return quantity * unit_price
 
 

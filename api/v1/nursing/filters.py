@@ -1,3 +1,5 @@
+"""FilterSets para recursos de Enfermagem na API v1."""
+
 from api.core.filters import SafeFilterSet
 from apps.nursing.models import (
     NursingEvolution,

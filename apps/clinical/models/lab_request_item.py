@@ -1,3 +1,5 @@
+"""Itens vinculados a uma requisição (exame lab ou exame médico)."""
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -11,7 +13,9 @@ from .result_item import ResultItem
 
 
 class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
-    tenant_source = "patient"
+    """Linha de exame da requisição (lab ou médico)."""
+
+    tenant_source = "patient"  # Propaga tenant a partir do paciente
 
     request = models.ForeignKey(
 

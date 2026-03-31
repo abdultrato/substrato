@@ -1,3 +1,5 @@
+"""Modelo de paciente com dados demográficos e contato."""
+
 from django.db import models
 from django.utils import timezone
 from django_countries.fields import CountryField
@@ -12,11 +14,9 @@ from infrastructure.orm.fields.phone_field import PhoneField
 
 
 class Patient(CoreModel):
-    """
-    Entidade corporativa de patient.
-    """
+    """Entidade corporativa de paciente."""
 
-    prefix = "PAC"
+    prefix = "PAC"  # Prefixo para IDs amigáveis
 
     pregnant = models.BooleanField(
 

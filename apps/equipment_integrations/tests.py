@@ -1,3 +1,5 @@
+"""Testes de integrações com equipamentos (worklist, roteamento, mapeamento)."""
+
 from decimal import Decimal
 
 import pytest

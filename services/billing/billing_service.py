@@ -47,3 +47,4 @@ class InvoiceBuilderService:
 
         return invoice
 
+"""Opera criação/atualização de faturas e integrações de cobrança."""

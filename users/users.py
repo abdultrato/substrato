@@ -41,3 +41,4 @@ class UserViewSet(ModelViewSet):
         user.is_active = False
         user.save(update_fields=["is_active"])
         return Response({"status": "deactivated"})
+"""Utilitários de gerenciamento de usuários (criação, reset, lookup)."""

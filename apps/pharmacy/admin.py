@@ -1,3 +1,8 @@
+"""Configuração do Django Admin para a app de farmácia.
+
+Inclui comentários em português explicando os principais pontos linha a linha.
+"""
+
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ValidationError as FormValidationError
@@ -35,6 +40,7 @@ from .models.lot import Lot  # for stock check in inline
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    """Administração de produtos com colunas calculadas de estoque."""
     list_display = (
         "custom_id",
         "name",
@@ -109,38 +115,39 @@ class ProductAdmin(admin.ModelAdmin):
     # =========================
 
     def get_queryset(self, request):
+        """Adiciona anotações de estoque para evitar consultas extras no admin."""
 
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request)  # Queryset base
 
         initial_lots = (
-            Lot.objects.filter(product=OuterRef("pk"))
-            .values("product")
-            .annotate(total=Sum("initial_quantity"))
-            .values("total")
+            Lot.objects.filter(product=OuterRef("pk"))  # Seleciona lotes do produto
+            .values("product")  # Agrupa por produto
+            .annotate(total=Sum("initial_quantity"))  # Soma quantidades iniciais
+            .values("total")  # Retorna apenas o total
         )
 
         movements = (
-            InventoryMovement.objects.filter(lot__product=OuterRef("pk"))
-            .values("lot__product")
+            InventoryMovement.objects.filter(lot__product=OuterRef("pk"))  # Movimentos do produto
+            .values("lot__product")  # Agrupa por produto
             .annotate(
                 total=Coalesce(
                     Sum(
                         Case(
-                            When(type=MovementType.SAIDA, then=-F("quantity")),
-                            default=F("quantity"),
+                            When(type=MovementType.SAIDA, then=-F("quantity")),  # Saída negativa
+                            default=F("quantity"),  # Entrada positiva
                             output_field=IntegerField(),
                         )
                     ),
-                    0,
+                    0,  # Se não houver movimentos, usa zero
                 )
             )
-            .values("total")
+            .values("total")  # Retorna apenas o total
         )
 
         qs = qs.annotate(
-            initial_stock_calc=Coalesce(Subquery(initial_lots), 0),
-            movements_total=Coalesce(Subquery(movements), 0),
-            proximo_vencimento=Min("lotes__expiration_date"),
+            initial_stock_calc=Coalesce(Subquery(initial_lots), 0),  # Estoque inicial
+            movements_total=Coalesce(Subquery(movements), 0),  # Soma de movimentos
+            proximo_vencimento=Min("lotes__expiration_date"),  # Vencimento mais próximo
         )
 
         return qs.annotate(inventory_total_calc=F("initial_stock_calc") + F("movements_total"))
@@ -156,15 +163,15 @@ class ProductAdmin(admin.ModelAdmin):
         consultas extras.
         """
         if hasattr(obj, "initial_stock_calc"):
-            return obj.initial_stock_calc or 0
-        return obj.initial_stock
+            return obj.initial_stock_calc or 0  # Usa valor anotado na query
+        return obj.initial_stock  # Fallback para propriedade do modelo
 
     initial_stock.short_description = "Estoque inicial"
     initial_stock.admin_order_field = "initial_stock_calc"
 
     def inventory_total(self, obj):
 
-        inventory = obj.inventory_total_calc or 0
+        inventory = obj.inventory_total_calc or 0  # Estoque total anotado
 
         if inventory <= 5:
             return format_html(
@@ -181,6 +188,7 @@ class ProductAdmin(admin.ModelAdmin):
     # =========================
 
     def proximo_vencimento(self, obj):
+        """Mostra a data de vencimento mais próxima ou '-'."""
 
         if not obj.proximo_vencimento:
             return "-"
@@ -197,6 +205,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Lot)
 class LotAdmin(admin.ModelAdmin):
+    """Administra lotes com saldo calculado e alerta de vencimento."""
     list_display = (
         "product",
         "lot_number",
@@ -269,10 +278,10 @@ class LotAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
 
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request)  # Queryset base com filtros padrão
 
         return qs.annotate(
-            saldo_calc=F("initial_quantity")
+            saldo_calc=F("initial_quantity")  # Saldo = inicial + movimentos
             + Coalesce(
                 Sum(
                     Case(
@@ -294,7 +303,7 @@ class LotAdmin(admin.ModelAdmin):
 
     def current_balance(self, obj):
 
-        saldo = obj.saldo_calc
+        saldo = obj.saldo_calc  # Usa anotação para não reconsultar o banco
 
         if saldo <= 5:
             return format_html("<span style='color:red;font-weight:bold'>{}</span>", saldo)
@@ -333,6 +342,7 @@ class LotAdmin(admin.ModelAdmin):
 
 @admin.register(InventoryMovement)
 class InventoryMovementAdmin(admin.ModelAdmin):
+    """Listagem apenas leitura de movimentos de estoque."""
     list_display = (
         "lot",
         "type",
@@ -428,6 +438,8 @@ class InventoryMovementAdmin(admin.ModelAdmin):
 
 
 class ItemVendaInline(admin.TabularInline):
+    """Inline de itens de venda para edição dentro da venda."""
+
     model = SaleItem
     extra = 0
     # formset set below after class definition
@@ -446,7 +458,7 @@ class ItemVendaInline(admin.TabularInline):
     def total_linha_formatado(self, obj):
 
         if not obj.pk:
-            return "-"
+            return "-"  # Nada para exibir enquanto não salvo
 
         return f"{obj.total_linha:.2f}"
 
@@ -455,19 +467,20 @@ class ItemVendaInline(admin.TabularInline):
 
 class SaleItemInlineFormSet(BaseInlineFormSet):
     def clean(self):
+        """Valida saldo disponível por produto antes de salvar inline."""
         super().clean()
 
         for form in self.forms:
             if form.cleaned_data.get("DELETE"):
-                continue
+                continue  # Ignora itens marcados para exclusão
             if not form.cleaned_data:
-                continue
+                continue  # Form vazio (extra)
 
             product = form.cleaned_data.get("product")
             qty = form.cleaned_data.get("quantity") or 0
 
             if not product or qty <= 0:
-                continue
+                continue  # Nada a validar
 
             # Disponível por produto somando lotes não vencidos (FEFO helper)
             available = 0
@@ -495,6 +508,7 @@ ItemVendaInline.formset = SaleItemInlineFormSet
 
 @admin.register(SaleItem)
 class SaleItemAdmin(admin.ModelAdmin):
+    """Admin direto de itens de venda (visualização)."""
     list_display = (
         "sale",
         "product",
@@ -530,6 +544,8 @@ class SaleItemAdmin(admin.ModelAdmin):
 
 @admin.register(Sale)
 class VendaAdmin(admin.ModelAdmin):
+    """Administra vendas com cálculos agregados de itens e impostos."""
+
     list_display = (
         "number",
         "patient",
@@ -609,9 +625,9 @@ class VendaAdmin(admin.ModelAdmin):
     # =========================
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request)  # Queryset base
 
-        total_items_expr = F("itens__quantity") * F("itens__unit_price")
+        total_items_expr = F("itens__quantity") * F("itens__unit_price")  # Subtotal por item
 
         vat_expr = ExpressionWrapper(
             F("itens__quantity")
@@ -622,7 +638,7 @@ class VendaAdmin(admin.ModelAdmin):
         )
 
         qs = qs.annotate(
-            total_items_qty=Coalesce(Sum("itens__quantity"), 0),
+            total_items_qty=Coalesce(Sum("itens__quantity"), 0),  # Quantidade total
             total_items_amount=Coalesce(
                 Sum(
                     total_items_expr,
@@ -635,7 +651,7 @@ class VendaAdmin(admin.ModelAdmin):
                     Case(
                         When(
                             itens__product__applies_vat_by_default=True,
-                            then=vat_expr,
+                            then=vat_expr,  # Calcula IVA só quando aplicável
                         ),
                         default=Value(0),
                         output_field=DecimalField(max_digits=14, decimal_places=2),
@@ -645,7 +661,7 @@ class VendaAdmin(admin.ModelAdmin):
                 Decimal("0.00"),
             ),
         )
-        return qs.prefetch_related("itens__product")
+        return qs.prefetch_related("itens__product")  # Evita N+1 nos produtos
 
     # =========================
     # CAMPOS COMPUTADOS
@@ -684,6 +700,7 @@ class VendaAdmin(admin.ModelAdmin):
 
 @admin.register(ParentCategory)
 class ParentCategoryAdmin(admin.ModelAdmin):
+    """Administra categorias-pai com ação de criação sugerida."""
     list_display = ("name", "created_at")
     search_fields = ("name",)
     ordering = ("name",)
@@ -745,6 +762,7 @@ class ParentCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ProductCategory)
 class ProductCategoryAdmin(admin.ModelAdmin):
+    """Admin de categorias de produto com referência a categorias-pai."""
     list_display = (
         "name",
         "parent_category",

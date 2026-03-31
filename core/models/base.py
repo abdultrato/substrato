@@ -1,3 +1,5 @@
+"""Modelos base compartilhados (CoreModel/InqCoreModel)."""
+
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.db.models import Q

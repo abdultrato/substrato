@@ -1,3 +1,5 @@
+"""Middleware multi-tenant que configura contexto e banco para cada request."""
+
 import os
 
 from django.conf import settings

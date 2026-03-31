@@ -1,5 +1,5 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated  # Protege endpoints
+from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.identity.models.password_reset_token import PasswordResetToken
@@ -11,11 +11,11 @@ from ..serializers import PasswordResetTokenSerializer, ProfessionalProfileSeria
 
 
 class PasswordResetTokenViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = PasswordResetToken.objects.all()
+    queryset = PasswordResetToken.objects.all()  # Inclui soft delete handled via mixin
     serializer_class = PasswordResetTokenSerializer
     filterset_class = PasswordResetTokenFilter
     permission_classes = [IsAuthenticated]
-    search_fields = []
+    search_fields = []  # Busca desabilitada (tokens são sigilosos)
     ordering_fields = ["user", "token", "created_at", "used"]
     ordering = ["-created_at"]
 

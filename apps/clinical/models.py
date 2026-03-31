@@ -1,3 +1,5 @@
+"""Atalhos de importação para os modelos clínicos."""
+
 from .models.clinical_event import ClinicalEvent
 from .models.clinical_history import ClinicalHistory
 from .models.clinical_reference import ClinicalReference

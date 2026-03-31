@@ -1,12 +1,12 @@
+"""Cálculo de uso de storage local no MEDIA_ROOT."""
+
 import os
 
 from django.conf import settings
 
 
 def calculate_local_usage():
-    """
-    Calcula o uso de storage local no MEDIA_ROOT.
-    """
+    """Retorna o total de bytes ocupados em MEDIA_ROOT."""
     media_path = settings.MEDIA_ROOT
     total = 0
 

@@ -1,3 +1,5 @@
+"""Aliases legados para `LabRequest`."""
+
 from .lab_request import LabRequest
 
 Requisicao = LabRequest

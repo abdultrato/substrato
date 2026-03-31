@@ -1,3 +1,5 @@
+"""Constantes de domínio reutilizáveis (documentos, idiomas, gênero, etc.)."""
+
 from .currencies import Currency
 from .document_types import DocumentType
 from .gender import Gender

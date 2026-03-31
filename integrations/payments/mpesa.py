@@ -1,3 +1,5 @@
+"""Gateway de pagamento M-Pesa (exemplo de integração HTTP)."""
+
 from django.conf import settings
 import requests
 

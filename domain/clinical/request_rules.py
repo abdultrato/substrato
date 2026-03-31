@@ -1,3 +1,6 @@
+"""Regras auxiliares para cálculo e checks em requisições clínicas."""
+
+
 class RequestCalculator:
     @staticmethod
     def calculate_total(request):

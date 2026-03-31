@@ -1,3 +1,5 @@
+"""ViewSets read-only da API v1 para auditoria de atividades e resumo por usuário."""
+
 from django.db.models import Count, Max, Q
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ReadOnlyModelViewSet

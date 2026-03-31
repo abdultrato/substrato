@@ -1,3 +1,5 @@
+"""Geração de numeração legível para faturas e recibos."""
+
 from django.utils import timezone
 
 

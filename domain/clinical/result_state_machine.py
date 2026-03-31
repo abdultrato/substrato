@@ -1,3 +1,5 @@
+"""State machine simples para estados de resultado clínico."""
+
 from domain.clinical.result_state import ResultState
 
 

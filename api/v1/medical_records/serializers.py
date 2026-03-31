@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from api.v1.compat import LegacyAliasSerializerMixin
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry

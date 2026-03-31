@@ -9,3 +9,4 @@ class CopaymentService:
         percentage = effective_plan.percentual_final()
         return calculate_copayment(total_value, percentage)
 
+"""Cálculo e validação de coparticipação do paciente."""

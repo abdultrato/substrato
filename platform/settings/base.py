@@ -829,3 +829,4 @@ SPECTACULAR_SETTINGS = {
         },
     ],
 }
+"""Configurações base do Django para todos os ambientes."""

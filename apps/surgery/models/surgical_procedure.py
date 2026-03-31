@@ -9,12 +9,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class SurgicalProcedure(CoreModel):
-    """
-    Catálogo de procedures cirúrgicos.
-
-    Usado para padronizar o campo "procedure" na surgery e permitir
-    múltiplos procedures na mesma surgery.
-    """
+    """Catálogo de procedimentos cirúrgicos usados nas cirurgias."""
 
     prefix = "PCIR"
 

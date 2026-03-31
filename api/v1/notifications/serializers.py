@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification

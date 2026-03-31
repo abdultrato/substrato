@@ -17,3 +17,4 @@ class PaymentService:
             payment.confirm()
 
         return payment
+"""Orquestra o fluxo de pagamento e reconciliação básica."""

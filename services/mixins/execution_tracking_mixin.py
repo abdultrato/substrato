@@ -13,3 +13,4 @@ class ExecutionTrackingMixin:
             logger.info("%s finished", operation_name, extra={"duration_ms": duration_ms, **extra})
 
         return finish
+"""Mixin para rastrear início/fim de execução e métricas básicas."""

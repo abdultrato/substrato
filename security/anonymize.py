@@ -4,3 +4,4 @@ def anonymize_email(email):
 
 
 anonimizar_email = anonymize_email
+"""Helpers para anonimização/mascaramento de dados sensíveis."""

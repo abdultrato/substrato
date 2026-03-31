@@ -1,3 +1,5 @@
+"""Worker Celery para processar autorizações pendentes com tolerância a falhas."""
+
 import logging
 
 from celery import shared_task

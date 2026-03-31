@@ -1,3 +1,5 @@
+"""Manipulador para atualizar saldos ao receber eventos contábeis."""
+
 from decimal import Decimal
 
 from django.db import transaction
@@ -9,6 +11,7 @@ from events.accounting.ledger_entry_created import LedgerEntryCreated
 
 @transaction.atomic
 def handle(event: LedgerEntryCreated):
+    """Aplica débito/crédito das linhas do evento aos saldos das contas."""
     account_totals = {}
 
     for line in event.linhas:

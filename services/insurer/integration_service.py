@@ -16,3 +16,4 @@ class InsurerIntegrationService:
 
 
 __all__ = ["InsurerIntegrationService"]
+"""Abstrai integração com APIs das seguradoras."""

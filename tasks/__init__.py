@@ -13,3 +13,4 @@ except Exception:  # pragma: no cover
 gerar_pdf = generate_pdf
 
 __all__ = ["generate_pdf", "gerar_pdf"]
+"""Tarefas e workers em background (Celery/RQ)."""

@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para módulos clínicos."""
+
 import unicodedata
 
 from django.contrib import admin
@@ -47,6 +49,7 @@ def _user_has_any_group(user, group_names: list[str]) -> bool:
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base comum com ordenação e campos somente leitura."""
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
     ordering = ("-created_at",)
@@ -60,6 +63,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
+    """Administra pacientes com filtros por documento e gênero."""
     list_display = (
         "custom_id",
         "name",
@@ -180,6 +184,7 @@ class PatientAdmin(admin.ModelAdmin):
 
 @admin.register(LabExamField)
 class LabExamFieldAdmin(CoreAdmin):
+    """Administra campos de exame (componentes do painel de resultados)."""
     list_display = (
         "custom_id",
         "name",
@@ -301,6 +306,7 @@ class LabExamFieldAdmin(CoreAdmin):
 
 
 class LabExamFieldInline(admin.TabularInline):
+    """Inline para gerenciar campos dentro do cadastro de exame."""
     model = LabExamField
 
     extra = 0
@@ -332,6 +338,7 @@ class LabExamFieldInline(admin.TabularInline):
 
 @admin.register(LabExam)
 class LabExamAdmin(CoreAdmin):
+    """Catálogo de exames laboratoriais com inlines de campos."""
     list_display = (
         "custom_id",
         "name",
@@ -422,6 +429,7 @@ class LabExamAdmin(CoreAdmin):
 
 
 class MedicalExamFieldInline(admin.TabularInline):
+    """Inline de campos de exame médico (imagem/laudo)."""
     model = MedicalExamField
     extra = 0
     fields = (
@@ -437,6 +445,7 @@ class MedicalExamFieldInline(admin.TabularInline):
 
 @admin.register(MedicalExam)
 class MedicalExamAdmin(CoreAdmin):
+    """Administra exames médicos com campos e filtros de resultado."""
     list_display = (
         "custom_id",
         "name",
@@ -527,6 +536,7 @@ class MedicalExamAdmin(CoreAdmin):
 
 
 class RequestLabItemInline(admin.TabularInline):
+    """Inline de itens de exame lab dentro da requisição."""
     model = LabRequestItem
     extra = 1
 
@@ -539,6 +549,7 @@ class RequestLabItemInline(admin.TabularInline):
 
 
 class RequestMedicalItemInline(admin.TabularInline):
+    """Inline de itens de exame médico na requisição."""
     model = LabRequestItem
     extra = 1
 
@@ -557,6 +568,7 @@ class RequestMedicalItemInline(admin.TabularInline):
 
 @admin.register(LabRequest)
 class LabRequestAdmin(CoreAdmin):
+    """Administra requisições de exames (lab e médico) com inlines."""
     list_display = (
         "custom_id",
         "patient",
@@ -751,6 +763,7 @@ class LabRequestAdmin(CoreAdmin):
 
 
 class ResultItemInlineAdmin(admin.TabularInline):
+    """Inline de resultados individuais por campo de exame."""
     model = ResultItem
     formset = ResultItemInlineFormSet
 
@@ -875,6 +888,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
 @admin.register(Result)
 class ResultAdmin(CoreAdmin):
+    """Administra resultados consolidados com itens e arquivos."""
     list_display = (
         "custom_id",
         "request",

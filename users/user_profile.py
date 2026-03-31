@@ -21,3 +21,4 @@ class UserProfileView(APIView):
                 "groups": list(user.groups.values_list("name", flat=True)),
             }
         )
+"""Operações relacionadas ao perfil do usuário (dados e preferências)."""

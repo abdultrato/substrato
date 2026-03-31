@@ -8,6 +8,6 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
+    "VIEWSET_MAP",  # Mapa usado pelo roteador dinâmico
     "EmpresaViewSet",
 ]

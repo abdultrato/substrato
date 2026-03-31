@@ -21,6 +21,6 @@ class SystemErrorAdmin(CoreAdmin):
     )
     list_filter = ("status_code", "exception_class")
     search_fields = ("path", "message", "exception_class", "user__username")
-    ordering = ("-created_at", "-id")
+    ordering = ("-created_at", "-id")  # Erros mais recentes primeiro
 
 

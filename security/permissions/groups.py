@@ -147,3 +147,4 @@ class IsAdminOrContabilidade(permissions.BasePermission):
             return False
 
         return user.groups.filter(name__in=["Administrador", "Contabilidade"]).exists()
+"""Helpers para agrupar/consultar permissões por perfil."""

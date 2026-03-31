@@ -1,3 +1,5 @@
+"""ViewSets da API v1 para tenants, planos, configurações, flags e usage."""
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 

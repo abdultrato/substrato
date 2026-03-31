@@ -1,3 +1,5 @@
+"""Modelo de configuração simples para ajustes globais do sistema."""
+
 from django.db import models
 
 

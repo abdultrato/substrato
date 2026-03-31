@@ -1,3 +1,5 @@
+"""Orquestra regras contábeis ao criar lançamentos e atualizar saldos."""
+
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -19,6 +21,7 @@ class AccountingService:
         external_reference: str = "",
         tenant=None,
     ):
+        # Lançamento contábil precisa de pelo menos duas linhas (débito/crédito).
         if len(movements) < 2:
             raise ValidationError("Accounting entries require at least two movements.")
 
@@ -26,6 +29,7 @@ class AccountingService:
         if not entry_date:
             raise ValidationError("Entry date is required.")
 
+        # Cabeçalho do lançamento (resumo).
         entry = LegacyEntry.objects.create(
             name=(description or "Accounting Entry")[:120],
             description=description,
@@ -37,6 +41,7 @@ class AccountingService:
         total_debit = Decimal("0.00")
         total_credit = Decimal("0.00")
 
+        # Gera movimentos individuais e acumula totais para validação de balanço.
         for index, movement in enumerate(movements, start=1):
             account = movement["account"]
             debit = movement.get("debit", Decimal("0.00"))
@@ -54,9 +59,11 @@ class AccountingService:
             total_debit += debit
             total_credit += credit
 
+        # Verifica se o lançamento ficou balanceado.
         if total_debit != total_credit:
             raise ValidationError("Unbalanced accounting entry.")
 
+        # Marca lançamento como confirmado após validações.
         entry.confirmed = True
         entry.save(update_fields=["confirmed"])
 

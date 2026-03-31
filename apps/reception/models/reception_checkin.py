@@ -6,6 +6,7 @@ from core.models.base import NoNameCoreModel
 
 
 class ReceptionCheckin(NoNameCoreModel):
+    """Check-in/triagem do paciente na recepção (fila e status do atendimento)."""
     prefix = "CHK"
 
     class Priority(models.TextChoices):

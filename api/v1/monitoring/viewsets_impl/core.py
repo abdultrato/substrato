@@ -1,5 +1,5 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.permissions import IsAuthenticated  # Protege o endpoint
+from rest_framework.viewsets import ReadOnlyModelViewSet  # Apenas leitura
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.monitoring.models.system_error import SystemError

@@ -19,3 +19,4 @@ class MetricsView(APIView):
                 "status": "ok",
             }
         )
+"""Endpoints/serializers auxiliares para expor métricas via API."""

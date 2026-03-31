@@ -18,3 +18,4 @@ class SecurityCheckView(APIView):
                 "x_frame_options": getattr(settings, "X_FRAME_OPTIONS", "DENY"),
             }
         )
+"""Verificações auxiliares para consolidar regras de segurança."""

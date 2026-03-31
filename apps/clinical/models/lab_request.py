@@ -1,3 +1,5 @@
+"""Requisição de exames laboratoriais ou exames médicos."""
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
@@ -14,7 +16,9 @@ User = settings.AUTH_USER_MODEL
 
 
 class LabRequest(NoNameCoreModel):
-    prefix = "REQ"
+    """Cabeçalho de uma solicitação de exames."""
+
+    prefix = "REQ"  # Prefixo para IDs amigáveis
 
     class Type(models.TextChoices):
         LABORATORY = "LAB", "Laboratório"

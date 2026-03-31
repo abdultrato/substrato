@@ -1,3 +1,5 @@
+"""Admin de Tenants e configurações multi-tenant."""
+
 from django.contrib import admin
 
 from .models.configuration import TenantConfiguration
@@ -5,6 +7,7 @@ from .models.tenant import Tenant
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base admin com filtros/ordenção e campos de auditoria read-only."""
     list_filter = ("deleted",)
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
@@ -13,6 +16,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
+    """Administra inquilinos (cliente) com domínio/status comercial."""
     list_display = ("identifier", "name", "domain", "active", "commercial_status", "trial_until")
     list_filter = ("active", "commercial_status")
     search_fields = ("identifier", "name", "domain")

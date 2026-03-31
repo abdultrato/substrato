@@ -1,3 +1,5 @@
+"""Serializers DRF para recursos de Enfermagem na API v1."""
+
 from rest_framework import serializers
 
 from apps.nursing.models import (

@@ -1,3 +1,5 @@
+"""Regras simples para validação de estoque/lote na farmácia."""
+
 def validate_available_inventory(lot, quantity):
     if lot.quantity_atual < quantity:
         raise ValueError("Estoque insuficiente.")

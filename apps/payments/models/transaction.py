@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Transaction(models.Model):
+    """Transação registrada no gateway (referência, status e payload)."""
     external_reference = models.CharField("Referência externa",
         db_column="external_reference",
          max_length=120, db_index=True)

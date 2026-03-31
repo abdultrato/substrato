@@ -1,3 +1,5 @@
+"""Utilidades de banco e roteamento multi-tenant."""
+
 from django.conf import settings
 from django.db import connection
 
@@ -60,6 +62,7 @@ class TenantDatabaseRouter:
 
 
 def active_queries():
+    """Retorna a lista de queries executadas na conexão atual (para debug)."""
     return connection.queries
 
 

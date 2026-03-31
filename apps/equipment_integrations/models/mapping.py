@@ -1,3 +1,5 @@
+"""Mapeamento de códigos de analisador para campos de exame internos."""
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -10,7 +12,7 @@ class IntegrationAnalyteMapping(CoreModel):
     Isso permite que um analisador preencha ResultadoItem automaticamente.
     """
 
-    prefix = "MAP"
+    prefix = "MAP"  # Prefixo para IDs amigáveis
 
     equipment = models.ForeignKey(
         "integracoes_equipamentos.IntegrationEquipment",

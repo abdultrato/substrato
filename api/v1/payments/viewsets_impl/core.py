@@ -1,3 +1,5 @@
+"""ViewSets da API v1 para pagamentos/recibos/reconciliações/transações."""
+
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated

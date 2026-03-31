@@ -1,9 +1,13 @@
+"""Configuração do Django Admin para auditoria de atividades."""
+
 from django.contrib import admin
 
 from .models.user_activity import UserActivity
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base comum com filtros e campos somente leitura."""
+
     list_filter = ("deleted",)
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
@@ -12,6 +16,8 @@ class CoreAdmin(admin.ModelAdmin):
 
 @admin.register(UserActivity)
 class UserActivityAdmin(CoreAdmin):
+    """Lista logs de atividade com colunas chave."""
+
     list_display = (
         "created_at",
         "user",

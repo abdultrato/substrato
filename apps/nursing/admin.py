@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para o módulo de Enfermagem."""
+
 from django.contrib import admin
 from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When
 from django.db.models.functions import Coalesce
@@ -20,6 +22,7 @@ from .models import (
 
 
 def _queryset_produtos_disponiveis():
+    """Retorna produtos com lotes não vencidos e saldo positivo (uso em autocomplete)."""
     hoje = timezone.localdate()
 
     lotes_disponiveis = (
@@ -55,8 +58,9 @@ def _queryset_produtos_disponiveis():
 
 
 class ProcedimentoItemInline(admin.TabularInline):
+    """Inline para itens de serviço de um procedimento de enfermagem."""
     model = ProcedureItem
-    extra = 1
+    extra = 1  # Sugere 1 linha para facilitar lançamento
     fields = (
         "catalog",
         "description",
@@ -68,8 +72,9 @@ class ProcedimentoItemInline(admin.TabularInline):
 
 
 class ProcedimentoMaterialInline(admin.TabularInline):
+    """Inline para materiais consumidos em um item de procedimento."""
     model = ProcedureMaterial
-    extra = 1
+    extra = 1  # Um material sugerido por item
     fields = (
         "procedure_item",
         "product",
@@ -90,8 +95,9 @@ class ProcedimentoMaterialInline(admin.TabularInline):
 
 
 class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
+    """Inline para materiais padrão de um catálogo de procedimento."""
     model = ProcedureCatalogMaterial
-    extra = 1
+    extra = 1  # Sugere um material padrão por vez
     fields = (
         "product",
         "default_quantity",
@@ -103,6 +109,7 @@ class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
 
 @admin.register(ProcedureCatalog)
 class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
+    """Administra catálogo de procedimentos e seus materiais padrão."""
     list_display = (
         "custom_id",
         "name",
@@ -117,7 +124,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         "description",
     )
     list_filter = ("created_at",)
-    ordering = ("name",)
+    ordering = ("name",)  # Ordena por nome para catálogo
     readonly_fields = (
         "custom_id",
         "created_at",
@@ -159,6 +166,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureCatalogMaterial)
 class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
+    """Administra materiais padrão associados a cada catálogo de procedimento."""
     list_display = (
         "custom_id",
         "catalog",
@@ -176,7 +184,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
         "catalog",
         "created_at",
     )
-    ordering = ("catalog", "product")
+    ordering = ("catalog", "product")  # Agrupa por catálogo
     autocomplete_fields = ("catalog", "product")
     list_select_related = ("catalog", "product")
     readonly_fields = (
@@ -219,6 +227,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
 
 @admin.register(NursingRecord)
 class NursingRecordAdmin(admin.ModelAdmin):
+    """Admin para registros de enfermagem (observações/prioridade por paciente)."""
     list_display = (
         "custom_id",
         "name",
@@ -238,7 +247,7 @@ class NursingRecordAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("patient",)
     list_select_related = ("patient",)
-    ordering = ("-record_date",)
+    ordering = ("-record_date",)  # Mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "record_date",
@@ -280,6 +289,7 @@ class NursingRecordAdmin(admin.ModelAdmin):
 
 @admin.register(Procedure)
 class ProcedimentoAdmin(admin.ModelAdmin):
+    """Admin de procedimentos de enfermagem com itens e materiais inlines."""
     list_display = (
         "custom_id",
         "patient",
@@ -304,7 +314,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "professional",
     )
     list_select_related = ("patient", "professional")
-    ordering = ("-performed_date",)
+    ordering = ("-performed_date",)  # Procedimentos mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "services_subtotal",
@@ -350,11 +360,13 @@ class ProcedimentoAdmin(admin.ModelAdmin):
     )
 
     def itens_total(self, obj):
+        """Quantidade de itens de serviço associados ao procedimento."""
         return obj.itens.count()
 
     itens_total.short_description = "Itens"
 
     def materiais_total(self, obj):
+        """Quantidade de materiais consumidos no procedimento."""
         return obj.materiais.count()
 
     materiais_total.short_description = "Materiais"
@@ -362,6 +374,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureItem)
 class ProcedimentoItemAdmin(admin.ModelAdmin):
+    """Admin de itens de serviço executados em procedimentos."""
     list_display = (
         "custom_id",
         "procedure",
@@ -381,7 +394,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_filter = ("performed", "created_at")
     autocomplete_fields = ("procedure", "catalog")
     list_select_related = ("procedure", "procedure__patient", "catalog")
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Últimos itens lançados no topo
     readonly_fields = (
         "custom_id",
         "created_at",
@@ -423,6 +436,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureMaterial)
 class ProcedimentoMaterialAdmin(admin.ModelAdmin):
+    """Admin de materiais consumidos em procedimentos de enfermagem."""
     list_display = (
         "custom_id",
         "procedure",
@@ -456,7 +470,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "lot",
         "inventory_movement",
     )
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Materiais consumidos mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "lot",
@@ -516,6 +530,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureItemValue)
 class ProcedureItemValueAdmin(admin.ModelAdmin):
+    """Admin para valores unitários de itens de procedimento."""
     list_display = (
         "custom_id",
         "item",
@@ -531,7 +546,7 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
     autocomplete_fields = ("item",)
     list_select_related = ("item", "item__procedure")
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Valores mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "created_at",
@@ -569,6 +584,7 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureMaterialValue)
 class ProcedureMaterialValueAdmin(admin.ModelAdmin):
+    """Admin para valores unitários de materiais consumidos."""
     list_display = (
         "custom_id",
         "material",
@@ -584,7 +600,7 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
     autocomplete_fields = ("material",)
     list_select_related = ("material", "material__procedure", "material__product")
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Valores mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "created_at",
@@ -622,6 +638,7 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
 
 @admin.register(NursingVitalSign)
 class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
+    """Admin de sinais vitais coletados pela enfermagem."""
     list_display = (
         "custom_id",
         "name",
@@ -639,7 +656,7 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     list_filter = ("collected_at",)
     autocomplete_fields = ("record",)
     list_select_related = ("record", "record__patient")
-    ordering = ("-collected_at",)
+    ordering = ("-collected_at",)  # Sinais mais recentes primeiro
     readonly_fields = (
         "custom_id",
         "collected_at",

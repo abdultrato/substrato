@@ -6,3 +6,4 @@ __all__ = [
     "get_temporal_partition",
     "get_temporal_partition",
 ]
+"""Abstrações de dados, particionamento e roteamento auxiliar."""

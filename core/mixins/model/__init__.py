@@ -1,3 +1,5 @@
+"""Mixins de campo para modelos (nome, descrição, código, ordem, timestamps)."""
+
 from .code import CodeMixin, CodigoMixin
 from .custom_identifier import CustomIdentifierMixin
 from .description import DescriptionMixin

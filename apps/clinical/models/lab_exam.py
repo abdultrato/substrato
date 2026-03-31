@@ -1,3 +1,5 @@
+"""Catálogo de exames laboratoriais com preços e restrições por método/setor."""
+
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -18,7 +20,7 @@ class LabExam(TenantPropagationMixin, CoreModel):
     """
 
     tenant_source = "patient"
-    prefix = "EXA"
+    prefix = "EXA"  # Prefixo para IDs amigáveis
 
     # =====================================================
     # CAMPOS

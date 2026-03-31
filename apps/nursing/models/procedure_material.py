@@ -14,6 +14,7 @@ from core.models.base import NoNameCoreModel
 
 
 class ProcedureMaterial(NoNameCoreModel):
+    """Material consumido/associado a um procedimento de enfermagem."""
     prefix = "PROCMAT"
 
     procedure = models.ForeignKey(

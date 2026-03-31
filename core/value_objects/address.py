@@ -1,3 +1,5 @@
+"""Value object simples de endereço (rua/cidade/país)."""
+
 class Address:
     def __init__(self, street: str, city: str, country: str = "Moçambique"):
         if not street or not city:

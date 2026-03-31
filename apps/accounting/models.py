@@ -1,3 +1,5 @@
+"""Facilita importação dos modelos de contabilidade."""
+
 from .models import (
     Account,
     AccountBalance,
@@ -8,6 +10,7 @@ from .models import (
     LegacyMovement,
 )
 
+# Exporta explicitamente para evitar `from .models import *` inesperado.
 __all__ = [
     "Account",
     "AccountBalance",

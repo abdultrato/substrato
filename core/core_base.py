@@ -1,3 +1,5 @@
+"""Helpers de cache/locking base para o core."""
+
 from hashlib import md5
 
 from django.core.cache import cache

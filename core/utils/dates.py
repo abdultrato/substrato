@@ -1,3 +1,5 @@
+"""Helpers de data/hora (timezone awareness e limites mensais)."""
+
 from datetime import UTC, datetime, timedelta
 
 

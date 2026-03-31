@@ -25,3 +25,4 @@ __all__ = [
     "SecurityCheckView",
     "security_check",
 ]
+"""Sistema de permissões (RBAC, grupos e verificações)."""

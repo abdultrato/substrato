@@ -14,3 +14,4 @@ class TimeTracking:
 
 
 RastreamentoTempo = TimeTracking
+"""Ferramentas de rastreamento de eventos/navegação."""

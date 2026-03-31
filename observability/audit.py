@@ -43,3 +43,4 @@ def register_event(
 
 
 registrar_evento = register_event
+"""Registro de eventos de auditoria para monitoramento e trilha."""

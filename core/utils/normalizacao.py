@@ -1,3 +1,5 @@
+"""Funções de normalização de texto e dígitos."""
+
 import re
 import unicodedata
 

@@ -1,3 +1,5 @@
+"""State machine simples para estados de requisição clínica."""
+
 from domain.clinical.request_state import RequestState
 
 

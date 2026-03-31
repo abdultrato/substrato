@@ -23,3 +23,4 @@ def retry(times: int = 3, delay: float = 0.0, exceptions=(Exception,)):
         return wrapper
 
     return decorator
+"""Utilitário de retry simples com backoff opcional."""

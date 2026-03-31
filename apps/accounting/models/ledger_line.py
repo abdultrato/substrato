@@ -1,33 +1,37 @@
-from decimal import Decimal
+"""Linha contábil imutável (débito/crédito) ligada a um LedgerEntry."""
 
-from django.core.exceptions import ValidationError
-from django.db import models
-from django.db.models import Q
+from decimal import Decimal  # Valores monetários
 
-from core.models.base import CoreModel
+from django.core.exceptions import ValidationError  # Validação de domínio
+from django.db import models  # ORM
+from django.db.models import Q  # Constraints condicionais
+
+from core.models.base import CoreModel  # Modelo base
 
 
 class LedgerLine(CoreModel):
-    prefix = "LL"
+    """Linha de movimento contábil que compõe um lançamento."""
+
+    prefix = "LL"  # Prefixo para IDs amigáveis
 
     # ===============================
     # RELACIONAMENTOS
     # ===============================
 
     entry = models.ForeignKey(
-        "contabilidade.LedgerEntry",
-        verbose_name="Lançamento",
-        on_delete=models.PROTECT,
-        related_name="linhas",
-        db_index=True,
+        "contabilidade.LedgerEntry",  # Cabeçalho do lançamento
+        verbose_name="Lançamento",  # Rótulo
+        on_delete=models.PROTECT,  # Protege registro original
+        related_name="linhas",  # Nome reverso
+        db_index=True,  # Índice
     )
 
     account = models.ForeignKey(
-        "contabilidade.Account",
-        verbose_name="Conta",
-        db_column="account_id",
-        on_delete=models.PROTECT,
-        db_index=True,
+        "contabilidade.Account",  # Conta contábil
+        verbose_name="Conta",  # Rótulo
+        db_column="account_id",  # Coluna
+        on_delete=models.PROTECT,  # Impede apagar conta usada
+        db_index=True,  # Índice
     )
 
     # ===============================
@@ -35,27 +39,27 @@ class LedgerLine(CoreModel):
     # ===============================
 
     value = models.DecimalField(
-        db_column="value",
-        verbose_name="Valor",
+        db_column="value",  # Coluna
+        verbose_name="Valor",  # Rótulo
         max_digits=18,
         decimal_places=2,
     )
 
     nature = models.CharField(
-        db_column="nature",
-        verbose_name="Natureza",
+        db_column="nature",  # Coluna
+        verbose_name="Natureza",  # Rótulo
         max_length=1,
         choices=[
             ("D", "Débito"),
             ("C", "Crédito"),
-        ],
+        ],  # Valores permitidos
     )
 
     created_at = models.DateTimeField(
-        db_column="created_at",
-        verbose_name="Criado em",
-        auto_now_add=True,
-        db_index=True,
+        db_column="created_at",  # Coluna
+        verbose_name="Criado em",  # Rótulo
+        auto_now_add=True,  # Preenche na criação
+        db_index=True,  # Índice
     )
 
     # ===============================
@@ -63,9 +67,9 @@ class LedgerLine(CoreModel):
     # ===============================
 
     class Meta:
-        db_table = "contabilidade_ledgerline"
-        verbose_name = "Linha contábil"
-        verbose_name_plural = "Linhas contábeis"
+        db_table = "contabilidade_ledgerline"  # Nome da tabela
+        verbose_name = "Linha contábil"  # Nome legível
+        verbose_name_plural = "Linhas contábeis"  # Nome plural
         indexes = [
             models.Index(fields=["entry"]),
             models.Index(fields=["tenant", "account", "created_at"]),
@@ -74,7 +78,7 @@ class LedgerLine(CoreModel):
 
         constraints = [
             models.CheckConstraint(
-                check=Q(value__gt=0),
+                check=Q(value__gt=0),  # Valor deve ser positivo
                 name="ledgerline_value_positivo",
             ),
         ]
@@ -117,11 +121,12 @@ class LedgerLine(CoreModel):
         if self.pk:
             raise RuntimeError("LedgerLine é imutável.")
 
-        self.full_clean()
+        self.full_clean()  # Garante validações antes de persistir
         return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         raise RuntimeError("LedgerLine é imutável.")
 
     def __str__(self):
+        """Mostra conta, natureza e valor."""
         return f"{self.account_id} | {self.nature} | {self.value}"

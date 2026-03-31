@@ -7,14 +7,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Payment(CoreModel):
-    """
-    Aggregate Root de Pagamento.
-
-    Responsável por:
-    - Estado do payment
-    - Transições válidas
-    - Integração com a invoice
-    """
+    """Aggregate root de pagamento (estado, transições e vínculo à fatura)."""
 
     class Method(models.TextChoices):
         CASH = "DIN", "Dinheiro"

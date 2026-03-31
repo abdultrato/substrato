@@ -4,6 +4,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Receipt(models.Model):
+    """Recibo emitido para uma fatura/pagamento."""
     invoice = models.ForeignKey(
         "faturamento.Invoice",
         db_column="invoice_id",

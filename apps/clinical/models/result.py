@@ -1,3 +1,5 @@
+"""Resultado consolidado de uma requisição (agrupa itens/arquivos)."""
+
 from django.conf import settings
 from django.db import models
 
@@ -9,7 +11,9 @@ User = settings.AUTH_USER_MODEL
 
 
 class Result(NoNameCoreModel):
-    prefix = "RESG"
+    """Cabeçalho de resultado (um por requisição)."""
+
+    prefix = "RESG"  # Prefixo para IDs amigáveis
 
     request = models.OneToOneField(
 

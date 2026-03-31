@@ -1,3 +1,5 @@
+"""Mixin para códigos gerados automaticamente (UUID5)."""
+
 import uuid
 
 from django.db import models

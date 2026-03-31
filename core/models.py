@@ -1,4 +1,6 @@
 
+"""Reexportações convenientes de modelos base e managers."""
+
 from core.models.base import AuditModel, BaseModel, CoreModel, IdentityModel, InqCoreModel, NoNameCoreModel
 from core.models.managers import AllObjectsManager, ManagerAtivo, QuerySetAtivo
 

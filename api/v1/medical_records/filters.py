@@ -1,4 +1,4 @@
-from api.core.filters import SafeFilterSet
+from api.core.filters import SafeFilterSet  # Base com saneamento
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 

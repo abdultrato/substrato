@@ -1,5 +1,7 @@
 # LOCAL: nucleo/mixins/versionamento.py
 
+"""Mixin simples de versionamento otimista (campo inteiro)."""
+
 from django.db import models
 from django.db.models import F
 

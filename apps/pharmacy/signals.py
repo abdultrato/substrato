@@ -1,5 +1,7 @@
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+"""Sinais automáticos da app de farmácia."""
+
+from django.db.models.signals import post_save  # Sinal disparado após salvar
+from django.dispatch import receiver  # Decorador de registrador
 
 from .models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from .models.lot import Lot
@@ -12,13 +14,13 @@ def create_initial_inventory_movement(sender, instance: Lot, created, **kwargs):
     com a quantidade inicial do lote.
     """
     if not created:
-        return
+        return  # Só executa na criação
 
     InventoryMovement.objects.create(
-        lot=instance,
-        tenant=instance.tenant,
-        type=MovementType.ENTRADA,
-        origin=MovementOrigin.AJUSTE,
-        quantity=instance.initial_quantity,
-        name=f"Entrada - Lote {instance.lot_number}",
+        lot=instance,  # Lote recém-criado
+        tenant=instance.tenant,  # Mesmo tenant
+        type=MovementType.ENTRADA,  # Movimento de entrada
+        origin=MovementOrigin.AJUSTE,  # Origem ajuste inicial
+        quantity=instance.initial_quantity,  # Quantidade igual ao cadastro
+        name=f"Entrada - Lote {instance.lot_number}",  # Nome descritivo
     )

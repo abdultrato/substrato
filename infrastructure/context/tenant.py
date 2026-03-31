@@ -1,3 +1,5 @@
+"""Contexto de tenant baseado em ContextVar para operações multi-tenant."""
+
 from __future__ import annotations
 
 from contextvars import ContextVar

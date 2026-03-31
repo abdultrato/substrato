@@ -1,18 +1,24 @@
-from decimal import ROUND_HALF_UP, Decimal
+"""Itens de fatura (linhas) com preenchimento automático por origem."""
 
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, transaction
-from django.db.models import Q
+from decimal import ROUND_HALF_UP, Decimal  # Operações monetárias com arredondamento
 
-from apps.consultations.utils.pricing import calculate_price_multiplier
-from core.models.base import NoNameCoreModel
+from django.core.exceptions import ObjectDoesNotExist, ValidationError  # Validações e referências faltantes
+from django.core.validators import MaxValueValidator, MinValueValidator  # Validadores numéricos
+from django.db import models, transaction  # ORM e transações
+from django.db.models import Q  # Constraints condicionais
+
+from apps.consultations.utils.pricing import calculate_price_multiplier  # Multiplicador por horário
+from core.models.base import NoNameCoreModel  # Modelo base sem campo name
 
 
 class InvoiceItem(NoNameCoreModel):
-    prefix = "FTIT"
+    """Linha de fatura que representa um exame, produto, serviço ou ajuste."""
+
+    prefix = "FTIT"  # Prefixo de IDs amigáveis
 
     class ItemType(models.TextChoices):
+        """Tipos de item suportados pela fatura."""
+
         EXAME = "EXA", "Exame"
         EXAME_MEDICO = "EXM", "Exame médico"
         ITEM_VENDA = "FAR", "Item de farmácia"
@@ -24,27 +30,23 @@ class InvoiceItem(NoNameCoreModel):
     TipoItem = ItemType
 
     invoice = models.ForeignKey(
-
-        "faturamento.Invoice",
-
+        "faturamento.Invoice",  # Fatura à qual o item pertence
         db_column="invoice_id",
         verbose_name="Fatura relacionada",
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE,  # Remove item se fatura for apagada
         related_name="items",
     )
     item_type = models.CharField(
         db_column="item_type",
         verbose_name="Tipo de item de fatura",
         max_length=3,
-        choices=ItemType.choices,
+        choices=ItemType.choices,  # Restringe aos tipos válidos
         default=ItemType.EXAME,
         db_index=True,
     )
 
     exam = models.ForeignKey(
-
-        "clinical.LabExam",
-
+        "clinical.LabExam",  # Exame de laboratório
         db_column="exam_id",
         verbose_name="Exame laboratorial",
         on_delete=models.PROTECT,
@@ -52,7 +54,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     medical_exam = models.ForeignKey(
-        "clinical.MedicalExam",
+        "clinical.MedicalExam",  # Exame de imagem/consulta médica
         db_column="medical_exam_id",
         verbose_name="Exame médico",
         on_delete=models.PROTECT,
@@ -60,7 +62,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     consultation = models.ForeignKey(
-        "consultas.MedicalConsultation",
+        "consultas.MedicalConsultation",  # Consulta vinculada (quando item_type = CONSULTATION)
         db_column="consultation_id",
         verbose_name="Consulta médica",
         on_delete=models.PROTECT,
@@ -68,7 +70,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     sale_item = models.ForeignKey(
-        "farmacia.SaleItem",
+        "farmacia.SaleItem",  # Item de venda da farmácia
         db_column="sale_item_id",
         verbose_name="Item de venda",
         on_delete=models.PROTECT,
@@ -76,7 +78,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     product = models.ForeignKey(
-        "farmacia.Product",
+        "farmacia.Product",  # Produto vendido (fallback quando não há sale_item)
         db_column="product_id",
         verbose_name="Produto",
         on_delete=models.PROTECT,
@@ -85,7 +87,7 @@ class InvoiceItem(NoNameCoreModel):
         help_text="Produto vendido (quando não há referência direta ao item da venda).",
     )
     procedure_item = models.ForeignKey(
-        "enfermagem.ProcedureItem",
+        "enfermagem.ProcedureItem",  # Serviço de enfermagem
         db_column="procedure_item_id",
         verbose_name="Procedimento de enfermagem",
         on_delete=models.PROTECT,
@@ -93,7 +95,7 @@ class InvoiceItem(NoNameCoreModel):
         blank=True,
     )
     procedure_material = models.ForeignKey(
-        "enfermagem.ProcedureMaterial",
+        "enfermagem.ProcedureMaterial",  # Material consumido em enfermagem
         db_column="procedure_material_id",
         verbose_name="Material de procedimento de enfermagem",
         on_delete=models.PROTECT,
@@ -102,12 +104,14 @@ class InvoiceItem(NoNameCoreModel):
     )
 
     description = models.CharField(
-
         db_column="description",
-
-        verbose_name="Descrição", max_length=255, blank=True, default="")
+        verbose_name="Descrição",
+        max_length=255,
+        blank=True,
+        default="",
+    )
     quantity = models.DecimalField(
-        db_column="quantity",
+        db_column="quantity",  # Coluna
         verbose_name="Quantidade",
         max_digits=10,
         decimal_places=2,
@@ -115,7 +119,7 @@ class InvoiceItem(NoNameCoreModel):
         help_text="Informe a quantidade do itens. Para itens de venda, a quantidade será preenchida automaticamente a partir do item de venda selecionado.",
     )
     unit_price = models.DecimalField(
-        db_column="unit_price",
+        db_column="unit_price",  # Coluna
         verbose_name="Preço unitário",
         max_digits=12,
         decimal_places=2,

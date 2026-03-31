@@ -14,7 +14,7 @@ class Pregnancy(NoNameCoreModel):
     Campos e regras podem ser expandidos (pré-natal, exams, partos, etc.).
     """
 
-    prefix = "MAT"
+    prefix = "MAT"  # Prefixo para custom_id
 
     class Status(models.TextChoices):
         FOLLOW_UP = "ACOMP", "Em acompanhamento"
@@ -22,17 +22,15 @@ class Pregnancy(NoNameCoreModel):
         CLOSED = "ENCERR", "Encerrada"
         CANCELED = "CANCEL", "Cancelada"
 
-    patient = models.ForeignKey(
-
+    patient = models.ForeignKey(  # Paciente gestante
         "clinical.Patient",
-
         db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
         related_name="gestacoes",
         db_index=True,
     )
-    responsible_doctor = models.ForeignKey(
+    responsible_doctor = models.ForeignKey(  # Médico responsável
         "recursos_humanos.Employee",
         db_column="responsible_doctor_id",
         verbose_name="Médico/Ginecologista responsável",
@@ -43,32 +41,28 @@ class Pregnancy(NoNameCoreModel):
         db_index=True,
     )
 
-    last_menstrual_period_date = models.DateField(
-
+    last_menstrual_period_date = models.DateField(  # DUM (base para cálculo de DPP)
         db_column="last_menstrual_period_date",
-
         verbose_name="Data da última menstruação",
         null=True,
         blank=True,
     )
-    expected_delivery_date = models.DateField(
+    expected_delivery_date = models.DateField(  # DPP (estimada)
         db_column="expected_delivery_date",
         verbose_name="Data prevista do parto",
         null=True,
         blank=True,
     )
 
-    nursery = models.CharField(
-
+    nursery = models.CharField(  # Berçário/ala
         db_column="nursery",
-
         verbose_name="Berçário",
         max_length=80,
         blank=True,
         default="",
         help_text="Identificação do berçário/ala/sala (quando aplicável).",
     )
-    maternity_bed = models.CharField(
+    maternity_bed = models.CharField(  # Leito na maternidade
         db_column="maternity_bed",
         verbose_name="Cama na maternidade",
         max_length=40,
@@ -77,31 +71,27 @@ class Pregnancy(NoNameCoreModel):
         help_text="Número/identificação da bed (quando aplicável).",
     )
 
-    total_deliveries = models.PositiveSmallIntegerField(
-
+    total_deliveries = models.PositiveSmallIntegerField(  # Partos totais (histórico)
         db_column="total_deliveries",
-
         verbose_name="Partos totais",
         default=0,
         help_text="Histórico obstétrico: total de partos já realizados.",
     )
-    normal_deliveries = models.PositiveSmallIntegerField(
+    normal_deliveries = models.PositiveSmallIntegerField(  # Partos vaginais
         db_column="normal_deliveries",
         verbose_name="Partos normais",
         default=0,
         help_text="Histórico obstétrico: total de partos vaginais.",
     )
-    cesareans = models.PositiveSmallIntegerField(
+    cesareans = models.PositiveSmallIntegerField(  # Partos cesáreos
         db_column="cesareans",
         verbose_name="Cesarianas",
         default=0,
         help_text="Histórico obstétrico: total de partos por cesariana.",
     )
 
-    status = models.CharField(
-
+    status = models.CharField(  # Estado atual da gestação
         db_column="status",
-
         verbose_name="Estado",
         max_length=10,
         choices=Status.choices,
@@ -109,12 +99,13 @@ class Pregnancy(NoNameCoreModel):
         db_index=True,
     )
 
-    notes = models.TextField(
-
+    notes = models.TextField(  # Observações clínicas
         db_column="notes",
-
-        verbose_name="Observações", blank=True, default="")
-    created_at = models.DateTimeField(
+        verbose_name="Observações",
+        blank=True,
+        default="",
+    )
+    created_at = models.DateTimeField(  # Timestamp próprio (não usa auto_add)
         verbose_name="Criado em",
         db_column="created_at",
         default=timezone.now,
@@ -122,10 +113,10 @@ class Pregnancy(NoNameCoreModel):
     )
 
     class Meta:
-        db_table = "maternidade_gestacao"
+        db_table = "maternidade_gestacao"  # Nome legado
         verbose_name = "Gestação"
         verbose_name_plural = "Gestações"
-        ordering = ["-created_at", "-id"]
+        ordering = ["-created_at", "-id"]  # Mais recentes primeiro
         indexes = [
             models.Index(fields=["tenant", "patient", "created_at"]),
             models.Index(fields=["tenant", "status", "created_at"]),
@@ -157,7 +148,7 @@ class Pregnancy(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         if not self.tenant_id and self.patient_id:
-            self.tenant_id = self.patient.tenant_id
+            self.tenant_id = self.patient.tenant_id  # Propaga tenant do paciente
         self.full_clean()
         return super().save(*args, **kwargs)
 

@@ -18,3 +18,4 @@ def permitido(key: str, limite=5, intervalo=60):
     cache.set(key, registros, timeout=intervalo)
 
     return True
+"""Aplicação manual de rate limit em pontos específicos."""

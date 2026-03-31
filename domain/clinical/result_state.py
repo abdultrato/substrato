@@ -1,3 +1,5 @@
+"""Enum-like de estados de resultado clínico."""
+
 class ResultState:
     PENDING = "pendente"
     IN_ANALYSIS = "em_analise"
