@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
-import { apiFetch, apiFetchList } from "@/lib/api";
+import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
@@ -32,6 +33,8 @@ function calcularIdade ( dataNascimento?: string ): string {
     return `${diffDias} dias`;
 }
 
+type PacienteList = { items: Paciente[]; meta: ApiListMeta; raw: any };
+
 export default function PacientesPage () {
     useAuthGuard();
     const { user } = useAuth();
@@ -43,15 +46,28 @@ export default function PacientesPage () {
     ] );
     const podeApagar = userHasAnyGroup( user, [GROUPS.ADMIN] );
 
-    const [pacientes, setPacientes] = useState<Paciente[]>( [] );
-    const [loading, setLoading] = useState( true );
     const [saving, setSaving] = useState( false );
-    const [error, setError] = useState<string | null>( null );
     const [editingId, setEditingId] = useState<number | null>( null );
     const [page, setPage] = useState( 1 );
     const [pageSize, setPageSize] = useState( 50 );
-    const [totalItems, setTotalItems] = useState( 0 );
-    const [totalPages, setTotalPages] = useState( 1 );
+    const [error, setError] = useState<string | null>( null );
+
+    const { data, isFetching, isError, error: queryError, refetch } = useQuery<PacienteList>( {
+        queryKey: ["pacientes", page, pageSize],
+        queryFn: () => apiFetchList<Paciente>( "/pacientes/", { page, pageSize } ),
+        placeholderData: keepPreviousData,
+        staleTime: 20_000,
+    } );
+
+    const pacientes = data?.items ?? [];
+    const totalItems = data?.meta.total ?? pacientes.length;
+    const totalPages =
+        data?.meta.totalPages ??
+        (totalItems && pageSize ? Math.max( 1, Math.ceil( totalItems / pageSize ) ) : 1);
+
+    useEffect( () => {
+        if ( totalPages > 0 && page > totalPages ) setPage( totalPages );
+    }, [page, totalPages] );
 
     const [form, setForm] = useState<PacienteCreateDTO>( {
         nome: "",
@@ -75,40 +91,6 @@ export default function PacientesPage () {
     } );
 
     const countryOptions = useMemo( () => getCountryOptions( ["pt"] ), [] );
-
-    useEffect( () => {
-        carregarPacientes();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, pageSize] );
-
-    async function carregarPacientes () {
-        try {
-            setLoading( true );
-            setError( null );
-
-            const { items, meta } = await apiFetchList<Paciente>( "/pacientes/", {
-                page,
-                pageSize,
-            } );
-
-            const total = meta.total ?? items.length;
-            const computedTotalPages =
-                meta.totalPages ??
-                (total && pageSize ? Math.max( 1, Math.ceil( total / pageSize ) ) : 1);
-
-            setPacientes( items );
-            setTotalItems( total || 0 );
-            setTotalPages( computedTotalPages );
-
-            if ( page > computedTotalPages ) {
-                setPage( computedTotalPages );
-            }
-        } catch ( err: any ) {
-            setError( err?.message || "Erro ao carregar pacientes" );
-        } finally {
-            setLoading( false );
-        }
-    }
 
     function handleChange (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -161,7 +143,7 @@ export default function PacientesPage () {
             }
 
             resetForm();
-            carregarPacientes();
+            refetch();
         } catch (err: any) {
             const validation = (err as any)?.validation
             if (validation && typeof validation === "object" && !Array.isArray(validation)) {
@@ -192,7 +174,7 @@ export default function PacientesPage () {
         if ( !confirm( "Deseja remover este paciente?" ) ) return;
 
         await apiFetch( `/pacientes/${id}/`, { method: "DELETE" } );
-        carregarPacientes();
+        refetch();
     }
 
     function iniciarEdicao ( p: Paciente ) {
@@ -225,7 +207,7 @@ export default function PacientesPage () {
         window.scrollTo( { top: 0, behavior: "smooth" } );
     }
 
-    if ( loading ) {
+    if ( isFetching ) {
         return (
             <AppLayout
                 requiredGroups={[
@@ -254,7 +236,9 @@ export default function PacientesPage () {
             <div className="page-box fade-in">
                 <h1 className="page-title">Pacientes</h1>
 
-                {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
+                {(error || (isError && queryError)) && (
+                    <p style={{ color: "#d32f2f" }}>{error || (queryError as any)?.message}</p>
+                )}
 
                 {/* FORM */}
                 {podeEditar ? (

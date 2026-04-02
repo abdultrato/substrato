@@ -1,17 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Shield, FileDown, FlaskConical } from "lucide-react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
-import { apiFetch } from "@/lib/api"
+import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequisicaoRow = Record<string, any>
+type RequisicaoList = { items: RequisicaoRow[]; meta: ApiListMeta; raw: any }
 
 async function abrirPdfResultados(requisicaoId: number) {
   const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
@@ -35,42 +37,24 @@ export default function LaboratorioRequisicoesPage() {
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [estado, setEstado] = useState<string>("pendente")
-  const [erro, setErro] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<RequisicaoRow[]>([])
+
+  const { data, isFetching, isError, error } = useQuery<RequisicaoList>({
+    queryKey: ["lab-requests", estado],
+    queryFn: () =>
+      apiFetchList<RequisicaoRow>(`/requisicoes/?tipo=LAB&estado=${encodeURIComponent(estado)}`),
+    placeholderData: keepPreviousData,
+    staleTime: 20_000,
+  })
+
+  const rows = data?.items ?? []
 
   const onPdf = useCallback(async (id: number) => {
     try {
       await abrirPdfResultados(id)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF de resultados.")
+      alert(e?.message || "Falha ao gerar PDF de resultados.")
     }
   }, [])
-
-  useEffect(() => {
-    let mounted = true
-    async function load() {
-      try {
-        setLoading(true)
-        setErro(null)
-        const res = await apiFetch<any>(
-          `/requisicoes/?tipo=LAB&estado=${encodeURIComponent(estado)}`
-        )
-        const items = res && (res as any).results ? (res as any).results : res
-        if (!mounted) return
-        setData(Array.isArray(items) ? items : [])
-      } catch (e: any) {
-        if (!mounted) return
-        setErro(e?.message || "Falha ao carregar requisições.")
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [estado])
 
   const columns = useMemo(
     () => [
@@ -155,18 +139,18 @@ export default function LaboratorioRequisicoesPage() {
           }
         />
 
-        {erro ? (
+        {isError ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {(error as any)?.message || "Falha ao carregar requisições."}
           </div>
         ) : null}
 
-        {loading ? (
+        {isFetching ? (
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
           <DataTable<RequisicaoRow>
             columns={columns as any}
-            data={data}
+            data={rows}
             emptyMessage="Nenhuma requisição encontrada."
           />
         )}

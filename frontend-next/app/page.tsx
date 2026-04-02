@@ -112,24 +112,28 @@ export default function DashboardPage () {
                             title="Pacientes"
                             value={stats.patients}
                             icon={Users}
+                            href="/patients"
                         />
 
                         <StatCard
                             title="Requisições Pendentes"
                             value={stats.pending_requests}
                             icon={ClipboardList}
+                            href="/requests"
                         />
 
                         <StatCard
                             title="Exames Hoje"
                             value={stats.exams_today}
                             icon={FlaskConical}
+                            href="/laboratory/requests"
                         />
 
                         <StatCard
                             title="Faturamento Hoje"
                             value={<MoneyValue value={stats.billing_today} />}
                             icon={Receipt}
+                            href="/invoices"
                         />
                     </div>
                 )}
@@ -229,12 +233,14 @@ function StatCard ( {
     title,
     value,
     icon: Icon,
+    href,
 }: {
     title: string
     value: number | string | JSX.Element
     icon: any
+    href?: string
 } ) {
-    return (
+    const content = (
         <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40">
             <div>
                 <p className="text-sm text-muted-foreground">{title}</p>
@@ -246,6 +252,8 @@ function StatCard ( {
             </div>
         </div>
     )
+
+    return href ? <Link href={href}>{content}</Link> : content
 }
 
 function CardSection({

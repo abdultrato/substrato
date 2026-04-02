@@ -2,6 +2,10 @@ import { logout as clearSession } from "../session"
 
 type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
+  /**
+   * Timeout em ms para abortar a requisição. Default: 8000.
+   */
+  timeoutMs?: number
 }
 export type ApiListMeta = {
   total?: number
@@ -29,11 +33,35 @@ function rewriteUrl(url: string): string {
 
   const aliases: Array<[string, string]> = [
     ["/patients", "/clinical/patient"],
+    ["/pacientes", "/clinical/patient"],
+    ["/pacientes/", "/clinical/patient"],
     ["/exams", "/clinical/exam"],
+    ["/exames", "/clinical/exam"],
+    ["/exames/", "/clinical/exam"],
     ["/medical-exams", "/clinical/medicalexam"],
+    ["/exames-medicos", "/clinical/medicalexam"],
+    ["/exames-medicos/", "/clinical/medicalexam"],
     ["/lab-requests", "/clinical/labrequest"],
+    ["/requisicoes", "/clinical/labrequest"],
+    ["/requisicoes/", "/clinical/labrequest"],
     ["/invoices", "/billing/invoice"],
+    ["/faturas", "/billing/invoice"],
+    ["/faturas/", "/billing/invoice"],
     ["/companies", "/external_entities/company"],
+    ["/entidades", "/external_entities/company"],
+    ["/entidades/", "/external_entities/company"],
+    ["/payments/payment", "/payments/payment"],
+    ["/pagamentos", "/payments/payment"],
+    ["/pagamentos/", "/payments/payment"],
+    ["/payments/recibo", "/payments/recibo"],
+    ["/recibos", "/payments/recibo"],
+    ["/recibos/", "/payments/recibo"],
+    ["/payments/transaction", "/payments/transaction"],
+    ["/transactions", "/payments/transaction"],
+    ["/transactions/", "/payments/transaction"],
+    ["/billing/invoiceitem", "/billing/invoiceitem"],
+    ["/itens-fatura", "/billing/invoiceitem"],
+    ["/itens-fatura/", "/billing/invoiceitem"],
   ]
 
   for (const [from, to] of aliases) {
@@ -117,47 +145,56 @@ export async function apiFetch<T = any>(
 ): Promise<T> {
   const rewritten = rewriteUrl(url)
   const responseType = options.responseType || "json"
+  const timeoutMs = options.timeoutMs ?? 8000
+  const controller = !options.signal ? new AbortController() : undefined
+  const signal = options.signal || controller?.signal
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined
 
   const doFetch = async (): Promise<Response> => {
     return fetch(`/api/v1${rewritten}`, {
       ...options,
       credentials: "include",
       headers: buildHeaders(options),
+      signal,
     })
   }
 
-  let res = await doFetch()
-
-  if (res.status === 401) {
-    const newAccess = await refreshAccessToken()
-    if (newAccess) {
-      res = await doFetch()
-    } else {
-      // Sessão inválida/expirada: limpa client-side e envia para login.
-      try {
-        clearSession()
-      } catch {
-        // ignore
-      }
-      if (typeof window !== "undefined") {
-        const next = encodeURIComponent(window.location.pathname + window.location.search)
-        window.location.href = `/login?next=${next}`
-      }
-      throw new Error("Sessão expirada. Faça login novamente.")
-    }
-  }
-
-  if (!res.ok) throw await parseError(res)
-
-  if (res.status === 204) return null as unknown as T
-
-  if (responseType === "blob") return (await res.blob()) as unknown as T
-  if (responseType === "text") return (await res.text()) as unknown as T
-
   try {
-    return (await res.json()) as unknown as T
-  } catch {
-    return null as unknown as T
+    let res = await doFetch()
+
+    if (res.status === 401) {
+      const newAccess = await refreshAccessToken()
+      if (newAccess) {
+        res = await doFetch()
+      } else {
+        // Sessão inválida/expirada: limpa client-side e envia para login.
+        try {
+          clearSession()
+        } catch {
+          // ignore
+        }
+        if (typeof window !== "undefined") {
+          const next = encodeURIComponent(window.location.pathname + window.location.search)
+          window.location.href = `/login?next=${next}`
+        }
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+    }
+
+    if (!res.ok) throw await parseError(res)
+
+    if (res.status === 204) return null as unknown as T
+
+    if (responseType === "blob") return (await res.blob()) as unknown as T
+    if (responseType === "text") return (await res.text()) as unknown as T
+
+    try {
+      return (await res.json()) as unknown as T
+    } catch {
+      return null as unknown as T
+    }
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }
 

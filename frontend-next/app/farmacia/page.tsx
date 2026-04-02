@@ -9,7 +9,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch, extractTotalCount } from "@/lib/api"
+import { pharmacyService } from "@/lib/api/typed-client"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -31,15 +31,15 @@ export default function FarmaciaPage() {
         setErro(null)
 
         const [prods, lots, movs] = await Promise.all([
-          apiFetch<any>("/farmacia/produto/"),
-          apiFetch<any>("/farmacia/lote/"),
-          apiFetch<any>("/farmacia/movimentoestoque/"),
+          pharmacyService.listProdutos(),
+          pharmacyService.listLotes(),
+          pharmacyService.listMovimentos(),
         ])
 
         if (!mounted) return
-        setProdutos(extractTotalCount(prods))
-        setLotes(extractTotalCount(lots))
-        setMovimentos(extractTotalCount(movs))
+        setProdutos(prods.data?.length ?? 0)
+        setLotes(lots.data?.length ?? 0)
+        setMovimentos(movs.data?.length ?? 0)
       } catch (e: any) {
         if (!mounted) return
         setErro(e?.message || "Falha ao carregar o workspace da farmácia.")

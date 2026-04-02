@@ -13,6 +13,21 @@ export const GROUPS = {
   RECURSOS_HUMANOS: "Gestor de RH",
 } as const
 
+const ALL_GROUP_VALUES = Object.values(GROUPS)
+
+const GROUP_SYNONYMS: Record<string, string[]> = {
+  Administrador: [
+    "admin",
+    "administrador",
+    "administrator",
+    "superuser",
+    "super usuario",
+    "super usuário",
+    "superusuario",
+    "staff",
+  ],
+}
+
 export type WorkspaceKey =
   | "dashboard"
   | "recepcao"
@@ -107,7 +122,25 @@ function normalizeGroupName(value: string): string {
 }
 
 export function userGroups(user: SessionUser | null): string[] {
-  return user?.groups ?? []
+  const base = user?.groups ?? []
+  if (user?.is_superuser) {
+    // Superuser ganha todos os grupos por padrão.
+    return Array.from(new Set([...base, ...ALL_GROUP_VALUES]))
+  }
+  if (user?.is_staff && !base.includes(GROUPS.ADMIN)) {
+    return [...base, GROUPS.ADMIN]
+  }
+  return base
+}
+
+function expandRequired(required: string[]): string[] {
+  const expanded: string[] = []
+  required.forEach((g) => {
+    expanded.push(g)
+    const syn = GROUP_SYNONYMS[g]
+    if (syn) expanded.push(...syn)
+  })
+  return expanded
 }
 
 export function userHasAnyGroup(
@@ -115,11 +148,22 @@ export function userHasAnyGroup(
   requiredGroups: string[]
 ): boolean {
   if (!requiredGroups?.length) return true
+  if (
+    requiredGroups.includes(GROUPS.ADMIN) &&
+    (user?.is_superuser || user?.is_staff)
+  ) {
+    return true
+  }
+
+  const requiredExpanded = expandRequired(requiredGroups)
   const have = new Set(userGroups(user).map(normalizeGroupName))
-  return requiredGroups.some((g) => have.has(normalizeGroupName(g)))
+  return requiredExpanded.some((g) => have.has(normalizeGroupName(g)))
 }
 
 export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[] {
+  if (user?.is_superuser || user?.is_staff) {
+    return WORKSPACES
+  }
   return WORKSPACES.filter((w) =>
     w.anyOfGroups ? userHasAnyGroup(user, w.anyOfGroups) : true
   )

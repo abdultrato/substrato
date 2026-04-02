@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetchList } from "@/lib/api";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { ApiListMeta, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { Requisicao } from "@/lib/types";
 import Link from "next/link";
@@ -9,54 +10,35 @@ import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
 import { GROUPS } from "@/lib/rbac";
 
+type RequisicaoListResponse = { items: Requisicao[]; meta: ApiListMeta; raw: any };
+
 export default function RequisicoesPage () {
     useAuthGuard();
 
-    const [requisicoes, setRequisicoes] = useState<Requisicao[]>( [] );
     const [tipo, setTipo] = useState<string>( "" );
-    const [loading, setLoading] = useState( true );
-    const [error, setError] = useState<string | null>( null );
     const [page, setPage] = useState( 1 );
     const [pageSize, setPageSize] = useState( 50 );
-    const [totalItems, setTotalItems] = useState( 0 );
-    const [totalPages, setTotalPages] = useState( 1 );
-
-    async function carregar () {
-        try {
-            setLoading( true );
-            setError( null );
-
+    const { data, isFetching, isError, error } = useQuery<RequisicaoListResponse>({
+        queryKey: ["requisicoes", { tipo, page, pageSize }],
+        queryFn: async () => {
             const url = tipo
                 ? `/requisicoes/?tipo=${encodeURIComponent( tipo )}`
                 : "/requisicoes/";
+            return apiFetchList<Requisicao>( url, { page, pageSize } );
+        },
+        placeholderData: keepPreviousData,
+        staleTime: 20_000,
+    });
 
-            const { items, meta } = await apiFetchList<Requisicao>( url, {
-                page,
-                pageSize,
-            } );
+    const requisicoes = data?.items ?? [];
+    const totalItems = data?.meta.total ?? requisicoes.length;
+    const totalPages =
+        data?.meta.totalPages ??
+        (totalItems && pageSize ? Math.max(1, Math.ceil(totalItems / pageSize)) : 1);
 
-            const total = meta.total ?? items.length;
-            const computedTotalPages =
-                meta.totalPages ??
-                (total && pageSize ? Math.max( 1, Math.ceil( total / pageSize ) ) : 1);
-
-            setRequisicoes( items );
-            setTotalItems( total || 0 );
-            setTotalPages( computedTotalPages );
-
-            if ( page > computedTotalPages ) setPage( computedTotalPages );
-        } catch ( err: any ) {
-            setError( err?.message || "Erro ao carregar requisições" );
-            setRequisicoes( [] );
-        } finally {
-            setLoading( false );
-        }
-    }
-
-    useEffect( () => {
-        carregar();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tipo, page, pageSize] );
+    useEffect(() => {
+        if (totalPages > 0 && page > totalPages) setPage(totalPages);
+    }, [page, totalPages]);
 
     return (
         <AppLayout
@@ -110,9 +92,9 @@ export default function RequisicoesPage () {
                     </label>
                 </div>
 
-                {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
+                {isError && <p style={{ color: "#d32f2f" }}>{(error as any)?.message || "Erro ao carregar requisições"}</p>}
 
-                {loading ? (
+                {isFetching ? (
                     <p>Carregando...</p>
                 ) : null}
 
