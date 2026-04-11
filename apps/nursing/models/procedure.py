@@ -60,6 +60,12 @@ class Procedure(NoNameCoreModel):
         decimal_places=2,
         default=Decimal("0.00"),
     )
+    selected_materials = models.ManyToManyField(
+        "farmacia.Product",
+        blank=True,
+        verbose_name="Materiais selecionados",
+        related_name="procedures_selected",
+    )
 
     class Meta:
         db_table = "enfermagem_procedimento"

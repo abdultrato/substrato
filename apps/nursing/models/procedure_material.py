@@ -121,13 +121,13 @@ class ProcedureMaterial(NoNameCoreModel):
 
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
-            # Depois que o material for lançado no estoque, ele se torna imutável.
+            # Depois que o material for lançado no estoque, campos críticos ficam imutáveis
+            # EXCETO quantity, que pode ser modificada com estorno automático
             if original.inventory_movement_id:
                 campos_immutaveis = (
                     "procedure_id",
                     "product_id",
                     "lot_id",
-                    "quantity",
                     "procedure_item_id",
                 )
                 if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
@@ -137,15 +137,14 @@ class ProcedureMaterial(NoNameCoreModel):
             else:
                 # Enquanto estiver pendente (sem inventory_movement), permitimos
                 # escolher lot e lançar o movimento posteriormente, mas
-                # mantemos a referência e quantity imutáveis.
+                # mantemos a referência imutáveis.
                 campos_immutaveis = (
                     "procedure_id",
                     "product_id",
-                    "quantity",
                     "procedure_item_id",
                 )
                 if any(getattr(original, campo) != getattr(self, campo) for campo in campos_immutaveis):
-                    raise ValidationError("Material pendente é imutável (exceto lot/baixa de estoque).")
+                    raise ValidationError("Material pendente é imutável (pode alterar lot/quantidade).")
 
     def _resolver_unit_cost(self):
         if self.unit_cost and self.unit_cost > 0:
@@ -203,16 +202,48 @@ class ProcedureMaterial(NoNameCoreModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
         alocar_estoque = bool(kwargs.pop("alocar_estoque", True))
+        quantity_changed = False
+        original_quantity = None
 
         if not self.tenant_id and self.procedure_id:
             self.tenant_id = self.procedure.tenant_id
+
+        # Detecta mudança de quantidade em material já lançado no estoque
+        if self.pk:
+            original = self.__class__.all_objects.get(pk=self.pk)
+            if original.inventory_movement_id and original.quantity != self.quantity:
+                quantity_changed = True
+                original_quantity = original.quantity
 
         if alocar_estoque:
             self._select_automatic_lot()
         self.full_clean()
         super().save(*args, **kwargs)
 
-        if alocar_estoque and self.inventory_movement_id is None:
+        # Se quantidade foi alterada após lançamento, faz estorno + novo movimento
+        if quantity_changed and original_quantity is not None:
+            # Cria movimento de entrada (estorno) da quantidade anterior
+            InventoryMovement.objects.create(
+                name=(f"Estorno/Ajuste {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
+                lot=self.lot,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.PROCEDIMENTO,
+                quantity=original_quantity,
+                tenant=self.tenant,
+            )
+            # Cria novo movimento de saída com a quantidade nova
+            bunch = InventoryMovement.objects.create(
+                name=(f"Consumo (Ajuste) {self.procedure.custom_id or self.procedure_id} - {self.product.name}"),
+                lot=self.lot,
+                type=MovementType.SAIDA,
+                origin=MovementOrigin.PROCEDIMENTO,
+                quantity=self.quantity,
+                tenant=self.tenant,
+            )
+            self.inventory_movement = bunch
+            self.__class__.all_objects.filter(pk=self.pk).update(inventory_movement=bunch)
+
+        elif alocar_estoque and self.inventory_movement_id is None:
             if not self.lot_id:
                 raise ValidationError({"lot": "Lote é obrigatório para baixar estoque do material."})
 

@@ -1,5 +1,7 @@
 """Configuração do Django Admin para o módulo de Enfermagem."""
 
+from decimal import Decimal
+
 from django.contrib import admin
 from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When
 from django.db.models.functions import Coalesce
@@ -72,20 +74,33 @@ class ProcedimentoItemInline(admin.TabularInline):
 
 
 class ProcedimentoMaterialInline(admin.TabularInline):
-    """Inline para materiais consumidos em um item de procedimento."""
+    """Inline para materiais consumidos em um procedimento de enfermagem.
+    
+    Permite edição de quantidade com estorno automático de estoque.
+    Ao alterar quantidade, o sistema cria um movimento de entrada (estorno)
+    e um novo movimento de saída com a quantidade atualizada.
+    """
     model = ProcedureMaterial
-    extra = 1  # Um material sugerido por item
+    extra = 1
     fields = (
         "procedure_item",
         "product",
         "quantity",
         "lot",
         "unit_cost",
-        "inventory_movement",
+        "status_estorno",
         "observation",
     )
-    readonly_fields = ("procedure_item", "lot", "unit_cost", "inventory_movement")
+    readonly_fields = ("procedure_item", "unit_cost", "status_estorno")
     autocomplete_fields = ("product",)
+
+    def status_estorno(self, obj):
+        """Exibe status do movimento de estoque associado."""
+        if not obj.inventory_movement:
+            return "Pendente (não lançado)"
+        return f"✓ Lançado: {obj.inventory_movement.custom_id}"
+    
+    status_estorno.short_description = "Status Estoque"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "product":
@@ -326,7 +341,8 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "updated_by",
         "version",
     )
-    inlines = (ProcedimentoItemInline, ProcedimentoMaterialInline)
+    filter_horizontal = ("selected_materials",)
+    # inlines defined in get_inlines
     fieldsets = (
         (
             "Procedimento",
@@ -342,6 +358,12 @@ class ProcedimentoAdmin(admin.ModelAdmin):
                     "materials_subtotal",
                     "total",
                 )
+            },
+        ),
+        (
+            "Materiais",
+            {
+                "fields": ("selected_materials",),
             },
         ),
         (
@@ -370,6 +392,23 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         return obj.materiais.count()
 
     materiais_total.short_description = "Materiais"
+
+    def get_inlines(self, request, obj=None):
+        if obj is None:  # add form
+            return []
+        return [ProcedimentoItemInline, ProcedimentoMaterialInline]
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if not change:  # only on add
+            procedure = form.instance
+            for product in procedure.selected_materials.all():
+                ProcedureMaterial.objects.create(
+                    procedure=procedure,
+                    product=product,
+                    quantity=0,  # default, user will edit
+                    unit_cost=Decimal("0.00"),
+                )
 
 
 @admin.register(ProcedureItem)
@@ -526,6 +565,24 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         return f"{obj.total_linha:.2f}"
 
     linha_total.short_description = "Total"
+
+    def fazer_estorno(self, request, queryset):
+        """Ação para fazer estorno completo de materiais lançados no estoque."""
+        from django.contrib import messages
+        contador = 0
+        for material in queryset:
+            if material.inventory_movement_id:
+                try:
+                    material.delete()
+                    contador += 1
+                except Exception as e:
+                    messages.error(request, f"Erro ao estornar {material.custom_id}: {str(e)}")
+        
+        messages.success(request, f"{contador} material(ais) estimado(s) com sucesso.")
+    
+    fazer_estorno.short_description = "Fazer estorno completo dos materiais selecionados"
+    
+    actions = ["fazer_estorno"]
 
 
 @admin.register(ProcedureItemValue)
