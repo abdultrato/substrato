@@ -12,7 +12,7 @@ from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
 from domain.clinical.result_state import ResultState
 from drf_spectacular.utils import extend_schema
-from security.permissions.groups import IsAdminOrContabilidade
+from rest_framework.permissions import IsAuthenticated
 
 
 class DashboardStatsSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
@@ -29,7 +29,7 @@ class DashboardStatsSerializer(LegacyAliasSerializerMixin, serializers.Serialize
 
 
 class DashboardStatsView(APIView):
-    permission_classes = [IsAdminOrContabilidade]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(responses={200: DashboardStatsSerializer})
     def get(self, request):

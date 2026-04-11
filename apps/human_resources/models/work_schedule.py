@@ -25,6 +25,7 @@ class WorkSchedule(NoNameCoreModel):
     employee = models.ForeignKey(  # Funcionário dono do horário
         "recursos_humanos.Employee",
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="horarios",
         db_index=True,
@@ -32,13 +33,15 @@ class WorkSchedule(NoNameCoreModel):
 
     weekday = models.IntegerField(  # Dia da semana (0-6)
         db_column="weekday",
+        verbose_name="Dia da Semana",
         choices=DiaSemana.choices,
         db_index=True,
     )
-    start_time = models.TimeField(db_column="start_time")  # Início do turno
-    end_time = models.TimeField(db_column="end_time")  # Fim do turno
+    start_time = models.TimeField(db_column="start_time", verbose_name="Hora de Início")  # Início do turno
+    end_time = models.TimeField(db_column="end_time", verbose_name="Hora de Fim")  # Fim do turno
     active = models.BooleanField(  # Flag para desativar período
         db_column="active",
+        verbose_name="Ativo",
         default=True,
         db_index=True,
     )

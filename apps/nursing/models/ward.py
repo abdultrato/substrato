@@ -127,7 +127,7 @@ class WardAdmission(NoNameCoreModel):
 
         db_column="estimated_observation_hours",
 
-        verbose_name="Tempo estimado de observação (hours)",
+        verbose_name="Tempo estimado de observação (horas)",
         null=True,
         blank=True,
         help_text="Tempo estimado de observação em hours (quando aplicável).",
@@ -186,7 +186,7 @@ class WardAdmission(NoNameCoreModel):
 
         db_column="active",
 
-        verbose_name="Internamento active",
+        verbose_name="Internamento ativo",
         default=True,
         db_index=True,
     )

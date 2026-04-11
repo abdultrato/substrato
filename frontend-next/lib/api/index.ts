@@ -120,7 +120,7 @@ async function parseError(res: Response): Promise<Error> {
                 ? value
                 : JSON.stringify(value)
           const err = new Error(`${field}: ${firstMessage}`)
-          ;(err as any).validation = j
+            ; (err as any).validation = j
           return err
         }
       }
@@ -129,7 +129,7 @@ async function parseError(res: Response): Promise<Error> {
         j?.message ||
         (typeof j === "string" ? j : JSON.stringify(j))
       const err = new Error(msg || res.statusText)
-      ;(err as any).validation = j
+        ; (err as any).validation = j
       return err
     }
     const text = await res.text()
@@ -146,9 +146,13 @@ export async function apiFetch<T = any>(
   const rewritten = rewriteUrl(url)
   const responseType = options.responseType || "json"
   const timeoutMs = options.timeoutMs ?? 8000
-  const controller = !options.signal ? new AbortController() : undefined
+
+  // Use o signal fornecido ou crie um novo controller
+  const shouldCreateController = !options.signal
+  const controller = shouldCreateController ? new AbortController() : undefined
   const signal = options.signal || controller?.signal
-  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined
+
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined
 
   const doFetch = async (): Promise<Response> => {
     return fetch(`/api/v1${rewritten}`, {
@@ -160,6 +164,11 @@ export async function apiFetch<T = any>(
   }
 
   try {
+    // Apenas define timeout se criamos o controller
+    if (shouldCreateController && timeoutMs > 0) {
+      timer = setTimeout(() => controller?.abort(), timeoutMs)
+    }
+
     let res = await doFetch()
 
     if (res.status === 401) {
@@ -194,7 +203,9 @@ export async function apiFetch<T = any>(
       return null as unknown as T
     }
   } finally {
+    // Apenas limpa timer se o criamos
     if (timer) clearTimeout(timer)
+    // Não faz abort aqui pois a requisição já foi completada
   }
 }
 

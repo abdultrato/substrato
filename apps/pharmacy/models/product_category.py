@@ -64,7 +64,7 @@ class ProductCategory(CoreModel):
 
     parent_category = models.ForeignKey(
         "farmacia.ParentCategory",  # Categoria pai opcional
-        verbose_name="Categoria pai",  # Rótulo
+        verbose_name="Categoria Base",  # Rótulo
         db_column="parent_category_id",  # Coluna
         null=True,  # Pode ser nulo
         blank=True,  # Opcional em formulários
@@ -97,7 +97,7 @@ class ProductCategory(CoreModel):
     # ======================================
 
     def clean(self):
-        """Garante consistência da hierarquia (sem ser pai de si mesma)."""
+        """Garante consistência da hierarquia (sem ser base de si mesma)."""
 
         super().clean()
 

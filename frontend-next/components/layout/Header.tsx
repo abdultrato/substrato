@@ -12,15 +12,15 @@ interface Props {
     onMenuClick?: () => void
 }
 
-export default function Header ( { user, onMenuClick }: Props ) {
+export default function Header({ user, onMenuClick }: Props) {
     const { signOut } = useAuth()
     const { isDark, toggle: toggleTheme } = useTheme()
-    const [open, setOpen] = useState( false )
-    const menuRef = useRef<HTMLDivElement>( null )
+    const [open, setOpen] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     const composed =
         `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || ""
-    const name = ( user?.full_name || composed || user?.username || "Utilizador" ).trim()
+    const name = (user?.full_name || composed || user?.username || "Utilizador").trim()
     const fotoUrl = user?.foto_url || null
     const logoStyle = {
         backgroundImage: "url(/icon.png)",
@@ -29,21 +29,21 @@ export default function Header ( { user, onMenuClick }: Props ) {
         backgroundPosition: "center",
     }
 
-    function toggle () {
-        setOpen( ( v ) => !v )
+    function toggle() {
+        setOpen((v) => !v)
     }
 
     // fechar ao clicar fora
-    useEffect( () => {
-        function handleClick ( e: MouseEvent ) {
-            if ( menuRef.current && !menuRef.current.contains( e.target as Node ) ) {
-                setOpen( false )
+    useEffect(() => {
+        function handleClick(e: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setOpen(false)
             }
         }
 
-        if ( open ) document.addEventListener( "mousedown", handleClick )
-        return () => document.removeEventListener( "mousedown", handleClick )
-    }, [open] )
+        if (open) document.addEventListener("mousedown", handleClick)
+        return () => document.removeEventListener("mousedown", handleClick)
+    }, [open])
 
     return (
         <header className="chrome-surface sticky top-0 z-40 flex h-auto flex-nowrap items-center justify-between gap-3 border-b px-3 py-2 shadow-sm backdrop-blur">
@@ -100,7 +100,7 @@ export default function Header ( { user, onMenuClick }: Props ) {
                             </>
                         ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm text-xs font-semibold">
-                                {name.charAt( 0 ).toUpperCase()}
+                                {name.charAt(0).toUpperCase()}
                             </div>
                         )}
 
@@ -121,12 +121,12 @@ export default function Header ( { user, onMenuClick }: Props ) {
                             </Link>
 
                             <Link
-                                href="/definicoes"
+                                href="/settings"
                                 onClick={() => setOpen(false)}
                                 className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <Settings size={16} />
-                                Definições
+                                Configurações
                             </Link>
 
                             <div className="my-1 border-t border-white/15" />

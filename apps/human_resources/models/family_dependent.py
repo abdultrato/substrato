@@ -31,7 +31,7 @@ class FamilyDependent(CoreModel):
 
     relationship = models.CharField(  # Grau de parentesco
         db_column="relationship",
-        verbose_name="Grau de relationship",
+        verbose_name="Grau de Parentesco",
         max_length=20,
         choices=Parentesco.choices,
         default=Parentesco.OUTRO,

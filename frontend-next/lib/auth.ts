@@ -9,9 +9,13 @@ function apiUrl(path: string) {
 }
 
 export async function login(username: string, password: string) {
-  // Timeout curto para evitar ficar 20s esperando resposta do backend.
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 4000)
+  // Timeout aumentado para 15s com AbortController separados para cada requisição
+  // evita "signal is aborted without reason" (problema de reaproveitar o mesmo AbortController)
+  const LOGIN_TIMEOUT_MS = 15000
+
+  // 1. POST para login - seu próprio timeout
+  const loginController = new AbortController()
+  const loginTimer = setTimeout(() => loginController.abort(), LOGIN_TIMEOUT_MS)
 
   try {
     const res = await fetch(apiUrl("/api/v1/auth/login/"), {
@@ -19,7 +23,7 @@ export async function login(username: string, password: string) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
       credentials: "include",
-      signal: controller.signal,
+      signal: loginController.signal,
     })
 
     if (!res.ok) {
@@ -31,14 +35,27 @@ export async function login(username: string, password: string) {
         throw new Error("Credenciais inválidas")
       }
     }
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error("Timeout no login (backend demorou muito, excedeu 15s)")
+    }
+    throw e
+  } finally {
+    clearTimeout(loginTimer)
+  }
 
+  // 2. GET para obter dados do usuário - seu próprio timeout independente
+  const userController = new AbortController()
+  const userTimer = setTimeout(() => userController.abort(), LOGIN_TIMEOUT_MS)
+
+  try {
     // Evita camada extra de refresh/retry na apiFetch para reduzir latência no login.
     const userRes = await fetch(apiUrl("/api/v1/auth/user/"), {
       method: "GET",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
-      signal: controller.signal,
+      signal: userController.signal,
     })
 
     if (!userRes.ok) throw new Error("Falha ao obter sessão")
@@ -47,8 +64,13 @@ export async function login(username: string, password: string) {
     if (!user) throw new Error("Falha ao obter sessão")
     setSessionUser(user)
     return user
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error("Timeout ao buscar perfil (backend demorou muito, excedeu 15s)")
+    }
+    throw e
   } finally {
-    clearTimeout(timer)
+    clearTimeout(userTimer)
   }
 }
 

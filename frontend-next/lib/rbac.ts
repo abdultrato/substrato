@@ -30,14 +30,14 @@ const GROUP_SYNONYMS: Record<string, string[]> = {
 
 export type WorkspaceKey =
   | "dashboard"
-  | "recepcao"
-  | "laboratorio"
-  | "enfermagem"
-  | "medicina"
-  | "farmacia"
-  | "medicina-ocupacional"
-  | "contabilidade"
-  | "recursos-humanos"
+  | "reception"
+  | "laboratory"
+  | "nursing"
+  | "medicine"
+  | "pharmacy"
+  | "occupational-medicine"
+  | "accounting"
+  | "resources-human-resources"
 
 export type WorkspaceDef = {
   key: WorkspaceKey
@@ -52,63 +52,63 @@ export const WORKSPACES: WorkspaceDef[] = [
     key: "dashboard",
     label: "Dashboard",
     href: "/",
-    description: "Visão geral do dia e indicadores operacionais.",
+    description: "Overview of the day and operational metrics.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },
   {
-    key: "recepcao",
-    label: "Recepção",
-    href: "/recepcao",
-    description: "Entrada de pacientes, requisições e fluxo financeiro (faturas/recibos).",
+    key: "reception",
+    label: "Reception",
+    href: "/reception",
+    description: "Patient intake, requests, and financial workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO],
   },
   {
-    key: "laboratorio",
-    label: "Laboratório",
-    href: "/laboratorio",
-    description: "Lançamento/validação de resultados e emissão de PDF.",
+    key: "laboratory",
+    label: "Laboratory",
+    href: "/laboratory",
+    description: "Result entry, validation, and PDF generation.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
   {
-    key: "enfermagem",
-    label: "Enfermagem",
-    href: "/enfermagem",
-    description: "Execução de colheitas, procedimentos e apoio operacional.",
+    key: "nursing",
+    label: "Nursing",
+    href: "/nursing",
+    description: "Collections, procedures, and operational support.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
   },
   {
-    key: "medicina",
-    label: "Medicina",
-    href: "/medicina",
-    description: "Acompanhamento clínico e requisições de exames/procedimentos.",
+    key: "medicine",
+    label: "Medicine",
+    href: "/medicine",
+    description: "Clinical follow-up and exam/procedure requests.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA],
   },
   {
-    key: "farmacia",
-    label: "Farmácia",
-    href: "/farmacia",
-    description: "Almoxarifado, lotes e movimentos de estoque.",
+    key: "pharmacy",
+    label: "Pharmacy",
+    href: "/pharmacy",
+    description: "Stock, lots, and warehouse movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
   },
   {
-    key: "medicina-ocupacional",
-    label: "Medicina Ocupacional",
-    href: "/medicina-ocupacional",
-    description: "Registo, requisições e jornada ocupacional.",
+    key: "occupational-medicine",
+    label: "Occupational Medicine",
+    href: "/occupational-medicine",
+    description: "Occupational registration and request workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
   },
   {
-    key: "contabilidade",
-    label: "Contabilidade",
-    href: "/contabilidade",
-    description: "Contas, lançamentos e auditoria (somente leitura para recepção).",
+    key: "accounting",
+    label: "Accounting",
+    href: "/accounting",
+    description: "Accounts, entries, and audit workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },
   {
-    key: "recursos-humanos",
-    label: "Recursos Humanos",
-    href: "/recursos/recursos_humanos",
-    description: "Gestão de funcionários, cargos e escalas de trabalho.",
+    key: "resources-human-resources",
+    label: "Human Resources",
+    href: "/resources/human-resources",
+    description: "Employee management, roles, and schedules.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS],
   },
 ]

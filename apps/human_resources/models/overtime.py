@@ -19,6 +19,7 @@ class Overtime(NoNameCoreModel):
     employee = models.ForeignKey(  # Funcionário que fez a hora extra
         "recursos_humanos.Employee",
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="hours_extras",
         db_index=True,
@@ -26,23 +27,27 @@ class Overtime(NoNameCoreModel):
 
     date = models.DateField(  # Data da hora extra
         db_column="date",
+        verbose_name="Data",
         default=timezone.now,
         db_index=True,
     )
     hours = models.DecimalField(  # Quantidade de horas
         db_column="hours",
+        verbose_name="Horas",
         max_digits=6,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     multiplier = models.DecimalField(  # Multiplicador aplicado
         db_column="multiplier",
+        verbose_name="Multiplicador",
         max_digits=4,
         decimal_places=2,
         default=Decimal("1.50"),
     )
     notes = models.CharField(  # Observações
         db_column="notes",
+        verbose_name="Observações",
         max_length=255,
         blank=True,
         default="",

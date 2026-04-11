@@ -31,7 +31,7 @@ class ProfessionalProfile(models.Model):
     )
     professional_registration = models.CharField(
         db_column="professional_registration",
-        verbose_name="Registro professional",
+        verbose_name="Registro Profissional",
         max_length=120,
         blank=True,
         default="",

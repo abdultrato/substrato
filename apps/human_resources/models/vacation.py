@@ -23,6 +23,7 @@ class Vacation(NoNameCoreModel):
     employee = models.ForeignKey(  # Funcionário que goza férias
         "recursos_humanos.Employee",
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="ferias",
         db_index=True,
@@ -30,16 +31,19 @@ class Vacation(NoNameCoreModel):
 
     start_date = models.DateField(  # Início das férias
         db_column="start_date",
+        verbose_name="Data de Início",
         default=timezone.now,
         db_index=True,
     )
     end_date = models.DateField(  # Fim das férias
         db_column="end_date",
+        verbose_name="Data de Fim",
         default=timezone.now,
         db_index=True,
     )
     status = models.CharField(  # Estado do pedido
         db_column="status",
+        verbose_name="Estado",
         max_length=10,
         choices=Status.choices,
         default=Status.REQUESTED,
@@ -47,6 +51,7 @@ class Vacation(NoNameCoreModel):
     )
     notes = models.TextField(  # Observações/justificativa
         db_column="notes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )

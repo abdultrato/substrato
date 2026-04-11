@@ -23,6 +23,7 @@ class Termination(NoNameCoreModel):
     employee = models.ForeignKey(  # Funcionário desligado
         "recursos_humanos.Employee",
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="dispensas",
         db_index=True,
@@ -30,11 +31,13 @@ class Termination(NoNameCoreModel):
 
     date = models.DateField(  # Data do desligamento
         db_column="date",
+        verbose_name="Data",
         default=timezone.now,
         db_index=True,
     )
     type = models.CharField(  # Motivo do desligamento
         db_column="type",
+        verbose_name="Tipo",
         max_length=20,
         choices=Type.choices,
         default=Type.DISMISSAL,
@@ -42,6 +45,7 @@ class Termination(NoNameCoreModel):
     )
     reason = models.TextField(  # Observações/justificativa
         db_column="reason",
+        verbose_name="Motivo",
         blank=True,
         default="",
     )

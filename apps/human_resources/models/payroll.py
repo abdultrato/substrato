@@ -20,6 +20,7 @@ class Payroll(NoNameCoreModel):
     employee = models.ForeignKey(  # Funcionário alvo da folha
         "recursos_humanos.Employee",
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="folhas_payment",
         db_index=True,
@@ -27,23 +28,28 @@ class Payroll(NoNameCoreModel):
 
     year = models.PositiveSmallIntegerField(  # Ano de referência
         db_column="year",
+        verbose_name="Ano",
         db_index=True,
     )
     month = models.PositiveSmallIntegerField(  # Mês (1-12)
         db_column="month",
+        verbose_name="Mês",
         db_index=True,
     )
 
     nominal_salary = MoneyField(  # Salário base do mês
         db_column="nominal_salary",
+        verbose_name="Salário Nominal",
         default=Decimal("0.00"),
     )
     base_month_hours = models.PositiveSmallIntegerField(  # Horas contratuais
         db_column="base_month_hours",
+        verbose_name="Horas Base do Mês",
         default=176,
     )
     overtime_hour_multiplier = models.DecimalField(  # Multiplicador da hora extra
         db_column="overtime_hour_multiplier",
+        verbose_name="Multiplicador da Hora Extra",
         max_digits=4,
         decimal_places=2,
         default=Decimal("1.50"),
@@ -51,27 +57,32 @@ class Payroll(NoNameCoreModel):
 
     calculated_overtime_hours = models.DecimalField(  # Horas extras computadas no mês
         db_column="calculated_overtime_hours",
+        verbose_name="Horas Extras Calculadas",
         max_digits=8,
         decimal_places=2,
         default=Decimal("0.00"),
     )
     hourly_value = models.DecimalField(  # Valor hora efetivo
         db_column="hourly_value",
+        verbose_name="Valor da Hora",
         max_digits=12,
         decimal_places=4,
         default=Decimal("0.0000"),
     )
     overtime_value = MoneyField(  # Valor total de horas extras
         db_column="overtime_value",
+        verbose_name="Valor das Horas Extras",
         default=Decimal("0.00"),
     )
     total_salary = MoneyField(  # Salário total (nominal + extras)
         db_column="total_salary",
+        verbose_name="Salário Total",
         default=Decimal("0.00"),
     )
 
     closed = models.BooleanField(  # Travamento da folha
         db_column="closed",
+        verbose_name="Fechada",
         default=False,
         db_index=True,
     )

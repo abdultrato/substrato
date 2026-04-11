@@ -34,7 +34,7 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
     )
 
     status = models.CharField(  # Situação da autorização
-        verbose_name="Status",
+        verbose_name="Situação",
         max_length=20,
         choices=Status.choices,
         default=Status.PENDENTE,

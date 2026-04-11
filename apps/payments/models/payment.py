@@ -40,13 +40,14 @@ class Payment(CoreModel):
 
         db_column="value",
 
-        verbose_name="Valor")
+        verbose_name="Valor",
+    )
 
     method = models.CharField(
 
         db_column="method",
 
-        verbose_name="Método",
+        verbose_name="Forma de Pagamento",
         max_length=4,
         choices=Method.choices,
     )

@@ -22,17 +22,17 @@ interface Item {
 
 const items: Item[] = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Recepção", href: "/recepcao", icon: BriefcaseIcon },
-    { label: "Pacientes", href: "/pacientes", icon: Users },
-    { label: "Requisições", href: "/requisicoes", icon: ClipboardList },
-    { label: "Exames", href: "/exames", icon: FlaskConical },
-    { label: "Faturas", href: "/faturas", icon: FileText },
-    { label: "Entidades", href: "/entidades", icon: Building2 },
-    { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
-    { label: "Configurações", href: "/configuracoes", icon: Settings },
+    { label: "Recepção", href: "/reception", icon: BriefcaseIcon },
+    { label: "Pacientes", href: "/patients", icon: Users },
+    { label: "Requisições", href: "/requests", icon: ClipboardList },
+    { label: "Exames", href: "/exams", icon: FlaskConical },
+    { label: "Faturas", href: "/invoices", icon: FileText },
+    { label: "Empresas", href: "/entities", icon: Building2 },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
+    { label: "Settings", href: "/settings", icon: Settings },
 ]
 
-export default function AppSidebar () {
+export default function AppSidebar() {
     const pathname = usePathname()
 
     return (
@@ -42,7 +42,7 @@ export default function AppSidebar () {
             </div>
 
             <nav className="flex-1 px-3 py-4 space-y-1">
-                {items.map( ( item ) => {
+                {items.map((item) => {
                     const Icon = item.icon
                     const active = pathname === item.href
 
@@ -60,7 +60,7 @@ export default function AppSidebar () {
                             {item.label}
                         </Link>
                     )
-                } )}
+                })}
             </nav>
         </aside>
     )
