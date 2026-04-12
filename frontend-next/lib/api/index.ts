@@ -1,11 +1,16 @@
 import { logout as clearSession } from "../session"
 
-type ApiFetchOptions = RequestInit & {
+export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
   /**
    * Timeout em ms para abortar a requisição. Default: 8000.
    */
   timeoutMs?: number
+  /**
+   * Número de tentativas extras quando a requisição for abortada por timeout.
+   * Default: 1 (uma nova tentativa).
+   */
+  retryOnTimeout?: number
 }
 export type ApiListMeta = {
   total?: number
@@ -47,9 +52,9 @@ function rewriteUrl(url: string): string {
     ["/invoices", "/billing/invoice"],
     ["/faturas", "/billing/invoice"],
     ["/faturas/", "/billing/invoice"],
-    ["/companies", "/external_entities/company"],
-    ["/entidades", "/external_entities/company"],
-    ["/entidades/", "/external_entities/company"],
+    ["/companies", "/entities/company"],
+    ["/entidades", "/entities/company"],
+    ["/entidades/", "/entities/company"],
     ["/payments/payment", "/payments/payment"],
     ["/pagamentos", "/payments/payment"],
     ["/pagamentos/", "/payments/payment"],
@@ -62,6 +67,13 @@ function rewriteUrl(url: string): string {
     ["/billing/invoiceitem", "/billing/invoiceitem"],
     ["/itens-fatura", "/billing/invoiceitem"],
     ["/itens-fatura/", "/billing/invoiceitem"],
+    ["/recepcao", "/reception"],
+    ["/recepcao/", "/reception"],
+    ["/recepcao/workspace", "/reception/workspace"],
+    ["/prontuario", "/medical_records"],
+    ["/prontuario/", "/medical_records"],
+    ["/prontuario/registro", "/medical_records/record"],
+    ["/prontuario/registro/", "/medical_records/record/"],
   ]
 
   for (const [from, to] of aliases) {
@@ -145,67 +157,112 @@ export async function apiFetch<T = any>(
 ): Promise<T> {
   const rewritten = rewriteUrl(url)
   const responseType = options.responseType || "json"
-  const timeoutMs = options.timeoutMs ?? 8000
+  // Por padrão não abortamos requisições automaticamente (0 = sem timeout).
+  // Chamadores podem fornecer `timeoutMs` quando desejarem comportamento de timeout.
+  const timeoutMs = options.timeoutMs ?? 0
+  const maxRetries = Math.max(0, (options.retryOnTimeout ?? 1))
 
   // Use o signal fornecido ou crie um novo controller
-  const shouldCreateController = !options.signal
-  const controller = shouldCreateController ? new AbortController() : undefined
-  const signal = options.signal || controller?.signal
+  // Tentativas: primeira + retries em caso de AbortError por timeout
+  let attempt = 0
+  let lastErr: any = null
+  for (; attempt <= maxRetries; attempt++) {
+    // Use o signal fornecido ou crie um novo controller a cada tentativa
+    const shouldCreateController = !options.signal
+    const controller = shouldCreateController ? new AbortController() : undefined
+    const signal = options.signal || controller?.signal
 
-  let timer: ReturnType<typeof setTimeout> | undefined = undefined
+    let timer: ReturnType<typeof setTimeout> | undefined = undefined
 
-  const doFetch = async (): Promise<Response> => {
-    return fetch(`/api/v1${rewritten}`, {
-      ...options,
-      credentials: "include",
-      headers: buildHeaders(options),
-      signal,
-    })
-  }
-
-  try {
-    // Apenas define timeout se criamos o controller
-    if (shouldCreateController && timeoutMs > 0) {
-      timer = setTimeout(() => controller?.abort(), timeoutMs)
+    const doFetch = async (): Promise<Response> => {
+      return fetch(`/api/v1${rewritten}`, {
+        ...options,
+        credentials: "include",
+        headers: buildHeaders(options),
+        signal,
+      })
     }
-
-    let res = await doFetch()
-
-    if (res.status === 401) {
-      const newAccess = await refreshAccessToken()
-      if (newAccess) {
-        res = await doFetch()
-      } else {
-        // Sessão inválida/expirada: limpa client-side e envia para login.
-        try {
-          clearSession()
-        } catch {
-          // ignore
-        }
-        if (typeof window !== "undefined") {
-          const next = encodeURIComponent(window.location.pathname + window.location.search)
-          window.location.href = `/login?next=${next}`
-        }
-        throw new Error("Sessão expirada. Faça login novamente.")
-      }
-    }
-
-    if (!res.ok) throw await parseError(res)
-
-    if (res.status === 204) return null as unknown as T
-
-    if (responseType === "blob") return (await res.blob()) as unknown as T
-    if (responseType === "text") return (await res.text()) as unknown as T
 
     try {
-      return (await res.json()) as unknown as T
-    } catch {
-      return null as unknown as T
+      // Apenas define timeout se criamos o controller
+      if (shouldCreateController && timeoutMs > 0) {
+        timer = setTimeout(() => controller?.abort(), timeoutMs)
+      }
+
+      let res: Response
+      try {
+        res = await doFetch()
+      } catch (err) {
+        // Se abort foi causado pelo nosso controller, tentar novamente (se houver retries)
+        if ((err as any)?.name === "AbortError") {
+          lastErr = err
+          // limpeza e log para diagnóstico
+          if (timer) {
+            clearTimeout(timer)
+          }
+          console.warn(`[apiFetch] AbortError on attempt ${attempt + 1}/${maxRetries + 1} for ${rewritten}`)
+          // se ainda restam tentativas, esperar um pequeno backoff e tentar de novo
+          if (attempt < maxRetries) {
+            const backoff = 200 * (attempt + 1)
+            await new Promise((r) => setTimeout(r, backoff))
+            continue
+          }
+          const e = new Error("Requisição abortada.")
+            ; (e as any).name = "AbortError"
+          throw e
+        }
+        throw err
+      }
+
+      if (res.status === 401) {
+        const newAccess = await refreshAccessToken()
+        if (newAccess) {
+          try {
+            res = await doFetch()
+          } catch (err) {
+            if ((err as any)?.name === "AbortError") {
+              lastErr = err
+              if (attempt < maxRetries) {
+                const backoff = 200 * (attempt + 1)
+                await new Promise((r) => setTimeout(r, backoff))
+                continue
+              }
+              throw new Error("Requisição abortada.")
+            }
+            throw err
+          }
+        } else {
+          // Sessão inválida/expirada: limpa client-side e envia para login.
+          try {
+            clearSession()
+          } catch {
+            // ignore
+          }
+          if (typeof window !== "undefined") {
+            const next = encodeURIComponent(window.location.pathname + window.location.search)
+            window.location.href = `/login?next=${next}`
+          }
+          throw new Error("Sessão expirada. Faça login novamente.")
+        }
+      }
+
+      if (!res.ok) throw await parseError(res)
+
+      if (res.status === 204) return null as unknown as T
+
+      if (responseType === "blob") return (await res.blob()) as unknown as T
+      if (responseType === "text") return (await res.text()) as unknown as T
+
+      try {
+        return (await res.json()) as unknown as T
+      } catch {
+        return null as unknown as T
+      }
+    } finally {
+      // Apenas limpa timer se o criamos
+      if (timer) clearTimeout(timer)
+      // Não faz abort aqui pois a requisição já foi completada
     }
-  } finally {
-    // Apenas limpa timer se o criamos
-    if (timer) clearTimeout(timer)
-    // Não faz abort aqui pois a requisição já foi completada
   }
 }
 

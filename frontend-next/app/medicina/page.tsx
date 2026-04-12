@@ -39,8 +39,8 @@ export default function MedicinaPage() {
         setErro(null)
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/pacientes/"),
-          apiFetch<any>("/requisicoes/"),
+          apiFetch<any>("/clinical/patient/"),
+          apiFetch<any>("/clinical/labrequest/"),
         ])
 
         if (!mounted) return

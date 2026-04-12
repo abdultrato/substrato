@@ -50,7 +50,7 @@ export const MODULES: ModuleGroup[] = [
     key: "entidades",
     label: "Entidades",
     resources: [
-      { key: "empresa", label: "Empresas", endpoint: "/entidades/empresa/", adminListHref: "/admin/entidades/empresa/" },
+      { key: "empresa", label: "Empresas", endpoint: "/entities/company/", adminListHref: "/admin/entidades/empresa/" },
     ],
   },
   {
@@ -172,7 +172,7 @@ export const MODULES: ModuleGroup[] = [
     key: "maternidade",
     label: "Maternidade",
     resources: [
-      { key: "gestacao", label: "Gestações", endpoint: "/maternidade/gestacao/", adminListHref: "/admin/maternidade/gestacao/" },
+      { key: "gestacao", label: "Gestações", endpoint: "/maternity/gestacao/", adminListHref: "/admin/maternity/gestacao/" },
     ],
   },
   {

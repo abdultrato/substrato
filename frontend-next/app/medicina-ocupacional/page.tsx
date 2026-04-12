@@ -30,8 +30,8 @@ export default function MedicinaOcupacionalPage() {
         setErro(null)
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/pacientes/?proveniencia=Medicina%20Ocupacional"),
-          apiFetch<any>("/requisicoes/"),
+          apiFetch<any>("/clinical/patient/?proveniencia=Medicina%20Ocupacional"),
+          apiFetch<any>("/clinical/labrequest/"),
         ])
 
         if (!mounted) return

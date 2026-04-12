@@ -12,19 +12,19 @@ import { GROUPS } from "@/lib/rbac";
 
 type RequisicaoListResponse = { items: Requisicao[]; meta: ApiListMeta; raw: any };
 
-export default function RequisicoesPage () {
+export default function RequisicoesPage() {
     useAuthGuard();
 
-    const [tipo, setTipo] = useState<string>( "" );
-    const [page, setPage] = useState( 1 );
-    const [pageSize, setPageSize] = useState( 50 );
+    const [tipo, setTipo] = useState<string>("");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
     const { data, isFetching, isError, error } = useQuery<RequisicaoListResponse>({
         queryKey: ["requisicoes", { tipo, page, pageSize }],
         queryFn: async () => {
             const url = tipo
-                ? `/requisicoes/?tipo=${encodeURIComponent( tipo )}`
-                : "/requisicoes/";
-            return apiFetchList<Requisicao>( url, { page, pageSize } );
+                ? `/clinical/labrequest/?tipo=${encodeURIComponent(tipo)}`
+                : "/clinical/labrequest/";
+            return apiFetchList<Requisicao>(url, { page, pageSize });
         },
         placeholderData: keepPreviousData,
         staleTime: 20_000,
@@ -66,8 +66,8 @@ export default function RequisicoesPage () {
                         <select
                             value={tipo}
                             onChange={(e) => {
-                                setPage( 1 );
-                                setTipo( e.target.value );
+                                setPage(1);
+                                setTipo(e.target.value);
                             }}
                         >
                             <option value="">Todos</option>
@@ -81,8 +81,8 @@ export default function RequisicoesPage () {
                         <select
                             value={pageSize}
                             onChange={(e) => {
-                                setPage( 1 );
-                                setPageSize( Number( e.target.value ) );
+                                setPage(1);
+                                setPageSize(Number(e.target.value));
                             }}
                         >
                             <option value={20}>20</option>
@@ -109,7 +109,7 @@ export default function RequisicoesPage () {
                         </tr>
                     </thead>
                     <tbody>
-                        {requisicoes.map( r => (
+                        {requisicoes.map(r => (
                             <tr key={r.id}>
                                 <td>
                                     <Link href={`/requisicoes/${r.id}`}>{r.id_custom}</Link>
@@ -118,7 +118,7 @@ export default function RequisicoesPage () {
                                 <td>{r.tipo === "MED" ? "Exames médicos" : "Laboratório"}</td>
                                 <td>{r.estado}</td>
                             </tr>
-                        ) )}
+                        ))}
                     </tbody>
                 </table>
 

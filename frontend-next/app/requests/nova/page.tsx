@@ -10,16 +10,16 @@ import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 import useDebounce from "@/hooks/useDebounce";
 
-export default function NovaRequisicaoPage () {
+export default function NovaRequisicaoPage() {
     useAuthGuard();
     const router = useRouter();
     const { user } = useAuth();
 
-    const [patients, setPatients] = useState<Patient[]>( [] );
+    const [patients, setPatients] = useState<Patient[]>([]);
 
-    const [patientId, setPatientId] = useState( "" );
-    const [type, setType] = useState<"LAB" | "MED">( "LAB" );
-    const [selectedExams, setSelectedExams] = useState<Array<Exam | MedicalExam>>( [] );
+    const [patientId, setPatientId] = useState("");
+    const [type, setType] = useState<"LAB" | "MED">("LAB");
+    const [selectedExams, setSelectedExams] = useState<Array<Exam | MedicalExam>>([]);
 
     const [query, setQuery] = useState("");
     const debouncedQuery = useDebounce(query, 250);
@@ -30,9 +30,9 @@ export default function NovaRequisicaoPage () {
     const [erro, setErro] = useState<string | null>(null);
     const [salvando, setSalvando] = useState(false);
 
-    useEffect( () => {
+    useEffect(() => {
         loadPatients();
-    }, [] );
+    }, []);
 
     useEffect(() => {
         // ao trocar de setor, limpa seleção e resultados
@@ -41,10 +41,10 @@ export default function NovaRequisicaoPage () {
         setQuery("");
     }, [type]);
 
-    async function loadPatients () {
-        const data = await apiFetch<any>( "/pacientes/" );
-        const items = Array.isArray( data ) ? data : data?.results || [];
-        setPatients( items.map( normalizePatient ) );
+    async function loadPatients() {
+        const data = await apiFetch<any>("/clinical/patient/");
+        const items = Array.isArray(data) ? data : data?.results || [];
+        setPatients(items.map(normalizePatient));
     }
 
     const selectedExamIds = useMemo(() => new Set(selectedExams.map((x) => x.id)), [selectedExams]);
@@ -61,7 +61,7 @@ export default function NovaRequisicaoPage () {
             try {
                 setSearching(true);
                 setSearchError(null);
-                const endpointBase = type === "MED" ? "/exames-medicos/" : "/exames/";
+                const endpointBase = "/clinical/exam/";
                 const res = await apiFetch<any>(`${endpointBase}?search=${encodeURIComponent(q)}`);
                 const items = res && res.results ? res.results : res;
                 const list = Array.isArray(items) ? items : [];
@@ -81,45 +81,45 @@ export default function NovaRequisicaoPage () {
         };
     }, [debouncedQuery, type, selectedExamIds]);
 
-    function addExam ( exam: Exam | MedicalExam ) {
+    function addExam(exam: Exam | MedicalExam) {
         setSelectedExams((prev) => (prev.some((item) => item.id === exam.id) ? prev : [...prev, exam]));
         setResults((prev) => prev.filter((item) => item.id !== exam.id));
     }
 
-    function removeExam ( id: number ) {
+    function removeExam(id: number) {
         setSelectedExams((prev) => prev.filter((item) => item.id !== id));
     }
 
-    async function salvar ( e: any ) {
+    async function salvar(e: any) {
         e.preventDefault();
         setErro(null);
-        if ( salvando ) return;
-        if ( !patientId ) {
-            setErro( "Selecione um paciente." );
+        if (salvando) return;
+        if (!patientId) {
+            setErro("Selecione um paciente.");
             return;
         }
-        if ( selectedExams.length === 0 ) {
-            setErro( "Adicione pelo menos um exame." );
+        if (selectedExams.length === 0) {
+            setErro("Adicione pelo menos um exame.");
             return;
         }
 
         try {
             setSalvando(true);
             const payload: any = {
-                patient: Number( patientId ),
+                patient: Number(patientId),
                 type,
             };
 
             const ids = selectedExams.map((x) => x.id);
-            if ( type === "MED" ) payload.medical_exams = ids;
+            if (type === "MED") payload.medical_exams = ids;
             else payload.exames = ids;
 
-            const nova = await apiFetch( "/requisicoes/", {
+            const nova = await apiFetch("/clinical/labrequest/", {
                 method: "POST",
-                body: JSON.stringify( payload ),
-            } );
+                body: JSON.stringify(payload),
+            });
 
-            router.push( `/requisicoes/${nova.id}` );
+            router.push(`/requisicoes/${nova.id}`);
         } catch (err: any) {
             setErro(err?.message || "Falha ao criar requisição.");
         } finally {
@@ -163,13 +163,13 @@ export default function NovaRequisicaoPage () {
                 ) : null}
 
                 <label>Paciente</label>
-                <select value={patientId} onChange={e => setPatientId( e.target.value )} required>
+                <select value={patientId} onChange={e => setPatientId(e.target.value)} required>
                     <option value="">Selecione</option>
-                    {patients.map( p => (
+                    {patients.map(p => (
                         <option key={p.id} value={p.id}>
                             {p.name || p.nome}
                         </option>
-                    ) )}
+                    ))}
                 </select>
 
                 <label>Setor</label>
@@ -288,18 +288,18 @@ export default function NovaRequisicaoPage () {
     );
 }
 
-function normalizePatient ( raw: any ): Patient {
+function normalizePatient(raw: any): Patient {
     return {
-        id: Number( raw?.id ?? 0 ),
+        id: Number(raw?.id ?? 0),
         custom_id: raw?.custom_id ?? raw?.id_custom,
         name: raw?.name ?? raw?.nome ?? "",
         nome: raw?.nome,
     }
 }
 
-function normalizeExam ( raw: any ): Exam | MedicalExam {
+function normalizeExam(raw: any): Exam | MedicalExam {
     return {
-        id: Number( raw?.id ?? 0 ),
+        id: Number(raw?.id ?? 0),
         custom_id: raw?.custom_id ?? raw?.id_custom,
         name: raw?.name ?? raw?.nome ?? "",
         nome: raw?.nome,

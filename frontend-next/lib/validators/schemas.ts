@@ -5,7 +5,7 @@
 
 import { z } from 'zod'
 
-const GeneroEnum = z.enum(['Masculino', 'Femenino'])
+const GeneroEnum = z.enum(['M', 'F'])
 const RacaOrigemEnum = z.enum(['Branca', 'Negra', 'Parda', 'Amarela', 'Indígena', 'Outro'])
 const TipoDocumentoEnum = z.enum(['BI', 'PASS', 'DIRE', 'CC', 'NUIT', 'CE', 'CN', 'OUT'])
 const ProvenienciaEnum = z.enum([
@@ -29,39 +29,42 @@ const ProvenienciaEnum = z.enum([
  */
 export const PacienteSchema = z
   .object({
-    id: z.number().int().readonly(),
+    id: z.number().int().optional(),
     empresa_origem_nome: z.string().optional(),
-    criado_em: z.string().datetime().readonly(),
-    atualizado_em: z.string().datetime().readonly(),
+    criado_em: z.string().datetime().optional(),
+    atualizado_em: z.string().datetime().optional(),
     id_custom: z.string().optional().nullable(),
-    deletado: z.boolean(),
-    deletado_em: z.string().datetime().nullable(),
-    versao: z.number(),
-    nome: z.string().min(1, 'Nome é obrigatório'),
-    gestante: z.boolean(),
-    idade_gestacional_semanas: z.number().int().nullable(),
-    data_nascimento: z.string().date().nullable(),
-    genero: GeneroEnum,
-    raca_origem: RacaOrigemEnum,
-    tipo_documento: TipoDocumentoEnum,
-    numero_id: z.string().nullable(),
-    endereco_rua: z.string(),
-    endereco_numero: z.string(),
-    endereco_bairro: z.string(),
-    endereco_cidade: z.string(),
-    endereco_provincia: z.string(),
-    endereco_codigo_postal: z.string(),
-    endereco_pais: z.string().length(2).or(z.literal('')),
-    endereco_complemento: z.string(),
-    morada: z.string(),
-    contacto: z.string().nullable(),
-    email: z.string().email().nullable(),
-    proveniencia: ProvenienciaEnum.or(z.literal('')),
-    criado_por: z.number().int().nullable(),
-    atualizado_por: z.number().int().nullable(),
-    inquilino: z.number().int(),
-    deletado_por: z.number().int().nullable(),
-    empresa_origem: z.number().int().nullable(),
+    deletado: z.boolean().optional(),
+    deletado_em: z.string().datetime().nullable().optional(),
+    versao: z.number().optional(),
+    nome: z.string().min(1, 'Nome é obrigatório').max(255, 'Nome não pode ter mais de 255 caracteres'),
+    gestante: z.boolean().optional(),
+    idade_gestacional_semanas: z.number().int().nullable().optional(),
+    data_nascimento: z.string().optional().nullable().refine((v) => {
+      if (v == null) return true
+      return /^\d{4}-\d{2}-\d{2}$/.test(v)
+    }, { message: 'Data de nascimento inválida' }),
+    genero: GeneroEnum.optional().nullable(),
+    raca_origem: RacaOrigemEnum.optional(),
+    tipo_documento: TipoDocumentoEnum.optional(),
+    numero_id: z.string().nullable().optional(),
+    endereco_rua: z.string().optional(),
+    endereco_numero: z.string().optional(),
+    endereco_bairro: z.string().optional(),
+    endereco_cidade: z.string().optional(),
+    endereco_provincia: z.string().optional(),
+    endereco_codigo_postal: z.string().optional(),
+    endereco_pais: z.string().length(2).or(z.literal('')).optional(),
+    endereco_complemento: z.string().optional(),
+    morada: z.string().optional(),
+    contacto: z.string().nullable().optional(),
+    email: z.string().email('Email inválido').nullable().optional(),
+    proveniencia: ProvenienciaEnum.or(z.literal('')).optional(),
+    criado_por: z.number().int().nullable().optional(),
+    atualizado_por: z.number().int().nullable().optional(),
+    inquilino: z.number().int().optional(),
+    deletado_por: z.number().int().nullable().optional(),
+    empresa_origem: z.number().int().nullable().optional(),
   })
   .strict()
 

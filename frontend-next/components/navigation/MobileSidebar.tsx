@@ -9,6 +9,7 @@ import {
     ClipboardList,
     FlaskConical,
     FileText,
+    Briefcase,
     Building2,
     BarChart3,
     Settings,
@@ -21,7 +22,7 @@ interface Props {
 
 const items = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Recepção", href: "/reception", icon: BriefcaseIcon },
+    { label: "Recepção", href: "/reception", icon: Briefcase },
     { label: "Pacientes", href: "/patients", icon: Users },
     { label: "Requisições", href: "/requests", icon: ClipboardList },
     { label: "Exames", href: "/exams", icon: FlaskConical },

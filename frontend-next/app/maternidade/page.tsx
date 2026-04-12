@@ -27,7 +27,7 @@ export default function MaternidadePage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const res = await apiFetch<any>("/maternidade/gestacao/")
+                const res = await apiFetch<any>("/maternity/gestacao/")
                 if (!mounted) return
                 setGestacoes(extractTotalCount(res))
             } catch (e: any) {
@@ -52,7 +52,7 @@ export default function MaternidadePage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/maternidade/gestacao/"
+                                href="/admin/maternity/gestacao/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                             >
                                 Abrir no admin
@@ -78,19 +78,19 @@ export default function MaternidadePage() {
                     <ActionTile
                         title="Gestações"
                         description="Lista e gestão de gestações (CRUD)."
-                        href="/maternidade/gestacoes"
+                        href="/maternity/gestacoes"
                         icon={Baby}
                     />
                     <ActionTile
                         title="Nova gestação"
                         description="Criar um registo de gestação para um paciente."
-                        href="/recursos/maternidade/gestacao/novo"
+                        href="/recursos/maternity/gestacao/novo"
                         icon={PlusCircle}
                     />
                     <ActionTile
                         title="CRUD (API)"
                         description="Acesso direto ao CRUD genérico deste módulo."
-                        href="/recursos/maternidade/gestacao"
+                        href="/recursos/maternity/gestacao"
                         icon={ClipboardList}
                     />
                 </div>

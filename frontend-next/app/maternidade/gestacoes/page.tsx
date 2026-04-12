@@ -38,7 +38,7 @@ export default function MaternidadeGestacoesPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<GestacaoRow>("/maternidade/gestacao/", {
+                const { items, meta } = await apiFetchList<GestacaoRow>("/maternity/gestacao/", {
                     page,
                     pageSize,
                 })
@@ -70,7 +70,7 @@ export default function MaternidadeGestacoesPage() {
                 header: "Código",
                 render: (g: GestacaoRow) => (
                     <Link
-                        href={`/recursos/maternidade/gestacao/${g.id}`}
+                        href={`/recursos/maternity/gestacao/${g.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {g.id_custom || g.id || "-"}
@@ -94,26 +94,26 @@ export default function MaternidadeGestacoesPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/maternidade/gestacao/novo"
+                                href="/recursos/maternity/gestacao/novo"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
                             </Link>
                             <Link
-                                href="/recursos/maternidade/gestacao"
+                                href="/recursos/maternity/gestacao"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 CRUD
                             </Link>
                             <Link
-                                href="/maternidade"
+                                href="/maternity"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Voltar
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
-                                    href="/admin/maternidade/gestacao/"
+                                    href="/admin/maternity/gestacao/"
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                                 >
                                     Admin

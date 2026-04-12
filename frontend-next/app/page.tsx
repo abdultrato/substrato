@@ -63,7 +63,7 @@ export default function DashboardPage() {
                     console.warn('Failed to fetch auth/user:', e?.message)
                 }
 
-                const { data } = await http.get("/dashboard/stats/")
+                const { data } = await http.get("/dashboard/stats/", { timeoutMs: 20000 })
                 console.log('Dashboard stats response:', data)
                 if (mounted) {
                     const normalized = normalizeDashboardStats(data)
@@ -91,7 +91,7 @@ export default function DashboardPage() {
         let alive = true
         async function loadAnalytics() {
             try {
-                const { data } = await http.get("/dashboard/analytics/?dias=7")
+                const { data } = await http.get("/dashboard/analytics/?dias=7", { timeoutMs: 20000 })
                 if (alive) setKpis(data?.kpis || {})
             } catch {
                 // silencioso
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         }
         async function loadEvents() {
             try {
-                const { data } = await http.get("/dashboard/events/?limit=10")
+                const { data } = await http.get("/dashboard/events/?limit=10", { timeoutMs: 20000 })
                 if (alive) setEvents(Array.isArray(data) ? data : [])
             } catch {
                 // silencioso

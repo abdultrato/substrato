@@ -1,4 +1,6 @@
 from decimal import Decimal
+import logging
+import traceback
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -33,31 +35,41 @@ class DashboardStatsView(APIView):
 
     @extend_schema(responses={200: DashboardStatsSerializer})
     def get(self, request):
+        logger = logging.getLogger(__name__)
         tenant = getattr(request, "tenant", None)
 
-        patients_qs = Patient.objects.all()
-        requests_qs = LabRequest.objects.all()
-        invoices_qs = Invoice.objects.all()
+        try:
+            logger.debug(f"DashboardStatsView start - tenant={tenant}")
 
-        if tenant is not None:
-            patients_qs = patients_qs.filter(tenant=tenant)
-            requests_qs = requests_qs.filter(tenant=tenant)
-            invoices_qs = invoices_qs.filter(tenant=tenant)
+            patients_qs = Patient.objects.all()
+            requests_qs = LabRequest.objects.all()
+            invoices_qs = Invoice.objects.all()
 
-        today = timezone.localdate()
+            if tenant is not None:
+                patients_qs = patients_qs.filter(tenant=tenant)
+                requests_qs = requests_qs.filter(tenant=tenant)
+                invoices_qs = invoices_qs.filter(tenant=tenant)
 
-        patients = patients_qs.count()
-        pending_requests = requests_qs.filter(status=ResultState.PENDING).count()
-        exams_today = requests_qs.filter(created_at__date=today).count()
+            today = timezone.localdate()
 
-        billing_today = invoices_qs.filter(created_at__date=today).aggregate(total=Sum("total"))["total"] or Decimal(
-            "0.00"
-        )
+            patients = patients_qs.count()
+            pending_requests = requests_qs.filter(status=ResultState.PENDING).count()
+            exams_today = requests_qs.filter(created_at__date=today).count()
 
-        payload = {
-            "patients": patients,
-            "pending_requests": pending_requests,
-            "exams_today": exams_today,
-            "billing_today": float(billing_today),
-        }
-        return Response(DashboardStatsSerializer(instance=payload).data)
+            billing_today = invoices_qs.filter(created_at__date=today).aggregate(total=Sum("total"))["total"] or Decimal(
+                "0.00"
+            )
+
+            payload = {
+                "patients": patients,
+                "pending_requests": pending_requests,
+                "exams_today": exams_today,
+                "billing_today": float(billing_today),
+            }
+
+            logger.debug(f"DashboardStatsView payload: {payload}")
+            return Response(DashboardStatsSerializer(instance=payload).data)
+        except Exception:
+            # Log full traceback for debugging (developer-only)
+            logger.exception("Unhandled error in DashboardStatsView:\n%s", traceback.format_exc())
+            return Response({"detail": "Internal server error"}, status=500)
