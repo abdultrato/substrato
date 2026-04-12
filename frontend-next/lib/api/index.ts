@@ -53,6 +53,7 @@ function rewriteUrl(url: string): string {
     ["/faturas", "/billing/invoice"],
     ["/faturas/", "/billing/invoice"],
     ["/companies", "/entities/company"],
+    ["/entidades/empresa", "/entities/company"],
     ["/entidades", "/entities/company"],
     ["/entidades/", "/entities/company"],
     ["/payments/payment", "/payments/payment"],
@@ -156,6 +157,13 @@ export async function apiFetch<T = any>(
   options: ApiFetchOptions = {}
 ): Promise<T> {
   const rewritten = rewriteUrl(url)
+  // Log rewritten URL for debugging routing mismatches (dev-time only)
+  try {
+    // eslint-disable-next-line no-console
+    console.debug(`[apiFetch] requesting /api/v1${rewritten} from ${url}`)
+  } catch {
+    // ignore
+  }
   const responseType = options.responseType || "json"
   // Por padrão não abortamos requisições automaticamente (0 = sem timeout).
   // Chamadores podem fornecer `timeoutMs` quando desejarem comportamento de timeout.
