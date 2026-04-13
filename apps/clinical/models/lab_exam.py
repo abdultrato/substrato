@@ -30,19 +30,19 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
         db_column="turnaround_hours",
 
-        verbose_name="Tempo de response (em hours)",
+        verbose_name="Tempo de resposta (em hours)",
         default=24,
-        help_text="Tempo de response em hours.",
+        help_text="Tempo de resposta em hours.",
     )
 
     price = MoneyField(
 
         db_column="price",
 
-        verbose_name="Preço do exam",
+        verbose_name="Preço do exame",
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="Preço do exam.",
+        help_text="Preço do exame.",
     )
 
     vat_percentage = models.DecimalField(
@@ -57,7 +57,7 @@ class LabExam(TenantPropagationMixin, CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao exam (0 a 100).",
+        help_text="Taxa de IVA aplicada ao exame (0 a 100).",
     )
 
     applies_vat_by_default = models.BooleanField(
@@ -66,16 +66,16 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este exam normalmente não deve ter IVA.",
+        help_text="Desmarque se este exame normalmente não deve ter IVA.",
     )
 
     method = MethodField(
-        verbose_name="Método do exam",
+        verbose_name="Método do exame",
         db_index=True,
     )
 
     sector = SectorField(
-        verbose_name="Setor do exam",
+        verbose_name="Setor do exame",
         db_index=True,
     )
 

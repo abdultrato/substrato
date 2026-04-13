@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 
 export default function AccountingPage() {
-    redirect("/accounting")
+    // Alias em inglês; rota real vive em /contabilidade.
+    redirect("/contabilidade")
 }
