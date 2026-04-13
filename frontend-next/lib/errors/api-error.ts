@@ -212,3 +212,25 @@ export function getFieldErrors(error: ApiError): Record<string, string> {
   }
   return error.validationErrors
 }
+
+/**
+ * Identifica erros 404 em diferentes formatos de erro usados na UI.
+ */
+export function isNotFoundLikeError(error: unknown): boolean {
+  if (!error) return false
+
+  if (error instanceof ApiError) {
+    return error.status === 404
+  }
+
+  if (typeof error === 'object') {
+    const status = (error as { status?: unknown }).status
+    if (typeof status === 'number' && status === 404) return true
+  }
+
+  if (error instanceof Error) {
+    if (/\b404\b/.test(error.message)) return true
+  }
+
+  return false
+}

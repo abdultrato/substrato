@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Banknote, BookOpenCheck, ClipboardList, FileText, Receipt } from "lucide-react"
@@ -42,7 +43,7 @@ export default function ContabilidadePage() {
         setLancamentos(extractTotalCount(lancs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace de contabilidade.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de contabilidade."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -93,7 +94,7 @@ export default function ContabilidadePage() {
           <ActionTile
             title="Faturas"
             description="Consulta, emissão de PDF e auditoria."
-            href="/faturas"
+            href="/invoices"
             icon={FileText}
           />
           <ActionTile
@@ -111,7 +112,7 @@ export default function ContabilidadePage() {
           <ActionTile
             title="Lançamentos"
             description="Lançamentos contabilísticos."
-            href="/contabilidade/lancamentos"
+            href="/contabilidade/entries"
             icon={BookOpenCheck}
           />
         </div>
@@ -120,7 +121,7 @@ export default function ContabilidadePage() {
           <ActionTile
             title="Movimentos"
             description="Movimentos e histórico de contas."
-            href="/contabilidade/movimentos"
+            href="/contabilidade/movements"
             icon={ClipboardList}
           />
           <ActionTile
@@ -132,7 +133,7 @@ export default function ContabilidadePage() {
           <ActionTile
             title="Recepção (audit)"
             description="Ver check-ins e atendimentos sem editar."
-            href="/contabilidade/recepcao"
+            href="/contabilidade/reception"
             icon={ClipboardList}
           />
           <ActionTile
@@ -156,4 +157,6 @@ export default function ContabilidadePage() {
     </AppLayout>
   )
 }
+
+
 

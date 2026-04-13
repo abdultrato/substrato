@@ -117,6 +117,11 @@ function buildHeaders(options: ApiFetchOptions): HeadersInit {
 }
 
 async function parseError(res: Response): Promise<Error> {
+  const withStatus = (error: Error): Error => {
+    ;(error as Error & { status?: number }).status = res.status
+    return error
+  }
+
   try {
     const contentType = res.headers.get("content-type") || ""
     if (contentType.includes("application/json")) {
@@ -134,7 +139,7 @@ async function parseError(res: Response): Promise<Error> {
                 : JSON.stringify(value)
           const err = new Error(`${field}: ${firstMessage}`)
             ; (err as any).validation = j
-          return err
+          return withStatus(err)
         }
       }
       const msg =
@@ -143,12 +148,12 @@ async function parseError(res: Response): Promise<Error> {
         (typeof j === "string" ? j : JSON.stringify(j))
       const err = new Error(msg || res.statusText)
         ; (err as any).validation = j
-      return err
+      return withStatus(err)
     }
     const text = await res.text()
-    return new Error(text || res.statusText)
+    return withStatus(new Error(text || res.statusText))
   } catch {
-    return new Error(res.statusText)
+    return withStatus(new Error(res.statusText))
   }
 }
 

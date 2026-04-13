@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -36,7 +37,7 @@ export default function EditarRecursoPage() {
                 const res = await (await import("@/lib/api")).apiFetch<any>(endpoint)
                 if (mounted) setInitial(res ?? {})
             } catch (e: any) {
-                if (mounted) setError(e?.message || "Erro ao carregar recurso.")
+                if (mounted) setError(isNotFoundLikeError(e) ? null : (e?.message || "Erro ao carregar recurso."))
             } finally {
                 if (mounted) setLoadingData(false)
             }
@@ -107,3 +108,5 @@ export default function EditarRecursoPage() {
         </AppLayout>
     )
 }
+
+

@@ -1,4 +1,5 @@
 "use client" // Necessário para hooks e chamadas client-side.
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 import { useEffect, useMemo, useState } from "react"
 
@@ -87,7 +88,7 @@ export default function ResultadosMedicosPage() {
       })
       setArquivos(items.map(normalizeMedicalFile))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar anexos médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar anexos médicos."))
     }
   }
 
@@ -97,7 +98,7 @@ export default function ResultadosMedicosPage() {
       const res = await apiFetchList<ExameMedicoResumo>("/clinical/medicalexam/", { page: 1, pageSize: 200 })
       setExames(res.items.map(normalizeMedicalExam))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar catálogo de exames médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar catálogo de exames médicos."))
     }
   }
 
@@ -107,7 +108,7 @@ export default function ResultadosMedicosPage() {
       const res = await apiFetchList<RequisicaoResumo>("/requisicoes/?tipo=MED", { page: 1, pageSize: 200 })
       setRequisicoes(res.items.map(normalizeMedicalRequest))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao listar requisições de exames médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao listar requisições de exames médicos."))
     }
   }
 
@@ -388,4 +389,6 @@ function normalizeMedicalFile(raw: any): ArquivoRow {
     request: raw?.request ?? raw?.requisicao,
   }
 }
+
+
 

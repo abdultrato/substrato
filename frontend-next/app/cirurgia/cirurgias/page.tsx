@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState, useCallback } from "react"
 
@@ -55,7 +56,7 @@ export default function CirurgiaCirurgiasPage() {
                 if (page > computedTotalPages) setPage(computedTotalPages)
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar cirurgias.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgias."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -81,7 +82,7 @@ export default function CirurgiaCirurgiasPage() {
             a.click()
             window.URL.revokeObjectURL(url)
         } catch (e: any) {
-            setErro(e?.message || "Falha ao gerar PDF.")
+            setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
         } finally {
             setAcaoId(null)
         }
@@ -215,3 +216,5 @@ export default function CirurgiaCirurgiasPage() {
         </AppLayout>
     )
 }
+
+

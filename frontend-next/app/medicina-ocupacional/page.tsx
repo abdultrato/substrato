@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { FilePlus2, HeartPulse, ScrollText, Pill, Users } from "lucide-react"
@@ -39,7 +40,7 @@ export default function MedicinaOcupacionalPage() {
         setRequisicoes(extractTotalCount(reqs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace de medicina ocupacional.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de medicina ocupacional."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -86,13 +87,13 @@ export default function MedicinaOcupacionalPage() {
           <ActionTile
             title="Pacientes"
             description="Registar e acompanhar pacientes de medicina ocupacional."
-            href="/pacientes"
+            href="/patients"
             icon={Users}
           />
           <ActionTile
             title="Nova requisição (laboratório)"
             description="Solicitar análises laboratoriais."
-            href="/requisicoes/nova"
+            href="/requests/nova"
             icon={FilePlus2}
           />
           <ActionTile
@@ -127,4 +128,6 @@ export default function MedicinaOcupacionalPage() {
     </AppLayout>
   )
 }
+
+
 

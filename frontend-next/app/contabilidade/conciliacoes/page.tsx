@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -39,7 +40,7 @@ export default function ContabilidadeConciliacoesPage() {
         setData(Array.isArray(items) ? items : [])
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar conciliações.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar conciliações."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -126,4 +127,6 @@ export default function ContabilidadeConciliacoesPage() {
     </AppLayout>
   )
 }
+
+
 

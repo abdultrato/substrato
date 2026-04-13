@@ -52,10 +52,10 @@ export default function RequisicoesPage() {
             <div className="page-box">
                 <h1>Requisições</h1>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <Link href="/requisicoes/nova" className="btn-primary">
+                    <Link href="/requests/nova" className="btn-primary">
                         Nova requisição
                     </Link>
-                    <Link href="/requisicoes/externa/nova" className="btn-secondary">
+                    <Link href="/requests/externa/nova" className="btn-secondary">
                         Nova requisição externa
                     </Link>
                 </div>
@@ -112,7 +112,7 @@ export default function RequisicoesPage() {
                         {requisicoes.map(r => (
                             <tr key={r.id}>
                                 <td>
-                                    <Link href={`/requisicoes/${r.id}`}>{r.id_custom}</Link>
+                                    <Link href={`/requests/${r.id}`}>{r.id_custom}</Link>
                                 </td>
                                 <td>{r.paciente_nome || r.paciente || "-"}</td>
                                 <td>{r.tipo === "MED" ? "Exames médicos" : "Laboratório"}</td>

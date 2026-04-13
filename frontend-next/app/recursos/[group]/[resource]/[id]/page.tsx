@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
@@ -41,7 +42,7 @@ export default function RecursoDetalhePage() {
             const res = await apiFetch<any>(endpoint)
             setData(res)
         } catch (e: any) {
-            setError(e?.message || "Erro ao carregar recurso.")
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Erro ao carregar recurso."))
         } finally {
             setLoadingData(false)
         }
@@ -64,7 +65,7 @@ export default function RecursoDetalhePage() {
             await apiFetch(endpoint, { method: "DELETE" })
             router.push(`/recursos/${groupKey}/${resourceKey}`)
         } catch (e: any) {
-            setError(e?.message || "Erro ao apagar.")
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Erro ao apagar."))
         } finally {
             setDeleting(false)
         }
@@ -89,7 +90,7 @@ export default function RecursoDetalhePage() {
             a.click()
             window.URL.revokeObjectURL(url)
         } catch (e: any) {
-            setError(e?.message || "Falha ao gerar PDF.")
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
         } finally {
             setActionId(null)
         }
@@ -183,3 +184,5 @@ export default function RecursoDetalhePage() {
         </AppLayout>
     )
 }
+
+

@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -160,7 +161,7 @@ export default function PacientesPage () {
                     return
                 }
             }
-            setError( err?.message || "Erro ao salvar paciente" );
+            setError(isNotFoundLikeError(err) ? null : (err?.message || "Erro ao salvar paciente" ));
         } finally {
             setSaving( false );
         }
@@ -432,7 +433,7 @@ export default function PacientesPage () {
                                     <td>{p.genero || "-"}</td>
                                     <td>{p.contacto || "-"}</td>
                                     <td style={{ display: "flex", gap: 6 }}>
-                                        <Link href={`/pacientes/${p.id}`} className="btn-secondary">
+                                        <Link href={`/patients/${p.id}`} className="btn-secondary">
                                             Ver
                                         </Link>
                                         {podeEditar && (
@@ -484,3 +485,4 @@ export default function PacientesPage () {
         </AppLayout>
     );
 }
+

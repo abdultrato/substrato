@@ -86,7 +86,7 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "pharmacy",
     label: "Pharmacy",
-    href: "/pharmacy",
+    href: "/farmacia",
     description: "Stock, lots, and warehouse movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
   },
@@ -100,7 +100,7 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "accounting",
     label: "Accounting",
-    href: "/accounting",
+    href: "/contabilidade",
     description: "Accounts, entries, and audit workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },

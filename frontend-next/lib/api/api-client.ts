@@ -295,6 +295,16 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
   // Error interceptor: log
   client.useErrorInterceptor((error) => {
+    const status =
+      typeof (error as Error & { status?: unknown }).status === 'number'
+        ? (error as Error & { status: number }).status
+        : undefined
+
+    if (status === 404) {
+      console.warn(`[API 404] ${error.message}`)
+      return error
+    }
+
     console.error('[API Error]', error)
     return error
   })

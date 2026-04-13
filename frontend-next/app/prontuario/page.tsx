@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ClipboardList, ScrollText, Pill, PlusCircle } from "lucide-react"
@@ -39,7 +40,7 @@ export default function ProntuarioPage() {
                 setItensPrescricao(extractTotalCount(itens))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar prontuário.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar prontuário."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -120,3 +121,5 @@ export default function ProntuarioPage() {
         </AppLayout>
     )
 }
+
+

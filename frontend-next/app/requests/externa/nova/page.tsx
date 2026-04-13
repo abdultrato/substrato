@@ -116,7 +116,7 @@ export default function NovaRequisicaoExternaPage() {
             body: JSON.stringify(payload),
         });
 
-        router.push(`/requisicoes/${nova.id}`);
+        router.push(`/requests/${nova.id}`);
     }
 
     const podeCriarExameMedico = userHasAnyGroup(user, [

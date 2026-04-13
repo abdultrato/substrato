@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Baby, ClipboardList, PlusCircle } from "lucide-react"
@@ -32,7 +33,7 @@ export default function MaternidadePage() {
                 setGestacoes(extractTotalCount(res))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar maternidade.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar maternidade."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -78,7 +79,7 @@ export default function MaternidadePage() {
                     <ActionTile
                         title="Gestações"
                         description="Lista e gestão de gestações (CRUD)."
-                        href="/maternity/gestacoes"
+                        href="/maternidade/gestacoes"
                         icon={Baby}
                     />
                     <ActionTile
@@ -108,4 +109,6 @@ export default function MaternidadePage() {
         </AppLayout>
     )
 }
+
+
 

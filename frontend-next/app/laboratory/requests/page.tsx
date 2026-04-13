@@ -68,7 +68,7 @@ export default function LaboratorioRequisicoesPage() {
           <div className="flex flex-wrap gap-2">
             {r.id && String(r.estado || "").toLowerCase() !== "validado" ? (
               <Link
-                href={`/laboratorio/requisicoes/${r.id}`}
+                href={`/laboratory/requests/${r.id}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <FlaskConical size={14} />
@@ -76,7 +76,7 @@ export default function LaboratorioRequisicoesPage() {
               </Link>
             ) : r.id ? (
               <Link
-                href={`/laboratorio/requisicoes/${r.id}`}
+                href={`/laboratory/requests/${r.id}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <FlaskConical size={14} />

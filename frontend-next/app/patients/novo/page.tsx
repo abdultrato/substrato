@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Entidade, PacienteCreateDTO } from "@/lib/types";
@@ -106,7 +107,7 @@ export default function NovoPacientePage () {
                     return
                 }
             }
-            setError( err.message || "Erro ao salvar paciente" );
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao salvar paciente" ));
         } finally {
             setLoading( false );
         }
@@ -308,3 +309,4 @@ export default function NovoPacientePage () {
         </AppLayout>
     );
 }
+

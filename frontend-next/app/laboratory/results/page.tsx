@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -45,7 +46,7 @@ export default function LaboratorioResultadosPage() {
         setData(Array.isArray(items) ? items : [])
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar resultados.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar resultados."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -111,5 +112,7 @@ export default function LaboratorioResultadosPage() {
     </AppLayout>
   )
 }
+
+
 
 

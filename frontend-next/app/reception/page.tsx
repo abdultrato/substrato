@@ -74,25 +74,25 @@ const atalhos = [
     {
         title: "Registrar paciente",
         description: "Abrir o cadastro clínico e preparar o atendimento.",
-        href: "/pacientes",
+        href: "/patients",
         icon: UserPlus,
     },
     {
         title: "Criar requisição",
         description: "Encaminhar o paciente direto para a jornada laboratorial.",
-        href: "/requisicoes/nova",
+        href: "/requests/nova",
         icon: FilePlus2,
     },
     {
         title: "Requisição externa",
         description: "Criar requisição para empresa solicitante ou terceirizada.",
-        href: "/requisicoes/externa/nova",
+        href: "/requests/externa/nova",
         icon: FileText,
     },
     {
         title: "Faturas",
         description: "Abrir o backoffice de faturamento para emissão e revisão.",
-        href: "/faturas",
+        href: "/invoices",
         icon: CreditCard,
     },
     {

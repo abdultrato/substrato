@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Paciente } from "@/lib/types";
@@ -63,7 +64,7 @@ export default function PacienteDetalhePage() {
             const data = await apiFetch(`/pacientes/${idStr}/`);
             setPaciente(data);
         } catch (err: any) {
-            setError(err.message || "Erro ao carregar paciente");
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao carregar paciente"));
         } finally {
             setLoading(false);
         }
@@ -150,7 +151,7 @@ export default function PacienteDetalhePage() {
                 <div style={{ marginTop: 25, display: "flex", gap: 10 }}>
                     <button
                         className="btn-secondary"
-                        onClick={() => router.push("/pacientes")}
+                        onClick={() => router.push("/patients")}
                     >
                         ← Voltar
                     </button>
@@ -158,7 +159,7 @@ export default function PacienteDetalhePage() {
                     {podeVerHistoriaClinica ? (
                         <button
                             className="btn-secondary"
-                            onClick={() => router.push(`/pacientes/${idStr}/historia-clinica`)}
+                            onClick={() => router.push(`/patients/${idStr}/historia-clinica`)}
                         >
                             História clínica
                         </button>
@@ -167,7 +168,7 @@ export default function PacienteDetalhePage() {
                     {podeEditar ? (
                         <button
                             className="btn-primary"
-                            onClick={() => router.push(`/pacientes/${idStr}/edit`)}
+                            onClick={() => router.push(`/patients/${idStr}/edit`)}
                         >
                             Editar
                         </button>
@@ -181,3 +182,4 @@ export default function PacienteDetalhePage() {
         </AppLayout>
     );
 }
+

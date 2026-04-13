@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
@@ -91,7 +92,7 @@ export default function EditarRequisicaoPage () {
 
             router.push( `/requisicoes/${id}` );
         } catch ( err: any ) {
-            setError( err.message || "Erro ao salvar" );
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao salvar" ));
         } finally {
             setSaving( false );
         }
@@ -163,3 +164,4 @@ export default function EditarRequisicaoPage () {
         </AppLayout>
     );
 }
+

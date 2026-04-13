@@ -63,7 +63,7 @@ export default function RequisicaoDetail() {
         <AppLayout requiredGroups={requiredGroups}>
             <div className="page-box fade-in">
                 <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                    <Link href={`/requisicoes/${req.id}/editar`} className="btn-secondary">
+                    <Link href={`/requests/${req.id}/editar`} className="btn-secondary">
                         Editar
                     </Link>
                 </div>
@@ -109,7 +109,7 @@ export default function RequisicaoDetail() {
                 <hr />
 
                 <div style={{ marginTop: 10 }}>
-                    <Link href="/requisicoes" className="btn-secondary">
+                    <Link href="/requests" className="btn-secondary">
                         ← Voltar
                     </Link>
                 </div>

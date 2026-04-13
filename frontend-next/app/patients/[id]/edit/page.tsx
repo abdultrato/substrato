@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Entidade, Paciente, PacienteCreateDTO } from "@/lib/types";
@@ -83,7 +84,7 @@ export default function EditarPacientePage() {
                 empresa_origem: (data as any).empresa_origem ?? null,
             });
         } catch (err: any) {
-            setError(err.message || "Erro ao carregar paciente");
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao carregar paciente"));
         } finally {
             setLoading(false);
         }
@@ -122,7 +123,7 @@ export default function EditarPacientePage() {
                 body: JSON.stringify(form),
             });
 
-            router.push("/pacientes");
+            router.push("/patients");
         } catch (err: any) {
             const validation = (err as any)?.validation
             if (validation && typeof validation === "object" && !Array.isArray(validation)) {
@@ -139,7 +140,7 @@ export default function EditarPacientePage() {
                     return
                 }
             }
-            setError(err.message || "Erro ao atualizar paciente");
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao atualizar paciente"));
         } finally {
             setSaving(false);
         }
@@ -364,3 +365,4 @@ export default function EditarPacientePage() {
         </AppLayout>
     );
 }
+

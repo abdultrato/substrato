@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -46,7 +47,7 @@ export default function CirurgiaProcedimentosPage() {
                 if (page > computedTotalPages) setPage(computedTotalPages)
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar procedimentos.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimentos."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -155,3 +156,5 @@ export default function CirurgiaProcedimentosPage() {
         </AppLayout>
     )
 }
+
+

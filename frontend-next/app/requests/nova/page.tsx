@@ -1,4 +1,5 @@
 "use client";
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
@@ -119,9 +120,9 @@ export default function NovaRequisicaoPage() {
                 body: JSON.stringify(payload),
             });
 
-            router.push(`/requisicoes/${nova.id}`);
+            router.push(`/requests/${nova.id}`);
         } catch (err: any) {
-            setErro(err?.message || "Falha ao criar requisição.");
+            setErro(isNotFoundLikeError(err) ? null : (err?.message || "Falha ao criar requisição."));
         } finally {
             setSalvando(false);
         }
@@ -305,3 +306,5 @@ function normalizeExam(raw: any): Exam | MedicalExam {
         nome: raw?.nome,
     }
 }
+
+

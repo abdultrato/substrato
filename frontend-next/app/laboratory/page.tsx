@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
@@ -47,7 +48,7 @@ export default function LaboratorioPage() {
     try {
       await abrirPdfResultados(id)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF de resultados.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de resultados."))
     }
   }, [])
 
@@ -79,7 +80,7 @@ export default function LaboratorioPage() {
         setItensPendentes(extractTotalCount(resItensPendentes))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace do laboratório.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace do laboratório."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -163,13 +164,13 @@ export default function LaboratorioPage() {
           <ActionTile
             title="Fila de requisições"
             description="Veja as requisições e aceda rapidamente ao lançamento de resultados."
-            href="/laboratorio/requisicoes"
+            href="/laboratory/requests"
             icon={FileText}
           />
           <ActionTile
             title="Itens de resultados"
             description="Gerencie os ResultadoItem (pendente, em análise, validado, rejeitado)."
-            href="/laboratorio/resultados"
+            href="/laboratory/results"
             icon={ListChecks}
           />
           {podeVerAdmin ? (
@@ -183,7 +184,7 @@ export default function LaboratorioPage() {
           <ActionTile
             title="PDF de resultados"
             description="Emita o PDF institucional (somente resultados validados)."
-            href="/laboratorio/requisicoes"
+            href="/laboratory/requests"
             icon={FileDown}
           />
         </div>
@@ -206,4 +207,6 @@ export default function LaboratorioPage() {
     </AppLayout>
   )
 }
+
+
 

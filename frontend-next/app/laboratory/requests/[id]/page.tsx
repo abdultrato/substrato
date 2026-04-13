@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -87,7 +88,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
       }
       setDraft(next)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar resultados da requisição.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar resultados da requisição."))
     } finally {
       setLoading(false)
     }
@@ -194,7 +195,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
         await lancarItem(it.id)
       }
     } catch (e: any) {
-      setErro(e?.message || "Falha ao lançar itens.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao lançar itens."))
     } finally {
       setBusyAll(null)
     }
@@ -220,7 +221,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
         await gravarItem(it.id)
       }
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gravar resultados.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gravar resultados."))
     } finally {
       setBusyAll(null)
     }
@@ -240,7 +241,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
         await validarItem(it.id)
       }
     } catch (e: any) {
-      setErro(e?.message || "Falha ao validar resultados.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao validar resultados."))
     } finally {
       setBusyAll(null)
     }
@@ -255,7 +256,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/laboratorio/requisicoes"
+                href="/laboratory/requests"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 <FlaskConical size={16} />
@@ -401,7 +402,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
                                 {canLancar ? (
                                   <button
                                     type="button"
-                                    onClick={() => lancarItem(r.id).catch((e: any) => setErro(e?.message || String(e)))}
+                                    onClick={() => lancarItem(r.id).catch((e: any) => setErro(isNotFoundLikeError(e) ? null : (e?.message || String(e))))}
                                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50"
                                   >
                                     Lançar
@@ -412,7 +413,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
                                   <button
                                     type="button"
                                     disabled={!canGravar}
-                                    onClick={() => gravarItem(r.id).catch((e: any) => setErro(e?.message || String(e)))}
+                                    onClick={() => gravarItem(r.id).catch((e: any) => setErro(isNotFoundLikeError(e) ? null : (e?.message || String(e))))}
                                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-50"
                                   >
                                     Gravar
@@ -422,7 +423,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
                                 {canValidar ? (
                                   <button
                                     type="button"
-                                    onClick={() => validarItem(r.id).catch((e: any) => setErro(e?.message || String(e)))}
+                                    onClick={() => validarItem(r.id).catch((e: any) => setErro(isNotFoundLikeError(e) ? null : (e?.message || String(e))))}
                                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50"
                                   >
                                     Validar
@@ -444,4 +445,6 @@ export default function LaboratorioRequisicaoResultadosPage() {
     </AppLayout>
   )
 }
+
+
 

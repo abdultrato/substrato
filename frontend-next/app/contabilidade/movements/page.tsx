@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -53,7 +54,7 @@ export default function ContabilidadeMovimentosPage() {
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar movimentos.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar movimentos."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -163,4 +164,6 @@ export default function ContabilidadeMovimentosPage() {
     </AppLayout>
   )
 }
+
+
 

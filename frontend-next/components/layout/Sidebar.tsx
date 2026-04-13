@@ -109,7 +109,7 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
     },
     {
-        href: "/pharmacy",
+        href: "/farmacia",
         label: "Farmácia",
         icon: Pill,
         groups: [GROUPS.ADMIN, GROUPS.FARMACIA],
@@ -121,7 +121,7 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/accounting",
+        href: "/contabilidade",
         label: "Contabilidade",
         icon: Calculator,
         groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
@@ -192,7 +192,7 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: "/entities",
+        href: "/entidades",
         label: "Empresas",
         icon: BriefcaseIcon,
         groups: [

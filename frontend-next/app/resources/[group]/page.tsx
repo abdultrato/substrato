@@ -8,8 +8,12 @@ function mapGroup(g: string) {
     return g.replace(/-/g, "_")
 }
 
-export default function ResourcesGroupPage({ params }: { params: { group: string } }) {
-    const { group } = params
+export default async function ResourcesGroupPage({
+    params,
+}: {
+    params: Promise<{ group: string }>
+}) {
+    const { group } = await params
     const mapped = mapGroup(group)
     redirect(`/recursos/${mapped}`)
 }

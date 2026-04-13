@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
@@ -46,7 +47,7 @@ export default function EnfermagemPage() {
         setProcedimentos(extractTotalCount(procs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace de enfermagem.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de enfermagem."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -92,13 +93,13 @@ export default function EnfermagemPage() {
           <ActionTile
             title="Requisições"
             description="Visualize as requisições pendentes e o que precisa ser executado."
-            href="/enfermagem/requisicoes"
+            href="/enfermagem/requests"
             icon={ClipboardList}
           />
           <ActionTile
             title="Itens de requisição"
             description="Lista de itens vinculados às requisições (exames)."
-            href="/enfermagem/itens-requisicao"
+            href="/enfermagem/request-items"
             icon={Droplets}
           />
           <ActionTile
@@ -139,3 +140,5 @@ export default function EnfermagemPage() {
     </AppLayout>
   )
 }
+
+

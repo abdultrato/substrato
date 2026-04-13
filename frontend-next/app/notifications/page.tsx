@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Bell, ClipboardList, FileText } from "lucide-react"
@@ -35,7 +36,7 @@ export default function NotificacoesPage() {
                 setLogs(extractTotalCount(l))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar notificações.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar notificações."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -79,13 +80,13 @@ export default function NotificacoesPage() {
                     <ActionTile
                         title="Notificações"
                         description="Lista e auditoria das mensagens enviadas."
-                        href="/notificacoes/notificacoes"
+                        href="/notifications/notifications"
                         icon={Bell}
                     />
                     <ActionTile
                         title="Logs de envio"
                         description="Status (sucesso/erro/ignorado) e resposta do provedor."
-                        href="/notificacoes/logs"
+                        href="/notifications/logs"
                         icon={FileText}
                     />
                     <ActionTile
@@ -105,3 +106,5 @@ export default function NotificacoesPage() {
         </AppLayout>
     )
 }
+
+

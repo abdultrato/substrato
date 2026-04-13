@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
@@ -56,7 +57,7 @@ export default function NovaEntidadePage () {
 
             router.push( "/entidades" );
         } catch ( err: any ) {
-            setError( err.message || "Erro ao salvar entidade" );
+            setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao salvar entidade" ));
         } finally {
             setLoading( false );
         }
@@ -167,3 +168,4 @@ export default function NovaEntidadePage () {
         </AppLayout>
     );
 }
+

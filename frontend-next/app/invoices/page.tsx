@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -65,7 +66,7 @@ export default function FaturasPage() {
       const items = res && (res as any).results ? (res as any).results : res
       setFaturas(Array.isArray(items) ? items : [])
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar faturas.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar faturas."))
     } finally {
       setCarregando(false)
     }
@@ -85,7 +86,7 @@ export default function FaturasPage() {
       await apiFetch(`/faturas/${id}/emitir/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
-      setErro(e?.message || "Falha ao emitir fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao emitir fatura."))
     } finally {
       setAcaoId(null)
     }
@@ -102,7 +103,7 @@ export default function FaturasPage() {
       await apiFetch(`/faturas/${id}/anular/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
-      setErro(e?.message || "Falha ao anular fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao anular fatura."))
     } finally {
       setAcaoId(null)
     }
@@ -122,7 +123,7 @@ export default function FaturasPage() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
     } finally {
       setAcaoId(null)
     }
@@ -136,7 +137,7 @@ export default function FaturasPage() {
       setItens(Array.isArray(lista) ? lista : [])
       setItensFaturaId(faturaId)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar itens da fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens da fatura."))
       setItens([])
       setItensFaturaId(null)
     } finally {
@@ -194,7 +195,7 @@ export default function FaturasPage() {
         }
         await carregarPagamentosPendentes(id)
       } catch (e: any) {
-        setErro(e?.message || "Falha ao confirmar pagamento.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao confirmar pagamento."))
       } finally {
         setAcaoId(null)
       }
@@ -216,7 +217,7 @@ export default function FaturasPage() {
         })
         if (itensFaturaId) await carregarItens(itensFaturaId)
       } catch (e: any) {
-        setErro(e?.message || "Falha ao atualizar IVA do item.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
       }
     },
     [carregarItens, itensFaturaId, podeAlterar]
@@ -234,7 +235,7 @@ export default function FaturasPage() {
           <div className="flex flex-wrap gap-2">
             {f.estado === "RASC" ? (
               <Link
-                href={`/faturas/rascunho/${f.id}`}
+                href={`/invoices/rascunho/${f.id}`}
                 className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
               >
                 {podeAlterar ? "Editar rascunho" : "Ver rascunho"}
@@ -339,7 +340,7 @@ export default function FaturasPage() {
             <div className="flex flex-wrap items-center gap-2">
               {podeCriar ? (
                 <Link
-                  href="/faturas/nova"
+                  href="/invoices/nova"
                   className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
                 >
                   Nova fatura
@@ -385,7 +386,7 @@ export default function FaturasPage() {
                         <div className="text-xs text-gray-500">Paciente: {f.paciente || "-"}</div>
                       </div>
                       <Link
-                        href={`/faturas/rascunho/${f.id}`}
+                        href={`/invoices/rascunho/${f.id}`}
                         className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
                       >
                         {podeAlterar ? "Editar" : "Ver"}
@@ -511,4 +512,6 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
+
+
 

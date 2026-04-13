@@ -1,5 +1,6 @@
 "use client";
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useState } from "react";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
@@ -45,7 +46,7 @@ export default function ExamesPage () {
             setTotalPages( computedTotalPages );
             if ( page > computedTotalPages ) setPage( computedTotalPages );
         } catch ( err: any ) {
-            setError( err?.message || "Erro ao carregar exames" );
+            setError(isNotFoundLikeError(err) ? null : (err?.message || "Erro ao carregar exames" ));
             setExames( [] );
         } finally {
             setLoading( false );
@@ -126,3 +127,4 @@ export default function ExamesPage () {
         </AppLayout>
     );
 }
+

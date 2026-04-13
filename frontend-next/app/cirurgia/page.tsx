@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ClipboardList, PlusCircle, Scissors, Wrench } from "lucide-react"
@@ -39,7 +40,7 @@ export default function CirurgiaPage() {
                 setProcedimentos(extractTotalCount(procs))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar cirurgia.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgia."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -121,3 +122,5 @@ export default function CirurgiaPage() {
         </AppLayout>
     )
 }
+
+

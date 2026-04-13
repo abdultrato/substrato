@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -118,7 +119,7 @@ export default function EstatisticasPage() {
         setData(res || null)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar estatísticas.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar estatísticas."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -156,7 +157,7 @@ export default function EstatisticasPage() {
       a.remove()
       setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao exportar relatório.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao exportar relatório."))
     } finally {
       setExportando(null)
     }
@@ -351,3 +352,5 @@ export default function EstatisticasPage() {
     </AppLayout>
   )
 }
+
+

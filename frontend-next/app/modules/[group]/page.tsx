@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation"
 
-export default function ModulesGroupPage({ params }: { params: { group: string } }) {
-    const { group } = params
+export default async function ModulesGroupPage({
+    params,
+}: {
+    params: Promise<{ group: string }>
+}) {
+    const { group } = await params
     redirect(`/modulos/${group}`)
 }
