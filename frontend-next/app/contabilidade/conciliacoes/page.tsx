@@ -98,7 +98,7 @@ export default function ContabilidadeConciliacoesPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/financialreconciliation/"
+                  href="/admin/accounting/financialreconciliation/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -127,6 +127,7 @@ export default function ContabilidadeConciliacoesPage() {
     </AppLayout>
   )
 }
+
 
 
 

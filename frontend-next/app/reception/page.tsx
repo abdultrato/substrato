@@ -148,10 +148,10 @@ export default function RecepcaoPage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/recepcao/checkinrecepcao/"
+                                href="/admin/"
                                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                             >
-                                Abrir check-ins no admin
+                                Abrir admin
                             </Link>
                         ) : null
                     }
@@ -348,3 +348,4 @@ function IndicadorLinha({
         </div>
     )
 }
+

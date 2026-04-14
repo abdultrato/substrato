@@ -6,6 +6,7 @@ import { useParams } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleGroup } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
@@ -14,7 +15,8 @@ export default function ModuloGrupoPage() {
   const params = useParams()
   const groupKey = routeParamToString((params as any)?.group)
   const { loading } = useAuthGuard()
-  const moduleGroup = findModuleGroup(groupKey)
+  const { modules } = useModulesCatalog()
+  const moduleGroup = findModuleGroup(groupKey, modules)
   const allGroups = Object.values(GROUPS)
   const requiredGroups =
     moduleGroup?.key === "equipamentos" ? allGroups : [GROUPS.ADMIN, GROUPS.LABORATORIO]

@@ -105,7 +105,7 @@ export default function ContabilidadeContasPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/account/"
+                  href="/admin/accounting/account/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -156,6 +156,7 @@ export default function ContabilidadeContasPage() {
     </AppLayout>
   )
 }
+
 
 
 

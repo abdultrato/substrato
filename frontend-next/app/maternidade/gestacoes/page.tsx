@@ -114,7 +114,7 @@ export default function MaternidadeGestacoesPage() {
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
-                                    href="/admin/maternity/gestacao/"
+                                    href="/admin/maternity/pregnancy/"
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                                 >
                                     Admin
@@ -165,6 +165,7 @@ export default function MaternidadeGestacoesPage() {
         </AppLayout>
     )
 }
+
 
 
 

@@ -121,7 +121,7 @@ export default function FarmaciaLotesPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/farmacia/lote/"
+                  href="/admin/pharmacy/lot/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -172,5 +172,6 @@ export default function FarmaciaLotesPage() {
     </AppLayout>
   )
 }
+
 
 

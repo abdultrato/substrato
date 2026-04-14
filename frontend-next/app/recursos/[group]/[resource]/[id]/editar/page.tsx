@@ -9,6 +9,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -20,7 +21,8 @@ export default function EditarRecursoPage() {
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
     const router = useRouter()
-    const found = findModuleResource(groupKey, resourceKey)
+    const { modules } = useModulesCatalog()
+    const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const [initial, setInitial] = useState<Record<string, any> | null>(null)
     const [error, setError] = useState<string | null>(null)

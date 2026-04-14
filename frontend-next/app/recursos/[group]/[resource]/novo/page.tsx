@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -16,7 +17,8 @@ export default function NovoRecursoPage() {
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
-    const found = findModuleResource(groupKey, resourceKey)
+    const { modules } = useModulesCatalog()
+    const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
 
     if (loading) return null

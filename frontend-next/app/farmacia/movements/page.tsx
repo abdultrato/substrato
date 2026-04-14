@@ -131,7 +131,7 @@ export default function FarmaciaMovimentosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/farmacia/movimentoestoque/"
+                  href="/admin/pharmacy/inventorymovement/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -182,5 +182,6 @@ export default function FarmaciaMovimentosPage() {
     </AppLayout>
   )
 }
+
 
 

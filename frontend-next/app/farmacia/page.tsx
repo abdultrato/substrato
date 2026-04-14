@@ -77,7 +77,7 @@ export default function FarmaciaPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/farmacia/"
+                href="/admin/pharmacy/"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 <ShieldCheck size={16} />
@@ -133,5 +133,6 @@ export default function FarmaciaPage() {
     </AppLayout>
   )
 }
+
 
 

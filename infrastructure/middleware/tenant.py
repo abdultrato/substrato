@@ -17,6 +17,11 @@ class TenantMiddleware:
     """
 
     CACHE_TIMEOUT = 60 * 10
+    FAST_REDIRECT_PATHS = {
+        "/",
+        "/dashboard",
+        "/dashboard/",
+    }
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -28,7 +33,11 @@ class TenantMiddleware:
             return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
     def _handle(self, request):
-        if request.path.startswith("/health/") or request.path.startswith("/metrics"):
+        if (
+            request.path.startswith("/health/")
+            or request.path.startswith("/metrics")
+            or request.path in self.FAST_REDIRECT_PATHS
+        ):
             token = set_tenant(None)
             request.tenant = None
             request.tenant = None
@@ -59,12 +68,6 @@ class TenantMiddleware:
         host = request.get_host().split(":")[0].lower().strip()
         if not host:
             return JsonResponse({"error": "Host inválido."}, status=400)
-
-        try:
-            connection.close_if_unusable_or_obsolete()
-            connection.ensure_connection()
-        except OperationalError:
-            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         tenant = self._resolve_tenant(host)
 

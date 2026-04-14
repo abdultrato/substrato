@@ -113,7 +113,7 @@ export default function ContabilidadeLancamentosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/legacyentry/"
+                  href="/admin/accounting/legacyentry/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -164,6 +164,7 @@ export default function ContabilidadeLancamentosPage() {
     </AppLayout>
   )
 }
+
 
 
 

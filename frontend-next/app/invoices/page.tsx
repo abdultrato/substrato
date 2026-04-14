@@ -348,7 +348,7 @@ export default function FaturasPage() {
               ) : null}
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/faturamento/invoice/"
+                  href="/admin/billing/invoice/"
                   className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                 >
                   Abrir no admin
@@ -512,6 +512,7 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
+
 
 
 

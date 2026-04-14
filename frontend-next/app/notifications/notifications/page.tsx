@@ -118,7 +118,7 @@ export default function NotificacoesListaPage() {
                                 Voltar
                             </Link>
                             <Link
-                                href="/admin/notificacoes/notificacao/"
+                                href="/admin/notifications/notification/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                             >
                                 Admin
@@ -168,5 +168,6 @@ export default function NotificacoesListaPage() {
         </AppLayout>
     )
 }
+
 
 

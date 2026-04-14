@@ -7,6 +7,7 @@ import ResourceListPage from "@/components/resources/ResourceListPage"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
@@ -16,7 +17,8 @@ export default function ModuloRecursoPage() {
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
-    const found = findModuleResource(groupKey, resourceKey)
+    const { modules } = useModulesCatalog()
+    const found = findModuleResource(groupKey, resourceKey, modules)
     const allGroups = Object.values(GROUPS)
     const requiredGroups =
         found?.group.key === "equipamentos" ? allGroups : [GROUPS.ADMIN, GROUPS.LABORATORIO]

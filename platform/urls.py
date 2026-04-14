@@ -80,6 +80,10 @@ def prometheus_metrics(request):
 
 
 urlpatterns = [
+    # Entrada principal: começa no login e, após autenticação, segue para o dashboard do Admin.
+    path("", RedirectView.as_view(url="/admin/login/?next=/admin/", permanent=False), name="root"),
+    # Alias explícito de dashboard.
+    path("dashboard/", RedirectView.as_view(url="/admin/", permanent=False), name="dashboard"),
     path("health/live", health_live),
     path("health/live/", health_live),
     path("health/ready", health_ready),

@@ -165,7 +165,7 @@ export default function CirurgiaCirurgiasPage() {
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
-                                    href="/admin/cirurgia/cirurgia/"
+                                    href="/admin/surgery/surgery/"
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                                 >
                                     Admin
@@ -216,5 +216,6 @@ export default function CirurgiaCirurgiasPage() {
         </AppLayout>
     )
 }
+
 
 

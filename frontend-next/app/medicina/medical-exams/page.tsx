@@ -77,7 +77,7 @@ export default function ExamesMedicosPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/medicalexam/"
+                href="/admin/clinical/medicalexam/"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir no admin
@@ -127,6 +127,7 @@ export default function ExamesMedicosPage() {
     </AppLayout>
   )
 }
+
 
 
 

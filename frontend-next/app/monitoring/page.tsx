@@ -48,7 +48,7 @@ export default function MonitoramentoPage() {
                     subtitle="Erros do sistema e rastreabilidade de falhas."
                     actions={
                         <Link
-                            href="/admin/monitoramento/errosistema/"
+                            href="/admin/monitoring/systemerror/"
                             className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                         >
                             Abrir no admin
@@ -85,7 +85,7 @@ export default function MonitoramentoPage() {
                     <ActionTile
                         title="Alertas (Admin)"
                         description="Revisão detalhada no Django Admin."
-                        href="/admin/monitoramento/errosistema/"
+                        href="/admin/monitoring/systemerror/"
                         icon={ShieldAlert}
                     />
                 </div>
@@ -99,5 +99,6 @@ export default function MonitoramentoPage() {
         </AppLayout>
     )
 }
+
 
 

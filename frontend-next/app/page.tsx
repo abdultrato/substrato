@@ -4,8 +4,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useEffect, useState } from "react"
 import http from "@/lib/http"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 import MoneyValue from "@/components/ui/MoneyValue"
 import Link from "next/link"
 import {
@@ -35,57 +34,29 @@ type EventItem = {
 
 export default function DashboardPage() {
     const { loading } = useAuthGuard()
-    const { user } = useAuth()
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [error, setError] = useState(false)
     const [kpis, setKpis] = useState<AnalyticsKpis>({})
     const [events, setEvents] = useState<EventItem[]>([])
 
-    console.log('Dashboard user:', user)
-    console.log('User groups:', user?.groups)
-    console.log('Required groups:', [GROUPS.ADMIN, GROUPS.CONTABILIDADE])
-
     useEffect(() => {
         let mounted = true
         async function load() {
             try {
-                console.log('Loading dashboard stats...')
-                console.log('User authenticated:', !!user)
-                console.log('User object:', JSON.stringify(user, null, 2))
-                console.log('User has admin/contabilidade groups:', userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE]))
-
-                // Primeiro testar se consegue buscar user data
-                try {
-                    console.log('Testing authentication by fetching /auth/user/...')
-                    const userRes = await http.get("/auth/user/")
-                    console.log('Auth user response:', userRes)
-                } catch (e) {
-                    console.warn('Failed to fetch auth/user:', e?.message)
-                }
-
                 const { data } = await http.get("/dashboard/stats/", { timeoutMs: 20000 })
-                console.log('Dashboard stats response:', data)
                 if (mounted) {
                     const normalized = normalizeDashboardStats(data)
-                    console.log('Normalized stats:', normalized)
                     setStats(normalized)
                 }
-            } catch (err: any) {
+            } catch {
                 if (mounted) {
-                    console.error('Error loading dashboard stats:', err)
-                    console.error('Error details:', {
-                        message: err?.message,
-                        stack: err?.stack,
-                        name: err?.name,
-                        validation: err?.validation
-                    })
                     setError(true)
                 }
             }
         }
         load()
         return () => { mounted = false }
-    }, [user])
+    }, [])
 
     useEffect(() => {
         let alive = true
@@ -139,12 +110,6 @@ export default function DashboardPage() {
                 {!stats && !error && (
                     <div className="text-sm text-muted-foreground">
                         Carregando métricas...
-                        <br />
-                        <small className="text-xs">
-                            Debug: User authenticated: {user ? 'Yes' : 'No'} |
-                            Has permissions: {userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE]) ? 'Yes' : 'No'} |
-                            Groups: {user?.groups?.join(', ') || 'None'}
-                        </small>
                     </div>
                 )}
 
@@ -263,15 +228,12 @@ export default function DashboardPage() {
 }
 
 function normalizeDashboardStats(raw: any): DashboardStats {
-    console.log('Raw dashboard data:', raw)
-    const result = {
+    return {
         patients: Number(raw?.patients ?? raw?.pacientes ?? 0),
         pending_requests: Number(raw?.pending_requests ?? raw?.requisicoes_pendentes ?? 0),
         exams_today: Number(raw?.exams_today ?? raw?.exams_hoje ?? raw?.exames_hoje ?? 0),
         billing_today: Number(raw?.billing_today ?? raw?.faturamento_hoje ?? 0),
     }
-    console.log('Normalized result:', result)
-    return result
 }
 
 function StatCard({

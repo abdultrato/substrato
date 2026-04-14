@@ -8,6 +8,7 @@ import { useEffect, useState, useCallback } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
@@ -24,7 +25,8 @@ export default function RecursoDetalhePage() {
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
     const router = useRouter()
-    const found = findModuleResource(groupKey, resourceKey)
+    const { modules } = useModulesCatalog()
+    const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const [data, setData] = useState<any | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -49,11 +51,7 @@ export default function RecursoDetalhePage() {
     }, [found, id])
 
     useEffect(() => {
-        let mounted = true
         reloadResource().catch(() => { })
-        return () => {
-            mounted = false
-        }
     }, [reloadResource])
 
     async function handleDelete() {
