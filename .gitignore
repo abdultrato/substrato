@@ -61,8 +61,6 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
 # Flask stuff:
 instance/
@@ -183,9 +181,7 @@ Thumbs.db
 /media/
 staticfiles/
 # SQLite DBs
-*.sqlite3
 test_db*
-db_*
 # Backups locais
 backups/
 
