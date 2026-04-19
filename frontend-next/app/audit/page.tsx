@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -54,7 +55,7 @@ export default function AuditoriaUsuariosPage() {
         setRows(Array.isArray(items) ? items.map(normalizeUserRow) : [])
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar usuários.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar usuários."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -108,7 +109,7 @@ export default function AuditoriaUsuariosPage() {
         header: "Ação",
         render: (u: UserRow) => (
           <Link
-            href={`/auditoria/usuarios/${u.id}`}
+            href={`/audit/users/${u.id}`}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
@@ -156,3 +157,5 @@ export default function AuditoriaUsuariosPage() {
     </AppLayout>
   )
 }
+
+

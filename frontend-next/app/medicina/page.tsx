@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
@@ -39,8 +40,8 @@ export default function MedicinaPage() {
         setErro(null)
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/pacientes/"),
-          apiFetch<any>("/requisicoes/"),
+          apiFetch<any>("/clinical/patient/"),
+          apiFetch<any>("/clinical/labrequest/"),
         ])
 
         if (!mounted) return
@@ -48,7 +49,7 @@ export default function MedicinaPage() {
         setRequisicoes(extractTotalCount(reqs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace de medicina.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de medicina."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -69,7 +70,7 @@ export default function MedicinaPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/"
+                href="/admin/clinical/"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir no admin
@@ -95,13 +96,13 @@ export default function MedicinaPage() {
           <ActionTile
             title="Pacientes"
             description="Ver e registar pacientes vindos da recepção."
-            href="/pacientes"
+            href="/patients"
             icon={Users}
           />
           <ActionTile
             title="Nova requisição (laboratório)"
             description="Solicitar exames laboratoriais para um paciente."
-            href="/requisicoes/nova"
+            href="/requests/nova"
             icon={FilePlus2}
           />
           <ActionTile
@@ -125,7 +126,7 @@ export default function MedicinaPage() {
           <ActionTile
             title="Exames médicos (catálogo)"
             description="Consultar cadastros de exames médicos (se aplicável)."
-            href="/medicina/exames-medicos"
+            href="/medicina/medical-exams"
             icon={Stethoscope}
           />
           <ActionTile
@@ -137,7 +138,7 @@ export default function MedicinaPage() {
           <ActionTile
             title="Resultados médicos"
             description="Anexar laudos e imagens por exame médico."
-            href="/medicina/resultados-medicos"
+            href="/medicina/medical-results"
             icon={ImagePlus}
           />
         </div>
@@ -169,4 +170,7 @@ export default function MedicinaPage() {
     </AppLayout>
   )
 }
+
+
+
 

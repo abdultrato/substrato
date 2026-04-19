@@ -1,4 +1,4 @@
-from api.core.filters import SafeFilterSet
+from api.core.filters import SafeFilterSet  # Base com saneamento
 from apps.equipment.models.equipment import Equipment
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
@@ -63,7 +63,7 @@ class MaintenanceFilter(SafeFilterSet):
 
 class IncidentFilter(SafeFilterSet):
     class Meta:
-        model = Incident
+        model = Incident  # Filtros para ocorrências de equipamentos
         fields = [
             "tenant",
             "custom_id",

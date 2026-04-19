@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ClipboardList, PlusCircle, Scissors, Wrench } from "lucide-react"
@@ -39,7 +40,7 @@ export default function CirurgiaPage() {
                 setProcedimentos(extractTotalCount(procs))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar cirurgia.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgia."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -59,7 +60,7 @@ export default function CirurgiaPage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/cirurgia/cirurgia/"
+                                href="/admin/surgery/surgery/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                             >
                                 Abrir no admin
@@ -121,3 +122,6 @@ export default function CirurgiaPage() {
         </AppLayout>
     )
 }
+
+
+

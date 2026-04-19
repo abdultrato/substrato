@@ -1,3 +1,5 @@
+"""Value object para documentos de identificação genéricos."""
+
 import re
 
 

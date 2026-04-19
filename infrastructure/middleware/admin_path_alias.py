@@ -1,3 +1,5 @@
+"""Middleware que permite aliases adicionais para a rota do admin do Django."""
+
 from typing import Dict
 
 
@@ -48,10 +50,74 @@ ADMIN_SLUG_ALIASES: Dict[str, str] = _with_hyphen_aliases(
 # Admin models: English slugs -> canonical model_name.
 ADMIN_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
     {
+        # Clinical
+        "paciente": "patient",
+        "exame": "labexam",
+        "examecampo": "labexamfield",
+        "examemedico": "medicalexam",
+        "requisicaoanalise": "labrequest",
+        "resultadoitem": "result",
+        # External entities / billing / pharmacy
+        "empresa": "company",
+        "fatura": "invoice",
+        "produto": "product",
+        "lote": "lot",
+        "movimentoestoque": "inventorymovement",
+        "venda": "sale",
+        "itemvenda": "saleitem",
+        # Nursing
+        "evolucaoenfermagem": "nursingevolution",
+        "prescricaoenfermagem": "nursingprescription",
+        "registroenfermagem": "nursingrecord",
+        "enfermaria": "ward",
+        "camaenfermaria": "wardbed",
+        "internamentoenfermaria": "wardadmission",
+        "procedimento": "procedure",
+        "procedimentocatalogo": "procedurecatalog",
+        "procedimentocatalogomaterial": "procedurecatalogmaterial",
+        "procedimentoitem": "procedureitem",
+        "procedimentoitemvalor": "procedureitemvalue",
+        "procedimentomaterial": "procedurematerial",
+        "procedimentomaterialvalor": "procedurematerialvalue",
+        # Legacy aliases already used in the project
         "nursing-vital-sign": "nursingvitalsign",
         "vital-sign": "nursingvitalsign",
         "sinal-vital": "nursingvitalsign",
         "sinalvitalenfermagem": "nursingvitalsign",
+        # Insurer / accounting / consultations
+        "seguradora": "insurer",
+        "planocobertura": "coverageplan",
+        "autorizacaoprocedimento": "procedureauthorization",
+        "conta": "account",
+        "lancamento": "legacyentry",
+        "movimento": "legacymovement",
+        "conciliacaofinanceira": "financialreconciliation",
+        "consulta": "medicalconsultation",
+        "especialidade": "consultationspecialty",
+        "feriado": "holiday",
+        # Tenants / notifications / identity
+        "inquilino": "tenant",
+        "configuracaoinquilino": "tenantconfiguration",
+        "notificacao": "notification",
+        "logenvio": "deliverylog",
+        "usuario": "user",
+        # Medical records / maternity / surgery
+        "registro": "medicalrecordentry",
+        "prescricaoitem": "prescriptionitem",
+        "gestacao": "pregnancy",
+        "cirurgia": "surgery",
+        "procedimentocirurgico": "surgicalprocedure",
+        # Human resources / monitoring
+        "cargo": "jobtitle",
+        "funcionario": "employee",
+        "agregadofamiliar": "familydependent",
+        "horario": "workschedule",
+        "falta": "absence",
+        "ferias": "vacation",
+        "dispensa": "termination",
+        "horaextra": "overtime",
+        "folhapagamento": "payroll",
+        "erro": "systemerror",
     }
 )
 

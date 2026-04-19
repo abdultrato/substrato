@@ -1,3 +1,5 @@
+"""Engine simples para escolher regra de cobertura por exame/CID."""
+
 def resolve_rule(rules, exam_code=None, diagnosis_code=None):
 
     for rule in rules:

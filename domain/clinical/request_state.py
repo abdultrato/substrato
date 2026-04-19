@@ -1,3 +1,5 @@
+"""Enum-like de estados de requisição clínica."""
+
 class RequestState:
     CREATED = "criada"
     IN_PROGRESS = "em_processamento"

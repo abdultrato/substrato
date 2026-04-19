@@ -1,3 +1,5 @@
+"""Mixin para identifiers textuais únicos (slug/código)."""
+
 from django.db import models
 from django.utils.timezone import now
 

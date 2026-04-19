@@ -1,3 +1,5 @@
+"""Conversões utilitárias entre tipos numéricos, booleanos e Decimal."""
+
 from decimal import Decimal, InvalidOperation
 
 

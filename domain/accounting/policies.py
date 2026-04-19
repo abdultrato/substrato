@@ -1,3 +1,5 @@
+"""Políticas de negócio para lançamentos contábeis e conciliações."""
+
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 

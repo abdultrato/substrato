@@ -1,3 +1,5 @@
+"""Registro imutável de eventos clínicos (auditoria e rastreabilidade)."""
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -21,8 +23,8 @@ class ClinicalEvent(TenantPropagationMixin, CoreModel):
     • rastreabilidade laboratorial
     """
 
-    tenant_source = "patient"
-    prefix = "EVT"
+    tenant_source = "patient"  # Propaga tenant pelo paciente
+    prefix = "EVT"  # Prefixo para IDs amigáveis
 
     patient = models.ForeignKey(
         Patient,

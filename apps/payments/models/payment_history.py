@@ -5,11 +5,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class PaymentHistory(CoreModel):
-    """
-    Registro imutável de eventos do Pagamento.
-
-    Serve como trilha auditável.
-    """
+    """Registro imutável de eventos do pagamento (trilha auditável)."""
 
     class EventType(models.TextChoices):
         CRIADO = "CRIADO", "Criado"

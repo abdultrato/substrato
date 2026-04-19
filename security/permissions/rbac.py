@@ -329,3 +329,4 @@ class RBACPermission(permissions.BasePermission):
             )
 
         return allowed
+"""Implementação de RBAC (roles, recursos, permissões) da aplicação."""

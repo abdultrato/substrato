@@ -245,16 +245,16 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
         top_exams = [
             {
                 "type": "laboratorial",
-                "id": row["exam_id"],
-                "name": row["exam__name"],
+                "id": row.get("exam_id") or row.get("exam") or row.get("exam__id"),
+                "name": row.get("exam__name"),
                 "total": row["total"],
             }
             for row in top_exams_lab
         ] + [
             {
                 "type": "doctor",
-                "id": row["medical_exam_id"],
-                "name": row["medical_exam__name"],
+                "id": row.get("medical_exam_id") or row.get("medical_exam") or row.get("medical_exam__id"),
+                "name": row.get("medical_exam__name"),
                 "total": row["total"],
             }
             for row in top_exams_medicos

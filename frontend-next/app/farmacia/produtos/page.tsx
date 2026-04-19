@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -46,7 +47,7 @@ export default function FarmaciaProdutosPage() {
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar produtos.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar produtos."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -99,7 +100,7 @@ export default function FarmaciaProdutosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/farmacia/produto/"
+                  href="/admin/pharmacy/product/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -150,3 +151,6 @@ export default function FarmaciaProdutosPage() {
     </AppLayout>
   )
 }
+
+
+

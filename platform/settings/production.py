@@ -96,3 +96,4 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
 # =========================================================
 
 LOGGING = LOGGING
+"""Configurações específicas de produção (security, cache, DB)."""

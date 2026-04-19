@@ -6,3 +6,4 @@ __all__ = [
     "required_permission_mixin",
     "tenant_permission_mixin",
 ]
+"""Mixins reutilizáveis para requisitos de segurança nos viewsets/serviços."""

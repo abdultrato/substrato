@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from apps.equipment.models.equipment import Equipment
 from apps.incidents.models.incident import Incident
@@ -99,7 +99,7 @@ class MaintenanceSerializer(serializers.ModelSerializer):
 
 
 class IncidentSerializer(serializers.ModelSerializer):
-    status = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()  # Rótulo legível
 
     def get_status(self, obj: Incident) -> str:
         return "Resolvida" if obj.resolved else "Pendente"

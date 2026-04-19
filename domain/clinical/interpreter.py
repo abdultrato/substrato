@@ -1,3 +1,5 @@
+"""Interpretação de resultados clínicos (status e mensagens)."""
+
 from dataclasses import dataclass
 
 

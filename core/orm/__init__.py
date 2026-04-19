@@ -5,3 +5,4 @@ __all__ = [
     "AtivoManager",
     "AtivoQuerySet",
 ]
+"""Extensões ORM (managers/querysets)."""

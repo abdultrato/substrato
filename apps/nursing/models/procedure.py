@@ -12,6 +12,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class Procedure(NoNameCoreModel):
+    """Procedimento de enfermagem com itens de serviço e materiais."""
     prefix = "PROC"
 
     patient = models.ForeignKey(
@@ -58,6 +59,12 @@ class Procedure(NoNameCoreModel):
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
+    )
+    selected_materials = models.ManyToManyField(
+        "farmacia.Product",
+        blank=True,
+        verbose_name="Materiais selecionados",
+        related_name="procedures_selected",
     )
 
     class Meta:

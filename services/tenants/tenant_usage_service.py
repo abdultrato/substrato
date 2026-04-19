@@ -59,3 +59,4 @@ class TenantUsageService:
         return round((usage / limit) * 100, 2)
 
 
+"""Mede e atualiza consumo de requisições/métricas por tenant."""

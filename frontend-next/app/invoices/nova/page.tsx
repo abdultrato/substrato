@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -48,7 +49,7 @@ export default function NovaFaturaPage() {
         const items = listFrom(res)
         if (mounted) setPacientes(items as PacienteRow[])
       } catch (e: any) {
-        if (mounted) setErro(e?.message || "Falha ao carregar pacientes.")
+        if (mounted) setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar pacientes."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -69,7 +70,7 @@ export default function NovaFaturaPage() {
       const existentes = await apiFetch<any>(`/faturas/?paciente=${paciente.id}&estado=RASC`)
       const lista = listFrom(existentes)
       if (lista.length) {
-        router.push(`/faturas/rascunho/${lista[0].id}`)
+        router.push(`/invoices/rascunho/${lista[0].id}`)
         return
       }
 
@@ -82,12 +83,12 @@ export default function NovaFaturaPage() {
       })
 
       if (nova?.id) {
-        router.push(`/faturas/rascunho/${nova.id}`)
+        router.push(`/invoices/rascunho/${nova.id}`)
       } else {
         setErro("Não foi possível criar a fatura.")
       }
     } catch (e: any) {
-      setErro(e?.message || "Falha ao criar fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao criar fatura."))
     } finally {
       setAcaoId(null)
     }
@@ -154,3 +155,5 @@ export default function NovaFaturaPage() {
     </AppLayout>
   )
 }
+
+

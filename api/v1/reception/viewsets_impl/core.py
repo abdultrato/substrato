@@ -1,3 +1,5 @@
+"""ViewSets da API v1 para check-in e fluxo de recepção."""
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -35,6 +37,8 @@ from ..serializers import (
 
 
 class TenantAwareMixin:
+    """Mixin que garante tenant no request e converte validações para DRF errors."""
+
     permission_classes = [IsAuthenticated]
 
     def get_tenant(self):
@@ -58,6 +62,7 @@ class TenantAwareMixin:
 
 
 class ReceptionWorkspaceViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
+    """Retorna datas/intervalos de trabalho da recepção (read-only)."""
     http_method_names = ["get"]
 
     @extend_schema(responses={200: OpenApiTypes.OBJECT})
@@ -66,6 +71,7 @@ class ReceptionWorkspaceViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, 
 
 
 class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ModelViewSet):
+    """CRUD de check-ins, com ações para request, invoice e pagamento."""
     queryset = ReceptionCheckin.objects.select_related(
         "patient",
         "request",
@@ -210,6 +216,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
 
 
 class ReceptionCareViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewSet):
+    """Ações avulsas do fluxo de cuidado (pagar, criar requisição/fatura)."""
     http_method_names = ["get", "post"]
 
     @transaction.atomic

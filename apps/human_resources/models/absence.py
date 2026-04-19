@@ -12,29 +12,32 @@ class Absence(NoNameCoreModel):
     Registro de faltas/ausências (MVP).
     """
 
-    prefix = "FLT"
+    prefix = "FLT"  # Prefixo custom_id
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário ausente
         "recursos_humanos.Employee",
-
         db_column="employee_id",
         on_delete=models.CASCADE,
         related_name="faltas",
         db_index=True,
     )
 
-    date = models.DateField(
-
+    date = models.DateField(  # Dia da falta
         db_column="date",
-
-        default=timezone.now, db_index=True)
-    reason = models.CharField(
+        default=timezone.now,
+        db_index=True,
+    )
+    reason = models.CharField(  # Motivo textual
         db_column="reason",
-        max_length=255, blank=True, default="")
-    justified = models.BooleanField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    justified = models.BooleanField(  # Falta justificada?
         db_column="justified",
-        default=False, db_index=True)
+        default=False,
+        db_index=True,
+    )
 
     class Meta:
         db_table = "recursos_humanos_falta"

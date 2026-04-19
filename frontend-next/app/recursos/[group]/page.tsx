@@ -6,6 +6,7 @@ import { useParams } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleGroup } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -17,7 +18,8 @@ export default function RecursosGrupoPage() {
   const groupKey = routeParamToString((params as any)?.group)
   const { loading } = useAuthGuard()
   const { user } = useAuth()
-  const moduleGroup = findModuleGroup(groupKey)
+  const { modules } = useModulesCatalog()
+  const moduleGroup = findModuleGroup(groupKey, modules)
   const requiredGroups = requiredGroupsForResourceGroup(groupKey)
   const podeVerIndice = userHasAnyGroup(user, [GROUPS.ADMIN])
   const hrefVoltar = podeVerIndice ? "/recursos" : "/"

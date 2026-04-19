@@ -1,3 +1,5 @@
+"""Gateway de pagamento PayPal (exemplo de integração HTTP)."""
+
 from django.conf import settings
 import requests
 

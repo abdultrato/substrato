@@ -27,3 +27,4 @@ class ProcessAuthorizationService:
         return "processed"
 
 
+"""Processa respostas de autorização e atualiza status local."""

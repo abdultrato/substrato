@@ -1,26 +1,34 @@
-from contextlib import suppress
-from decimal import Decimal
+"""Modelo de fatura com cálculo de totais e sincronização por origem."""
 
-from django.core.exceptions import ValidationError
-from django.db import models, transaction
-from django.db.models import DecimalField, Sum
-from django.db.models.functions import Coalesce
+from contextlib import suppress  # Evita exceções em blocos opcionais
+from decimal import Decimal  # Precisão para valores monetários
 
-from apps.clinical.models.lab_request import LabRequest
-from apps.clinical.models.patient import Patient
-from core.models.base import NoNameCoreModel
+from django.core.exceptions import ValidationError  # Exceções de validação
+from django.db import models, transaction  # ORM e controle transacional
+from django.db.models import DecimalField, Sum  # Agregações numéricas
+from django.db.models.functions import Coalesce  # Substitui None por zero
+
+from apps.clinical.models.lab_request import LabRequest  # Requisição de exames
+from apps.clinical.models.patient import Patient  # Paciente ligado à fatura
+from core.models.base import NoNameCoreModel  # Modelo base sem campo name
 
 
 class Invoice(NoNameCoreModel):
-    prefix = "FAT"
+    """Fatura consolidando itens de diversas origens (clínica, farmácia, etc.)."""
+
+    prefix = "FAT"  # Prefixo para IDs amigáveis
 
     class Status(models.TextChoices):
+        """Estados possíveis da fatura."""
+
         DRAFT = "RASC", "Rascunho"
         ISSUED = "EMIT", "Emitida"
         PAID = "PAGA", "Paga"
         CANCELED = "CANC", "Cancelada"
 
     class Origin(models.TextChoices):
+        """Origem do faturamento (controla sincronização de itens)."""
+
         CLINICAL = "CLI", "Clínico"
         PHARMACY = "FAR", "Farmácia"
         NURSING = "ENF", "Enfermagem"
@@ -29,38 +37,34 @@ class Invoice(NoNameCoreModel):
         MIXED = "MIX", "Mista"
 
     origin = models.CharField(
-
-        db_column="origin",
-
+        db_column="origin",  # Coluna
         verbose_name="Origem",
         max_length=3,
-        choices=Origin.choices,
+        choices=Origin.choices,  # Restringe às origens válidas
         default=Origin.CLINICAL,
         db_index=True,
     )
 
     request = models.OneToOneField(
-
-        LabRequest,
-
+        LabRequest,  # Requisição laboratorial (origem clínica)
         db_column="request_id",
         verbose_name="Requisição",
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE,  # Apaga fatura se requisição for removida
         related_name="invoice",
         null=True,
         blank=True,
     )
     sale = models.OneToOneField(
-        "farmacia.Sale",
+        "farmacia.Sale",  # Venda da farmácia
         db_column="sale_id",
         verbose_name="Venda",
-        on_delete=models.PROTECT,
+        on_delete=models.PROTECT,  # Protege venda faturada
         related_name="invoice",
         null=True,
         blank=True,
     )
     procedure = models.OneToOneField(
-        "enfermagem.Procedure",
+        "enfermagem.Procedure",  # Procedimento único (legado)
         db_column="procedure_id",
         verbose_name="Procedimento (legado)",
         on_delete=models.PROTECT,
@@ -70,7 +74,7 @@ class Invoice(NoNameCoreModel):
         help_text="Legado: prefira usar o campo 'procedures' (múltiplos).",
     )
     procedures = models.ManyToManyField(
-        "enfermagem.Procedure",
+        "enfermagem.Procedure",  # Procedimentos múltiplos (novo fluxo)
         db_table="faturamento_fatura_procedimentos",
         verbose_name="Procedimentos (Enfermagem)",
         blank=True,
@@ -78,7 +82,7 @@ class Invoice(NoNameCoreModel):
         help_text="Pode associar múltiplos procedures de enfermagem à mesma invoice.",
     )
     consultations = models.ManyToManyField(
-        "consultas.MedicalConsultation",
+        "consultas.MedicalConsultation",  # Consultas múltiplas
         db_table="faturamento_fatura_consultas",
         verbose_name="Consultas médicas",
         blank=True,
@@ -86,7 +90,7 @@ class Invoice(NoNameCoreModel):
         help_text="Associa várias consultas (ex.: clínica geral e especialidade) a esta fatura.",
     )
     consultation = models.OneToOneField(
-        "consultas.MedicalConsultation",
+        "consultas.MedicalConsultation",  # Consulta única (compatibilidade)
         db_column="consultation_id",
         verbose_name="Consulta",
         on_delete=models.PROTECT,
@@ -95,7 +99,7 @@ class Invoice(NoNameCoreModel):
         blank=True,
     )
     surgery = models.OneToOneField(
-        "cirurgia.Surgery",
+        "cirurgia.Surgery",  # Cirurgia associada
         db_column="surgery_id",
         verbose_name="Cirurgia",
         on_delete=models.PROTECT,
@@ -105,39 +109,55 @@ class Invoice(NoNameCoreModel):
     )
 
     patient = models.ForeignKey(
-
-        Patient,
-
+        Patient,  # Paciente associado
         db_column="patient_id",
         verbose_name="Paciente",
-        on_delete=models.PROTECT,
+        on_delete=models.PROTECT,  # Evita excluir paciente com fatura
         related_name="invoices",
         null=True,
         blank=True,
     )
 
-    subtotal = models.DecimalField(verbose_name="Total sem IVA", max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(  # Soma sem impostos
+        verbose_name="Total sem IVA",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
     vat_amount = models.DecimalField(
         db_column="vat_amount",
-        verbose_name="Total de IVA", max_digits=12, decimal_places=2, default=0)
-    total = models.DecimalField(verbose_name="Total com IVA", max_digits=12, decimal_places=2, default=0)
+        verbose_name="Total de IVA",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+    total = models.DecimalField(  # Total com impostos
+        verbose_name="Total com IVA",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
 
     insurance_amount = models.DecimalField(
-
-        db_column="insurance_amount",
-
-        verbose_name="Valor do seguro", max_digits=12, decimal_places=2, default=0)
+        db_column="insurance_amount",  # Parcela coberta pelo seguro
+        verbose_name="Valor do seguro",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
     patient_amount = models.DecimalField(
-        db_column="patient_amount",
-        verbose_name="Valor do patient", max_digits=12, decimal_places=2, default=0)
+        db_column="patient_amount",  # Parcela cobrada ao paciente
+        verbose_name="Valor do patient",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
 
     status = models.CharField(
-
-        db_column="status",
-
+        db_column="status",  # Coluna
         verbose_name="Estado",
         max_length=5,
-        choices=Status.choices,
+        choices=Status.choices,  # Estados permitidos
         default=Status.DRAFT,
         db_index=True,
     )

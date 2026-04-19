@@ -22,3 +22,4 @@ def decrypt(text: str) -> str:
 CHAVE = KEY
 criptografar = encrypt
 descriptografar = decrypt
+"""Funções de apoio para hashing e criptografia simples."""

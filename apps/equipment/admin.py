@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para equipamentos."""
+
 from django.contrib import admin
 
 from .models.equipment import Equipment
@@ -5,6 +7,7 @@ from .models.equipment import Equipment
 
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
+    """Lista equipamentos com estado operacional e filtros de aquisição."""
     list_display = (
         "custom_id",
         "name",

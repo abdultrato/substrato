@@ -1,3 +1,5 @@
+"""Task Celery para recalcular cobranças/faturas em lote."""
+
 import logging
 import time
 
@@ -29,3 +31,17 @@ def recalculate_invoice_task(invoice_id: int) -> None:
     duration = time.perf_counter() - start
     tenant_id = getattr(invoice, "tenant_id", None)
     INVOICE_RECALCULATION_DURATION.labels(tenant_id or "unknown").observe(duration)
+
+
+@shared_task(bind=True)
+def recalculate_invoices(self):
+    """Itera invoices pendentes e recalcula totais; reporta tempo total."""
+    logger.info("Iniciando recalculo de faturas")
+
+    start = time.perf_counter()
+
+    for invoice in Invoice.objects.filter(status=Invoice.Status.PENDENTE):
+        recalculate_invoice_task.delay(invoice.id)
+
+    duration = time.perf_counter() - start
+    logger.info("Recalculo agendado em %.2fs", duration)

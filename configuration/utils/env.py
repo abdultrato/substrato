@@ -1,3 +1,5 @@
+"""View para inspecionar variáveis de ambiente em runtime (admin-only)."""
+
 from django.conf import settings
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response

@@ -1,3 +1,5 @@
+"""Endpoint utilitário para retornar hora do servidor."""
+
 from django.utils.timezone import now
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response

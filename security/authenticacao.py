@@ -59,3 +59,4 @@ class JWTAuth(JWTAuthentication):
                 cache.set(key, session_id, timeout=_session_timeout_seconds())
 
         return result
+"""Fluxos auxiliares de autenticação/autorização fora do DRF padrão."""

@@ -8,9 +8,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class ProcedureItemValue(TenantPropagationMixin, NoNameCoreModel):
-    """
-    Valor unitário efetivo de um item de procedure.
-    """
+    """Valor unitário efetivo de um item de procedimento (serviço)."""
 
     tenant_source = "item"
     prefix = "PIV"

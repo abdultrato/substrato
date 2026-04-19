@@ -74,25 +74,25 @@ const atalhos = [
     {
         title: "Registrar paciente",
         description: "Abrir o cadastro clínico e preparar o atendimento.",
-        href: "/pacientes",
+        href: "/patients",
         icon: UserPlus,
     },
     {
         title: "Criar requisição",
         description: "Encaminhar o paciente direto para a jornada laboratorial.",
-        href: "/requisicoes/nova",
+        href: "/requests/nova",
         icon: FilePlus2,
     },
     {
         title: "Requisição externa",
         description: "Criar requisição para empresa solicitante ou terceirizada.",
-        href: "/requisicoes/externa/nova",
+        href: "/requests/externa/nova",
         icon: FileText,
     },
     {
         title: "Faturas",
         description: "Abrir o backoffice de faturamento para emissão e revisão.",
-        href: "/faturas",
+        href: "/invoices",
         icon: CreditCard,
     },
     {
@@ -148,10 +148,10 @@ export default function RecepcaoPage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/recepcao/checkinrecepcao/"
+                                href="/admin/"
                                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                             >
-                                Abrir check-ins no admin
+                                Abrir admin
                             </Link>
                         ) : null
                     }
@@ -348,3 +348,4 @@ function IndicadorLinha({
         </div>
     )
 }
+

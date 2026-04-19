@@ -31,3 +31,4 @@ def apply_coverages(invoice):
 
 
 aplicar_coberturas = apply_coverages
+"""Verificações de cobertura de convênio/seguradora para faturamento."""

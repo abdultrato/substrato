@@ -25,4 +25,4 @@ class ManutencaoAdmin(admin.ModelAdmin):
         "equipment__serial_number",
         "technician",
     )
-    ordering = ("-scheduled_date",)
+    ordering = ("-scheduled_date",)  # Próximas/mais recentes primeiro

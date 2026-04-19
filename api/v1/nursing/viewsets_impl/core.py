@@ -1,3 +1,5 @@
+"""ViewSets da API v1 para recursos de Enfermagem."""
+
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

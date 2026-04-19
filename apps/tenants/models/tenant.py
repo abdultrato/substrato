@@ -18,10 +18,11 @@ class Tenant(
     SoftDeleteMixin,
     BaseModel,
 ):
+    """Entidade locatária (cliente) com domínio, status comercial e vigência."""
     objects = ManagerAtivo()
     all_objects = AllObjectsManager()
 
-    prefix = "TN"
+    prefix = "TN"  # Prefixo para custom_id
 
     class CommercialStatus(models.TextChoices):
         TRIAL = "TRIAL", "Trial"

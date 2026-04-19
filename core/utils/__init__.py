@@ -14,3 +14,4 @@ __all__ = [
     "validadores",
     "validators",
 ]
+"""Utilidades core (datas, conversões, normalização, strings, validação, verbose names)."""

@@ -1,3 +1,5 @@
+"""Geração de códigos incrementais únicos (custom_id) por prefixo."""
+
 import logging
 
 from django.db import IntegrityError, transaction

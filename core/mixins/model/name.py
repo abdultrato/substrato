@@ -1,3 +1,5 @@
+"""Mixin para campo `name` com index e verbose."""
+
 from django.db import models
 
 

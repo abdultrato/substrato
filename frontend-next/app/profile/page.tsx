@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -54,7 +55,7 @@ export default function PerfilPage () {
                 setEmail( ( data?.email || "" ).toString() )
                 setTelefone( ( data?.telefone || "" ).toString() )
             } catch (e) {
-                setError( e instanceof Error ? e.message : "Falha ao carregar o perfil." )
+                setError(isNotFoundLikeError(e) ? null : (e instanceof Error ? e.message : "Falha ao carregar o perfil." ))
             } finally {
                 setLoading( false )
             }
@@ -112,7 +113,7 @@ export default function PerfilPage () {
             setSuccess( "Perfil atualizado com sucesso." )
             await refreshUser()
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Falha ao atualizar o perfil." )
+            setError(isNotFoundLikeError(e) ? null : (e instanceof Error ? e.message : "Falha ao atualizar o perfil." ))
         } finally {
             setSaving( false )
         }
@@ -237,3 +238,4 @@ export default function PerfilPage () {
         </AppLayout>
     )
 }
+

@@ -1,17 +1,17 @@
 import { apiFetch } from "./index"
 
 export async function listarEntidades() {
-  return apiFetch("/entidades/")
+  return apiFetch("/entities/company/")
 }
 
 export async function criarEntidade(payload: any) {
-  return apiFetch("/entidades/", { method: "POST", body: JSON.stringify(payload) })
+  return apiFetch("/entities/company/", { method: "POST", body: JSON.stringify(payload) })
 }
 
 export async function atualizarEntidade(id: number, payload: any) {
-  return apiFetch(`/entidades/${id}/`, { method: "PUT", body: JSON.stringify(payload) })
+  return apiFetch(`/entities/company/${id}/`, { method: "PUT", body: JSON.stringify(payload) })
 }
 
 export async function deletarEntidade(id: number) {
-  return apiFetch(`/entidades/${id}/`, { method: "DELETE" })
+  return apiFetch(`/entities/company/${id}/`, { method: "DELETE" })
 }

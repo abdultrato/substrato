@@ -1,3 +1,5 @@
+"""WSGI entrypoint para servidores compatíveis (gunicorn, uwsgi)."""
+
 import os
 
 from django.core.wsgi import get_wsgi_application

@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
@@ -54,7 +55,7 @@ export default function DefinicoesPage () {
             signOut()
             router.replace( "/login" )
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Falha ao alterar a palavra-passe." )
+            setError(isNotFoundLikeError(e) ? null : (e instanceof Error ? e.message : "Falha ao alterar a palavra-passe." ))
         } finally {
             setSaving( false )
         }
@@ -152,3 +153,4 @@ export default function DefinicoesPage () {
         </AppLayout>
     )
 }
+

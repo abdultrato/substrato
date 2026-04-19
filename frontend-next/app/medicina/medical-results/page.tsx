@@ -1,16 +1,21 @@
-"use client"
+"use client" // Necessário para hooks e chamadas client-side.
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 import { useEffect, useMemo, useState } from "react"
 
+// Estrutura de layout e UI reutilizada pelo app.
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
+// Clientes REST autenticados.
 import { apiFetch, apiFetchList } from "@/lib/api"
+// Constantes de domínio de exames médicos.
 import {
   getTiposResultadoMedicoPorMetodo,
   tipoResultadoMedicoAcceptMap,
   tipoResultadoMedicoOptions,
 } from "@/lib/constants/medical-exam"
+// Controle de acesso por grupo.
 import { GROUPS } from "@/lib/rbac"
 
 type RequisicaoResumo = {
@@ -20,6 +25,7 @@ type RequisicaoResumo = {
   result?: { id: number }
 }
 
+// Dados mínimos de um exame médico retornado pela API.
 type ExameMedicoResumo = {
   id: number
   name?: string
@@ -28,6 +34,7 @@ type ExameMedicoResumo = {
   registered_result_types?: string[]
 }
 
+// Linha de arquivo de resultado médico já enviado.
 type ArquivoRow = {
   id: number
   custom_id?: string
@@ -41,6 +48,7 @@ type ArquivoRow = {
   request?: number
 }
 
+// Formata datas vindas da API para exibição amigável.
 function fmtDate(value: any): string {
   if (!value) return "—"
   const d = new Date(value)
@@ -49,6 +57,7 @@ function fmtDate(value: any): string {
 }
 
 export default function ResultadosMedicosPage() {
+  // Estado local para tabelas e formulários.
   const [arquivos, setArquivos] = useState<ArquivoRow[]>([])
   const [exames, setExames] = useState<ExameMedicoResumo[]>([])
   const [requisicoes, setRequisicoes] = useState<RequisicaoResumo[]>([])
@@ -63,12 +72,14 @@ export default function ResultadosMedicosPage() {
     descricao: "",
   })
 
+  // Carrega dados iniciais ao montar a página.
   useEffect(() => {
     loadExames()
     loadRequisicoes()
     loadArquivos()
   }, [])
 
+  // Busca lista paginada de arquivos já enviados.
   async function loadArquivos() {
     try {
       const { items } = await apiFetchList<ArquivoRow>("/clinical/medicalresultfile/", {
@@ -77,38 +88,43 @@ export default function ResultadosMedicosPage() {
       })
       setArquivos(items.map(normalizeMedicalFile))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar anexos médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar anexos médicos."))
     }
   }
 
+  // Busca catálogo de exames médicos.
   async function loadExames() {
     try {
       const res = await apiFetchList<ExameMedicoResumo>("/clinical/medicalexam/", { page: 1, pageSize: 200 })
       setExames(res.items.map(normalizeMedicalExam))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar catálogo de exames médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar catálogo de exames médicos."))
     }
   }
 
+  // Busca requisições médicas para relacionar uploads.
   async function loadRequisicoes() {
     try {
       const res = await apiFetchList<RequisicaoResumo>("/requisicoes/?tipo=MED", { page: 1, pageSize: 200 })
       setRequisicoes(res.items.map(normalizeMedicalRequest))
     } catch (e: any) {
-      setErro(e?.message || "Falha ao listar requisições de exames médicos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao listar requisições de exames médicos."))
     }
   }
 
+  // Resultado (se existir) da requisição selecionada.
   const selectedResultadoId = useMemo(() => {
     const req = requisicoes.find((r) => String(r.id) === form.requisicaoId)
     return req?.result?.id
   }, [form.requisicaoId, requisicoes])
 
+  // Exame médico selecionado no formulário.
   const selectedExame = useMemo(
     () => exames.find((ex) => String(ex.id) === form.exameMedicoId),
     [exames, form.exameMedicoId]
   )
 
+  // Tipos de arquivo permitidos de acordo com exame/método.
   const tiposPermitidos = useMemo(() => {
     if (!selectedExame) return tipoResultadoMedicoOptions.map((opt) => opt.value)
     if (selectedExame.registered_result_types?.length) {
@@ -125,6 +141,7 @@ export default function ResultadosMedicosPage() {
     [tiposPermitidos]
   )
 
+  // Garante que o tipo selecionado sempre é permitido pelo exame.
   useEffect(() => {
     if (!tipoOptions.length) return
     if (!tipoOptions.some((opt) => opt.value === form.tipo)) {
@@ -132,8 +149,10 @@ export default function ResultadosMedicosPage() {
     }
   }, [form.tipo, tipoOptions])
 
+  // Aceites de upload por tipo (mapa definido em constants).
   const fileAccept = tipoResultadoMedicoAcceptMap[form.tipo] ?? ".pdf,image/*,video/*,application/dicom"
 
+  // Handler principal de envio do formulário.
   async function handleSubmit(evt: React.FormEvent) {
     evt.preventDefault()
     setFormError(null)
@@ -155,6 +174,7 @@ export default function ResultadosMedicosPage() {
       return
     }
 
+    // Monta payload multipart exigido pela API para upload de arquivos.
     const formData = new FormData()
     formData.append("file", file)
     formData.append("medical_exam", form.exameMedicoId)
@@ -185,6 +205,7 @@ export default function ResultadosMedicosPage() {
     }
   }
 
+  // Normaliza linhas para tabela (inclui label legível do tipo).
   const rows = useMemo(
     () =>
       arquivos.map((arquivo) => ({
@@ -331,6 +352,7 @@ export default function ResultadosMedicosPage() {
 }
 
 function normalizeMedicalRequest(raw: any): RequisicaoResumo {
+  // Converte payload da API (campos PT/EN) para shape interno.
   return {
     id: Number(raw?.id ?? 0),
     custom_id: raw?.custom_id ?? raw?.id_custom,
@@ -340,6 +362,7 @@ function normalizeMedicalRequest(raw: any): RequisicaoResumo {
 }
 
 function normalizeMedicalExam(raw: any): ExameMedicoResumo {
+  // Normaliza exame médico combinando aliases portugueses/ingleses.
   return {
     id: Number(raw?.id ?? 0),
     name: raw?.name ?? raw?.nome,
@@ -352,6 +375,7 @@ function normalizeMedicalExam(raw: any): ExameMedicoResumo {
 }
 
 function normalizeMedicalFile(raw: any): ArquivoRow {
+  // Normaliza linha de arquivo médico para consumo na UI.
   return {
     id: Number(raw?.id ?? 0),
     custom_id: raw?.custom_id ?? raw?.id_custom,
@@ -365,4 +389,6 @@ function normalizeMedicalFile(raw: any): ArquivoRow {
     request: raw?.request ?? raw?.requisicao,
   }
 }
+
+
 

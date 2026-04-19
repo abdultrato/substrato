@@ -1,3 +1,5 @@
+"""Serviços utilitários de cache (global e por tenant)."""
+
 from django.core.cache import cache
 from django_redis import get_redis_connection
 

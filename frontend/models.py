@@ -1,3 +1,5 @@
+"""Reexports de modelos usados por integrações legadas do frontend antigo."""
+
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient

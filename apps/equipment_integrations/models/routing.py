@@ -1,3 +1,5 @@
+"""Regras de roteamento para direcionar pedidos a equipamentos por setor."""
+
 from django.db import models
 
 from core.constants.laboratory.sector import Sector
@@ -10,7 +12,7 @@ class IntegrationRouting(NoNameCoreModel):
     create a worklist order automatically when a request is created.
     """
 
-    prefix = "ROUT"
+    prefix = "ROUT"  # Prefixo para IDs amigáveis
 
     class ExamType(models.TextChoices):
         LABORATORIO = "LAB", "Exame laboratorial"

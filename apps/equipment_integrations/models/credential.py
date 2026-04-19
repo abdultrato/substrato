@@ -1,3 +1,5 @@
+"""Credenciais de integração para equipamentos (worklist/resultados)."""
+
 import base64
 from collections.abc import Iterable
 import hashlib
@@ -23,7 +25,9 @@ def _hash_key(raw_key: str) -> str:
 
 
 class IntegrationCredential(NoNameCoreModel):
-    prefix = "KEY"
+    """Chaves/API tokens usados para comunicação com equipamentos."""
+
+    prefix = "KEY"  # Prefixo para IDs amigáveis
 
     class Scope(models.TextChoices):
         WORKLIST_READ = "WORKLIST_READ", "Ler worklist"

@@ -48,7 +48,7 @@ interface NavItem {
     groups?: string[]
 }
 
-const ALL_GROUPS = Object.values( GROUPS )
+const ALL_GROUPS = Object.values(GROUPS)
 
 /**
  * Definição dos menus com RBAC
@@ -61,49 +61,49 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/recepcao",
+        href: "/reception",
         label: "Recepção",
         icon: BriefcaseIcon,
         groups: [GROUPS.ADMIN, GROUPS.RECEPCAO],
     },
     {
-        href: "/laboratorio",
+        href: "/laboratory",
         label: "Laboratório",
         icon: Microscope,
         groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
     },
     {
-        href: "/enfermagem",
+        href: "/nursing",
         label: "Enfermagem",
         icon: HeartPulse,
         groups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
     },
     {
-        href: "/medicina",
+        href: "/medicine",
         label: "Medicina",
         icon: Stethoscope,
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA],
     },
     {
-        href: "/prontuario",
+        href: "/medical-records",
         label: "Prontuário",
         icon: ScrollText,
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
     },
     {
-        href: "/maternidade",
+        href: "/maternity",
         label: "Maternidade",
         icon: Baby,
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
     },
     {
-        href: "/cirurgia",
+        href: "/surgery",
         label: "Cirurgia",
         icon: Scissors,
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL],
     },
     {
-        href: "/medicina-ocupacional",
+        href: "/occupational-medicine",
         label: "Med. Ocupacional",
         icon: BriefcaseIcon,
         groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
@@ -115,7 +115,7 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.FARMACIA],
     },
     {
-        href: "/pagamentos",
+        href: "/payments",
         label: "Pagamentos",
         icon: CreditCard,
         groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
@@ -127,7 +127,7 @@ const NAV_ITEMS: NavItem[] = [
         groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/consultas",
+        href: "/consultations",
         label: "Consultas",
         icon: CalendarClock,
         groups: [
@@ -139,37 +139,37 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: "/recursos/recursos_humanos",
+        href: "/resources/human-resources",
         label: "Recursos Humanos",
         icon: BriefcaseIcon,
         groups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS],
     },
     {
-        href: "/estatisticas",
+        href: "/statistics",
         label: "Estatísticas",
         icon: BarChart3,
         groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/auditoria",
+        href: "/audit",
         label: "Auditoria",
         icon: Activity,
         groups: [GROUPS.ADMIN],
     },
     {
-        href: "/notificacoes",
+        href: "/notifications",
         label: "Notificações",
         icon: Bell,
         groups: [GROUPS.ADMIN],
     },
     {
-        href: "/monitoramento",
+        href: "/monitoring",
         label: "Monitoramento",
         icon: Bug,
         groups: [GROUPS.ADMIN],
     },
     {
-        href: "/pacientes",
+        href: "/patients",
         label: "Pacientes",
         icon: Users,
         groups: [
@@ -181,7 +181,7 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: "/requisicoes",
+        href: "/requests",
         label: "Requisições",
         icon: FileText,
         groups: [
@@ -202,37 +202,37 @@ const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        href: "/modulos/equipamentos",
+        href: "/modules/equipment",
         label: "Equipamentos",
         icon: Wrench,
         groups: ALL_GROUPS,
     },
     {
-        href: "/exames",
+        href: "/exams",
         label: "Exames",
         icon: FlaskConical,
         groups: [GROUPS.ADMIN],
     },
     {
-        href: "/faturas",
+        href: "/invoices",
         label: "Faturas",
         icon: Receipt,
         groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/recibos",
+        href: "/receipts",
         label: "Recibos",
         icon: Receipt,
         groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
     },
     {
-        href: "/modulos",
+        href: "/modules",
         label: "Módulos",
         icon: Layers,
         groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
     },
     {
-        href: "/recursos",
+        href: "/resources",
         label: "Recursos API",
         icon: Layers,
         groups: [GROUPS.ADMIN],
@@ -245,13 +245,13 @@ const NAV_ITEMS: NavItem[] = [
     },
 ]
 
-export default function Sidebar ( { user, open = false, onClose, className }: Props ) {
+export default function Sidebar({ user, open = false, onClose, className }: Props) {
     const pathname = usePathname()
     const { isDark, toggle: toggleTheme } = useTheme()
 
-    function hasAccess ( item: NavItem ) {
-        if ( !item.groups ) return true
-        return userHasAnyGroup( user, item.groups )
+    function hasAccess(item: NavItem) {
+        if (!item.groups) return true
+        return userHasAnyGroup(user, item.groups)
     }
 
     const menu = (
@@ -271,7 +271,7 @@ export default function Sidebar ( { user, open = false, onClose, className }: Pr
             </div>
 
             <nav className="flex flex-1 flex-col gap-1 px-2.5 pt-6 pb-6 overflow-y-auto">
-                {NAV_ITEMS.filter( hasAccess ).map( ( item ) => {
+                {NAV_ITEMS.filter(hasAccess).map((item) => {
                     const Icon = item.icon
                     const active = pathname === item.href
 
@@ -292,7 +292,7 @@ export default function Sidebar ( { user, open = false, onClose, className }: Pr
                             {item.label}
                         </Link>
                     )
-                } )}
+                })}
             </nav>
 
             <div className="border-t border-white/15 p-2.5">

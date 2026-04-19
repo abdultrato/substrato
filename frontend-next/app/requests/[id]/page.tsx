@@ -10,31 +10,31 @@ import { GROUPS } from "@/lib/rbac";
 import { useParams } from "next/navigation";
 import { routeParamToString } from "@/lib/routeParams";
 
-export default function RequisicaoDetail () {
+export default function RequisicaoDetail() {
     const params = useParams();
-    const id = routeParamToString( (params as any)?.id );
+    const id = routeParamToString((params as any)?.id);
     useAuthGuard();
 
-    const [req, setReq] = useState<Requisicao | null>( null );
-    const [loading, setLoading] = useState( true );
-    const [error, setError] = useState<string | null>( null );
+    const [req, setReq] = useState<Requisicao | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const carregar = useCallback( async () => {
+    const carregar = useCallback(async () => {
         try {
-            setLoading( true );
-            setError( null );
-            const data = await apiFetch( `/requisicoes/${id}/` );
-            setReq( data );
+            setLoading(true);
+            setError(null);
+            const data = await apiFetch(`/clinical/labrequest/${id}/`);
+            setReq(data);
         } catch {
-            setError( "Erro ao carregar requisição" );
+            setError("Erro ao carregar requisição");
         } finally {
-            setLoading( false );
+            setLoading(false);
         }
-    }, [id] );
+    }, [id]);
 
-    useEffect( () => {
+    useEffect(() => {
         carregar();
-    }, [carregar] );
+    }, [carregar]);
 
     const requiredGroups = [
         GROUPS.ADMIN,
@@ -43,27 +43,27 @@ export default function RequisicaoDetail () {
         GROUPS.MEDICINA_OCUPACIONAL,
     ]
 
-    if ( loading ) {
+    if (loading) {
         return (
             <AppLayout requiredGroups={requiredGroups}>
                 <p>Carregando...</p>
             </AppLayout>
         )
     }
-    if ( error ) {
+    if (error) {
         return (
             <AppLayout requiredGroups={requiredGroups}>
                 <p style={{ color: "red" }}>{error}</p>
             </AppLayout>
         )
     }
-    if ( !req ) return null;
+    if (!req) return null;
 
     return (
         <AppLayout requiredGroups={requiredGroups}>
             <div className="page-box fade-in">
                 <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                    <Link href={`/requisicoes/${req.id}/editar`} className="btn-secondary">
+                    <Link href={`/requests/${req.id}/editar`} className="btn-secondary">
                         Editar
                     </Link>
                 </div>
@@ -96,11 +96,11 @@ export default function RequisicaoDetail () {
 
                 {req.itens && req.itens.length > 0 ? (
                     <ul>
-                        {req.itens.map( ( it: any ) => (
+                        {req.itens.map((it: any) => (
                             <li key={it.id}>
                                 {it.exame_nome || it.exame_medico_nome || `Item #${it.id}`}
                             </li>
-                        ) )}
+                        ))}
                     </ul>
                 ) : (
                     <p>Nenhum exame associado</p>
@@ -109,7 +109,7 @@ export default function RequisicaoDetail () {
                 <hr />
 
                 <div style={{ marginTop: 10 }}>
-                    <Link href="/requisicoes" className="btn-secondary">
+                    <Link href="/requests" className="btn-secondary">
                         ← Voltar
                     </Link>
                 </div>

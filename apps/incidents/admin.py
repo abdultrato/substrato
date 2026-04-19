@@ -25,4 +25,4 @@ class OcorrenciaAdmin(admin.ModelAdmin):
         "description",
         "support_contact",
     )
-    ordering = ("-date",)
+    ordering = ("-date",)  # Incidentes mais recentes primeiro

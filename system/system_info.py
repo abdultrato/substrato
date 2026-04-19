@@ -1,3 +1,5 @@
+"""Exposição de informações de versão/configuração da aplicação."""
+
 import sys
 
 import django

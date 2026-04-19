@@ -1,3 +1,5 @@
+"""Serializers DRF para tenants, planos, configurações e uso."""
+
 from rest_framework import serializers
 
 from apps.tenants.models.configuration import TenantConfiguration

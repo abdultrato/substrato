@@ -1,4 +1,4 @@
-# LOCAL: nucleo/constantes/laboratorio/event_type_clinico.py
+"""Enumeração de eventos clínicos (resultados, requisições, prescrições)."""
 
 from django.db import models
 

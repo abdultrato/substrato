@@ -1,9 +1,8 @@
+"""Intervalos de referência laboratoriais (por campo, sexo e idade)."""
+
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import (
-    F,
-    Q,
-)
+from django.db.models import F, Q
 
 from core.constants.gender import Gender
 from core.models.base import CoreModel
@@ -23,7 +22,7 @@ class ClinicalReference(CoreModel):
     Também define limites críticos clínicos.
     """
 
-    prefix = "REF"
+    prefix = "REF"  # Prefixo para IDs amigáveis
 
     exam_field = models.ForeignKey(
         LabExamField,

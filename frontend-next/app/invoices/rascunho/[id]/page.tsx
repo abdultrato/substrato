@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 
@@ -181,7 +182,7 @@ export default function FaturaRascunhoPage() {
       const lista = listFrom(res)
       setItens(lista as FaturaItem[])
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar itens da fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens da fatura."))
       setItens([])
     }
   }, [])
@@ -280,7 +281,7 @@ export default function FaturaRascunhoPage() {
       })
       setVendaItens(vendaMap)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar itens do paciente.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens do paciente."))
     }
   }, [])
 
@@ -326,7 +327,7 @@ export default function FaturaRascunhoPage() {
         setPagamentoValor(String(fat.total))
       }
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar fatura."))
     } finally {
       setLoading(false)
     }
@@ -356,7 +357,7 @@ export default function FaturaRascunhoPage() {
       const fat = await apiFetch<any>(`/faturas/${faturaId}/`)
       setFatura(fat)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao adicionar item.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao adicionar item."))
     }
   }, [carregarItens, faturaId, faturaRascunho, podeEditar])
 
@@ -374,7 +375,7 @@ export default function FaturaRascunhoPage() {
       await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
       if (faturaId) await carregarItens(faturaId)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao remover item.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao remover item."))
     }
   }, [carregarItens, faturaId, faturaRascunho, podeEditar])
 
@@ -391,7 +392,7 @@ export default function FaturaRascunhoPage() {
       })
       if (faturaId) await carregarItens(faturaId)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao atualizar IVA do item.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
     }
   }, [carregarItens, faturaId, podeEditar])
 
@@ -406,7 +407,7 @@ export default function FaturaRascunhoPage() {
       await apiFetch(`/faturas/${faturaId}/emitir/`, { method: "POST" })
       await carregarFatura()
     } catch (e: any) {
-      setErro(e?.message || "Falha ao emitir fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao emitir fatura."))
     } finally {
       setAcaoId(null)
     }
@@ -459,7 +460,7 @@ export default function FaturaRascunhoPage() {
       await carregarFatura()
       await carregarRecibo(faturaId)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao registrar pagamento.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao registrar pagamento."))
     } finally {
       setAcaoId(null)
     }
@@ -491,7 +492,7 @@ export default function FaturaRascunhoPage() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF da fatura.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF da fatura."))
     }
   }, [faturaId])
 
@@ -509,7 +510,7 @@ export default function FaturaRascunhoPage() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF do recibo.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF do recibo."))
     }
   }, [recibo])
 
@@ -646,7 +647,7 @@ export default function FaturaRascunhoPage() {
               <StatusBadge status={fatura.estado} />
               <button
                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                onClick={() => router.push("/faturas")}
+                onClick={() => router.push("/invoices")}
               >
                 Voltar
               </button>
@@ -1166,4 +1167,6 @@ export default function FaturaRascunhoPage() {
     </AppLayout>
   )
 }
+
+
 

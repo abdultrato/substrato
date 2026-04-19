@@ -17,7 +17,7 @@ def _superuser_allowlist() -> set[str]:
 
 
 def _admin_group_name() -> str:
-    # Prefer the canonical RBAC name; fallback keeps dev resilient.
+    # Prefere nome canônico do RBAC; fallback mantém dev resiliente.
     try:
         return str(RBAC_GROUPS["ADMIN"])
     except Exception:
@@ -41,6 +41,7 @@ def sync_admin_staff_superuser(sender, instance, action, reverse, model, pk_set=
     allowlist = _superuser_allowlist()
 
     def _promote(u: User) -> None:
+        # Sobe flags de acesso admin.
         fields: list[str] = []
         if getattr(u, "is_active", True) is False:
             u.is_active = True

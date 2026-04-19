@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { CreditCard, Receipt, Repeat, ShieldCheck } from "lucide-react"
@@ -42,7 +43,7 @@ export default function PagamentosPage() {
                 setReconciliacoes(extractTotalCount(recs2))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar pagamentos.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar pagamentos."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -79,7 +80,7 @@ export default function PagamentosPage() {
                     <ActionTile
                         title="Pagamentos"
                         description="Listar pagamentos e auditar status."
-                        href="/pagamentos/pagamentos"
+                        href="/payments/payments"
                         icon={CreditCard}
                     />
                     <ActionTile
@@ -91,13 +92,13 @@ export default function PagamentosPage() {
                     <ActionTile
                         title="Transações"
                         description="Registo de gateway (referência externa e status)."
-                        href="/pagamentos/transacoes"
+                        href="/payments/transactions"
                         icon={Repeat}
                     />
                     <ActionTile
                         title="Reconciliações"
                         description="Confirmações e auditoria por transação."
-                        href="/pagamentos/reconciliacoes"
+                        href="/payments/reconciliacoes"
                         icon={ShieldCheck}
                     />
                 </div>
@@ -122,4 +123,6 @@ export default function PagamentosPage() {
         </AppLayout>
     )
 }
+
+
 

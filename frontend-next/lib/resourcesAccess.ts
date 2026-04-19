@@ -1,7 +1,8 @@
 import { GROUPS } from "@/lib/rbac"
+import { canonicalModuleGroupKey } from "@/lib/modules"
 
 export function requiredGroupsForResourceGroup(groupKey: string): string[] {
-  switch (groupKey) {
+  switch (canonicalModuleGroupKey(groupKey)) {
     case "enfermagem":
       return [GROUPS.ADMIN, GROUPS.ENFERMAGEM]
     case "recursos_humanos":

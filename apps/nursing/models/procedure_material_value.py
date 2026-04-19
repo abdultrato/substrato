@@ -8,9 +8,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class ProcedureMaterialValue(TenantPropagationMixin, NoNameCoreModel):
-    """
-    Valor unitário efetivo de um material consumido em procedure.
-    """
+    """Valor unitário efetivo de um material consumido em procedimento."""
 
     tenant_source = "material"
     prefix = "PMV"

@@ -8,11 +8,13 @@ from core.models import CoreModel
 
 class IdentityUserManager(UserManager):
     def create_superuser(self, username, email=None, password=None, **extra_fields):
+        # Cria superuser padrão e garante acesso administrativo completo.
         user = super().create_superuser(username, email=email, password=password, **extra_fields)
         self._ensure_admin_access(user)
         return user
 
     def _ensure_admin_access(self, user) -> None:
+        # Adiciona grupo ADMIN e reforça flags staff/superuser defensivamente.
         try:
             from django.contrib.auth.models import Group
             from security.permissions.rbac import GROUPS as RBAC_GROUPS
@@ -51,16 +53,16 @@ class User(AbstractUser, CoreModel):
 
     email = models.EmailField(unique=True, verbose_name="E-mail")
 
-    phone = models.CharField(
-
+    phone = models.CharField(  # Contato principal
         db_column="phone",
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Telefone",
+    )
 
-        max_length=20, blank=True, null=True, verbose_name="Telefone")
-
-    photo = models.ImageField(
-
+    photo = models.ImageField(  # Foto para UI
         db_column="photo",
-
         upload_to="users/fotos/",
         blank=True,
         null=True,
@@ -76,7 +78,7 @@ class User(AbstractUser, CoreModel):
         ordering = ["username"]
 
     def save(self, *args, **kwargs):
-        # Garantir associação a um tenant mesmo em ambientes sem contexto (ex.: createsuperuser)
+        # Garante tenant mesmo em ambientes sem contexto (ex.: createsuperuser).
         if not self.tenant_id:
             tenant = Tenant.objects.order_by("id").first()
             if tenant:

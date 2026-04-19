@@ -11,3 +11,4 @@ def chunked(iterable, size: int):
 
     if batch:
         yield batch
+"""Executa listas em lotes menores aplicando função callback."""

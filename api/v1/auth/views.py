@@ -339,6 +339,11 @@ class UserView(APIView):
     def get(self, request):
         user = request.user
 
+        # Otimização: prefetch groups para evitar N+1 query ao iterar em user.groups
+        # Se o usuário não foi carregado com prefetch_related, fazer query adicional controlada
+        if not hasattr(user, '_prefetched_objects_cache') or 'groups' not in getattr(user, '_prefetched_objects_cache', {}):
+            user = User.objects.prefetch_related('groups').get(id=user.id)
+
         full_name = ""
         try:
             full_name = (user.get_full_name() or "").strip()

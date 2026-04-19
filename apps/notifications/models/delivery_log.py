@@ -2,7 +2,7 @@ from django.db import models
 
 
 class DeliveryLog(models.Model):
-    notification = models.ForeignKey(
+    notification = models.ForeignKey(  # Notificação associada
         "notificacoes.Notification",
         verbose_name="Notificação",
         db_column="notification_id",
@@ -10,11 +10,13 @@ class DeliveryLog(models.Model):
         related_name="logs_envio",
         db_index=True,
     )
-    status = models.CharField("Status", max_length=40, db_index=True)
-    response = models.TextField(
+    status = models.CharField("Status", max_length=40, db_index=True)  # Status retornado pelo provedor
+    response = models.TextField(  # Payload/resposta do provedor
         db_column="response",
         verbose_name="Resposta",
-        blank=True, default="")
+        blank=True,
+        default="",
+    )
 
     created_at = models.DateTimeField(
         db_column="created_at",
@@ -24,8 +26,8 @@ class DeliveryLog(models.Model):
     )
 
     class Meta:
-        db_table = "notificacoes_logenvio"
-        ordering = ["-created_at"]
+        db_table = "notificacoes_logenvio"  # Nome legado
+        ordering = ["-created_at"]  # Últimos logs primeiro
         verbose_name = "Log de Envio"
         verbose_name_plural = "Logs de Envio"
         indexes = [

@@ -1,4 +1,4 @@
-# LOCAL: nucleo/models/managers.py
+"""Managers base: ativos e filtrados por soft delete."""
 
 from django.db import models
 

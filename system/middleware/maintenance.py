@@ -1,3 +1,5 @@
+"""Middleware que bloqueia requisições quando o modo manutenção está ativo."""
+
 from django.http import JsonResponse
 
 from system.services.configuration_service import SystemConfigurationService

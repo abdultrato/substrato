@@ -17,3 +17,4 @@ class AuthenticatedMixin:
     """
 
     permission_classes = [IsAuthenticated]
+"""Mixins de conveniência para checar permissões em views/serializers."""

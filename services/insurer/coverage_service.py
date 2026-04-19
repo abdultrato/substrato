@@ -19,3 +19,4 @@ class CoverageService:
         }
 
 
+"""Determina se procedimentos/exames estão cobertos pelo plano."""

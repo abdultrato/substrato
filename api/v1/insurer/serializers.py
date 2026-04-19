@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer

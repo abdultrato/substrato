@@ -17,16 +17,14 @@ class Employee(CoreModel):
     Observação: o vínculo com usuário (login) é feito via Perfil Profissional.
     """
 
-    prefix = "FUN"
+    prefix = "FUN"  # Prefixo para custom_id
 
     class Status(models.TextChoices):
         ACTIVE = "ATIVO", "Ativo"
         INACTIVE = "INATIVO", "Inativo"
 
-    role = models.ForeignKey(
-
+    role = models.ForeignKey(  # Cargo atual do funcionário
         "recursos_humanos.JobTitle",
-
         db_column="role_id",
         verbose_name="Cargo",
         on_delete=models.PROTECT,
@@ -36,10 +34,8 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    profession = models.CharField(
-
+    profession = models.CharField(  # Profissão declarada
         db_column="profession",
-
         verbose_name="Profissão",
         max_length=120,
         blank=True,
@@ -47,7 +43,7 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    nuit = models.CharField(
+    nuit = models.CharField(  # Número fiscal
         verbose_name="NUIT",
         max_length=30,
         blank=True,
@@ -55,17 +51,15 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    nib = models.CharField(
+    nib = models.CharField(  # Conta bancária para pagamento
         verbose_name="NIB / Conta bancária",
         max_length=60,
         blank=True,
         default="",
     )
 
-    document_number = models.CharField(
-
+    document_number = models.CharField(  # Documento de identidade
         db_column="document_number",
-
         verbose_name="Número do documento",
         max_length=60,
         blank=True,
@@ -73,17 +67,21 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    email = models.EmailField(verbose_name="E-mail", blank=True, default="")
-    phone = models.CharField(
+    email = models.EmailField(verbose_name="E-mail", blank=True, default="")  # Contato
+    phone = models.CharField(  # Telefone principal
         db_column="phone",
-        verbose_name="Telefone", max_length=30, blank=True, default="")
+        verbose_name="Telefone",
+        max_length=30,
+        blank=True,
+        default="",
+    )
 
-    admission_date = models.DateField(
-
+    admission_date = models.DateField(  # Data de contratação
         db_column="admission_date",
-
-        verbose_name="Data de admissão", default=timezone.now)
-    status = models.CharField(
+        verbose_name="Data de admissão",
+        default=timezone.now,
+    )
+    status = models.CharField(  # Ativo/Inativo
         db_column="status",
         verbose_name="Estado",
         max_length=10,
@@ -92,18 +90,18 @@ class Employee(CoreModel):
         db_index=True,
     )
 
-    nominal_salary = MoneyField(
-
+    nominal_salary = MoneyField(  # Salário base mensal
         db_column="nominal_salary",
-
-        verbose_name="Salário nominal", default=Decimal("0.00"))
-    salary_increase = MoneyField(
+        verbose_name="Salário nominal",
+        default=Decimal("0.00"),
+    )
+    salary_increase = MoneyField(  # Ajuste por promoção/extra
         db_column="salary_increase",
         verbose_name="Aumento salarial",
         default=Decimal("0.00"),
         help_text="Valor adicional por promoção/aumento (somado ao salário nominal).",
     )
-    base_month_hours = models.PositiveSmallIntegerField(
+    base_month_hours = models.PositiveSmallIntegerField(  # Jornada mensal contratual
         db_column="base_month_hours",
         verbose_name="Horas base (mês)",
         default=176,
@@ -111,11 +109,11 @@ class Employee(CoreModel):
     )
 
     class Meta:
-        db_table = "recursos_humanos_funcionario"
+        db_table = "recursos_humanos_funcionario"  # Nome legado
         verbose_name = "Funcionário"
         verbose_name_plural = "Funcionários"
-        ordering = ["name"]
-        indexes = [
+        ordering = ["name"]  # Ordenação padrão
+        indexes = [  # Índices para buscas frequentes
             models.Index(fields=["tenant", "status"]),
             models.Index(fields=["tenant", "role"]),
             models.Index(fields=["tenant", "nuit"]),

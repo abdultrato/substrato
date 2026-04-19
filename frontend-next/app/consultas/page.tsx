@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -119,7 +120,7 @@ export default function ConsultasPage() {
         if (!mounted) return
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar consultas.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar consultas."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -517,4 +518,6 @@ export default function ConsultasPage() {
     </AppLayout>
   )
 }
+
+
 

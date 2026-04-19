@@ -175,6 +175,7 @@ class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         model = InvoiceItem
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+        validators: list = []  # evita UniqueValidators automáticos que usam campo deleted
 
 
 class InvoiceHistorySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

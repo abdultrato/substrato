@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -70,7 +71,7 @@ export default function HistoriaClinicaPage() {
         setPayload(res || null)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar história clínica.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar história clínica."))
       } finally {
         if (mounted) setCarregando(false)
       }
@@ -148,7 +149,7 @@ export default function HistoriaClinicaPage() {
         header: "Código",
         render: (r: any) => (
           <Link
-            href={`/requisicoes/${r.id}`}
+            href={`/requests/${r.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {r.id_custom || r.id || "-"}
@@ -248,7 +249,7 @@ export default function HistoriaClinicaPage() {
           subtitle={`${paciente?.nome || "Paciente"} · ${paciente?.id_custom || id}`}
           actions={
             <Link
-              href={`/pacientes/${id}`}
+              href={`/patients/${id}`}
               className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
             >
               Voltar ao paciente
@@ -363,3 +364,5 @@ export default function HistoriaClinicaPage() {
     </AppLayout>
   )
 }
+
+

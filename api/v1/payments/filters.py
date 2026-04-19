@@ -1,3 +1,5 @@
+"""FilterSets para recursos de Pagamentos na API v1."""
+
 from api.core.filters import SafeFilterSet
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt

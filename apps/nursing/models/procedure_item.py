@@ -9,6 +9,7 @@ from core.models.base import NoNameCoreModel
 
 
 class ProcedureItem(NoNameCoreModel):
+    """Serviço (ato) realizado dentro de um procedimento de enfermagem."""
     prefix = "PROCIT"
 
     procedure = models.ForeignKey(

@@ -1,3 +1,5 @@
+"""Mixin para adicionar campo de descrição opcional."""
+
 from django.db import models
 
 

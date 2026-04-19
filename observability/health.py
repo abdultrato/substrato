@@ -35,3 +35,4 @@ class HealthCheckView(APIView):
                 "api_version": "v1",
             }
         )
+"""Endpoints/helpers para verificar healthchecks da aplicação."""

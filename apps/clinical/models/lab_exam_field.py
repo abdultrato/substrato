@@ -1,4 +1,4 @@
-# LOCAL: aplicativos/clinico/models/exam_field.py
+"""Campos de resultado de um exame laboratorial (ex.: glicose, hemoglobina)."""
 
 from decimal import Decimal
 
@@ -11,7 +11,9 @@ from core.models.base import CoreModel
 
 
 class LabExamField(TenantPropagationMixin, CoreModel):
-    prefix = "CMP"
+    """Campo mensurado de um exame laboratorial (valor numérico, texto etc.)."""
+
+    prefix = "CMP"  # Prefixo para IDs amigáveis
 
     exam = models.ForeignKey(
 

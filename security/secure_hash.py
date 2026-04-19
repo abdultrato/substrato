@@ -6,3 +6,4 @@ def generate_hash(value: str) -> str:
 
 
 gerar_hash = generate_hash
+"""Geração e verificação de hashes seguros para tokens/IDs."""

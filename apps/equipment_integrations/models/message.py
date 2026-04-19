@@ -1,3 +1,5 @@
+"""Mensagens e documentos trocados com equipamentos integrados."""
+
 import hashlib
 from typing import Any
 
@@ -17,7 +19,9 @@ def _upload_path(instance: "IntegrationDocument", filename: str) -> str:
 
 
 class IntegrationMessage(NoNameCoreModel):
-    prefix = "MSG"
+    """Envelope de mensagem trocada com o equipamento."""
+
+    prefix = "MSG"  # Prefixo para IDs amigáveis
 
     class Direction(models.TextChoices):
         INBOUND = "IN", "Entrada"

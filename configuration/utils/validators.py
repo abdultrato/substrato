@@ -1,3 +1,5 @@
+"""Validações utilitárias usadas em serializers e views."""
+
 from rest_framework.exceptions import ValidationError
 
 

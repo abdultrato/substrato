@@ -9,7 +9,6 @@ import {
 } from "react"
 import {
     getSessionUser,
-    isAuthenticated,
     logout,
     SessionUser,
     setSessionUser,
@@ -64,12 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const stored = getSessionUser()
 
-        if (stored && isAuthenticated()) {
+        if (stored) {
             setUser(stored)
-            refreshUser().finally(() => setLoading(false))
-        } else {
+            // Libera render imediatamente e revalida sessão em background.
             setLoading(false)
+            refreshUser().catch(() => {
+                // Erro já tratado em refreshUser.
+            })
+            return
         }
+
+        setLoading(false)
     }, [refreshUser])
 
     const signOut = useCallback(() => {

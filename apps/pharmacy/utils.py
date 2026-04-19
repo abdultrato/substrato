@@ -1,7 +1,9 @@
-from django.db.models import Case, F, IntegerField, Sum, When
-from django.db.models.functions import Coalesce
+"""Funções utilitárias para cálculos de estoque."""
 
-from .models.lot import Lot
+from django.db.models import Case, F, IntegerField, Sum, When  # Construções de agregação
+from django.db.models.functions import Coalesce  # Troca None por zero
+
+from .models.lot import Lot  # Modelo de lote usado nas consultas
 
 
 def calculate_initial_stock(product):
@@ -10,10 +12,10 @@ def calculate_initial_stock(product):
     Útil para reutilizar em views/API/frontend sem duplicar lógica.
     """
     return (
-        Lot.objects.filter(product=product)
-        .aggregate(total=Sum("initial_quantity"))
-        .get("total")
-        or 0
+        Lot.objects.filter(product=product)  # Filtra lotes do produto
+        .aggregate(total=Sum("initial_quantity"))  # Soma campo initial_quantity
+        .get("total")  # Obtém o valor do dicionário agregado
+        or 0  # Substitui None por zero
     )
 
 
@@ -22,20 +24,20 @@ def calculate_current_stock(product):
     Estoque atual = estoque inicial + movimentações (entradas - saídas).
     """
     movements = (
-        Lot.objects.filter(product=product)
+        Lot.objects.filter(product=product)  # Filtra lotes do produto
         .aggregate(
             total=Coalesce(
                 Sum(
                     Case(
-                        When(movimentos__type="SAI", then=-F("movimentos__quantity")),
-                        default=F("movimentos__quantity"),
-                        output_field=IntegerField(),
+                        When(movimentos__type="SAI", then=-F("movimentos__quantity")),  # Saídas negativas
+                        default=F("movimentos__quantity"),  # Entradas positivas
+                        output_field=IntegerField(),  # Tipo inteiro
                     )
                 ),
-                0,
+                0,  # Se não houver movimentos, usa zero
             )
         )
         .get("total")
         or 0
     )
-    return calculate_initial_stock(product) + movements
+    return calculate_initial_stock(product) + movements  # Estoque inicial + movimentações

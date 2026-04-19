@@ -58,3 +58,4 @@ class TenantService:
         return tenant
 
 
+"""Operações de ciclo de vida do tenant (criação, ativação, suspensão)."""

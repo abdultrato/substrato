@@ -1,4 +1,4 @@
-from api.core.filters import SafeFilterSet
+from api.core.filters import SafeFilterSet  # Base com saneamento
 from apps.human_resources.models.absence import Absence
 from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.family_dependent import FamilyDependent
@@ -12,8 +12,8 @@ from apps.human_resources.models.work_schedule import WorkSchedule
 
 class JobTitleFilter(SafeFilterSet):
     class Meta:
-        model = JobTitle
-        fields = ["name", "created_at"]
+        model = JobTitle  # Dataset filtrado
+        fields = ["name", "created_at"]  # Campos permitidos
 
 
 class EmployeeFilter(SafeFilterSet):

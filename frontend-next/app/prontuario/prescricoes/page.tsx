@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -46,7 +47,7 @@ export default function ProntuarioPrescricoesPage() {
                 if (page > computedTotalPages) setPage(computedTotalPages)
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar itens de prescrição.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens de prescrição."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -123,7 +124,7 @@ export default function ProntuarioPrescricoesPage() {
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
-                                    href="/admin/prontuario/prescricaoitem/"
+                                    href="/admin/medical-records/prescriptionitem/"
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                                 >
                                     Admin
@@ -174,3 +175,6 @@ export default function ProntuarioPrescricoesPage() {
         </AppLayout>
     )
 }
+
+
+

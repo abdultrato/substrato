@@ -1,5 +1,7 @@
+"""Exceções do domínio de pagamentos."""
+
 class PaymentFailed(Exception):
-    pass
+    """Falha ao processar pagamento."""
 
 
 PagamentoFalhou = PaymentFailed

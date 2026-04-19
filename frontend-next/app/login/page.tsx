@@ -8,6 +8,7 @@ import { getDefaultWorkspaceHref } from "@/lib/rbac";
 import useAuth from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 import { Eye, EyeOff } from "lucide-react";
+import { useEffect } from "react";
 
 export default function LoginPage () {
     useAuthGuard( { requireAuth: false } )
@@ -27,6 +28,17 @@ export default function LoginPage () {
     const [resetInfo, setResetInfo] = useState( "" )
     const [showResetPass, setShowResetPass] = useState( false )
     const [showResetPass2, setShowResetPass2] = useState( false )
+
+    /**
+     * Pré-carrega as rotas protegidas mais acessadas para que,
+     * depois do login, a navegação seja imediata (evita o tempo
+     * de compilação/carregamento inicial do app router).
+     */
+    useEffect(() => {
+        router.prefetch( "/" )
+        router.prefetch( "/patients" )
+        router.prefetch( "/laboratory/requests" )
+    }, [router])
 
     async function handleSubmit ( e: any ) {
         e.preventDefault();

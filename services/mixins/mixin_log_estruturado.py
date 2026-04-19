@@ -9,3 +9,4 @@ class StructuredLoggingMixin:
 
     def log_error(self, message: str, **extra):
         self.logger.error(message, extra=extra or None)
+"""Mixin que padroniza logs estruturados em serviços."""

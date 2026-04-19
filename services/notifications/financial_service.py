@@ -22,3 +22,4 @@ class FinancialService:
             external_reference=reference,
             tenant=getattr(payment, "tenant", None),
         )
+"""Notificações relacionadas a eventos financeiros (faturas, pagamentos)."""

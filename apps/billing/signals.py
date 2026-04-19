@@ -1,3 +1,5 @@
+"""Sinais de faturamento."""
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -6,6 +8,7 @@ from .models.invoice import Invoice
 
 @receiver(post_save, sender=Invoice)
 def register_invoice_event(sender, instance, created, **kwargs):
+    """Ao criar uma fatura, registra histórico de criação."""
     if created:
         try:
             linhas = [

@@ -1,3 +1,5 @@
+"""Agregados do domínio contábil (account ledger, entradas balanceadas)."""
+
 from decimal import Decimal
 
 from domain.accounting.exceptions import UnbalancedEntriesError

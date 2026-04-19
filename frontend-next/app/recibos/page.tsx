@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -41,7 +42,7 @@ export default function RecibosPage() {
       setAcaoId(id)
       await abrirPdfRecibo(id)
     } catch (e: any) {
-      setErro(e?.message || "Falha ao gerar PDF do recibo.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF do recibo."))
     } finally {
       setAcaoId(null)
     }
@@ -55,7 +56,7 @@ export default function RecibosPage() {
       const items = res && (res as any).results ? (res as any).results : res
       setRecibos(Array.isArray(items) ? items : [])
     } catch (e: any) {
-      setErro(e?.message || "Falha ao carregar recibos.")
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar recibos."))
     } finally {
       setCarregando(false)
     }
@@ -121,4 +122,6 @@ export default function RecibosPage() {
     </AppLayout>
   )
 }
+
+
 

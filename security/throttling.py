@@ -58,3 +58,4 @@ class LoginRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
     """
 
     scope = "login"
+"""Componentes DRF de throttling customizado."""

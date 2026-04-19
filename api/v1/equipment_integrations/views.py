@@ -236,8 +236,8 @@ class EquipmentWorklistView(APIView):
             )
             .select_related("request__patient")
             .prefetch_related(
-                "itens__request_item__exam",
-                "itens__request_item__medical_exam",
+                "items__request_item__exam",
+                "items__request_item__medical_exam",
             )
             .order_by("created_at")[:limit]
         )

@@ -1,3 +1,5 @@
+"""Middleware que registra atividades de usuário para auditoria."""
+
 import time
 from typing import Any, Dict
 

@@ -1,3 +1,5 @@
+"""Configuração da aplicação Celery vinculada ao projeto Django."""
+
 import os
 
 from celery import Celery

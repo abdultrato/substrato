@@ -42,3 +42,4 @@ class GroupViewSet(ViewSet):
         group.permissions.remove(perm)
 
         return Response({"status": "permission removed"})
+"""Helpers para criar/atribuir grupos de permissão."""

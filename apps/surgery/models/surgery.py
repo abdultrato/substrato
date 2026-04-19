@@ -14,12 +14,7 @@ User = settings.AUTH_USER_MODEL
 
 
 class Surgery(NoNameCoreModel):
-    """
-    Registro de surgery (MVP).
-
-    Inclui agendamento e status básico. Pode ser expandido com equipe,
-    sala cirúrgica, checklists, anestesia, materiais, etc.
-    """
+    """Registro de cirurgia (MVP) com agendamento, status e custos estimados."""
 
     prefix = "CIR"
 

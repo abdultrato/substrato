@@ -1,3 +1,5 @@
+"""Managers customizados (tenant-aware, ativos, etc.)."""
+
 from django.db import models
 
 from .querysets import AtivoQuerySet

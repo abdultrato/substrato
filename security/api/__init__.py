@@ -5,3 +5,4 @@ __all__ = [
     "GroupsPermissionsView",
     "LogoutView",
 ]
+"""Endpoints auxiliares de segurança (grupos, logout, etc.)."""

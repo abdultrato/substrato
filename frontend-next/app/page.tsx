@@ -32,39 +32,46 @@ type EventItem = {
     at?: string
 }
 
-export default function DashboardPage () {
+export default function DashboardPage() {
     const { loading } = useAuthGuard()
-    const [stats, setStats] = useState<DashboardStats | null>( null )
-    const [error, setError] = useState( false )
+    const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [error, setError] = useState(false)
     const [kpis, setKpis] = useState<AnalyticsKpis>({})
     const [events, setEvents] = useState<EventItem[]>([])
 
-    useEffect( () => {
-        async function load () {
+    useEffect(() => {
+        let mounted = true
+        async function load() {
             try {
-                const { data } = await http.get( "/dashboard/stats/" )
-                setStats( normalizeDashboardStats( data ) )
+                const { data } = await http.get("/dashboard/stats/", { timeoutMs: 20000 })
+                if (mounted) {
+                    const normalized = normalizeDashboardStats(data)
+                    setStats(normalized)
+                }
             } catch {
-                setError( true )
+                if (mounted) {
+                    setError(true)
+                }
             }
         }
         load()
-    }, [] )
+        return () => { mounted = false }
+    }, [])
 
-    useEffect( () => {
+    useEffect(() => {
         let alive = true
-        async function loadAnalytics () {
+        async function loadAnalytics() {
             try {
-                const { data } = await http.get( "/dashboard/analytics/?dias=7" )
-                if ( alive ) setKpis( data?.kpis || {} )
+                const { data } = await http.get("/dashboard/analytics/?dias=7", { timeoutMs: 20000 })
+                if (alive) setKpis(data?.kpis || {})
             } catch {
                 // silencioso
             }
         }
-        async function loadEvents () {
+        async function loadEvents() {
             try {
-                const { data } = await http.get( "/dashboard/events/?limit=10" )
-                if ( alive ) setEvents( Array.isArray( data ) ? data : [] )
+                const { data } = await http.get("/dashboard/events/?limit=10", { timeoutMs: 20000 })
+                if (alive) setEvents(Array.isArray(data) ? data : [])
             } catch {
                 // silencioso
             }
@@ -72,14 +79,14 @@ export default function DashboardPage () {
         loadAnalytics()
         loadEvents()
         return () => { alive = false }
-    }, [] )
+    }, [])
 
-    if ( loading ) return null
+    if (loading) return null
 
     const alerts: { label: string; value: number | string }[] = []
-    if ( stats?.pending_requests ) alerts.push( { label: "Requisições pendentes", value: stats.pending_requests } )
-    if ( stats?.exams_today === 0 ) alerts.push( { label: "Sem exames hoje", value: "-" } )
-    if ( kpis["Faturas em aberto"] ) alerts.push( { label: "Faturas em aberto", value: kpis["Faturas em aberto"] } )
+    if (stats?.pending_requests) alerts.push({ label: "Requisições pendentes", value: stats.pending_requests })
+    if (stats?.exams_today === 0) alerts.push({ label: "Sem exames hoje", value: "-" })
+    if (kpis["Faturas em aberto"]) alerts.push({ label: "Faturas em aberto", value: kpis["Faturas em aberto"] })
 
     const funnel = [
         { label: "Consultas/Exames (últ. 7d)", value: kpis["Requisições (no período)"] ?? "—" },
@@ -112,24 +119,28 @@ export default function DashboardPage () {
                             title="Pacientes"
                             value={stats.patients}
                             icon={Users}
+                            href="/patients"
                         />
 
                         <StatCard
                             title="Requisições Pendentes"
                             value={stats.pending_requests}
                             icon={ClipboardList}
+                            href="/requests"
                         />
 
                         <StatCard
                             title="Exames Hoje"
                             value={stats.exams_today}
                             icon={FlaskConical}
+                            href="/laboratory/requests"
                         />
 
                         <StatCard
                             title="Faturamento Hoje"
                             value={<MoneyValue value={stats.billing_today} />}
                             icon={Receipt}
+                            href="/invoices"
                         />
                     </div>
                 )}
@@ -175,7 +186,7 @@ export default function DashboardPage () {
                             <div className="text-sm text-muted-foreground">Sem eventos recentes.</div>
                         ) : (
                             <ul className="space-y-2 text-sm">
-                                {events.map( ( ev ) => (
+                                {events.map((ev) => (
                                     <li
                                         key={ev.id}
                                         className="rounded-xl border border-border bg-card/70 px-3 py-2 shadow-sm"
@@ -188,7 +199,7 @@ export default function DashboardPage () {
                                             <div className="text-[11px] text-muted-foreground mt-0.5">{ev.at}</div>
                                         ) : null}
                                     </li>
-                                ) ) }
+                                ))}
                             </ul>
                         )}
                     </CardSection>
@@ -216,25 +227,27 @@ export default function DashboardPage () {
     )
 }
 
-function normalizeDashboardStats ( raw: any ): DashboardStats {
+function normalizeDashboardStats(raw: any): DashboardStats {
     return {
-        patients: Number( raw?.patients ?? raw?.pacientes ?? 0 ),
-        pending_requests: Number( raw?.pending_requests ?? raw?.requisicoes_pendentes ?? 0 ),
-        exams_today: Number( raw?.exams_today ?? raw?.exams_hoje ?? raw?.exames_hoje ?? 0 ),
-        billing_today: Number( raw?.billing_today ?? raw?.faturamento_hoje ?? 0 ),
+        patients: Number(raw?.patients ?? raw?.pacientes ?? 0),
+        pending_requests: Number(raw?.pending_requests ?? raw?.requisicoes_pendentes ?? 0),
+        exams_today: Number(raw?.exams_today ?? raw?.exams_hoje ?? raw?.exames_hoje ?? 0),
+        billing_today: Number(raw?.billing_today ?? raw?.faturamento_hoje ?? 0),
     }
 }
 
-function StatCard ( {
+function StatCard({
     title,
     value,
     icon: Icon,
+    href,
 }: {
     title: string
     value: number | string | JSX.Element
     icon: any
-} ) {
-    return (
+    href?: string
+}) {
+    const content = (
         <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40">
             <div>
                 <p className="text-sm text-muted-foreground">{title}</p>
@@ -246,6 +259,8 @@ function StatCard ( {
             </div>
         </div>
     )
+
+    return href ? <Link href={href}>{content}</Link> : content
 }
 
 function CardSection({
@@ -273,8 +288,8 @@ function CardSection({
 }
 
 const quickLinks = [
-    { href: "/pacientes", label: "Registrar paciente", icon: UserPlus, desc: "Cadastro e triagem" },
-    { href: "/requisicoes/nova", label: "Criar requisição", icon: ClipboardList, desc: "Fluxo laboratorial" },
-    { href: "/consultas", label: "Agendar consulta", icon: CalendarClock, desc: "Médico + faturamento" },
-    { href: "/faturas", label: "Faturas", icon: Receipt, desc: "Emissão e revisão" },
+    { href: "/patients", label: "Registrar Paciente", icon: UserPlus, desc: "Cadastro e triagem de pacientes" },
+    { href: "/requests/new", label: "Criar Requisição", icon: ClipboardList, desc: "Fluxo de laboratório" },
+    { href: "/consultations", label: "Agendar Consulta", icon: CalendarClock, desc: "Agendamento clínico e faturamento" },
+    { href: "/invoices", label: "Faturas", icon: Receipt, desc: "Emitir e revisar faturas" },
 ]

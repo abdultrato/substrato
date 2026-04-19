@@ -1,3 +1,5 @@
+"""Controle de modo de manutenção (liga/desliga) usando cache."""
+
 from django.core.cache import cache
 
 CACHE_KEY = "system:maintenance_mode"

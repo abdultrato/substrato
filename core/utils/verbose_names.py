@@ -1,3 +1,5 @@
+"""Utilitário para aplicar verbose_name/_plural globais em modelos dinamicamente."""
+
 from __future__ import annotations
 
 from django.apps import apps

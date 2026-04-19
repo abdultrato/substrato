@@ -4,6 +4,7 @@ from infrastructure.orm.fields.money_field import MoneyField
 
 
 class Receipt(models.Model):
+    """Recibo emitido para uma fatura/pagamento."""
     invoice = models.ForeignKey(
         "faturamento.Invoice",
         db_column="invoice_id",
@@ -28,7 +29,8 @@ class Receipt(models.Model):
          max_length=60, db_index=True)
     value = MoneyField(
         db_column="value",
-        verbose_name="Valor")
+        verbose_name="Valor",
+    )
 
     created_at = models.DateTimeField("Criado em", db_column="created_at", auto_now_add=True, db_index=True)
 

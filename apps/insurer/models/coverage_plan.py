@@ -13,9 +13,9 @@ class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     Plano de cobertura associado a uma insurer.
     """
 
-    prefix = "PLC"
+    prefix = "PLC"  # Prefixo para custom_id
 
-    insurer = models.ForeignKey(
+    insurer = models.ForeignKey(  # Seguradora dona do plano
         "seguradora.Insurer",
         verbose_name="Seguradora",
         db_column="insurer_id",
@@ -23,7 +23,7 @@ class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
         related_name="planos",
     )
 
-    coverage_percentage = models.DecimalField(
+    coverage_percentage = models.DecimalField(  # Percentual padrão do plano
         db_column="coverage_percentage",
         verbose_name="Percentual de cobertura",
         max_digits=5,
@@ -36,19 +36,23 @@ class CoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
         help_text="Percentual de cobertura (0-100).",
     )
 
-    requires_authorization = models.BooleanField(
+    requires_authorization = models.BooleanField(  # Exige autorização prévia?
         db_column="requires_authorization",
         verbose_name="Requer autorização",
-        default=False, db_index=True)
+        default=False,
+        db_index=True,
+    )
 
     # Compatibilidade com filtros/viewsets gerados
     active = models.BooleanField(
         db_column="active",
         verbose_name="Ativo",
-        default=True, db_index=True)
+        default=True,
+        db_index=True,
+    )
 
     class Meta:
-        db_table = "seguradora_planocobertura"
+        db_table = "seguradora_planocobertura"  # Nome legado
         verbose_name = "Plano de Cobertura"
         verbose_name_plural = "Planos de Cobertura"
 

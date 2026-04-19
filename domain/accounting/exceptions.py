@@ -1,7 +1,5 @@
 class AccountingDomainError(Exception):
-    """
-    Base class for accounting domain exceptions.
-    """
+    """Base para exceções do domínio de contabilidade."""
 
     pass
 

@@ -9,9 +9,10 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch, extractTotalCount } from "@/lib/api"
+import { pharmacyService } from "@/lib/api/typed-client"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { ApiError, isNotFoundLikeError } from "@/lib/errors/api-error"
 
 export default function FarmaciaPage() {
   const { user } = useAuth()
@@ -30,19 +31,33 @@ export default function FarmaciaPage() {
         setLoading(true)
         setErro(null)
 
-        const [prods, lots, movs] = await Promise.all([
-          apiFetch<any>("/farmacia/produto/"),
-          apiFetch<any>("/farmacia/lote/"),
-          apiFetch<any>("/farmacia/movimentoestoque/"),
+        const listWithFallback = async <T,>(
+          request: Promise<{ data: T[] }>
+        ): Promise<number> => {
+          try {
+            const response = await request
+            return response.data?.length ?? 0
+          } catch (error) {
+            if (error instanceof ApiError && error.isNotFoundError()) {
+              return 0
+            }
+            throw error
+          }
+        }
+
+        const [produtosCount, lotesCount, movimentosCount] = await Promise.all([
+          listWithFallback(pharmacyService.listProdutos()),
+          listWithFallback(pharmacyService.listLotes()),
+          listWithFallback(pharmacyService.listMovimentos()),
         ])
 
         if (!mounted) return
-        setProdutos(extractTotalCount(prods))
-        setLotes(extractTotalCount(lots))
-        setMovimentos(extractTotalCount(movs))
+        setProdutos(produtosCount)
+        setLotes(lotesCount)
+        setMovimentos(movimentosCount)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace da farmácia.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace da farmácia."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -62,7 +77,7 @@ export default function FarmaciaPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/farmacia/"
+                href="/admin/pharmacy/"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 <ShieldCheck size={16} />
@@ -101,7 +116,7 @@ export default function FarmaciaPage() {
           <ActionTile
             title="Movimentos"
             description="Entradas, saídas e ajustes de estoque."
-            href="/farmacia/movimentos"
+            href="/farmacia/movements"
             icon={Repeat}
           />
         </div>
@@ -118,3 +133,6 @@ export default function FarmaciaPage() {
     </AppLayout>
   )
 }
+
+
+

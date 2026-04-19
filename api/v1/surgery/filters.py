@@ -1,3 +1,5 @@
+"""FilterSets para recursos de Cirurgia na API v1."""
+
 from api.core.filters import SafeFilterSet
 from apps.surgery.models.surgery import Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure

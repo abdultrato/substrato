@@ -5,23 +5,36 @@ import Link from "next/link"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
-import { MODULES } from "@/lib/modules"
+import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ModulosPage() {
   const { loading } = useAuthGuard()
+  const { modules, isFetching, isError } = useModulesCatalog()
   if (loading) return null
 
   return (
-            <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="space-y-6">
         <PageHeader
           title="Módulos"
           subtitle="Acesso rápido a todos os apps do Django atualmente expostos na API v1."
         />
 
+        {isFetching ? (
+          <div className="text-xs text-muted-foreground">
+            Sincronizando catálogo com o backend...
+          </div>
+        ) : null}
+
+        {isError ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Não foi possível atualizar o catálogo em tempo real. Exibindo estrutura local.
+          </div>
+        ) : null}
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {MODULES.map((m) => (
+          {modules.map((m) => (
             <Link
               key={m.key}
               href={`/modulos/${m.key}`}

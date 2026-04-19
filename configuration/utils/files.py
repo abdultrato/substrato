@@ -1,3 +1,5 @@
+"""Utilidades para estatística de armazenamento (local/S3) e cacheamento."""
+
 import os
 import time
 

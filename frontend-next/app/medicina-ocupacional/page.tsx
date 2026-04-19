@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { FilePlus2, HeartPulse, ScrollText, Pill, Users } from "lucide-react"
@@ -30,8 +31,8 @@ export default function MedicinaOcupacionalPage() {
         setErro(null)
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/pacientes/?proveniencia=Medicina%20Ocupacional"),
-          apiFetch<any>("/requisicoes/"),
+          apiFetch<any>("/clinical/patient/?proveniencia=Medicina%20Ocupacional"),
+          apiFetch<any>("/clinical/labrequest/"),
         ])
 
         if (!mounted) return
@@ -39,7 +40,7 @@ export default function MedicinaOcupacionalPage() {
         setRequisicoes(extractTotalCount(reqs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar o workspace de medicina ocupacional.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de medicina ocupacional."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -60,7 +61,7 @@ export default function MedicinaOcupacionalPage() {
           actions={
             podeVerAdmin ? (
               <Link
-                href="/admin/clinico/patient/?proveniencia__exact=Medicina+Ocupacional"
+                href="/admin/clinical/patient/?proveniencia__exact=Medicina+Ocupacional"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir no admin
@@ -86,13 +87,13 @@ export default function MedicinaOcupacionalPage() {
           <ActionTile
             title="Pacientes"
             description="Registar e acompanhar pacientes de medicina ocupacional."
-            href="/pacientes"
+            href="/patients"
             icon={Users}
           />
           <ActionTile
             title="Nova requisição (laboratório)"
             description="Solicitar análises laboratoriais."
-            href="/requisicoes/nova"
+            href="/requests/nova"
             icon={FilePlus2}
           />
           <ActionTile
@@ -127,4 +128,7 @@ export default function MedicinaOcupacionalPage() {
     </AppLayout>
   )
 }
+
+
+
 

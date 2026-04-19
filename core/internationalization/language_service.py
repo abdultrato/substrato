@@ -1,10 +1,10 @@
+"""Serviços utilitários para listar e nomear idiomas ISO (pycountry)."""
+
 import pycountry
 
 
 def list_iso_languages():
-    """
-    Returns ISO 639-1 language choices.
-    """
+    """Retorna choices ISO 639-1 (código, nome) ordenados alfabeticamente."""
     languages = []
 
     for language in pycountry.languages:

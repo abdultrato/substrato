@@ -8,3 +8,4 @@ class LogoutView(APIView):
 
     def post(self, request):
         return Response({"detail": "Logout performed com sucesso."})
+"""Endpoint simples de logout (token/session)."""

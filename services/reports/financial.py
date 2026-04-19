@@ -67,3 +67,4 @@ def open_invoices():
         patient_amount__gt=Decimal("0.00"),
     )
 
+"""Geração de relatórios financeiros consolidados."""

@@ -1,3 +1,5 @@
+"""Serviços para interpretar resultados clínicos e gerar labels/cores."""
+
 from domain.clinical.patient_rules import ResultInterpreter as ReferenceInterpreter
 from domain.clinical.reference_values import ClinicalReferenceResolver
 

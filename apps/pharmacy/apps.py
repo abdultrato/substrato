@@ -1,16 +1,21 @@
+"""Configuração da aplicação de farmácia."""
+
 from django.apps import AppConfig
 
 
 class PharmacyConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.pharmacy"
-    label = "farmacia"
-    verbose_name = "Farmácia e Gestão de Estoque"
+    """Define metadados da app e registra sinais."""
+
+    default_auto_field = "django.db.models.BigAutoField"  # Tipo padrão de chave
+    name = "apps.pharmacy"  # Caminho da app
+    label = "farmacia"  # Rótulo curto usado em ForeignKeys
+    verbose_name = "Farmácia e Gestão de Estoque"  # Nome exibido no admin
 
     def ready(self):
+        """Carrega sinais ao iniciar a app."""
         # Registra sinais de estoque (ex.: entrada automática ao criar lote).
         try:
-            from . import signals  # noqa: F401
+            from . import signals  # noqa: F401  # Import para disparar registradores
         except Exception:
             # Em caso de erro de import, não quebrar a inicialização.
             pass

@@ -1,7 +1,11 @@
+"""Gateway simulado para integração com Emola."""
+
 from .base_gateway import PaymentGateway
 
 
 class EmolaGateway(PaymentGateway):
+    """Implementação mock de operações básicas do provedor Emola."""
+
     name = "emola"
 
     def charge(self, amount, reference, phone):

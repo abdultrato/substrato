@@ -15,65 +15,83 @@ class Payroll(NoNameCoreModel):
     Monthly payroll per employee (MVP).
     """
 
-    prefix = "FPG"
+    prefix = "FPG"  # Prefixo custom_id
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário alvo da folha
         "recursos_humanos.Employee",
-
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="folhas_payment",
         db_index=True,
     )
 
-    year = models.PositiveSmallIntegerField(
-
+    year = models.PositiveSmallIntegerField(  # Ano de referência
         db_column="year",
-
-        db_index=True)
-    month = models.PositiveSmallIntegerField(
+        verbose_name="Ano",
+        db_index=True,
+    )
+    month = models.PositiveSmallIntegerField(  # Mês (1-12)
         db_column="month",
-        db_index=True)
+        verbose_name="Mês",
+        db_index=True,
+    )
 
-    nominal_salary = MoneyField(
-
+    nominal_salary = MoneyField(  # Salário base do mês
         db_column="nominal_salary",
-
-        default=Decimal("0.00"))
-    base_month_hours = models.PositiveSmallIntegerField(
+        verbose_name="Salário Nominal",
+        default=Decimal("0.00"),
+    )
+    base_month_hours = models.PositiveSmallIntegerField(  # Horas contratuais
         db_column="base_month_hours",
-        default=176)
-    overtime_hour_multiplier = models.DecimalField(
+        verbose_name="Horas Base do Mês",
+        default=176,
+    )
+    overtime_hour_multiplier = models.DecimalField(  # Multiplicador da hora extra
         db_column="overtime_hour_multiplier",
-        max_digits=4, decimal_places=2, default=Decimal("1.50"))
+        verbose_name="Multiplicador da Hora Extra",
+        max_digits=4,
+        decimal_places=2,
+        default=Decimal("1.50"),
+    )
 
-    calculated_overtime_hours = models.DecimalField(
-
+    calculated_overtime_hours = models.DecimalField(  # Horas extras computadas no mês
         db_column="calculated_overtime_hours",
-
-        max_digits=8, decimal_places=2, default=Decimal("0.00"))
-    hourly_value = models.DecimalField(
+        verbose_name="Horas Extras Calculadas",
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+    hourly_value = models.DecimalField(  # Valor hora efetivo
         db_column="hourly_value",
-        max_digits=12, decimal_places=4, default=Decimal("0.0000"))
-    overtime_value = MoneyField(
+        verbose_name="Valor da Hora",
+        max_digits=12,
+        decimal_places=4,
+        default=Decimal("0.0000"),
+    )
+    overtime_value = MoneyField(  # Valor total de horas extras
         db_column="overtime_value",
-        default=Decimal("0.00"))
-    total_salary = MoneyField(
+        verbose_name="Valor das Horas Extras",
+        default=Decimal("0.00"),
+    )
+    total_salary = MoneyField(  # Salário total (nominal + extras)
         db_column="total_salary",
-        default=Decimal("0.00"))
+        verbose_name="Salário Total",
+        default=Decimal("0.00"),
+    )
 
-    closed = models.BooleanField(
-
+    closed = models.BooleanField(  # Travamento da folha
         db_column="closed",
-
-        default=False, db_index=True)
+        verbose_name="Fechada",
+        default=False,
+        db_index=True,
+    )
 
     class Meta:
-        db_table = "recursos_humanos_folhapagamento"
+        db_table = "recursos_humanos_folhapagamento"  # Nome legado
         verbose_name = "Folha de Pagamento"
         verbose_name_plural = "Folhas de Pagamento"
-        ordering = ["-year", "-month", "-created_at"]
+        ordering = ["-year", "-month", "-created_at"]  # Listagem do mais recente
         constraints = [
             models.UniqueConstraint(
                 fields=["tenant", "employee", "year", "month"],

@@ -1,4 +1,4 @@
-from api.core.filters import SafeFilterSet
+from api.core.filters import SafeFilterSet  # Base que saneia filtros inválidos
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
@@ -6,8 +6,8 @@ from apps.identity.models.user import User
 
 class PasswordResetTokenFilter(SafeFilterSet):
     class Meta:
-        model = PasswordResetToken
-        fields = ["user", "token", "created_at", "used"]
+        model = PasswordResetToken  # Dataset alvo
+        fields = ["user", "token", "created_at", "used"]  # Filtros permitidos
 
 
 class ProfessionalProfileFilter(SafeFilterSet):

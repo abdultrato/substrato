@@ -1,3 +1,5 @@
+"""FilterSets para Tenants, configurações, planos e usage na API v1."""
+
 from api.core.filters import SafeFilterSet
 from apps.tenants.models.configuration import TenantConfiguration
 from apps.tenants.models.feature_flags import TenantFeatureFlag

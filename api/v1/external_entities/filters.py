@@ -1,11 +1,11 @@
-from api.core.filters import SafeFilterSet
-from apps.external_entities.models.company import Company
+from api.core.filters import SafeFilterSet  # Base com saneamento de entradas
+from apps.external_entities.models.company import Company  # Modelo alvo
 
 
 class EmpresaFilter(SafeFilterSet):
     class Meta:
-        model = Company
-        fields = [
+        model = Company  # Dataset filtrado
+        fields = [  # Campos expostos para filtros GET
             "tenant",
             "custom_id",
             "name",
@@ -24,5 +24,5 @@ class EmpresaFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "empresa": EmpresaFilter,
+    "empresa": EmpresaFilter,  # Mapeia alias -> filtro
 }

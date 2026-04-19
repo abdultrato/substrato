@@ -1,3 +1,5 @@
+"""Ordens/worklists enviadas para equipamentos integrados."""
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -10,7 +12,7 @@ class IntegrationOrder(NoNameCoreModel):
     RequisicaoAnalise agrupada por equipment.
     """
 
-    prefix = "ORD"
+    prefix = "ORD"  # Prefixo para IDs amigáveis
 
     class Status(models.TextChoices):
         PENDING = "PEND", "Pendente"

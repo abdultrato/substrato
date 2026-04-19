@@ -42,3 +42,4 @@ class InventoryService:
             sale_item=sale_item,
             tenant=getattr(locked_lot, "tenant", None),
         )
+"""Gerencia estoque farmacêutico (entradas, saídas, ajustes)."""

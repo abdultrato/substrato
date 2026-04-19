@@ -9,3 +9,4 @@ __all__ = [
     "UserProfileView",
     "UserViewSet",
 ]
+"""Utilidades relacionadas a usuários (grupos, perfis, notificações)."""

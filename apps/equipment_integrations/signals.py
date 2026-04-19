@@ -1,3 +1,5 @@
+"""Sinais para gerar ordens de worklist automaticamente."""
+
 from __future__ import annotations
 
 import logging
@@ -13,7 +15,7 @@ logger = logging.getLogger("equipment_integrations.signals")
 @receiver(post_save, sender=LabRequestItem)
 def create_integration_order_for_item(sender, instance: LabRequestItem, created: bool, **kwargs):
     """
-    Create or update worklist orders automatically when a request item is created.
+    Cria/atualiza ordens de worklist quando um item de requisição é criado.
     """
 
     if not created:

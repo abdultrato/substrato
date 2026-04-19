@@ -27,7 +27,7 @@ class NotificationAdmin(admin.ModelAdmin):
         "patient__custom_id",
     )
     readonly_fields = ("created_at", "sent_at")
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Notificações mais recentes primeiro
 
 
 @admin.register(NotificationTemplate)
@@ -44,6 +44,6 @@ class DeliveryLogAdmin(admin.ModelAdmin):
     list_filter = ("status", "created_at")
     search_fields = ("notification__recipient", "status", "response")
     readonly_fields = ("created_at",)
-    ordering = ("-created_at",)
+    ordering = ("-created_at",)  # Logs mais recentes primeiro
 
 

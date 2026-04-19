@@ -1,4 +1,4 @@
-from api.core.filters import SafeFilterSet
+from api.core.filters import SafeFilterSet  # Base com saneamento
 from apps.maternity.models.pregnancy import Pregnancy
 
 

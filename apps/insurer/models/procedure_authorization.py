@@ -11,19 +11,21 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
     Insurer authorization request for a procedure/request.
     """
 
-    prefix = "AUT"
+    prefix = "AUT"  # Prefixo para custom_id
 
     class Status(models.TextChoices):
         PENDENTE = "PENDENTE", "Pendente"
         APROVADA = "APROVADA", "Aprovada"
         NEGADA = "NEGADA", "Negada"
 
-    request_id = models.CharField(
+    request_id = models.CharField(  # ID externo da requisição
         db_column="request_id",
         verbose_name="ID da requisição",
-        max_length=60, db_index=True)
+        max_length=60,
+        db_index=True,
+    )
 
-    plan = models.ForeignKey(
+    plan = models.ForeignKey(  # Plano ao qual a autorização se refere
         "seguradora.CoveragePlan",
         verbose_name="Plano",
         db_column="plan_id",
@@ -31,15 +33,15 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
         related_name="autorizacoes",
     )
 
-    status = models.CharField(
-        verbose_name="Status",
+    status = models.CharField(  # Situação da autorização
+        verbose_name="Situação",
         max_length=20,
         choices=Status.choices,
         default=Status.PENDENTE,
         db_index=True,
     )
 
-    authorization_code = models.CharField(
+    authorization_code = models.CharField(  # Código retornado pela seguradora
         db_column="authorization_code",
         verbose_name="Código de autorização",
         max_length=80,
@@ -48,13 +50,15 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
         db_index=True,
     )
 
-    response_date = models.DateTimeField(
+    response_date = models.DateTimeField(  # Quando a seguradora respondeu
         db_column="response_date",
         verbose_name="Data da resposta",
-        blank=True, null=True)
+        blank=True,
+        null=True,
+    )
 
     # Compatibilidade com filtros/viewsets gerados
-    name = models.CharField(
+    name = models.CharField(  # Compatibilidade com DescriptionMixin
         "Nome",
         db_column="name",
         max_length=120,
@@ -62,13 +66,15 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
         null=True,
         db_index=True,
     )
-    active = models.BooleanField(
+    active = models.BooleanField(  # Atributo de negócio (não soft delete)
         db_column="active",
         verbose_name="Ativo",
-        default=True, db_index=True)
+        default=True,
+        db_index=True,
+    )
 
     class Meta:
-        db_table = "seguradora_autorizacaoprocedimento"
+        db_table = "seguradora_autorizacaoprocedimento"  # Nome legado
         verbose_name = "Autorização de Procedimento"
         verbose_name_plural = "Autorizações de Procedimento"
 

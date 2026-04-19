@@ -1,3 +1,5 @@
+"""Serializers para Recepção (check-in, fluxo de atendimento)."""
+
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin

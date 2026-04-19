@@ -1,3 +1,5 @@
+"""Helpers HTTP/DRF para cache, env, docs, schema e validações."""
+
 from .cache import CacheClearView, CacheStatusView
 from .cache_keys import CacheKeys
 from .decorators import cache_response

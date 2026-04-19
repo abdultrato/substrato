@@ -1,3 +1,5 @@
+"""Funções de particionamento temporal e roteamento simples por tenant."""
+
 from datetime import datetime
 
 

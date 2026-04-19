@@ -6,9 +6,7 @@ from core.models.base import CoreModel
 
 
 class NursingVitalSign(TenantPropagationMixin, CoreModel):
-    """
-    Registro de sinais vitais do patient.
-    """
+    """Registro de sinais vitais coletados pela enfermagem."""
 
     tenant_source = "record"
     prefix = "SVI"

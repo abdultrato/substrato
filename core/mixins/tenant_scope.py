@@ -1,4 +1,4 @@
-# LOCAL: nucleo/mixins/escopo_tenant.py
+"""Mixin abstrato para escopo multi-tenant (seta tenant a partir do contexto)."""
 
 from django.db import models
 

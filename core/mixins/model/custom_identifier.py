@@ -1,3 +1,5 @@
+"""Mixin para gerar custom_id incremental por prefixo e data."""
+
 from django.db import connection, models
 from django.utils.timezone import now
 

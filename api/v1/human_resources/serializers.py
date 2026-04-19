@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers  # DRF base
 
 from apps.human_resources.models.absence import Absence
 from apps.human_resources.models.employee import Employee
@@ -15,7 +15,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobTitle
         fields = "__all__"
-        read_only_fields = (
+        read_only_fields = (  # Protege campos de auditoria/tenant
             "custom_id",
             "tenant",
             "created_at",
@@ -169,7 +169,7 @@ class PayrollSerializer(serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "role": JobTitleSerializer,
+    "role": JobTitleSerializer,  # Alias -> serializer
     "employee": EmployeeSerializer,
     "agregadofamiliar": FamilyDependentSerializer,
     "horario": WorkScheduleSerializer,

@@ -1,6 +1,8 @@
+// Layout raiz do app Next.js: aplica tema dark/light e injeta AuthProvider.
 import "./globals.css"
 
 import { AuthProvider } from "@/hooks/useAuth"
+import Providers from "./providers"
 
 const themeInitScript = `
 (function () {
@@ -18,7 +20,8 @@ const themeInitScript = `
   }
 })();`
 
-export default function RootLayout ( { children }: { children: React.ReactNode } ) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    // Define HTML base (lang, tema) e envolve app no AuthProvider.
     return (
         <html
             lang="pt"
@@ -29,7 +32,9 @@ export default function RootLayout ( { children }: { children: React.ReactNode }
             </head>
             <body className="min-h-screen font-sans">
                 <AuthProvider>
-                    {children}
+                    <Providers>
+                        {children}
+                    </Providers>
                 </AuthProvider>
             </body>
         </html>

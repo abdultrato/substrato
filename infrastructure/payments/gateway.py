@@ -1,3 +1,5 @@
+"""Adaptadores de gateway de pagamento na camada de infraestrutura."""
+
 from decimal import Decimal
 
 

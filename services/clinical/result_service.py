@@ -41,3 +41,4 @@ class ResultService:
         result_item.save(update_fields=["clinical_status", "report_color", "critical_alert"])
 
 
+"""Serviços para emissão e manipulação de resultados de exames."""

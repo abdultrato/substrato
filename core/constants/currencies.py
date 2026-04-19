@@ -1,10 +1,10 @@
+"""ISO 4217 — Códigos internacionais de moeda."""
+
 from django.db import models
 
 
 class Currency(models.TextChoices):
-    """
-    ISO 4217 — Códigos internacionais de moeda.
-    """
+    """ISO 4217 — códigos de moeda usados no sistema."""
 
     MZN = "MZN", "Metical Moçambicano"
     ZAR = "ZAR", "Rand Sul-Africano"

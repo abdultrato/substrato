@@ -1,3 +1,5 @@
+"""Decorators utilitários (cache_response)."""
+
 from functools import wraps
 
 from django.core.cache import cache

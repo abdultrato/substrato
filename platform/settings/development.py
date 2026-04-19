@@ -78,3 +78,4 @@ CSRF_COOKIE_SECURE = False
 
 
 LOGGING["root"]["level"] = "DEBUG"
+"""Ajustes adicionais de desenvolvimento (debug, ferramentas locais)."""

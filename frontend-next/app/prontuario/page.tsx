@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ClipboardList, ScrollText, Pill, PlusCircle } from "lucide-react"
@@ -39,7 +40,7 @@ export default function ProntuarioPage() {
                 setItensPrescricao(extractTotalCount(itens))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar prontuário.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar prontuário."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -59,7 +60,7 @@ export default function ProntuarioPage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/prontuario/registroprontuario/"
+                                href="/admin/medical-records/medicalrecordentry/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                             >
                                 Abrir no admin
@@ -120,3 +121,6 @@ export default function ProntuarioPage() {
         </AppLayout>
     )
 }
+
+
+

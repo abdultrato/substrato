@@ -1,19 +1,19 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
-import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { pharmacyService } from "@/lib/api/typed-client"
+import { type MovimentoEstoque, type Lote, type Produto } from "@/lib/validators/schemas"
 
-type MovimentoRow = Record<string, any>
-
-function fmtDate(value: any): string {
+function fmtDate(value: string | null | undefined): string {
   if (!value) return "-"
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return String(value)
@@ -26,11 +26,13 @@ export default function FarmaciaMovimentosPage() {
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<MovimentoRow[]>([])
+  const [data, setData] = useState<MovimentoEstoque[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [lotes, setLotes] = useState<Map<number, Lote>>(new Map())
+  const [produtos, setProdutos] = useState<Map<number, Produto>>(new Map())
 
   useEffect(() => {
     let mounted = true
@@ -38,22 +40,35 @@ export default function FarmaciaMovimentosPage() {
       try {
         setLoading(true)
         setErro(null)
-        const { items, meta } = await apiFetchList<MovimentoRow>(
-          "/farmacia/movimentoestoque/",
-          { page, pageSize }
-        )
-        const total = meta.total ?? items.length
-        const computedTotalPages =
-          meta.totalPages ??
-          (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+        const [movRes, lotesRes, prodRes] = await Promise.all([
+          pharmacyService.listMovimentos(),
+          pharmacyService.listLotes(),
+          pharmacyService.listProdutos(),
+        ])
+
+        const items = movRes.data || []
+        const lotesMap = new Map<number, Lote>()
+        lotesRes.data?.forEach(l => {
+          if (l.id !== undefined && l.id !== null) lotesMap.set(l.id, l)
+        })
+        const produtoMap = new Map<number, Produto>()
+        prodRes.data?.forEach(p => {
+          if (p.id !== undefined && p.id !== null) produtoMap.set(p.id, p)
+        })
+        const total = items.length
+        const computedTotalPages = Math.max(1, Math.ceil(total / pageSize))
+        const offset = (page - 1) * pageSize
+        const pageItems = items.slice(offset, offset + pageSize)
         if (!mounted) return
-        setData(items)
-        setTotalItems(total || 0)
+        setData(pageItems)
+        setTotalItems(total)
         setTotalPages(computedTotalPages)
+        setLotes(lotesMap)
+        setProdutos(produtoMap)
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar movimentos.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar movimentos."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -68,7 +83,7 @@ export default function FarmaciaMovimentosPage() {
     () => [
       {
         header: "Código",
-        render: (m: MovimentoRow) => (
+        render: (m: MovimentoEstoque) => (
           <Link
             href={`/recursos/farmacia/movimentoestoque/${m.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
@@ -77,13 +92,21 @@ export default function FarmaciaMovimentosPage() {
           </Link>
         ),
       },
-      { header: "Produto", render: (m: MovimentoRow) => m.produto || "-" },
-      { header: "Lote", render: (m: MovimentoRow) => m.lote || "-" },
-      { header: "Tipo", render: (m: MovimentoRow) => m.tipo || m.natureza || "-" },
-      { header: "Quantidade", render: (m: MovimentoRow) => m.quantidade || m.qtd || "-" },
-      { header: "Data", render: (m: MovimentoRow) => fmtDate(m.criado_em || m.data) },
+      { header: "Lote", render: (m: MovimentoEstoque) => m.lote ?? "-" },
+      {
+        header: "Produto",
+        render: (m: MovimentoEstoque) => {
+          const lote = m.lote ? lotes.get(m.lote) : null
+          const produto = lote?.produto ? produtos.get(lote.produto) : null
+          return produto?.nome || lote?.produto || "-"
+        },
+      },
+      { header: "Tipo", render: (m: MovimentoEstoque) => m.tipo || "-" },
+      { header: "Origem", render: (m: MovimentoEstoque) => m.origem ?? "-" },
+      { header: "Quantidade", render: (m: MovimentoEstoque) => m.quantidade ?? "-" },
+      { header: "Data", render: (m: MovimentoEstoque) => fmtDate(m.criado_em) },
     ],
-    []
+    [lotes, produtos]
   )
 
   return (
@@ -108,7 +131,7 @@ export default function FarmaciaMovimentosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/farmacia/movimentoestoque/"
+                  href="/admin/pharmacy/inventorymovement/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -147,7 +170,7 @@ export default function FarmaciaMovimentosPage() {
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
           <>
-            <DataTable<MovimentoRow>
+            <DataTable<MovimentoEstoque>
               columns={columns as any}
               data={data}
               emptyMessage="Nenhum movimento encontrado."
@@ -159,3 +182,6 @@ export default function FarmaciaMovimentosPage() {
     </AppLayout>
   )
 }
+
+
+

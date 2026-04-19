@@ -1,3 +1,5 @@
+"""Regras de negócio para lançar movimentos contábeis (balanço e validações)."""
+
 from decimal import Decimal
 
 from domain.accounting.exceptions import (

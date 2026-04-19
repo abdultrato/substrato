@@ -1,3 +1,5 @@
+"""Feriados para precificação diferenciada de consultas."""
+
 from __future__ import annotations
 
 from django.core.exceptions import ValidationError
@@ -13,7 +15,7 @@ class Holiday(NoNameCoreModel):
     Nota: o percent de acréscimo é configurado por tenant (ConfiguracaoInquilino).
     """
 
-    prefix = "FER"
+    prefix = "FER"  # Prefixo para IDs amigáveis
 
     date = models.DateField(
 

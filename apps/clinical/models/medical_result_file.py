@@ -1,3 +1,5 @@
+"""Arquivos de resultado de exames médicos (imagem/PDF/vídeo/DICOM)."""
+
 from contextlib import suppress
 import os
 
@@ -94,7 +96,9 @@ def validate_medical_file_for_type(file, type):
 
 
 class MedicalResultFile(TenantPropagationMixin, NoNameCoreModel):
-    prefix = "RMA"
+    """Arquivo associado a um resultado médico."""
+
+    prefix = "RMA"  # Prefixo para IDs amigáveis
 
     result = models.ForeignKey(
 

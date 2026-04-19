@@ -1,3 +1,5 @@
+"""Helpers para precificar consultas conforme horário, feriado e tenant TZ."""
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -13,9 +15,7 @@ SCHEDULE_MANUAL_HOLIDAY = "FERIADO_MANUAL"
 
 
 def get_tenant_timezone(tenant):
-    """
-    Retorna a ZoneInfo do tenant ou None para usar o timezone padrão.
-    """
+    """Retorna a ZoneInfo do tenant ou None para usar o timezone padrão."""
     try:
         cfg = getattr(tenant, "configuracao", None)
         tz = (getattr(cfg, "time_zone", "") or "").strip()
@@ -27,9 +27,7 @@ def get_tenant_timezone(tenant):
 
 
 def get_local_datetime(tenant, date_time):
-    """
-    Converte a data/hora para o timezone do tenant.
-    """
+    """Converte a data/hora para o timezone do tenant."""
     tz = get_tenant_timezone(tenant)
     if not date_time:
         return None
@@ -39,9 +37,7 @@ def get_local_datetime(tenant, date_time):
 
 
 def is_holiday(tenant, date_time) -> bool:
-    """
-    Verifica se a data/hora informada cai em feriado cadastrado.
-    """
+    """Verifica se a data/hora informada cai em feriado cadastrado."""
     tenant_id = getattr(tenant, "id", None)
     if not tenant_id or not date_time:
         return False
@@ -57,9 +53,7 @@ def is_holiday(tenant, date_time) -> bool:
 
 
 def calculate_schedule_type(tenant, date_time, manual_holiday: bool = False) -> str:
-    """
-    Classifica o horário (normal, fora de expediente, fim de semana ou feriado).
-    """
+    """Classifica o horário (normal, fora de expediente, fim de semana ou feriado)."""
     dt_local = get_local_datetime(tenant, date_time)
     if not dt_local:
         return SCHEDULE_NORMAL
@@ -77,9 +71,7 @@ def calculate_schedule_type(tenant, date_time, manual_holiday: bool = False) -> 
 
 
 def calculate_price_multiplier(tenant, date_time, manual_holiday: bool = False) -> Decimal:
-    """
-    Calcula multiplicador de preço com base em horário e feriados.
-    """
+    """Calcula multiplicador de preço com base em horário e feriados."""
     schedule_type = calculate_schedule_type(tenant, date_time, manual_holiday=manual_holiday)
 
     # 200% (2x) para fim de semana, fora de expediente ou feriado manual.

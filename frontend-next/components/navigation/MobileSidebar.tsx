@@ -9,6 +9,7 @@ import {
     ClipboardList,
     FlaskConical,
     FileText,
+    Briefcase,
     Building2,
     BarChart3,
     Settings,
@@ -21,19 +22,20 @@ interface Props {
 
 const items = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Pacientes", href: "/pacientes", icon: Users },
-    { label: "Requisições", href: "/requisicoes", icon: ClipboardList },
-    { label: "Exames", href: "/exames", icon: FlaskConical },
-    { label: "Faturas", href: "/faturas", icon: FileText },
-    { label: "Entidades", href: "/entidades", icon: Building2 },
-    { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
-    { label: "Configurações", href: "/configuracoes", icon: Settings },
+    { label: "Recepção", href: "/reception", icon: Briefcase },
+    { label: "Pacientes", href: "/patients", icon: Users },
+    { label: "Requisições", href: "/requests", icon: ClipboardList },
+    { label: "Exames", href: "/exams", icon: FlaskConical },
+    { label: "Faturas", href: "/invoices", icon: FileText },
+    { label: "Empresas", href: "/entidades", icon: Building2 },
+    { label: "Estatísticas", href: "/statistics", icon: BarChart3 },
+    { label: "Definições", href: "/definicoes", icon: Settings },
 ]
 
-export default function MobileSidebar ( { open, onClose }: Props ) {
+export default function MobileSidebar({ open, onClose }: Props) {
     const pathname = usePathname()
 
-    if ( !open ) return null
+    if (!open) return null
 
     return (
         <div className="fixed inset-0 z-50 flex">
@@ -51,7 +53,7 @@ export default function MobileSidebar ( { open, onClose }: Props ) {
                 </div>
 
                 <nav className="flex-1 px-3 py-4 space-y-1">
-                    {items.map( ( item ) => {
+                    {items.map((item) => {
                         const Icon = item.icon
                         const active = pathname === item.href
 
@@ -70,7 +72,7 @@ export default function MobileSidebar ( { open, onClose }: Props ) {
                                 {item.label}
                             </Link>
                         )
-                    } )}
+                    })}
                 </nav>
             </aside>
         </div>

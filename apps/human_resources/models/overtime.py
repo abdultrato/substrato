@@ -14,32 +14,44 @@ class Overtime(NoNameCoreModel):
     Registro de hours extras (MVP).
     """
 
-    prefix = "HEX"
+    prefix = "HEX"  # Prefixo custom_id
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário que fez a hora extra
         "recursos_humanos.Employee",
-
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="hours_extras",
         db_index=True,
     )
 
-    date = models.DateField(
-
+    date = models.DateField(  # Data da hora extra
         db_column="date",
-
-        default=timezone.now, db_index=True)
-    hours = models.DecimalField(
+        verbose_name="Data",
+        default=timezone.now,
+        db_index=True,
+    )
+    hours = models.DecimalField(  # Quantidade de horas
         db_column="hours",
-        max_digits=6, decimal_places=2, default=Decimal("0.00"))
-    multiplier = models.DecimalField(
+        verbose_name="Horas",
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+    multiplier = models.DecimalField(  # Multiplicador aplicado
         db_column="multiplier",
-        max_digits=4, decimal_places=2, default=Decimal("1.50"))
-    notes = models.CharField(
+        verbose_name="Multiplicador",
+        max_digits=4,
+        decimal_places=2,
+        default=Decimal("1.50"),
+    )
+    notes = models.CharField(  # Observações
         db_column="notes",
-        max_length=255, blank=True, default="")
+        verbose_name="Observações",
+        max_length=255,
+        blank=True,
+        default="",
+    )
 
     class Meta:
         db_table = "recursos_humanos_horaextra"

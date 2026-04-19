@@ -1,3 +1,5 @@
+"""Facilita import condicional de configurações (base/dev/prod)."""
+
 # ruff: noqa: F403
 #
 # default settings

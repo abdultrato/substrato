@@ -1,3 +1,5 @@
+"""Endpoints legados para receber webhooks de provedores de pagamento."""
+
 import hashlib
 import hmac
 import json
@@ -17,11 +19,14 @@ logger = logging.getLogger("webhooks")
 
 
 class WebhookViewSet(ViewSet):
+    """Recebe notificações de diversos provedores e publica eventos internos."""
+
     permission_classes = [AllowAny]
     authentication_classes = []
 
     @action(detail=False, methods=["post"], url_path=r"(?P<provider>[^/.]+)")
     def receive(self, request, provider=None):
+        """Valida assinatura, evita duplicados e dispara evento `PAYMENT_RECEIVED`."""
 
         provider = provider.lower()
 
@@ -45,6 +50,7 @@ class WebhookViewSet(ViewSet):
         return Response({"status": "received"})
 
     def _verify_signature(self, provider, request):
+        """Confere assinatura HMAC quando o provedor exige chave secreta."""
 
         secret_map = {
             "stripe": getattr(settings, "STRIPE_WEBHOOK_SECRET", None),
@@ -70,6 +76,7 @@ class WebhookViewSet(ViewSet):
         return hmac.compare_digest(expected, signature)
 
     def _extract_event_id(self, provider, payload):
+        """Extrai identificador único do evento para deduplicação por cache."""
 
         if provider == "stripe":
             return payload.get("id")

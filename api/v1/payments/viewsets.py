@@ -9,13 +9,9 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
-    "PaymentViewSet",
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "PaymentViewSet",
     "ReceiptViewSet",
-    "ReceiptViewSet",
     "ReconciliationViewSet",
-    "ReconciliationViewSet",
-    "TransactionViewSet",
     "TransactionViewSet",
 ]

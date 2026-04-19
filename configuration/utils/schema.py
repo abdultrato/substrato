@@ -1,14 +1,10 @@
+"""AutoSchema custom para padronizar tags do OpenAPI."""
+
 from rest_framework.schemas.openapi import AutoSchema
 
 
 class CustomAutoSchema(AutoSchema):
-    """
-    Schema base para documentação OpenAPI futura.
-
-    ✔ pronto para Swagger / Redoc
-    ✔ padronização de tags
-    ✔ escalável
-    """
+    """Schema base: mantém tags consistentes e prepara para Swagger/Redoc."""
 
     def get_tags(self, path, method):
         if hasattr(self.view, "schema_tag"):

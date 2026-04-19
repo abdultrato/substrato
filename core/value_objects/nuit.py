@@ -1,3 +1,5 @@
+"""Value object para NUIT (número fiscal)."""
+
 import re
 
 

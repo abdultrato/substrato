@@ -13,3 +13,4 @@ class CommunicationService:
         )
 
 
+"""Envio genérico de notificações para usuários/tenants."""

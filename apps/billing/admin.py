@@ -1,3 +1,5 @@
+"""Configuração do Django Admin para faturamento."""
+
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
@@ -10,6 +12,7 @@ from .models.invoice_items import InvoiceItem
 
 
 class CoreAdmin(admin.ModelAdmin):
+    """Base comum para admins com filtros padrão."""
     list_filter = ("deleted",)
     search_fields = ("custom_id",)
     readonly_fields = ("created_at", "updated_at")
@@ -22,6 +25,7 @@ class CoreAdmin(admin.ModelAdmin):
 
 
 class InvoiceItemInline(admin.TabularInline):
+    """Inline genérico para itens de fatura (multi-tipo)."""
     model = InvoiceItem
     extra = 1
     autocomplete_fields = (
@@ -247,6 +251,7 @@ class InvoiceProcedureMaterialInline(BaseTypedInvoiceItemInline):
 
 @admin.register(Invoice)
 class InvoiceAdmin(CoreAdmin):
+    """Administra faturas e sincroniza itens a partir da origem."""
     list_display = (
         "custom_id",
         "origin",

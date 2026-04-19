@@ -1,3 +1,5 @@
+"""Mixin para campo `order` (inteiro) com index."""
+
 from django.db import models
 
 

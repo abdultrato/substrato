@@ -13,16 +13,31 @@ export const GROUPS = {
   RECURSOS_HUMANOS: "Gestor de RH",
 } as const
 
+const ALL_GROUP_VALUES = Object.values(GROUPS)
+
+const GROUP_SYNONYMS: Record<string, string[]> = {
+  Administrador: [
+    "admin",
+    "administrador",
+    "administrator",
+    "superuser",
+    "super usuario",
+    "super usuário",
+    "superusuario",
+    "staff",
+  ],
+}
+
 export type WorkspaceKey =
   | "dashboard"
-  | "recepcao"
-  | "laboratorio"
-  | "enfermagem"
-  | "medicina"
-  | "farmacia"
-  | "medicina-ocupacional"
-  | "contabilidade"
-  | "recursos-humanos"
+  | "reception"
+  | "laboratory"
+  | "nursing"
+  | "medicine"
+  | "pharmacy"
+  | "occupational-medicine"
+  | "accounting"
+  | "resources-human-resources"
 
 export type WorkspaceDef = {
   key: WorkspaceKey
@@ -37,63 +52,63 @@ export const WORKSPACES: WorkspaceDef[] = [
     key: "dashboard",
     label: "Dashboard",
     href: "/",
-    description: "Visão geral do dia e indicadores operacionais.",
+    description: "Overview of the day and operational metrics.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },
   {
-    key: "recepcao",
-    label: "Recepção",
-    href: "/recepcao",
-    description: "Entrada de pacientes, requisições e fluxo financeiro (faturas/recibos).",
+    key: "reception",
+    label: "Reception",
+    href: "/reception",
+    description: "Patient intake, requests, and financial workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO],
   },
   {
-    key: "laboratorio",
-    label: "Laboratório",
-    href: "/laboratorio",
-    description: "Lançamento/validação de resultados e emissão de PDF.",
+    key: "laboratory",
+    label: "Laboratory",
+    href: "/laboratory",
+    description: "Result entry, validation, and PDF generation.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
   {
-    key: "enfermagem",
-    label: "Enfermagem",
-    href: "/enfermagem",
-    description: "Execução de colheitas, procedimentos e apoio operacional.",
+    key: "nursing",
+    label: "Nursing",
+    href: "/nursing",
+    description: "Collections, procedures, and operational support.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
   },
   {
-    key: "medicina",
-    label: "Medicina",
-    href: "/medicina",
-    description: "Acompanhamento clínico e requisições de exames/procedimentos.",
+    key: "medicine",
+    label: "Medicine",
+    href: "/medicine",
+    description: "Clinical follow-up and exam/procedure requests.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA],
   },
   {
-    key: "farmacia",
-    label: "Farmácia",
+    key: "pharmacy",
+    label: "Pharmacy",
     href: "/farmacia",
-    description: "Almoxarifado, lotes e movimentos de estoque.",
+    description: "Stock, lots, and warehouse movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
   },
   {
-    key: "medicina-ocupacional",
-    label: "Medicina Ocupacional",
-    href: "/medicina-ocupacional",
-    description: "Registo, requisições e jornada ocupacional.",
+    key: "occupational-medicine",
+    label: "Occupational Medicine",
+    href: "/occupational-medicine",
+    description: "Occupational registration and request workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
   },
   {
-    key: "contabilidade",
-    label: "Contabilidade",
+    key: "accounting",
+    label: "Accounting",
     href: "/contabilidade",
-    description: "Contas, lançamentos e auditoria (somente leitura para recepção).",
+    description: "Accounts, entries, and audit workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },
   {
-    key: "recursos-humanos",
-    label: "Recursos Humanos",
-    href: "/recursos/recursos_humanos",
-    description: "Gestão de funcionários, cargos e escalas de trabalho.",
+    key: "resources-human-resources",
+    label: "Human Resources",
+    href: "/resources/human-resources",
+    description: "Employee management, roles, and schedules.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS],
   },
 ]
@@ -107,7 +122,25 @@ function normalizeGroupName(value: string): string {
 }
 
 export function userGroups(user: SessionUser | null): string[] {
-  return user?.groups ?? []
+  const base = user?.groups ?? []
+  if (user?.is_superuser) {
+    // Superuser ganha todos os grupos por padrão.
+    return Array.from(new Set([...base, ...ALL_GROUP_VALUES]))
+  }
+  if (user?.is_staff && !base.includes(GROUPS.ADMIN)) {
+    return [...base, GROUPS.ADMIN]
+  }
+  return base
+}
+
+function expandRequired(required: string[]): string[] {
+  const expanded: string[] = []
+  required.forEach((g) => {
+    expanded.push(g)
+    const syn = GROUP_SYNONYMS[g]
+    if (syn) expanded.push(...syn)
+  })
+  return expanded
 }
 
 export function userHasAnyGroup(
@@ -115,11 +148,22 @@ export function userHasAnyGroup(
   requiredGroups: string[]
 ): boolean {
   if (!requiredGroups?.length) return true
+  if (
+    requiredGroups.includes(GROUPS.ADMIN) &&
+    (user?.is_superuser || user?.is_staff)
+  ) {
+    return true
+  }
+
+  const requiredExpanded = expandRequired(requiredGroups)
   const have = new Set(userGroups(user).map(normalizeGroupName))
-  return requiredGroups.some((g) => have.has(normalizeGroupName(g)))
+  return requiredExpanded.some((g) => have.has(normalizeGroupName(g)))
 }
 
 export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[] {
+  if (user?.is_superuser || user?.is_staff) {
+    return WORKSPACES
+  }
   return WORKSPACES.filter((w) =>
     w.anyOfGroups ? userHasAnyGroup(user, w.anyOfGroups) : true
   )

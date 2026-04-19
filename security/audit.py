@@ -15,3 +15,4 @@ def register_action(user, action):
 
 
 registrar_acao = register_action
+"""Utilitários para registrar eventos de segurança e auditoria."""

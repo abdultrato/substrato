@@ -1,3 +1,5 @@
+"""Helpers de contexto request/tenant usados em middlewares e serviços."""
+
 from .tenant import (
     clear_tenant,
     get_tenant,

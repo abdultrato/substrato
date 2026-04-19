@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
@@ -53,7 +54,7 @@ export default function ContabilidadeMovimentosPage() {
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
-        setErro(e?.message || "Falha ao carregar movimentos.")
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar movimentos."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -112,7 +113,7 @@ export default function ContabilidadeMovimentosPage() {
               </Link>
               {podeVerAdmin ? (
                 <Link
-                  href="/admin/contabilidade/legacymovement/"
+                  href="/admin/accounting/legacymovement/"
                   className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                 >
                   Admin
@@ -163,4 +164,7 @@ export default function ContabilidadeMovimentosPage() {
     </AppLayout>
   )
 }
+
+
+
 

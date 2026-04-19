@@ -8,6 +8,8 @@ export type SessionUser = {
   telefone?: string
   foto_url?: string | null
   groups?: string[]
+  is_superuser?: boolean
+  is_staff?: boolean
 }
 
 import { clearTokens } from "./tokens"

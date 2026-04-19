@@ -1,3 +1,5 @@
+"""Eventos de domínio para contabilidade (ledger, conciliação, conta)."""
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal

@@ -11,7 +11,7 @@ class WorkSchedule(NoNameCoreModel):
     Horário de trabalho semanal por funcionário (MVP).
     """
 
-    prefix = "HRT"
+    prefix = "HRT"  # Prefixo custom_id
 
     class DiaSemana(models.IntegerChoices):
         SEGUNDA = 0, "Segunda"
@@ -22,30 +22,29 @@ class WorkSchedule(NoNameCoreModel):
         SABADO = 5, "Sábado"
         DOMINGO = 6, "Domingo"
 
-    employee = models.ForeignKey(
-
+    employee = models.ForeignKey(  # Funcionário dono do horário
         "recursos_humanos.Employee",
-
         db_column="employee_id",
+        verbose_name="Funcionário",
         on_delete=models.CASCADE,
         related_name="horarios",
         db_index=True,
     )
 
-    weekday = models.IntegerField(
-
+    weekday = models.IntegerField(  # Dia da semana (0-6)
         db_column="weekday",
-
-        choices=DiaSemana.choices, db_index=True)
-    start_time = models.TimeField(
-        db_column="start_time",
-        )
-    end_time = models.TimeField(
-        db_column="end_time",
-        )
-    active = models.BooleanField(
+        verbose_name="Dia da Semana",
+        choices=DiaSemana.choices,
+        db_index=True,
+    )
+    start_time = models.TimeField(db_column="start_time", verbose_name="Hora de Início")  # Início do turno
+    end_time = models.TimeField(db_column="end_time", verbose_name="Hora de Fim")  # Fim do turno
+    active = models.BooleanField(  # Flag para desativar período
         db_column="active",
-        default=True, db_index=True)
+        verbose_name="Ativo",
+        default=True,
+        db_index=True,
+    )
 
     class Meta:
         db_table = "recursos_humanos_horariotrabalho"

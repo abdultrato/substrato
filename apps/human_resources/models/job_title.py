@@ -10,21 +10,25 @@ class JobTitle(CoreModel):
     Cargo/função do funcionário (MVP).
     """
 
-    prefix = "CRG"
+    prefix = "CRG"  # Prefixo para custom_id
 
-    description = models.TextField(
+    description = models.TextField(  # Descrição interna do cargo
         db_column="description",
         verbose_name="Descrição",
-        blank=True, default="")
+        blank=True,
+        default="",
+    )
 
-    # Usado para filtrar médicos no agendamento de consultations.
+    # Usado para filtrar médicos no agendamento de consultas.
     is_doctor = models.BooleanField(
         db_column="is_doctor",
         verbose_name="É médico",
-        default=False, db_index=True)
+        default=False,
+        db_index=True,
+    )
 
     class Meta:
-        db_table = "recursos_humanos_cargo"
+        db_table = "recursos_humanos_cargo"  # Nome de tabela legada
         verbose_name = "Cargo"
         verbose_name_plural = "Cargos"
-        ordering = ["name"]
+        ordering = ["name"]  # Ordenação padrão

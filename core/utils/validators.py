@@ -1,3 +1,5 @@
+"""Validações utilitárias independentes de Django."""
+
 def require_non_empty(value, field_name="valor"):
     if value is None or str(value).strip() == "":
         raise ValueError(f"{field_name} é obrigatório.")

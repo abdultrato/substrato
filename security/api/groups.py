@@ -1,3 +1,5 @@
+"""Lista grupos disponíveis para compor permissões no frontend."""
+
 from django.contrib.auth.models import Group
 from rest_framework.response import Response
 from rest_framework.views import APIView

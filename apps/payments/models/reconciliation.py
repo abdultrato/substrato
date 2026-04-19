@@ -3,6 +3,7 @@ from django.utils import timezone
 
 
 class Reconciliation(models.Model):
+    """Conciliação de uma transação com confirmação e timestamp."""
     transaction = models.OneToOneField(
         "pagamentos.Transaction",
         db_column="transaction_id",

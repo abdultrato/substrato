@@ -1,3 +1,5 @@
+"""Regras de negócio para pacientes (idade, IMC, gravidez)."""
+
 from datetime import date
 from decimal import Decimal
 

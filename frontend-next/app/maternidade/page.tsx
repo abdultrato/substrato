@@ -1,5 +1,6 @@
 "use client"
 
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Baby, ClipboardList, PlusCircle } from "lucide-react"
@@ -27,12 +28,12 @@ export default function MaternidadePage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const res = await apiFetch<any>("/maternidade/gestacao/")
+                const res = await apiFetch<any>("/maternity/gestacao/")
                 if (!mounted) return
                 setGestacoes(extractTotalCount(res))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(e?.message || "Falha ao carregar maternidade.")
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar maternidade."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -52,7 +53,7 @@ export default function MaternidadePage() {
                     actions={
                         podeVerAdmin ? (
                             <Link
-                                href="/admin/maternidade/gestacao/"
+                                href="/admin/maternity/pregnancy/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                             >
                                 Abrir no admin
@@ -84,13 +85,13 @@ export default function MaternidadePage() {
                     <ActionTile
                         title="Nova gestação"
                         description="Criar um registo de gestação para um paciente."
-                        href="/recursos/maternidade/gestacao/novo"
+                        href="/recursos/maternity/gestacao/novo"
                         icon={PlusCircle}
                     />
                     <ActionTile
                         title="CRUD (API)"
                         description="Acesso direto ao CRUD genérico deste módulo."
-                        href="/recursos/maternidade/gestacao"
+                        href="/recursos/maternity/gestacao"
                         icon={ClipboardList}
                     />
                 </div>
@@ -108,4 +109,7 @@ export default function MaternidadePage() {
         </AppLayout>
     )
 }
+
+
+
 

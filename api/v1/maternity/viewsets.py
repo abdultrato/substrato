@@ -6,7 +6,6 @@ from .viewsets_impl import (
 )
 
 __all__ = [
-    "VIEWSET_MAP",
-    "PregnancyViewSet",
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "PregnancyViewSet",
 ]

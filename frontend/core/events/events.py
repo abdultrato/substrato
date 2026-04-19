@@ -1,3 +1,5 @@
+"""Nomes de eventos do domínio expostos para compatibilidade do frontend."""
+
 INSURANCE_UPDATED = "INSURANCE_UPDATED"
 LAB_RESULT_READY = "LAB_RESULT_READY"
 PAYMENT_RECEIVED = "PAYMENT_RECEIVED"

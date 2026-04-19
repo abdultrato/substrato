@@ -1,3 +1,5 @@
+"""Gateway de pagamento Stripe (exemplo)."""
+
 from django.conf import settings
 import stripe
 

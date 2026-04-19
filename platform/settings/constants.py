@@ -1,3 +1,5 @@
+"""Constantes globais compartilhadas entre diferentes arquivos de settings."""
+
 APP_NAME = "substrato"
 API_VERSION = "v1"
 
