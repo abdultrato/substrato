@@ -13,6 +13,8 @@ class NursingVitalSign(TenantPropagationMixin, CoreModel):
     tenant_source = "record"
     prefix = "SVI"
 
+    patient = models.ForeignKey("clinical.Patient", verbose_name="Paciente", on_delete=models.CASCADE)
+
     record = models.ForeignKey(
         "enfermagem.NursingRecord",
         verbose_name="Registro",

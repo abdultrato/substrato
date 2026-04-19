@@ -624,6 +624,7 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
 class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
+        "patient",
         "name",
         "record",
         "temperature_c",
@@ -655,6 +656,7 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "custom_id",
+                    "patient",
                     "name",
                     "record",
                     "temperature_c",
