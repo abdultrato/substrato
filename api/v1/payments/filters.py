@@ -19,6 +19,7 @@ class PaymentFilter(SafeFilterSet):
         "numero_autorizacao": "authorization_number",
         "plano_cobertura": "coverage_plan",
         "seguradora": "insurer",
+        "troco": "change_amount",
         "valor": "value",
     }
 
@@ -39,6 +40,7 @@ class PaymentFilter(SafeFilterSet):
             "updated_by",
             "invoice",
             "value",
+            "change_amount",
             "method",
             "status",
             "external_reference",
@@ -128,4 +130,3 @@ FILTER_MAP = {
     "reconciliacao": ReconciliationFilter,
     "transaction": TransactionFilter,
 }
-

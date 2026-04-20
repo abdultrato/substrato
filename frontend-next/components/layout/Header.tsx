@@ -21,14 +21,7 @@ export default function Header({ user, onMenuClick }: Props) {
     const composed =
         `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || ""
     const name = (user?.full_name || composed || user?.username || "Utilizador").trim()
-    const fotoUrl = user?.foto_url || null
-    const logoStyle = {
-        backgroundImage: "url(/icon.png)",
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-    }
-
+    const fotoUrl = user?.foto_url || user?.photo_url || null
     function toggle() {
         setOpen((v) => !v)
     }
@@ -59,10 +52,17 @@ export default function Header({ user, onMenuClick }: Props) {
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <div
-                            className="h-8 w-8 shrink-0 rounded-lg bg-muted"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm"
                             aria-hidden
-                            style={logoStyle}
-                        />
+                            style={{ backgroundColor: "#fff" }}
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/static/img/logo.png"
+                                alt="Logo do Substrato"
+                                className="h-full w-full object-contain p-1"
+                            />
+                        </div>
                         <div className="font-display text-sm font-semibold tracking-wide text-white">
                             Substrato
                         </div>

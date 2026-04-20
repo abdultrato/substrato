@@ -294,12 +294,26 @@ body.dark-mode .content-wrapper {
 }
 
 .admin-logo-tile {
-  @apply h-10 w-10 shrink-0 rounded-xl bg-slate-900;
-  background-image: url('/static/img/logo.png');
-  background-size: 75%;
-  background-repeat: no-repeat;
-  background-position: center;
+  @apply flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.admin-logo-image {
+  @apply h-full w-full object-contain;
+}
+
+.brand-link .brand-image,
+.brand-link .brand-image-xs,
+.admin-logo-tile,
+.admin-login-visual {
+  background-color: #fff !important;
+}
+
+.brand-link .brand-image,
+.brand-link .brand-image-xs,
+.admin-logo-image {
+  object-fit: contain;
+  padding: 0.2rem;
 }
 
 .admin-title-block {

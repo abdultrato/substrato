@@ -217,7 +217,8 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 deleted=False,
                 patient_id__in=patient_ids,
             )
-            .select_related("patient", "professional")
+            .select_related("patient")
+            .prefetch_related("professional")
             .order_by("-performed_date", "-created_at")
         )
         if tenant is not None:
@@ -325,5 +326,4 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raise NotFound("Paciente não encontrado para este número de documento.")
 
         return Response(self._montar_historia_clinica(request, patient))
-
 

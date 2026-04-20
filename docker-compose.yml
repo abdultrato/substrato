@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "${DB_HOST_PORT:-5433}:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U substrato_user -d substrato" ]
       interval: 10s

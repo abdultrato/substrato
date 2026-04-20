@@ -35,6 +35,7 @@ PAYMENT_LEGACY_ALIASES = {
     "pago_em": "paid_at",
     "plano_cobertura": "coverage_plan",
     "seguradora": "insurer",
+    "troco": "change_amount",
     "valor": "value",
 }
 
@@ -94,18 +95,23 @@ class PaymentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         if desired_status == instance.status:
             return instance
 
-        if desired_status == Payment.Status.CONFIRMED:
-            instance.confirm()
-            return instance
-        if desired_status == Payment.Status.REFUNDED:
-            instance.refund()
-            return instance
-        if desired_status == Payment.Status.CANCELED:
-            instance.cancel()
-            return instance
-        if desired_status == Payment.Status.FAILED:
-            instance.fail()
-            return instance
+        try:
+            if desired_status == Payment.Status.CONFIRMED:
+                instance.confirm()
+                return instance
+            if desired_status == Payment.Status.REFUNDED:
+                instance.refund()
+                return instance
+            if desired_status == Payment.Status.CANCELED:
+                instance.cancel()
+                return instance
+            if desired_status == Payment.Status.FAILED:
+                instance.fail()
+                return instance
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise serializers.ValidationError(exc.message_dict) from exc
+            raise serializers.ValidationError(exc.messages) from exc
 
         # Voltar para pendente via API não é suportado (evita inconsistências).
         raise serializers.ValidationError({"status": "Transição de status não suportada."})

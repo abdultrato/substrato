@@ -5,12 +5,26 @@
 {% get_jazzmin_ui_tweaks as jazzmin_ui %}
 
 {% block content %}
+<style>
+  .login-logo img {
+    background-color: #fff;
+    border-radius: 1rem;
+    padding: 0.4rem;
+  }
+</style>
 <div class="admin-login-wrap">
-  <div class="admin-login-visual" aria-hidden="true"></div>
+  <div class="admin-login-visual" aria-hidden="true" style="background-color: #fff;"></div>
 
   <div class="admin-login-form">
     <div class="admin-login-heading">
-      <div class="admin-logo-tile" aria-hidden="true"></div>
+      <div class="admin-logo-tile" style="background-color: #fff;">
+        <img
+          src="{% static jazzmin_settings.site_logo %}"
+          alt="{{ jazzmin_settings.site_header }}"
+          class="admin-logo-image"
+          style="width: 100%; height: 100%; object-fit: contain;"
+        />
+      </div>
       <div class="admin-title-block">
         <div class="admin-title">{{ jazzmin_settings.site_header }}</div>
         <p class="admin-subtitle">Infrastrutura de unificada de gestao em saude</p>

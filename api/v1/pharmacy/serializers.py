@@ -11,6 +11,9 @@ class SaleItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = SaleItem
         fields = "__all__"
+        extra_kwargs = {
+            "unit_price": {"read_only": True},
+        }
 
 
 class LotSerializer(serializers.ModelSerializer):
@@ -44,4 +47,3 @@ SERIALIZER_MAP = {
     "product": ProductSerializer,
     "sale": SaleSerializer,
 }
-

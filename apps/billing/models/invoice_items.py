@@ -221,6 +221,34 @@ class InvoiceItem(NoNameCoreModel):
     def total_com_iva(self) -> Decimal:
         return (self.total_sem_iva or Decimal("0.00")) + (self.vat_amount or Decimal("0.00"))
 
+    @property
+    def billed_sector(self) -> str:
+        """Retorna o setor funcional do item faturado para auditoria/listagem."""
+        if self.exam_id:
+            return getattr(self.exam, "get_sector_display", lambda: None)() or str(getattr(self.exam, "sector", ""))
+
+        if self.medical_exam_id:
+            return getattr(self.medical_exam, "get_sector_display", lambda: None)() or str(
+                getattr(self.medical_exam, "sector", "")
+            )
+
+        if self.item_type == self.TipoItem.ITEM_VENDA:
+            return "Farmácia"
+
+        if self.item_type in {self.TipoItem.PROCEDIMENTO_ITEM, self.TipoItem.PROCEDIMENTO_MATERIAL}:
+            return "Enfermagem"
+
+        if self.item_type == self.TipoItem.CONSULTATION:
+            specialty = getattr(getattr(self, "consultation", None), "specialty", None)
+            if specialty is not None and getattr(specialty, "name", ""):
+                return f"Consulta ({specialty.name})"
+            return "Consulta"
+
+        if self.item_type == self.TipoItem.AJUSTE:
+            return "Ajuste manual"
+
+        return self.get_item_type_display() or "-"
+
     def _schedule_recalculation(self):
         try:
             from tasks.billing.recalculation import recalculate_invoice_task
@@ -446,31 +474,8 @@ class InvoiceItem(NoNameCoreModel):
                 if campo != campo_esperado and informado:
                     raise ValidationError({campo: "Remova esta referência, ela não corresponde ao type."})
 
-        # Restrições por origem da fatura: mistura só é permitida em invoices MIXED.
-        origem_permitida = {
-            self.invoice.Origin.CLINICAL: {self.TipoItem.EXAME, self.TipoItem.EXAME_MEDICO},
-            self.invoice.Origin.PHARMACY: {self.TipoItem.ITEM_VENDA},
-            self.invoice.Origin.NURSING: {self.TipoItem.PROCEDIMENTO_ITEM, self.TipoItem.PROCEDIMENTO_MATERIAL},
-            self.invoice.Origin.CONSULTATION: {self.TipoItem.CONSULTATION},
-            self.invoice.Origin.SURGERY: {
-                self.TipoItem.PROCEDIMENTO_ITEM,
-                self.TipoItem.PROCEDIMENTO_MATERIAL,
-                self.TipoItem.EXAME_MEDICO,
-            },
-            self.invoice.Origin.MIXED: {
-                self.TipoItem.EXAME,
-                self.TipoItem.EXAME_MEDICO,
-                self.TipoItem.ITEM_VENDA,
-                self.TipoItem.PROCEDIMENTO_ITEM,
-                self.TipoItem.PROCEDIMENTO_MATERIAL,
-                self.TipoItem.CONSULTATION,
-                self.TipoItem.AJUSTE,
-            },
-        }
-
-        tipos_permitidos = origem_permitida.get(self.invoice.origin, origem_permitida[self.invoice.Origin.MIXED])
-        if self.item_type not in tipos_permitidos:
-            raise ValidationError({"item_type": "Tipo de item incompatível com a origem da fatura."})
+        # Regra de negócio: a origem da fatura é apenas classificatória;
+        # não bloqueamos criação/edição de itens por tipo.
 
         if self.tenant_id and self.invoice_id and self.tenant_id != self.invoice.tenant_id:
             raise ValidationError("Item e invoice devem pertencer ao mesmo tenant.")

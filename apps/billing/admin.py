@@ -1,7 +1,7 @@
 """Configuração do Django Admin para faturamento."""
 
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 
 from .models.invoice import Invoice
 from .models.invoice_items import InvoiceItem
@@ -103,6 +103,25 @@ class BaseTypedInvoiceItemInline(admin.TabularInline):
             def __init__(self, *args, **kw):
                 super().__init__(*args, **kw)
                 self.instance.item_type = fixed_type
+
+            def add_error(self, field, error):
+                # In inlines tipados, `item_type` não está entre os campos visíveis.
+                # Se o model levantar erro nesse campo, convertemos para erro geral
+                # para evitar ValueError do Django Admin.
+                if field is None and isinstance(error, ValidationError) and hasattr(error, "error_dict"):
+                    normalized_error = {}
+                    for key, value in error.error_dict.items():
+                        target_key = key
+                        if key == "item_type" and key not in self.fields:
+                            target_key = NON_FIELD_ERRORS
+                        elif key != NON_FIELD_ERRORS and key not in self.fields:
+                            target_key = NON_FIELD_ERRORS
+                        normalized_error.setdefault(target_key, [])
+                        normalized_error[target_key].extend(value)
+                    error = ValidationError(normalized_error)
+                if field == "item_type" and field not in self.fields:
+                    field = None
+                return super().add_error(field, error)
 
         formset.form = FixedTypeForm
         return formset
@@ -299,7 +318,14 @@ class InvoiceAdmin(CoreAdmin):
             {
                 "fields": (
                     "custom_id",
+                    "origin",
                     "patient",
+                    "request",
+                    "sale",
+                    "procedure",
+                    "procedures",
+                    "consultation",
+                    "surgery",
                     "status",
                 )
             },

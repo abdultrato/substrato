@@ -182,11 +182,6 @@ class CareFlowCreateSerializer(LegacyAliasSerializerMixin, serializers.Serialize
                 "Informe `patient_id` para usar um patient existente ou envie `patient` para criar um novo."
             )
 
-        if billing and not request:
-            raise serializers.ValidationError(
-                {"billing": "Billing na abertura exige criar requisição no mesmo fluxo."}
-            )
-
         if payment and not request:
             raise serializers.ValidationError(
                 {"payment": "Pagamento na abertura exige requisição e invoice no mesmo fluxo."}
@@ -198,4 +193,3 @@ class CareFlowCreateSerializer(LegacyAliasSerializerMixin, serializers.Serialize
 SERIALIZER_MAP = {
     "checkin": ReceptionCheckinSerializer,
 }
-

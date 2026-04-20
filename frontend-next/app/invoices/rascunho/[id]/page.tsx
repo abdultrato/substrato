@@ -47,7 +47,9 @@ const PAGAMENTO_METODOS = [
   { value: "SEG", label: "Seguro de saúde" },
   { value: "CHQ", label: "Cheque" },
   { value: "OUT", label: "Outro" },
-]
+] as const
+
+type MetodoPagamento = (typeof PAGAMENTO_METODOS)[number]["value"]
 
 function listFrom(res: any): any[] {
   if (res && (res as any).results) return (res as any).results
@@ -59,6 +61,36 @@ function toNumberId(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined
   const parsed = Number(value)
   return Number.isNaN(parsed) ? undefined : parsed
+}
+
+function parseMoneyToCents(value: unknown): number | null {
+  if (value === undefined || value === null) return null
+  if (typeof value === "number" && Number.isFinite(value)) return Math.round(value * 100)
+
+  const raw = String(value).trim()
+  if (!raw) return null
+
+  let normalized = raw.replace(/\s+/g, "").replace(/[^\d,.-]/g, "")
+  if (normalized.includes(",") && normalized.includes(".")) {
+    normalized = normalized.replace(/\./g, "").replace(",", ".")
+  } else if (normalized.includes(",")) {
+    normalized = normalized.replace(",", ".")
+  }
+
+  const partes = normalized.split(".")
+  if (partes.length > 2) {
+    normalized = `${partes.slice(0, -1).join("")}.${partes[partes.length - 1]}`
+  }
+
+  if (!normalized || normalized === "." || normalized === "-" || normalized === "-.") return null
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed)) return null
+  return Math.round(parsed * 100)
+}
+
+function centsToMoney(cents: number): string {
+  return (cents / 100).toFixed(2)
 }
 
 export default function FaturaRascunhoPage() {
@@ -97,8 +129,17 @@ export default function FaturaRascunhoPage() {
   const [searchProcedimentoCirurgico, setSearchProcedimentoCirurgico] = useState<Row[]>([])
   const [searchProduto, setSearchProduto] = useState<Row[]>([])
 
-  const [pagamentoMetodo, setPagamentoMetodo] = useState("DIN")
-  const [pagamentoValor, setPagamentoValor] = useState("")
+  const [pagamentoMetodosSelecionados, setPagamentoMetodosSelecionados] = useState<MetodoPagamento[]>([])
+  const [pagamentoValoresPorMetodo, setPagamentoValoresPorMetodo] = useState<Record<MetodoPagamento, string>>({
+    DIN: "",
+    CAR: "",
+    TRF: "",
+    MOB: "",
+    POS: "",
+    SEG: "",
+    CHQ: "",
+    OUT: "",
+  })
   const [recibo, setRecibo] = useState<Row | null>(null)
   const [seguradoras, setSeguradoras] = useState<Row[]>([])
   const [planos, setPlanos] = useState<Row[]>([])
@@ -111,6 +152,15 @@ export default function FaturaRascunhoPage() {
     const codigo = fatura.id_custom || fatura.id
     return `Pagamento ${codigo}`
   }, [fatura])
+  const metodosSelecionados = useMemo(
+    () => PAGAMENTO_METODOS.filter((op) => pagamentoMetodosSelecionados.includes(op.value)),
+    [pagamentoMetodosSelecionados]
+  )
+  const metodosLabelByValue = useMemo(() => {
+    const map = new Map<MetodoPagamento, string>()
+    PAGAMENTO_METODOS.forEach((m) => map.set(m.value, m.label))
+    return map
+  }, [])
 
   const faturaRascunho = fatura?.estado === "RASC"
 
@@ -175,6 +225,27 @@ export default function FaturaRascunhoPage() {
       return seguroId === seguradoraId
     })
   }, [planos, pagamentoSeguradora])
+  const totalFaturaCents = useMemo(() => parseMoneyToCents(fatura?.total) || 0, [fatura?.total])
+  const totalInformadoCents = useMemo(
+    () =>
+      pagamentoMetodosSelecionados.reduce((acc, metodo) => {
+        const cents = parseMoneyToCents(pagamentoValoresPorMetodo[metodo])
+        return acc + (cents || 0)
+      }, 0),
+    [pagamentoMetodosSelecionados, pagamentoValoresPorMetodo]
+  )
+  const trocoPrevistoCents = Math.max(totalInformadoCents - totalFaturaCents, 0)
+  const faltaPagamentoCents = Math.max(totalFaturaCents - totalInformadoCents, 0)
+  const totalLiquidoPagamentoCents = totalInformadoCents - trocoPrevistoCents
+  const faltamDadosSeguro = pagamentoMetodosSelecionados.includes("SEG")
+    && (!pagamentoSeguradora || !numeroAutorizacao.trim())
+  const podeConfirmarPagamentoComposto = pagamentoMetodosSelecionados.length > 0
+    && pagamentoMetodosSelecionados.every((metodo) => {
+      const cents = parseMoneyToCents(pagamentoValoresPorMetodo[metodo])
+      return typeof cents === "number" && cents > 0
+    })
+    && totalLiquidoPagamentoCents === totalFaturaCents
+    && !faltamDadosSeguro
 
   const carregarItens = useCallback(async (fatId: number) => {
     try {
@@ -291,13 +362,13 @@ export default function FaturaRascunhoPage() {
   }, [carregarSeguros, podePagar])
 
   useEffect(() => {
-    if (pagamentoMetodo !== "SEG") {
+    if (!pagamentoMetodosSelecionados.includes("SEG")) {
       setPagamentoSeguradora("")
       setPagamentoPlano("")
       setNumeroAutorizacao("")
       setDadosSeguro("")
     }
-  }, [pagamentoMetodo])
+  }, [pagamentoMetodosSelecionados])
 
   const carregarFatura = useCallback(async () => {
     if (!faturaId || Number.isNaN(faturaId)) return
@@ -323,15 +394,19 @@ export default function FaturaRascunhoPage() {
         await carregarCatalogos()
       }
 
-      if (fat?.total && !pagamentoValor) {
-        setPagamentoValor(String(fat.total))
-      }
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar fatura."))
     } finally {
       setLoading(false)
     }
-  }, [carregarCatalogos, carregarItens, carregarRecibo, carregarRecursosPaciente, faturaId, pagamentoValor, podeEditar])
+  }, [
+    carregarCatalogos,
+    carregarItens,
+    carregarRecibo,
+    carregarRecursosPaciente,
+    faturaId,
+    podeEditar,
+  ])
 
   useEffect(() => {
     carregarFatura()
@@ -413,17 +488,82 @@ export default function FaturaRascunhoPage() {
     }
   }, [carregarFatura, faturaId, podeEditar])
 
+  const alternarMetodoPagamento = useCallback((metodo: MetodoPagamento, checked: boolean) => {
+    setPagamentoMetodosSelecionados((prev) => {
+      if (checked) {
+        if (prev.includes(metodo)) return prev
+        return [...prev, metodo]
+      }
+      return prev.filter((m) => m !== metodo)
+    })
+
+    if (!checked) {
+      setPagamentoValoresPorMetodo((prev) => ({ ...prev, [metodo]: "" }))
+    }
+  }, [])
+
+  const definirValorMetodoPagamento = useCallback((metodo: MetodoPagamento, valor: string) => {
+    setPagamentoValoresPorMetodo((prev) => ({ ...prev, [metodo]: valor }))
+  }, [])
+
   const pagarFatura = useCallback(async () => {
     if (!faturaId) return
     if (!podePagar) {
       setErro("Sem permissão para registrar pagamento.")
       return
     }
-    if (!pagamentoValor) {
-      setErro("Informe o valor do pagamento.")
+    if (!pagamentoMetodosSelecionados.length) {
+      setErro("Selecione pelo menos um método de pagamento.")
       return
     }
-    if (pagamentoMetodo === "SEG") {
+
+    const lancamentos = pagamentoMetodosSelecionados.map((metodo) => {
+      const cents = parseMoneyToCents(pagamentoValoresPorMetodo[metodo])
+      return { metodo, cents: typeof cents === "number" ? cents : 0 }
+    })
+
+    const metodoInvalido = lancamentos.find((entry) => entry.cents <= 0)
+    if (metodoInvalido) {
+      const label = metodosLabelByValue.get(metodoInvalido.metodo) || metodoInvalido.metodo
+      setErro(`Informe um valor válido para ${label}.`)
+      return
+    }
+
+    const somaCents = lancamentos.reduce((acc, entry) => acc + entry.cents, 0)
+    if (somaCents < totalFaturaCents) {
+      const faltante = totalFaturaCents - somaCents
+      setErro(`Total informado insuficiente. Ainda faltam ${centsToMoney(faltante)}.`)
+      return
+    }
+    const trocoTotalCents = somaCents - totalFaturaCents
+    const totalLiquidoCents = somaCents - trocoTotalCents
+    const trocoPorMetodo: Partial<Record<MetodoPagamento, number>> = {}
+    let trocoRestanteCents = trocoTotalCents
+
+    const lancamentosComPrioridadeTroco = [...lancamentos].sort((a, b) => {
+      const prioridadeA = a.metodo === "DIN" ? 0 : 1
+      const prioridadeB = b.metodo === "DIN" ? 0 : 1
+      return prioridadeA - prioridadeB
+    })
+
+    for (const entry of lancamentosComPrioridadeTroco) {
+      if (trocoRestanteCents <= 0) break
+      const trocoMetodoCents = Math.min(entry.cents, trocoRestanteCents)
+      if (trocoMetodoCents <= 0) continue
+      trocoPorMetodo[entry.metodo] = (trocoPorMetodo[entry.metodo] || 0) + trocoMetodoCents
+      trocoRestanteCents -= trocoMetodoCents
+    }
+
+    if (trocoRestanteCents > 0) {
+      setErro("Não foi possível distribuir o troco entre os métodos informados.")
+      return
+    }
+    if (totalLiquidoCents !== totalFaturaCents) {
+      setErro("O valor líquido do pagamento deve ser exatamente o total da fatura.")
+      return
+    }
+
+    if (pagamentoMetodosSelecionados.includes("SEG")) {
       if (!pagamentoSeguradora) {
         setErro("Selecione a seguradora do seguro de saúde.")
         return
@@ -436,27 +576,35 @@ export default function FaturaRascunhoPage() {
     try {
       setAcaoId(faturaId)
       setErro(null)
-      const payload: Record<string, unknown> = {
-        fatura: faturaId,
-        nome: pagamentoNomePadrao,
-        valor: pagamentoValor,
-        metodo: pagamentoMetodo,
-        status: "CON",
-      }
-      if (pagamentoMetodo === "SEG") {
-        const seguradoraId = toNumberId(pagamentoSeguradora)
-        if (seguradoraId) payload.seguradora = seguradoraId
-        const planoId = toNumberId(pagamentoPlano)
-        if (planoId) payload.plano_cobertura = planoId
-        payload.numero_autorizacao = numeroAutorizacao.trim()
-        if (dadosSeguro.trim()) {
-          payload.dados_seguro = { observacoes: dadosSeguro.trim() }
+
+      for (const entry of lancamentos) {
+        const trocoMetodoCents = trocoPorMetodo[entry.metodo] || 0
+        const payload: Record<string, unknown> = {
+          fatura: faturaId,
+          nome: `${pagamentoNomePadrao} · ${metodosLabelByValue.get(entry.metodo) || entry.metodo}`,
+          valor: centsToMoney(entry.cents),
+          metodo: entry.metodo,
+          status: "CON",
         }
+        if (trocoMetodoCents > 0) {
+          payload.troco = centsToMoney(trocoMetodoCents)
+        }
+        if (entry.metodo === "SEG") {
+          const seguradoraId = toNumberId(pagamentoSeguradora)
+          if (seguradoraId) payload.seguradora = seguradoraId
+          const planoId = toNumberId(pagamentoPlano)
+          if (planoId) payload.plano_cobertura = planoId
+          payload.numero_autorizacao = numeroAutorizacao.trim()
+          if (dadosSeguro.trim()) {
+            payload.dados_seguro = { observacoes: dadosSeguro.trim() }
+          }
+        }
+        await apiFetch("/payments/payment/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
       }
-      await apiFetch("/payments/payment/", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      })
+
       await carregarFatura()
       await carregarRecibo(faturaId)
     } catch (e: any) {
@@ -469,13 +617,15 @@ export default function FaturaRascunhoPage() {
     carregarRecibo,
     dadosSeguro,
     faturaId,
+    metodosLabelByValue,
     numeroAutorizacao,
-    pagamentoMetodo,
+    pagamentoMetodosSelecionados,
     pagamentoNomePadrao,
     pagamentoPlano,
     pagamentoSeguradora,
-    pagamentoValor,
+    pagamentoValoresPorMetodo,
     podePagar,
+    totalFaturaCents,
   ])
 
   const baixarPdfFatura = useCallback(async () => {
@@ -731,34 +881,83 @@ export default function FaturaRascunhoPage() {
             <div className="text-sm text-gray-500">Sem permissão para registrar pagamento.</div>
           ) : (
             <>
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-600">Método</label>
-                  <SelectInput
-                    value={pagamentoMetodo}
-                    onChange={(e) => setPagamentoMetodo(e.target.value)}
-                    options={PAGAMENTO_METODOS}
-                  />
+                  <label className="text-xs font-semibold text-gray-600">Tipos de pagamento</label>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    {PAGAMENTO_METODOS.map((metodo) => (
+                      <label
+                        key={metodo.value}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={pagamentoMetodosSelecionados.includes(metodo.value)}
+                          onChange={(e) => alternarMetodoPagamento(metodo.value, e.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
+                        />
+                        {metodo.label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600">Valor</label>
-                  <TextInput
-                    value={pagamentoValor}
-                    onChange={(e) => setPagamentoValor(e.target.value)}
-                    placeholder="0.00"
-                  />
+
+                <div className="text-xs text-gray-500">
+                  Informe manualmente o valor por método. Se ultrapassar o total da fatura, o excedente será registrado como troco.
                 </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  {metodosSelecionados.map((metodo) => (
+                    <div key={metodo.value}>
+                      <label className="text-xs font-semibold text-gray-600">{metodo.label} · Valor</label>
+                      <TextInput
+                        value={pagamentoValoresPorMetodo[metodo.value]}
+                        onChange={(e) => definirValorMetodoPagamento(metodo.value, e.target.value)}
+                        placeholder="0.00"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm md:grid-cols-4">
+                  <div>
+                    <div className="text-xs text-gray-500">Total da fatura</div>
+                    <div className="font-semibold text-gray-900"><MoneyValue value={fatura.total} /></div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Total informado</div>
+                    <div className="font-semibold text-gray-900"><MoneyValue value={totalInformadoCents / 100} /></div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Troco previsto</div>
+                    <div className={`font-semibold ${trocoPrevistoCents > 0 ? "text-amber-700" : "text-gray-900"}`}>
+                      <MoneyValue value={trocoPrevistoCents / 100} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Valor líquido</div>
+                    <div className={`font-semibold ${faltaPagamentoCents === 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                      <MoneyValue value={totalLiquidoPagamentoCents / 100} />
+                    </div>
+                  </div>
+                </div>
+                {faltaPagamentoCents > 0 ? (
+                  <div className="text-xs text-rose-700">
+                    Faltam <MoneyValue value={faltaPagamentoCents / 100} /> para quitar a fatura.
+                  </div>
+                ) : null}
+
                 <div className="flex items-end">
                   <button
                     className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                     onClick={pagarFatura}
-                    disabled={acaoId === fatura.id}
+                    disabled={acaoId === fatura.id || !podeConfirmarPagamentoComposto}
                   >
                     Confirmar pagamento
                   </button>
                 </div>
               </div>
-              {pagamentoMetodo === "SEG" ? (
+              {pagamentoMetodosSelecionados.includes("SEG") ? (
                 <>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     <div>
@@ -1167,6 +1366,3 @@ export default function FaturaRascunhoPage() {
     </AppLayout>
   )
 }
-
-
-

@@ -1,8 +1,8 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
@@ -63,14 +63,18 @@ class ProcedureCatalogMaterial(TenantPropagationMixin, NoNameCoreModel):
         verbose_name = "Material de Procedimento"
         verbose_name_plural = "Materiais de Procedimentos"
         ordering = ["catalog", "product"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["catalog", "product"],
-                condition=Q(deleted=False),
-                name="unique_material_padrao_por_catalog",
-            )
-        ]
+
+    def clean(self):
+        super().clean()
+
+        if self.catalog_id and self.product_id and self.catalog.tenant_id != self.product.tenant_id:
+            raise ValidationError({"product": "Catálogo e produto devem pertencer ao mesmo tenant."})
+
+    def save(self, *args, **kwargs):
+        if not self.tenant_id and self.catalog_id:
+            self.tenant_id = self.catalog.tenant_id
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product} ({self.catalog})"
-

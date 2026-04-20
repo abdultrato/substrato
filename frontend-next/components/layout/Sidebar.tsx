@@ -257,8 +257,21 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     const menu = (
         <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur supports-[backdrop-filter]:bg-card/80">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/20 bg-white/5 px-3 py-3 backdrop-blur">
-                <div className="font-display text-xs font-semibold tracking-[0.32em] text-white/90">
-                    SUBSTRATO
+                <div className="flex items-center gap-3">
+                    <img
+                        src="/static/img/logo.png"
+                        alt="Logo do Substrato"
+                        className="h-9 w-9 rounded-xl object-contain p-1 shadow-sm"
+                        style={{ backgroundColor: "#fff" }}
+                    />
+                    <div className="min-w-0">
+                        <div className="font-display text-xs font-semibold tracking-[0.32em] text-white/90">
+                            SUBSTRATO
+                        </div>
+                        <div className="text-[11px] text-white/70">
+                            Plataforma clínica integrada
+                        </div>
+                    </div>
                 </div>
                 <button
                     type="button"
@@ -313,7 +326,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
 
                 <div className="mt-2 text-xs text-white/70">
-                    Substrato Platform
+                    Logo principal sincronizada com a identidade do sistema
                 </div>
             </div>
         </div>

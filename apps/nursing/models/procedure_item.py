@@ -12,6 +12,12 @@ class ProcedureItem(NoNameCoreModel):
     """Serviço (ato) realizado dentro de um procedimento de enfermagem."""
     prefix = "PROCIT"
 
+    class ExecutionStatus(models.TextChoices):
+        PENDING = "PEN", "Pendente"
+        EXECUTED = "EXE", "Executado"
+        COMPLETED = "CON", "Concluído"
+        NOT_COMPLETED = "NCO", "Não concluído"
+
     procedure = models.ForeignKey(
 
         "enfermagem.Procedure",
@@ -46,6 +52,33 @@ class ProcedureItem(NoNameCoreModel):
     performed = models.BooleanField(
         db_column="performed",
         default=True, db_index=True)
+    execution_status = models.CharField(
+        db_column="execution_status",
+        max_length=3,
+        choices=ExecutionStatus.choices,
+        default=ExecutionStatus.PENDING,
+        db_index=True,
+    )
+    billed = models.BooleanField(
+        db_column="billed",
+        default=False,
+        db_index=True,
+    )
+    billed_at = models.DateTimeField(
+        db_column="billed_at",
+        null=True,
+        blank=True,
+    )
+    executed_at = models.DateTimeField(
+        db_column="executed_at",
+        null=True,
+        blank=True,
+    )
+    completed_at = models.DateTimeField(
+        db_column="completed_at",
+        null=True,
+        blank=True,
+    )
     observation = models.TextField(
         db_column="observation",
         blank=True, default="")
@@ -59,6 +92,8 @@ class ProcedureItem(NoNameCoreModel):
             models.Index(fields=["tenant", "procedure"]),
             models.Index(fields=["catalog"]),
             models.Index(fields=["description"]),
+            models.Index(fields=["execution_status"]),
+            models.Index(fields=["billed"]),
         ]
 
     def clean(self):
@@ -212,6 +247,11 @@ class ProcedureItem(NoNameCoreModel):
         if not self.tenant_id and self.procedure_id:
             self.tenant_id = self.procedure.tenant_id
 
+        if self.execution_status in {self.ExecutionStatus.EXECUTED, self.ExecutionStatus.COMPLETED}:
+            self.performed = True
+        elif self.execution_status == self.ExecutionStatus.NOT_COMPLETED:
+            self.performed = False
+
         self._apply_catalog_defaults()
         self.full_clean()
 
@@ -222,6 +262,7 @@ class ProcedureItem(NoNameCoreModel):
 
         self._upsert_value()
         self.procedure.recalculate_totals()
+        self.procedure.sync_status_from_items()
 
     @transaction.atomic
     def delete(self, *args, **kwargs):
@@ -240,6 +281,64 @@ class ProcedureItem(NoNameCoreModel):
 
         super().delete(*args, **kwargs)
         procedure.recalculate_totals()
+        procedure.sync_status_from_items()
+
+    @transaction.atomic
+    def mark_billed(self):
+        if self.execution_status == self.ExecutionStatus.NOT_COMPLETED and not self.billed:
+            raise ValidationError(
+                {"billed": "Procedimento não concluído e ainda não faturado não pode mais ser faturado."}
+            )
+
+        if self.billed:
+            return
+
+        from django.utils import timezone
+
+        self.billed = True
+        self.billed_at = timezone.now()
+        self.save(update_fields=["billed", "billed_at", "updated_at"])
+
+    @transaction.atomic
+    def mark_executed(self, professional=None):
+        if self.execution_status != self.ExecutionStatus.PENDING:
+            raise ValidationError(
+                {"execution_status": "Apenas procedimentos pendentes podem ser marcados como executados."}
+            )
+
+        from django.utils import timezone
+
+        self.execution_status = self.ExecutionStatus.EXECUTED
+        self.executed_at = timezone.now()
+        self.save(update_fields=["execution_status", "executed_at", "performed", "updated_at"])
+
+        if professional is not None:
+            self.procedure.professional.add(professional)
+            self.procedure.save(update_fields=["updated_at"])
+
+    @transaction.atomic
+    def mark_completed(self):
+        if self.execution_status != self.ExecutionStatus.EXECUTED:
+            raise ValidationError({"execution_status": "Apenas procedimentos executados podem ser concluídos."})
+
+        from django.utils import timezone
+
+        self.execution_status = self.ExecutionStatus.COMPLETED
+        self.completed_at = timezone.now()
+        self.save(update_fields=["execution_status", "completed_at", "performed", "updated_at"])
+
+    @transaction.atomic
+    def mark_not_completed(self):
+        if self.execution_status != self.ExecutionStatus.EXECUTED:
+            raise ValidationError(
+                {"execution_status": "Apenas procedimentos executados podem ser marcados como não concluídos."}
+            )
+
+        from django.utils import timezone
+
+        self.execution_status = self.ExecutionStatus.NOT_COMPLETED
+        self.completed_at = timezone.now()
+        self.save(update_fields=["execution_status", "completed_at", "performed", "updated_at"])
 
     def __str__(self):
         return f"{self.description} x{self.quantity}"

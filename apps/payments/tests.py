@@ -154,6 +154,51 @@ def test_insurance_payment_requires_insurer_and_authorization():
 
 
 @pytest.mark.django_db
+def test_payment_confirm_requires_change_when_value_exceeds_remaining_amount():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    invoice = _invoice_with_exam(tenant, patient, exam)
+    invoice.status = Invoice.Status.ISSUED
+    invoice.save(update_fields=["status"])
+
+    payment = Payment.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        value=invoice.total + Decimal("5.00"),
+        method=Payment.Method.CASH,
+    )
+
+    with pytest.raises(ValidationError):
+        payment.confirm()
+
+
+@pytest.mark.django_db
+def test_payment_confirm_accepts_overpayment_when_change_is_registered():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    invoice = _invoice_with_exam(tenant, patient, exam)
+    invoice.status = Invoice.Status.ISSUED
+    invoice.save(update_fields=["status"])
+
+    payment = Payment.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        value=invoice.total + Decimal("5.00"),
+        change_amount=Decimal("5.00"),
+        method=Payment.Method.CASH,
+    )
+
+    payment.confirm()
+    invoice.refresh_from_db()
+
+    assert payment.status == Payment.Status.CONFIRMED
+    assert invoice.status == Invoice.Status.PAID
+    assert invoice.confirmed_paid_amount() == invoice.total
+
+
+@pytest.mark.django_db
 def test_transaction_and_reconciliation():
     trans = Transaction.objects.create(
         external_reference="TX123",
@@ -165,4 +210,3 @@ def test_transaction_and_reconciliation():
     rec.refresh_from_db()
     assert rec.confirmed is True
     assert rec.confirmation_date is not None
-

@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+from decimal import Decimal
 
 from core.models.base import CoreModel
 from infrastructure.orm.fields.money_field import MoneyField
@@ -41,6 +42,14 @@ class Payment(CoreModel):
         db_column="value",
 
         verbose_name="Valor",
+    )
+
+    change_amount = MoneyField(
+
+        db_column="change_amount",
+
+        verbose_name="Troco",
+        default=Decimal("0.00"),
     )
 
     method = models.CharField(
@@ -138,12 +147,29 @@ class Payment(CoreModel):
     def __str__(self):
         return f"{self.get_method_display()} - {self.value} ({self.get_status_display()})"
 
+    def net_value(self) -> Decimal:
+        valor = self.value if self.value is not None else Decimal("0.00")
+        troco = self.change_amount if self.change_amount is not None else Decimal("0.00")
+        return (valor - troco).quantize(Decimal("0.01"))
+
     def clean(self):
         super().clean()
-        if self.method != self.Method.HEALTH_INSURANCE:
-            return
 
         erros = {}
+
+        troco = self.change_amount if self.change_amount is not None else Decimal("0.00")
+        valor = self.value if self.value is not None else Decimal("0.00")
+
+        if troco < Decimal("0.00"):
+            erros["change_amount"] = "Troco não pode ser negativo."
+
+        if self.value is not None and troco > valor:
+            erros["change_amount"] = "Troco não pode ser maior que o valor pago."
+
+        if self.method != self.Method.HEALTH_INSURANCE:
+            if erros:
+                raise ValidationError(erros)
+            return
 
         if not self.insurer_id:
             erros["insurer"] = "Informe a insurer para pagamentos via seguro de saúde."
@@ -170,6 +196,30 @@ class Payment(CoreModel):
     def confirm(self):
         if self.status != self.Status.PENDING:
             raise ValidationError("Pagamentos pendentes podem ser confirmados.")
+
+        valor_liquido = self.net_value()
+        if valor_liquido <= Decimal("0.00"):
+            raise ValidationError({"change_amount": "Troco não pode zerar ou negativar o valor líquido."})
+
+        if self.invoice_id:
+            total_fatura = (self.invoice.total or Decimal("0.00")).quantize(Decimal("0.01"))
+            total_confirmado = (self.invoice.confirmed_paid_amount() or Decimal("0.00")).quantize(Decimal("0.01"))
+            restante = (total_fatura - total_confirmado).quantize(Decimal("0.01"))
+
+            if restante <= Decimal("0.00"):
+                raise ValidationError({"invoice": "Fatura já está totalmente quitada."})
+
+            if valor_liquido > restante:
+                troco_atual = self.change_amount if self.change_amount is not None else Decimal("0.00")
+                troco_minimo = (troco_atual + (valor_liquido - restante)).quantize(Decimal("0.01"))
+                raise ValidationError(
+                    {
+                        "change_amount": (
+                            "Troco insuficiente para manter o total líquido igual ao valor da fatura. "
+                            f"Informe no mínimo {troco_minimo:.2f}."
+                        )
+                    }
+                )
 
         self.status = self.Status.CONFIRMED
         if not self.paid_at:
@@ -206,4 +256,3 @@ class Payment(CoreModel):
     def _update_invoice(self, payment=None):
         if self.invoice_id:
             self.invoice.update_payment_status(payment=payment)
-

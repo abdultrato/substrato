@@ -26,6 +26,8 @@ INVOICE_LEGACY_ALIASES = {
     "cirurgia": "surgery",
     "consulta": "consultation",
     "criado_em": "created_at",
+    "criado_por_departamento": "created_by_department",
+    "criado_por_nome": "created_by_name",
     "estado": "status",
     "id_custom": "custom_id",
     "iva_valor": "vat_amount",
@@ -34,6 +36,7 @@ INVOICE_LEGACY_ALIASES = {
     "procedimento": "procedure",
     "procedimentos": "procedures",
     "requisicao": "request",
+    "setores_itens_faturados": "billed_item_sectors",
     "valor_paciente": "patient_amount",
     "valor_seguro": "insurance_amount",
     "venda": "sale",
@@ -55,6 +58,7 @@ INVOICE_ITEM_LEGACY_ALIASES = {
     "procedimento_item": "procedure_item",
     "procedimento_material": "procedure_material",
     "quantidade": "quantity",
+    "setor_item_faturado": "billed_sector",
     "tipo_item": "item_type",
 }
 
@@ -70,6 +74,41 @@ INVOICE_HISTORY_LEGACY_ALIASES = {
 class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = INVOICE_LEGACY_ALIASES
     legacy_output_aliases = INVOICE_LEGACY_ALIASES
+    created_by_name = serializers.SerializerMethodField(method_name="get_created_by_name")
+    created_by_department = serializers.SerializerMethodField(method_name="get_created_by_department")
+    billed_item_sectors = serializers.SerializerMethodField(method_name="get_billed_item_sectors")
+
+    @staticmethod
+    def _user_display(user):
+        if not user:
+            return ""
+
+        full_name = (getattr(user, "get_full_name", lambda: "")() or "").strip()
+        if full_name:
+            return full_name
+
+        return getattr(user, "username", "") or ""
+
+    def get_created_by_name(self, obj):
+        return self._user_display(getattr(obj, "created_by", None))
+
+    def get_created_by_department(self, obj):
+        user = getattr(obj, "created_by", None)
+        profile = getattr(user, "perfil_professional", None) if user else None
+        return (getattr(profile, "department", "") or "").strip()
+
+    def get_billed_item_sectors(self, obj):
+        prefetched = getattr(obj, "_prefetched_objects_cache", {}).get("items")
+        if prefetched is not None:
+            items = [item for item in prefetched if not getattr(item, "deleted", False)]
+        else:
+            items = obj.items.filter(deleted=False)
+
+        sectors = {
+            (getattr(item, "billed_sector", "") or "").strip()
+            for item in items
+        }
+        return sorted([sector for sector in sectors if sector])
 
     class Meta:
         model = Invoice
@@ -161,6 +200,7 @@ class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     total_sem_iva = serializers.SerializerMethodField(method_name="get_total_before_tax")
     vat_amount = serializers.SerializerMethodField(method_name="get_tax_amount")
     total_com_iva = serializers.SerializerMethodField(method_name="get_total_with_tax")
+    billed_sector = serializers.SerializerMethodField(method_name="get_billed_sector")
 
     def get_total_before_tax(self, obj):
         return self._format_money(getattr(obj, "total_sem_iva", None))
@@ -170,6 +210,9 @@ class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
 
     def get_total_with_tax(self, obj):
         return self._format_money(getattr(obj, "total_com_iva", None))
+
+    def get_billed_sector(self, obj):
+        return (getattr(obj, "billed_sector", "") or "").strip()
 
     class Meta:
         model = InvoiceItem

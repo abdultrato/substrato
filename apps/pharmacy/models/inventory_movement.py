@@ -7,8 +7,6 @@ para facilitar manutenção e repasses de conhecimento.
 from django.core.exceptions import ValidationError  # Exceções de validação
 from django.core.validators import MinValueValidator  # Validador numérico mínimo
 from django.db import models  # Ferramentas ORM
-from django.db.models import Case, F, IntegerField, Sum, When  # Construções para agregações
-from django.db.models.functions import Coalesce  # Função para lidar com nulos
 
 from core.models.base import CoreModel  # Modelo base com campos comuns
 
@@ -94,24 +92,7 @@ class InventoryMovement(CoreModel):
 
     def lot_balance(self):
         """Calcula o saldo atual do lote somando todas as movimentações."""
-
-        total = self.lot.movimentos.aggregate(  # Agrega movimentos do lote
-            total=Coalesce(  # Substitui None por zero
-                Sum(  # Soma assinada das quantidades
-                    Case(
-                        When(
-                            type=MovementType.SAIDA,  # Saídas são negativas
-                            then=-F("quantity"),
-                        ),
-                        default=F("quantity"),  # Entradas contam positivo
-                        output_field=IntegerField(),  # Força tipo inteiro
-                    )
-                ),
-                0,
-            )
-        )["total"]
-
-        return self.lot.initial_quantity + total  # Quantidade inicial + movimentos
+        return self.lot.balance()
 
     # =====================================
     # VALIDAÇÃO DE DOMÍNIO
@@ -193,4 +174,3 @@ class InventoryMovement(CoreModel):
     def __str__(self):
         """Representação legível usada no admin e logs."""
         return f"{self.lot} - {self.type} ({self.quantity})"
-

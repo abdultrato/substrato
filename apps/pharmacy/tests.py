@@ -42,6 +42,7 @@ def _lot(product, expiration_date_days=30, quantity=10):
         lot_number="L001",
         expiration_date=timezone.localdate() + timedelta(days=expiration_date_days),
         initial_quantity=quantity,
+        sale_price=product.sale_price,
     )
 
 
@@ -77,9 +78,7 @@ def test_inventory_movement_output_reduces_lot():
     lot = _lot(prod, quantity=5)
 
     sale = Sale.objects.create(tenant=tenant, number="V001", total=Decimal("0"))
-    item = SaleItem.objects.create(
-        tenant=tenant, sale=sale, product=prod, quantity=2, unit_price=Decimal("10.00")
-    )
+    item = SaleItem.objects.create(tenant=tenant, sale=sale, product=prod, quantity=2)
     mov = InventoryMovement.objects.create(
         tenant=tenant,
         lot=lot,
@@ -91,6 +90,50 @@ def test_inventory_movement_output_reduces_lot():
 
     assert mov.pk
     assert mov.type == MovementType.SAIDA
+    assert item.unit_price == prod.sale_price
+    lot.refresh_from_db()
+    # O SaleItem já gerou uma saída automática de 2 no save; este movimento manual
+    # adiciona mais 2 de saída: 5 - 4 = 1.
+    assert lot.balance() == 1
+    assert prod.inventory_total == 1
+
+
+@pytest.mark.django_db
+def test_lot_balance_on_creation_matches_initial_quantity():
+    tenant = _tenant()
+    prod = _product(tenant)
+    lot = _lot(prod, quantity=7)
+
+    assert lot.movimentos.filter(
+        type=MovementType.ENTRADA,
+        origin=MovementOrigin.AJUSTE,
+        quantity=7,
+    ).exists()
+    assert lot.balance() == 7
+
+    lot_qs = Lot.disponiveis(prod)
+    assert lot_qs.count() == 1
+    assert lot_qs.first().saldo == 7
+
+
+@pytest.mark.django_db
+def test_product_inventory_total_uses_effective_lot_balance():
+    tenant = _tenant()
+    prod = _product(tenant)
+    lot = _lot(prod, quantity=5)
+
+    InventoryMovement.objects.create(
+        tenant=tenant,
+        lot=lot,
+        type=MovementType.SAIDA,
+        origin=MovementOrigin.AJUSTE,
+        quantity=2,
+    )
+
+    lot.refresh_from_db()
+    assert lot.balance() == 3
+    assert prod.inventory_total == 3
+    assert Lot.disponiveis(prod).first().saldo == 3
 
 
 @pytest.mark.django_db
@@ -107,7 +150,6 @@ def test_sale_itens_e_total():
         sale=sale,
         product=prod,
         quantity=2,
-        unit_price=Decimal("10.00"),
     )
 
     assert sale.itens.count() == 1
@@ -116,6 +158,24 @@ def test_sale_itens_e_total():
     item.update_sale_total()
     sale.refresh_from_db()
     assert sale.total == Decimal("20.00")
+
+
+@pytest.mark.django_db
+def test_sale_item_ignores_manual_unit_price_and_inherits_product_price():
+    tenant = _tenant()
+    prod = _product(tenant)
+    _lot(prod, quantity=10)
+    sale = Sale.objects.create(tenant=tenant, number="V003", total=Decimal("0.00"))
+
+    item = SaleItem.objects.create(
+        tenant=tenant,
+        sale=sale,
+        product=prod,
+        quantity=1,
+        unit_price=Decimal("99.99"),
+    )
+
+    assert item.unit_price == prod.sale_price
 
 
 _product = _product

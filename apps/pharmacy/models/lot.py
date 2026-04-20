@@ -6,7 +6,7 @@ Os comentários explicam cada linha para facilitar entendimento em português.
 from django.core.exceptions import ValidationError  # Exceções de validação de domínio
 from django.core.validators import MinValueValidator  # Validador mínimo
 from django.db import models  # ORM do Django
-from django.db.models import Case, F, IntegerField, Sum, When  # Funções para agregações
+from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When  # Funções para agregações
 from django.db.models.functions import Coalesce  # Substitui None por zero
 from django.utils import timezone  # Datas locais
 
@@ -124,9 +124,10 @@ class Lot(CoreModel):
     # =====================================================
 
     def balance(self):
-        """Calcula o saldo atual do lote (entradas - saídas)."""
+        """Calcula o saldo atual do lote (entradas - saídas), sem duplicar entrada inicial."""
 
-        movimentos = self.movimentos.aggregate(
+        movimentos_qs = self.movimentos.filter(deleted=False)
+        movimentos = movimentos_qs.aggregate(
             total=Coalesce(
                 Sum(
                     Case(
@@ -142,7 +143,21 @@ class Lot(CoreModel):
             )
         )["total"]
 
-        return self.initial_quantity + movimentos  # Quantidade inicial + movimentos
+        # Compatibilidade:
+        # - Lotes novos têm um movimento inicial de entrada criado por signal.
+        # - Lotes antigos podem não ter esse movimento.
+        # Se já existe entrada inicial equivalente ao cadastro, o saldo é a própria
+        # soma dos movimentos; caso contrário, soma com initial_quantity.
+        has_initial_entry = movimentos_qs.filter(
+            type="ENT",
+            origin="AJUS",
+            quantity=self.initial_quantity,
+        ).exists()
+
+        if has_initial_entry:
+            return movimentos
+
+        return self.initial_quantity + movimentos
 
     # =====================================================
     # QUERY FEFO
@@ -152,7 +167,37 @@ class Lot(CoreModel):
     def disponiveis(cls, product):
         """Retorna queryset FEFO (primeiro que vence, primeiro a sair) com saldo."""
 
+        from apps.pharmacy.models.inventory_movement import (
+            InventoryMovement,
+            MovementOrigin,
+            MovementType,
+        )
+
         hoje = timezone.localdate()  # Data de corte
+
+        movimentos_total = Coalesce(
+            Sum(
+                Case(
+                    When(
+                        movimentos__type=MovementType.SAIDA,  # Saídas negativas
+                        then=-F("movimentos__quantity"),
+                    ),
+                    default=F("movimentos__quantity"),  # Entradas positivas
+                    output_field=IntegerField(),
+                )
+            ),
+            0,
+        )
+
+        has_initial_entry = Exists(
+            InventoryMovement.all_objects.filter(
+                lot_id=OuterRef("pk"),
+                deleted=False,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.AJUSTE,
+                quantity=OuterRef("initial_quantity"),
+            )
+        )
 
         return (
             cls.objects.filter(
@@ -160,19 +205,17 @@ class Lot(CoreModel):
                 expiration_date__gte=hoje,  # Não vencidos
             )
             .annotate(
-                saldo=F("initial_quantity")
-                + Coalesce(
-                    Sum(
-                        Case(
-                            When(
-                                movimentos__type="SAI",  # Saídas negativas
-                                then=-F("movimentos__quantity"),
-                            ),
-                            default=F("movimentos__quantity"),  # Entradas positivas
-                            output_field=IntegerField(),
-                        )
+                movimentos_total=movimentos_total,
+                has_initial_entry=has_initial_entry,
+            )
+            .annotate(
+                saldo=Case(
+                    When(
+                        has_initial_entry=True,
+                        then=F("movimentos_total"),
                     ),
-                    0,
+                    default=F("initial_quantity") + F("movimentos_total"),
+                    output_field=IntegerField(),
                 )
             )
             .filter(saldo__gt=0)  # Apenas lotes com saldo

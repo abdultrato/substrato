@@ -128,7 +128,7 @@ export default function LoginPage () {
                 <div className="login-card">
                     <div className="login-image">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/icon.png" alt="logo" />
+                        <img src="/static/img/logo.png" alt="Logo do Substrato" />
                     </div>
 
                 <div className="login-form">

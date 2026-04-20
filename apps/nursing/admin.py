@@ -308,7 +308,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "patient",
-        "professional",
+        "professionals_display",
         "performed_date",
         "itens_total",
         "materiais_total",
@@ -326,9 +326,8 @@ class ProcedimentoAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = (
         "patient",
-        "professional",
     )
-    list_select_related = ("patient", "professional")
+    list_select_related = ("patient",)
     ordering = ("-performed_date",)  # Procedimentos mais recentes primeiro
     readonly_fields = (
         "custom_id",
@@ -341,7 +340,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "updated_by",
         "version",
     )
-    filter_horizontal = ("selected_materials",)
+    filter_horizontal = ("professional", "selected_catalogs", "selected_materials")
     # inlines defined in get_inlines
     fieldsets = (
         (
@@ -358,6 +357,12 @@ class ProcedimentoAdmin(admin.ModelAdmin):
                     "materials_subtotal",
                     "total",
                 )
+            },
+        ),
+        (
+            "Procedimentos do Catálogo",
+            {
+                "fields": ("selected_catalogs",),
             },
         ),
         (
@@ -387,28 +392,80 @@ class ProcedimentoAdmin(admin.ModelAdmin):
 
     itens_total.short_description = "Itens"
 
+    def professionals_display(self, obj):
+        """Lista os profissionais associados ao procedimento."""
+        profissionais = list(obj.professional.all())
+        if not profissionais:
+            return "-"
+
+        nomes = []
+        for profissional in profissionais:
+            nome = ""
+            if hasattr(profissional, "get_full_name"):
+                nome = (profissional.get_full_name() or "").strip()
+            if not nome:
+                nome = getattr(profissional, "name", "") or getattr(profissional, "username", "")
+            nomes.append(nome or str(profissional.pk))
+
+        return ", ".join(nomes)
+
+    professionals_display.short_description = "Profissionais"
+
     def materiais_total(self, obj):
         """Quantidade de materiais consumidos no procedimento."""
         return obj.materiais.count()
 
     materiais_total.short_description = "Materiais"
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.prefetch_related("professional")
+
     def get_inlines(self, request, obj=None):
         if obj is None:  # add form
             return []
         return [ProcedimentoItemInline, ProcedimentoMaterialInline]
 
+    def _sync_items_from_selected_catalogs(self, procedure):
+        """Cria itens de procedimento para catálogos selecionados ainda não lançados."""
+        selected_catalog_ids = set(procedure.selected_catalogs.values_list("id", flat=True))
+        if not selected_catalog_ids:
+            return
+
+        existing_catalog_ids = set(
+            procedure.itens.filter(
+                deleted=False,
+                catalog_id__in=selected_catalog_ids,
+            ).values_list("catalog_id", flat=True)
+        )
+        missing_catalog_ids = selected_catalog_ids - existing_catalog_ids
+        if not missing_catalog_ids:
+            return
+
+        catalogs = ProcedureCatalog.objects.filter(pk__in=missing_catalog_ids).order_by("name")
+        for catalog in catalogs:
+            ProcedureItem.objects.create(
+                procedure=procedure,
+                catalog=catalog,
+                quantity=1,
+            )
+
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
+        procedure = form.instance
+
+        self._sync_items_from_selected_catalogs(procedure)
+
         if not change:  # only on add
-            procedure = form.instance
             for product in procedure.selected_materials.all():
-                ProcedureMaterial.objects.create(
+                material = ProcedureMaterial(
                     procedure=procedure,
                     product=product,
-                    quantity=0,  # default, user will edit
+                    quantity=1,  # quantidade mínima válida; pode ser ajustada depois
                     unit_cost=Decimal("0.00"),
                 )
+                # No cadastro inicial, registra apenas a intenção de uso sem baixar estoque.
+                material.save(alocar_estoque=False)
 
 
 @admin.register(ProcedureItem)
@@ -756,5 +813,3 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
             },
         ),
     )
-
-

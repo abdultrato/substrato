@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from django.db.models import (
     Case,
+    Exists,
     F,
     IntegerField,
     Min,
@@ -25,7 +26,11 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 from django.utils.html import format_html, format_html_join
 
-from .models.inventory_movement import InventoryMovement, MovementType
+from .models.inventory_movement import (
+    InventoryMovement,
+    MovementOrigin,
+    MovementType,
+)
 from .models.lot import Lot
 from .models.product import Product
 from .models.product_category import ParentCategory, ProductCategory
@@ -127,30 +132,53 @@ class ProductAdmin(admin.ModelAdmin):
         )
 
         movements = (
-            InventoryMovement.objects.filter(lot__product=OuterRef("pk"))  # Movimentos do produto
-            .values("lot__product")  # Agrupa por produto
+            InventoryMovement.objects.filter(
+                lot__product=OuterRef("pk"),
+                deleted=False,
+            )
+            .values("lot__product")
             .annotate(
                 total=Coalesce(
                     Sum(
                         Case(
-                            When(type=MovementType.SAIDA, then=-F("quantity")),  # Saída negativa
-                            default=F("quantity"),  # Entrada positiva
+                            When(type=MovementType.SAIDA, then=-F("quantity")),
+                            default=F("quantity"),
                             output_field=IntegerField(),
                         )
                     ),
-                    0,  # Se não houver movimentos, usa zero
+                    0,
                 )
             )
-            .values("total")  # Retorna apenas o total
+            .values("total")
+        )
+
+        missing_initial_stock = (
+            Lot.objects.filter(product=OuterRef("pk"))
+            .annotate(
+                has_initial_entry=Exists(
+                    InventoryMovement.all_objects.filter(
+                        lot_id=OuterRef("pk"),
+                        deleted=False,
+                        type=MovementType.ENTRADA,
+                        origin=MovementOrigin.AJUSTE,
+                        quantity=OuterRef("initial_quantity"),
+                    )
+                )
+            )
+            .filter(has_initial_entry=False)
+            .values("product")
+            .annotate(total=Coalesce(Sum("initial_quantity"), 0))
+            .values("total")
         )
 
         qs = qs.annotate(
             initial_stock_calc=Coalesce(Subquery(initial_lots), 0),  # Estoque inicial
-            movements_total=Coalesce(Subquery(movements), 0),  # Soma de movimentos
+            movements_total=Coalesce(Subquery(movements), 0),
+            missing_initial_stock=Coalesce(Subquery(missing_initial_stock), 0),
             proximo_vencimento=Min("lotes__expiration_date"),  # Vencimento mais próximo
         )
 
-        return qs.annotate(inventory_total_calc=F("initial_stock_calc") + F("movements_total"))
+        return qs.annotate(inventory_total_calc=F("movements_total") + F("missing_initial_stock"))
 
     # =========================
     # ESTOQUE
@@ -280,20 +308,41 @@ class LotAdmin(admin.ModelAdmin):
 
         qs = super().get_queryset(request)  # Queryset base com filtros padrão
 
+        has_initial_entry = Exists(
+            InventoryMovement.all_objects.filter(
+                lot_id=OuterRef("pk"),
+                deleted=False,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.AJUSTE,
+                quantity=OuterRef("initial_quantity"),
+            )
+        )
+
+        movimentos_total = Coalesce(
+            Sum(
+                Case(
+                    When(
+                        movimentos__type=MovementType.SAIDA,
+                        then=-F("movimentos__quantity"),
+                    ),
+                    default=F("movimentos__quantity"),
+                    output_field=IntegerField(),
+                )
+            ),
+            0,
+        )
+
         return qs.annotate(
-            saldo_calc=F("initial_quantity")  # Saldo = inicial + movimentos
-            + Coalesce(
-                Sum(
-                    Case(
-                        When(
-                            movimentos__type="SAI",
-                            then=-F("movimentos__quantity"),
-                        ),
-                        default=F("movimentos__quantity"),
-                        output_field=IntegerField(),
-                    )
+            movimentos_total=movimentos_total,
+            has_initial_entry=has_initial_entry,
+        ).annotate(
+            saldo_calc=Case(
+                When(
+                    has_initial_entry=True,
+                    then=F("movimentos_total"),
                 ),
-                0,
+                default=F("initial_quantity") + F("movimentos_total"),
+                output_field=IntegerField(),
             )
         )
 
@@ -573,7 +622,6 @@ class VendaAdmin(admin.ModelAdmin):
     readonly_fields = (
         "number",
         "total_items_quantity",
-        "unit_prices",
         "total_items_amount",
         "total_vat_amount",
         "total",
@@ -594,7 +642,6 @@ class VendaAdmin(admin.ModelAdmin):
                     "number",
                     "patient",
                     "total_items_quantity",
-                    "unit_prices",
                     "total_items_amount",
                     "total_vat_amount",
                     "total",

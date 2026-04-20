@@ -96,6 +96,9 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     invoice_payload = _response_data(invoice_response)
     assert invoice_payload["paciente"] == patient.id
     assert invoice_payload["origem"] == Invoice.Origin.MIXED
+    assert "criado_por_nome" in invoice_payload
+    assert "criado_por_departamento" in invoice_payload
+    assert "setores_itens_faturados" in invoice_payload
 
     invoice_id = invoice_payload["id"]
 
@@ -121,9 +124,15 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert item_payload["iva_percentual"] == "16.00"
     assert item_payload["iva_valor"] == "1.60"
     assert item_payload["total_com_iva"] == "11.60"
+    assert item_payload["setor_item_faturado"] == "Ajuste manual"
 
     invoice = Invoice.objects.get(pk=invoice_id)
     assert invoice.total == Decimal("11.60")
+
+    invoice_detail_response = api_client.get(f"/api/v1/billing/invoice/{invoice_id}/")
+    assert invoice_detail_response.status_code == 200
+    invoice_detail_payload = _response_data(invoice_detail_response)
+    assert "Ajuste manual" in invoice_detail_payload["setores_itens_faturados"]
 
     update_response = api_client.patch(
         f"/api/v1/billing/invoiceitem/{item_payload['id']}/",
@@ -173,6 +182,59 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert len(receipts) == 1
     assert receipts[0]["numero"].startswith("REC-")
     assert receipts[0]["valor"] == "10.00"
+
+
+@pytest.mark.django_db
+def test_payment_api_rejects_confirmed_overpayment_without_change(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client=api_client)
+    patient = _patient(tenant)
+
+    invoice_response = api_client.post(
+        "/api/v1/billing/invoice/",
+        {
+            "paciente": patient.id,
+            "origem": "MIX",
+        },
+        format="json",
+    )
+    assert invoice_response.status_code == 201
+    invoice_id = _response_data(invoice_response)["id"]
+
+    item_response = api_client.post(
+        "/api/v1/billing/invoiceitem/",
+        {
+            "fatura": invoice_id,
+            "tipo_item": "AJU",
+            "descricao": "Taxa administrativa",
+            "quantidade": "1.00",
+            "preco_unitario": "10.00",
+            "aplica_iva": False,
+            "iva_percentual": "0.00",
+        },
+        format="json",
+    )
+    assert item_response.status_code == 201
+
+    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
+    assert issue_response.status_code == 200
+
+    payment_response = api_client.post(
+        "/api/v1/payments/payment/",
+        {
+            "fatura": invoice_id,
+            "nome": "Pagamento com excesso",
+            "valor": "15.00",
+            "metodo": "DIN",
+            "estado": "CON",
+        },
+        format="json",
+    )
+
+    assert payment_response.status_code == 400
+    payload = _response_data(payment_response)
+    detail_text = json.dumps(payload, ensure_ascii=False)
+    assert "change_amount" in detail_text or "troco" in detail_text
 
 
 def test_start_payment_uses_gateway_registry_and_requires_phone_for_mobile_money(monkeypatch):

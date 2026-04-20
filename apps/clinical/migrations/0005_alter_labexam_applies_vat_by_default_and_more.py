@@ -11,7 +11,7 @@ import infrastructure.orm.fields.sector_field
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clinical', '0004_alter_resultitem_clinical_status_and_more'),
+        ('clinical', '0002_initial'),
     ]
 
     operations = [

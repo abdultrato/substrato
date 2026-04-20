@@ -39,6 +39,33 @@ class ProcedureCatalogMaterialSerializer(serializers.ModelSerializer):
 
 
 class ProcedureSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    professional_name = serializers.SerializerMethodField()
+    professional_names = serializers.SerializerMethodField()
+    workflow_status_display = serializers.CharField(source="get_workflow_status_display", read_only=True)
+    billing_status_display = serializers.CharField(source="get_billing_status_display", read_only=True)
+    items_count = serializers.IntegerField(source="itens.count", read_only=True)
+
+    def _professional_names(self, obj):
+        names = []
+        for professional in obj.professional.all():
+            full_name = ""
+            if hasattr(professional, "get_full_name"):
+                full_name = (professional.get_full_name() or "").strip()
+            if not full_name:
+                full_name = getattr(professional, "name", "") or getattr(professional, "username", "")
+            names.append(full_name or str(professional.pk))
+        return names
+
+    def get_professional_names(self, obj):
+        return self._professional_names(obj)
+
+    def get_professional_name(self, obj):
+        names = self._professional_names(obj)
+        if not names:
+            return ""
+        return ", ".join(names)
+
     class Meta:
         model = Procedure
         fields = "__all__"
@@ -51,6 +78,10 @@ class ProcedureItemSerializer(serializers.ModelSerializer):
         decimal_places=2,
         read_only=True,
     )
+    catalog_name = serializers.CharField(source="catalog.name", read_only=True)
+    catalog_code = serializers.CharField(source="catalog.procedure_code", read_only=True)
+    execution_status_display = serializers.CharField(source="get_execution_status_display", read_only=True)
+    patient_name = serializers.CharField(source="procedure.patient.name", read_only=True)
 
     class Meta:
         model = ProcedureItem
@@ -140,5 +171,3 @@ SERIALIZER_MAP = {
     "camaenfermaria": WardBedSerializer,
     "internamentoenfermaria": WardAdmissionSerializer,
 }
-
-

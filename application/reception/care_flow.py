@@ -16,6 +16,28 @@ from apps.payments.models.receipt import Receipt
 from apps.reception.models.reception_checkin import ReceptionCheckin
 
 
+def _resolve_user_display(user):
+    if not user:
+        return ""
+
+    full_name = (getattr(user, "get_full_name", lambda: "")() or "").strip()
+    if full_name:
+        return full_name
+
+    return getattr(user, "username", "") or ""
+
+
+def _resolve_user_department(user):
+    if not user:
+        return ""
+
+    profile = getattr(user, "perfil_professional", None)
+    if not profile:
+        return ""
+
+    return (getattr(profile, "department", "") or "").strip()
+
+
 def _quantize_value(value):
     if value is None:
         return None
@@ -137,20 +159,20 @@ def create_invoice_for_checkin(
     if checkin.invoice_id:
         raise ValidationError("Check-in já possui invoice vinculada.")
 
-    if not checkin.request_id:
-        raise ValidationError("Crie ou vincule uma requisição antes da invoice.")
+    has_request = bool(checkin.request_id)
+    origin = Invoice.Origin.CLINICAL if has_request else Invoice.Origin.MIXED
 
     invoice = Invoice(
         tenant=checkin.tenant,
-        origin=Invoice.Origin.CLINICAL,
-        request=checkin.request,
+        origin=origin,
+        request=checkin.request if has_request else None,
         patient=checkin.patient,
     )
     invoice.full_clean()
     invoice.save()
     invoice.sync_items_from_origin()
 
-    if issue:
+    if issue and invoice.items.filter(deleted=False).exists():
         invoice.issue()
 
     checkin.register_invoice(invoice)
@@ -241,11 +263,14 @@ def get_care_summary(checkin):
             "patient",
             "request",
             "invoice",
+            "invoice__created_by",
+            "invoice__created_by__perfil_professional",
             "attendant",
         )
         .prefetch_related(
-            "request__itens__exam",
-            "invoice__itens",
+            "request__items__exam",
+            "request__items__medical_exam",
+            "invoice__items",
             "invoice__pagamentos",
             "invoice__recibos",
         )
@@ -256,6 +281,15 @@ def get_care_summary(checkin):
     invoice = checkin.invoice
     payments = list(invoice.pagamentos.order_by("-created_at")) if invoice else []
     receipts = list(invoice.recibos.order_by("-created_at")) if invoice else []
+    invoice_items = list(invoice.items.filter(deleted=False)) if invoice else []
+    invoice_creator = getattr(invoice, "created_by", None) if invoice else None
+    billed_item_sectors = sorted(
+        {
+            setor
+            for setor in (getattr(item, "billed_sector", "") for item in invoice_items)
+            if (setor or "").strip()
+        }
+    )
 
     return {
         "checkin": {
@@ -306,6 +340,9 @@ def get_care_summary(checkin):
                 "id": invoice.id,
                 "custom_id": invoice.custom_id,
                 "status": invoice.status,
+                "created_by_name": _resolve_user_display(invoice_creator),
+                "created_by_department": _resolve_user_department(invoice_creator),
+                "billed_item_sectors": billed_item_sectors,
                 "subtotal": str(invoice.subtotal),
                 "vat_amount": str(invoice.vat_amount),
                 "total": str(invoice.total),
@@ -316,11 +353,12 @@ def get_care_summary(checkin):
                         "id": item.id,
                         "custom_id": item.custom_id,
                         "description": item.description,
+                        "billed_sector": item.billed_sector,
                         "quantity": str(item.quantity),
                         "unit_price": str(item.unit_price),
                         "total": str(item.total),
                     }
-                    for item in invoice.items.filter(deleted=False)
+                    for item in invoice_items
                 ],
             }
             if invoice
@@ -435,10 +473,11 @@ def execute_full_flow(
             clinical_status=dados_request.get("clinical_status"),
         )
 
-    if billing or payment:
+    if payment:
         if not checkin_obj.request_id and not request_obj:
             raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
 
+    if billing or payment:
         billing_data = dict(billing or {})
         create_invoice_for_checkin(
             checkin=checkin_obj,

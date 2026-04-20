@@ -12,7 +12,6 @@ from django.db.models import DecimalField, F, Q, Sum  # Funções de agregação
 from django.db.models.functions import Coalesce  # Troca None por zero
 
 from core.models.base import CoreModel  # Modelo base
-from apps.pharmacy.models.lot import Lot  # Import para acessar FEFO
 
 
 class SaleItem(CoreModel):
@@ -180,13 +179,12 @@ class SaleItem(CoreModel):
 
         criando = self.pk is None  # Flag para saber se é criação
 
-        # Sempre herda o preço do lote disponível (FEFO). Se não houver, cai para o produto.
-        if self.unit_price is None:
-            first_lot = Lot.disponiveis(self.product).first()  # Busca primeiro lote disponível
-            if first_lot:
-                self.unit_price = first_lot.sale_price  # Usa preço do lote
-            else:
-                self.unit_price = Lot.sale_price_for_product(self.product)  # Fallback para produto
+        # Regra de negócio: item de venda herda preço do produto na criação.
+        if criando:
+            self.unit_price = self.product.sale_price or Decimal("0.00")
+        elif self.unit_price is None:
+            # Salvaguarda para dados legados/incompletos.
+            self.unit_price = self.product.sale_price or Decimal("0.00")
 
         if not self.name:
             self.name = f"Item {self.product.name}"  # Nome default

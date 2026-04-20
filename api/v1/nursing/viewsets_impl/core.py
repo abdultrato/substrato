@@ -1,6 +1,8 @@
 """ViewSets da API v1 para recursos de Enfermagem."""
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
@@ -147,12 +149,16 @@ class ProcedureCatalogViewSet(TenantScopedModelViewSet):
     search_fields = [
         "custom_id",
         "name",
+        "procedure_code",
         "description",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
         "name",
+        "procedure_code",
+        "estimated_duration_minutes",
+        "active",
         "default_price",
         "created_at",
         "updated_at",
@@ -199,8 +205,12 @@ class ProcedureViewSet(TenantScopedModelViewSet):
         "tenant",
         "custom_id",
         "patient",
-        "professional",
+        "workflow_status",
+        "billing_status",
         "performed_date",
+        "billed_at",
+        "executed_at",
+        "completed_at",
         "services_subtotal",
         "materials_subtotal",
         "total",
@@ -231,6 +241,11 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         "description",
         "quantity",
         "performed",
+        "execution_status",
+        "billed",
+        "billed_at",
+        "executed_at",
+        "completed_at",
         "created_at",
         "updated_at",
         "deleted",
@@ -263,6 +278,54 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def _handle_model_validation_error(self, exc: DjangoValidationError):
+        if hasattr(exc, "message_dict"):
+            raise serializers.ValidationError(exc.message_dict) from exc
+        if hasattr(exc, "messages"):
+            raise serializers.ValidationError(exc.messages) from exc
+        raise serializers.ValidationError(str(exc)) from exc
+
+    @action(detail=True, methods=["post"], url_path="executar", url_name="executar")
+    def execute(self, request, pk=None):
+        item = self.get_object()
+        professional = request.user if getattr(request.user, "is_authenticated", False) else None
+        try:
+            item.mark_executed(professional=professional)
+        except DjangoValidationError as exc:
+            self._handle_model_validation_error(exc)
+        item.refresh_from_db()
+        return Response(self.get_serializer(item).data)
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def complete(self, request, pk=None):
+        item = self.get_object()
+        try:
+            item.mark_completed()
+        except DjangoValidationError as exc:
+            self._handle_model_validation_error(exc)
+        item.refresh_from_db()
+        return Response(self.get_serializer(item).data)
+
+    @action(detail=True, methods=["post"], url_path="nao_concluir", url_name="nao-concluir")
+    def mark_not_completed(self, request, pk=None):
+        item = self.get_object()
+        try:
+            item.mark_not_completed()
+        except DjangoValidationError as exc:
+            self._handle_model_validation_error(exc)
+        item.refresh_from_db()
+        return Response(self.get_serializer(item).data)
+
+    @action(detail=True, methods=["post"], url_path="marcar_faturado", url_name="marcar-faturado")
+    def mark_billed(self, request, pk=None):
+        item = self.get_object()
+        try:
+            item.mark_billed()
+        except DjangoValidationError as exc:
+            self._handle_model_validation_error(exc)
+        item.refresh_from_db()
+        return Response(self.get_serializer(item).data)
 
 
 class ProcedureItemValueViewSet(TenantScopedModelViewSet):
@@ -558,5 +621,3 @@ __all__ = [
     "WardDashboardViewSet",
     "WardViewSet",
 ]
-
-

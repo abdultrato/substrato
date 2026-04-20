@@ -6,7 +6,9 @@ export type SessionUser = {
   last_name?: string
   email?: string
   telefone?: string
+  phone?: string
   foto_url?: string | null
+  photo_url?: string | null
   groups?: string[]
   is_superuser?: boolean
   is_staff?: boolean
@@ -37,7 +39,16 @@ export function getSessionUser(): SessionUser | null {
 export function setSessionUser(u: any) {
   const storage = getStorage()
   if (!storage) return
-  storage.setItem("sessionUser", JSON.stringify(u))
+  const normalized = u && typeof u === "object"
+    ? {
+        ...u,
+        telefone: u.telefone ?? u.phone ?? "",
+        phone: u.phone ?? u.telefone ?? "",
+        foto_url: u.foto_url ?? u.photo_url ?? null,
+        photo_url: u.photo_url ?? u.foto_url ?? null,
+      }
+    : u
+  storage.setItem("sessionUser", JSON.stringify(normalized))
 }
 
 export function clearSessionUser() {

@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -17,7 +18,19 @@ from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, Invoi
 
 
 class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Invoice.objects.all()
+    queryset = Invoice.objects.select_related(
+        "patient",
+        "request",
+        "sale",
+        "consultation",
+        "created_by",
+        "created_by__perfil_professional",
+    ).prefetch_related(
+        "items",
+        "items__exam",
+        "items__medical_exam",
+        "items__consultation__specialty",
+    )
     serializer_class = InvoiceSerializer
     filterset_class = InvoiceFilter
     permission_classes = [IsAuthenticated]
@@ -105,8 +118,10 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         try:
             payment.confirm()
-        except ValidationError as exc:
-            raise ValidationError(str(exc)) from exc
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
 
         invoice.refresh_from_db()
         return invoice
@@ -154,7 +169,15 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
 
 class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = InvoiceItem.objects.all()
+    queryset = InvoiceItem.objects.select_related(
+        "invoice",
+        "exam",
+        "medical_exam",
+        "consultation__specialty",
+        "sale_item__product",
+        "procedure_item__catalog",
+        "procedure_material__product",
+    )
     serializer_class = InvoiceItemSerializer
     filterset_class = InvoiceItemFilter
     permission_classes = [IsAuthenticated]

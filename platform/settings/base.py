@@ -133,6 +133,8 @@ JAZZMIN_SETTINGS = {
     "site_title": "Substrato Admin",
     "site_header": "Substrato",
     "site_brand": "Substrato",
+    "site_logo": "img/logo.png",
+    "site_logo_classes": "img-circle elevation-3 p-1 bg-white",
     "welcome_sign": "Bem-vindo ao Substrato",
     "copyright": f"Substrato · {SYSTEM_VERSION_DISPLAY}",
     # CSS customizado (gerado via Tailwind; ver `frontend-next/styles/admin-tailwind.input.css`)
@@ -599,6 +601,7 @@ TEMPLATES = [
 # =========================================================
 
 STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"

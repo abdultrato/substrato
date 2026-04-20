@@ -236,18 +236,26 @@ class Invoice(NoNameCoreModel):
     def confirmed_paid_amount(self):
         from apps.payments.models.payment import Payment
 
-        return self.pagamentos.filter(
+        totais = self.pagamentos.filter(
             status=Payment.Status.CONFIRMED,
             deleted=False,
         ).aggregate(
-            total=Coalesce(
+            total_pago=Coalesce(
                 Sum(
                     "value",
                     output_field=DecimalField(max_digits=12, decimal_places=2),
                 ),
                 Decimal("0.00"),
+            ),
+            total_troco=Coalesce(
+                Sum(
+                    "change_amount",
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Decimal("0.00"),
             )
-        )["total"]
+        )
+        return (totais["total_pago"] or Decimal("0.00")) - (totais["total_troco"] or Decimal("0.00"))
 
     def _default_receipt_number(self, payment):
         # Um recibo é gerado quando a invoice fica totalmente paga. O número
@@ -430,6 +438,10 @@ class Invoice(NoNameCoreModel):
             item.delete()
 
         if self.origin == self.Origin.CLINICAL:
+            if not self.request_id:
+                self.persist_totals()
+                return
+
             request_items = self.request.items.select_related(
                 "exam",
                 "medical_exam",
@@ -452,6 +464,10 @@ class Invoice(NoNameCoreModel):
                     )
 
         elif self.origin == self.Origin.PHARMACY:
+            if not self.sale_id:
+                self.persist_totals()
+                return
+
             sale_items = self.sale.itens.select_related("product")
             for item in sale_items:
                 InvoiceItem.objects.create(
@@ -469,13 +485,24 @@ class Invoice(NoNameCoreModel):
                 procedures = list(self.procedures.all())
 
             if not procedures:
-                raise ValidationError(
-                    {"procedures": "Provide at least one nursing procedure to sync items."}
-                )
+                self.persist_totals()
+                return
 
             for proc in procedures:
-                procedure_items = proc.itens.filter(performed=True)
+                # Regra solicitada: incluir apenas itens usados (executados/concluídos)
+                # e que tenham valor/preço efetivo.
+                procedure_items = proc.itens.filter(deleted=False).select_related("value")
                 for item in procedure_items:
+                    used_statuses = {
+                        item.ExecutionStatus.EXECUTED,
+                        item.ExecutionStatus.COMPLETED,
+                    }
+                    if item.execution_status not in used_statuses:
+                        continue
+
+                    if (item.total_linha or Decimal("0.00")) <= Decimal("0.00"):
+                        continue
+
                     InvoiceItem.objects.create(
                         tenant=self.tenant,
                         invoice=self,
@@ -483,8 +510,24 @@ class Invoice(NoNameCoreModel):
                         procedure_item=item,
                     )
 
-                materiais_procedure = proc.materiais.all()
+                    if not item.billed:
+                        item.mark_billed()
+
+                # Regra solicitada: incluir apenas materiais com custo/valor efetivo.
+                materiais_procedure = proc.materiais.filter(deleted=False).select_related("value", "procedure_item")
                 for material in materiais_procedure:
+                    if material.procedure_item_id:
+                        material_item = material.procedure_item
+                        material_used_statuses = {
+                            material_item.ExecutionStatus.EXECUTED,
+                            material_item.ExecutionStatus.COMPLETED,
+                        }
+                        if material_item.execution_status not in material_used_statuses:
+                            continue
+
+                    if (material.total_linha or Decimal("0.00")) <= Decimal("0.00"):
+                        continue
+
                     InvoiceItem.objects.create(
                         tenant=self.tenant,
                         invoice=self,
@@ -493,6 +536,10 @@ class Invoice(NoNameCoreModel):
                     )
 
         elif self.origin == self.Origin.CONSULTATION:
+            if not self.consultation_id:
+                self.persist_totals()
+                return
+
             description = f"Consulta: {getattr(self.consultation, 'type', '')}".strip()
             if not description:
                 description = "Consulta"
@@ -507,6 +554,10 @@ class Invoice(NoNameCoreModel):
                 vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
             )
         elif self.origin == self.Origin.SURGERY:
+            if not self.surgery_id:
+                self.persist_totals()
+                return
+
             description = "Cirurgia"
             nomes = []
             with suppress(Exception):
@@ -566,10 +617,26 @@ class Invoice(NoNameCoreModel):
             elif self.pk:
                 procedures = list(self.procedures.all())
 
+            billed_material_ids = list(
+                self.items.filter(
+                    deleted=False,
+                    item_type="MAT",
+                    procedure_material__isnull=False,
+                ).values_list("procedure_material_id", flat=True)
+            )
+
             pendentes = []
-            for proc in procedures:
-                pendentes.extend(
-                    list(proc.materiais.filter(inventory_movement__isnull=True).select_related("product").all())
+            if billed_material_ids:
+                from apps.nursing.models.procedure_material import ProcedureMaterial
+
+                pendentes = list(
+                    ProcedureMaterial.objects.filter(
+                        pk__in=billed_material_ids,
+                        inventory_movement__isnull=True,
+                        deleted=False,
+                    )
+                    .select_related("product")
+                    .all()
                 )
 
             faltas = []

@@ -16,10 +16,10 @@ type UserMe = {
     id: number
     username?: string | null
     email?: string | null
-    telefone?: string | null
+    phone?: string | null
     first_name?: string | null
     last_name?: string | null
-    foto_url?: string | null
+    photo_url?: string | null
     full_name?: string | null
 }
 
@@ -35,7 +35,7 @@ export default function PerfilPage () {
     const [firstName, setFirstName] = useState( "" )
     const [lastName, setLastName] = useState( "" )
     const [email, setEmail] = useState( "" )
-    const [telefone, setTelefone] = useState( "" )
+    const [phone, setPhone] = useState( "" )
     const [fotoFile, setFotoFile] = useState<File | null>( null )
     const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>( null )
 
@@ -53,7 +53,7 @@ export default function PerfilPage () {
                 setFirstName( ( data?.first_name || "" ).toString() )
                 setLastName( ( data?.last_name || "" ).toString() )
                 setEmail( ( data?.email || "" ).toString() )
-                setTelefone( ( data?.telefone || "" ).toString() )
+                setPhone( ( data?.phone || "" ).toString() )
             } catch (e) {
                 setError(isNotFoundLikeError(e) ? null : (e instanceof Error ? e.message : "Falha ao carregar o perfil." ))
             } finally {
@@ -82,11 +82,14 @@ export default function PerfilPage () {
             setSuccess( null )
 
             const hasFoto = !!fotoFile
+            const normalizedEmail = email.trim()
+            const normalizedPhone = phone.trim()
+
             const payloadKeys = {
                 first_name: firstName,
                 last_name: lastName,
-                email,
-                telefone,
+                email: normalizedEmail,
+                phone: normalizedPhone,
             }
 
             let updated: UserMe | null = null
@@ -96,7 +99,7 @@ export default function PerfilPage () {
                 for ( const [k, v] of Object.entries( payloadKeys ) ) {
                     fd.append( k, v ?? "" )
                 }
-                fd.append( "foto", fotoFile as File )
+                fd.append( "photo", fotoFile as File )
                 updated = await apiFetch<UserMe>( "/auth/user/", {
                     method: "PATCH",
                     body: fd,
@@ -145,10 +148,10 @@ export default function PerfilPage () {
                         <div className="grid gap-4 md:grid-cols-[120px_1fr]">
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-24 h-24 rounded-full overflow-hidden border border-[var(--border)] bg-[var(--gray-100)] flex items-center justify-center">
-                                    {fotoPreviewUrl || me?.foto_url ? (
+                                    {fotoPreviewUrl || me?.photo_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
-                                            src={fotoPreviewUrl || ( me?.foto_url as string )}
+                                            src={fotoPreviewUrl || ( me?.photo_url as string )}
                                             alt={displayName}
                                             className="w-full h-full object-cover"
                                         />
@@ -202,8 +205,8 @@ export default function PerfilPage () {
 
                                 <FormField label="Telefone" hint="Use o número com indicativo (+258...).">
                                     <TextInput
-                                        value={telefone}
-                                        onChange={(e) => setTelefone( e.target.value )}
+                                        value={phone}
+                                        onChange={(e) => setPhone( e.target.value )}
                                         placeholder="+258..."
                                         inputMode="tel"
                                     />
@@ -238,4 +241,3 @@ export default function PerfilPage () {
         </AppLayout>
     )
 }
-

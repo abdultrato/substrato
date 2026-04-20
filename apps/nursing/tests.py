@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
@@ -27,7 +28,12 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():
-    return Tenant.objects.create(identifier="tn-enf", name="Tenant Enf")
+    return Tenant.objects.create(
+        identifier="tn-enf",
+        name="Tenant Enf",
+        domain="tenant-enf.local",
+        active=True,
+    )
 
 
 def _patient(tenant):
@@ -48,6 +54,22 @@ def _professional(tenant):
         name="Prof Enf",
         tenant=tenant,
     )
+
+
+def _authenticate_admin(tenant, api_client):
+    User = get_user_model()
+    user = User.objects.create_user(
+        username="admin-enf",
+        email="admin@enf.test",
+        password="123456",
+        name="Admin Enf",
+        tenant=tenant,
+    )
+    group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(group)
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+    return user
 
 
 def _product(tenant):
@@ -89,7 +111,8 @@ def test_procedure_recalculates_totals_with_item_value():
     patient = _patient(tenant)
     prof = _professional(tenant)
 
-    proc = Procedure.objects.create(patient=patient, professional=prof)
+    proc = Procedure.objects.create(patient=patient)
+    proc.professional.add(prof)
 
     item = ProcedureItem.objects.create(
         procedure=proc,
@@ -128,6 +151,39 @@ def test_procedure_catalog_material_propagacao():
 
     assert pcm.tenant == tenant
     assert pcm.catalog.tenant == tenant
+
+
+@pytest.mark.django_db
+def test_procedure_catalog_material_allows_duplicate_product_in_same_catalog():
+    tenant = _tenant()
+    catalog = ProcedureCatalog.objects.create(tenant=tenant, name="Curativo")
+    product = _product(tenant)
+
+    first = ProcedureCatalogMaterial.objects.create(
+        catalog=catalog,
+        product=product,
+        tenant=tenant,
+        default_quantity=Decimal("1.0"),
+        default_unit_cost=Decimal("2.50"),
+    )
+
+    second = ProcedureCatalogMaterial.objects.create(
+        catalog=catalog,
+        product=product,
+        tenant=tenant,
+        default_quantity=Decimal("2.0"),
+        default_unit_cost=Decimal("3.00"),
+    )
+
+    assert first.pk != second.pk
+    assert (
+        ProcedureCatalogMaterial.objects.filter(
+            catalog=catalog,
+            product=product,
+            deleted=False,
+        ).count()
+        == 2
+    )
 
 
 @pytest.mark.django_db
@@ -174,7 +230,7 @@ def test_record_and_vital_sign():
     patient = _patient(tenant)
 
     record = NursingRecord.objects.create(patient=patient, tenant=tenant, observation="Obs")
-    sv = NursingVitalSign.objects.create(record=record, tenant=tenant, temperature_c=Decimal("36.5"))
+    sv = NursingVitalSign.objects.create(record=record, patient=patient, tenant=tenant, temperature_c=Decimal("36.5"))
 
     assert record.tenant == tenant
     assert sv.tenant == tenant
@@ -212,6 +268,141 @@ def test_procedure_item_catalog_creates_pending_material_without_inventory():
     assert material.product_id == product.id
     assert material.lot_id is None
     assert material.inventory_movement_id is None
+
+
+@pytest.mark.django_db
+def test_procedure_item_workflow_transitions_sync_procedure_status():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    professional = _professional(tenant)
+    proc = Procedure.objects.create(patient=patient)
+
+    item = ProcedureItem.objects.create(
+        procedure=proc,
+        tenant=tenant,
+        description="Curativo simples",
+        quantity=1,
+        unit_price=Decimal("10.00"),
+    )
+
+    proc.refresh_from_db()
+    assert proc.workflow_status == Procedure.WorkflowStatus.REQUESTED
+    assert proc.billing_status == Procedure.BillingStatus.PENDING
+
+    item.mark_executed(professional=professional)
+    item.refresh_from_db()
+    proc.refresh_from_db()
+
+    assert item.execution_status == ProcedureItem.ExecutionStatus.EXECUTED
+    assert item.performed is True
+    assert item.executed_at is not None
+    assert proc.workflow_status == Procedure.WorkflowStatus.EXECUTED
+    assert proc.executed_at is not None
+    assert proc.professional.filter(id=professional.id).exists()
+
+    item.mark_completed()
+    item.refresh_from_db()
+    proc.refresh_from_db()
+
+    assert item.execution_status == ProcedureItem.ExecutionStatus.COMPLETED
+    assert item.completed_at is not None
+    assert proc.workflow_status == Procedure.WorkflowStatus.COMPLETED
+    assert proc.completed_at is not None
+
+    item.mark_billed()
+    item.refresh_from_db()
+    proc.refresh_from_db()
+
+    assert item.billed is True
+    assert item.billed_at is not None
+    assert proc.billing_status == Procedure.BillingStatus.BILLED
+    assert proc.billed_at is not None
+
+
+@pytest.mark.django_db
+def test_procedure_item_not_completed_blocks_new_billing():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    proc = Procedure.objects.create(patient=patient)
+    item = ProcedureItem.objects.create(
+        procedure=proc,
+        tenant=tenant,
+        description="Curativo não concluído",
+        quantity=1,
+        unit_price=Decimal("10.00"),
+    )
+
+    item.mark_executed()
+    item.mark_not_completed()
+
+    item.refresh_from_db()
+    proc.refresh_from_db()
+
+    assert item.execution_status == ProcedureItem.ExecutionStatus.NOT_COMPLETED
+    assert item.performed is False
+    assert proc.workflow_status == Procedure.WorkflowStatus.NOT_COMPLETED
+
+    with pytest.raises(ValidationError) as exc:
+        item.mark_billed()
+
+    assert "não pode mais ser faturado" in str(exc.value).lower()
+    item.refresh_from_db()
+    assert item.billed is False
+
+
+@pytest.mark.django_db
+def test_procedure_item_actions_exposed_in_api(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+    proc = Procedure.objects.create(patient=patient)
+    item = ProcedureItem.objects.create(
+        procedure=proc,
+        tenant=tenant,
+        description="Curativo API",
+        quantity=1,
+        unit_price=Decimal("8.00"),
+    )
+
+    base_url = f"/api/v1/nursing/procedimentoitem/{item.id}/"
+
+    resp_execute = api_client.post(f"{base_url}executar/")
+    assert resp_execute.status_code == 200
+    assert resp_execute.data["execution_status"] == ProcedureItem.ExecutionStatus.EXECUTED
+
+    resp_complete = api_client.post(f"{base_url}concluir/")
+    assert resp_complete.status_code == 200
+    assert resp_complete.data["execution_status"] == ProcedureItem.ExecutionStatus.COMPLETED
+
+    resp_billed = api_client.post(f"{base_url}marcar_faturado/")
+    assert resp_billed.status_code == 200
+    assert resp_billed.data["billed"] is True
+
+    proc.refresh_from_db()
+    assert proc.workflow_status == Procedure.WorkflowStatus.COMPLETED
+    assert proc.billing_status == Procedure.BillingStatus.BILLED
+
+
+@pytest.mark.django_db
+def test_procedure_item_api_rejects_invalid_transition(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+    proc = Procedure.objects.create(patient=patient)
+    item = ProcedureItem.objects.create(
+        procedure=proc,
+        tenant=tenant,
+        description="Curativo inválido",
+        quantity=1,
+        unit_price=Decimal("8.00"),
+    )
+
+    base_url = f"/api/v1/nursing/procedimentoitem/{item.id}/"
+
+    response = api_client.post(f"{base_url}concluir/")
+    assert response.status_code == 400
+    detail = str(response.data.get("detail", ""))
+    assert "execution_status" in detail
 
 
 _patient = _patient
