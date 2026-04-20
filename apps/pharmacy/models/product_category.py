@@ -33,6 +33,7 @@ class ParentCategory(CoreModel):
                 fields=["tenant", "name"],  # Nome único por tenant
                 condition=Q(deleted=False),  # Ignora registros excluídos logicamente
                 name="unique_parent_category_por_tenant",
+                violation_error_message="Ja existe uma Categoria Pai com este nome neste tenant.",
             )
         ]
 
@@ -89,6 +90,7 @@ class ProductCategory(CoreModel):
                 fields=["tenant", "name"],  # Nome único por tenant
                 condition=Q(deleted=False),  # Ignora excluídos logicamente
                 name="unique_category_product_por_tenant",
+                violation_error_message="Ja existe uma Categoria de Produto com este nome neste tenant.",
             )
         ]
 

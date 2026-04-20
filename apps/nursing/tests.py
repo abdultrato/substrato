@@ -154,6 +154,24 @@ def test_procedure_catalog_material_propagacao():
 
 
 @pytest.mark.django_db
+def test_procedure_catalog_material_inherits_unit_cost_from_product():
+    tenant = _tenant()
+    catalog = ProcedureCatalog.objects.create(tenant=tenant, name="Curativo")
+    product = _product(tenant)
+
+    pcm = ProcedureCatalogMaterial.objects.create(
+        catalog=catalog,
+        product=product,
+        tenant=tenant,
+        default_quantity=Decimal("1.0"),
+        default_unit_cost=Decimal("2.50"),
+    )
+
+    pcm.refresh_from_db()
+    assert pcm.default_unit_cost == product.sale_price
+
+
+@pytest.mark.django_db
 def test_procedure_catalog_material_allows_duplicate_product_in_same_catalog():
     tenant = _tenant()
     catalog = ProcedureCatalog.objects.create(tenant=tenant, name="Curativo")

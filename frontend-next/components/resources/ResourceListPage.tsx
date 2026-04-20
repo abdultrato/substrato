@@ -20,6 +20,8 @@ function pickLabel(row: Row): string {
     "nome",
     "descricao",
     "identificador",
+    "bag_identifier",
+    "unit_number",
     "dominio",
     "token",
     "numero",

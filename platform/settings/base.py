@@ -109,6 +109,7 @@ LOCAL_APPS = [
     "apps.notifications.apps.NotificationsConfig",
     "apps.tenants.apps.TenantsConfig",
     "apps.pharmacy.apps.PharmacyConfig",
+    "apps.bloodbank.apps.BloodBankConfig",
     "apps.accounting.apps.AccountingConfig",
     "apps.reception.apps.ReceptionConfig",
     "apps.audit_activities.apps.AuditActivitiesConfig",
@@ -630,7 +631,7 @@ REST_FRAMEWORK = {
         "security.authenticacao.JWTAuth",
     ],
     "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
+        "api.core.filter_backends.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],

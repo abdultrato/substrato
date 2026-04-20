@@ -205,8 +205,8 @@ export default function AutoForm({
   if (!formSpec) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-        Schema do endpoint não encontrado em schema.json. Regerar o schema e tipos
-        para habilitar o formulário.
+        Schema do endpoint não encontrado em `schema.generated.json`. Regerar o schema
+        para habilitar o formulário (ex.: `python generate_schema.py` e depois `python scripts/convert_schema_json.py`).
       </div>
     )
   }

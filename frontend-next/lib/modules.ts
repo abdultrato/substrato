@@ -84,6 +84,18 @@ const MODULES_BASE: ModuleGroup[] = [
     ],
   },
   {
+    key: "banco_sangue",
+    label: "Banco de Sangue",
+    resources: [
+      { key: "doacao", label: "Doações", endpoint: "/bloodbank/doacao/", adminListHref: "/admin/bloodbank/blooddonation/" },
+      { key: "unidade", label: "Unidades", endpoint: "/bloodbank/unidade/", adminListHref: "/admin/bloodbank/bloodunit/" },
+      { key: "transfusao", label: "Transfusões", endpoint: "/bloodbank/transfusao/", adminListHref: "/admin/bloodbank/bloodtransfusion/" },
+      { key: "armazenamento", label: "Armazenamentos", endpoint: "/bloodbank/armazenamento/", adminListHref: "/admin/bloodbank/bloodstorage/" },
+      { key: "movimentoestoque", label: "Movimentos", endpoint: "/bloodbank/movimentoestoque/", adminListHref: "/admin/bloodbank/bloodstockmovement/" },
+      { key: "manutencaoarmazenamento", label: "Manutenções", endpoint: "/bloodbank/manutencaoarmazenamento/", adminListHref: "/admin/bloodbank/bloodstoragemaintenance/" },
+    ],
+  },
+  {
     key: "enfermagem",
     label: "Enfermagem",
     resources: [
@@ -374,6 +386,7 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   insurer: "seguradora",
   tenants: "inquilinos",
   identity: "identidade",
+  bloodbank: "banco_sangue",
 }
 
 function normalizeResourceKey(value: string): string {

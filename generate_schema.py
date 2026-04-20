@@ -9,6 +9,7 @@ import os
 import sys
 
 import sitecustomize  # noqa: F401
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Adiciona o diretório do projeto ao path
 sys.path.insert(0, os.path.dirname(__file__))
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 
         # Salva o schema em JSON
         with open("frontend-next/schema.json", "w") as f:
-            json.dump(schema, f, indent=2)
+            json.dump(schema, f, indent=2, cls=DjangoJSONEncoder)
 
         sys.exit(0)
     except Exception:

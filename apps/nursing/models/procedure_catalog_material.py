@@ -71,6 +71,15 @@ class ProcedureCatalogMaterial(TenantPropagationMixin, NoNameCoreModel):
             raise ValidationError({"product": "Catálogo e produto devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
+        if self.product_id:
+            try:
+                product = self.product
+            except Exception:
+                product = None
+
+            if product is not None:
+                self.default_unit_cost = product.sale_price
+
         if not self.tenant_id and self.catalog_id:
             self.tenant_id = self.catalog.tenant_id
         self.full_clean()

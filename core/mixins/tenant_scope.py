@@ -20,6 +20,18 @@ class TenantMixin(models.Model):
             models.Index(fields=["tenant"]),
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Admin/serializers run full_clean() before save(). If tenant is only set
+        # in save(), unique constraints scoped by tenant are validated with a NULL
+        # tenant and may crash later with IntegrityError. Hydrate tenant early
+        # from the request ContextVar when available.
+        if not getattr(self, "tenant_id", None):
+            tenant = get_tenant()
+            if tenant:
+                self.tenant = tenant
+
     def save(self, *args, **kwargs):
         if not self.tenant_id:
             tenant = get_tenant()

@@ -53,7 +53,17 @@ export default function EnfermagemProcedimentosPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (p: ProcedimentoRow) => p.id_custom || p.id || "-" },
+      {
+        header: "Código",
+        render: (p: ProcedimentoRow) => (
+          <Link
+            href={`/enfermagem/procedimentos/${p.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {p.id_custom || p.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Paciente", render: (p: ProcedimentoRow) => p.paciente || "-" },
       { header: "Data", render: (p: ProcedimentoRow) => fmtDate(p.data_realizacao) },
       { header: "Total", render: (p: ProcedimentoRow) => (p.total ?? "-") },
@@ -68,14 +78,28 @@ export default function EnfermagemProcedimentosPage() {
           title="Procedimentos"
           subtitle="Registos de procedimentos de enfermagem."
           actions={
-            podeVerAdmin ? (
+            <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/admin/nursing/procedure/"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                href="/enfermagem/procedimentos/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
-                Abrir no admin
+                Novo
               </Link>
-            ) : null
+              <Link
+                href="/recursos/enfermagem/procedimento"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                Gerenciamento
+              </Link>
+              {podeVerAdmin ? (
+                <Link
+                  href="/admin/nursing/procedure/"
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                >
+                  Admin
+                </Link>
+              ) : null}
+            </div>
           }
         />
 

@@ -37,7 +37,7 @@ ROTULOS_FIXOS = {
     "default_price": "Preço padrão",
     "unit_price": "Preço unitário",
     "unit_cost": "Custo unitário",
-    "default_unit_cost": "Custo unitário padrão",
+    "default_unit_cost": "Preço unitário padrão",
     "services_subtotal": "Subtotal serviços",
     "materials_subtotal": "Subtotal materiais",
     "total": "Total",

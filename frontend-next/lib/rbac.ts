@@ -32,6 +32,7 @@ export type WorkspaceKey =
   | "dashboard"
   | "reception"
   | "laboratory"
+  | "blood-bank"
   | "nursing"
   | "medicine"
   | "pharmacy"
@@ -67,6 +68,13 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Laboratory",
     href: "/laboratory",
     description: "Result entry, validation, and PDF generation.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
+  },
+  {
+    key: "blood-bank",
+    label: "Blood Bank",
+    href: "/banco-sangue",
+    description: "Donations, units, transfusions, and stock movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
   {

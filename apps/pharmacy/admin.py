@@ -3,6 +3,7 @@
 Inclui comentários em português explicando os principais pontos linha a linha.
 """
 
+from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms import ValidationError as FormValidationError
@@ -37,6 +38,7 @@ from .models.product_category import ParentCategory, ProductCategory
 from .models.sale import Sale
 from .models.sale_item import SaleItem
 from .models.lot import Lot  # for stock check in inline
+from infrastructure.context.tenant import get_tenant
 
 # =========================================================
 # PRODUTO
@@ -748,6 +750,42 @@ class VendaAdmin(admin.ModelAdmin):
 @admin.register(ParentCategory)
 class ParentCategoryAdmin(admin.ModelAdmin):
     """Administra categorias-pai com ação de criação sugerida."""
+
+    class ParentCategoryAdminForm(forms.ModelForm):
+        """
+        Garante validação de unicidade (tenant, name) antes do save.
+
+        No admin, o campo `tenant` não aparece no formulário, então o Django pode
+        pular validações de UniqueConstraint que dependem dele e só falhar no banco
+        com IntegrityError. Esta validação evita o crash e mostra um erro amigável.
+        """
+
+        class Meta:
+            model = ParentCategory
+            fields = ("name", "description")
+
+        def clean(self):
+            cleaned_data = super().clean()
+            name = (cleaned_data.get("name") or "").strip()
+
+            tenant = getattr(self.instance, "tenant", None) or get_tenant()
+            if tenant and not getattr(self.instance, "tenant_id", None):
+                self.instance.tenant = tenant
+
+            if tenant and name:
+                qs = ParentCategory.objects.filter(tenant=tenant, name=name)
+                if self.instance.pk:
+                    qs = qs.exclude(pk=self.instance.pk)
+
+                if qs.exists():
+                    raise FormValidationError(
+                        {"name": "Ja existe uma Categoria Pai com este nome neste tenant."}
+                    )
+
+            return cleaned_data
+
+    form = ParentCategoryAdminForm
+
     list_display = ("name", "created_at")
     search_fields = ("name",)
     ordering = ("name",)

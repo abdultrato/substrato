@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import datetime
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
 from core.models.base import NoNameCoreModel
+from apps.bloodbank.services.compatibility import (
+    compatibility_error_message,
+    is_blood_compatible,
+)
 
 User = settings.AUTH_USER_MODEL
 
@@ -43,6 +49,17 @@ class BloodDonation(NoNameCoreModel):
 
     prefix = "DON"
 
+    class DonorRole(models.TextChoices):
+        VOLUNTARY = "VOL", "Voluntario"
+        REPLACEMENT = "REP", "Repositor"
+
+    class TestResult(models.TextChoices):
+        PENDING = "PEN", "Pendente"
+        NEGATIVE = "NEG", "Negativo"
+        POSITIVE = "POS", "Positivo"
+        INCONCLUSIVE = "INC", "Inconclusivo"
+        NOT_DONE = "NDO", "Nao realizado"
+
     class DonationType(models.TextChoices):
         WHOLE_BLOOD = "WBL", "Sangue total"
         APHERESIS = "APH", "Aferese"
@@ -59,11 +76,29 @@ class BloodDonation(NoNameCoreModel):
         REJECTED = "REJ", "Rejeitada"
 
     donor = models.ForeignKey(
-        "clinico.Patient",
+        "clinical.Patient",
         db_column="donor_id",
         verbose_name="Doador",
         on_delete=models.PROTECT,
         related_name="blood_donations",
+        db_index=True,
+    )
+    donor_role = models.CharField(
+        db_column="donor_role",
+        verbose_name="Tipo de doador",
+        max_length=3,
+        choices=DonorRole.choices,
+        default=DonorRole.VOLUNTARY,
+        db_index=True,
+    )
+    replacement_for = models.ForeignKey(
+        "clinical.Patient",
+        db_column="replacement_for_id",
+        verbose_name="Reposicao para (paciente)",
+        on_delete=models.SET_NULL,
+        related_name="replacement_blood_donations",
+        null=True,
+        blank=True,
         db_index=True,
     )
     collected_by = models.ForeignKey(
@@ -149,6 +184,86 @@ class BloodDonation(NoNameCoreModel):
         null=True,
         blank=True,
     )
+    donor_height_cm = models.PositiveIntegerField(
+        db_column="donor_height_cm",
+        verbose_name="Altura do doador (cm)",
+        null=True,
+        blank=True,
+    )
+    blood_pressure_systolic = models.PositiveIntegerField(
+        db_column="blood_pressure_systolic",
+        verbose_name="Pressao arterial sistolica (mmHg)",
+        null=True,
+        blank=True,
+    )
+    blood_pressure_diastolic = models.PositiveIntegerField(
+        db_column="blood_pressure_diastolic",
+        verbose_name="Pressao arterial diastolica (mmHg)",
+        null=True,
+        blank=True,
+    )
+    pulse_bpm = models.PositiveIntegerField(
+        db_column="pulse_bpm",
+        verbose_name="Pulso (bpm)",
+        null=True,
+        blank=True,
+    )
+    temperature_c = models.DecimalField(
+        db_column="temperature_c",
+        verbose_name="Temperatura (C)",
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+    )
+
+    # Resultados de triagem laboratorial (por doacao).
+    hiv_test = models.CharField(
+        db_column="hiv_test",
+        verbose_name="HIV",
+        max_length=3,
+        choices=TestResult.choices,
+        default=TestResult.PENDING,
+        db_index=True,
+    )
+    syphilis_rpr_test = models.CharField(
+        db_column="syphilis_rpr_test",
+        verbose_name="Sifilis/RPR",
+        max_length=3,
+        choices=TestResult.choices,
+        default=TestResult.PENDING,
+        db_index=True,
+    )
+    hepatitis_b_hbsag_test = models.CharField(
+        db_column="hepatitis_b_hbsag_test",
+        verbose_name="Hepatite B (HBsAg)",
+        max_length=3,
+        choices=TestResult.choices,
+        default=TestResult.PENDING,
+        db_index=True,
+    )
+    hepatitis_c_anti_hcv_test = models.CharField(
+        db_column="hepatitis_c_anti_hcv_test",
+        verbose_name="Hepatite C (anti-HCV)",
+        max_length=3,
+        choices=TestResult.choices,
+        default=TestResult.PENDING,
+        db_index=True,
+    )
+    malaria_test = models.CharField(
+        db_column="malaria_test",
+        verbose_name="Malaria",
+        max_length=3,
+        choices=TestResult.choices,
+        default=TestResult.PENDING,
+        db_index=True,
+    )
+    test_notes = models.TextField(
+        db_column="test_notes",
+        verbose_name="Observacoes dos exames",
+        blank=True,
+        default="",
+    )
     contraindications = models.TextField(
         db_column="contraindications",
         verbose_name="Contraindicacoes",
@@ -188,11 +303,177 @@ class BloodDonation(NoNameCoreModel):
         if self.donor_id and self.tenant_id and self.donor.tenant_id != self.tenant_id:
             raise ValidationError({"donor": "Doador e doacao devem pertencer ao mesmo tenant."})
 
+        if self.replacement_for_id and self.tenant_id and self.replacement_for.tenant_id != self.tenant_id:
+            raise ValidationError(
+                {"replacement_for": "Paciente de reposicao e doacao devem pertencer ao mesmo tenant."}
+            )
+
+        if self.donor_role == self.DonorRole.REPLACEMENT:
+            if not self.replacement_for_id:
+                raise ValidationError({"replacement_for": "Informe o paciente para doacao do tipo repositor."})
+
+            if getattr(self.donor, "is_replacement_donor_inapt", False):
+                until = getattr(self.donor, "replacement_donor_inapt_at", None)
+                base = "Doador repositor inapto."
+                msg = f"{base} Inapto desde {until:%Y-%m-%d %H:%M}." if until else base
+                raise ValidationError({"donor": msg})
+
+            # Para doador repositor, exige registro de todos os exames (nao pode ficar pendente).
+            required = {
+                "hiv_test": self.hiv_test,
+                "syphilis_rpr_test": self.syphilis_rpr_test,
+                "hepatitis_b_hbsag_test": self.hepatitis_b_hbsag_test,
+                "hepatitis_c_anti_hcv_test": self.hepatitis_c_anti_hcv_test,
+                "malaria_test": self.malaria_test,
+            }
+            errors = {}
+            for field_name, value in required.items():
+                if value == self.TestResult.PENDING:
+                    errors[field_name] = "Para repositor, informe o resultado do exame (nao pode ficar pendente)."
+            if errors:
+                raise ValidationError(errors)
+
+        # Regra geral: intervalo minimo entre doacoes (90 dias).
+        if self.donor_id and self.collected_at:
+            try:
+                collected_date = timezone.localdate(self.collected_at)
+            except Exception:
+                collected_date = self.collected_at.date()
+
+            last = (
+                BloodDonation.objects.filter(
+                    tenant_id=self.tenant_id,
+                    donor_id=self.donor_id,
+                    deleted=False,
+                )
+                .exclude(pk=self.pk)
+                .exclude(status=self.DonationStatus.CANCELED)
+                .filter(collected_at__lt=self.collected_at)
+                .order_by("-collected_at")
+                .first()
+            )
+            if last is not None and last.collected_at:
+                try:
+                    last_date = timezone.localdate(last.collected_at)
+                except Exception:
+                    last_date = last.collected_at.date()
+
+                next_ok = last_date + datetime.timedelta(days=90)
+                if collected_date < next_ok:
+                    raise ValidationError(
+                        {"donor": f"Doador temporariamente inapto. Proxima doacao apos {next_ok:%Y-%m-%d}."}
+                    )
+
+        if self.donor_id:
+            # Elegibilidade minima para doacao: 16 anos.
+            birth_date = getattr(self.donor, "birth_date", None)
+            if not birth_date:
+                raise ValidationError({"donor": "Doador sem data de nascimento. Informe para validar idade minima."})
+
+            collected_date = None
+            if isinstance(self.collected_at, datetime.datetime):
+                try:
+                    collected_date = timezone.localdate(self.collected_at)
+                except Exception:
+                    collected_date = self.collected_at.date()
+            if collected_date is None:
+                collected_date = timezone.localdate()
+
+            if isinstance(birth_date, datetime.date):
+                years = collected_date.year - birth_date.year
+                if (collected_date.month, collected_date.day) < (birth_date.month, birth_date.day):
+                    years -= 1
+                if years < 16:
+                    raise ValidationError({"donor": "Idade minima para doacao de sangue: 16 anos."})
+
         if self.processed_at and self.collected_at and self.processed_at < self.collected_at:
             raise ValidationError({"processed_at": "Processamento nao pode ser anterior a coleta."})
 
         if self.volume_ml <= 0:
             raise ValidationError({"volume_ml": "Volume coletado deve ser maior que zero."})
+
+        if self.donor_weight_kg is not None and self.donor_weight_kg < 50:
+            raise ValidationError({"donor_weight_kg": "Peso minimo para doacao: 50 kg."})
+
+        if self.screening_status == self.ScreeningStatus.APPROVED:
+            required_negative = {
+                "hiv_test": self.hiv_test,
+                "syphilis_rpr_test": self.syphilis_rpr_test,
+                "hepatitis_b_hbsag_test": self.hepatitis_b_hbsag_test,
+                "hepatitis_c_anti_hcv_test": self.hepatitis_c_anti_hcv_test,
+                "malaria_test": self.malaria_test,
+            }
+            errors = {}
+            for field_name, value in required_negative.items():
+                if value != self.TestResult.NEGATIVE:
+                    errors[field_name] = "Triagem aprovada exige resultado NEGATIVO."
+            if self.donor_weight_kg is None:
+                errors["donor_weight_kg"] = "Informe o peso do doador para triagem aprovada."
+            if self.hemoglobin_g_dl is None:
+                errors["hemoglobin_g_dl"] = "Informe a hemoglobina para triagem aprovada."
+            if errors:
+                raise ValidationError(errors)
+
+    def _has_any_positive_test(self) -> bool:
+        return any(
+            v == self.TestResult.POSITIVE
+            for v in (
+                self.hiv_test,
+                self.syphilis_rpr_test,
+                self.hepatitis_b_hbsag_test,
+                self.hepatitis_c_anti_hcv_test,
+                self.malaria_test,
+            )
+        )
+
+    def _discard_related_units(self, reason: str):
+        now = timezone.now()
+        qs = BloodUnit.objects.filter(tenant_id=self.tenant_id, donation_id=self.id, deleted=False)
+        for unit in qs.select_related("storage"):
+            if unit.status == BloodUnit.UnitStatus.DISCARDED:
+                continue
+            unit.status = BloodUnit.UnitStatus.DISCARDED
+            unit.reserved_for = None
+            unit.notes = (unit.notes or "").strip()
+            suffix = f"[DESCARTE] {reason}"
+            unit.notes = f"{unit.notes}\n{suffix}".strip() if unit.notes else suffix
+            unit.save()
+
+            BloodStockMovement(
+                tenant=unit.tenant,
+                unit=unit,
+                source_storage=unit.storage,
+                movement_type=BloodStockMovement.MovementType.DISCARD,
+                moved_at=now,
+                reason=reason,
+            ).save()
+
+    def save(self, *args, **kwargs):
+        # Padroniza validacoes (clean()) antes de persistir.
+        self.full_clean()
+        result = super().save(*args, **kwargs)
+
+        # Repositor com exame POSITIVO: torna repositor inapto e descarta sangue.
+        if self.donor_role == self.DonorRole.REPLACEMENT and self.donor_id and self._has_any_positive_test():
+            donor = self.donor
+            changed_donor = False
+            if not getattr(donor, "is_replacement_donor_inapt", False):
+                donor.is_replacement_donor_inapt = True
+                donor.replacement_donor_inapt_at = timezone.now()
+                donor.replacement_donor_inapt_reason = (
+                    donor.replacement_donor_inapt_reason or ""
+                ).strip() or "Exame positivo em doacao repositor."
+                changed_donor = True
+            if changed_donor:
+                donor.save()
+
+            if self.screening_status != self.ScreeningStatus.REJECTED:
+                self.screening_status = self.ScreeningStatus.REJECTED
+                super().save(update_fields=["screening_status"])
+
+            self._discard_related_units("Exame positivo (reposicao)")
+
+        return result
 
 
 class BloodStorage(NoNameCoreModel):
@@ -262,6 +543,7 @@ class BloodStorage(NoNameCoreModel):
             models.UniqueConstraint(
                 fields=["tenant", "name"],
                 name="uq_blood_storage_name_per_tenant",
+                violation_error_message="Ja existe um armazenamento com este nome neste tenant.",
             )
         ]
         indexes = [
@@ -317,7 +599,7 @@ class BloodUnit(NoNameCoreModel):
         db_index=True,
     )
     reserved_for = models.ForeignKey(
-        "clinico.Patient",
+        "clinical.Patient",
         db_column="reserved_for_id",
         verbose_name="Paciente reservado",
         on_delete=models.SET_NULL,
@@ -422,6 +704,19 @@ class BloodUnit(NoNameCoreModel):
         if self.expires_at <= self.collected_at:
             raise ValidationError({"expires_at": "Validade deve ser posterior a data da coleta."})
 
+        if self.reserved_for_id:
+            recipient_blood_type = getattr(self.reserved_for, "blood_type", None)
+            if not is_blood_compatible(self.blood_type, recipient_blood_type, self.component_type):
+                raise ValidationError(
+                    {
+                        "reserved_for": compatibility_error_message(
+                            self.blood_type,
+                            recipient_blood_type,
+                            self.component_type,
+                        )
+                    }
+                )
+
         if self.status == self.UnitStatus.RESERVED and not self.reserved_for_id:
             raise ValidationError({"reserved_for": "Informe o paciente quando a unidade estiver reservada."})
 
@@ -434,7 +729,8 @@ class BloodUnit(NoNameCoreModel):
             if not self.volume_ml:
                 self.volume_ml = self.donation.volume_ml
 
-        super().save(*args, **kwargs)
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class BloodTransfusion(NoNameCoreModel):
@@ -453,7 +749,7 @@ class BloodTransfusion(NoNameCoreModel):
         ADVERSE_REACTION = "REA", "Reacao adversa"
 
     recipient = models.ForeignKey(
-        "clinico.Patient",
+        "clinical.Patient",
         db_column="recipient_id",
         verbose_name="Paciente receptor",
         on_delete=models.PROTECT,
@@ -557,6 +853,25 @@ class BloodTransfusion(NoNameCoreModel):
         if self.blood_unit_id and self.tenant_id and self.blood_unit.tenant_id != self.tenant_id:
             raise ValidationError({"blood_unit": "Unidade e transfusao devem pertencer ao mesmo tenant."})
 
+        if self.recipient_id and self.blood_unit_id:
+            recipient_blood_type = getattr(self.recipient, "blood_type", None)
+            if getattr(self.blood_unit, "reserved_for_id", None) and self.blood_unit.reserved_for_id != self.recipient_id:
+                raise ValidationError({"blood_unit": "Unidade reservada para outro paciente."})
+            if not is_blood_compatible(
+                getattr(self.blood_unit, "blood_type", None),
+                recipient_blood_type,
+                getattr(self.blood_unit, "component_type", None),
+            ):
+                raise ValidationError(
+                    {
+                        "blood_unit": compatibility_error_message(
+                            getattr(self.blood_unit, "blood_type", None),
+                            recipient_blood_type,
+                            getattr(self.blood_unit, "component_type", None),
+                        )
+                    }
+                )
+
         if self.finished_at and not self.started_at:
             raise ValidationError({"finished_at": "Nao e possivel terminar sem iniciar a transfusao."})
 
@@ -571,6 +886,10 @@ class BloodTransfusion(NoNameCoreModel):
 
         if self.status == self.TransfusionStatus.COMPLETED and not self.finished_at:
             raise ValidationError({"finished_at": "Informe a data de termino para transfusao concluida."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 class BloodStockMovement(NoNameCoreModel):

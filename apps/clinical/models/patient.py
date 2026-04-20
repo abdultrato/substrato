@@ -13,6 +13,18 @@ from infrastructure.orm.fields.email_field import NormalizedEmailField
 from infrastructure.orm.fields.phone_field import PhoneField
 
 
+class BloodType(models.TextChoices):
+    O_NEGATIVE = "O-", "O negativo"
+    O_POSITIVE = "O+", "O positivo"
+    A_NEGATIVE = "A-", "A negativo"
+    A_POSITIVE = "A+", "A positivo"
+    B_NEGATIVE = "B-", "B negativo"
+    B_POSITIVE = "B+", "B positivo"
+    AB_NEGATIVE = "AB-", "AB negativo"
+    AB_POSITIVE = "AB+", "AB positivo"
+    UNKNOWN = "UNK", "Nao informado"
+
+
 class Patient(CoreModel):
     """Entidade corporativa de paciente."""
 
@@ -54,6 +66,34 @@ class Patient(CoreModel):
         choices=Gender.choices,
         db_index=True,
         default=Gender.FEMALE,
+    )
+
+    blood_type = models.CharField(
+        db_column="blood_type",
+        verbose_name="Tipo sanguineo",
+        max_length=3,
+        choices=BloodType.choices,
+        default=BloodType.UNKNOWN,
+        db_index=True,
+    )
+
+    is_replacement_donor_inapt = models.BooleanField(
+        db_column="is_replacement_donor_inapt",
+        verbose_name="Repositor inapto",
+        default=False,
+        db_index=True,
+    )
+    replacement_donor_inapt_at = models.DateTimeField(
+        db_column="replacement_donor_inapt_at",
+        verbose_name="Repositor inapto em",
+        null=True,
+        blank=True,
+    )
+    replacement_donor_inapt_reason = models.TextField(
+        db_column="replacement_donor_inapt_reason",
+        verbose_name="Motivo de inapto (reposicao)",
+        blank=True,
+        default="",
     )
 
     race_origin = models.CharField(
@@ -213,6 +253,8 @@ class Patient(CoreModel):
             models.Index(fields=["name"]),
             models.Index(fields=["document_number"]),
             models.Index(fields=["gender"]),
+            models.Index(fields=["blood_type"]),
+            models.Index(fields=["is_replacement_donor_inapt"]),
             models.Index(fields=["birth_date"]),
             models.Index(fields=["origin_company"]),
         ]

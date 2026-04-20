@@ -11,6 +11,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
+import { canonicalModuleGroupKey } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -70,6 +71,9 @@ export default function RecursoDetalhePage() {
     }
 
     const basePath = `/recursos/${groupKey}/${resourceKey}`
+    const isBloodUnit =
+        canonicalModuleGroupKey(groupKey) === "banco_sangue" &&
+        resourceKey.toLocaleLowerCase() === "unidade"
 
     const criarFatura = useCallback(async () => {
         alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
@@ -93,6 +97,66 @@ export default function RecursoDetalhePage() {
             setActionId(null)
         }
     }, [data?.fatura_id])
+
+    const reservarUnidade = useCallback(async () => {
+        const recipientRaw = prompt("ID do paciente receptor para reserva:")
+        if (!recipientRaw) return
+        const recipient = Number(recipientRaw)
+        if (!Number.isFinite(recipient)) {
+            alert("ID inválido.")
+            return
+        }
+
+        try {
+            setActionId(recipient)
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/reservar/`
+            await apiFetch(endpoint, { method: "POST", body: JSON.stringify({ recipient }) })
+            await reloadResource()
+        } catch (e: any) {
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao reservar."))
+        } finally {
+            setActionId(null)
+        }
+    }, [found, id, reloadResource])
+
+    const liberarReserva = useCallback(async () => {
+        try {
+            setActionId(-1)
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/liberar_reserva/`
+            await apiFetch(endpoint, { method: "POST" })
+            await reloadResource()
+        } catch (e: any) {
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao liberar reserva."))
+        } finally {
+            setActionId(null)
+        }
+    }, [found, id, reloadResource])
+
+    const transfundirUnidade = useCallback(async () => {
+        const recipientRaw = prompt("ID do paciente receptor para transfusão:")
+        if (!recipientRaw) return
+        const recipient = Number(recipientRaw)
+        if (!Number.isFinite(recipient)) {
+            alert("ID inválido.")
+            return
+        }
+
+        const indication = prompt("Indicação clínica (opcional):") || ""
+
+        try {
+            setActionId(recipient)
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/transfundir/`
+            await apiFetch(endpoint, {
+                method: "POST",
+                body: JSON.stringify({ recipient, indication }),
+            })
+            await reloadResource()
+        } catch (e: any) {
+            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao transfundir."))
+        } finally {
+            setActionId(null)
+        }
+    }, [found, id, reloadResource])
 
     if (loading) return null
 
@@ -123,6 +187,31 @@ export default function RecursoDetalhePage() {
                     subtitle={found.resource.endpoint}
                     actions={
                         <div className="flex gap-3">
+                            {isBloodUnit ? (
+                                <>
+                                    <button
+                                        onClick={reservarUnidade}
+                                        disabled={actionId !== null}
+                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                    >
+                                        Reservar
+                                    </button>
+                                    <button
+                                        onClick={liberarReserva}
+                                        disabled={actionId !== null}
+                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                    >
+                                        Liberar reserva
+                                    </button>
+                                    <button
+                                        onClick={transfundirUnidade}
+                                        disabled={actionId !== null}
+                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                    >
+                                        Transfundir
+                                    </button>
+                                </>
+                            ) : null}
                             {isCirurgia ? (
                                 data?.fatura_id ? (
                                     <button

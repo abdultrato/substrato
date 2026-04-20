@@ -36,6 +36,9 @@ class ProcedureCatalogMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCatalogMaterial
         fields = "__all__"
+        extra_kwargs = {
+            "default_unit_cost": {"read_only": True},
+        }
 
 
 class ProcedureSerializer(serializers.ModelSerializer):

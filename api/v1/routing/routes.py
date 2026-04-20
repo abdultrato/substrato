@@ -1,6 +1,7 @@
 from api.v1.accounting.viewsets import VIEWSET_MAP as ACCOUNTING_VIEWSET_MAP
 from api.v1.audit.viewsets import VIEWSET_MAP as AUDIT_VIEWSET_MAP
 from api.v1.billing.viewsets import VIEWSET_MAP as BILLING_VIEWSET_MAP
+from api.v1.bloodbank.viewsets import VIEWSET_MAP as BLOODBANK_VIEWSET_MAP
 from api.v1.clinical.viewsets import VIEWSET_MAP as CLINICAL_VIEWSET_MAP
 from api.v1.consultations.viewsets import VIEWSET_MAP as CONSULTATIONS_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
@@ -32,6 +33,7 @@ VIEWSET_GROUPS = {
     "external_entities": EXTERNAL_ENTITIES_VIEWSET_MAP,
     "pharmacy": PHARMACY_VIEWSET_MAP,
     "billing": BILLING_VIEWSET_MAP,
+    "bloodbank": BLOODBANK_VIEWSET_MAP,
     "identity": IDENTITY_VIEWSET_MAP,
     "tenants": TENANTS_VIEWSET_MAP,
     "notifications": NOTIFICATIONS_VIEWSET_MAP,

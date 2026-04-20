@@ -13,6 +13,7 @@ import {
     ClipboardList,
     Receipt,
     Microscope,
+    Droplet,
     HeartPulse,
     Stethoscope,
     ScrollText,
@@ -70,6 +71,12 @@ const NAV_ITEMS: NavItem[] = [
         href: "/laboratory",
         label: "Laboratório",
         icon: Microscope,
+        groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
+    },
+    {
+        href: "/banco-sangue",
+        label: "Banco de Sangue",
+        icon: Droplet,
         groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
     },
     {

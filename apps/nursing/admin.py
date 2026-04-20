@@ -2,7 +2,10 @@
 
 from decimal import Decimal
 
+from django import forms
 from django.contrib import admin
+from django.http import JsonResponse
+from django.urls import path
 from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -113,6 +116,34 @@ class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
     """Inline para materiais padrão de um catálogo de procedimento."""
     model = ProcedureCatalogMaterial
     extra = 1  # Sugere um material padrão por vez
+
+    class ProcedimentoCatalogoMaterialInlineForm(forms.ModelForm):
+        class Meta:
+            model = ProcedureCatalogMaterial
+            fields = (
+                "product",
+                "default_quantity",
+                "default_unit_cost",
+                "observation",
+            )
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            # Não é editável aqui (é herdado do produto), mas mostramos como input
+            # para permitir preenchimento automático via JS no admin inline.
+            unit_cost = self.fields.get("default_unit_cost")
+            if unit_cost is not None:
+                unit_cost.widget.attrs["readonly"] = True
+
+            if getattr(self.instance, "product_id", None) and unit_cost is not None:
+                try:
+                    self.initial["default_unit_cost"] = self.instance.product.sale_price
+                except Exception:
+                    pass
+
+    form = ProcedimentoCatalogoMaterialInlineForm
+
     fields = (
         "product",
         "default_quantity",
@@ -178,6 +209,34 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
         ),
     )
 
+    def get_urls(self):
+        urls = super().get_urls()
+
+        custom = [
+            path(
+                "product-price/<int:product_id>/",
+                self.admin_site.admin_view(self.product_price_view),
+                name="enfermagem_procedurecatalog_product_price",
+            ),
+        ]
+
+        return custom + urls
+
+    def product_price_view(self, request, product_id: int):
+        qs = Product.objects.only("id", "sale_price", "tenant_id").filter(id=product_id, deleted=False)
+        tenant = getattr(request, "tenant", None)
+        if tenant is not None:
+            qs = qs.filter(tenant=tenant)
+
+        product = qs.first()
+        if not product:
+            return JsonResponse({"detail": "Produto não encontrado."}, status=404)
+
+        return JsonResponse({"sale_price": str(product.sale_price or Decimal("0.00"))})
+
+    class Media:
+        js = ("enfermagem/admin/procedure_catalog_material_inline.js",)
+
 
 @admin.register(ProcedureCatalogMaterial)
 class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
@@ -204,6 +263,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
     list_select_related = ("catalog", "product")
     readonly_fields = (
         "custom_id",
+        "default_unit_cost",
         "created_at",
         "updated_at",
         "created_by",

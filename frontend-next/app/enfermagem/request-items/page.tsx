@@ -1,6 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -78,7 +79,17 @@ export default function EnfermagemItensRequisicaoPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: Row) => r.id_custom || r.id || "-" },
+      {
+        header: "Código",
+        render: (r: Row) => (
+          <Link
+            href={`/enfermagem/request-items/${r.id}`}
+            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+          >
+            {r.id_custom || r.id || "-"}
+          </Link>
+        ),
+      },
       { header: "Requisição", render: (r: Row) => r.requisicao || "-" },
       {
         header: "Exame",
@@ -99,14 +110,28 @@ export default function EnfermagemItensRequisicaoPage() {
           title="Itens de requisição"
           subtitle="Lista de exames vinculados às requisições."
           actions={
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-slate-700">Requisição (ID)</label>
-              <input
-                value={requisicao}
-                onChange={(e) => setRequisicao(e.target.value)}
-                placeholder="ex: 123"
-                className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/enfermagem/request-items/novo"
+                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+              >
+                Novo
+              </Link>
+              <Link
+                href="/recursos/clinico/requisicaoitem"
+                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+              >
+                Gerenciamento
+              </Link>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-slate-700">Requisição (ID)</label>
+                <input
+                  value={requisicao}
+                  onChange={(e) => setRequisicao(e.target.value)}
+                  placeholder="ex: 123"
+                  className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
+                />
+              </div>
             </div>
           }
         />
