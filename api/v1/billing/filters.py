@@ -16,6 +16,8 @@ class InvoiceFilter(SafeFilterSet):
         "iva_valor": "vat_amount",
         "origem": "origin",
         "paciente": "patient",
+        "total_a_pagar": "total",
+        "valor_a_pagar": "total",
         "valor_paciente": "patient_amount",
         "valor_seguro": "insurance_amount",
     }

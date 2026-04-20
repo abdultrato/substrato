@@ -26,10 +26,11 @@ from .pdf_base import (
     document_section_style,
     document_title_style,
     draw_line_full_width,
-    institutional_user_identity,
     montar_bloco_identificacao,
     on_page,
     pdf_encryption,
+    user_name,
+    user_primary_group,
 )
 
 logger = logging.getLogger(__name__)
@@ -170,7 +171,8 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     # ==========================
     # BLOCO DIREITA (FATURA)
     # ==========================
-    technician_texto = institutional_user_identity(user_documento)
+    professional_group = user_primary_group(user_documento)
+    professional_name = user_name(user_documento)
 
     date_request = _format_request_date(request)
 
@@ -178,7 +180,7 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         f"{bold('Fatura')}: {getattr(invoice, 'custom_id', '—')}",
         f"{bold('Requisição')}: {getattr(request, 'custom_id', '—') if request else '—'}",
         f"{bold('Data')}: {date_request}",
-        f"{bold('Técn. de Laboratório')}: {technician_texto}",
+        f"{bold(professional_group)}: {professional_name}",
         f"{bold('Estado')}: {getattr(invoice, 'status', '—')}",
     ]
 
@@ -374,10 +376,10 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     # ==========================
     # TOTAIS
     # ==========================
-    desconto = getattr(invoice, "desconto", Decimal("0.00")) or Decimal("0.00")
-
     subtotal_model = getattr(invoice, "subtotal", None)
-    total_model = getattr(invoice, "total", None)
+    total_model = getattr(invoice, "total_a_pagar", None)
+    if total_model is None:
+        total_model = getattr(invoice, "total", None)
     iva_model = getattr(invoice, "vat_amount", None)
 
     def fmt_money(v):
@@ -390,34 +392,20 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     subtotal_sem_iva = subtotal_model if subtotal_model is not None else subtotal_geral
     total_com_iva = total_model if total_model is not None else subtotal_sem_iva + (iva_model or Decimal("0.00"))
     value_total_iva = iva_model if iva_model is not None else max(total_com_iva - subtotal_sem_iva, Decimal("0.00"))
-    total_a_pagar_sem_iva = max(subtotal_sem_iva - desconto, Decimal("0.00"))
+    total_a_pagar_com_iva = total_com_iva
 
     totais_date = [
         [
-            cell_paragraph("Subtotal com desconto de IVA:", is_bold=True),
+            cell_paragraph("Subtotal (sem IVA):", is_bold=True),
             cell_paragraph(fmt_money(subtotal_sem_iva)),
         ],
         [cell_paragraph("Valor total do IVA:", is_bold=True), cell_paragraph(fmt_money(value_total_iva))],
+        [cell_paragraph("Total (com IVA):", is_bold=True), cell_paragraph(fmt_money(total_com_iva))],
+        [
+            cell_paragraph("TOTAL A PAGAR (com IVA):", is_bold=True),
+            cell_paragraph(fmt_money(total_a_pagar_com_iva), is_bold=True),
+        ]
     ]
-    if desconto > 0:
-        totais_date.append(
-            [
-                cell_paragraph("Desconto:", is_bold=True),
-                cell_paragraph(fmt_money(desconto)),
-            ]
-        )
-    totais_date.append(
-        [
-            cell_paragraph("Total sem desconto de IVA:", is_bold=True),
-            cell_paragraph(fmt_money(total_com_iva)),
-        ]
-    )
-    totais_date.append(
-        [
-            cell_paragraph("TOTAL A PAGAR (sem IVA):", is_bold=True),
-            cell_paragraph(fmt_money(total_a_pagar_sem_iva), is_bold=True),
-        ]
-    )
 
     totais_table = Table(totais_date, colWidths=[usable_width * 0.60, usable_width * 0.40])
     totais_table.setStyle(

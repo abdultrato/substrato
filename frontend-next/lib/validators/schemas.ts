@@ -153,6 +153,7 @@ export const InvoiceSchema = z.object({
   custom_id: z.string().optional().nullable(),
   status: z.string().optional().nullable(),
   total: z.string().optional().nullable(),
+  total_a_pagar: z.string().optional().nullable(),
   patient: z.number().int().optional().nullable(),
 })
 export type Invoice = z.infer<typeof InvoiceSchema>

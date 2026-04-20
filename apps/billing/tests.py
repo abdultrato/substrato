@@ -14,6 +14,7 @@ from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.medical_exam import MedicalExam
 from apps.clinical.models.patient import Patient
+from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.nursing.models import (
     Procedure,
     ProcedureCatalog,
@@ -68,6 +69,15 @@ def _medical_exam(tenant):
     )
 
 
+def _consultation(tenant, patient):
+    return MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        type="Consulta geral",
+        price=Decimal("120.00"),
+    )
+
+
 def _horario_normal():
     """Retorna horário normal (sem multa de horário)."""
     return datetime(2024, 1, 2, 10, 0, tzinfo=timezone.get_current_timezone())
@@ -104,6 +114,7 @@ def test_clinical_invoice_recalculates_totals():
 
     assert invoice.subtotal == exam.price
     assert invoice.total == invoice.subtotal + invoice.vat_amount
+    assert invoice.total_a_pagar == invoice.total
     assert invoice.patient_amount == invoice.total
 
 
@@ -133,6 +144,7 @@ def test_invoice_caps_patient_balance_when_insurance_exceeds_total():
     invoice.refresh_from_db()
 
     assert invoice.total == Decimal("10.00")
+    assert invoice.total_a_pagar == Decimal("10.00")
     assert invoice.insurance_amount == invoice.total
     assert invoice.patient_amount == Decimal("0.00")
 
@@ -215,6 +227,83 @@ def test_exam_item_allows_flexible_source_classification():
 
 
 @pytest.mark.django_db
+def test_invoice_allows_duplicate_pharmacy_product_items_without_sale_item():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    category = ProductCategory.objects.create(tenant=tenant, name="Cat FAR", description="")
+    product = Product.objects.create(
+        tenant=tenant,
+        name="Analgésico",
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal("8.00"),
+        category=category,
+    )
+
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        origin=Invoice.Origin.PHARMACY,
+    )
+
+    first = InvoiceItem(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.ITEM_VENDA,
+        product=product,
+        quantity=Decimal("1.00"),
+        unit_price=Decimal("0.00"),
+    )
+    first.full_clean()
+    first.save()
+
+    second = InvoiceItem(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.ITEM_VENDA,
+        product=product,
+        quantity=Decimal("2.00"),
+        unit_price=Decimal("0.00"),
+    )
+    second.full_clean()
+    second.save()
+
+    assert invoice.items.filter(product=product, deleted=False).count() == 2
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert first.unit_price == product.sale_price
+    assert second.unit_price == product.sale_price
+    assert first.description == product.name
+    assert second.description == product.name
+
+
+@pytest.mark.django_db
+def test_consultation_item_inherits_price_from_consultation():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    consultation = _consultation(tenant, patient)
+
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        origin=Invoice.Origin.CONSULTATION,
+    )
+
+    item = InvoiceItem.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.CONSULTATION,
+        consultation=consultation,
+        quantity=Decimal("3.00"),
+        unit_price=Decimal("0.00"),
+    )
+
+    item.refresh_from_db()
+    assert item.unit_price == consultation.price
+    assert item.quantity == Decimal("1.00")
+    assert item.description == consultation.type
+
+
+@pytest.mark.django_db
 def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_update():
     tenant = _tenant()
     patient = _patient(tenant)
@@ -281,6 +370,34 @@ def test_nursing_invoice_blocks_issuance_without_inventory_and_releases_after_up
     material.refresh_from_db()
     assert material.lot_id == lot.id
     assert material.inventory_movement_id is not None
+
+
+@pytest.mark.django_db
+def test_legacy_procedure_allows_multiple_invoices():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    proc = Procedure.objects.create(patient=patient)
+
+    invoice_1 = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        origin=Invoice.Origin.NURSING,
+        procedure=proc,
+    )
+    invoice_2 = Invoice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        origin=Invoice.Origin.NURSING,
+        procedure=proc,
+    )
+
+    invoices = Invoice.objects.filter(patient=patient, procedure=proc, deleted=False).order_by("created_at", "id")
+    assert invoices.count() == 2
+    assert invoices.first().id == invoice_1.id
+    assert invoices.last().id == invoice_2.id
+
+    # Compatibilidade legado: retorna a mais recente.
+    assert proc.invoice.id == invoice_2.id
 
 
 @pytest.mark.django_db

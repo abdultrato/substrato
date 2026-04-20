@@ -520,8 +520,17 @@ def user_groups(user):
     return ", ".join(nomes) if nomes else "Sem Grupo"
 
 
+def user_primary_group(user):
+    groups_label = user_groups(user)
+    if not groups_label or groups_label == "Sem Grupo":
+        return "Sem Grupo"
+
+    parts = [part.strip() for part in str(groups_label).split(",") if part.strip()]
+    return parts[0] if parts else "Sem Grupo"
+
+
 def institutional_user_identity(user):
-    return f"Téc. de Laboratório | {user_groups(user)} | {user_name(user)}"
+    return f"{user_primary_group(user)}: {user_name(user)}"
 
 
 def document_title_style(name="HeadingDoc"):
@@ -592,6 +601,7 @@ gerar_qr_code = generate_qr_code
 _sanitizar_code_barra = _sanitize_barcode
 name_user = user_name
 grupos_user = user_groups
+grupo_principal_user = user_primary_group
 identidade_user_institucional = institutional_user_identity
 estilo_titulo_documento = document_title_style
 estilo_secao_documento = document_section_style

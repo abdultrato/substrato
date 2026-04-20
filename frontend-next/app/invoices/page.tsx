@@ -57,6 +57,10 @@ export default function FaturasPage() {
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const rascunhos = useMemo(() => faturas.filter((f) => f.estado === "RASC"), [faturas])
+  const totalAPagar = useCallback(
+    (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
+    []
+  )
 
   const carregar = useCallback(async () => {
     try {
@@ -228,7 +232,7 @@ export default function FaturasPage() {
       { header: "Código", render: (f: FaturaRow) => f.id_custom || f.id },
       { header: "Origem", render: (f: FaturaRow) => f.origem || "-" },
       { header: "Estado", render: (f: FaturaRow) => f.estado || "-" },
-      { header: "Total", render: (f: FaturaRow) => <MoneyValue value={f.total} /> },
+      { header: "Total a pagar", render: (f: FaturaRow) => <MoneyValue value={totalAPagar(f)} /> },
       {
         header: "Ações",
         render: (f: FaturaRow) => (
@@ -247,7 +251,7 @@ export default function FaturasPage() {
             >
               Detalhes
             </button>
-            {podeAlterar ? (
+            {podeAlterar && f.estado === "RASC" ? (
               <button
                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={acaoId === f.id}
@@ -270,7 +274,7 @@ export default function FaturasPage() {
             >
               Itens/IVA
             </button>
-            {podeAlterar ? (
+            {podeAlterar && f.estado === "RASC" ? (
               <button
                 className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                 disabled={acaoId === f.id}
@@ -283,7 +287,18 @@ export default function FaturasPage() {
         ),
       },
     ],
-    [acaoId, anular, baixarPdf, emitir, podeAlterar, carregarItens, carregandoItens, itensFaturaId, detalhar]
+    [
+      acaoId,
+      anular,
+      baixarPdf,
+      emitir,
+      podeAlterar,
+      carregarItens,
+      carregandoItens,
+      itensFaturaId,
+      detalhar,
+      totalAPagar,
+    ]
   )
 
   const groupedItens = useMemo(() => {
@@ -439,8 +454,8 @@ export default function FaturasPage() {
                 <div className="text-foreground"><MoneyValue value={selectedFatura.iva_valor} /></div>
               </div>
               <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Total (com IVA)</div>
-                <div className="text-foreground"><MoneyValue value={selectedFatura.total} /></div>
+                <div className="text-xs font-semibold uppercase text-muted-foreground">Total a pagar (com IVA)</div>
+                <div className="text-foreground"><MoneyValue value={totalAPagar(selectedFatura)} /></div>
               </div>
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Valor paciente</div>
@@ -512,7 +527,4 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
-
-
-
 

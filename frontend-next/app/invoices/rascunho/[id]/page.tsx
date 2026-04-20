@@ -225,7 +225,11 @@ export default function FaturaRascunhoPage() {
       return seguroId === seguradoraId
     })
   }, [planos, pagamentoSeguradora])
-  const totalFaturaCents = useMemo(() => parseMoneyToCents(fatura?.total) || 0, [fatura?.total])
+  const totalAPagarFatura = useMemo(
+    () => fatura?.total_a_pagar ?? fatura?.valor_a_pagar ?? fatura?.total,
+    [fatura?.total_a_pagar, fatura?.valor_a_pagar, fatura?.total]
+  )
+  const totalFaturaCents = useMemo(() => parseMoneyToCents(totalAPagarFatura) || 0, [totalAPagarFatura])
   const totalInformadoCents = useMemo(
     () =>
       pagamentoMetodosSelecionados.reduce((acc, metodo) => {
@@ -822,8 +826,8 @@ export default function FaturaRascunhoPage() {
               <div className="text-base font-semibold text-gray-900"><MoneyValue value={fatura.iva_valor} /></div>
             </div>
             <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-              <div className="text-xs text-gray-500">Total</div>
-              <div className="text-base font-semibold text-gray-900"><MoneyValue value={fatura.total} /></div>
+              <div className="text-xs text-gray-500">Total a pagar (com IVA)</div>
+              <div className="text-base font-semibold text-gray-900"><MoneyValue value={totalAPagarFatura} /></div>
             </div>
           </div>
 
@@ -921,8 +925,8 @@ export default function FaturaRascunhoPage() {
 
                 <div className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm md:grid-cols-4">
                   <div>
-                    <div className="text-xs text-gray-500">Total da fatura</div>
-                    <div className="font-semibold text-gray-900"><MoneyValue value={fatura.total} /></div>
+                    <div className="text-xs text-gray-500">Total a pagar (com IVA)</div>
+                    <div className="font-semibold text-gray-900"><MoneyValue value={totalAPagarFatura} /></div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500">Total informado</div>

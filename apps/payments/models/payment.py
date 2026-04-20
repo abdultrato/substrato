@@ -202,7 +202,7 @@ class Payment(CoreModel):
             raise ValidationError({"change_amount": "Troco não pode zerar ou negativar o valor líquido."})
 
         if self.invoice_id:
-            total_fatura = (self.invoice.total or Decimal("0.00")).quantize(Decimal("0.01"))
+            total_fatura = (self.invoice.total_a_pagar or Decimal("0.00")).quantize(Decimal("0.01"))
             total_confirmado = (self.invoice.confirmed_paid_amount() or Decimal("0.00")).quantize(Decimal("0.01"))
             restante = (total_fatura - total_confirmado).quantize(Decimal("0.01"))
 

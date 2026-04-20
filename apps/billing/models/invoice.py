@@ -63,12 +63,12 @@ class Invoice(NoNameCoreModel):
         null=True,
         blank=True,
     )
-    procedure = models.OneToOneField(
+    procedure = models.ForeignKey(
         "enfermagem.Procedure",  # Procedimento único (legado)
         db_column="procedure_id",
         verbose_name="Procedimento (legado)",
         on_delete=models.PROTECT,
-        related_name="invoice",
+        related_name="invoices_legacy",
         null=True,
         blank=True,
         help_text="Legado: prefira usar o campo 'procedures' (múltiplos).",
@@ -233,6 +233,19 @@ class Invoice(NoNameCoreModel):
             patient_amount=self.patient_amount,
         )
 
+    @property
+    def total_a_pagar(self) -> Decimal:
+        """Total final da fatura (com IVA)."""
+        try:
+            return Decimal(self.total or Decimal("0.00")).quantize(Decimal("0.01"))
+        except Exception:
+            return Decimal("0.00")
+
+    @property
+    def valor_a_pagar(self) -> Decimal:
+        """Alias em português para compatibilidade."""
+        return self.total_a_pagar
+
     def confirmed_paid_amount(self):
         from apps.payments.models.payment import Payment
 
@@ -285,10 +298,10 @@ class Invoice(NoNameCoreModel):
             if recibo.invoice_id != self.pk:
                 recibo.invoice = self
                 campos_atualizar.append("invoice")
-            if recibo.value != self.total:
+            if recibo.value != self.total_a_pagar:
                 # O recibo representa o payment total da invoice (não só o
                 # último payment).
-                recibo.value = self.total
+                recibo.value = self.total_a_pagar
                 campos_atualizar.append("value")
             if recibo.payment_id != payment.pk:
                 recibo.payment = payment
@@ -308,7 +321,7 @@ class Invoice(NoNameCoreModel):
             invoice=self,
             payment=payment,
             number=self._default_receipt_number(payment),
-            value=self.total,
+            value=self.total_a_pagar,
         )
 
     def update_payment_status(self, payment=None):
@@ -316,7 +329,7 @@ class Invoice(NoNameCoreModel):
             return
 
         total_paid = self.confirmed_paid_amount() or Decimal("0.00")
-        total_invoice = self.total or Decimal("0.00")
+        total_invoice = self.total_a_pagar
         novo_status = (
             self.Status.PAID if total_paid >= total_invoice and total_invoice > Decimal("0.00") else self.Status.ISSUED
         )

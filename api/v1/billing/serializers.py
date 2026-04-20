@@ -37,6 +37,7 @@ INVOICE_LEGACY_ALIASES = {
     "procedimentos": "procedures",
     "requisicao": "request",
     "setores_itens_faturados": "billed_item_sectors",
+    "valor_a_pagar": "total_a_pagar",
     "valor_paciente": "patient_amount",
     "valor_seguro": "insurance_amount",
     "venda": "sale",
@@ -77,6 +78,7 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     created_by_name = serializers.SerializerMethodField(method_name="get_created_by_name")
     created_by_department = serializers.SerializerMethodField(method_name="get_created_by_department")
     billed_item_sectors = serializers.SerializerMethodField(method_name="get_billed_item_sectors")
+    total_a_pagar = serializers.SerializerMethodField(method_name="get_total_a_pagar")
 
     @staticmethod
     def _user_display(user):
@@ -88,6 +90,13 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
             return full_name
 
         return getattr(user, "username", "") or ""
+
+    @staticmethod
+    def _format_money(value):
+        try:
+            return str(Decimal(value).quantize(Decimal("0.01")))
+        except Exception:
+            return None
 
     def get_created_by_name(self, obj):
         return self._user_display(getattr(obj, "created_by", None))
@@ -109,6 +118,9 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
             for item in items
         }
         return sorted([sector for sector in sectors if sector])
+
+    def get_total_a_pagar(self, obj):
+        return self._format_money(getattr(obj, "total_a_pagar", None))
 
     class Meta:
         model = Invoice

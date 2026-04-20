@@ -233,3 +233,11 @@ class Procedure(NoNameCoreModel):
 
     def __str__(self):
         return f"{self.custom_id} - {self.patient.name}"
+
+    @property
+    def invoice(self):
+        """
+        Compatibilidade legado: retorna a fatura mais recente vinculada
+        via campo legado `Invoice.procedure`.
+        """
+        return self.invoices_legacy.order_by("-created_at", "-id").first()

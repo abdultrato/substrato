@@ -99,6 +99,8 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert "criado_por_nome" in invoice_payload
     assert "criado_por_departamento" in invoice_payload
     assert "setores_itens_faturados" in invoice_payload
+    assert invoice_payload["total_a_pagar"] == "0.00"
+    assert invoice_payload["valor_a_pagar"] == "0.00"
 
     invoice_id = invoice_payload["id"]
 
@@ -133,6 +135,8 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert invoice_detail_response.status_code == 200
     invoice_detail_payload = _response_data(invoice_detail_response)
     assert "Ajuste manual" in invoice_detail_payload["setores_itens_faturados"]
+    assert invoice_detail_payload["total_a_pagar"] == "11.60"
+    assert invoice_detail_payload["valor_a_pagar"] == "11.60"
 
     update_response = api_client.patch(
         f"/api/v1/billing/invoiceitem/{item_payload['id']}/",
@@ -148,6 +152,7 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
 
     invoice.refresh_from_db()
     assert invoice.total == Decimal("10.00")
+    assert invoice.total_a_pagar == Decimal("10.00")
 
     issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
     assert issue_response.status_code == 200

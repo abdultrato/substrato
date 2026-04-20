@@ -179,11 +179,6 @@ class InvoiceItem(NoNameCoreModel):
                 name="unique_sale_item_por_invoice",
             ),
             models.UniqueConstraint(
-                fields=["invoice", "product"],
-                condition=Q(product__isnull=False, deleted=False, sale_item__isnull=True),
-                name="unique_product_pharmacy_por_invoice",
-            ),
-            models.UniqueConstraint(
                 fields=["invoice", "procedure_item"],
                 condition=Q(procedure_item__isnull=False, deleted=False),
                 name="unique_proc_item_por_invoice",
@@ -331,9 +326,17 @@ class InvoiceItem(NoNameCoreModel):
         if self.item_type == self.TipoItem.EXAME_MEDICO and self.medical_exam_id:
             return getattr(self.medical_exam, "vat_percentage", None) or Decimal("0.00")
 
-        if self.item_type == self.TipoItem.ITEM_VENDA and self.sale_item_id:
-            product = getattr(self.sale_item, "product", None)
+        if self.item_type == self.TipoItem.ITEM_VENDA:
+            product = None
+            if self.sale_item_id:
+                product = getattr(self.sale_item, "product", None)
+            elif self.product_id:
+                product = getattr(self, "product", None)
             return getattr(product, "vat_percentage", None) or Decimal("0.00")
+
+        if self.item_type == self.TipoItem.CONSULTATION and self.consultation_id:
+            specialty = getattr(getattr(self, "consultation", None), "specialty", None)
+            return getattr(specialty, "vat_percentage", None) or Decimal("0.00")
 
         if self.item_type == self.TipoItem.PROCEDIMENTO_ITEM and self.procedure_item_id:
             catalog = getattr(self.procedure_item, "catalog", None)
@@ -357,9 +360,16 @@ class InvoiceItem(NoNameCoreModel):
         if self.item_type == self.TipoItem.EXAME_MEDICO and self.medical_exam_id:
             return getattr(self.medical_exam, "applies_vat_by_default", True)
 
-        if self.item_type == self.TipoItem.ITEM_VENDA and self.sale_item_id:
-            product = getattr(self.sale_item, "product", None)
+        if self.item_type == self.TipoItem.ITEM_VENDA:
+            product = None
+            if self.sale_item_id:
+                product = getattr(self.sale_item, "product", None)
+            elif self.product_id:
+                product = getattr(self, "product", None)
             return getattr(product, "applies_vat_by_default", True)
+
+        if self.item_type == self.TipoItem.CONSULTATION and self.consultation_id:
+            return True
 
         if self.item_type == self.TipoItem.PROCEDIMENTO_ITEM and self.procedure_item_id:
             catalog = getattr(self.procedure_item, "catalog", None)
@@ -398,9 +408,34 @@ class InvoiceItem(NoNameCoreModel):
             return
 
         if self.item_type == self.TipoItem.ITEM_VENDA and self.sale_item_id:
-            self.description = self.sale_item.product.name
+            product = self.sale_item.product
+            if not self.product_id:
+                self.product = product
+            if not self.description.strip():
+                self.description = product.name
             self.quantity = Decimal(self.sale_item.quantity)
-            self.unit_price = self.sale_item.unit_price
+            self.unit_price = self.sale_item.unit_price or product.sale_price or Decimal("0.00")
+            if self.vat_percentage is None:
+                self.vat_percentage = self._resolve_reference_vat_percentage()
+            self.applies_vat = self._resolve_reference_applies_vat()
+            return
+
+        if self.item_type == self.TipoItem.ITEM_VENDA and self.product_id:
+            if not self.description.strip():
+                self.description = self.product.name
+            if self.unit_price == Decimal("0.00"):
+                self.unit_price = self.product.sale_price or Decimal("0.00")
+            if self.vat_percentage is None:
+                self.vat_percentage = self._resolve_reference_vat_percentage()
+            self.applies_vat = self._resolve_reference_applies_vat()
+            return
+
+        if self.item_type == self.TipoItem.CONSULTATION and self.consultation_id:
+            if not self.description.strip():
+                self.description = (self.consultation.type or "").strip() or f"Consulta {self.consultation_id}"
+            self.quantity = Decimal("1.00")
+            if self.unit_price == Decimal("0.00"):
+                self.unit_price = self.consultation.price or Decimal("0.00")
             if self.vat_percentage is None:
                 self.vat_percentage = self._resolve_reference_vat_percentage()
             self.applies_vat = self._resolve_reference_applies_vat()
@@ -441,6 +476,7 @@ class InvoiceItem(NoNameCoreModel):
         referencias = {
             "exam": bool(self.exam_id),
             "medical_exam": bool(self.medical_exam_id),
+            "consultation": bool(self.consultation_id),
             "sale_item": bool(self.sale_item_id),
             "product": bool(getattr(self, "product_id", None)),
             "procedure_item": bool(self.procedure_item_id),
@@ -449,6 +485,7 @@ class InvoiceItem(NoNameCoreModel):
         type_para_campo = {
             self.TipoItem.EXAME: "exam",
             self.TipoItem.EXAME_MEDICO: "medical_exam",
+            self.TipoItem.CONSULTATION: "consultation",
             self.TipoItem.ITEM_VENDA: "product",
             self.TipoItem.PROCEDIMENTO_ITEM: "procedure_item",
             self.TipoItem.PROCEDIMENTO_MATERIAL: "procedure_material",
@@ -467,6 +504,14 @@ class InvoiceItem(NoNameCoreModel):
                 raise ValidationError("Item de ajuste manual não pode possuir referência externa.")
             if not self.description.strip():
                 raise ValidationError({"description": "Descrição é obrigatória para ajuste manual."})
+        elif self.item_type == self.TipoItem.ITEM_VENDA:
+            if not (self.sale_item_id or self.product_id):
+                raise ValidationError({"product": "Informe o produto (ou item de venda) para item de farmácia."})
+            if self.sale_item_id and self.product_id and self.sale_item.product_id != self.product_id:
+                raise ValidationError({"product": "Produto deve corresponder ao item de venda selecionado."})
+            for campo in ("exam", "medical_exam", "consultation", "procedure_item", "procedure_material"):
+                if referencias[campo]:
+                    raise ValidationError({campo: "Remova esta referência, ela não corresponde ao type."})
         else:
             if not referencias[campo_esperado]:
                 raise ValidationError({campo_esperado: "Informe a referência do type selecionado."})

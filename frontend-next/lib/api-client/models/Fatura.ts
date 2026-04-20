@@ -16,6 +16,8 @@ export type Fatura = {
     subtotal?: string;
     iva_valor?: string;
     total?: string;
+    total_a_pagar?: string;
+    valor_a_pagar?: string;
     valor_seguro?: string;
     valor_paciente?: string;
     estado?: FaturaEstadoEnum;
@@ -37,4 +39,3 @@ export type Fatura = {
      */
     procedimentos?: Array<number>;
 };
-

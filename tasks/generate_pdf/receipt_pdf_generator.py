@@ -249,7 +249,9 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     # ==========================
     total_sem_iva = getattr(invoice, "subtotal", None) if invoice else None
     total_iva = getattr(invoice, "vat_amount", None) if invoice else None
-    total_com_iva = getattr(invoice, "total", None) if invoice else None
+    total_com_iva = getattr(invoice, "total_a_pagar", None) if invoice else None
+    if total_com_iva is None:
+        total_com_iva = getattr(invoice, "total", None) if invoice else None
 
     def _as_money(v):
         if v is None:
