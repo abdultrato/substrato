@@ -97,9 +97,12 @@ export default function DashboardPage() {
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
             <div className="space-y-4 md:space-y-5">
-                <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
-                    Dashboard
-                </h2>
+                <div>
+                    <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+                        Dashboard
+                    </h2>
+                    <p className="text-sm text-muted-foreground">Visão geral dos últimos 7 dias.</p>
+                </div>
 
                 {error && (
                     <div className="text-sm text-rose-600 dark:text-rose-300">
@@ -146,14 +149,14 @@ export default function DashboardPage() {
                 )}
 
                 <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                    <CardSection title="Funil de receita (7d)" description="Do atendimento até o recebimento.">
+                    <CardSection title="Funil de receita" subtitle="7 dias">
                         <div className="grid gap-3 md:grid-cols-3">
                             {funnel.map((item) => (
-                                <div key={item.label} className="rounded-2xl border border-border bg-card p-3 shadow-sm">
-                                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <div key={item.label} className="rounded-2xl border border-border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40">
+                                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                                         {item.label}
                                     </div>
-                                    <div className="mt-1 text-lg font-semibold text-foreground">
+                                    <div className="mt-1 font-display text-lg font-bold text-foreground">
                                         {item.value}
                                     </div>
                                 </div>
@@ -161,15 +164,15 @@ export default function DashboardPage() {
                         </div>
                     </CardSection>
 
-                    <CardSection title="Alertas" description="Pendências que exigem atenção imediata.">
+                    <CardSection title="Alertas">
                         {alerts.length === 0 ? (
-                            <div className="text-sm text-muted-foreground">Sem alertas críticos.</div>
+                            <div className="text-sm text-muted-foreground">Sem alertas.</div>
                         ) : (
                             <ul className="space-y-2 text-sm">
                                 {alerts.map((a) => (
                                     <li
                                         key={a.label}
-                                        className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900"
+                                        className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                                     >
                                         <span>{a.label}</span>
                                         <span className="font-semibold">{a.value}</span>
@@ -181,7 +184,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-                    <CardSection title="Últimos eventos" description="Movimentações recentes nos módulos.">
+                    <CardSection title="Últimos eventos">
                         {events.length === 0 ? (
                             <div className="text-sm text-muted-foreground">Sem eventos recentes.</div>
                         ) : (
@@ -189,7 +192,7 @@ export default function DashboardPage() {
                                 {events.map((ev) => (
                                     <li
                                         key={ev.id}
-                                        className="rounded-xl border border-border bg-card/70 px-3 py-2 shadow-sm"
+                                        className="rounded-xl border border-border bg-card/70 px-3 py-2 shadow-sm transition-colors hover:bg-muted/40"
                                     >
                                         <div className="font-semibold text-foreground">{ev.title}</div>
                                         {ev.detail ? (
@@ -204,19 +207,22 @@ export default function DashboardPage() {
                         )}
                     </CardSection>
 
-                    <CardSection title="Atalhos rápidos" description="Ações frequentes de atendimento.">
-                        <div className="grid gap-2 text-sm">
+                    <CardSection title="Atalhos">
+                        <div className="grid gap-1.5 text-sm">
                             {quickLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2 shadow-sm transition hover:bg-muted"
+                                    title={link.desc}
+                                    className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:translate-x-[1px]"
                                 >
                                     <div className="flex items-center gap-2">
-                                        <link.icon size={16} />
+                                        <link.icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
                                         <span className="font-medium text-foreground">{link.label}</span>
                                     </div>
-                                    <span className="text-xs text-muted-foreground">{link.desc}</span>
+                                    <span className="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                                        {link.desc}
+                                    </span>
                                 </Link>
                             ))}
                         </div>
@@ -265,22 +271,24 @@ function StatCard({
 
 function CardSection({
     title,
-    description,
+    subtitle,
     children,
 }: {
     title: string
-    description?: string
+    subtitle?: string
     children: React.ReactNode
 }) {
     return (
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-                <div>
-                    <div className="text-sm font-semibold text-foreground">{title}</div>
-                    {description ? (
-                        <div className="text-xs text-muted-foreground">{description}</div>
-                    ) : null}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex items-baseline justify-between gap-3">
+                <div className="font-display text-base font-semibold tracking-tight text-foreground">
+                    {title}
                 </div>
+                {subtitle ? (
+                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                        {subtitle}
+                    </div>
+                ) : null}
             </div>
             <div className="mt-3">{children}</div>
         </div>

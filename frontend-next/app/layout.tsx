@@ -1,8 +1,22 @@
 // Layout raiz do app Next.js: aplica tema dark/light e injeta AuthProvider.
 import "./globals.css"
 
+import { Inter, Plus_Jakarta_Sans } from "next/font/google"
 import { AuthProvider } from "@/hooks/useAuth"
 import Providers from "./providers"
+
+const inter = Inter({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-sans",
+})
+
+const display = Plus_Jakarta_Sans({
+    subsets: ["latin"],
+    display: "swap",
+    variable: "--font-display",
+    weight: ["500", "600", "700", "800"],
+})
 
 const themeInitScript = `
 (function () {
@@ -25,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html
             lang="pt"
+            className={`${inter.variable} ${display.variable}`}
             suppressHydrationWarning
         >
             <head suppressHydrationWarning>
@@ -33,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     dangerouslySetInnerHTML={{ __html: themeInitScript }}
                 />
             </head>
-            <body className="min-h-screen font-sans">
+            <body className="min-h-screen font-sans antialiased">
                 <AuthProvider>
                     <Providers>
                         {children}

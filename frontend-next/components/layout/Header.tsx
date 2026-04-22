@@ -49,28 +49,27 @@ export default function Header({ user, onMenuClick }: Props) {
                 >
                     <AlignJustify size={18} />
                 </button>
-                <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                        <div
-                            className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm"
-                            aria-hidden
-                            style={{ backgroundColor: "#fff" }}
-                        >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src="/static/img/logo.png"
-                                alt="Logo do Substrato"
-                                className="h-full w-full object-contain p-1"
-                            />
-                        </div>
-                        <div className="font-display text-sm font-semibold tracking-wide text-white">
-                            Substrato
-                        </div>
+                <Link
+                    href="/"
+                    className="group flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    title="Ir para o dashboard"
+                >
+                    <div
+                        className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm transition-transform group-hover:scale-105"
+                        aria-hidden
+                        style={{ backgroundColor: "#fff" }}
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src="/static/img/logo.png"
+                            alt="Substrato"
+                            className="h-full w-full object-contain p-1"
+                        />
                     </div>
-                    <p className="text-[11px] leading-tight text-white/80">
-                        Infraestrutura de base unificada de saúde
-                    </p>
-                </div>
+                    <div className="font-display text-base font-bold tracking-tight text-white">
+                        Substrato
+                    </div>
+                </Link>
             </div>
 
             <div className="ml-auto flex items-center gap-2">
