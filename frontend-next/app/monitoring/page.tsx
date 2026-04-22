@@ -44,14 +44,14 @@ export default function MonitoramentoPage() {
         <AppLayout requiredGroups={[GROUPS.ADMIN]}>
             <div className="space-y-6">
                 <PageHeader
-                    title="Monitoramento"
-                    subtitle="Erros do sistema e rastreabilidade de falhas."
+                    title="Monitorização"
+                    subtitle="Acompanhe erros e o estado do sistema."
                     actions={
                         <Link
                             href="/admin/monitoring/systemerror/"
-                            className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                            className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
                         >
-                            Abrir no admin
+                            Abrir na Administração
                         </Link>
                     }
                 />
@@ -64,35 +64,35 @@ export default function MonitoramentoPage() {
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <MetricCard label="Erros registados" value={loading ? "..." : erros} />
-                    <MetricCard label="4xx/5xx" value="—" hint="Filtrável na lista" />
-                    <MetricCard label="Exceções" value="—" hint="exception_class" />
-                    <MetricCard label="Views" value="—" hint="view_basename/action" />
+                    <MetricCard label="Erros do cliente (4xx)" value="—" hint="Filtrável na lista" />
+                    <MetricCard label="Erros do servidor (5xx)" value="—" hint="Filtrável na lista" />
+                    <MetricCard label="Páginas afetadas" value="—" hint="Agregado por rota" />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <ActionTile
                         title="Erros do sistema"
-                        description="Lista de erros (status, rota, exceção, mensagem)."
+                        description="Lista detalhada com rota, código e mensagem."
                         href="/monitoring/errors"
                         icon={Bug}
                     />
                     <ActionTile
-                        title="Gerenciamento (API)"
-                        description="Acesso à interface genérica do monitoramento."
-                        href="/recursos/monitoramento"
+                        title="Atividade dos utilizadores"
+                        description="Pedidos recentes por utilizador."
+                        href="/audit"
                         icon={ClipboardList}
                     />
                     <ActionTile
-                        title="Alertas (Admin)"
-                        description="Revisão detalhada no Django Admin."
+                        title="Painel de Administração"
+                        description="Revisão detalhada e ferramentas avançadas."
                         href="/admin/monitoring/systemerror/"
                         icon={ShieldAlert}
                     />
                 </div>
 
-                <Card title="Nota" subtitle="O registro de erros é multi-tenant e guarda traceback/metadata.">
-                    <div className="text-sm text-slate-700">
-                        Esta área é administrativa. Para produção, recomendamos rotação/retenção e exportação para observabilidade externa.
+                <Card title="Sobre esta página">
+                    <div className="text-sm text-foreground-2">
+                        Os registos ficam organizados por organização e incluem o detalhe técnico necessário para investigar cada falha.
                     </div>
                 </Card>
             </div>

@@ -19,6 +19,49 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  GET: "Consulta",
+  POST: "Criação",
+  PUT: "Atualização",
+  PATCH: "Atualização",
+  DELETE: "Remoção",
+}
+
+function friendlyMethod(raw: any): string {
+  const v = String(raw ?? "").trim().toUpperCase()
+  return METHOD_LABELS[v] || v || "-"
+}
+
+function friendlyStatus(code: any): string {
+  const n = Number(code)
+  if (!n) return "—"
+  if (n >= 200 && n < 300) return `Sucesso (${n})`
+  if (n === 304) return `Sem alteração (${n})`
+  if (n >= 300 && n < 400) return `Redirecionamento (${n})`
+  if (n === 401) return `Sessão expirada (${n})`
+  if (n === 403) return `Sem permissão (${n})`
+  if (n === 404) return `Não encontrado (${n})`
+  if (n >= 400 && n < 500) return `Erro do pedido (${n})`
+  if (n >= 500) return `Erro do servidor (${n})`
+  return String(n)
+}
+
+function friendlyResource(base: any, action: any): string {
+  const b = String(base ?? "").trim()
+  const a = String(action ?? "").trim()
+  if (!b && !a) return "-"
+  const labelBase = b
+    ? b
+        .split(/[-_]/)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ")
+    : "—"
+  const labelAction = a
+    ? ({ list: "lista", create: "criar", retrieve: "ver", update: "editar", partial_update: "editar", destroy: "remover" } as Record<string, string>)[a] || a
+    : ""
+  return labelAction ? `${labelBase} · ${labelAction}` : labelBase
+}
+
 export default function AuditoriaUsuarioDetalhePage() {
   const params = useParams() as any
   const userId = String(params?.id || "")
@@ -61,26 +104,26 @@ export default function AuditoriaUsuarioDetalhePage() {
   const columns = useMemo(
     () => [
       { header: "Quando", render: (r: AtividadeRow) => fmtDate(r.criado_em) },
-      { header: "Método", render: (r: AtividadeRow) => r.metodo || "-" },
+      { header: "Ação", render: (r: AtividadeRow) => friendlyMethod(r.metodo) },
       {
-        header: "Rota",
+        header: "Página",
         render: (r: AtividadeRow) => (
           <div className="max-w-[520px] truncate" title={r.path_completo || r.caminho || ""}>
             {r.path_completo || r.caminho || "-"}
           </div>
         ),
       },
-      { header: "Status", render: (r: AtividadeRow) => r.status_code ?? "-" },
+      { header: "Resultado", render: (r: AtividadeRow) => friendlyStatus(r.status_code) },
       {
-        header: "Tempo (ms)",
-        render: (r: AtividadeRow) => (r.duracao_ms ?? "—"),
+        header: "Tempo",
+        render: (r: AtividadeRow) => (r.duracao_ms != null ? `${r.duracao_ms} ms` : "—"),
         className: "text-right",
       },
       {
         header: "Recurso",
         render: (r: AtividadeRow) => (
-          <span className="text-xs text-gray-600">
-            {(r.view_basename || "-") + (r.view_action ? `:${r.view_action}` : "")}
+          <span className="text-xs text-muted-foreground">
+            {friendlyResource(r.view_basename, r.view_action)}
           </span>
         ),
       },
@@ -94,8 +137,8 @@ export default function AuditoriaUsuarioDetalhePage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
-          title={`Actividades: ${nome}`}
-          subtitle="Registos em ordem cronológica (mais recentes primeiro)."
+          title={`Atividade de ${nome}`}
+          subtitle="Histórico recente de pedidos."
         />
 
         {erro ? (

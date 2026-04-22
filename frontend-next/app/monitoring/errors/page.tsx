@@ -27,6 +27,31 @@ function truncate(value: any, max = 70): string {
     return `${v.slice(0, Math.max(0, max - 3))}...`
 }
 
+const EXCEPTION_FRIENDLY: Record<string, string> = {
+    ValidationError: "Validação inválida",
+    PermissionDenied: "Permissão negada",
+    NotAuthenticated: "Sessão expirada",
+    AuthenticationFailed: "Falha de autenticação",
+    NotFound: "Não encontrado",
+    Http404: "Página não encontrada",
+    IntegrityError: "Conflito de dados",
+    DatabaseError: "Erro na base de dados",
+    OperationalError: "Falha operacional",
+    TimeoutError: "Tempo esgotado",
+    ConnectionError: "Falha de ligação",
+    ValueError: "Valor inválido",
+    KeyError: "Campo em falta",
+    AttributeError: "Atributo inexistente",
+    TypeError: "Tipo inválido",
+}
+
+function friendlyExceptionName(raw: any): string {
+    const v = String(raw ?? "").trim()
+    if (!v) return "-"
+    const last = v.split(".").pop() || v
+    return EXCEPTION_FRIENDLY[last] || last
+}
+
 export default function MonitoramentoErrosPage() {
     const [erro, setErro] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
@@ -81,9 +106,9 @@ export default function MonitoramentoErrosPage() {
                     </Link>
                 ),
             },
-            { header: "Status", render: (e: ErroRow) => e.status_code || "-" },
-            { header: "Rota", render: (e: ErroRow) => truncate(e.caminho, 40) },
-            { header: "Exceção", render: (e: ErroRow) => truncate(e.exception_class, 34) },
+            { header: "Estado", render: (e: ErroRow) => e.status_code || "-" },
+            { header: "Página", render: (e: ErroRow) => truncate(e.caminho, 40) },
+            { header: "Tipo de erro", render: (e: ErroRow) => truncate(friendlyExceptionName(e.exception_class), 34) },
             { header: "Mensagem", render: (e: ErroRow) => truncate(e.mensagem, 42) },
             { header: "Utilizador", render: (e: ErroRow) => truncate(e.usuario_nome, 26) },
             { header: "Criado em", render: (e: ErroRow) => fmtDateTime(e.criado_em) },
@@ -100,22 +125,16 @@ export default function MonitoramentoErrosPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/monitoramento/erro"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-                            >
-                                Gerenciamento
-                            </Link>
-                            <Link
                                 href="/monitoring"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                                className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground-2 shadow-sm transition hover:bg-muted"
                             >
                                 Voltar
                             </Link>
                             <Link
                                 href="/admin/monitoring/systemerror/"
-                                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                                className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
                             >
-                                Admin
+                                Abrir na Administração
                             </Link>
                         </div>
                     }

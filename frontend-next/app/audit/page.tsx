@@ -97,12 +97,12 @@ export default function AuditoriaUsuariosPage() {
         ),
       },
       {
-        header: "Actividades",
+        header: "Atividades",
         render: (u: UserRow) => u.total_activities ?? 0,
         className: "text-right",
       },
       {
-        header: "Última Actividade",
+        header: "Última atividade",
         render: (u: UserRow) => fmtDate(u.last_activity_at),
       },
       {
@@ -126,8 +126,8 @@ export default function AuditoriaUsuariosPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
-          title="Histórico de Actividades"
-          subtitle="Administrador: utilizadores e actividades."
+          title="Histórico de atividades"
+          subtitle="Utilizadores e ações recentes."
           actions={
             <input
               value={q}

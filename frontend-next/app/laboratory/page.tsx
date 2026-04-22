@@ -141,7 +141,7 @@ export default function LaboratorioPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 <Shield size={16} />
-                Abrir no admin
+                Abrir na Administração
               </Link>
             ) : null
           }
@@ -191,7 +191,7 @@ export default function LaboratorioPage() {
 
         <Card
           title="Próximas requisições"
-          subtitle="Atalhos para lançar resultado no admin e emitir PDF."
+          subtitle="Atalhos para lançar resultado pela Administração e emitir PDF."
         >
           {loading ? (
             <div className="text-sm text-gray-500">Carregando...</div>
