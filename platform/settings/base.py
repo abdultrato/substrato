@@ -518,11 +518,12 @@ else:
                     if _module_available("django_prometheus")
                     else "django.db.backends.postgresql"
                 ),
-                "NAME": get_env("DB_NAME", required=True),
-                "USER": get_env("DB_USER", required=True),
-                "PASSWORD": get_env("DB_PASSWORD", required=True),
-                "HOST": get_env("DB_HOST", "localhost"),
-                "PORT": get_env("DB_PORT", "5432"),
+                # Prefer Replit-managed Postgres (PG* vars) when present; otherwise fall back to DB_* vars.
+                "NAME": os.environ.get("PGDATABASE") or get_env("DB_NAME", required=True),
+                "USER": os.environ.get("PGUSER") or get_env("DB_USER", required=True),
+                "PASSWORD": os.environ.get("PGPASSWORD") or get_env("DB_PASSWORD", required=True),
+                "HOST": os.environ.get("PGHOST") or get_env("DB_HOST", "localhost"),
+                "PORT": os.environ.get("PGPORT") or get_env("DB_PORT", "5432"),
                 "CONN_MAX_AGE": 300,
                 "OPTIONS": {
                     "connect_timeout": 10,
