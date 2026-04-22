@@ -38,24 +38,10 @@ type FormSpec = {
 const ALWAYS_READONLY_FIELDS = new Set([
   "id",
   "id_custom",
-<<<<<<< Updated upstream
   // Multi-tenant: never allow tenant to be chosen via UI forms.
   // Backend derives/enforces it from `request.tenant` for non-superusers.
   "tenant",
   "tenant_id",
-=======
-  // Common DRF/ModelViewSet fields (English)
-  "created_at",
-  "updated_at",
-  "custom_id",
-  "deleted",
-  "deleted_at",
-  "version",
-  "created_by",
-  "updated_by",
-  "deleted_by",
-  "tenant",
->>>>>>> Stashed changes
   "inquilino",
   "criado_por",
   "atualizado_por",

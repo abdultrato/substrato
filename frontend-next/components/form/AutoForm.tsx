@@ -1,21 +1,12 @@
 "use client"
 
-<<<<<<< Updated upstream
 import { useEffect, useMemo, useState } from "react"
-=======
-import { useCallback, useEffect, useMemo, useState } from "react"
->>>>>>> Stashed changes
 import { z } from "zod"
 
 import { apiFetch } from "@/lib/api"
 import { buildFormSpec, FormField } from "@/lib/openapi/formBuilder"
-<<<<<<< Updated upstream
 import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
-=======
-import { wizardStepsFor, type WizardStep } from "@/lib/ui/wizardSteps"
-import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
->>>>>>> Stashed changes
 
 type Method = "post" | "put" | "patch"
 
@@ -162,25 +153,15 @@ function renderInput(
         />
       )
     default:
-<<<<<<< Updated upstream
       if (widget === "textarea") {
-=======
-      if (LONG_TEXT_FIELDS.has(field.name)) {
->>>>>>> Stashed changes
         return (
           <textarea
             value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
-<<<<<<< Updated upstream
             className={`${common} min-h-[92px] resize-y px-3 py-2`}
             placeholder={placeholder}
             disabled={disabled}
             rows={4}
-=======
-            className={common}
-            rows={4}
-            disabled={disabled}
->>>>>>> Stashed changes
           />
         )
       }
@@ -201,6 +182,8 @@ function normalizeDraftKey(method: Method, endpoint: string): string {
   const e = String(endpoint || "").split("?")[0].split("#")[0]
   return `draft:autofrm:${method}:${e}`
 }
+
+type WizardStep = { key: string; title: string; description?: string }
 
 function Stepper({
   steps,
@@ -270,7 +253,6 @@ export default function AutoForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-<<<<<<< Updated upstream
   const etapas = config?.etapas || null
   const [etapaAtual, setEtapaAtual] = useState(0)
 
@@ -294,12 +276,6 @@ export default function AutoForm({
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config?.lembrarCampos?.join(",")])
-=======
-  const [stepIdx, setStepIdx] = useState(0)
-  const [storageOptions, setStorageOptions] = useState<Array<{ id: number; name: string }>>([])
-
-  const isBloodbank = !!bloodbankResourceKeyFromEndpoint(endpoint)
->>>>>>> Stashed changes
 
   const schema = useMemo(() => {
     if (!formSpec) return null
@@ -310,7 +286,6 @@ export default function AutoForm({
     return z.object(shape)
   }, [formSpec])
 
-<<<<<<< Updated upstream
   function listVisibleFields(): FormField[] {
     if (!formSpec) return []
     const esconder = new Set(config?.esconderCampos || [])
@@ -348,150 +323,6 @@ export default function AutoForm({
     }
     return z.object(shape)
   }
-=======
-  const steps = useMemo(() => {
-    if (!formSpec) return null
-    return wizardStepsFor(endpoint, formSpec.submitFields)
-  }, [endpoint, formSpec])
-
-  const isWizard = !!steps?.length
-
-  // Load draft values (wizard) so refreshes don't lose progress.
-  useEffect(() => {
-    if (!isWizard) return
-    if (typeof window === "undefined") return
-    try {
-      const raw = localStorage.getItem(normalizeDraftKey(method, endpoint))
-      if (!raw) return
-      const parsed = JSON.parse(raw)
-      if (!parsed || typeof parsed !== "object") return
-      setValues((prev) => ({ ...parsed, ...prev }))
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWizard, endpoint, method])
-
-  // Persist draft values.
-  useEffect(() => {
-    if (!isWizard) return
-    if (typeof window === "undefined") return
-    const key = normalizeDraftKey(method, endpoint)
-    const t = setTimeout(() => {
-      try {
-        localStorage.setItem(key, JSON.stringify(values))
-      } catch {
-        // ignore
-      }
-    }, 250)
-    return () => clearTimeout(t)
-  }, [endpoint, isWizard, method, values])
-
-  // Bloodbank foreign-key helpers (storage and related).
-  useEffect(() => {
-    let mounted = true
-    async function loadStorages() {
-      if (!isBloodbank) return
-      if (!formSpec) return
-      const needs =
-        formSpec.submitFields.some((f) =>
-          ["storage", "source_storage", "destination_storage"].includes(f.name)
-        )
-      if (!needs) return
-      try {
-        const res = await apiFetch<any>("/bloodbank/armazenamento/")
-        const items = res && (res as any).results ? (res as any).results : res
-        const opts: Array<{ id: number; name: string }> = []
-        if (Array.isArray(items)) {
-          for (const s of items) {
-            const id = Number((s as any)?.id)
-            if (!Number.isFinite(id)) continue
-            const name = String((s as any)?.name || (s as any)?.custom_id || (s as any)?.id_custom || id)
-            opts.push({ id, name })
-          }
-        }
-        if (mounted) setStorageOptions(opts)
-      } catch {
-        // ignore
-      }
-    }
-    loadStorages()
-    return () => {
-      mounted = false
-    }
-  }, [formSpec, isBloodbank])
-
-  const currentStep = steps?.[Math.min(stepIdx, (steps?.length || 1) - 1)] || null
-
-  const visibleFields = useMemo(() => {
-    if (!formSpec) return []
-    const writable = formSpec.fields.filter((f) => !f.readOnly)
-    if (!isWizard || !currentStep) return writable
-    const allow = new Set(currentStep.fields)
-    return writable.filter((f) => allow.has(f.name))
-  }, [currentStep, formSpec, isWizard])
-
-  const stepSchema = useMemo(() => {
-    if (!isWizard || !schema || !currentStep) return null
-    const allow = new Set(currentStep.fields)
-    const mask: Record<string, true> = {}
-    for (const k of Object.keys((schema as any).shape || {})) {
-      if (allow.has(k)) mask[k] = true
-    }
-    try {
-      return (schema as any).pick(mask)
-    } catch {
-      return null
-    }
-  }, [currentStep, isWizard, schema])
-
-  const saveStep = useCallback(async () => {
-    if (!isWizard) return
-    if (!currentStep) return
-
-    // For POST create flows we cannot persist partial records in the backend reliably,
-    // so we store the draft locally and proceed.
-    if (method === "post") {
-      setMessage("Rascunho guardado.")
-      return
-    }
-
-    // For edit flows, save step-by-step using PATCH.
-    const payload: Record<string, any> = {}
-    for (const name of currentStep.fields) {
-      if (name in values) payload[name] = values[name]
-    }
-    try {
-      await apiFetch(endpoint, { method: "PATCH", body: JSON.stringify(payload) })
-      setMessage("Etapa guardada.")
-    } catch (e: any) {
-      setMessage(e?.message || "Falha ao guardar a etapa.")
-      throw e
-    }
-  }, [currentStep, endpoint, isWizard, method, values])
-
-  const nextStep = useCallback(async () => {
-    if (!isWizard || !steps || !currentStep) return
-    setMessage(null)
-    setErrors({})
-
-    try {
-      if (stepSchema) stepSchema.parse(values)
-      await saveStep()
-      setStepIdx((i) => Math.min(steps.length - 1, i + 1))
-    } catch (e: any) {
-      if (e?.issues) {
-        const errs: Record<string, string> = {}
-        e.issues.forEach((issue: any) => {
-          const path = issue.path.join(".")
-          errs[path] = issue.message
-        })
-        setErrors(errs)
-        setMessage("Verifique os campos desta etapa.")
-      }
-    }
-  }, [currentStep, isWizard, saveStep, stepSchema, steps, values])
->>>>>>> Stashed changes
 
   async function handleSubmit() {
     if (!formSpec || !schema) return
@@ -530,7 +361,6 @@ export default function AutoForm({
         body: JSON.stringify(parsed),
       })
       setMessage("Salvo com sucesso.")
-<<<<<<< Updated upstream
       if (config?.lembrarCampos?.length) {
         for (const f of config.lembrarCampos || []) {
           const v = (parsed as any)?.[f]
@@ -540,13 +370,6 @@ export default function AutoForm({
               localStorage.setItem(`substrato:ultimo_valor:${f}`, String(v))
             }
           } catch {}
-=======
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.removeItem(normalizeDraftKey(method, endpoint))
-        } catch {
-          // ignore
->>>>>>> Stashed changes
         }
       }
       onSuccess?.(res)
@@ -576,7 +399,6 @@ export default function AutoForm({
     )
   }
 
-<<<<<<< Updated upstream
   const visibleFields = listVisibleFields()
   const visibleByName = new Map(visibleFields.map((f) => [f.name, f] as const))
   const stepNames = stepFieldNames()
@@ -584,47 +406,15 @@ export default function AutoForm({
     ? stepNames.map((n) => visibleByName.get(n)).filter(Boolean) as FormField[]
     : visibleFields
   const somenteLeitura = new Set(config?.somenteLeituraCampos || [])
-=======
-  function renderStorageSelect(
-    field: FormField,
-    value: any,
-    onChange: (v: any) => void,
-    opts?: { readOnly?: boolean }
-  ) {
-    const common =
-      "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm leading-tight text-[var(--text)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10"
-    const disabled = !!opts?.readOnly
-    return (
-      <select
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-        className={common}
-        disabled={disabled}
-      >
-        <option value="">Selecione...</option>
-        {storageOptions.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-    )
-  }
->>>>>>> Stashed changes
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-3">
-      {isWizard && steps ? (
-        <Stepper steps={steps} current={Math.min(stepIdx, steps.length - 1)} onSelect={setStepIdx} />
-      ) : null}
-
       {message && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-1.5 text-sm text-[var(--text)]">
           {message}
         </div>
       )}
 
-<<<<<<< Updated upstream
       {etapas?.length ? (
         <Etapas etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))} etapaAtual={etapaAtual} onChange={setEtapaAtual} />
       ) : null}
@@ -680,81 +470,10 @@ export default function AutoForm({
             >
               Anterior
             </button>
-=======
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-2">
-          {visibleFields.map((field) => (
-            <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-foreground">
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </span>
-                {errors[field.name] && (
-                  <span className="shrink-0 text-xs font-semibold text-red-600">{errors[field.name]}</span>
-                )}
-              </div>
-
-              {["storage", "source_storage", "destination_storage"].includes(field.name) && storageOptions.length
-                ? renderStorageSelect(
-                  field,
-                  values[field.name],
-                  (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
-                  { readOnly: false }
-                )
-                : renderInput(
-                  field,
-                  values[field.name],
-                  (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
-                  errors[field.name]
-                )}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {isWizard && steps ? (
-          <button
-            type="button"
-            onClick={() => setStepIdx((i) => Math.max(0, i - 1))}
-            disabled={stepIdx <= 0 || submitting}
-            className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-muted disabled:opacity-60"
-          >
-            Voltar
-          </button>
-        ) : (
-          <div />
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          {isWizard && steps ? (
-            stepIdx < steps.length - 1 ? (
-              <button
-                type="button"
-                onClick={nextStep}
-                disabled={submitting}
-                className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-              >
-                {method === "post" ? "Guardar rascunho e continuar" : "Guardar e continuar"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-              >
-                {submitting ? "A guardar..." : submitLabel}
-              </button>
-            )
-          ) : (
->>>>>>> Stashed changes
             <button
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-<<<<<<< Updated upstream
               className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
             >
               {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
@@ -770,14 +489,6 @@ export default function AutoForm({
             {submitting ? "Salvando..." : submitLabel}
           </button>
         )}
-=======
-              className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-            >
-              {submitting ? "A guardar..." : submitLabel}
-            </button>
-          )}
-        </div>
->>>>>>> Stashed changes
       </div>
     </div>
   )

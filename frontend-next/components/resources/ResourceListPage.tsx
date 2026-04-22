@@ -161,15 +161,11 @@ export default function ResourceListPage({
   }, [needsBloodStorageLookup])
 
   const columns = useMemo(
-    () => {
-      const codeCol = {
+    () => [
+      {
         header: "Código",
         render: (row: Row) => {
-<<<<<<< Updated upstream
           const label = pickCode(row)
-=======
-          const label = row.id_custom || row.custom_id || row.id || "-"
->>>>>>> Stashed changes
           if (!rowHref) return label
           return (
             <Link
@@ -180,7 +176,6 @@ export default function ResourceListPage({
             </Link>
           )
         },
-<<<<<<< Updated upstream
       },
       {
         header: "Nome",
@@ -197,69 +192,6 @@ export default function ResourceListPage({
       },
     ],
     [rowHref]
-=======
-      }
-
-      if (bloodbankResource === "armazenamento") {
-        return [
-          codeCol,
-          { header: "Nome", render: (row: Row) => row.name || "-" },
-          { header: "Localização", render: (row: Row) => row.location || "-" },
-          { header: "Capacidade", render: (row: Row) => row.capacity_units ?? "-" },
-          {
-            header: "Temperatura",
-            render: (row: Row) => fmtTemp(row.temperature_min_c, row.temperature_max_c),
-          },
-          { header: "Ativo", render: (row: Row) => fmtBool(row.is_active) },
-        ]
-      }
-
-      if (bloodbankResource === "manutencaoarmazenamento") {
-        return [
-          codeCol,
-          {
-            header: "Armazenamento",
-            render: (row: Row) => {
-              const id = Number(row.storage)
-              if (!Number.isFinite(id)) return "-"
-              return bloodStorages[id] || `ID ${id}`
-            },
-          },
-          {
-            header: "Tipo",
-            render: (row: Row) =>
-              BLOODBANK_MAINTENANCE_TYPE[String(row.maintenance_type || "")] ||
-              row.maintenance_type ||
-              "-",
-          },
-          {
-            header: "Estado",
-            render: (row: Row) =>
-              BLOODBANK_MAINTENANCE_STATUS[String(row.status || "")] || row.status || "-",
-          },
-          { header: "Agendada", render: (row: Row) => fmtDate(row.scheduled_at) },
-          { header: "Técnico", render: (row: Row) => row.technician_name || "-" },
-        ]
-      }
-
-      return [
-        codeCol,
-        {
-          header: "Nome",
-          render: (row: Row) => pickLabel(row) || "-",
-        },
-        {
-          header: "Estado",
-          render: (row: Row) => row.estado || row.status || row.status_comercial || "-",
-        },
-        {
-          header: "Criado em",
-          render: (row: Row) => fmtDate(row.criado_em || row.created_at),
-        },
-      ]
-    },
-    [bloodStorages, bloodbankResource, rowHref]
->>>>>>> Stashed changes
   )
 
   if (loading) return null
