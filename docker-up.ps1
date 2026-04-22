@@ -130,6 +130,13 @@ Invoke-Compose -Args @("up", "-d", "backend") -Retries 5 -RetryDelaySeconds 4
 Write-Host "✓ Subindo demais serviços..." -ForegroundColor Yellow
 Invoke-Compose -Args @("up", "-d") -Retries 3 -RetryDelaySeconds 4
 
+Write-Host "✓ Warmup do frontend (Next.js)..." -ForegroundColor Yellow
+try {
+    Invoke-Compose -Args @("run", "--rm", "warmup") -Retries 2 -RetryDelaySeconds 2
+} catch {
+    Write-Host "⚠ Warmup falhou (ignorando): $($_.Exception.Message)" -ForegroundColor Yellow
+}
+
 Write-Host "✓ Aguardando containers..." -ForegroundColor Yellow
 $services = @("db", "redis", "backend", "frontend")
 foreach ($service in $services) {

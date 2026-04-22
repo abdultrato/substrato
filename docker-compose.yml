@@ -98,11 +98,11 @@ services:
   frontend:
     container_name: substrato_frontend
     image: node:20-bookworm-slim
-    user: "node"
     working_dir: /app
     environment:
       BACKEND_URL: http://backend:8000
       TZ: Africa/Maputo
+      NEXT_TELEMETRY_DISABLED: "1"
       # Melhor tolerância a rede instável em ambientes dev.
       NPM_CONFIG_FETCH_RETRIES: "5"
       NPM_CONFIG_FETCH_RETRY_MINTIMEOUT: "20000"
@@ -112,12 +112,18 @@ services:
       NPM_CONFIG_FUND: "false"
     command: >
       sh -lc
-      "if [ ! -d node_modules ]; then
-         npm ci --no-audit --no-fund || npm install --no-audit --no-fund;
+      "mkdir -p /home/node/.cache/next-swc /app/node_modules /app/.next;
+       chown -R node:node /home/node/.cache/next-swc /app/node_modules /app/.next;
+       if [ ! -f node_modules/.bin/next ]; then
+         su -s /bin/sh node -c 'npm ci --no-audit --no-fund || npm install --no-audit --no-fund';
        fi;
-       npm run dev -- -H 0.0.0.0 -p 3000"
+       exec su -s /bin/sh node -c 'npm run dev -- -H 0.0.0.0 -p 3000'"
     volumes:
       - ./frontend-next:/app
+      # Mantém caches pesados em volume Linux (bem mais rápido que bind-mount no Windows)
+      - frontend_node_modules:/app/node_modules
+      - frontend_next_cache:/app/.next
+      - frontend_swc_cache:/home/node/.cache/next-swc
     ports:
       - "3000:3000"
     depends_on:
@@ -126,6 +132,22 @@ services:
     networks:
       - substrato
     restart: unless-stopped
+
+  # =========================================================================
+  # WARMUP (DEV) - aquece rotas do Next para evitar timeout no 1º acesso
+  # =========================================================================
+  warmup:
+    image: substrato-backend
+    entrypoint:
+      - sh
+      - -lc
+      - "set -eu; echo '[warmup] aguardando backend...'; for i in $$(seq 1 60); do if curl -fsS http://backend:8000/health/live >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aguardando frontend...'; for i in $$(seq 1 60); do if curl -fsS http://frontend:3000/ >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aquecendo backend...'; curl -fsS http://backend:8000/admin/login/ >/dev/null || true; echo '[warmup] aquecendo frontend...'; curl -fsS http://frontend:3000/ >/dev/null || true; curl -fsS http://frontend:3000/login/ >/dev/null || true; echo '[warmup] ok';"
+    depends_on:
+      frontend:
+        condition: service_started
+    networks:
+      - substrato
+    restart: "no"
 
   # =========================================================================
   # CELERY WORKER
@@ -238,6 +260,9 @@ volumes:
   redis_data:
   static_volume:
   media_volume:
+  frontend_node_modules:
+  frontend_next_cache:
+  frontend_swc_cache:
 
 # ============================================================================
 # NETWORK
