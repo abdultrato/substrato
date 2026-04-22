@@ -182,7 +182,7 @@ export default function PerfilPage () {
                                     <TextInput
                                         value={email}
                                         onChange={(e) => setEmail( e.target.value )}
-                                        placeholder="ex: utilizador@empresa.com"
+                                        placeholder="Ex.: utilizador@empresa.com"
                                         inputMode="email"
                                     />
                                 </FormField>

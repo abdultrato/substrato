@@ -131,9 +131,9 @@ export default function PacienteDetalhePage() {
                     <div><strong>ID:</strong> {paciente.id_custom}</div>
                     <div><strong>Nome:</strong> {paciente.nome}</div>
                     <div><strong>Idade:</strong> {calcularIdade(paciente.data_nascimento)}</div>
-                    <div><strong>Gênero:</strong> {paciente.genero || "-"}</div>
+                    <div><strong>Género:</strong> {paciente.genero || "-"}</div>
                     <div><strong>Telefone:</strong> {paciente.contacto || "-"}</div>
-                    <div><strong>Email:</strong> {paciente.email || "-"}</div>
+                    <div><strong>E-mail:</strong> {paciente.email || "-"}</div>
                     <div><strong>Documento:</strong> {paciente.tipo_documento || "-"}</div>
                     <div><strong>Nº Documento:</strong> {paciente.numero_id || "-"}</div>
                     <div><strong>Raça/Origem:</strong> {paciente.raca_origem || "-"}</div>

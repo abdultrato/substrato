@@ -58,7 +58,7 @@ export default function VerEntidadePage() {
                     <div><strong>Local / Sede:</strong> {entidade.endereco_sede || "-"}</div>
                     <div><strong>Contactos:</strong> {entidade.contactos || "-"}</div>
                     <div><strong>Telefone:</strong> {entidade.telefone1 || "-"}</div>
-                    <div><strong>Telefone (alt):</strong> {entidade.telefone2 || "-"}</div>
+                    <div><strong>Telefone (alternativo):</strong> {entidade.telefone2 || "-"}</div>
                     <div><strong>E-mail:</strong> {entidade.email || "-"}</div>
                     <div><strong>NUIT:</strong> {entidade.nuit || "-"}</div>
                     <div><strong>NIB:</strong> {entidade.nib || "-"}</div>

@@ -9,6 +9,7 @@ import pytest
 import application.payments.start_payment as start_payment_module
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
+from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.tenants.models.tenant import Tenant
 
 
@@ -56,6 +57,25 @@ def _authenticate_admin(tenant, api_client=None):
 
     admin_group, _ = Group.objects.get_or_create(name="Administrador")
     user.groups.add(admin_group)
+    if api_client is not None:
+        api_client.defaults["HTTP_HOST"] = tenant.domain
+        api_client.force_authenticate(user=user)
+    return user
+
+
+def _authenticate_doctor(tenant, api_client=None):
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        username="doctor_http",
+        email="doctor-http@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+
+    doctor_group, _ = Group.objects.get_or_create(name="Médico")
+    user.groups.add(doctor_group)
     if api_client is not None:
         api_client.defaults["HTTP_HOST"] = tenant.domain
         api_client.force_authenticate(user=user)
@@ -117,7 +137,6 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
         },
         format="json",
     )
-
     assert item_response.status_code == 201
     item_payload = _response_data(item_response)
     assert item_payload["descricao"] == "Taxa administrativa"
@@ -291,3 +310,38 @@ def test_start_payment_uses_gateway_registry_and_requires_phone_for_mobile_money
             Decimal("20.00"),
             gateway_name="mpesa",
         )
+
+
+@pytest.mark.django_db
+def test_clinical_history_endpoint_allows_doctor(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/?limit=5")
+
+    assert response.status_code == 200
+    payload = _response_data(response)
+    assert "patient" in payload
+    assert payload["patient"]["id"] == patient.id
+
+
+@pytest.mark.django_db
+def test_consultation_clinical_history_endpoint_returns_patient_aggregate(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    consultation = MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        type="Consulta",
+        price=Decimal("0.00"),
+    )
+
+    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/?limit=5")
+
+    assert response.status_code == 200
+    payload = _response_data(response)
+    assert "patient" in payload
+    assert payload["patient"]["id"] == patient.id

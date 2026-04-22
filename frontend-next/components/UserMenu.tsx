@@ -19,7 +19,7 @@ export default function UserMenu() {
 
     return (
         <div style={{display: "flex", gap: 10, alignItems: "center"}}>
-            <span>👤 {user?.full_name || user?.username || "Usuário"}</span>
+            <span>👤 {user?.full_name || user?.username || "Utilizador"}</span>
             <button className="btn-secondary" onClick={logout}>
                 Sair
             </button>

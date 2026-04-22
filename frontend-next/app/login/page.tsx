@@ -57,7 +57,7 @@ export default function LoginPage () {
                     : null
             router.push( next || getDefaultWorkspaceHref( sessionUser ) );
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Usuário ou senha inválidos" );
+            setError( e instanceof Error ? e.message : "Utilizador ou palavra-passe inválidos" );
         }
     }
 
@@ -133,7 +133,7 @@ export default function LoginPage () {
 
                 <div className="login-form">
                     <h1 className="login-title">Substrato</h1>
-                    <p className="login-subtitle">Infrastrutura de unificada de gestao em saude</p>
+                    <p className="login-subtitle">Infraestrutura unificada de gestão em saúde</p>
 
                     {error && <div className="login-error">{error}</div>}
                     {resetInfo && (
@@ -147,7 +147,10 @@ export default function LoginPage () {
                             <form onSubmit={handleSubmit}>
                                 <input
                                     className="login-input"
-                                    placeholder="Usuário"
+                                    id="utilizador"
+                                    name="utilizador"
+                                    autoComplete="username"
+                                    placeholder="Utilizador"
                                     value={user}
                                     onChange={e => setUser( e.target.value )}
                                 />
@@ -155,8 +158,10 @@ export default function LoginPage () {
                                 <div className="flex items-center gap-2">
                                     <input
                                         className="login-input flex-1"
+                                        id="palavra-passe"
+                                        name="palavra_passe"
                                         type={showPass ? "text" : "password"}
-                                        placeholder="Senha"
+                                        placeholder="Palavra-passe"
                                         value={pass}
                                         onChange={e => setPass( e.target.value )}
                                         autoComplete="current-password"
@@ -191,6 +196,8 @@ export default function LoginPage () {
                             <form onSubmit={handleResetRequest}>
                                 <input
                                     className="login-input"
+                                    id="identificador-reposicao"
+                                    name="identificador_reposicao"
                                     placeholder="E-mail, telefone ou utilizador"
                                     value={resetId}
                                     onChange={e => setResetId( e.target.value )}
@@ -216,6 +223,8 @@ export default function LoginPage () {
                             <form onSubmit={handleResetConfirm}>
                                 <input
                                     className="login-input"
+                                    id="codigo-reposicao"
+                                    name="codigo_reposicao"
                                     placeholder="Código recebido"
                                     value={resetToken}
                                     onChange={e => setResetToken( e.target.value )}
@@ -224,6 +233,8 @@ export default function LoginPage () {
                                 <div className="flex items-center gap-2">
                                     <input
                                         className="login-input flex-1"
+                                        id="nova-palavra-passe"
+                                        name="nova_palavra_passe"
                                         type={showResetPass ? "text" : "password"}
                                         placeholder="Nova palavra-passe"
                                         value={resetPass}
@@ -243,6 +254,8 @@ export default function LoginPage () {
                                 <div className="flex items-center gap-2">
                                     <input
                                         className="login-input flex-1"
+                                        id="confirmacao-nova-palavra-passe"
+                                        name="confirmacao_nova_palavra_passe"
                                         type={showResetPass2 ? "text" : "password"}
                                         placeholder="Confirmar nova palavra-passe"
                                         value={resetPass2}

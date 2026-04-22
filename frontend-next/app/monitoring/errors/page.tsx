@@ -85,7 +85,7 @@ export default function MonitoramentoErrosPage() {
             { header: "Rota", render: (e: ErroRow) => truncate(e.caminho, 40) },
             { header: "Exceção", render: (e: ErroRow) => truncate(e.exception_class, 34) },
             { header: "Mensagem", render: (e: ErroRow) => truncate(e.mensagem, 42) },
-            { header: "Usuário", render: (e: ErroRow) => truncate(e.usuario_nome, 26) },
+            { header: "Utilizador", render: (e: ErroRow) => truncate(e.usuario_nome, 26) },
             { header: "Criado em", render: (e: ErroRow) => fmtDateTime(e.criado_em) },
         ],
         []

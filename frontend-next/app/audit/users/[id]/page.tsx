@@ -25,7 +25,7 @@ export default function AuditoriaUsuarioDetalhePage() {
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [usuario, setUsuario] = useState<any>(null)
+  const [utilizador, setUtilizador] = useState<any>(null)
   const [atividades, setAtividades] = useState<AtividadeRow[]>([])
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function AuditoriaUsuarioDetalhePage() {
         const items = acts && (acts as any).results ? (acts as any).results : acts
 
         if (!mounted) return
-        setUsuario(u || null)
+        setUtilizador(u || null)
         setAtividades(Array.isArray(items) ? items : [])
       } catch (e: any) {
         if (!mounted) return
@@ -88,7 +88,7 @@ export default function AuditoriaUsuarioDetalhePage() {
     []
   )
 
-  const nome = usuario?.nome || usuario?.username || userId
+  const nome = utilizador?.nome || utilizador?.username || userId
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>

@@ -25,6 +25,7 @@ class MovementOrigin(models.TextChoices):
     VENDA = "VEND", "Venda"
     PROCEDIMENTO = "PROC", "Procedimento"
     AJUSTE = "AJUS", "Ajuste"
+    REQUISICAO = "REQ", "Requisição"
 
 
 class InventoryMovement(CoreModel):
@@ -66,6 +67,17 @@ class InventoryMovement(CoreModel):
         blank=True,  # Permite omitir no formulário
         related_name="movimentos",  # Nome reverso
         db_index=True,  # Índice
+    )
+
+    material_request_item = models.ForeignKey(
+        "farmacia.MaterialRequisitionItem",
+        verbose_name="Item de requisição",
+        db_column="material_request_item_id",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="movimentos",
+        db_index=True,
     )
 
     quantity = models.PositiveIntegerField(
@@ -127,6 +139,18 @@ class InventoryMovement(CoreModel):
         if self.type == MovementType.SAIDA and self.origin != MovementOrigin.VENDA and self.sale_item:
             raise ValidationError("Saídas que não são de sale não devem estar ligadas a ItemVenda.")
 
+        if self.material_request_item_id and self.tenant_id and self.material_request_item.tenant_id != self.tenant_id:
+            raise ValidationError("Inquilino do movimento difere do item de requisição.")
+
+        if self.origin == MovementOrigin.VENDA and self.material_request_item_id:
+            raise ValidationError("Movimentos de venda não devem estar ligados a item de requisição.")
+
+        if self.origin == MovementOrigin.REQUISICAO and self.type != MovementType.SAIDA:
+            raise ValidationError("Movimento de requisição deve ser de saída.")
+
+        if self.origin == MovementOrigin.REQUISICAO and self.sale_item_id:
+            raise ValidationError("Movimento de requisição não deve estar ligado a ItemVenda.")
+
         if self.type == MovementType.ENTRADA and self.sale_item:
             raise ValidationError("Entradas de estoque não devem estar ligadas a vendas.")
 
@@ -162,6 +186,10 @@ class InventoryMovement(CoreModel):
                 sale = self.sale_item.sale  # Venda associada
                 reference = sale.number or sale.custom_id  # Referência amigável
                 self.name = f"Venda {reference} - Lote {self.lot.lot_number}"
+            elif self.origin == MovementOrigin.REQUISICAO and self.material_request_item_id:
+                req = getattr(self.material_request_item, "requisition", None)
+                req_ref = getattr(req, "custom_id", None) or getattr(req, "id", None) or ""
+                self.name = f"Requisição {req_ref} - Lote {self.lot.lot_number}"
             elif self.origin == MovementOrigin.PROCEDIMENTO:
                 self.name = f"Procedimento - Lote {self.lot.lot_number}"
             else:

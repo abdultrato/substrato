@@ -55,7 +55,7 @@ export default function AuditoriaUsuariosPage() {
         setRows(Array.isArray(items) ? items.map(normalizeUserRow) : [])
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar usuários."))
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar utilizadores."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -127,12 +127,12 @@ export default function AuditoriaUsuariosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Histórico de Actividades"
-          subtitle="Administrador: usuários e atividades."
+          subtitle="Administrador: utilizadores e actividades."
           actions={
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Pesquisar usuário/grupo..."
+              placeholder="Pesquisar utilizador/grupo..."
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
             />
           }
@@ -150,7 +150,7 @@ export default function AuditoriaUsuariosPage() {
           <DataTable<UserRow>
             columns={columns as any}
             data={filtered}
-            emptyMessage="Nenhum usuário encontrado."
+            emptyMessage="Nenhum utilizador encontrado."
           />
         )}
       </div>

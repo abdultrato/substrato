@@ -48,7 +48,7 @@ export default function ExameDetailPage () {
 
                 <h3>Campos</h3>
                 {campos.length === 0 ? (
-                    <p>Sem campos cadastrados.</p>
+                    <p>Sem campos registados.</p>
                 ) : campos.map( c => (
                     <div key={c.id}>
                         {c.nome || "-"} ({c.unidade || "-"})

@@ -119,6 +119,12 @@ export default function FarmaciaPage() {
             href="/farmacia/movements"
             icon={Repeat}
           />
+          <ActionTile
+            title="Requisições"
+            description="Pendentes/parciais de outros setores."
+            href="/farmacia/requisicoes-materiais"
+            icon={Layers}
+          />
         </div>
 
         <Card

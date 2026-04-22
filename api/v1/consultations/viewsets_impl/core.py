@@ -6,12 +6,13 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from api.v1.clinical.services import build_patient_clinical_history, user_can_view_clinical_history
 from apps.billing.models.invoice import Invoice
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
@@ -80,6 +81,29 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     search_fields = ["custom_id", "type", "patient__name", "doctor__name"]
     ordering_fields = ["scheduled_for", "created_at", "type", "status", "price"]
     ordering = ["-scheduled_for", "-created_at"]
+
+    @action(detail=True, methods=["get"], url_path="historia_clinica", url_name="historia-clinica")
+    def historia_clinica(self, request, pk=None):
+        """
+        Retorna a história clínica agregada do paciente desta consulta.
+
+        Este endpoint existe para evitar que o frontend faça várias chamadas e
+        consolide dados sensíveis localmente.
+        """
+        if not user_can_view_clinical_history(getattr(request, "user", None)):
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
+
+        consultation = self.get_object()
+        patient = getattr(consultation, "patient", None)
+        if not patient:
+            raise ValidationError("Consulta sem paciente associado.")
+
+        return Response(build_patient_clinical_history(request, patient))
+
+    # English alias (stable for SDKs), keep Portuguese as canonical.
+    @action(detail=True, methods=["get"], url_path="clinical_history", url_name="clinical-history")
+    def clinical_history(self, request, pk=None):
+        return self.historia_clinica(request, pk)
 
     @action(detail=False, methods=["get"], url_path="price", url_name="price")
     def price_preview(self, request):

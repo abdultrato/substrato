@@ -13,6 +13,7 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 
 export default function EditarRecursoPage() {
     const params = useParams()
@@ -103,6 +104,7 @@ export default function EditarRecursoPage() {
                         method="put"
                         initialValues={initial || {}}
                         submitLabel="Salvar"
+                        config={getResourceFormConfig(groupKey, resourceKey, found.resource.endpoint)}
                         onSuccess={() => router.push(`/recursos/${groupKey}/${resourceKey}/${id}`)}
                     />
                 )}

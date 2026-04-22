@@ -75,12 +75,40 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "consultations-feriado": SAFE_METHODS,
             # Entidades externas (empresas para medicina ocupacional / terceirizações)
             "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "clinical-patient": SAFE_METHODS | WRITE_METHODS,
+            "clinical-labrequest": SAFE_METHODS | WRITE_METHODS,
+            "clinical-labrequestitem": SAFE_METHODS,
+            "clinical-exam": SAFE_METHODS,
+            "clinical-examfield": SAFE_METHODS,
+            "clinical-medicalexam": SAFE_METHODS,
+            "clinical-medicalexamfield": SAFE_METHODS,
+            "billing-invoice": SAFE_METHODS | WRITE_METHODS,
+            "billing-invoiceitem": SAFE_METHODS | WRITE_METHODS,
+            "billing-invoicehistory": SAFE_METHODS,
+            "payments-recibo": SAFE_METHODS,
+            "payments-payment": SAFE_METHODS | frozenset({"POST"}),
+            "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-medicos": SAFE_METHODS,
+            "consultations-specialty": SAFE_METHODS,
+            "consultations-feriado": SAFE_METHODS,
+            "external_entities-empresa": SAFE_METHODS | WRITE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
         g["LABORATORIO"]: {
             # Laboratorio só: requisicoes + resultados (sem catálogo de exams)
             "clinico-requisicaoanalise": SAFE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
             "clinico-resultadoitem": SAFE_METHODS | WRITE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "clinical-labrequest": SAFE_METHODS,
+            "clinical-labrequestitem": SAFE_METHODS,
+            "clinical-resultitem": SAFE_METHODS | WRITE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
             # SGE (CRUD total)
             "equipamentos-equipment": SAFE_METHODS | WRITE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS | WRITE_METHODS,
@@ -118,6 +146,31 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-camaenfermaria": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-internamentoenfermaria": SAFE_METHODS | WRITE_METHODS,
             "enfermagem-enfermariadashboard": SAFE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "clinical-patient": SAFE_METHODS,
+            "clinical-labrequest": SAFE_METHODS,
+            "clinical-labrequestitem": SAFE_METHODS,
+            "clinical-exam": SAFE_METHODS,
+            "clinical-medicalexam": SAFE_METHODS,
+            "clinical-medicalexamfield": SAFE_METHODS,
+            "nursing-nursingrecord": SAFE_METHODS | WRITE_METHODS,
+            "nursing-nursingvitalsign": SAFE_METHODS | WRITE_METHODS,
+            "nursing-nursingprescription": SAFE_METHODS | WRITE_METHODS,
+            "nursing-nursingevolution": SAFE_METHODS | WRITE_METHODS,
+            "nursing-procedure": SAFE_METHODS | WRITE_METHODS,
+            "nursing-procedurecatalog": SAFE_METHODS,
+            "nursing-procedurecatalogmaterial": SAFE_METHODS,
+            "nursing-procedureitem": SAFE_METHODS | WRITE_METHODS,
+            "nursing-procedureitemvalue": SAFE_METHODS | WRITE_METHODS,
+            "nursing-procedurematerial": SAFE_METHODS | WRITE_METHODS,
+            "nursing-procedurematerialvalue": SAFE_METHODS | WRITE_METHODS,
+            "nursing-ward": SAFE_METHODS | WRITE_METHODS,
+            "nursing-wardbed": SAFE_METHODS | WRITE_METHODS,
+            "nursing-hospitalization": SAFE_METHODS | WRITE_METHODS,
+            "nursing-warddashboard": SAFE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
             "prontuario-record": SAFE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS,
@@ -130,6 +183,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoitem": SAFE_METHODS,
             "clinico-exam": SAFE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "clinical-patient": SAFE_METHODS,
+            "clinical-labrequest": SAFE_METHODS | WRITE_METHODS,
+            "clinical-labrequestitem": SAFE_METHODS,
+            "clinical-exam": SAFE_METHODS,
             # SGE (somente leitura)
             "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
@@ -156,6 +214,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-exam": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "clinical-patient": SAFE_METHODS | WRITE_METHODS,
+            "clinical-labrequest": SAFE_METHODS | WRITE_METHODS,
+            "clinical-labrequestitem": SAFE_METHODS,
+            "clinical-exam": SAFE_METHODS,
+            "clinical-medicalexam": SAFE_METHODS,
+            "clinical-medicalexamfield": SAFE_METHODS,
             # SGE (somente leitura)
             "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
@@ -184,6 +249,15 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "farmacia-movimentoestoque": SAFE_METHODS | WRITE_METHODS,
             "farmacia-sale": SAFE_METHODS | WRITE_METHODS,
             "farmacia-itemvenda": SAFE_METHODS | WRITE_METHODS,
+            # --- API v1 routes (English prefixes) ---
+            "pharmacy-product": SAFE_METHODS | WRITE_METHODS,
+            "pharmacy-lot": SAFE_METHODS | WRITE_METHODS,
+            "pharmacy-movimentoestoque": SAFE_METHODS | WRITE_METHODS,
+            "pharmacy-sale": SAFE_METHODS | WRITE_METHODS,
+            "pharmacy-itemvenda": SAFE_METHODS | WRITE_METHODS,
+            # Logística interna (receber/aviar/arquivar requisições)
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
+            "pharmacy-requisicaomaterialitem": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
             "equipamentos-equipment": SAFE_METHODS,
             "equipamentos-inspecaodiaria": SAFE_METHODS,
@@ -191,6 +265,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "equipamentos-ocorrencia": SAFE_METHODS,
             # (Opcional) consultar patient para vinculos operacionais
             "clinico-patient": SAFE_METHODS,
+            "clinical-patient": SAFE_METHODS,
         },
         g["MANUTENCAO"]: {
             # SGE (somente leitura)

@@ -2,8 +2,11 @@
 
 import unicodedata
 
-from django.contrib import admin
-from django.urls import reverse
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
+from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -895,6 +898,7 @@ class ResultAdmin(CoreAdmin):
         "analyst",
         "finalized",
         "created_at",
+        "pdf_link",
     )
 
     search_fields = (
@@ -925,6 +929,7 @@ class ResultAdmin(CoreAdmin):
     readonly_fields = (
         "custom_id",
         "analyst",
+        "pdf_link",
         "created_at",
         "created_by",
         "created_by_id",
@@ -949,6 +954,7 @@ class ResultAdmin(CoreAdmin):
                 "fields": (
                     "tenant",
                     "custom_id",
+                    "pdf_link",
                 )
             },
         ),
@@ -980,3 +986,60 @@ class ResultAdmin(CoreAdmin):
             },
         ),
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        extra = [
+            path(
+                "<path:object_id>/pdf/",
+                self.admin_site.admin_view(self.results_pdf_view),
+                name=f"{app_label}_{model_name}_pdf",
+            ),
+        ]
+        return extra + urls
+
+    def pdf_link(self, obj):
+        if not getattr(obj, "pk", None):
+            return "-"
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        url = reverse(f"admin:{app_label}_{model_name}_pdf", args=[obj.pk])
+        return format_html('<a href="{}" target="_blank" rel="noopener">Gerar PDF</a>', url)
+
+    pdf_link.short_description = "PDF"
+
+    def results_pdf_view(self, request, object_id: str):
+        result = self.get_object(request, object_id)
+        if result is None:
+            raise Http404("Resultado não encontrado.")
+        if not self.has_view_permission(request, result):
+            raise PermissionDenied("Sem permissão para ver este resultado.")
+
+        req = getattr(result, "request", None)
+        if not req:
+            messages.error(request, "Este resultado não possui requisição associada.")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change",
+                    args=[result.pk],
+                )
+            )
+
+        from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
+
+        try:
+            pdf_bytes, filename = generate_results_pdf(req, apenas_validados=True)
+        except Exception as exc:
+            messages.error(request, f"Falha ao gerar PDF: {exc}")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change",
+                    args=[result.pk],
+                )
+            )
+
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{filename}"'
+        return resp

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 from datetime import UTC
 import importlib.util
+from pathlib import Path
 import pkgutil
 import copy
 
@@ -88,6 +89,57 @@ def _patch_django_filters_choice_iterator() -> None:
 
 
 _patch_legacy_ast_aliases()
+
+
+def _patch_project_platform_package() -> None:
+    """
+    Ensure our project package `platform/` wins over the stdlib `platform` module.
+
+    Some tooling (notably pytest plugins) imports the stdlib `platform` module
+    early; after that, `import platform.settings...` fails with:
+    "'platform' is not a package".
+
+    The project intentionally ships a `platform/__init__.py` that proxies the
+    stdlib API, so replacing the module is safe.
+    """
+    try:
+        import sys
+    except Exception:
+        return
+
+    current = sys.modules.get("platform")
+    if current is not None:
+        current_file = str(getattr(current, "__file__", "") or "")
+        if current_file.replace("/", "\\").endswith("\\platform\\__init__.py"):
+            return
+
+    repo_root = Path(__file__).resolve().parent
+    pkg_dir = repo_root / "platform"
+    init_py = pkg_dir / "__init__.py"
+    if not init_py.exists():
+        return
+
+    spec = importlib.util.spec_from_file_location(
+        "platform",
+        init_py,
+        submodule_search_locations=[str(pkg_dir)],
+    )
+    if spec is None or spec.loader is None:
+        return
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["platform"] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception:
+        # Restore previous module on failure.
+        if current is not None:
+            sys.modules["platform"] = current
+        else:
+            sys.modules.pop("platform", None)
+
+
+_patch_project_platform_package()
 _patch_pkgutil_find_loader()
 _patch_django_timezone_utc()
 _patch_django_filters_choice_iterator()

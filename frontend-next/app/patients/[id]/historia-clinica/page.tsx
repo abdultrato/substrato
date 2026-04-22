@@ -17,13 +17,13 @@ import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
 type HistoriaClinicaPayload = {
-  paciente?: any
+  patient?: any
   referencia?: any
   cardex?: any[]
-  consultas?: any[]
   requisicoes?: any[]
-  procedimentos_enfermagem?: any[]
-  internamentos_enfermaria?: any[]
+  consultations?: any[]
+  procedures_enfermagem?: any[]
+  internamentos_ward?: any[]
   vendas_farmacia?: any[]
   faturas?: any[]
   recibos?: any[]
@@ -82,15 +82,15 @@ export default function HistoriaClinicaPage() {
     }
   }, [id])
 
-  const paciente = payload?.paciente || {}
-  const cardex = (payload?.cardex || []) as any[]
-  const requisicoes = (payload?.requisicoes || []) as any[]
-  const consultas = (payload?.consultas || []) as any[]
-  const procedimentos = (payload?.procedimentos_enfermagem || []) as any[]
-  const internamentos = (payload?.internamentos_enfermaria || []) as any[]
-  const vendas = (payload?.vendas_farmacia || []) as any[]
-  const faturas = (payload?.faturas || []) as any[]
-  const recibos = (payload?.recibos || []) as any[]
+  const paciente = (payload as any)?.patient || (payload as any)?.paciente || {}
+  const cardex = (((payload as any)?.cardex || []) as any[])
+  const requisicoes = (((payload as any)?.requisicoes || []) as any[])
+  const consultas = ((((payload as any)?.consultations || (payload as any)?.consultas) || []) as any[])
+  const procedimentos = ((((payload as any)?.procedures_enfermagem || (payload as any)?.procedimentos_enfermagem) || []) as any[])
+  const internamentos = ((((payload as any)?.internamentos_ward || (payload as any)?.internamentos_enfermaria) || []) as any[])
+  const vendas = (((payload as any)?.vendas_farmacia || []) as any[])
+  const faturas = (((payload as any)?.faturas || []) as any[])
+  const recibos = (((payload as any)?.recibos || []) as any[])
 
   const cardexCols = useMemo(
     () => [
@@ -286,7 +286,7 @@ export default function HistoriaClinicaPage() {
                   {paciente.tipo_documento || "-"} {paciente.numero_id || "-"}
                 </div>
                 <div>
-                  <span className="font-semibold text-[var(--text)]">Gênero:</span> {paciente.genero || "-"}
+                  <span className="font-semibold text-[var(--text)]">Género:</span> {paciente.genero || "-"}
                 </div>
                 <div>
                   <span className="font-semibold text-[var(--text)]">Contacto:</span> {paciente.contacto || "-"}

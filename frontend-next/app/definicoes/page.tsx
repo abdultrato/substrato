@@ -82,11 +82,14 @@ export default function DefinicoesPage () {
 
                 <Card title="Segurança" subtitle="Alterar palavra-passe da conta.">
                     <form onSubmit={onSubmit} className="grid gap-3 sm:max-w-xl">
-                        <FormField label="Palavra-passe atual" required>
+                        <FormField label="Palavra-passe atual" htmlFor="palavra-passe-atual" required>
                             <div className="flex items-center gap-2">
                                 <input
+                                    id="palavra-passe-atual"
+                                    name="palavra_passe_atual"
                                     className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
                                     type={showCurrent ? "text" : "password"}
+                                    placeholder="Introduza a palavra-passe atual"
                                     value={currentPassword}
                                     onChange={(e) => setCurrentPassword( e.target.value )}
                                     autoComplete="current-password"
@@ -102,11 +105,14 @@ export default function DefinicoesPage () {
                             </div>
                         </FormField>
 
-                        <FormField label="Nova palavra-passe" required>
+                        <FormField label="Nova palavra-passe" htmlFor="nova-palavra-passe" required>
                             <div className="flex items-center gap-2">
                                 <input
+                                    id="nova-palavra-passe"
+                                    name="nova_palavra_passe"
                                     className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
                                     type={showNew ? "text" : "password"}
+                                    placeholder="Crie uma nova palavra-passe"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword( e.target.value )}
                                     autoComplete="new-password"
@@ -122,11 +128,14 @@ export default function DefinicoesPage () {
                             </div>
                         </FormField>
 
-                        <FormField label="Confirmar nova palavra-passe" required>
+                        <FormField label="Confirmar nova palavra-passe" htmlFor="confirmacao-nova-palavra-passe" required>
                             <div className="flex items-center gap-2">
                                 <input
+                                    id="confirmacao-nova-palavra-passe"
+                                    name="confirmacao_nova_palavra_passe"
                                     className="w-full flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm leading-tight text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
                                     type={showConfirm ? "text" : "password"}
+                                    placeholder="Repita a nova palavra-passe"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword( e.target.value )}
                                     autoComplete="new-password"

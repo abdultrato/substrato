@@ -262,9 +262,9 @@ export default function PacientesPage () {
                             />
 
                             <select name="genero" value={form.genero} onChange={handleChange}>
-                                <option value="">Gênero</option>
-                                <option>Masculino</option>
-                                <option>Femenino</option>
+                                <option value="">Género</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Feminino</option>
                             </select>
 
                             <select
@@ -298,7 +298,7 @@ export default function PacientesPage () {
 
                             <input
                                 name="numero_id"
-                                placeholder="Documento"
+                                placeholder="Número do documento"
                                 value={form.numero_id}
                                 onChange={handleChange}
                             />
@@ -312,7 +312,7 @@ export default function PacientesPage () {
 
                             <input
                                 name="email"
-                                placeholder="Email"
+                                placeholder="E-mail"
                                 value={form.email}
                                 onChange={handleChange}
                             />
@@ -419,7 +419,7 @@ export default function PacientesPage () {
                                 <th>Entrada</th>
                                 <th>Nome</th>
                                 <th>Idade</th>
-                                <th>Gênero</th>
+                                <th>Género</th>
                                 <th>Contacto</th>
                                 <th>Ações</th>
                             </tr>

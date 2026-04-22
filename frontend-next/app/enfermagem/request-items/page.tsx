@@ -128,7 +128,7 @@ export default function EnfermagemItensRequisicaoPage() {
                 <input
                   value={requisicao}
                   onChange={(e) => setRequisicao(e.target.value)}
-                  placeholder="ex: 123"
+                  placeholder="Ex.: 123"
                   className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 />
               </div>

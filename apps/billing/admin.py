@@ -2,6 +2,11 @@
 
 from django.contrib import admin, messages
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
+from django.urls import path, reverse
+from django.utils.html import format_html
+from rest_framework.exceptions import PermissionDenied
 
 from .models.invoice import Invoice
 from .models.invoice_items import InvoiceItem
@@ -279,6 +284,7 @@ class InvoiceAdmin(CoreAdmin):
         "total",
         "status",
         "created_at",
+        "pdf_link",
     )
 
     search_fields = (
@@ -308,6 +314,7 @@ class InvoiceAdmin(CoreAdmin):
         "vat_amount",
         "total",
         "patient_amount",
+        "pdf_link",
         "created_at",
         "updated_at",
     )
@@ -318,6 +325,7 @@ class InvoiceAdmin(CoreAdmin):
             {
                 "fields": (
                     "custom_id",
+                    "pdf_link",
                     "origin",
                     "patient",
                     "request",
@@ -352,6 +360,61 @@ class InvoiceAdmin(CoreAdmin):
     ]
     actions = ("sync_origin_items",)
     filter_horizontal = ("procedures",)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        extra = [
+            path(
+                "<path:object_id>/pdf/",
+                self.admin_site.admin_view(self.invoice_pdf_view),
+                name=f"{app_label}_{model_name}_pdf",
+            ),
+        ]
+        return extra + urls
+
+    def pdf_link(self, obj):
+        if not getattr(obj, "pk", None):
+            return "-"
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        url = reverse(f"admin:{app_label}_{model_name}_pdf", args=[obj.pk])
+        return format_html('<a href="{}" target="_blank" rel="noopener">Gerar PDF</a>', url)
+
+    pdf_link.short_description = "PDF"
+
+    def invoice_pdf_view(self, request, object_id: str):
+        invoice = self.get_object(request, object_id)
+        if invoice is None:
+            raise Http404("Fatura não encontrada.")
+        if not self.has_view_permission(request, invoice):
+            raise PermissionDenied("Sem permissão para ver esta fatura.")
+
+        from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
+
+        try:
+            pdf_bytes, filename = generate_invoice_pdf(invoice, request=request)
+        except ValidationError as exc:
+            messages.error(request, str(exc))
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change",
+                    args=[invoice.pk],
+                )
+            )
+        except Exception as exc:
+            messages.error(request, f"Falha ao gerar PDF: {exc}")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change",
+                    args=[invoice.pk],
+                )
+            )
+
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{filename}"'
+        return resp
 
     def source_reference(self, obj):
         source_reference = obj.source_reference

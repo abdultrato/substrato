@@ -4,12 +4,15 @@ from datetime import timedelta  # Para manipular datas de validade
 from decimal import Decimal  # Para valores monetários
 
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.utils import timezone
 import pytest
 
 from apps.clinical.models.patient import Patient
 from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from apps.pharmacy.models.lot import Lot
+from apps.pharmacy.models.material_requisition import MaterialRequisitionStatus
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.sale import Sale
@@ -179,3 +182,75 @@ def test_sale_item_ignores_manual_unit_price_and_inherits_product_price():
 
 
 _product = _product
+
+
+@pytest.mark.django_db
+def test_material_requisition_api_flow_create_and_fulfill(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar",
+        name="Tenant ReqFar",
+        domain="tenant-reqfar.local",
+        active=True,
+    )
+
+    # Usuário solicitante (Recepção)
+    User = get_user_model()
+    requester = User.objects.create_user(
+        username="req_user",
+        email="req@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+    requester.groups.add(grp_recep)
+
+    # Usuário farmácia
+    pharmacist = User.objects.create_user(
+        username="ph_user",
+        email="ph@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    pharmacist.is_staff = True
+    pharmacist.save(update_fields=["is_staff"])
+    grp_ph, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+    pharmacist.groups.add(grp_ph)
+
+    # Produto + lote com estoque
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQ1",
+        expiration_date=timezone.localdate() + timedelta(days=60),
+        initial_quantity=10,
+        sale_price=prod.sale_price,
+    )
+
+    # Criar requisição (solicitante)
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 5}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    req_id = create_resp.data["id"]
+    assert create_resp.data["status"] == MaterialRequisitionStatus.PENDING
+
+    # Aviar parcialmente (farmácia)
+    api_client.force_authenticate(user=pharmacist)
+    fulfill_resp = api_client.post(
+        f"/api/v1/pharmacy/requisicaomaterial/{req_id}/aviar/",
+        {"items": [{"id": create_resp.data["items"][0]["id"], "quantity": 3}]},
+        format="json",
+    )
+    assert fulfill_resp.status_code == 200
+    assert fulfill_resp.data["status"] == MaterialRequisitionStatus.PARTIAL
+
+    lot.refresh_from_db()
+    assert lot.balance() == 7
+    assert InventoryMovement.objects.filter(origin=MovementOrigin.REQUISICAO, material_request_item__isnull=False).exists()

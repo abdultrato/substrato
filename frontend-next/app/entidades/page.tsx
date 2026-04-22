@@ -85,7 +85,7 @@ export default function EntidadesPage () {
                                 <th>Nome</th>
                                 <th>NUIT</th>
                                 <th>Telefone</th>
-                                <th>Email</th>
+                                <th>E-mail</th>
                                 <th>NIB</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -126,7 +126,7 @@ export default function EntidadesPage () {
 
                             {entidades.length === 0 && (
                                 <tr>
-                                    <td colSpan={7}>Nenhuma empresa cadastrada</td>
+                                    <td colSpan={7}>Nenhuma empresa registada</td>
                                 </tr>
                             )}
                         </tbody>

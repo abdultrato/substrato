@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { EntidadeCreateDTO } from "@/lib/types";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
+import { FormField } from "@/components/form";
 import { GROUPS } from "@/lib/rbac";
 
 export default function NovaEntidadePage () {
@@ -80,89 +81,138 @@ export default function NovaEntidadePage () {
                     </p>
                 )}
 
-                <form onSubmit={salvar} className="grid">
-                    <input
-                        name="nome"
-                        placeholder="Nome"
-                        required
-                        value={form.nome}
-                        onChange={handleChange}
-                    />
+                <form onSubmit={salvar} className="space-y-6">
+                    <fieldset className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                        <legend className="px-2 text-sm font-semibold text-foreground">Dados da empresa</legend>
+                        <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <FormField id="nome" label="Nome" required hint="Nome oficial ou comercial.">
+                                <input
+                                    id="nome"
+                                    name="nome"
+                                    placeholder="Ex.: Clínica Substrato"
+                                    required
+                                    value={form.nome}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
 
-                    <input
-                        name="endereco_sede"
-                        placeholder="Local / Sede"
-                        value={form.endereco_sede}
-                        onChange={handleChange}
-                    />
+                            <FormField id="endereco_sede" label="Local / Sede" hint="Opcional.">
+                                <input
+                                    id="endereco_sede"
+                                    name="endereco_sede"
+                                    placeholder="Ex.: Maputo, Baixa"
+                                    value={form.endereco_sede}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
+                        </div>
+                    </fieldset>
 
-                    <input
-                        name="contactos"
-                        placeholder="Contactos (pessoa/departamento)"
-                        value={form.contactos}
-                        onChange={handleChange}
-                    />
+                    <fieldset className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                        <legend className="px-2 text-sm font-semibold text-foreground">Contactos</legend>
+                        <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <FormField id="contactos" label="Contactos (pessoa/departamento)" hint="Opcional.">
+                                <input
+                                    id="contactos"
+                                    name="contactos"
+                                    placeholder="Ex.: Recursos Humanos / Financeiro"
+                                    value={form.contactos}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
 
-                    <input
-                        name="telefone1"
-                        placeholder="Telefone"
-                        value={form.telefone1}
-                        onChange={handleChange}
-                    />
+                            <FormField id="telefone1" label="Telefone" hint="Opcional.">
+                                <input
+                                    id="telefone1"
+                                    name="telefone1"
+                                    placeholder="Ex.: +258 21 123 456"
+                                    value={form.telefone1}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
 
-                    <input
-                        name="telefone2"
-                        placeholder="Telefone (alternativo)"
-                        value={form.telefone2}
-                        onChange={handleChange}
-                    />
+                            <FormField id="telefone2" label="Telefone (alternativo)" hint="Opcional.">
+                                <input
+                                    id="telefone2"
+                                    name="telefone2"
+                                    placeholder="Ex.: +258 84 123 4567"
+                                    value={form.telefone2}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
 
-                    <input
-                        name="email"
-                        type="email"
-                        placeholder="E-mail"
-                        value={form.email}
-                        onChange={handleChange}
-                    />
+                            <FormField id="email" label="E-mail" hint="Opcional.">
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="Ex.: contacto@empresa.com"
+                                    value={form.email}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
+                        </div>
+                    </fieldset>
 
-                    <input
-                        name="nuit"
-                        placeholder="NUIT"
-                        value={form.nuit}
-                        onChange={handleChange}
-                    />
+                    <fieldset className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                        <legend className="px-2 text-sm font-semibold text-foreground">Fiscal e bancário</legend>
+                        <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <FormField id="nuit" label="NUIT" hint="Opcional.">
+                                <input
+                                    id="nuit"
+                                    name="nuit"
+                                    placeholder="Ex.: 123456789"
+                                    value={form.nuit}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
 
-                    <input
-                        name="nib"
-                        placeholder="NIB / Conta bancária"
-                        value={form.nib || ""}
-                        onChange={handleChange}
-                    />
+                            <FormField id="nib" label="NIB / Conta bancária" hint="Opcional.">
+                                <input
+                                    id="nib"
+                                    name="nib"
+                                    placeholder="Ex.: 0001.0000.0000.0000.0"
+                                    value={form.nib || ""}
+                                    onChange={handleChange}
+                                />
+                            </FormField>
+                        </div>
+                    </fieldset>
 
-                    <textarea
-                        name="observacoes"
-                        placeholder="Observações"
-                        value={form.observacoes || ""}
-                        onChange={handleChange}
-                        rows={3}
-                    />
+                    <fieldset className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                        <legend className="px-2 text-sm font-semibold text-foreground">Notas e estado</legend>
+                        <div className="mt-2 grid grid-cols-1 gap-3">
+                            <FormField id="observacoes" label="Observações" hint="Opcional.">
+                                <textarea
+                                    id="observacoes"
+                                    name="observacoes"
+                                    placeholder="Escreva observações relevantes..."
+                                    value={form.observacoes || ""}
+                                    onChange={handleChange}
+                                    rows={3}
+                                />
+                            </FormField>
 
-                    <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <input
-                            type="checkbox"
-                            name="ativo"
-                            checked={!!form.ativo}
-                            onChange={handleChange}
-                        />
-                        Ativo
-                    </label>
+                            <label className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+                                <input
+                                    type="checkbox"
+                                    name="ativo"
+                                    checked={!!form.ativo}
+                                    onChange={handleChange}
+                                />
+                                Ativo
+                            </label>
+                        </div>
+                    </fieldset>
 
-                    <button
-                        className={`btn-primary ${loading ? "btn-loading" : ""}`}
-                        disabled={loading}
-                    >
-                        {loading ? "Salvando..." : "Salvar"}
-                    </button>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        <button
+                            className={`btn-primary ${loading ? "btn-loading" : ""}`}
+                            disabled={loading}
+                        >
+                            {loading ? "Salvando..." : "Salvar"}
+                        </button>
+                    </div>
                 </form>
             </div>
         </AppLayout>

@@ -1,6 +1,8 @@
 from api.core.filters import SafeFilterSet
 from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.lot import Lot
+from apps.pharmacy.models.material_requisition import MaterialRequisition
+from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
@@ -144,6 +146,52 @@ class SaleFilter(SafeFilterSet):
 
 
 # =====================================================
+# REQUISIÇÃO DE MATERIAL (LOGÍSTICA INTERNA)
+# =====================================================
+
+
+class MaterialRequisitionFilter(SafeFilterSet):
+    class Meta:
+        model = MaterialRequisition
+        fields = [
+            "tenant",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "sector",
+            "requested_by_department",
+            "status",
+            "fulfilled_at",
+            "fulfilled_by",
+            "on_hold_at",
+            "on_hold_by",
+        ]
+
+
+class MaterialRequisitionItemFilter(SafeFilterSet):
+    class Meta:
+        model = MaterialRequisitionItem
+        fields = [
+            "tenant",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "requisition",
+            "lot",
+            "requested_quantity",
+            "supplied_quantity",
+        ]
+
+
+# =====================================================
 # MAPA
 # =====================================================
 
@@ -152,6 +200,8 @@ FILTER_MAP = {
     "lot": LotFilter,
     "movimentoestoque": InventoryMovementFilter,
     "product": ProductFilter,
+    "requisicaomaterial": MaterialRequisitionFilter,
+    "requisicaomaterialitem": MaterialRequisitionItemFilter,
     "sale": SaleFilter,
 }
 

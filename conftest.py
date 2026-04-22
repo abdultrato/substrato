@@ -12,7 +12,7 @@ import pytest
 import sitecustomize  # noqa: F401
 
 # Setup Django (pytest-django will manage DB lifecycle)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "platform.settings.development")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plataforma.settings.development")
 
 
 def _skip_test_db_serialize(self):

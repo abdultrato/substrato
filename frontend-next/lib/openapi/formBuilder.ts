@@ -37,6 +37,10 @@ type FormSpec = {
 const ALWAYS_READONLY_FIELDS = new Set([
   "id",
   "id_custom",
+  // Multi-tenant: never allow tenant to be chosen via UI forms.
+  // Backend derives/enforces it from `request.tenant` for non-superusers.
+  "tenant",
+  "tenant_id",
   "inquilino",
   "criado_por",
   "atualizado_por",
@@ -46,6 +50,16 @@ const ALWAYS_READONLY_FIELDS = new Set([
   "deletado_em",
   "deletado_por",
   "versao",
+  // English/system fields (some modules still expose these as writable in OpenAPI)
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
 ])
 
 // Resolve $ref inside components.schemas

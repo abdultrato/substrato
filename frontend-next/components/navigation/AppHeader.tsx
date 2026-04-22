@@ -39,7 +39,7 @@ export default function AppHeader ( { onMenuClick, userName }: Props ) {
                     >
                         <UserCircle2 size={24} />
                         <span className="hidden md:block text-sm">
-                            {userName || "Usuário"}
+                            {userName || "Utilizador"}
                         </span>
                     </button>
 

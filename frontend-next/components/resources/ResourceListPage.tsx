@@ -43,6 +43,18 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+function pickCode(row: Row): string {
+  return (
+    row?.id_custom ||
+    row?.custom_id ||
+    row?.customId ||
+    row?.codigo ||
+    row?.code ||
+    row?.id ||
+    "-"
+  )
+}
+
 export default function ResourceListPage({
   title,
   endpoint,
@@ -91,7 +103,7 @@ export default function ResourceListPage({
       {
         header: "Código",
         render: (row: Row) => {
-          const label = row.id_custom || row.id || "-"
+          const label = pickCode(row)
           if (!rowHref) return label
           return (
             <Link
@@ -114,7 +126,7 @@ export default function ResourceListPage({
       },
       {
         header: "Criado em",
-        render: (row: Row) => fmtDate(row.criado_em),
+        render: (row: Row) => fmtDate(row.criado_em || row.created_at),
       },
     ],
     [rowHref]
@@ -144,7 +156,7 @@ export default function ResourceListPage({
                   href={adminListHref}
                   className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                 >
-                  Abrir no admin
+                  Abrir na administração
                 </Link>
               ) : null}
             </>
@@ -163,7 +175,7 @@ export default function ResourceListPage({
           <DataTable<Row>
             columns={columns as any}
             data={data}
-            emptyMessage="Nenhum registro encontrado."
+            emptyMessage="Nenhum registo encontrado."
           />
         )}
       </div>

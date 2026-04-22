@@ -38,6 +38,8 @@ from .models.product_category import ParentCategory, ProductCategory
 from .models.sale import Sale
 from .models.sale_item import SaleItem
 from .models.lot import Lot  # for stock check in inline
+from .models.material_requisition import MaterialRequisition
+from .models.material_requisition_item import MaterialRequisitionItem
 from infrastructure.context.tenant import get_tenant
 
 # =========================================================
@@ -937,6 +939,121 @@ class ProductCategoryAdmin(admin.ModelAdmin):
         return format_html("<ul>{}</ul>", itens)
 
     parent_category_references.short_description = "Categorias sugeridas"
+
+
+# =========================================================
+# LOGÍSTICA INTERNA: REQUISIÇÕES DE MATERIAL
+# =========================================================
+
+
+class MaterialRequisitionItemInline(admin.TabularInline):
+    model = MaterialRequisitionItem
+    extra = 0
+    fields = (
+        "lot",
+        "requested_quantity",
+        "supplied_quantity",
+        "available_quantity",
+        "notes",
+    )
+    readonly_fields = ("supplied_quantity", "available_quantity")
+    autocomplete_fields = ("lot",)
+
+    def available_quantity(self, obj):
+        if not obj or not getattr(obj, "pk", None):
+            return "-"
+        try:
+            return obj.lot.balance()
+        except Exception:
+            return "-"
+
+    available_quantity.short_description = "Disponível (saldo)"
+
+
+@admin.register(MaterialRequisition)
+class MaterialRequisitionAdmin(admin.ModelAdmin):
+    list_display = (
+        "custom_id",
+        "sector",
+        "requested_by_department",
+        "status",
+        "created_by",
+        "created_at",
+    )
+    list_filter = ("sector", "status", "created_at")
+    search_fields = ("custom_id", "requested_by_department", "created_by__username", "created_by__first_name", "created_by__last_name")
+    ordering = ("-created_at",)
+
+    exclude = ("tenant",)
+    readonly_fields = (
+        "custom_id",
+        "status",
+        "requested_by_department",
+        "hold_reason",
+        "fulfilled_at",
+        "fulfilled_by",
+        "on_hold_at",
+        "on_hold_by",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+        "version",
+        "deleted_at",
+        "deleted_by",
+    )
+
+    fieldsets = (
+        (
+            "Requisição",
+            {
+                "fields": (
+                    "custom_id",
+                    "sector",
+                    "requested_by_department",
+                    "status",
+                )
+            },
+        ),
+        (
+            "Arquivamento",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "hold_reason",
+                    "on_hold_at",
+                    "on_hold_by",
+                ),
+            },
+        ),
+        (
+            "Avio",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "fulfilled_at",
+                    "fulfilled_by",
+                ),
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "created_by",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                ),
+            },
+        ),
+    )
+
+    inlines = (MaterialRequisitionItemInline,)
 
 
 ProductAdmin.estoque_total = ProductAdmin.inventory_total
