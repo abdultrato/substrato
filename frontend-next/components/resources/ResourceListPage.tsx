@@ -44,7 +44,6 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
-<<<<<<< Updated upstream
 function pickCode(row: Row): string {
   return (
     row?.id_custom ||
@@ -55,7 +54,8 @@ function pickCode(row: Row): string {
     row?.id ||
     "-"
   )
-=======
+}
+
 function fmtBool(value: any): string {
   if (value === true) return "Sim"
   if (value === false) return "Não"
@@ -83,7 +83,6 @@ const BLOODBANK_MAINTENANCE_STATUS: Record<string, string> = {
   INP: "Em andamento",
   COM: "Concluída",
   CAN: "Cancelada",
->>>>>>> Stashed changes
 }
 
 export default function ResourceListPage({
