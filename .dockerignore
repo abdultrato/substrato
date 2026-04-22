@@ -61,6 +61,12 @@ coverage/
 .coverage*
 .nyc_output/
 
+# Frontend source is built/runs in a separate service/image; excluding it speeds up backend builds on Windows.
+frontend/
+frontend-next/
+!frontend-next/lib/
+!frontend-next/lib/api-client/
+
 # ==========================================================
 # IDE / EDITORS
 # ==========================================================
@@ -76,6 +82,14 @@ Thumbs.db
 .pydevproject
 .settings/
 
+# Extra caches / local tooling
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.codex-run/
+.codex_models_inventory.txt
+
 # ==========================================================
 # DATABASE
 # ==========================================================
@@ -90,6 +104,13 @@ db.sqlite3
 media/
 uploads/
 staticfiles/
+
+# ==========================================================
+# LOCAL ARTIFACTS
+# ==========================================================
+logs/
+backups/
+artefatos/
 
 # ==========================================================
 # TESTS

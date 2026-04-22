@@ -209,3 +209,29 @@ tests/tmp*/
 coverage/
 frontend-next/coverage/
 *.tsbuildinfo
+
+# ----------------------------------------------------------
+# Docker/Windows build context helpers (keeps repo clean)
+# ----------------------------------------------------------
+# Cache dirs (common on Windows dev)
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Local Codex/AI tooling artifacts
+.codex-run/
+.codex_models_inventory.txt
+
+# Local build/runtime artifacts that slow Docker context on Windows
+logs/
+artefatos/
+staticfiles/
+media/
+uploads/
+
+# Local databases (dev)
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
