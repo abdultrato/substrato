@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # ============================================================================
 # ENTRYPOINT.SH - Script de inicialização do Django
 # ============================================================================
 
-set -euo pipefail
+set -eu
 
 log() {
   echo "[substrato] $1"
@@ -14,6 +14,12 @@ log "🚀 Iniciando Substrato..."
 echo "=================================================="
 
 STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-30}
+MAIN_CMD="${1:-}"
+
+is_celery_like=0
+if [ "$MAIN_CMD" = "celery" ]; then
+  is_celery_like=1
+fi
 
 # ============================================================================
 # Aguardar PostgreSQL
@@ -93,22 +99,25 @@ PY
 
 
 # ============================================================================
-# Django migrations
+# Django bootstrap (apenas 1 container)
 # ============================================================================
 
-log "🔄 Executando migrations..."
-python manage.py migrate --noinput
+if [ "$is_celery_like" -eq 1 ]; then
+  log "⏭️  Celery detectado; pulando migrations/bootstrap."
+else
+  log "🔄 Executando migrations..."
+  python manage.py migrate --noinput
 
 
-# ============================================================================
-# Superuser automático (apenas dev)
-# ============================================================================
+  # ============================================================================
+  # Superuser automático (apenas dev)
+  # ============================================================================
 
-if [ "${DJANGO_DEBUG:-False}" = "True" ]; then
+  if [ "${DJANGO_DEBUG:-False}" = "True" ]; then
 
-log "👤 Verificando superuser..."
+  log "👤 Verificando superuser..."
 
-python <<'PY'
+  python <<'PY'
 import django
 django.setup()
 
@@ -157,23 +166,23 @@ except Exception as exc:
     print(f"⚠️  Superuser automático ignorado: {exc}")
 PY
 
-fi
+  fi
 
 
-# ============================================================================
-# Sincronizar acesso admin (RBAC)
-# ============================================================================
+  # ============================================================================
+  # Sincronizar acesso admin (RBAC)
+  # ============================================================================
 
-log "🔐 Sincronizando acesso admin (grupo Administrador -> staff/superuser)..."
-python manage.py sync_admin_access || echo "[substrato] ⚠️  sync_admin_access falhou, prosseguindo."
+  log "🔐 Sincronizando acesso admin (grupo Administrador -> staff/superuser)..."
+  python manage.py sync_admin_access || echo "[substrato] ⚠️  sync_admin_access falhou, prosseguindo."
 
 
-# ============================================================================
-# Static files
-# ============================================================================
+  # ============================================================================
+  # Static files
+  # ============================================================================
 
-log "📦 Coletando arquivos estáticos..."
-if python - <<'PY'
+  log "📦 Coletando arquivos estáticos..."
+  if python - <<'PY'
 import os
 from pathlib import Path
 root = Path(os.getenv("STATIC_ROOT", "/app/staticfiles"))
@@ -183,20 +192,20 @@ print(f"STATIC_ROOT={root} | write={can_write}")
 if not can_write:
     raise SystemExit(1)
 PY
-then
-  python manage.py collectstatic --noinput --clear || echo "[substrato] ⚠️  collectstatic falhou, prosseguindo (ambiente dev)."
-else
-  echo "[substrato] ⚠️  STATIC_ROOT sem permissão de escrita, pulando collectstatic."
-fi
+  then
+    python manage.py collectstatic --noinput --clear || echo "[substrato] ⚠️  collectstatic falhou, prosseguindo (ambiente dev)."
+  else
+    echo "[substrato] ⚠️  STATIC_ROOT sem permissão de escrita, pulando collectstatic."
+  fi
 
 
-# ============================================================================
-# Limpeza de cache
-# ============================================================================
+  # ============================================================================
+  # Limpeza de cache
+  # ============================================================================
 
-log "🧹 Limpando cache..."
+  log "🧹 Limpando cache..."
 
-python <<'PY'
+  python <<'PY'
 import django
 django.setup()
 
@@ -205,6 +214,7 @@ from django.core.cache import cache
 cache.clear()
 print("✅ Cache limpo!")
 PY
+fi
 
 
 echo "=================================================="

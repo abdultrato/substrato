@@ -52,6 +52,11 @@ COPY --from=builder /wheels /wheels
 RUN pip install --root-user-action=ignore --no-cache-dir --no-index --find-links=/wheels /wheels/* \
     && rm -rf /wheels
 
+# entrypoint fora de /app para não ser sobrescrito por bind-mount (Windows)
+COPY entrypoint.sh /usr/local/bin/substrato-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/substrato-entrypoint.sh \
+    && chmod +x /usr/local/bin/substrato-entrypoint.sh
+
 # criar usuário antes de copiar arquivos
 RUN useradd -m -u 1000 appuser
 
@@ -61,7 +66,7 @@ COPY --chown=appuser:appuser . .
 RUN mkdir -p /app/staticfiles /app/media \
     && chown -R appuser:appuser /app/staticfiles /app/media
 
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh || true
 
 USER appuser
 
@@ -69,6 +74,6 @@ EXPOSE 8000
 
 HEALTHCHECK CMD curl -f http://localhost:8000/health/live || exit 1
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/substrato-entrypoint.sh"]
 
 CMD gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 3 --worker-class gthread --threads 4 --timeout 120 --access-logfile - --error-logfile -

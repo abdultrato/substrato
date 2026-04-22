@@ -13,9 +13,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterConstraint(
+        migrations.RemoveConstraint(
             model_name="bloodstorage",
             name="uq_blood_storage_name_per_tenant",
+        ),
+        migrations.AddConstraint(
+            model_name="bloodstorage",
             constraint=models.UniqueConstraint(
                 fields=("tenant", "name"),
                 name="uq_blood_storage_name_per_tenant",

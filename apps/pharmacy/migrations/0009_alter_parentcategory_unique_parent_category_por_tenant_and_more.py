@@ -13,9 +13,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterConstraint(
+        migrations.RemoveConstraint(
             model_name="parentcategory",
             name="unique_parent_category_por_tenant",
+        ),
+        migrations.AddConstraint(
+            model_name="parentcategory",
             constraint=models.UniqueConstraint(
                 condition=models.Q(("deleted", False)),
                 fields=("tenant", "name"),
@@ -23,9 +26,12 @@ class Migration(migrations.Migration):
                 violation_error_message="Ja existe uma Categoria Pai com este nome neste tenant.",
             ),
         ),
-        migrations.AlterConstraint(
+        migrations.RemoveConstraint(
             model_name="productcategory",
             name="unique_category_product_por_tenant",
+        ),
+        migrations.AddConstraint(
+            model_name="productcategory",
             constraint=models.UniqueConstraint(
                 condition=models.Q(("deleted", False)),
                 fields=("tenant", "name"),
