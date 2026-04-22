@@ -43,13 +43,28 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://0.0.0.0:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://0.0.0.0:5000",
     # Next dev pode subir em 3001 quando 3000 estiver ocupado (docker, etc).
     "http://localhost:3001",
     "http://127.0.0.1:3001",
     "http://0.0.0.0:3001",
     "http://100.93.161.102:3000",
     "http://100.93.161.102:3001",
+    # Replit dev domains (preview proxy + direct port)
+    "https://*.replit.dev",
+    "https://*.repl.co",
+    "https://*.replit.app",
 ]
+
+# Replit dev/produção é servido atrás de proxy HTTPS; o cabeçalho informa
+# o esquema original ao Django para que CSRF/cookies seguros funcionem.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+# CORS aberto em dev para facilitar testes (inclui acesso direto à porta 8000).
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 REDIS_URL = os.getenv("REDIS_URL")
