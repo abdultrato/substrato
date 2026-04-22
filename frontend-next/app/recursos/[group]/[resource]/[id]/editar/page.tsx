@@ -76,7 +76,7 @@ export default function EditarRecursoPage() {
 
     return (
         <AppLayout requiredGroups={requiredGroups}>
-            <div className="space-y-6">
+            <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
                     title={`Editar ${found.resource.label} — ${id}`}
                     subtitle={found.resource.endpoint}
@@ -112,5 +112,4 @@ export default function EditarRecursoPage() {
         </AppLayout>
     )
 }
-
 

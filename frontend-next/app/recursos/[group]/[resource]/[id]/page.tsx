@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
+import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
@@ -74,6 +75,7 @@ export default function RecursoDetalhePage() {
     const isBloodUnit =
         canonicalModuleGroupKey(groupKey) === "banco_sangue" &&
         resourceKey.toLocaleLowerCase() === "unidade"
+    const isBloodbank = canonicalModuleGroupKey(groupKey) === "banco_sangue"
 
     const criarFatura = useCallback(async () => {
         alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
@@ -263,13 +265,16 @@ export default function RecursoDetalhePage() {
                 {loadingData ? (
                     <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
                 ) : (
-                    <pre className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-4 text-xs text-[var(--text)]">
-                        {JSON.stringify(data, null, 2)}
-                    </pre>
+                    isBloodbank && data ? (
+                        <ResourceDetailsCard endpoint={found.resource.endpoint} data={data} />
+                    ) : (
+                        <pre className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-4 text-xs text-[var(--text)]">
+                            {JSON.stringify(data, null, 2)}
+                        </pre>
+                    )
                 )}
             </div>
         </AppLayout>
     )
 }
-
 

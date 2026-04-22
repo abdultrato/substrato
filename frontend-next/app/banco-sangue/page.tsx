@@ -1,7 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { Droplet, Shield } from "lucide-react"
+import {
+  Droplet,
+  Shield,
+  Package,
+  Wrench,
+  ArrowLeftRight,
+  Layers,
+  HeartPulse,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import ActionTile from "@/components/ui/ActionTile"
@@ -22,12 +30,42 @@ export default function BancoSanguePage() {
 
   if (loading) return null
 
+  const tiles: Record<
+    string,
+    { icon: any; description: string }
+  > = {
+    doacao: {
+      icon: Droplet,
+      description: "Registrar e acompanhar doacoes e triagem.",
+    },
+    unidade: {
+      icon: Layers,
+      description: "Controle de bolsas e hemocomponentes por estado.",
+    },
+    transfusao: {
+      icon: HeartPulse,
+      description: "Registros de transfusoes e pacientes receptores.",
+    },
+    armazenamento: {
+      icon: Package,
+      description: "Geladeiras, freezers e locais de armazenamento.",
+    },
+    movimentoestoque: {
+      icon: ArrowLeftRight,
+      description: "Entradas, saidas, reservas e transferencias.",
+    },
+    manutencaoarmazenamento: {
+      icon: Wrench,
+      description: "Agendar e registrar manutencoes dos armazenamentos.",
+    },
+  }
+
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         <PageHeader
           title="Banco de Sangue"
-          subtitle="Doações, unidades, transfusões e movimentos de stock."
+          subtitle="Doações, unidades, transfusões, armazenamentos e manutenções."
           actions={
             podeVerAdmin ? (
               <Link
@@ -47,9 +85,9 @@ export default function BancoSanguePage() {
               <ActionTile
                 key={resource.key}
                 title={resource.label}
-                description={resource.endpoint}
+                description={tiles[resource.key]?.description || "Abrir lista e criar novos registros."}
                 href={`/recursos/${group.key}/${resource.key}`}
-                icon={Droplet}
+                icon={tiles[resource.key]?.icon || Droplet}
               />
             ))
           ) : (

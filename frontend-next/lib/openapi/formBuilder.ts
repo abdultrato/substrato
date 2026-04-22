@@ -1,4 +1,5 @@
 import schema from "@/schema.generated.json"
+import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 
 type HttpMethod = "post" | "put" | "patch"
 
@@ -37,10 +38,24 @@ type FormSpec = {
 const ALWAYS_READONLY_FIELDS = new Set([
   "id",
   "id_custom",
+<<<<<<< Updated upstream
   // Multi-tenant: never allow tenant to be chosen via UI forms.
   // Backend derives/enforces it from `request.tenant` for non-superusers.
   "tenant",
   "tenant_id",
+=======
+  // Common DRF/ModelViewSet fields (English)
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+  "tenant",
+>>>>>>> Stashed changes
   "inquilino",
   "criado_por",
   "atualizado_por",
@@ -117,13 +132,17 @@ function extractEnumLabels(prop: any): string[] | undefined {
   return values.map((v) => map.get(String(v)) || String(v))
 }
 
-function schemaToFields(reqSchema: any, requiredList: string[] = []): FormField[] {
+function schemaToFields(
+  reqSchema: any,
+  requiredList: string[] = [],
+  endpoint?: string
+): FormField[] {
   const s = normalizeSchema(reqSchema)
   if (!s?.properties) return []
   return Object.entries(s.properties).map(([name, raw]) => {
     const prop = normalizeSchema(raw)
     const required = requiredList.includes(name)
-    const label = prop?.title || name
+    const label = fieldLabel({ endpoint, name, title: prop?.title })
     const type = mapType(prop)
     return {
       name,
@@ -187,7 +206,7 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
 
   const reqNorm = normalizeSchema(req)
   const reqRequired = (reqNorm?.required || []) as string[]
-  const reqFields = schemaToFields(reqNorm, reqRequired)
+  const reqFields = schemaToFields(reqNorm, reqRequired, endpoint)
   const reqFieldNames = new Set(reqFields.map((f) => f.name))
 
   // Prefer the write response schema; fallback to GET response schema.
@@ -199,14 +218,18 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
   const respSchema = resp?.content?.["application/json"]?.schema
   const respNorm = normalizeSchema(respSchema)
   const respRequired = (respNorm?.required || []) as string[]
-  const respFields = schemaToFields(respNorm, respRequired)
+  const respFields = schemaToFields(respNorm, respRequired, endpoint)
 
   const baseFields = respFields.length ? respFields : reqFields
 
   // Merge: expose all response fields, but only submit writable request fields.
   const fields: FormField[] = baseFields.map((f) => {
     const inReq = reqFieldNames.has(f.name)
-    const readOnly = ALWAYS_READONLY_FIELDS.has(f.name) || f.readOnly || !inReq
+    const readOnly =
+      ALWAYS_READONLY_FIELDS.has(f.name) ||
+      isInternalField(f.name) ||
+      f.readOnly ||
+      !inReq
     return {
       ...f,
       required: inReq ? reqRequired.includes(f.name) : false,
@@ -217,7 +240,10 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
   // Include request-only fields (rare) that might not appear in response schema.
   for (const f of reqFields) {
     if (fields.some((x) => x.name === f.name)) continue
-    fields.push({ ...f, readOnly: ALWAYS_READONLY_FIELDS.has(f.name) ? true : false })
+    fields.push({
+      ...f,
+      readOnly: ALWAYS_READONLY_FIELDS.has(f.name) || isInternalField(f.name) ? true : false,
+    })
   }
 
   const submitFields = fields.filter((f) => !f.readOnly)

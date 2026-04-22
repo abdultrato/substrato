@@ -4,7 +4,7 @@
   "description": "Substrato Healthcare Platform - Frontend",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev --turbo -H 127.0.0.1",
     "build": "next build",
     "build:admin-css": "tailwindcss -c tailwind.admin.config.js -i styles/admin-tailwind.input.css -o ../aplicativos/clinico/static/admin/css/substrato-admin-tailwind.css --minify",
     "start": "next start",

@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
+import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Row = Record<string, any>
@@ -43,6 +44,7 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+<<<<<<< Updated upstream
 function pickCode(row: Row): string {
   return (
     row?.id_custom ||
@@ -53,6 +55,35 @@ function pickCode(row: Row): string {
     row?.id ||
     "-"
   )
+=======
+function fmtBool(value: any): string {
+  if (value === true) return "Sim"
+  if (value === false) return "Não"
+  return "-"
+}
+
+function fmtTemp(minC: any, maxC: any): string {
+  const min = minC ?? ""
+  const max = maxC ?? ""
+  if (min === "" && max === "") return "-"
+  if (min !== "" && max !== "") return `${min} - ${max} °C`
+  return `${min || max} °C`
+}
+
+const BLOODBANK_MAINTENANCE_TYPE: Record<string, string> = {
+  PRV: "Preventiva",
+  COR: "Corretiva",
+  CAL: "Calibração",
+  SAN: "Higienização",
+  TMP: "Validação de temperatura",
+}
+
+const BLOODBANK_MAINTENANCE_STATUS: Record<string, string> = {
+  SCH: "Agendada",
+  INP: "Em andamento",
+  COM: "Concluída",
+  CAN: "Cancelada",
+>>>>>>> Stashed changes
 }
 
 export default function ResourceListPage({
@@ -76,6 +107,11 @@ export default function ResourceListPage({
   const [data, setData] = useState<Row[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
+  const [bloodStorages, setBloodStorages] = useState<Record<number, string>>({})
+
+  const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
+  const needsBloodStorageLookup =
+    bloodbankResource === "manutencaoarmazenamento" || bloodbankResource === "unidade" || bloodbankResource === "movimentoestoque"
 
   useEffect(() => {
     let mounted = true
@@ -98,12 +134,43 @@ export default function ResourceListPage({
     }
   }, [endpoint])
 
+  useEffect(() => {
+    let mounted = true
+    async function loadStorages() {
+      if (!needsBloodStorageLookup) return
+      try {
+        const res = await apiFetch<any>("/bloodbank/armazenamento/")
+        const items = res && (res as any).results ? (res as any).results : res
+        const map: Record<number, string> = {}
+        if (Array.isArray(items)) {
+          for (const s of items) {
+            const id = Number(s?.id)
+            if (!Number.isFinite(id)) continue
+            const name = String(s?.name || s?.custom_id || s?.id_custom || id)
+            map[id] = name
+          }
+        }
+        if (mounted) setBloodStorages(map)
+      } catch {
+        // ignore (still show numeric ids)
+      }
+    }
+    loadStorages()
+    return () => {
+      mounted = false
+    }
+  }, [needsBloodStorageLookup])
+
   const columns = useMemo(
-    () => [
-      {
+    () => {
+      const codeCol = {
         header: "Código",
         render: (row: Row) => {
+<<<<<<< Updated upstream
           const label = pickCode(row)
+=======
+          const label = row.id_custom || row.custom_id || row.id || "-"
+>>>>>>> Stashed changes
           if (!rowHref) return label
           return (
             <Link
@@ -114,6 +181,7 @@ export default function ResourceListPage({
             </Link>
           )
         },
+<<<<<<< Updated upstream
       },
       {
         header: "Nome",
@@ -130,13 +198,76 @@ export default function ResourceListPage({
       },
     ],
     [rowHref]
+=======
+      }
+
+      if (bloodbankResource === "armazenamento") {
+        return [
+          codeCol,
+          { header: "Nome", render: (row: Row) => row.name || "-" },
+          { header: "Localização", render: (row: Row) => row.location || "-" },
+          { header: "Capacidade", render: (row: Row) => row.capacity_units ?? "-" },
+          {
+            header: "Temperatura",
+            render: (row: Row) => fmtTemp(row.temperature_min_c, row.temperature_max_c),
+          },
+          { header: "Ativo", render: (row: Row) => fmtBool(row.is_active) },
+        ]
+      }
+
+      if (bloodbankResource === "manutencaoarmazenamento") {
+        return [
+          codeCol,
+          {
+            header: "Armazenamento",
+            render: (row: Row) => {
+              const id = Number(row.storage)
+              if (!Number.isFinite(id)) return "-"
+              return bloodStorages[id] || `ID ${id}`
+            },
+          },
+          {
+            header: "Tipo",
+            render: (row: Row) =>
+              BLOODBANK_MAINTENANCE_TYPE[String(row.maintenance_type || "")] ||
+              row.maintenance_type ||
+              "-",
+          },
+          {
+            header: "Estado",
+            render: (row: Row) =>
+              BLOODBANK_MAINTENANCE_STATUS[String(row.status || "")] || row.status || "-",
+          },
+          { header: "Agendada", render: (row: Row) => fmtDate(row.scheduled_at) },
+          { header: "Técnico", render: (row: Row) => row.technician_name || "-" },
+        ]
+      }
+
+      return [
+        codeCol,
+        {
+          header: "Nome",
+          render: (row: Row) => pickLabel(row) || "-",
+        },
+        {
+          header: "Estado",
+          render: (row: Row) => row.estado || row.status || row.status_comercial || "-",
+        },
+        {
+          header: "Criado em",
+          render: (row: Row) => fmtDate(row.criado_em || row.created_at),
+        },
+      ]
+    },
+    [bloodStorages, bloodbankResource, rowHref]
+>>>>>>> Stashed changes
   )
 
   if (loading) return null
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="space-y-3">
+      <div className="mx-auto w-full max-w-6xl space-y-3">
         <PageHeader
           title={title}
           subtitle={endpoint}

@@ -48,7 +48,7 @@ export default function NovoRecursoPage() {
 
     return (
         <AppLayout requiredGroups={requiredGroups}>
-            <div className="space-y-6">
+            <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
                     title={`Novo ${found.resource.label}`}
                     subtitle={found.resource.endpoint}
