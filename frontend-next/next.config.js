@@ -44,6 +44,12 @@ module.exports = (phase) => ({
 
       { source: "/static/:path*", destination: `${backend}/static/:path*` },
       { source: "/media/:path*", destination: `${backend}/media/:path*` },
+
+      // Healthchecks (used by Replit autoscale and external monitors)
+      { source: "/health/live", destination: `${backend}/health/live/` },
+      { source: "/health/live/", destination: `${backend}/health/live/` },
+      { source: "/health/ready", destination: `${backend}/health/ready/` },
+      { source: "/health/ready/", destination: `${backend}/health/ready/` },
     ]
   },
 })
