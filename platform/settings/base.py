@@ -550,20 +550,35 @@ else:
 DATABASE_ROUTERS = ["infrastructure.database.TenantDatabaseRouter"]
 
 # =========================================================
-# CACHE (Redis)
+# CACHE (Redis opcional; fallback para banco de dados)
 # =========================================================
+#
+# Em ambientes sem Redis (ex.: Replit), USE_REDIS=false faz o cache cair para
+# uma tabela no banco (django.core.cache.backends.db). É partilhado entre
+# workers do gunicorn, mas mais lento que Redis. Para reativar Redis, defina
+# USE_REDIS=true e REDIS_URL.
+USE_REDIS = get_env("USE_REDIS", "false").lower() in ("1", "true", "yes", "on")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "IGNORE_EXCEPTIONS": True,
-        },
-        "TIMEOUT": 300,
+if USE_REDIS:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
+            "TIMEOUT": 300,
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "django_cache_table",
+            "TIMEOUT": 300,
+        }
+    }
 
 # =========================================================
 # AUTH

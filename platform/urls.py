@@ -41,15 +41,18 @@ def health_ready(request):
     except Exception:
         status_code = 503
 
-    try:
-        from django.conf import settings
-        import redis
+    if not getattr(settings, "USE_REDIS", False):
+        # Redis está intencionalmente desativado neste ambiente.
+        checks["redis"] = "disabled"
+    else:
+        try:
+            import redis
 
-        r = redis.from_url(getattr(settings, "REDIS_URL", "redis://localhost:6379/0"))
-        r.ping()
-        checks["redis"] = True
-    except Exception:
-        status_code = 503
+            r = redis.from_url(getattr(settings, "REDIS_URL", "redis://localhost:6379/0"))
+            r.ping()
+            checks["redis"] = True
+        except Exception:
+            status_code = 503
 
     return JsonResponse(
         {"status": "ok" if status_code == 200 else "error", **checks},
