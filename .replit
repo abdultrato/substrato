@@ -4,6 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+packages = ["cargo", "freetype", "glibcLocales", "lcms2", "libcxx", "libffi", "libiconv", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "lsof", "openjpeg", "openssl", "pgadmin4", "pkg-config", "postgresql", "rustc", "strace", "tcl", "tk", "u-root-cmds", "unicorn-emu", "zlib"]
 
 [workflows]
 runButton = "Project"
