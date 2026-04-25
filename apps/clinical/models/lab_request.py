@@ -1,5 +1,7 @@
 """Requisição de exames laboratoriais ou exames médicos."""
 
+from typing import Type
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
@@ -26,9 +28,9 @@ class LabRequest(NoNameCoreModel):
 
     class Tipo:
         # Compatibilidade legada (português)
-        LABORATORIO = Type.LABORATORY
-        MEDICO = Type.MEDICAL_EXAM
-        EXAME_MEDICO = Type.MEDICAL_EXAM
+        LABORATORIO = "LAB"
+        MEDICO = "MED"
+        EXAME_MEDICO = "MED"
 
     class Status:
         # Compatibilidade legada de status.
