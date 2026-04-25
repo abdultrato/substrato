@@ -111,9 +111,12 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         """
         item = self.get_object()
 
-        raw = (request.data or {}).get("result_value", None)
-        if raw is None:
-            raw = (request.data or {}).get("value", None)
+        payload = request.data or {}
+        raw = None
+        for field_name in ("result_value", "resultado_valor", "value", "valor"):
+            if payload.get(field_name, None) is not None:
+                raw = payload.get(field_name)
+                break
 
         if raw is None or (isinstance(raw, str) and not raw.strip()):
             raise ValidationError({"result_value": "Informe um valor antes de gravar."})

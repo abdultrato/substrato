@@ -92,6 +92,11 @@ class Result(NoNameCoreModel):
 
     _criar_itens = _create_items
 
+    @property
+    def itens(self):
+        # Compatibilidade legada (português) para relation manager.
+        return self.items
+
     # -----------------------------------------------------
 
     def __str__(self):

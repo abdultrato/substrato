@@ -137,9 +137,9 @@ def create_request_for_checkin(
         item.full_clean()
         item.save()
 
-    Result.objects.create(
+    Result.objects.get_or_create(
         request=request,
-        tenant=checkin.tenant,
+        defaults={"tenant": checkin.tenant},
     )
 
     checkin.register_request(request)

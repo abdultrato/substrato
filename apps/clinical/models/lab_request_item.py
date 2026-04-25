@@ -86,6 +86,7 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         self.full_clean()
         super().save(*args, **kwargs)
+        self._create_results()
 
     # -----------------------------------------------------
 

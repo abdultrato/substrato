@@ -91,7 +91,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         request_record = self.get_object()
         # Result PDFs only apply to the laboratory workflow.
-        if request_record.type != request_record.Tipo.LABORATORIO:
+        if request_record.type != request_record.Type.LABORATORY:
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
         result = getattr(request_record, "result", None)
@@ -112,7 +112,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         """
         request_record = self.get_object()
 
-        if request_record.type != request_record.Tipo.LABORATORIO:
+        if request_record.type != request_record.Type.LABORATORY:
             raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
 
         from apps.clinical.models.result import Result
@@ -145,23 +145,40 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "rejeitado": qs.filter(status=ResultState.REJECTED).count(),
         }
 
+        request_payload = {
+            "id": request_record.id,
+            "custom_id": request_record.custom_id,
+            "patient": request_record.patient_id,
+            "patient_name": request_record.patient.name,
+            "status": request_record.status,
+            "clinical_status": request_record.clinical_status,
+            "has_critical_result": request_record.has_critical_result,
+        }
+        requisicao_payload = {
+            "id": request_record.id,
+            "id_custom": request_record.custom_id,
+            "paciente": request_record.patient_id,
+            "paciente_nome": request_record.patient.name,
+            "estado": request_record.status,
+            "status_clinico": request_record.clinical_status,
+            "possui_resultado_critico": request_record.has_critical_result,
+        }
+
         return Response(
             {
-                "request": {
-                    "id": request_record.id,
-                    "custom_id": request_record.custom_id,
-                    "patient": request_record.patient_id,
-                    "patient_name": request_record.patient.name,
-                    "status": request_record.status,
-                    "clinical_status": request_record.clinical_status,
-                    "has_critical_result": request_record.has_critical_result,
-                },
+                "request": request_payload,
+                "requisicao": requisicao_payload,
                 "summary": summary,
                 "items": items,
                 "resumo": summary,
                 "itens": items,
             }
         )
+
+    @action(detail=True, methods=["get"], url_path="resultado_itens", url_name="resultado-itens")
+    def result_items_legacy(self, request, pk=None):
+        """Alias legado em português para compatibilidade do frontend."""
+        return self.result_items(request, pk=pk)
 
 
 @extend_schema(

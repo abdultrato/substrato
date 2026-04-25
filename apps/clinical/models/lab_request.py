@@ -24,6 +24,23 @@ class LabRequest(NoNameCoreModel):
         LABORATORY = "LAB", "Laboratório"
         MEDICAL_EXAM = "MED", "Exame médico"
 
+    class Tipo:
+        # Compatibilidade legada (português)
+        LABORATORIO = Type.LABORATORY
+        MEDICO = Type.MEDICAL_EXAM
+        EXAME_MEDICO = Type.MEDICAL_EXAM
+
+    class Status:
+        # Compatibilidade legada de status.
+        PENDENTE = ResultState.PENDING
+        EM_ANALISE = ResultState.IN_ANALYSIS
+        AGUARDANDO_RESULTADO = ResultState.IN_ANALYSIS
+        AGUARDANDO_VALIDACAO = ResultState.AWAITING_VALIDATION
+        VALIDADA = ResultState.VALIDATED
+        VALIDADO = ResultState.VALIDATED
+        REJEITADA = ResultState.REJECTED
+        REJEITADO = ResultState.REJECTED
+
     patient = models.ForeignKey(
 
         Patient,
@@ -228,10 +245,14 @@ class LabRequest(NoNameCoreModel):
     def create_result(self):
         from .result import Result
 
-        return Result.objects.create(
+        result, _ = Result.objects.get_or_create(
             request=self,
-            tenant=self.tenant,
+            defaults={"tenant": self.tenant},
         )
+        return result
+
+    def create_automatic_results(self):
+        return self.create_result()
 
     # =====================================================
     # VIEWS/DRF HELPERS
@@ -250,6 +271,11 @@ class LabRequest(NoNameCoreModel):
 
         return MedicalExam.objects.filter(lab_requests__request=self, lab_requests__deleted=False).distinct()
 
+    @property
+    def itens(self):
+        # Compatibilidade legada (português) para relation manager.
+        return self.items
+
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA
     # =====================================================
@@ -265,9 +291,9 @@ class LabRequest(NoNameCoreModel):
                 pass
             return
 
-        novo_status = ClinicalStatus.NON_URGENT
+        novo_status_clinico = ClinicalStatus.NON_URGENT
         possui_critico = False
-        novo_status = ResultState.PENDING
+        novo_status_fluxo = ResultState.PENDING
         result_finalized = False
 
         if hasattr(self, "result"):
@@ -292,17 +318,17 @@ class LabRequest(NoNameCoreModel):
             possui_critico = criticos > 0
 
             if total == 0:
-                novo_status = ClinicalStatus.NON_URGENT
-                novo_status = ResultState.PENDING
+                novo_status_clinico = ClinicalStatus.NON_URGENT
+                novo_status_fluxo = ResultState.PENDING
             else:
                 if possui_critico:
-                    novo_status = ClinicalStatus.EXTREMELY_URGENT
+                    novo_status_clinico = ClinicalStatus.EXTREMELY_URGENT
                 elif muito_urgentes > 0:
-                    novo_status = ClinicalStatus.VERY_URGENT
+                    novo_status_clinico = ClinicalStatus.VERY_URGENT
                 elif urgentes > 0:
-                    novo_status = ClinicalStatus.URGENT
+                    novo_status_clinico = ClinicalStatus.URGENT
                 else:
-                    novo_status = ClinicalStatus.NON_URGENT
+                    novo_status_clinico = ClinicalStatus.NON_URGENT
 
                 pendentes = int(stats.get("pendentes") or 0)
                 aguardando = int(stats.get("aguardando") or 0)
@@ -311,35 +337,42 @@ class LabRequest(NoNameCoreModel):
                 # Sincroniza o status geral da requisição com o fluxo dos itens:
                 # PENDENTE -> EM_ANALISE -> AGUARDANDO_VALIDACAO -> VALIDADO
                 if validados == total:
-                    novo_status = ResultState.VALIDATED
+                    novo_status_fluxo = ResultState.VALIDATED
                 elif (validados + aguardando) == total:
-                    novo_status = ResultState.AWAITING_VALIDATION
+                    novo_status_fluxo = ResultState.AWAITING_VALIDATION
                 elif pendentes == total:
-                    novo_status = ResultState.PENDING
+                    novo_status_fluxo = ResultState.PENDING
                 else:
-                    novo_status = ResultState.IN_ANALYSIS
+                    novo_status_fluxo = ResultState.IN_ANALYSIS
 
-            result_finalized = novo_status == ResultState.VALIDATED
+            result_finalized = novo_status_fluxo == ResultState.VALIDATED
 
             if result.finalized != result_finalized:
                 result.finalized = result_finalized
                 result.save(update_fields=["finalized"])
 
         update_fields = []
-        if self.clinical_status != novo_status:
-            self.clinical_status = novo_status
+        if self.clinical_status != novo_status_clinico:
+            self.clinical_status = novo_status_clinico
             update_fields.append("clinical_status")
 
         if self.has_critical_result != possui_critico:
             self.has_critical_result = possui_critico
             update_fields.append("has_critical_result")
 
-        if self.status != novo_status:
-            self.status = novo_status
+        if self.status != novo_status_fluxo:
+            self.status = novo_status_fluxo
             update_fields.append("status")
 
         if update_fields:
             self.save(update_fields=update_fields)
+
+    def apply_status(self, new_status):
+        if self.status == new_status:
+            return self
+        self.status = new_status
+        self.save(update_fields=["status"])
+        return self
 
     @property
     def patient_tenant(self):
@@ -351,6 +384,8 @@ class LabRequest(NoNameCoreModel):
     adicionar_exam = add_exam
     adicionar_medical_exam = add_medical_exam
     criar_result = create_result
+    criar_resultados_automaticos = create_automatic_results
+    aplicar_status = apply_status
     exams_medicos = medical_exams
     atualizar_clinical_status = update_clinical_status
     tenant_do_patient = patient_tenant

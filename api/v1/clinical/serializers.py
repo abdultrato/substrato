@@ -516,6 +516,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "empresa_solicitante": "requesting_company",
         "empresa_executora_externa": "external_executing_company",
         "analista": "analyst",
+        "exames": "exams",
+        "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
         "itens": "items",
     }
@@ -529,6 +531,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "estado": "status",
         "status_clinico": "clinical_status",
         "possui_resultado_critico": "has_critical_result",
+        "exames": "exams",
+        "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
         "itens": "items",
     }
@@ -553,7 +557,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "medical_exam_name",
             ]
 
-    items = LabRequestItemSummarySerializer(source="itens", many=True, read_only=True)
+    items = LabRequestItemSummarySerializer(source="items", many=True, read_only=True)
 
     class Meta:
         model = LabRequest
@@ -712,21 +716,40 @@ class LabRequestItemSerializer(serializers.ModelSerializer):
         }
 
 
-class ResultItemSerializer(serializers.ModelSerializer):
+class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para resultados de análises.
     Contém os valores medidos para cada parâmetro.
     """
 
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "resultado": "result",
+        "exame_campo": "exam_field",
+        "resultado_valor": "result_value",
+        "status_clinico": "clinical_status",
+        "alerta_critico": "critical_alert",
+        "estado": "status",
+        "validado_por": "validated_by",
+        "data_validacao": "validation_date",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "resultado": "result",
+        "exame_campo": "exam_field",
+        "resultado_valor": "result_value",
+        "status_clinico": "clinical_status",
+        "alerta_critico": "critical_alert",
+        "estado": "status",
+        "validado_por": "validated_by",
+        "data_validacao": "validation_date",
+    }
+
     class Meta:
         model = ResultItem
         fields = "__all__"
         extra_kwargs = {
-            "request_item": {
-                "required": True,
-                "help_text": "Item da requisição para o qual este é o result",
-            },
-            "value": {
+            "result_value": {
                 "required": False,
                 "allow_null": True,
                 "help_text": "Valor medido do parâmetro",
@@ -749,6 +772,14 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
     exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
     exam_field_reference = serializers.CharField(source="exam_field.referencia", read_only=True)
     legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "resultado": "result",
+        "resultado_valor": "result_value",
+        "status_clinico": "clinical_status",
+        "alerta_critico": "critical_alert",
+        "estado": "status",
+        "validado_por": "validated_by",
+        "data_validacao": "validation_date",
         "paciente_nome": "patient_name",
         "requisicao_id": "request_id",
         "requisicao_codigo": "request_code",

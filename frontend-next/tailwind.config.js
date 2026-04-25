@@ -1,3 +1,17 @@
+const substratoPalette = {
+  50: "#F6F3FF",
+  100: "#EDE7FF",
+  200: "#D9CCFF",
+  300: "#B89FFF",
+  400: "#903CFC",
+  500: "#8430FC",
+  600: "#7830F0",
+  700: "#6024CC",
+  800: "#4818A8",
+  900: "#300C84",
+  950: "#180054",
+}
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: "class",
@@ -14,6 +28,9 @@ module.exports = {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
       },
       colors: {
+        substrato: substratoPalette,
+        slate: substratoPalette,
+        gray: substratoPalette,
         background: "hsl(var(--background-hsl) / <alpha-value>)",
         foreground: "hsl(var(--foreground-hsl) / <alpha-value>)",
         "foreground-2": "hsl(var(--foreground-2-hsl) / <alpha-value>)",

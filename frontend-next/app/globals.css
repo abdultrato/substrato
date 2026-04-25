@@ -6,9 +6,9 @@
   :root {
     color-scheme: light;
     scroll-behavior: smooth;
-    --chrome-from: hsl(352 78% 32%);
-    --chrome-mid: hsl(346 72% 28%);
-    --chrome-to: hsl(340 70% 24%);
+    --chrome-from: hsl(257 100% 16%);
+    --chrome-mid: hsl(260 75% 38%);
+    --chrome-to: hsl(266 97% 61%);
 
     /* Fonts: Inter (texto) e Plus Jakarta Sans (títulos) carregadas via
        next/font no app/layout.tsx. As variáveis abaixo são usadas como
@@ -19,22 +19,22 @@
       -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, Arial,
       sans-serif;
 
-    --background-hsl: 210 40% 98%;
-    --foreground-hsl: 222 47% 11%;
-    --foreground-2-hsl: 215 25% 27%;
+    --background-hsl: 255 100% 98%;
+    --foreground-hsl: 257 100% 16%;
+    --foreground-2-hsl: 258 46% 30%;
 
     --card-hsl: 0 0% 100%;
     --card-foreground-hsl: var(--foreground-hsl);
 
-    --muted-hsl: 210 40% 96%;
-    --muted-2-hsl: 214 32% 91%;
-    --muted-foreground-hsl: 215 16% 47%;
+    --muted-hsl: 255 100% 97%;
+    --muted-2-hsl: 255 88% 93%;
+    --muted-foreground-hsl: 259 24% 44%;
 
-    --border-hsl: 214 32% 91%;
+    --border-hsl: 255 60% 88%;
 
-    --primary-hsl: 346 72% 28%;
-    --primary-hover-hsl: 340 70% 24%;
-    --primary-soft-hsl: 350 80% 94%;
+    --primary-hsl: 262 78% 52%;
+    --primary-hover-hsl: 261 70% 47%;
+    --primary-soft-hsl: 255 100% 95%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --ring-hsl: var(--primary-hsl);
@@ -75,22 +75,22 @@
   .dark {
     color-scheme: dark;
 
-    --background-hsl: 222 47% 7%;
-    --foreground-hsl: 210 40% 96%;
-    --foreground-2-hsl: 215 20% 80%;
+    --background-hsl: 258 73% 8%;
+    --foreground-hsl: 255 100% 95%;
+    --foreground-2-hsl: 257 58% 82%;
 
-    --card-hsl: 222 47% 11%;
+    --card-hsl: 258 67% 12%;
     --card-foreground-hsl: var(--foreground-hsl);
 
-    --muted-hsl: 217 33% 17%;
-    --muted-2-hsl: 217 30% 22%;
-    --muted-foreground-hsl: 215 16% 65%;
+    --muted-hsl: 258 53% 16%;
+    --muted-2-hsl: 259 46% 22%;
+    --muted-foreground-hsl: 257 40% 72%;
 
-    --border-hsl: 217 30% 22%;
+    --border-hsl: 259 44% 25%;
 
-    --primary-hsl: 0 84% 60%;
-    --primary-hover-hsl: 0 84% 54%;
-    --primary-soft-hsl: 0 35% 18%;
+    --primary-hsl: 266 97% 61%;
+    --primary-hover-hsl: 265 97% 59%;
+    --primary-soft-hsl: 259 45% 22%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.04),
@@ -139,17 +139,17 @@
     opacity: 1;
     background-image: radial-gradient(
         1000px 780px at 12% -10%,
-        hsl(352 78% 32% / 0.14),
+        hsl(258 83% 28% / 0.18),
         transparent 60%
       ),
       radial-gradient(
         900px 700px at 110% 0%,
-        hsl(346 72% 28% / 0.12),
+        hsl(262 78% 52% / 0.14),
         transparent 55%
       ),
       radial-gradient(
         900px 700px at 50% 120%,
-        hsl(340 70% 24% / 0.08),
+        hsl(266 97% 61% / 0.12),
         transparent 60%
       );
   }
@@ -158,17 +158,17 @@
     opacity: 0;
     background-image: radial-gradient(
         1000px 780px at 12% -10%,
-        hsl(352 78% 32% / 0.18),
+        hsl(257 100% 16% / 0.38),
         transparent 62%
       ),
       radial-gradient(
         900px 700px at 110% 0%,
-        hsl(346 72% 28% / 0.12),
+        hsl(261 70% 47% / 0.22),
         transparent 55%
       ),
       radial-gradient(
         900px 700px at 50% 120%,
-        hsl(340 70% 24% / 0.1),
+        hsl(266 97% 61% / 0.2),
         transparent 60%
       );
   }
@@ -495,7 +495,7 @@
   }
 
   .dark .chrome-surface {
-    background-image: linear-gradient(135deg, hsl(352 70% 18%), hsl(346 68% 16%), hsl(340 66% 14%));
+    background-image: linear-gradient(135deg, hsl(257 100% 16%), hsl(260 75% 24%), hsl(262 78% 36%));
     color: #f8fafc;
     border-color: hsl(0 0% 100% / 0.08);
   }
