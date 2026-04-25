@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="description"
+    content="Substrato: plataforma integrada para operações de saúde. Perfil profissional e pessoal do fundador, proposta comercial e canais de contacto para novos clientes."
+  >
+  <title>Substrato | Perfil e Proposta Comercial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para conteúdo</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#topo" aria-label="Início">
+        <img src="./static/img/logo.png" alt="Logo do projeto Substrato" loading="lazy">
+        <span>Substrato</span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="siteNav">
+        Menu
+      </button>
+      <nav id="siteNav" class="site-nav" aria-label="Navegação principal">
+        <a href="#sobre">Projeto</a>
+        <a href="#perfil">Perfil</a>
+        <a href="#modulos">Módulos</a>
+        <a href="#oferta">Oferta</a>
+        <a href="#contato">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero section" id="topo">
+      <div class="container hero-grid">
+        <div class="reveal">
+          <p class="eyebrow" id="projectTagline"></p>
+          <h1 id="heroTitle"></h1>
+          <p class="hero-subtitle" id="heroSubtitle"></p>
+          <div class="hero-actions">
+            <a class="button button-primary" id="ctaPrimary" href="#contato">Agendar demo</a>
+            <a class="button button-ghost" href="#sobre">Ver proposta</a>
+          </div>
+          <ul class="bullet-list" id="heroBullets"></ul>
+        </div>
+        <figure class="hero-media reveal">
+          <img
+            src="./frontend-next/app/login-side.png"
+            alt="Interface do Substrato em um painel real de operação"
+            loading="lazy"
+          >
+          <figcaption id="heroMediaCaption"></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section section-muted">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Resultados que o cliente entende rápido</h2>
+          <p>Mostre valor real em fluxo, controlo e crescimento.</p>
+        </div>
+        <div class="metrics-grid" id="metricsGrid"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sobre">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>O que o Substrato faz</h2>
+          <p id="projectOverview"></p>
+        </div>
+        <div class="split-grid">
+          <article class="panel reveal">
+            <h3>Problemas que resolvemos</h3>
+            <ul class="stack-list" id="painPointsList"></ul>
+          </article>
+          <article class="panel reveal">
+            <h3>Diferenciais de venda</h3>
+            <ul class="stack-list" id="differentialsList"></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="perfil">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Perfil profissional e pessoal</h2>
+          <p>Sua história, autoridade técnica e visão humana no mesmo lugar.</p>
+        </div>
+        <div class="split-grid">
+          <article class="panel reveal">
+            <h3>Perfil profissional</h3>
+            <p class="profile-title" id="ownerName"></p>
+            <p class="profile-subtitle" id="ownerRole"></p>
+            <ul class="stack-list" id="professionalHighlights"></ul>
+          </article>
+          <article class="panel reveal">
+            <h3>Perfil pessoal</h3>
+            <p class="profile-subtitle" id="ownerCity"></p>
+            <ul class="stack-list" id="personalHighlights"></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="modulos">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Módulos integrados</h2>
+          <p>Um produto único para toda a operação da unidade de saúde.</p>
+        </div>
+        <div class="card-grid" id="modulesGrid"></div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="oferta">
+      <div class="container">
+        <div class="section-head reveal">
+          <h2>Oferta comercial para fechar contratos</h2>
+          <p>Pacotes claros para reduzir decisão e acelerar assinatura.</p>
+        </div>
+        <div class="card-grid" id="offersGrid"></div>
+        <div class="timeline reveal" id="processTimeline"></div>
+      </div>
+    </section>
+
+    <section class="section section-cta" id="contato">
+      <div class="container cta-grid">
+        <div class="reveal">
+          <p class="eyebrow">Contato direto</p>
+          <h2 id="contactTitle"></h2>
+          <p class="hero-subtitle" id="contactSubtitle"></p>
+          <div class="hero-actions">
+            <a class="button button-primary" id="contactWhatsApp" href="#" target="_blank" rel="noopener noreferrer">
+              Falar no WhatsApp
+            </a>
+            <a class="button button-ghost" id="contactEmail" href="#">Enviar email</a>
+          </div>
+        </div>
+        <aside class="contact-panel reveal">
+          <p><strong>Email:</strong> <a id="contactEmailText" href="#"></a></p>
+          <p><strong>WhatsApp:</strong> <a id="contactWhatsAppText" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+          <p><strong>Perfil profissional:</strong> <a id="contactProfessionalProfile" href="#" target="_blank" rel="noopener noreferrer">Perfil profissional</a></p>
+          <p><strong>LinkedIn:</strong> <a id="contactLinkedin" href="#" target="_blank" rel="noopener noreferrer">Abrir LinkedIn</a></p>
+          <p><strong>GitHub:</strong> <a id="contactGithub" href="#" target="_blank" rel="noopener noreferrer">Repositório</a></p>
+          <p class="contact-note">
+            Dica: personalize os dados em <code>script.js</code> para esta página ficar 100% com sua identidade.
+          </p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p id="footerText"></p>
+      <a href="#topo">Voltar ao topo</a>
+    </div>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>
