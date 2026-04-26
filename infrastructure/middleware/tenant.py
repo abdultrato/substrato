@@ -22,6 +22,12 @@ class TenantMiddleware:
         "/dashboard",
         "/dashboard/",
     }
+    TENANT_OPTIONAL_PATHS = {
+        "/admin",
+        "/admin/",
+        "/admin/login",
+        "/admin/login/",
+    }
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -95,7 +101,10 @@ class TenantMiddleware:
 
         try:
             if not tenant:
-                if request.path.startswith("/api/v1/equipment_integrations/equipment/"):
+                if (
+                    request.path.startswith("/api/v1/equipment_integrations/equipment/")
+                    or request.path in self.TENANT_OPTIONAL_PATHS
+                ):
                     return self.get_response(request)
                 return JsonResponse({"error": "Tenant não encontrado."}, status=404)
 

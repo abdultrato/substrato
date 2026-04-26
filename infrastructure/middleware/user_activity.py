@@ -73,6 +73,8 @@ class UserActivityMiddleware(MiddlewareMixin):
 
         tenant = getattr(request, "tenant", None)
         tenant_id = getattr(tenant, "id", None) or getattr(tenant, "pk", None)
+        if tenant_id is None:
+            return
 
         UserActivity.objects.create(
             tenant_id=tenant_id,

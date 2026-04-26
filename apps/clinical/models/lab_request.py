@@ -192,10 +192,12 @@ class LabRequest(NoNameCoreModel):
 
         with transaction.atomic():
             try:
-                return LabRequestItem.all_objects.create(
+                item = LabRequestItem.all_objects.create(
                     request=self,
                     exam=exam,
                 )
+                item._create_results()
+                return item
 
             except IntegrityError as err:
                 raise ValidationError("Exame já adicionado à requisição.") from err
@@ -211,10 +213,12 @@ class LabRequest(NoNameCoreModel):
 
         with transaction.atomic():
             try:
-                return LabRequestItem.all_objects.create(
+                item = LabRequestItem.all_objects.create(
                     request=self,
                     medical_exam=medical_exam,
                 )
+                item._create_results()
+                return item
             except IntegrityError as err:
                 raise ValidationError("Exame médico já adicionado à requisição.") from err
 
