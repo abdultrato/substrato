@@ -187,14 +187,23 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
             for r in resultados:
                 campo = r.exam_field
 
-                value = r.result_value_formatado or "-"
+                value = getattr(r, "formatted_result_value", None)
+                if not value:
+                    raw_value = getattr(r, "result_value", None)
+                    value = "-" if raw_value is None else str(raw_value)
+                reference_value = (
+                    getattr(campo, "reference", None)
+                    or getattr(campo, "referencia", None)
+                    or getattr(campo, "referencias", None)
+                    or "-"
+                )
 
                 date.append(
                     [
                         cell_paragraph(campo.name),
                         cell_paragraph(value),
                         cell_paragraph(campo.unit or "-"),
-                        cell_paragraph(campo.referencia or "-"),
+                        cell_paragraph(reference_value),
                     ]
                 )
 
