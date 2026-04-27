@@ -1,3 +1,5 @@
+"""Geração do PDF de analytics para indicadores operacionais."""
+
 from datetime import datetime
 import io
 import logging
@@ -25,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def _fmt_range(value: str | None) -> str:
+    """Formata datas ISO do payload para o padrão exibido no PDF."""
     if not value:
         return "—"
     # ISO string in API; keep safe fallback.
@@ -36,6 +39,7 @@ def _fmt_range(value: str | None) -> str:
 
 
 def _as_str(v) -> str:
+    """Converte valores heterogéneos para texto com fallback previsível."""
     if v is None:
         return "—"
     if isinstance(v, bool):
@@ -51,9 +55,10 @@ def _as_str(v) -> str:
 
 def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
     """
-    Gera PDF A5 do Relatório de Estatísticas (Dashboard/Analytics).
-    Entrada: dict payload no mesmo formato do endpoint /dashboard/analytics/
-    Saída: (bytes_pdf, name_file)
+    Gera PDF A5 do relatório de estatísticas (Dashboard/Analytics).
+
+    Espera um `payload` compatível com `/dashboard/analytics/` e retorna
+    `(bytes_pdf, nome_ficheiro)`.
     """
 
     buffer = io.BytesIO()

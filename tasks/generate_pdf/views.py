@@ -1,3 +1,5 @@
+"""Views HTTP para geração de PDFs clínicos e financeiros."""
+
 import logging
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -56,6 +58,7 @@ def result_pdf(request, custom_id):
 
 
 def request_pdf(request, request_id):
+    """Gera o PDF de uma requisição laboratorial pelo ID interno."""
     try:
         request = get_object_or_404(
             LabRequest.objects.select_related("patient"),
@@ -79,6 +82,7 @@ def request_pdf(request, request_id):
 
 
 def results_pdf(request, request_id):
+    """Gera o PDF de resultados validados para uma requisição laboratorial."""
     try:
         request = get_object_or_404(
             LabRequest.objects.select_related("patient"),
@@ -106,6 +110,7 @@ def results_pdf(request, request_id):
 
 @staff_member_required
 def request_invoice_pdf(request, custom_id):
+    """Gera PDF de fatura a partir do `custom_id` da requisição."""
     try:
         request = (
             LabRequest.objects.select_related("patient", "analyst")
@@ -137,6 +142,7 @@ def request_invoice_pdf(request, custom_id):
 
 @staff_member_required
 def invoice_pdf(request, invoice_custom_id):
+    """Gera PDF de fatura diretamente a partir do `custom_id` da fatura."""
     try:
         invoice = get_object_or_404(
             Invoice.objects.select_related("patient", "request"),

@@ -1,3 +1,5 @@
+"""Views baseadas em classe para emissão de PDFs clínicos."""
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views import View
@@ -8,7 +10,10 @@ from .views import request_pdf, results_pdf
 
 
 class RequestPdfView(View):
+    """Expõe o PDF da requisição laboratorial a partir do `pk`."""
+
     def get(self, request, pk: int):
+        """Resolve a requisição e delega para a view funcional de PDF."""
         try:
             request = get_object_or_404(LabRequest.objects.select_related("patient"), pk=pk)
         except Exception as exc:
@@ -18,7 +23,10 @@ class RequestPdfView(View):
 
 
 class ResultPdfView(View):
+    """Expõe o PDF de resultados laboratoriais a partir do `pk`."""
+
     def get(self, request, pk: int):
+        """Resolve a requisição e delega para a view funcional de resultados."""
         try:
             request = get_object_or_404(LabRequest.objects.select_related("patient"), pk=pk)
         except Exception as exc:

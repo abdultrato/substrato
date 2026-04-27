@@ -1,3 +1,5 @@
+"""Testes da API de geração de PDF de resultados laboratoriais."""
+
 from datetime import date
 from decimal import Decimal
 import json
@@ -23,12 +25,14 @@ from security.permissions.rbac import GROUPS
 
 
 def _response_data(response):
+    """Extrai payload tanto de DRF Response como de HttpResponse puro."""
     if hasattr(response, "data"):
         return response.data
     return json.loads(response.content)
 
 
 def _tenant():
+    """Cria tenant isolado para os cenários da API de PDF."""
     return Tenant.objects.create(
         identifier="tn-pdf-api",
         name="Tenant PDF API",
@@ -38,6 +42,7 @@ def _tenant():
 
 
 def _patient(tenant: Tenant):
+    """Cria paciente padrão para os testes."""
     return Patient.objects.create(
         tenant=tenant,
         name="Paciente PDF API",
@@ -48,6 +53,7 @@ def _patient(tenant: Tenant):
 
 
 def _exam(tenant: Tenant):
+    """Cria exame laboratorial base para os cenários de resultado."""
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma API",
@@ -59,6 +65,7 @@ def _exam(tenant: Tenant):
 
 
 def _field(exam: LabExam):
+    """Cria campo de resultado associado ao exame."""
     return LabExamField.objects.create(
         tenant=exam.tenant,
         exam=exam,
@@ -69,6 +76,7 @@ def _field(exam: LabExam):
 
 
 def _authenticate_lab_user(tenant: Tenant, api_client):
+    """Autentica um utilizador de laboratório no `api_client`."""
     user_model = get_user_model()
     user = user_model.objects.create_user(
         username="lab_pdf_api",
@@ -85,6 +93,7 @@ def _authenticate_lab_user(tenant: Tenant, api_client):
 
 
 def _request_with_result_item(tenant: Tenant, patient: Patient, exam: LabExam, field: LabExamField):
+    """Monta requisição com `ResultItem` pronto para configuração de estado."""
     request = LabRequest.objects.create(tenant=tenant, patient=patient)
     request_item = LabRequestItem.objects.create(tenant=tenant, request=request, exam=exam)
     result = Result.objects.create(request=request, tenant=tenant)
@@ -95,6 +104,7 @@ def _request_with_result_item(tenant: Tenant, patient: Patient, exam: LabExam, f
 
 @pytest.mark.django_db
 def test_pdf_resultados_returns_pdf_when_has_validated_result(api_client):
+    """Endpoint deve responder 200 e PDF quando existe item validado."""
     tenant = _tenant()
     _authenticate_lab_user(tenant, api_client)
     patient = _patient(tenant)
@@ -115,6 +125,7 @@ def test_pdf_resultados_returns_pdf_when_has_validated_result(api_client):
 
 @pytest.mark.django_db
 def test_pdf_resultados_requires_at_least_one_validated_result(api_client):
+    """Endpoint deve bloquear emissão sem qualquer resultado validado."""
     tenant = _tenant()
     _authenticate_lab_user(tenant, api_client)
     patient = _patient(tenant)

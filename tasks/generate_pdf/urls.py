@@ -1,3 +1,5 @@
+"""Rotas dedicadas à geração de PDF institucional."""
+
 from django.urls import path
 
 from .views import result_pdf

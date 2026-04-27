@@ -1,3 +1,10 @@
+"""Interface pública do pacote `tasks.generate_pdf`.
+
+Este módulo centraliza as funções e views de geração de PDF usadas pelo
+frontend e por endpoints internos. Também mantém aliases legados para evitar
+quebras em imports antigos.
+"""
+
 from .class_views import RequestPdfView, ResultPdfView
 from .invoice_pdf_generator import generate_invoice_pdf
 from .pdf_base import (

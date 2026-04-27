@@ -1,3 +1,5 @@
+"""Testes unitários do pacote `tasks.generate_pdf`."""
+
 from django.http import HttpRequest
 from decimal import Decimal
 from datetime import date
@@ -22,6 +24,7 @@ from tasks.generate_pdf.views import request_pdf
 
 
 def test_request_pdf_404(db):
+    """A view funcional deve retornar `Http404` para IDs inexistentes."""
     request = HttpRequest()
     try:
         request_pdf(request, request_id=99999)
@@ -34,6 +37,7 @@ def test_request_pdf_404(db):
 
 @pytest.mark.django_db
 def test_generate_results_pdf_with_validated_item():
+    """A geração de resultados deve produzir bytes quando existe item validado."""
     tenant = Tenant.objects.create(identifier="tn-pdf", name="Tenant PDF")
     patient = Patient.objects.create(
         tenant=tenant,

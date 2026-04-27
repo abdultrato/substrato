@@ -1,3 +1,5 @@
+"""Geração do PDF de resultados laboratoriais."""
+
 import io
 
 from reportlab.lib import colors
@@ -31,6 +33,7 @@ from .pdf_base import (
 
 
 def _format_results_date(request):
+    """Formata a data base do documento de resultados."""
     date = getattr(request, "created_at", None)
     if not date:
         return "—"
@@ -38,6 +41,7 @@ def _format_results_date(request):
 
 
 def _resolve_document_user(request, resultados_qs):
+    """Escolhe o utilizador institucional a exibir no cabeçalho do PDF."""
     if resultados_qs:
         for r in resultados_qs:
             if r.validated_by:
@@ -47,6 +51,7 @@ def _resolve_document_user(request, resultados_qs):
 
 
 def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
+    """Monta e devolve o PDF de resultados laboratoriais em formato A5."""
     buffer = io.BytesIO()
 
     page_width, _ = A5

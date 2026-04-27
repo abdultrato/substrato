@@ -1,3 +1,5 @@
+"""Geração do PDF de recibo associado a pagamentos de faturas."""
+
 from decimal import Decimal
 import io
 import logging
@@ -26,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def _formatar_dt(value) -> str:
+    """Formata data/hora para o padrão institucional dos PDFs."""
     if not value:
         return "—"
     try:
@@ -35,6 +38,7 @@ def _formatar_dt(value) -> str:
 
 
 def _item_code(item) -> str:
+    """Resolve o código do item faturável (exame ou exame médico)."""
     exam = getattr(item, "exam", None) or getattr(item, "medical_exam", None)
     if not exam:
         return ""
@@ -43,10 +47,9 @@ def _item_code(item) -> str:
 
 def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     """
-    Gera PDF A5 do Recibo (documento separado da invoice).
+    Gera o PDF A5 do recibo (documento separado da fatura).
 
-    Entrada: objeto Recibo
-    Saída: (bytes_pdf, name_file)
+    Retorna uma tupla com os bytes do documento e o nome de ficheiro.
     """
 
     buffer = io.BytesIO()

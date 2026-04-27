@@ -1,3 +1,5 @@
+"""Geração do PDF institucional de requisições de exames."""
+
 import io
 
 from reportlab.lib import colors
@@ -29,6 +31,7 @@ from .pdf_base import (
 
 
 def _format_request_date(request):
+    """Formata a data de criação da requisição para apresentação no PDF."""
     date = getattr(request, "created_at", None) or getattr(request, "created_at", None)
     if not date:
         return "—"
@@ -36,14 +39,17 @@ def _format_request_date(request):
 
 
 def _exam_code(exam):
+    """Resolve o código público do exame com fallback seguro."""
     return getattr(exam, "code", None) or getattr(exam, "custom_id", None) or "—"
 
 
 def _resolve_document_user(request):
+    """Resolve o profissional a apresentar como emissor do documento."""
     return getattr(request, "created_by", None) or getattr(request, "analyst", None)
 
 
 def generate_request_pdf(request) -> tuple[bytes, str]:
+    """Monta e devolve o PDF da requisição de exames em bytes."""
     buffer = io.BytesIO()
     page_width, _ = A5
     min_margin = 1 * cm

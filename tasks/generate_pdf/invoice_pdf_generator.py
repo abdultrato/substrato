@@ -1,3 +1,5 @@
+"""Geração do PDF de fatura (invoice) em layout institucional A5."""
+
 from decimal import Decimal
 import io
 import logging
@@ -37,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 def _format_request_date(request):
+    """Formata data/hora da requisição associada à fatura."""
     if not request:
         return "—"
 
@@ -51,6 +54,7 @@ def _format_request_date(request):
 
 
 def _exam_code(exam):
+    """Resolve código primário de exame com fallback para `custom_id`."""
     return getattr(exam, "code", "") or getattr(exam, "custom_id", "") or ""
 
 
@@ -58,6 +62,7 @@ _code_exam = _exam_code
 
 
 def _resolve_document_user(invoice, request):
+    """Resolve o utilizador responsável exibido no cabeçalho da fatura."""
     return (
         getattr(invoice, "created_by", None)
         or getattr(request, "created_by", None)
@@ -67,9 +72,9 @@ def _resolve_document_user(invoice, request):
 
 def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     """
-    Gera PDF A5 da Fatura.
-    Entrada: objeto Fatura
-    Saída: (bytes_pdf, name_file)
+    Gera o PDF A5 da fatura.
+
+    Retorna uma tupla com os bytes do documento e o nome de ficheiro.
     """
 
     buffer = io.BytesIO()
