@@ -30,6 +30,45 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/billing/invoice/")
   })
 
+  it("reescreve alias legado de recibos para o endpoint atual", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/recibos/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/receipt/")
+  })
+
+  it("reescreve alias legado de seguradora para insurer", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/seguradora/planocobertura/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/insurer/planocobertura/")
+  })
+
+  it("reescreve alias legado de reconciliacao para o endpoint atual", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/reconciliacoes/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/reconciliation/")
+  })
+
   it("renova a sessao em 401 e repete o request original", async () => {
     ;(global.fetch as any)
       .mockResolvedValueOnce(new Response("unauthorized", { status: 401 }))

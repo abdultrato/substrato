@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { pharmacyService, nursingService } from '@/lib/api/typed-client'
+import { pharmacyService, nursingService, paymentsService } from '@/lib/api/typed-client'
 
 // Mock fetch global
 global.fetch = vi.fn()
@@ -58,5 +58,31 @@ describe('typed-client pharmacy & nursing services', () => {
       })
     )
     expect(response.data.observacao).toBe('Curativo diário')
+  })
+
+  it('deve listar recibos no endpoint canonico de pagamentos', async () => {
+    const payload = [{ id: 1 }]
+    ;(global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(payload))
+
+    const response = await paymentsService.listReceipts()
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8000/api/v1/payments/receipt/',
+      expect.objectContaining({ method: 'GET' })
+    )
+    expect(response.data[0].id).toBe(1)
+  })
+
+  it('deve listar reconciliações no endpoint canonico de pagamentos', async () => {
+    const payload = [{ id: 9 }]
+    ;(global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(payload))
+
+    const response = await paymentsService.listReconciliations()
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost:8000/api/v1/payments/reconciliation/',
+      expect.objectContaining({ method: 'GET' })
+    )
+    expect(response.data[0].id).toBe(9)
   })
 })

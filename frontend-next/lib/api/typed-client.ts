@@ -448,7 +448,7 @@ export class PaymentsService {
   }
 
   async listReceipts(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/payments/recibo/', ReceiptSchema.array(), { retryOptions })
+    return this.client.get('/api/v1/payments/receipt/', ReceiptSchema.array(), { retryOptions })
   }
 
   async listTransactions(retryOptions?: RetryOptions) {
@@ -456,7 +456,7 @@ export class PaymentsService {
   }
 
   async listReconciliations(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/payments/reconciliacao/', ReconciliationSchema.array(), { retryOptions })
+    return this.client.get('/api/v1/payments/reconciliation/', ReconciliationSchema.array(), { retryOptions })
   }
 }
 
