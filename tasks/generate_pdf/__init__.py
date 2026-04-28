@@ -11,6 +11,11 @@ from .invoice_pdf_generator import generate_invoice_pdf
 from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
+from .pharmacy_reports_pdf_generator import (
+    generate_pharmacy_movements_pdf,
+    generate_pharmacy_sector_movements_pdf,
+    generate_pharmacy_stock_pdf,
+)
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -51,6 +56,9 @@ __all__ = [
     "generate_patient_history_pdf",
     "generate_patient_invoice_history_pdf",
     "generate_patient_payment_history_pdf",
+    "generate_pharmacy_movements_pdf",
+    "generate_pharmacy_sector_movements_pdf",
+    "generate_pharmacy_stock_pdf",
     "generate_qr_code",
     "generate_request_pdf",
     "generate_results_pdf",
@@ -76,6 +84,9 @@ gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
 gerar_pdf_historia_clinica = generate_patient_history_pdf
 gerar_pdf_historia_faturas = generate_patient_invoice_history_pdf
 gerar_pdf_historia_pagamentos = generate_patient_payment_history_pdf
+gerar_pdf_historico_movimentos_farmacia = generate_pharmacy_movements_pdf
+gerar_pdf_movimentos_setor_farmacia = generate_pharmacy_sector_movements_pdf
+gerar_pdf_estoque_farmacia = generate_pharmacy_stock_pdf
 gerar_pdf_request = generate_request_pdf
 gerar_pdf_resultados = generate_results_pdf
 gerar_qr_code = generate_qr_code

@@ -2,13 +2,14 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { useAuth } from "@/hooks/useAuth"
+import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { pharmacyService } from "@/lib/api/typed-client"
 import { type MovimentoEstoque, type Lote, type Produto } from "@/lib/validators/schemas"
@@ -33,6 +34,11 @@ export default function FarmaciaMovimentosPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [lotes, setLotes] = useState<Map<number, Lote>>(new Map())
   const [produtos, setProdutos] = useState<Map<number, Produto>>(new Map())
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [reportType, setReportType] = useState<"ALL" | "ENT" | "SAI" | "AJU">("ALL")
+  const [reportSector, setReportSector] = useState<"ALL" | "LAB" | "ENF" | "REC" | "MED" | "MOC" | "OUT">("ALL")
+  const [reportLoading, setReportLoading] = useState<null | "moves" | "stock" | "sector">(null)
 
   useEffect(() => {
     let mounted = true
@@ -78,6 +84,69 @@ export default function FarmaciaMovimentosPage() {
       mounted = false
     }
   }, [page, pageSize])
+
+  const baixarPdf = useCallback(async (url: string, filename: string) => {
+    const blob = await apiFetch<Blob>(url, { responseType: "blob" })
+    const href = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = href
+    a.download = filename
+    a.click()
+    window.URL.revokeObjectURL(href)
+  }, [])
+
+  const buildCommonParams = useCallback(() => {
+    const params = new URLSearchParams()
+    if (dateFrom) params.set("date_from", dateFrom)
+    if (dateTo) params.set("date_to", dateTo)
+    return params
+  }, [dateFrom, dateTo])
+
+  const gerarPdfEntradasSaidas = useCallback(async () => {
+    try {
+      setReportLoading("moves")
+      const params = buildCommonParams()
+      if (reportType !== "ALL") params.set("type", reportType)
+      if (reportSector !== "ALL") params.set("sector", reportSector)
+      params.set("limit", "1000")
+      await baixarPdf(
+        `/pharmacy/movimentoestoque/historico/pdf/?${params.toString()}`,
+        "historico_entradas_saidas_farmacia.pdf"
+      )
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de entradas/saídas."))
+    } finally {
+      setReportLoading(null)
+    }
+  }, [baixarPdf, buildCommonParams, reportSector, reportType])
+
+  const gerarPdfEstoque = useCallback(async () => {
+    try {
+      setReportLoading("stock")
+      const params = buildCommonParams()
+      await baixarPdf(`/pharmacy/lot/estoque/pdf/?${params.toString()}`, "estoque_existente_farmacia.pdf")
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de estoque existente."))
+    } finally {
+      setReportLoading(null)
+    }
+  }, [baixarPdf, buildCommonParams])
+
+  const gerarPdfMovimentosPorSetor = useCallback(async () => {
+    try {
+      setReportLoading("sector")
+      const params = buildCommonParams()
+      if (reportSector !== "ALL") params.set("sector", reportSector)
+      await baixarPdf(
+        `/pharmacy/requisicaomaterial/historico_movimentos/pdf/?${params.toString()}`,
+        "historico_movimentos_por_setor_farmacia.pdf"
+      )
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF por setor solicitante."))
+    } finally {
+      setReportLoading(null)
+    }
+  }, [baixarPdf, buildCommonParams, reportSector])
 
   const columns = useMemo(
     () => [
@@ -164,6 +233,107 @@ export default function FarmaciaMovimentosPage() {
               <option value={100}>100</option>
             </select>
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
+                De
+              </label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
+                Até
+              </label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
+                Tipo movimento
+              </label>
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value as any)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              >
+                <option value="ALL">Todos</option>
+                <option value="ENT">Entradas</option>
+                <option value="SAI">Saídas</option>
+                <option value="AJU">Ajustes</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
+                Setor solicitante
+              </label>
+              <select
+                value={reportSector}
+                onChange={(e) => setReportSector(e.target.value as any)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              >
+                <option value="ALL">Todos</option>
+                <option value="LAB">Laboratório</option>
+                <option value="ENF">Enfermagem</option>
+                <option value="REC">Recepção</option>
+                <option value="MED">Medicina</option>
+                <option value="MOC">Medicina Ocupacional</option>
+                <option value="OUT">Outros setores</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setDateFrom("")
+                  setDateTo("")
+                  setReportType("ALL")
+                  setReportSector("ALL")
+                }}
+                className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              >
+                Limpar filtros
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={gerarPdfEntradasSaidas}
+              disabled={reportLoading !== null}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              {reportLoading === "moves" ? "Gerando..." : "PDF histórico entradas/saídas"}
+            </button>
+            <button
+              type="button"
+              onClick={gerarPdfEstoque}
+              disabled={reportLoading !== null}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              {reportLoading === "stock" ? "Gerando..." : "PDF estoque existente"}
+            </button>
+            <button
+              type="button"
+              onClick={gerarPdfMovimentosPorSetor}
+              disabled={reportLoading !== null}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              {reportLoading === "sector" ? "Gerando..." : "PDF movimentos por setor solicitante"}
+            </button>
+          </div>
         </div>
 
         {loading ? (

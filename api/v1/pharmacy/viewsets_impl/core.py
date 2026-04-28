@@ -1,4 +1,8 @@
+from datetime import datetime
+
+from django.db.models import Count, Q, Sum
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -34,6 +38,21 @@ from ..serializers import (
     SaleItemSerializer,
     SaleSerializer,
 )
+
+
+def _parse_query_date(value: str | None, *, field_name: str):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value)).date()
+    except Exception as exc:
+        raise ValidationError({field_name: "Use o formato YYYY-MM-DD."}) from exc
+
+
+def _truthy(value) -> bool:
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "sim"}
 
 
 class SaleItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -107,6 +126,64 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
         lots = [lot for lot in base_qs if (not lot.vencido and lot.balance() > 0)]
         return Response(LotSerializer(lots, many=True).data)
 
+    @action(detail=False, methods=["get"], url_path="estoque/pdf", url_name="estoque-pdf")
+    def stock_pdf(self, request):
+        """Gera PDF do estoque existente (snapshot atual de lotes com saldo)."""
+        include_expired = _truthy(request.query_params.get("include_expired"))
+        date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
+        date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
+
+        qs = self.get_queryset().select_related("product").filter(deleted=False).order_by("product__name", "expiration_date")
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
+
+        rows = []
+        total_balance = 0
+        for lot in qs:
+            balance = int(lot.balance() or 0)
+            if balance <= 0:
+                continue
+            if lot.vencido and not include_expired:
+                continue
+
+            total_balance += balance
+            rows.append(
+                {
+                    "product_name": getattr(getattr(lot, "product", None), "name", "—"),
+                    "lot_number": lot.lot_number,
+                    "expiration_date": lot.expiration_date.isoformat() if lot.expiration_date else None,
+                    "balance": balance,
+                    "sale_price": str(getattr(lot, "sale_price", "0.00") or "0.00"),
+                    "is_expired": bool(lot.vencido),
+                }
+            )
+
+        summary = {
+            "lots_count": len(rows),
+            "products_count": len({r["product_name"] for r in rows}),
+            "total_balance": total_balance,
+        }
+        payload = {
+            "report_type": "stock",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "include_expired": include_expired,
+            },
+            "summary": summary,
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_stock_pdf
+
+        pdf_bytes, filename = generate_pharmacy_stock_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
 
 class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = InventoryMovement.objects.all()
@@ -132,6 +209,90 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
         "version",
     ]
     ordering = ["-created_at"]
+
+    @action(detail=False, methods=["get"], url_path="historico/pdf", url_name="historico-pdf")
+    def history_pdf(self, request):
+        """
+        Gera PDF de histórico de entradas/saídas/ajustes.
+        Filtros: date_from, date_to, type, origin, sector.
+        """
+        date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
+        date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
+        movement_type = (request.query_params.get("type") or "").strip().upper()
+        origin = (request.query_params.get("origin") or "").strip().upper()
+        sector = (request.query_params.get("sector") or "").strip().upper()
+        limit_raw = request.query_params.get("limit")
+        try:
+            limit = int(limit_raw) if limit_raw not in (None, "") else 500
+        except Exception as exc:
+            raise ValidationError({"limit": "Valor inválido para limit."}) from exc
+        limit = max(1, min(limit, 2000))
+
+        qs = self.get_queryset().filter(deleted=False).select_related(
+            "lot__product",
+            "material_request_item__requisition",
+        )
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
+        if movement_type in {"ENT", "SAI", "AJU"}:
+            qs = qs.filter(type=movement_type)
+        if origin in {"VEND", "PROC", "AJUS", "REQ"}:
+            qs = qs.filter(origin=origin)
+        if sector:
+            qs = qs.filter(material_request_item__requisition__sector=sector)
+
+        summary_raw = qs.aggregate(
+            moves_count=Count("id"),
+            total_entries=Sum("quantity", filter=Q(type="ENT")),
+            total_exits=Sum("quantity", filter=Q(type="SAI")),
+            total_adjustments=Sum("quantity", filter=Q(type="AJU")),
+        )
+
+        rows = []
+        for movement in qs.order_by("-created_at")[:limit]:
+            req = getattr(getattr(movement, "material_request_item", None), "requisition", None)
+            rows.append(
+                {
+                    "created_at": timezone.localtime(movement.created_at).strftime("%d/%m/%Y %H:%M"),
+                    "movement_code": movement.custom_id or movement.id,
+                    "type": movement.get_type_display(),
+                    "origin": movement.get_origin_display(),
+                    "product_name": getattr(getattr(movement.lot, "product", None), "name", "—"),
+                    "lot_number": getattr(movement.lot, "lot_number", "—"),
+                    "quantity": int(movement.quantity or 0),
+                    "sector": req.get_sector_display() if req else "—",
+                    "requisition_code": getattr(req, "custom_id", None) or (f"#{req.id}" if req else "—"),
+                }
+            )
+
+        payload = {
+            "report_type": "movements",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "type": movement_type or None,
+                "origin": origin or None,
+                "sector": sector or None,
+                "limit": limit,
+            },
+            "summary": {
+                "moves_count": int(summary_raw.get("moves_count") or 0),
+                "total_entries": int(summary_raw.get("total_entries") or 0),
+                "total_exits": int(summary_raw.get("total_exits") or 0),
+                "total_adjustments": int(summary_raw.get("total_adjustments") or 0),
+            },
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_movements_pdf
+
+        pdf_bytes, filename = generate_pharmacy_movements_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
 
 class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -410,6 +571,81 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         requisition.save(update_fields=["status", "hold_reason", "on_hold_at", "on_hold_by", "updated_at", "updated_by"])
 
         return Response(self.get_serializer(requisition).data)
+
+    @action(detail=False, methods=["get"], url_path="historico_movimentos/pdf", url_name="historico-movimentos-pdf")
+    def sector_movements_pdf(self, request):
+        """
+        PDF de movimentos de insumos por setor solicitante.
+        Uso principal: equipe da farmácia.
+        """
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode emitir histórico de movimentos por setor.")
+
+        date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
+        date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
+        sector = (request.query_params.get("sector") or "").strip().upper()
+
+        requisitions_qs = self.get_queryset().filter(deleted=False)
+        if sector:
+            requisitions_qs = requisitions_qs.filter(sector=sector)
+
+        movements_qs = InventoryMovement.objects.filter(
+            deleted=False,
+            origin="REQ",
+            material_request_item__requisition__in=requisitions_qs,
+        ).select_related(
+            "lot__product",
+            "material_request_item__requisition",
+        )
+        if date_from:
+            movements_qs = movements_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            movements_qs = movements_qs.filter(created_at__date__lte=date_to)
+
+        summary_raw = movements_qs.aggregate(
+            moves_count=Count("id"),
+            total_quantity=Sum("quantity"),
+            requisitions_count=Count("material_request_item__requisition", distinct=True),
+        )
+
+        rows = []
+        for movement in movements_qs.order_by("-created_at")[:2000]:
+            req = movement.material_request_item.requisition
+            rows.append(
+                {
+                    "created_at": timezone.localtime(movement.created_at).strftime("%d/%m/%Y %H:%M"),
+                    "requisition_code": req.custom_id or f"#{req.id}",
+                    "sector": req.get_sector_display(),
+                    "department": req.requested_by_department or "—",
+                    "product_name": getattr(getattr(movement.lot, "product", None), "name", "—"),
+                    "lot_number": getattr(movement.lot, "lot_number", "—"),
+                    "quantity": int(movement.quantity or 0),
+                }
+            )
+
+        payload = {
+            "report_type": "sector_movements",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "sector": sector or None,
+            },
+            "summary": {
+                "moves_count": int(summary_raw.get("moves_count") or 0),
+                "total_quantity": int(summary_raw.get("total_quantity") or 0),
+                "requisitions_count": int(summary_raw.get("requisitions_count") or 0),
+            },
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_sector_movements_pdf
+
+        pdf_bytes, filename = generate_pharmacy_sector_movements_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
 
 class MaterialRequisitionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
