@@ -3,6 +3,8 @@
 from django.http import HttpRequest
 from decimal import Decimal
 from datetime import date
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -19,6 +21,11 @@ from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.sector import Sector
 from core.constants.laboratory.units import DefaultUnit
 from domain.clinical.result_state import ResultState
+from tasks.generate_pdf.pdf_base import _should_draw_signatures, institutional_user_identity, user_name, user_primary_group
+from tasks.generate_pdf import pdf_base
+from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
+from tasks.generate_pdf.patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
+from tasks.generate_pdf.patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 from tasks.generate_pdf.views import request_pdf
 
@@ -33,6 +40,125 @@ def test_request_pdf_404(db):
         assert exc.__class__.__name__ == "Http404"
     else:
         raise AssertionError("Expected Http404 for missing request")
+
+
+def test_signature_flag_only_when_enabled():
+    assert _should_draw_signatures(SimpleNamespace()) is False
+    assert _should_draw_signatures(SimpleNamespace(include_signatures=False)) is False
+    assert _should_draw_signatures(SimpleNamespace(include_signatures=True)) is True
+
+
+def test_on_page_skips_signatures_when_disabled():
+    canvas = object()
+    doc = SimpleNamespace(include_signatures=False)
+    user = object()
+    with (
+        patch.object(pdf_base, "draw_header") as draw_header_mock,
+        patch.object(pdf_base, "draw_signatures") as draw_signatures_mock,
+    ):
+        pdf_base.on_page(canvas, doc, user=user)
+    draw_header_mock.assert_called_once_with(canvas, doc)
+    draw_signatures_mock.assert_not_called()
+
+
+def test_on_page_draws_signatures_when_enabled():
+    canvas = object()
+    doc = SimpleNamespace(include_signatures=True)
+    user = object()
+    with (
+        patch.object(pdf_base, "draw_header") as draw_header_mock,
+        patch.object(pdf_base, "draw_signatures") as draw_signatures_mock,
+    ):
+        pdf_base.on_page(canvas, doc, user=user)
+    draw_header_mock.assert_called_once_with(canvas, doc)
+    draw_signatures_mock.assert_called_once_with(canvas, doc, user)
+
+
+def test_user_name_prefers_full_name():
+    user = SimpleNamespace(first_name="Ana", last_name="Matos", username="ana.matos")
+    assert user_name(user) == "Ana Matos"
+
+
+def test_user_name_falls_back_to_username_when_full_name_missing():
+    user = SimpleNamespace(first_name="", last_name="", username="lab.user")
+    assert user_name(user) == "lab.user"
+
+
+def test_institutional_identity_uses_group_and_username_when_no_full_name():
+    groups = SimpleNamespace(all=lambda: [SimpleNamespace(name="Laboratório")])
+    user = SimpleNamespace(first_name="", last_name="", username="lab.user", groups=groups)
+    assert user_primary_group(user) == "Laboratório"
+    assert institutional_user_identity(user) == "Laboratório: lab.user"
+
+
+def test_generate_patient_history_pdf_with_basic_payload():
+    payload = {
+        "patient": {
+            "id_custom": "PAC-001",
+            "nome": "Paciente Teste",
+            "tipo_documento": "BI",
+            "numero_id": "1100110011A",
+            "genero": "Masculino",
+            "contacto": "+258840000000",
+            "email": "paciente@example.com",
+            "criado_em": "2026-04-28T10:00:00Z",
+        },
+        "referencia": {"pacientes_vinculados": 1},
+        "cardex": [],
+        "requisicoes": [],
+        "consultations": [],
+        "procedures_enfermagem": [],
+        "internamentos_ward": [],
+        "vendas_farmacia": [],
+        "faturas": [],
+        "recibos": [],
+    }
+
+    pdf_bytes, filename = generate_patient_history_pdf(payload, request=None)
+
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+    assert filename.endswith(".pdf")
+    assert "PAC-001" in filename
+
+
+def test_generate_patient_invoice_history_pdf_with_basic_payload():
+    payload = {
+        "patient": {
+            "id_custom": "PAC-INV-001",
+            "nome": "Paciente Faturas",
+            "tipo_documento": "BI",
+            "numero_id": "2200220011A",
+        },
+        "faturas": [],
+    }
+
+    pdf_bytes, filename = generate_patient_invoice_history_pdf(payload, request=None)
+
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+    assert filename.endswith(".pdf")
+    assert "historia_faturas" in filename
+
+
+def test_generate_patient_payment_history_pdf_with_basic_payload():
+    payload = {
+        "patient": {
+            "id_custom": "PAC-PAG-001",
+            "nome": "Paciente Pagamentos",
+            "tipo_documento": "BI",
+            "numero_id": "3300330011A",
+        },
+        "pagamentos": [],
+        "recibos": [],
+    }
+
+    pdf_bytes, filename = generate_patient_payment_history_pdf(payload, request=None)
+
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0
+    assert filename.endswith(".pdf")
+    assert "historia_pagamentos" in filename
 
 
 @pytest.mark.django_db

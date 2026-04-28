@@ -2,6 +2,7 @@ from datetime import datetime, time
 from decimal import Decimal
 
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
@@ -104,6 +105,32 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     @action(detail=True, methods=["get"], url_path="clinical_history", url_name="clinical-history")
     def clinical_history(self, request, pk=None):
         return self.historia_clinica(request, pk)
+
+    @action(detail=True, methods=["get"], url_path="historia_clinica/pdf", url_name="historia-clinica-pdf")
+    def historia_clinica_pdf(self, request, pk=None):
+        """
+        Emite o PDF da história clínica agregada do paciente desta consulta.
+        """
+        if not user_can_view_clinical_history(getattr(request, "user", None)):
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir a história clínica.")
+
+        consultation = self.get_object()
+        patient = getattr(consultation, "patient", None)
+        if not patient:
+            raise ValidationError("Consulta sem paciente associado.")
+
+        payload = build_patient_clinical_history(request, patient)
+        from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
+
+        pdf_bytes, filename = generate_patient_history_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @action(detail=True, methods=["get"], url_path="clinical_history/pdf", url_name="clinical-history-pdf")
+    def clinical_history_pdf(self, request, pk=None):
+        """Alias em inglês para emissão do PDF de história clínica por consulta."""
+        return self.historia_clinica_pdf(request, pk=pk)
 
     @action(detail=False, methods=["get"], url_path="price", url_name="price")
     def price_preview(self, request):

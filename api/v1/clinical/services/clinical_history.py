@@ -152,7 +152,21 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
         qs_faturas = qs_faturas.filter(tenant=tenant)
 
     from api.v1.payments.serializers import ReceiptSerializer
+    from api.v1.payments.serializers import PaymentSerializer
+    from apps.payments.models.payment import Payment
     from apps.payments.models.receipt import Receipt
+
+    qs_pagamentos = (
+        Payment.objects.filter(
+            deleted=False,
+            invoice__deleted=False,
+            invoice__patient_id__in=patient_ids,
+        )
+        .select_related("invoice", "invoice__patient")
+        .order_by("-paid_at", "-created_at")
+    )
+    if tenant is not None:
+        qs_pagamentos = qs_pagamentos.filter(invoice__tenant=tenant)
 
     qs_recibos = (
         Receipt.objects.filter(
@@ -181,6 +195,7 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
         "internamentos_ward": WardAdmissionSerializer(qs_internamentos[:limit], many=True).data,
         "vendas_farmacia": SaleSerializer(qs_vendas[:limit], many=True).data,
         "faturas": InvoiceSerializer(qs_faturas[:limit], many=True).data,
+        "pagamentos": PaymentSerializer(qs_pagamentos[:limit], many=True, context={"request": request}).data,
         "recibos": ReceiptSerializer(qs_recibos[:limit], many=True).data,
     }
 

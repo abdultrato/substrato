@@ -28,6 +28,11 @@ type FaturaItem = {
   total_com_iva?: string | number
 }
 
+type UserOption = {
+  id: number
+  username: string
+  displayName: string
+}
 
 const ITEM_TYPE_ORDER = ["EXM", "EXA", "AJU", "PRC", "MAT", "FAR"] as const
 
@@ -54,6 +59,14 @@ export default function FaturasPage() {
   const [carregandoItens, setCarregandoItens] = useState(false)
   const [selectedFatura, setSelectedFatura] = useState<FaturaRow | null>(null)
   const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
+  const [reportUsers, setReportUsers] = useState<UserOption[]>([])
+  const [reportUserId, setReportUserId] = useState<string>("__all__")
+  const [reportYear, setReportYear] = useState<number>(new Date().getFullYear())
+  const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1)
+  const [reportSemester, setReportSemester] = useState<number>(new Date().getMonth() + 1 <= 6 ? 1 : 2)
+  const [reportLoading, setReportLoading] = useState<null | "monthly" | "semiannual" | "annual" | "general">(null)
+  const [reportUsersLoading, setReportUsersLoading] = useState(false)
+  const [reportUsersError, setReportUsersError] = useState<string | null>(null)
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const rascunhos = useMemo(() => faturas.filter((f) => f.estado === "RASC"), [faturas])
@@ -79,6 +92,37 @@ export default function FaturasPage() {
   useEffect(() => {
     carregar()
   }, [carregar])
+
+  const carregarUtilizadores = useCallback(async () => {
+    try {
+      setReportUsersLoading(true)
+      setReportUsersError(null)
+      const res = await apiFetch<any>("/identidade/usuario/?page_size=500")
+      const items = res && res.results ? res.results : res
+      const rows = Array.isArray(items) ? items : []
+      const options: UserOption[] = rows.map((row: any) => {
+        const firstName = String(row.first_name || "").trim()
+        const lastName = String(row.last_name || "").trim()
+        const fullName = `${firstName} ${lastName}`.trim()
+        const username = String(row.username || "")
+        return {
+          id: Number(row.id),
+          username,
+          displayName: fullName || username || `Utilizador ${row.id}`,
+        }
+      })
+      setReportUsers(options)
+    } catch (e: any) {
+      setReportUsers([])
+      setReportUsersError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar utilizadores."))
+    } finally {
+      setReportUsersLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    carregarUtilizadores()
+  }, [carregarUtilizadores])
 
   const emitir = useCallback(async (id: number) => {
     if (!podeAlterar) {
@@ -132,6 +176,43 @@ export default function FaturasPage() {
       setAcaoId(null)
     }
   }, [])
+
+  const gerarHistoricoFaturamentoPdf = useCallback(
+    async (period: "monthly" | "semiannual" | "annual", forceAll = false) => {
+      try {
+        setReportLoading(forceAll ? "general" : period)
+        const scope = forceAll ? "all" : reportUserId === "__all__" ? "all" : "user"
+        if (scope === "user" && !reportUserId) {
+          setErro("Selecione um utilizador para gerar histórico individual.")
+          return
+        }
+
+        const params = new URLSearchParams()
+        params.set("period", period)
+        params.set("scope", scope)
+        params.set("year", String(reportYear))
+        if (period === "monthly") params.set("month", String(reportMonth))
+        if (period === "semiannual") params.set("semester", String(reportSemester))
+        if (scope === "user") params.set("user_id", String(reportUserId))
+        params.set("limit", "300")
+
+        const blob = await apiFetch<Blob>(`/faturas/historico_faturamento/pdf/?${params.toString()}`, {
+          responseType: "blob",
+        })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `historico_faturamento_${period}_${scope}_${reportYear}.pdf`
+        a.click()
+        window.URL.revokeObjectURL(url)
+      } catch (e: any) {
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar histórico de faturamento."))
+      } finally {
+        setReportLoading(null)
+      }
+    },
+    [reportMonth, reportSemester, reportUserId, reportYear]
+  )
 
   const carregarItens = useCallback(async (faturaId: number) => {
     setCarregandoItens(true)
@@ -378,6 +459,106 @@ export default function FaturasPage() {
             {erro}
           </div>
         )}
+
+        <Card
+          title="Relatórios de faturamento por utilizador"
+          subtitle="Gere PDF mensal, semestral, anual por utilizador ou geral para todos os utilizadores."
+        >
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Utilizador</label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportUserId}
+                onChange={(e) => setReportUserId(e.target.value)}
+                disabled={reportUsersLoading}
+              >
+                <option value="__all__">Todos os utilizadores</option>
+                {reportUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Ano</label>
+              <input
+                type="number"
+                min={2000}
+                max={2100}
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportYear}
+                onChange={(e) => setReportYear(Number(e.target.value || new Date().getFullYear()))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Mês (mensal)</label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportMonth}
+                onChange={(e) => setReportMonth(Number(e.target.value))}
+              >
+                {Array.from({ length: 12 }).map((_, idx) => (
+                  <option key={idx + 1} value={idx + 1}>
+                    {String(idx + 1).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Semestre</label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportSemester}
+                onChange={(e) => setReportSemester(Number(e.target.value))}
+              >
+                <option value={1}>1º semestre</option>
+                <option value={2}>2º semestre</option>
+              </select>
+            </div>
+          </div>
+
+          {reportUsersError ? (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {reportUsersError}
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              disabled={reportLoading !== null}
+              onClick={() => gerarHistoricoFaturamentoPdf("monthly")}
+            >
+              {reportLoading === "monthly" ? "Gerando..." : "Gerar histórico mensal"}
+            </button>
+            <button
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              disabled={reportLoading !== null}
+              onClick={() => gerarHistoricoFaturamentoPdf("semiannual")}
+            >
+              {reportLoading === "semiannual" ? "Gerando..." : "Gerar histórico semestral"}
+            </button>
+            <button
+              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              disabled={reportLoading !== null}
+              onClick={() => gerarHistoricoFaturamentoPdf("annual")}
+            >
+              {reportLoading === "annual" ? "Gerando..." : "Gerar histórico anual"}
+            </button>
+            <button
+              className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+              disabled={reportLoading !== null}
+              onClick={() => gerarHistoricoFaturamentoPdf("annual", true)}
+            >
+              {reportLoading === "general" ? "Gerando..." : "Gerar histórico geral (todos utilizadores)"}
+            </button>
+          </div>
+        </Card>
 
         {carregando ? (
           <div className="text-sm text-gray-500">Carregando faturas...</div>

@@ -1,5 +1,6 @@
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -130,6 +131,77 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         patient = self.get_object()
         return Response(self._montar_historia_clinica(request, patient))
+
+    @extend_schema(operation_id="v1_clinical_patient_clinical_history_pdf_by_id")
+    @action(detail=True, methods=["get"], url_path="historia_clinica/pdf", url_name="historia-clinica-pdf")
+    def historia_clinica_pdf(self, request, pk=None):
+        """
+        Emite PDF do histórico clínico agregado do paciente.
+        """
+        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir a história clínica.")
+
+        patient = self.get_object()
+        payload = self._montar_historia_clinica(request, patient)
+
+        from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
+
+        pdf_bytes, filename = generate_patient_history_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @extend_schema(operation_id="v1_clinical_patient_clinical_history_pdf_by_id_en")
+    @action(detail=True, methods=["get"], url_path="clinical_history/pdf", url_name="clinical-history-pdf")
+    def clinical_history_pdf(self, request, pk=None):
+        """Alias em inglês para emissão do PDF de história clínica."""
+        return self.historia_clinica_pdf(request, pk=pk)
+
+    @extend_schema(operation_id="v1_clinical_patient_invoice_history_pdf_by_id")
+    @action(detail=True, methods=["get"], url_path="historia_faturas/pdf", url_name="historia-faturas-pdf")
+    def historia_faturas_pdf(self, request, pk=None):
+        """Emite PDF com histórico de faturas do paciente."""
+        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+            raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir o histórico de faturas.")
+
+        patient = self.get_object()
+        payload = self._montar_historia_clinica(request, patient)
+        from tasks.generate_pdf.patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
+
+        pdf_bytes, filename = generate_patient_invoice_history_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @extend_schema(operation_id="v1_clinical_patient_payment_history_pdf_by_id")
+    @action(detail=True, methods=["get"], url_path="historia_pagamentos/pdf", url_name="historia-pagamentos-pdf")
+    def historia_pagamentos_pdf(self, request, pk=None):
+        """Emite PDF com histórico de pagamentos do paciente."""
+        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+            raise PermissionDenied(
+                "Requer Médico/Medicina Ocupacional/Administrador para emitir o histórico de pagamentos."
+            )
+
+        patient = self.get_object()
+        payload = self._montar_historia_clinica(request, patient)
+        from tasks.generate_pdf.patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
+
+        pdf_bytes, filename = generate_patient_payment_history_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @extend_schema(operation_id="v1_clinical_patient_invoice_history_pdf_by_id_en")
+    @action(detail=True, methods=["get"], url_path="invoice_history/pdf", url_name="invoice-history-pdf")
+    def invoice_history_pdf(self, request, pk=None):
+        """Alias em inglês para emissão do PDF de histórico de faturas."""
+        return self.historia_faturas_pdf(request, pk=pk)
+
+    @extend_schema(operation_id="v1_clinical_patient_payment_history_pdf_by_id_en")
+    @action(detail=True, methods=["get"], url_path="payment_history/pdf", url_name="payment-history-pdf")
+    def payment_history_pdf(self, request, pk=None):
+        """Alias em inglês para emissão do PDF de histórico de pagamentos."""
+        return self.historia_pagamentos_pdf(request, pk=pk)
 
     @extend_schema(operation_id="v1_clinical_patient_clinical_history_by_document")
     @action(detail=False, methods=["get"], url_path="historia_clinica")

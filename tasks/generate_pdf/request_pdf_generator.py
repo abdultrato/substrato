@@ -64,6 +64,7 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
         bottomMargin=2 * cm,
         encrypt=pdf_encryption(),
     )
+    doc.include_signatures = False
 
     # Código de barras no header (repete em todas páginas)
     try:

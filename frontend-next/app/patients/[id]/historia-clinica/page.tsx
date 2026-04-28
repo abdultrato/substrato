@@ -26,6 +26,7 @@ type HistoriaClinicaPayload = {
   internamentos_ward?: any[]
   vendas_farmacia?: any[]
   faturas?: any[]
+  pagamentos?: any[]
   recibos?: any[]
 }
 
@@ -57,6 +58,7 @@ export default function HistoriaClinicaPage() {
   const [payload, setPayload] = useState<HistoriaClinicaPayload | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
+  const [exportandoPdf, setExportandoPdf] = useState<null | "medical" | "invoices" | "payments">(null)
 
   useEffect(() => {
     let mounted = true
@@ -82,6 +84,56 @@ export default function HistoriaClinicaPage() {
     }
   }, [id])
 
+  async function baixarPdfHistorico(
+    type: "medical" | "invoices" | "payments",
+    endpoint: string,
+    filenamePrefix: string
+  ) {
+    if (!id) return
+    try {
+      setExportandoPdf(type)
+      const blob = await apiFetch<Blob>(endpoint, {
+        responseType: "blob",
+      })
+      const objectUrl = window.URL.createObjectURL(blob)
+      const anchor = document.createElement("a")
+      anchor.href = objectUrl
+      anchor.download = `${filenamePrefix}_${paciente?.id_custom || id}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.URL.revokeObjectURL(objectUrl)
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao exportar PDF do histórico."))
+    } finally {
+      setExportandoPdf(null)
+    }
+  }
+
+  function exportarHistoricoMedicoPdf() {
+    return baixarPdfHistorico(
+      "medical",
+      `/pacientes/${id}/historia_clinica/pdf/?limit=200`,
+      "historia_clinica"
+    )
+  }
+
+  function exportarHistoricoFaturasPdf() {
+    return baixarPdfHistorico(
+      "invoices",
+      `/pacientes/${id}/historia_faturas/pdf/?limit=200`,
+      "historia_faturas"
+    )
+  }
+
+  function exportarHistoricoPagamentosPdf() {
+    return baixarPdfHistorico(
+      "payments",
+      `/pacientes/${id}/historia_pagamentos/pdf/?limit=200`,
+      "historia_pagamentos"
+    )
+  }
+
   const paciente = (payload as any)?.patient || (payload as any)?.paciente || {}
   const cardex = (((payload as any)?.cardex || []) as any[])
   const requisicoes = (((payload as any)?.requisicoes || []) as any[])
@@ -90,6 +142,7 @@ export default function HistoriaClinicaPage() {
   const internamentos = ((((payload as any)?.internamentos_ward || (payload as any)?.internamentos_enfermaria) || []) as any[])
   const vendas = (((payload as any)?.vendas_farmacia || []) as any[])
   const faturas = (((payload as any)?.faturas || []) as any[])
+  const pagamentos = (((payload as any)?.pagamentos || []) as any[])
   const recibos = (((payload as any)?.recibos || []) as any[])
 
   const cardexCols = useMemo(
@@ -248,12 +301,38 @@ export default function HistoriaClinicaPage() {
           title="História clínica"
           subtitle={`${paciente?.nome || "Paciente"} · ${paciente?.id_custom || id}`}
           actions={
-            <Link
-              href={`/patients/${id}`}
-              className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-            >
-              Voltar ao paciente
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={exportarHistoricoFaturasPdf}
+                disabled={exportandoPdf !== null}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {exportandoPdf === "invoices" ? "Gerando PDF..." : "Gerar histórico de faturas"}
+              </button>
+              <button
+                type="button"
+                onClick={exportarHistoricoPagamentosPdf}
+                disabled={exportandoPdf !== null}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {exportandoPdf === "payments" ? "Gerando PDF..." : "Gerar histórico de pagamentos"}
+              </button>
+              <button
+                type="button"
+                onClick={exportarHistoricoMedicoPdf}
+                disabled={exportandoPdf !== null}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {exportandoPdf === "medical" ? "Gerando PDF..." : "Gerar histórico médico"}
+              </button>
+              <Link
+                href={`/patients/${id}`}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              >
+                Voltar ao paciente
+              </Link>
+            </div>
           }
         />
 
@@ -273,6 +352,7 @@ export default function HistoriaClinicaPage() {
               <MetricCard label="Consultas" value={consultas.length} />
               <MetricCard label="Procedimentos" value={procedimentos.length} />
               <MetricCard label="Faturas" value={faturas.length} />
+              <MetricCard label="Pagamentos" value={pagamentos.length} />
               <MetricCard label="Vendas (Farmácia)" value={vendas.length} />
             </div>
 

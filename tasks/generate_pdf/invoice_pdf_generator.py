@@ -100,6 +100,7 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         bottomMargin=bottom_margin,
         encrypt=pdf_encryption(),
     )
+    doc.include_signatures = True
 
     story = []
 

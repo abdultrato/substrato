@@ -67,6 +67,7 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
         bottomMargin=2.0 * cm,
         encrypt=pdf_encryption(),
     )
+    doc.include_signatures = False
 
     elements = []
 

@@ -6,7 +6,11 @@ quebras em imports antigos.
 """
 
 from .class_views import RequestPdfView, ResultPdfView
+from .billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
 from .invoice_pdf_generator import generate_invoice_pdf
+from .patient_history_pdf_generator import generate_patient_history_pdf
+from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
+from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -42,7 +46,11 @@ __all__ = [
     "digits_only",
     "draw_header",
     "draw_signatures",
+    "generate_billing_user_history_pdf",
     "generate_invoice_pdf",
+    "generate_patient_history_pdf",
+    "generate_patient_invoice_history_pdf",
+    "generate_patient_payment_history_pdf",
     "generate_qr_code",
     "generate_request_pdf",
     "generate_results_pdf",
@@ -64,6 +72,10 @@ capitalizar_name = capitalize_name
 invoice_pdf = invoice_pdf
 invoice_request_pdf = request_invoice_pdf
 gerar_pdf_invoice = generate_invoice_pdf
+gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
+gerar_pdf_historia_clinica = generate_patient_history_pdf
+gerar_pdf_historia_faturas = generate_patient_invoice_history_pdf
+gerar_pdf_historia_pagamentos = generate_patient_payment_history_pdf
 gerar_pdf_request = generate_request_pdf
 gerar_pdf_resultados = generate_results_pdf
 gerar_qr_code = generate_qr_code

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils import timezone
 import pytest
 
 import application.payments.start_payment as start_payment_module
@@ -44,11 +45,17 @@ def _patient(tenant):
     )
 
 
-def _authenticate_admin(tenant, api_client=None):
+def _authenticate_admin(
+    tenant,
+    api_client=None,
+    *,
+    username="admin_http",
+    email="admin-http@example.com",
+):
     user_model = get_user_model()
     user = user_model.objects.create_user(
-        username="admin_http",
-        email="admin-http@example.com",
+        username=username,
+        email=email,
         password="testpass123",
         tenant=tenant,
     )
@@ -61,6 +68,35 @@ def _authenticate_admin(tenant, api_client=None):
         api_client.defaults["HTTP_HOST"] = tenant.domain
         api_client.force_authenticate(user=user)
     return user
+
+
+def _create_invoice_with_single_item(api_client, patient_id, *, descricao, valor):
+    invoice_response = api_client.post(
+        "/api/v1/billing/invoice/",
+        {
+            "paciente": patient_id,
+            "origem": "MIX",
+        },
+        format="json",
+    )
+    assert invoice_response.status_code == 201
+    invoice_id = _response_data(invoice_response)["id"]
+
+    item_response = api_client.post(
+        "/api/v1/billing/invoiceitem/",
+        {
+            "fatura": invoice_id,
+            "tipo_item": "AJU",
+            "descricao": descricao,
+            "quantidade": "1.00",
+            "preco_unitario": str(valor),
+            "aplica_iva": False,
+            "iva_percentual": "0.00",
+        },
+        format="json",
+    )
+    assert item_response.status_code == 201
+    return invoice_id
 
 
 def _authenticate_doctor(tenant, api_client=None):
@@ -327,6 +363,45 @@ def test_clinical_history_endpoint_allows_doctor(api_client):
 
 
 @pytest.mark.django_db
+def test_clinical_history_pdf_endpoint_returns_pdf_for_doctor(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/pdf/?limit=5")
+
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0
+
+
+@pytest.mark.django_db
+def test_patient_invoice_history_pdf_endpoint_returns_pdf_for_doctor(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_faturas/pdf/?limit=5")
+
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0
+
+
+@pytest.mark.django_db
+def test_patient_payment_history_pdf_endpoint_returns_pdf_for_doctor(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_pagamentos/pdf/?limit=5")
+
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0
+
+
+@pytest.mark.django_db
 def test_consultation_clinical_history_endpoint_returns_patient_aggregate(api_client):
     tenant = _tenant()
     patient = _patient(tenant)
@@ -345,3 +420,140 @@ def test_consultation_clinical_history_endpoint_returns_patient_aggregate(api_cl
     payload = _response_data(response)
     assert "patient" in payload
     assert payload["patient"]["id"] == patient.id
+
+
+@pytest.mark.django_db
+def test_consultation_clinical_history_pdf_endpoint_returns_pdf(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_doctor(tenant, api_client=api_client)
+
+    consultation = MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        type="Consulta",
+        price=Decimal("0.00"),
+    )
+
+    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/pdf/?limit=5")
+
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0
+
+
+@pytest.mark.django_db
+def test_billing_history_endpoint_supports_user_general_and_periods(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+
+    admin_a = _authenticate_admin(
+        tenant,
+        api_client=api_client,
+        username="admin_hist_a",
+        email="admin-hist-a@example.com",
+    )
+    _create_invoice_with_single_item(
+        api_client,
+        patient.id,
+        descricao="Fatura do utilizador A",
+        valor="30.00",
+    )
+
+    admin_b = _authenticate_admin(
+        tenant,
+        api_client=api_client,
+        username="admin_hist_b",
+        email="admin-hist-b@example.com",
+    )
+    _create_invoice_with_single_item(
+        api_client,
+        patient.id,
+        descricao="Fatura do utilizador B",
+        valor="50.00",
+    )
+
+    api_client.force_authenticate(user=admin_a)
+
+    now = timezone.localtime()
+    year = now.year
+    semester = 1 if now.month <= 6 else 2
+
+    user_history_response = api_client.get(
+        "/api/v1/billing/invoice/historico_faturamento/",
+        {
+            "scope": "user",
+            "user_id": admin_a.id,
+            "period": "annual",
+            "year": year,
+        },
+    )
+    assert user_history_response.status_code == 200
+    user_payload = _response_data(user_history_response)
+    assert user_payload["scope"] == "user"
+    assert user_payload["target_user"]["id"] == admin_a.id
+    assert user_payload["summary"]["invoice_count"] == 1
+    assert any(row["user_id"] == admin_a.id for row in user_payload["users"])
+
+    general_history_response = api_client.get(
+        "/api/v1/billing/invoice/historico_faturamento/",
+        {
+            "scope": "all",
+            "period": "annual",
+            "year": year,
+        },
+    )
+    assert general_history_response.status_code == 200
+    general_payload = _response_data(general_history_response)
+    assert general_payload["scope"] == "all"
+    assert general_payload["summary"]["invoice_count"] == 2
+    user_ids = {row["user_id"] for row in general_payload["users"]}
+    assert admin_a.id in user_ids
+    assert admin_b.id in user_ids
+
+    periods = [
+        ("monthly", {"month": now.month}),
+        ("semiannual", {"semester": semester}),
+        ("annual", {}),
+    ]
+    for period_key, extra in periods:
+        params = {
+            "scope": "all",
+            "period": period_key,
+            "year": year,
+            **extra,
+        }
+        response = api_client.get("/api/v1/billing/invoice/historico_faturamento/", params)
+        assert response.status_code == 200
+        payload = _response_data(response)
+        assert payload["period"]["key"] == period_key
+        assert payload["summary"]["invoice_count"] >= 1
+
+
+@pytest.mark.django_db
+def test_billing_history_pdf_endpoint_returns_pdf(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    admin = _authenticate_admin(tenant, api_client=api_client)
+
+    _create_invoice_with_single_item(
+        api_client,
+        patient.id,
+        descricao="Fatura para PDF de histórico",
+        valor="42.00",
+    )
+
+    now = timezone.localtime()
+    response = api_client.get(
+        "/api/v1/billing/invoice/historico_faturamento/pdf/",
+        {
+            "scope": "user",
+            "user_id": admin.id,
+            "period": "annual",
+            "year": now.year,
+        },
+    )
+
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0

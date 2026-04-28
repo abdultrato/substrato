@@ -4,7 +4,7 @@ PDF Base Engine — Clinical Enterprise Grade
 ✔ Layout A5 professional
 ✔ Header institucional em todas páginas
 ✔ QR Code verificável (topo direito)
-✔ Assinaturas automáticas
+✔ Assinaturas configuráveis por documento
 ✔ Compressão e otimização
 ✔ Fallback seguro para logo
 ✔ Pronto para produção hospitalar
@@ -445,9 +445,15 @@ def draw_signatures(canvas_obj, doc, user=None):
 # =========================================================
 
 
+def _should_draw_signatures(doc) -> bool:
+    """Define se o documento atual deve exibir assinaturas no rodapé."""
+    return bool(getattr(doc, "include_signatures", False))
+
+
 def on_page(canvas_obj, doc, user=None):
     draw_header(canvas_obj, doc)
-    draw_signatures(canvas_obj, doc, user)
+    if _should_draw_signatures(doc):
+        draw_signatures(canvas_obj, doc, user)
 
 
 def draw_line_full_width(canvas_obj, doc):
@@ -480,13 +486,23 @@ def user_name(user):
     if not user:
         return "Sem usuário"
 
+    first_name = (getattr(user, "first_name", "") or "").strip()
+    last_name = (getattr(user, "last_name", "") or "").strip()
+    full_name = f"{first_name} {last_name}".strip()
+    if full_name:
+        return full_name
+
     full_name_fn = getattr(user, "get_full_name", None)
     if callable(full_name_fn):
         full_name = (full_name_fn() or "").strip()
         if full_name:
             return full_name
 
-    for attr in ("name", "username", "email"):
+    username = (getattr(user, "username", None) or "").strip()
+    if username:
+        return username
+
+    for attr in ("name", "email"):
         value = getattr(user, attr, None)
         if value:
             return str(value)
@@ -523,6 +539,13 @@ def user_groups(user):
 def user_primary_group(user):
     groups_label = user_groups(user)
     if not groups_label or groups_label == "Sem Grupo":
+        fallback_group = getattr(user, "group", None)
+        if isinstance(fallback_group, str) and fallback_group.strip():
+            return fallback_group.strip()
+        if fallback_group is not None:
+            fallback_group_name = getattr(fallback_group, "name", None)
+            if fallback_group_name:
+                return str(fallback_group_name).strip()
         return "Sem Grupo"
 
     parts = [part.strip() for part in str(groups_label).split(",") if part.strip()]

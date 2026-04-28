@@ -75,6 +75,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
         bottomMargin=bottom_margin,
         encrypt=pdf_encryption(),
     )
+    doc.include_signatures = False
 
     story: list = []
 
