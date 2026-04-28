@@ -10,7 +10,11 @@ import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { ApiListMeta, apiFetchList } from "@/lib/api"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import {
+  canCreateMaterialRequisition,
+  isMaterialRequisitionPharmacyUser,
+} from "@/lib/material-requisition-rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type MaterialRequisition = {
   id: number
@@ -69,7 +73,8 @@ export default function RequisicoesMateriaisPage() {
   useAuthGuard()
   const { user } = useAuth()
 
-  const isPharmacy = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.FARMACIA])
+  const isPharmacy = isMaterialRequisitionPharmacyUser(user)
+  const canCreate = canCreateMaterialRequisition(user)
   const requiredGroups = useMemo(
     () => [
       GROUPS.ADMIN,
@@ -79,6 +84,9 @@ export default function RequisicoesMateriaisPage() {
       GROUPS.RECEPCAO,
       GROUPS.MEDICINA,
       GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.CONTABILIDADE,
+      GROUPS.MANUTENCAO,
+      GROUPS.RECURSOS_HUMANOS,
     ],
     []
   )
@@ -115,12 +123,12 @@ export default function RequisicoesMateriaisPage() {
     }
   }, [page, pageSize])
 
-  const itemsRaw = data?.items ?? []
   const items = useMemo(() => {
+    const itemsRaw = data?.items ?? []
     if (!isPharmacy) return itemsRaw
     if (!onlyPending) return itemsRaw
     return itemsRaw.filter((x) => x.status === "PEN" || x.status === "PAR")
-  }, [itemsRaw, isPharmacy, onlyPending])
+  }, [data?.items, isPharmacy, onlyPending])
 
   const totalItems = data?.meta.total ?? items.length
   const totalPages =
@@ -134,7 +142,7 @@ export default function RequisicoesMateriaisPage() {
           title="Requisições de materiais"
           subtitle={isPharmacy ? "Solicitações criadas pelos outros setores para avio na farmácia." : "Requisições do seu setor ao almoxarifado/farmácia."}
           actions={
-            !isPharmacy ? (
+            canCreate ? (
               <Link
                 href="/farmacia/requisicoes-materiais/nova"
                 className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
@@ -232,4 +240,3 @@ export default function RequisicoesMateriaisPage() {
     </AppLayout>
   )
 }
-

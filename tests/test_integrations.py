@@ -513,7 +513,9 @@ def test_billing_history_endpoint_supports_user_general_and_periods(api_client):
     assert admin_b.id in user_ids
 
     periods = [
+        ("daily", {"date": now.date().isoformat()}),
         ("monthly", {"month": now.month}),
+        ("quarterly", {"quarter": ((now.month - 1) // 3) + 1}),
         ("semiannual", {"semester": semester}),
         ("annual", {}),
     ]

@@ -10,7 +10,8 @@ import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch } from "@/lib/api"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { isMaterialRequisitionPharmacyUser } from "@/lib/material-requisition-rbac"
+import { GROUPS } from "@/lib/rbac"
 
 type ReqItem = {
   id: number
@@ -91,10 +92,13 @@ export default function RequisicaoMaterialDetailPage() {
       GROUPS.RECEPCAO,
       GROUPS.MEDICINA,
       GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.CONTABILIDADE,
+      GROUPS.MANUTENCAO,
+      GROUPS.RECURSOS_HUMANOS,
     ],
     []
   )
-  const isPharmacy = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.FARMACIA])
+  const isPharmacy = isMaterialRequisitionPharmacyUser(user)
 
   const id = String((params as any)?.id || "")
   const [data, setData] = useState<Requisition | null>(null)
@@ -332,4 +336,3 @@ export default function RequisicaoMaterialDetailPage() {
     </AppLayout>
   )
 }
-

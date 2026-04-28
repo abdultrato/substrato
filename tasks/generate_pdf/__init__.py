@@ -12,9 +12,13 @@ from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 from .pharmacy_reports_pdf_generator import (
+    generate_pharmacy_least_requested_products_pdf,
     generate_pharmacy_movements_pdf,
+    generate_pharmacy_product_consumption_pdf,
+    generate_pharmacy_product_sector_demand_pdf,
     generate_pharmacy_sector_movements_pdf,
     generate_pharmacy_stock_pdf,
+    generate_pharmacy_top_requested_products_pdf,
 )
 from .pdf_base import (
     NumberedCanvas,
@@ -57,6 +61,10 @@ __all__ = [
     "generate_patient_invoice_history_pdf",
     "generate_patient_payment_history_pdf",
     "generate_pharmacy_movements_pdf",
+    "generate_pharmacy_product_consumption_pdf",
+    "generate_pharmacy_top_requested_products_pdf",
+    "generate_pharmacy_least_requested_products_pdf",
+    "generate_pharmacy_product_sector_demand_pdf",
     "generate_pharmacy_sector_movements_pdf",
     "generate_pharmacy_stock_pdf",
     "generate_qr_code",
@@ -87,6 +95,10 @@ gerar_pdf_historia_pagamentos = generate_patient_payment_history_pdf
 gerar_pdf_historico_movimentos_farmacia = generate_pharmacy_movements_pdf
 gerar_pdf_movimentos_setor_farmacia = generate_pharmacy_sector_movements_pdf
 gerar_pdf_estoque_farmacia = generate_pharmacy_stock_pdf
+gerar_pdf_consumo_produtos_farmacia = generate_pharmacy_product_consumption_pdf
+gerar_pdf_produtos_mais_requisitados_farmacia = generate_pharmacy_top_requested_products_pdf
+gerar_pdf_produtos_menos_requisitados_farmacia = generate_pharmacy_least_requested_products_pdf
+gerar_pdf_setores_por_produto_farmacia = generate_pharmacy_product_sector_demand_pdf
 gerar_pdf_request = generate_request_pdf
 gerar_pdf_resultados = generate_results_pdf
 gerar_qr_code = generate_qr_code

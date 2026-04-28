@@ -24,7 +24,12 @@ class LotSerializer(serializers.ModelSerializer):
 
     def get_saldo(self, obj):
         try:
-            return int(getattr(obj, "saldo", None) or obj.balance())
+            saldo = getattr(obj, "saldo", None)
+            if callable(saldo):
+                saldo = saldo()
+            if saldo is None:
+                saldo = obj.balance()
+            return int(saldo or 0)
         except Exception:
             return 0
 
@@ -115,6 +120,30 @@ class MaterialRequisitionSerializer(serializers.ModelSerializer):
             return obj.get_status_display()
         except Exception:
             return obj.status
+
+    def validate_items_input(self, items):
+        if not items:
+            raise serializers.ValidationError("Informe pelo menos 1 item.")
+
+        request = self.context.get("request")
+        request_tenant = getattr(request, "tenant", None)
+
+        for idx, item in enumerate(items):
+            lot = item.get("lot")
+            if not lot:
+                raise serializers.ValidationError(f"Item {idx + 1}: lote obrigatório.")
+
+            if getattr(lot, "deleted", False):
+                raise serializers.ValidationError(
+                    f"Item {idx + 1}: o lote selecionado está indisponível."
+                )
+
+            if request_tenant is not None and getattr(lot, "tenant_id", None) != getattr(request_tenant, "id", None):
+                raise serializers.ValidationError(
+                    f"Item {idx + 1}: o lote não pertence ao tenant atual."
+                )
+
+        return items
 
     class Meta:
         model = MaterialRequisition

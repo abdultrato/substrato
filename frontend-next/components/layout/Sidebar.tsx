@@ -20,6 +20,7 @@ import {
     Baby,
     Scissors,
     Pill,
+    PackageSearch,
     Calculator,
     Shield,
     Layers,
@@ -71,6 +72,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/surgery", label: "Cirurgia", icon: Scissors, desc: "Procedimentos cirúrgicos", groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/occupational-medicine", label: "Med. Ocupacional", icon: BriefcaseIcon, desc: "Saúde no trabalho", groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/farmacia", label: "Farmácia", icon: Pill, desc: "Dispensação e estoque", groups: [GROUPS.ADMIN, GROUPS.FARMACIA] },
+    { href: "/farmacia/requisicoes-materiais", label: "Req. Materiais", icon: PackageSearch, desc: "Solicitar e acompanhar avio de materiais", groups: ALL_GROUPS },
     { href: "/payments", label: "Pagamentos", icon: CreditCard, desc: "Recebimentos", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
     { href: "/invoices", label: "Faturas", icon: Receipt, desc: "Emissão e revisão", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
     { href: "/receipts", label: "Recibos", icon: Receipt, desc: "Comprovativos", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
@@ -97,7 +99,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }
 
     const menu = (
-        <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/20 bg-white/5 px-3 py-3 backdrop-blur">
                 <Link
                     href="/"

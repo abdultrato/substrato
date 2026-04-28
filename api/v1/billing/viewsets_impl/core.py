@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -76,9 +76,15 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ordering = ["-created_at"]
 
     PERIOD_ALIASES = {
+        "daily": "daily",
+        "diario": "daily",
+        "day": "daily",
         "monthly": "monthly",
         "mensal": "monthly",
         "month": "monthly",
+        "quarterly": "quarterly",
+        "trimestral": "quarterly",
+        "quarter": "quarterly",
         "semiannual": "semiannual",
         "semestral": "semiannual",
         "semester": "semiannual",
@@ -133,7 +139,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         raw_period = (request.query_params.get("period") or "annual").strip().lower()
         period = self.PERIOD_ALIASES.get(raw_period)
         if not period:
-            raise ValidationError({"period": "Use: monthly, semiannual ou annual."})
+            raise ValidationError({"period": "Use: daily, monthly, quarterly, semiannual ou annual."})
 
         year = self._parse_int(
             request.query_params.get("year"),
@@ -142,6 +148,22 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             max_value=2100,
             default=now.year,
         )
+
+        if period == "daily":
+            raw_date = (request.query_params.get("date") or "").strip()
+            if raw_date:
+                try:
+                    date_ref = datetime.strptime(raw_date, "%Y-%m-%d").date()
+                except Exception as exc:
+                    raise ValidationError({"date": "Use o formato YYYY-MM-DD."}) from exc
+            else:
+                date_ref = now.date()
+
+            start = timezone.make_aware(datetime(date_ref.year, date_ref.month, date_ref.day, 0, 0, 0))
+            end = start + timedelta(days=1)
+            label = f"Diário {date_ref.strftime('%d/%m/%Y')}"
+            filters = {"date": date_ref.isoformat(), "year": date_ref.year}
+            return period, start, end, label, filters
 
         if period == "monthly":
             month = self._parse_int(
@@ -158,6 +180,26 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 end = timezone.make_aware(datetime(year, month + 1, 1, 0, 0, 0))
             label = f"Mensal {month:02d}/{year}"
             filters = {"year": year, "month": month}
+            return period, start, end, label, filters
+
+        if period == "quarterly":
+            default_quarter = ((now.month - 1) // 3) + 1
+            quarter = self._parse_int(
+                request.query_params.get("quarter"),
+                field_name="quarter",
+                min_value=1,
+                max_value=4,
+                default=default_quarter,
+            )
+            month_start = ((quarter - 1) * 3) + 1
+            month_end = month_start + 3
+            start = timezone.make_aware(datetime(year, month_start, 1, 0, 0, 0))
+            if month_end > 12:
+                end = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0))
+            else:
+                end = timezone.make_aware(datetime(year, month_end, 1, 0, 0, 0))
+            label = f"Trimestral T{quarter}/{year}"
+            filters = {"year": year, "quarter": quarter}
             return period, start, end, label, filters
 
         if period == "semiannual":

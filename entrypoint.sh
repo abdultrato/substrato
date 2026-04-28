@@ -182,6 +182,10 @@ PY
   # ============================================================================
 
   log "📦 Coletando arquivos estáticos..."
+  STATIC_ROOT_PATH="${STATIC_ROOT:-/app/staticfiles}"
+  COLLECTSTATIC_BOOT_MODE="${COLLECTSTATIC_BOOT_MODE:-auto}" # auto|always|never
+  COLLECTSTATIC_CLEAR="${COLLECTSTATIC_CLEAR:-0}"
+  COLLECTSTATIC_MARKER="${STATIC_ROOT_PATH}/.collectstatic_bootstrap_done"
   if python - <<'PY'
 import os
 from pathlib import Path
@@ -193,7 +197,40 @@ if not can_write:
     raise SystemExit(1)
 PY
   then
-    python manage.py collectstatic --noinput --clear || echo "[substrato] ⚠️  collectstatic falhou, prosseguindo (ambiente dev)."
+    should_collectstatic=0
+    case "$COLLECTSTATIC_BOOT_MODE" in
+      always)
+        should_collectstatic=1
+        ;;
+      never)
+        should_collectstatic=0
+        ;;
+      auto)
+        if [ ! -f "$COLLECTSTATIC_MARKER" ]; then
+          should_collectstatic=1
+        fi
+        ;;
+      *)
+        echo "[substrato] ⚠️  COLLECTSTATIC_BOOT_MODE inválido: '$COLLECTSTATIC_BOOT_MODE' (usando auto)."
+        if [ ! -f "$COLLECTSTATIC_MARKER" ]; then
+          should_collectstatic=1
+        fi
+        ;;
+    esac
+
+    if [ "$should_collectstatic" -eq 1 ]; then
+      collectstatic_cmd="python manage.py collectstatic --noinput"
+      if [ "$COLLECTSTATIC_CLEAR" = "1" ]; then
+        collectstatic_cmd="$collectstatic_cmd --clear"
+      fi
+      if sh -c "$collectstatic_cmd"; then
+        touch "$COLLECTSTATIC_MARKER" || true
+      else
+        echo "[substrato] ⚠️  collectstatic falhou, prosseguindo (ambiente dev)."
+      fi
+    else
+      echo "[substrato] ℹ️  collectstatic pulado (modo=$COLLECTSTATIC_BOOT_MODE, marker detectado)."
+    fi
   else
     echo "[substrato] ⚠️  STATIC_ROOT sem permissão de escrita, pulando collectstatic."
   fi

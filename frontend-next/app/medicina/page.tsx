@@ -143,9 +143,9 @@ export default function MedicinaPage() {
             icon={ImagePlus}
           />
           <ActionTile
-            title="Requisição de materiais"
-            description="Solicitar insumos médico-cirúrgicos à farmácia."
-            href="/farmacia/requisicoes-materiais"
+            title="Criar requisição de materiais"
+            description="Abrir o formulário para solicitar insumos médico-cirúrgicos à farmácia."
+            href="/farmacia/requisicoes-materiais/nova"
             icon={Pill}
           />
         </div>
@@ -177,7 +177,6 @@ export default function MedicinaPage() {
     </AppLayout>
   )
 }
-
 
 
 

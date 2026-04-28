@@ -62,9 +62,27 @@ export default function FaturasPage() {
   const [reportUsers, setReportUsers] = useState<UserOption[]>([])
   const [reportUserId, setReportUserId] = useState<string>("__all__")
   const [reportYear, setReportYear] = useState<number>(new Date().getFullYear())
+  const [reportDate, setReportDate] = useState<string>(() => {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, "0")
+    const dd = String(now.getDate()).padStart(2, "0")
+    return `${yyyy}-${mm}-${dd}`
+  })
   const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1)
+  const [reportQuarter, setReportQuarter] = useState<number>(Math.floor(new Date().getMonth() / 3) + 1)
   const [reportSemester, setReportSemester] = useState<number>(new Date().getMonth() + 1 <= 6 ? 1 : 2)
-  const [reportLoading, setReportLoading] = useState<null | "monthly" | "semiannual" | "annual" | "general">(null)
+  const [reportLoading, setReportLoading] = useState<
+    | null
+    | "daily"
+    | "monthly"
+    | "quarterly"
+    | "semiannual"
+    | "annual"
+    | "general-daily"
+    | "general-monthly"
+    | "general-annual"
+  >(null)
   const [reportUsersLoading, setReportUsersLoading] = useState(false)
   const [reportUsersError, setReportUsersError] = useState<string | null>(null)
 
@@ -178,12 +196,21 @@ export default function FaturasPage() {
   }, [])
 
   const gerarHistoricoFaturamentoPdf = useCallback(
-    async (period: "monthly" | "semiannual" | "annual", forceAll = false) => {
+    async (period: "daily" | "monthly" | "quarterly" | "semiannual" | "annual", forceAll = false) => {
       try {
-        setReportLoading(forceAll ? "general" : period)
-        const scope = forceAll ? "all" : reportUserId === "__all__" ? "all" : "user"
-        if (scope === "user" && !reportUserId) {
-          setErro("Selecione um utilizador para gerar histórico individual.")
+        const loadingKey =
+          forceAll && period === "daily"
+            ? "general-daily"
+            : forceAll && period === "monthly"
+              ? "general-monthly"
+              : forceAll && period === "annual"
+                ? "general-annual"
+                : period
+        setReportLoading(loadingKey)
+
+        const scope = forceAll ? "all" : "user"
+        if (!forceAll && (!reportUserId || reportUserId === "__all__")) {
+          setErro("Selecione um utilizador específico para gerar histórico individual.")
           return
         }
 
@@ -191,7 +218,9 @@ export default function FaturasPage() {
         params.set("period", period)
         params.set("scope", scope)
         params.set("year", String(reportYear))
+        if (period === "daily") params.set("date", String(reportDate))
         if (period === "monthly") params.set("month", String(reportMonth))
+        if (period === "quarterly") params.set("quarter", String(reportQuarter))
         if (period === "semiannual") params.set("semester", String(reportSemester))
         if (scope === "user") params.set("user_id", String(reportUserId))
         params.set("limit", "300")
@@ -202,7 +231,8 @@ export default function FaturasPage() {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `historico_faturamento_${period}_${scope}_${reportYear}.pdf`
+        const periodRef = period === "daily" ? reportDate : String(reportYear)
+        a.download = `historico_faturamento_${period}_${scope}_${periodRef}.pdf`
         a.click()
         window.URL.revokeObjectURL(url)
       } catch (e: any) {
@@ -211,7 +241,7 @@ export default function FaturasPage() {
         setReportLoading(null)
       }
     },
-    [reportMonth, reportSemester, reportUserId, reportYear]
+    [reportDate, reportMonth, reportQuarter, reportSemester, reportUserId, reportYear]
   )
 
   const carregarItens = useCallback(async (faturaId: number) => {
@@ -462,9 +492,9 @@ export default function FaturasPage() {
 
         <Card
           title="Relatórios de faturamento por utilizador"
-          subtitle="Gere PDF mensal, semestral, anual por utilizador ou geral para todos os utilizadores."
+          subtitle="Gere PDF diário, mensal, trimestral, semestral e anual por utilizador; e diário, mensal, anual no modo geral."
         >
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             <div className="space-y-1">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Utilizador</label>
               <select
@@ -480,6 +510,16 @@ export default function FaturasPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Data (diário)</label>
+              <input
+                type="date"
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+              />
             </div>
 
             <div className="space-y-1">
@@ -510,6 +550,20 @@ export default function FaturasPage() {
             </div>
 
             <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase text-muted-foreground">Trimestre</label>
+              <select
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                value={reportQuarter}
+                onChange={(e) => setReportQuarter(Number(e.target.value))}
+              >
+                <option value={1}>1º trimestre</option>
+                <option value={2}>2º trimestre</option>
+                <option value={3}>3º trimestre</option>
+                <option value={4}>4º trimestre</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Semestre</label>
               <select
                 className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
@@ -528,35 +582,74 @@ export default function FaturasPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={reportLoading !== null}
-              onClick={() => gerarHistoricoFaturamentoPdf("monthly")}
-            >
-              {reportLoading === "monthly" ? "Gerando..." : "Gerar histórico mensal"}
-            </button>
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={reportLoading !== null}
-              onClick={() => gerarHistoricoFaturamentoPdf("semiannual")}
-            >
-              {reportLoading === "semiannual" ? "Gerando..." : "Gerar histórico semestral"}
-            </button>
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={reportLoading !== null}
-              onClick={() => gerarHistoricoFaturamentoPdf("annual")}
-            >
-              {reportLoading === "annual" ? "Gerando..." : "Gerar histórico anual"}
-            </button>
-            <button
-              className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
-              disabled={reportLoading !== null}
-              onClick={() => gerarHistoricoFaturamentoPdf("annual", true)}
-            >
-              {reportLoading === "general" ? "Gerando..." : "Gerar histórico geral (todos utilizadores)"}
-            </button>
+          <div className="mt-4 space-y-3">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">
+              Histórico por utilizador selecionado
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("daily")}
+              >
+                {reportLoading === "daily" ? "Gerando..." : "Gerar histórico diário"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("monthly")}
+              >
+                {reportLoading === "monthly" ? "Gerando..." : "Gerar histórico mensal"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("quarterly")}
+              >
+                {reportLoading === "quarterly" ? "Gerando..." : "Gerar histórico trimestral"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("semiannual")}
+              >
+                {reportLoading === "semiannual" ? "Gerando..." : "Gerar histórico semestral"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("annual")}
+              >
+                {reportLoading === "annual" ? "Gerando..." : "Gerar histórico anual"}
+              </button>
+            </div>
+
+            <div className="text-xs font-semibold uppercase text-muted-foreground">
+              Histórico geral (todos utilizadores)
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("daily", true)}
+              >
+                {reportLoading === "general-daily" ? "Gerando..." : "Gerar histórico geral diário"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("monthly", true)}
+              >
+                {reportLoading === "general-monthly" ? "Gerando..." : "Gerar histórico geral mensal"}
+              </button>
+              <button
+                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                disabled={reportLoading !== null}
+                onClick={() => gerarHistoricoFaturamentoPdf("annual", true)}
+              >
+                {reportLoading === "general-annual" ? "Gerando..." : "Gerar histórico geral anual"}
+              </button>
+            </div>
           </div>
         </Card>
 
@@ -708,4 +801,3 @@ export default function FaturasPage() {
     </AppLayout>
   )
 }
-

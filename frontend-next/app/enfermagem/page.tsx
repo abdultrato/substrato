@@ -115,9 +115,9 @@ export default function EnfermagemPage() {
             icon={BedDouble}
           />
           <ActionTile
-            title="Materiais e medicação"
-            description="Criar requisição de materiais e acompanhar quantidades aviadas."
-            href="/farmacia/requisicoes-materiais"
+            title="Criar requisição de materiais"
+            description="Abrir o formulário para solicitar materiais ao almoxarifado/farmácia."
+            href="/farmacia/requisicoes-materiais/nova"
             icon={PackageSearch}
           />
         </div>
@@ -140,6 +140,5 @@ export default function EnfermagemPage() {
     </AppLayout>
   )
 }
-
 
 

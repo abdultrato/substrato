@@ -54,11 +54,45 @@ current_compose_port() {
   docker port "$cid" "$container_port" 2>/dev/null | awk -F: 'NR == 1 {print $NF}'
 }
 
+service_runtime_status() {
+  local service="$1"
+  local cid=""
+  local status=""
+
+  cid=$($COMPOSE ps -q "$service" 2>/dev/null || true)
+  if [[ -z "${cid:-}" ]]; then
+    echo "missing"
+    return 0
+  fi
+
+  status=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid" 2>/dev/null || echo "unknown")
+  echo "$status"
+}
+
+service_is_ready() {
+  local service="$1"
+  local status=""
+  status="$(service_runtime_status "$service")"
+  [[ "$status" == "healthy" || "$status" == "running" ]]
+}
+
+all_core_services_ready() {
+  local services=(db redis backend frontend)
+  local service
+  for service in "${services[@]}"; do
+    if ! service_is_ready "$service"; then
+      return 1
+    fi
+  done
+  return 0
+}
+
 print_help() {
   cat <<'EOF'
 Uso: ./docker-up.sh [opções]
 
 Opções:
+  --force-up   força executar `compose up` mesmo com stack já saudável
   --build      força rebuild das imagens
   --no-build   nunca tenta build (falha se imagem não existir)
   --no-wait    não aguarda healthcheck/estado running
@@ -66,18 +100,29 @@ Opções:
 
 Variáveis de ambiente:
   DOCKER_UP_BUILD=auto|always|never   (padrão: auto)
+  DOCKER_UP_FAST_IF_RUNNING=0|1       (padrão: 1)
   DOCKER_UP_NO_WAIT=0|1               (padrão: 0)
   DOCKER_UP_WAIT_TIMEOUT=<segundos>   (padrão: 90)
+  DOCKER_UP_FRONTEND_READY_PATH=<rota> (padrão: /login/)
+  DOCKER_UP_FRONTEND_TIMEOUT=<segundos> (padrão: 12)
   DB_HOST_PORT=<porta>                (expõe o Postgres no host)
+  REDIS_HOST_PORT=<porta>             (expõe o Redis no host)
 EOF
 }
 
 BUILD_MODE="${DOCKER_UP_BUILD:-auto}"
+FAST_IF_RUNNING="${DOCKER_UP_FAST_IF_RUNNING:-1}"
 NO_WAIT="${DOCKER_UP_NO_WAIT:-0}"
 WAIT_TIMEOUT="${DOCKER_UP_WAIT_TIMEOUT:-90}"
+FRONTEND_READY_PATH="${DOCKER_UP_FRONTEND_READY_PATH:-/login/}"
+FRONTEND_TIMEOUT="${DOCKER_UP_FRONTEND_TIMEOUT:-12}"
+FORCE_UP=0
 
 for arg in "$@"; do
   case "$arg" in
+  --force-up)
+    FORCE_UP=1
+    ;;
   --build)
     BUILD_MODE="always"
     ;;
@@ -104,8 +149,18 @@ if [[ "$BUILD_MODE" != "auto" && "$BUILD_MODE" != "always" && "$BUILD_MODE" != "
   exit 1
 fi
 
+if [[ "$FAST_IF_RUNNING" != "0" && "$FAST_IF_RUNNING" != "1" ]]; then
+  err "✗ DOCKER_UP_FAST_IF_RUNNING inválido: $FAST_IF_RUNNING (use 0|1)"
+  exit 1
+fi
+
 if ! [[ "$WAIT_TIMEOUT" =~ ^[0-9]+$ ]] || [[ "$WAIT_TIMEOUT" -lt 1 ]]; then
   err "✗ DOCKER_UP_WAIT_TIMEOUT inválido: $WAIT_TIMEOUT"
+  exit 1
+fi
+
+if ! [[ "$FRONTEND_TIMEOUT" =~ ^[0-9]+$ ]] || [[ "$FRONTEND_TIMEOUT" -lt 1 ]]; then
+  err "✗ DOCKER_UP_FRONTEND_TIMEOUT inválido: $FRONTEND_TIMEOUT"
   exit 1
 fi
 
@@ -181,6 +236,40 @@ fi
 
 log "✓ PostgreSQL no host: localhost:${DB_HOST_PORT}"
 
+if [[ -n "${REDIS_HOST_PORT:-}" ]]; then
+  requested_redis_host_port="$REDIS_HOST_PORT"
+  redis_host_port_explicit=1
+else
+  requested_redis_host_port="$(load_env_value "REDIS_HOST_PORT" ".env")"
+  redis_host_port_explicit=0
+fi
+
+if [[ -z "$requested_redis_host_port" ]]; then
+  requested_redis_host_port="6379"
+fi
+
+if ((redis_host_port_explicit)); then
+  if port_in_use "$requested_redis_host_port"; then
+    err "✗ REDIS_HOST_PORT=${requested_redis_host_port} já está em uso no host"
+    err "  Defina outra porta em .env ou no ambiente e execute novamente"
+    exit 1
+  fi
+  export REDIS_HOST_PORT="$requested_redis_host_port"
+else
+  current_redis_host_port="$(current_compose_port "redis" "6379/tcp")"
+  if [[ -n "${current_redis_host_port:-}" ]]; then
+    export REDIS_HOST_PORT="$current_redis_host_port"
+    log "ℹ️  Reutilizando porta atual do Redis: localhost:${REDIS_HOST_PORT}"
+  elif port_in_use "$requested_redis_host_port"; then
+    export REDIS_HOST_PORT="$(find_free_port 6380)"
+    log "ℹ️  Porta 6379 ocupada; Redis será exposto em localhost:${REDIS_HOST_PORT}"
+  else
+    export REDIS_HOST_PORT="$requested_redis_host_port"
+  fi
+fi
+
+log "✓ Redis no host: localhost:${REDIS_HOST_PORT}"
+
 # Habilitar BuildKit
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
@@ -202,13 +291,24 @@ never)
   ;;
 esac
 
-if [[ "$NO_WAIT" == "1" ]]; then
-  log "✓ Iniciando serviços (sem espera)..."
-  $COMPOSE up "${up_flags[@]}"
-else
-  log "✓ Iniciando serviços..."
-  $COMPOSE up "${up_flags[@]}"
+did_compose_up=1
 
+if [[ "$FORCE_UP" == "0" && "$FAST_IF_RUNNING" == "1" && "$BUILD_MODE" != "always" ]] && all_core_services_ready; then
+  did_compose_up=0
+  log "ℹ️  Stack já está saudável; pulando \`compose up\` (use --force-up para forçar)."
+fi
+
+if [[ "$did_compose_up" == "1" ]]; then
+  if [[ "$NO_WAIT" == "1" ]]; then
+    log "✓ Iniciando serviços (sem espera)..."
+    $COMPOSE up "${up_flags[@]}"
+  else
+    log "✓ Iniciando serviços..."
+    $COMPOSE up "${up_flags[@]}"
+  fi
+fi
+
+if [[ "$NO_WAIT" != "1" ]]; then
   log "✓ Aguardando containers (timeout: ${WAIT_TIMEOUT}s)..."
   services=(db redis backend frontend)
   declare -A service_ready service_status
@@ -268,7 +368,7 @@ $COMPOSE ps
 if command -v curl >/dev/null 2>&1; then
   log "✓ Verificando endpoints HTTP..."
   curl -sS -m 6 -o /dev/null -w "   → Backend:  %{http_code} (%{time_total}s)\n" http://localhost:8000/health/live || true
-  curl -sS -m 10 -o /dev/null -w "   → Frontend: %{http_code} (%{time_total}s)\n" http://localhost:3000/ || true
+  curl -sS -m "$FRONTEND_TIMEOUT" -o /dev/null -w "   → Frontend: %{http_code} (%{time_total}s)\n" "http://localhost:3000${FRONTEND_READY_PATH}" || true
   curl -sS -m 10 -o /dev/null -w "   → Nginx:    %{http_code} (%{time_total}s)\n" http://localhost/ || true
 else
   log "ℹ️  curl não encontrado; pulando smoke tests."

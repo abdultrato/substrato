@@ -253,7 +253,157 @@ def generate_pharmacy_sector_movements_pdf(payload: dict, request=None) -> tuple
     return pdf_bytes, filename
 
 
+def generate_pharmacy_product_consumption_pdf(payload: dict, request=None) -> tuple[bytes, str]:
+    summary = (payload or {}).get("summary") or {}
+    rows = list((payload or {}).get("rows") or [])
+
+    pdf_bytes = _build_document(
+        title="CONSUMO FARMACÊUTICO POR PRODUTO",
+        payload=payload,
+        request=request,
+        summary_rows=[
+            ["Produtos", summary.get("products_count", 0)],
+            ["Quantidade requisitada", summary.get("requested_total", 0)],
+            ["Quantidade aviada", summary.get("supplied_total", 0)],
+            ["Requisições", summary.get("requisitions_count", 0)],
+        ],
+        table_sections=[
+            {
+                "title": "Resumo por produto",
+                "headers": ["Produto", "Tipo", "Qtd requisitada", "Qtd aviada", "Requisições", "Linhas"],
+                "rows": [
+                    [
+                        _text(r.get("product_name")),
+                        _text(r.get("product_type")),
+                        _text(r.get("requested_quantity"), default="0"),
+                        _text(r.get("supplied_quantity"), default="0"),
+                        _text(r.get("requisitions_count"), default="0"),
+                        _text(r.get("items_count"), default="0"),
+                    ]
+                    for r in rows
+                ],
+            }
+        ],
+    )
+    filename = "consumo_farmaceutico_produtos.pdf"
+    return pdf_bytes, filename
+
+
+def generate_pharmacy_top_requested_products_pdf(payload: dict, request=None) -> tuple[bytes, str]:
+    summary = (payload or {}).get("summary") or {}
+    rows = list((payload or {}).get("rows") or [])
+
+    pdf_bytes = _build_document(
+        title="PRODUTOS MAIS REQUISITADOS",
+        payload=payload,
+        request=request,
+        summary_rows=[
+            ["Limite", summary.get("limit", 0)],
+            ["Produtos listados", summary.get("products_count", 0)],
+            ["Qtd requisitada (top)", summary.get("requested_total", 0)],
+            ["Qtd aviada (top)", summary.get("supplied_total", 0)],
+        ],
+        table_sections=[
+            {
+                "title": "Top produtos requisitados",
+                "headers": ["Posição", "Produto", "Tipo", "Qtd requisitada", "Qtd aviada", "Requisições"],
+                "rows": [
+                    [
+                        _text(r.get("rank"), default="—"),
+                        _text(r.get("product_name")),
+                        _text(r.get("product_type")),
+                        _text(r.get("requested_quantity"), default="0"),
+                        _text(r.get("supplied_quantity"), default="0"),
+                        _text(r.get("requisitions_count"), default="0"),
+                    ]
+                    for r in rows
+                ],
+            }
+        ],
+    )
+    filename = "produtos_mais_requisitados_farmacia.pdf"
+    return pdf_bytes, filename
+
+
+def generate_pharmacy_least_requested_products_pdf(payload: dict, request=None) -> tuple[bytes, str]:
+    summary = (payload or {}).get("summary") or {}
+    rows = list((payload or {}).get("rows") or [])
+
+    pdf_bytes = _build_document(
+        title="PRODUTOS MENOS REQUISITADOS",
+        payload=payload,
+        request=request,
+        summary_rows=[
+            ["Limite", summary.get("limit", 0)],
+            ["Produtos listados", summary.get("products_count", 0)],
+            ["Qtd requisitada (base)", summary.get("requested_total", 0)],
+            ["Qtd aviada (base)", summary.get("supplied_total", 0)],
+        ],
+        table_sections=[
+            {
+                "title": "Base de produtos menos requisitados",
+                "headers": ["Posição", "Produto", "Tipo", "Qtd requisitada", "Qtd aviada", "Requisições"],
+                "rows": [
+                    [
+                        _text(r.get("rank"), default="—"),
+                        _text(r.get("product_name")),
+                        _text(r.get("product_type")),
+                        _text(r.get("requested_quantity"), default="0"),
+                        _text(r.get("supplied_quantity"), default="0"),
+                        _text(r.get("requisitions_count"), default="0"),
+                    ]
+                    for r in rows
+                ],
+            }
+        ],
+    )
+    filename = "produtos_menos_requisitados_farmacia.pdf"
+    return pdf_bytes, filename
+
+
+def generate_pharmacy_product_sector_demand_pdf(payload: dict, request=None) -> tuple[bytes, str]:
+    summary = (payload or {}).get("summary") or {}
+    rows = list((payload or {}).get("rows") or [])
+    product_name = _text(summary.get("product_name"), default="—")
+
+    pdf_bytes = _build_document(
+        title="SETORES QUE MAIS REQUISITAM O PRODUTO",
+        payload=payload,
+        request=request,
+        summary_rows=[
+            ["Produto", product_name],
+            ["Setores listados", summary.get("sectors_count", 0)],
+            ["Qtd requisitada", summary.get("requested_total", 0)],
+            ["Qtd aviada", summary.get("supplied_total", 0)],
+            ["Requisições", summary.get("requisitions_count", 0)],
+        ],
+        table_sections=[
+            {
+                "title": "Distribuição por setor solicitante",
+                "headers": ["Setor", "Departamento", "Qtd requisitada", "Qtd aviada", "Requisições", "Linhas"],
+                "rows": [
+                    [
+                        _text(r.get("sector")),
+                        _text(r.get("department")),
+                        _text(r.get("requested_quantity"), default="0"),
+                        _text(r.get("supplied_quantity"), default="0"),
+                        _text(r.get("requisitions_count"), default="0"),
+                        _text(r.get("items_count"), default="0"),
+                    ]
+                    for r in rows
+                ],
+            }
+        ],
+    )
+    product_code = _text(summary.get("product_code"), default="produto")
+    filename = f"setores_requisicao_produto_{product_code}.pdf"
+    return pdf_bytes, filename
+
+
 gerar_pdf_historico_movimentos_farmacia = generate_pharmacy_movements_pdf
 gerar_pdf_estoque_farmacia = generate_pharmacy_stock_pdf
 gerar_pdf_movimentos_setor_farmacia = generate_pharmacy_sector_movements_pdf
-
+gerar_pdf_consumo_produtos_farmacia = generate_pharmacy_product_consumption_pdf
+gerar_pdf_produtos_mais_requisitados_farmacia = generate_pharmacy_top_requested_products_pdf
+gerar_pdf_produtos_menos_requisitados_farmacia = generate_pharmacy_least_requested_products_pdf
+gerar_pdf_setores_por_produto_farmacia = generate_pharmacy_product_sector_demand_pdf

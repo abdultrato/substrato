@@ -189,9 +189,9 @@ export default function LaboratorioPage() {
             icon={FileDown}
           />
           <ActionTile
-            title="Requisição de materiais"
-            description="Solicite consumíveis ao almoxarifado/farmácia e acompanhe o avio."
-            href="/farmacia/requisicoes-materiais"
+            title="Criar requisição de materiais"
+            description="Abrir o formulário para solicitar consumíveis ao almoxarifado/farmácia."
+            href="/farmacia/requisicoes-materiais/nova"
             icon={PackageSearch}
           />
         </div>
@@ -214,7 +214,6 @@ export default function LaboratorioPage() {
     </AppLayout>
   )
 }
-
 
 
 

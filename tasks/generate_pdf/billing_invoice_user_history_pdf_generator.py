@@ -187,11 +187,10 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
     buffer.close()
 
     period_key = _val(period.get("key"), default="annual")
-    year = _val(period.get("year"), default="")
+    period_ref = _val(period.get("date"), default="") or _val(period.get("year"), default="")
     scope_key = "user" if scope == "user" else "all"
-    filename = f"historico_faturamento_{scope_key}_{period_key}_{year or 'periodo'}.pdf"
+    filename = f"historico_faturamento_{scope_key}_{period_key}_{period_ref or 'periodo'}.pdf"
     return pdf_bytes, filename
 
 
 gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
-

@@ -279,6 +279,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "equipamentos-inspecaodiaria": SAFE_METHODS,
             "equipamentos-manutencao": SAFE_METHODS,
             "equipamentos-ocorrencia": SAFE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
         g["CONTABILIDADE"]: {
             # Contabilidade (CRUD) + auditoria read-only de recepcao/financeiro
@@ -311,6 +314,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "consultations-feriado": SAFE_METHODS,
             # Estatísticas
             "dashboard-analytics": SAFE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
         g["RECURSOS_HUMANOS"]: {
             # RH (CRUD interno)
@@ -330,6 +336,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "equipamentos-ocorrencia": SAFE_METHODS,
             # Precisa listar usuários para vincular a funcionários.
             "identidade-user": SAFE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
     }
 

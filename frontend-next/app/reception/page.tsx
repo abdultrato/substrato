@@ -109,9 +109,9 @@ const atalhos = [
         icon: CalendarClock,
     },
     {
-        title: "Requisição de materiais",
-        description: "Solicitar consumíveis ao almoxarifado/farmácia e acompanhar avio.",
-        href: "/farmacia/requisicoes-materiais",
+        title: "Criar requisição de materiais",
+        description: "Abrir o formulário para solicitar consumíveis ao almoxarifado/farmácia.",
+        href: "/farmacia/requisicoes-materiais/nova",
         icon: PackageSearch,
     },
 ]
@@ -355,4 +355,3 @@ function IndicadorLinha({
         </div>
     )
 }
-

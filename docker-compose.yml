@@ -35,7 +35,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -73,6 +73,11 @@ services:
 
       REDIS_URL: redis://redis:6379/1
       TZ: Africa/Maputo
+      # Otimizações de bootstrap em dev:
+      # - auto: roda collectstatic só na primeira inicialização do volume staticfiles
+      # - clear=0: evita limpeza total de staticfiles a cada boot
+      COLLECTSTATIC_BOOT_MODE: auto
+      COLLECTSTATIC_CLEAR: "0"
 
     volumes:
       - .:/app
@@ -113,7 +118,12 @@ services:
     command: >
       sh -lc
       "mkdir -p /home/node/.cache/next-swc /app/node_modules /app/.next;
-       chown -R node:node /home/node/.cache/next-swc /app/node_modules /app/.next;
+       for d in /home/node/.cache/next-swc /app/node_modules /app/.next; do
+         owner=$$(stat -c '%u:%g' $$d 2>/dev/null || true);
+         if [ \"$$owner\" != '1000:1000' ]; then
+           chown -R node:node $$d;
+         fi;
+       done;
        if [ ! -f node_modules/.bin/next ]; then
          su -s /bin/sh node -c 'npm ci --no-audit --no-fund || npm install --no-audit --no-fund';
        fi;
@@ -138,10 +148,12 @@ services:
   # =========================================================================
   warmup:
     image: substrato-backend
+    healthcheck:
+      disable: true
     entrypoint:
       - sh
       - -lc
-      - "set -eu; echo '[warmup] aguardando backend...'; for i in $$(seq 1 60); do if curl -fsS http://backend:8000/health/live >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aguardando frontend...'; for i in $$(seq 1 60); do if curl -fsS http://frontend:3000/ >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aquecendo backend...'; curl -fsS http://backend:8000/admin/login/ >/dev/null || true; echo '[warmup] aquecendo frontend...'; curl -fsS http://frontend:3000/ >/dev/null || true; curl -fsS http://frontend:3000/login/ >/dev/null || true; echo '[warmup] ok';"
+      - "set -eu; echo '[warmup] aguardando backend...'; for i in $$(seq 1 60); do if curl -fsS http://backend:8000/health/live >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aguardando frontend...'; for i in $$(seq 1 60); do if curl -fsS http://frontend:3000/login/ >/dev/null 2>&1; then break; fi; sleep 1; done; echo '[warmup] aquecendo backend...'; curl -fsS http://backend:8000/admin/login/ >/dev/null || true; echo '[warmup] aquecendo frontend (light)...'; curl -fsS http://frontend:3000/login/ >/dev/null || true; echo '[warmup] ok';"
     depends_on:
       frontend:
         condition: service_started

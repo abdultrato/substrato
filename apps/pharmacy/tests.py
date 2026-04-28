@@ -481,3 +481,117 @@ def test_material_requisition_fulfill_returns_clear_insufficient_stock_error(api
     msg = str(fulfill_resp.data).lower()
     assert "não é possível aviar" in msg or "nao e possivel aviar" in msg
     assert "estoque disponível" in msg or "estoque disponivel" in msg
+
+
+@pytest.mark.django_db
+def test_pharmacy_product_report_pdf_endpoints(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-far-reports",
+        name="Tenant Farmácia Reports",
+        domain="tenant-far-reports.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+    grp_lab, _ = Group.objects.get_or_create(name="Técnico de Laboratório")
+    grp_ph, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+
+    recep = User.objects.create_user(
+        username="recep_reports",
+        email="recep-reports@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    recep.is_staff = True
+    recep.save(update_fields=["is_staff"])
+    recep.groups.add(grp_recep)
+
+    lab = User.objects.create_user(
+        username="lab_reports",
+        email="lab-reports@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    lab.is_staff = True
+    lab.save(update_fields=["is_staff"])
+    lab.groups.add(grp_lab)
+
+    pharmacist = User.objects.create_user(
+        username="ph_reports",
+        email="ph-reports@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    pharmacist.is_staff = True
+    pharmacist.save(update_fields=["is_staff"])
+    pharmacist.groups.add(grp_ph)
+
+    prod_a = _product(tenant)
+    prod_b = Product.objects.create(
+        tenant=tenant,
+        name="Medicamento Y",
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal("15.00"),
+        category=prod_a.category,
+    )
+    lot_a = Lot.objects.create(
+        tenant=tenant,
+        product=prod_a,
+        lot_number="LREP-A",
+        expiration_date=timezone.localdate() + timedelta(days=90),
+        initial_quantity=40,
+        sale_price=prod_a.sale_price,
+    )
+    lot_b = Lot.objects.create(
+        tenant=tenant,
+        product=prod_b,
+        lot_number="LREP-B",
+        expiration_date=timezone.localdate() + timedelta(days=90),
+        initial_quantity=30,
+        sale_price=prod_b.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+
+    api_client.force_authenticate(user=recep)
+    create_recep = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot_a.id, "requested_quantity": 5}]},
+        format="json",
+    )
+    assert create_recep.status_code == 201, create_recep.data
+
+    api_client.force_authenticate(user=lab)
+    create_lab = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {
+            "items_input": [
+                {"lot": lot_a.id, "requested_quantity": 2},
+                {"lot": lot_b.id, "requested_quantity": 1},
+            ]
+        },
+        format="json",
+    )
+    assert create_lab.status_code == 201, create_lab.data
+
+    api_client.force_authenticate(user=pharmacist)
+
+    consumo_resp = api_client.get("/api/v1/pharmacy/product/consumo/pdf/")
+    assert consumo_resp.status_code == 200
+    assert "application/pdf" in consumo_resp["Content-Type"]
+    assert len(consumo_resp.content) > 0
+
+    top_resp = api_client.get("/api/v1/pharmacy/product/mais_requisitados/pdf/?limit=10")
+    assert top_resp.status_code == 200
+    assert "application/pdf" in top_resp["Content-Type"]
+    assert len(top_resp.content) > 0
+
+    least_resp = api_client.get("/api/v1/pharmacy/product/menos_requisitados/pdf/?limit=10")
+    assert least_resp.status_code == 200
+    assert "application/pdf" in least_resp["Content-Type"]
+    assert len(least_resp.content) > 0
+
+    sectors_resp = api_client.get(f"/api/v1/pharmacy/product/setores_requisicao/pdf/?product_id={prod_a.id}")
+    assert sectors_resp.status_code == 200
+    assert "application/pdf" in sectors_resp["Content-Type"]
+    assert len(sectors_resp.content) > 0

@@ -319,6 +319,333 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ]
     ordering = ["-created_at"]
 
+    @staticmethod
+    def _parse_int_param(raw_value, *, field_name: str, min_value: int, max_value: int, default: int) -> int:
+        value = default if raw_value in (None, "") else raw_value
+        try:
+            parsed = int(value)
+        except Exception as exc:
+            raise ValidationError({field_name: "Valor numérico inválido."}) from exc
+        if parsed < min_value or parsed > max_value:
+            raise ValidationError({field_name: f"Valor deve estar entre {min_value} e {max_value}."})
+        return parsed
+
+    def _base_requisition_items(self, request):
+        date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
+        date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
+
+        qs = MaterialRequisitionItem.objects.filter(
+            deleted=False,
+            requisition__deleted=False,
+            lot__deleted=False,
+            lot__product__deleted=False,
+        ).select_related(
+            "lot__product",
+            "requisition",
+        )
+        tenant = getattr(request, "tenant", None)
+        if tenant is not None:
+            qs = qs.filter(tenant=tenant)
+        if date_from:
+            qs = qs.filter(requisition__created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(requisition__created_at__date__lte=date_to)
+        return qs, date_from, date_to
+
+    @staticmethod
+    def _product_type_label(product_type: str | None) -> str:
+        return dict(Product.ProductType.choices).get(product_type, product_type or "—")
+
+    @action(detail=False, methods=["get"], url_path="consumo/pdf", url_name="consumo-pdf")
+    def product_consumption_pdf(self, request):
+        """PDF de consumo farmacêutico consolidado por produto."""
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode emitir relatório de consumo por produto.")
+
+        qs, date_from, date_to = self._base_requisition_items(request)
+        raw_product_id = request.query_params.get("product_id") or request.query_params.get("produto")
+        product_id = None
+        if raw_product_id not in (None, ""):
+            product_id = self._parse_int_param(
+                raw_product_id,
+                field_name="product_id",
+                min_value=1,
+                max_value=999999999,
+                default=0,
+            )
+            qs = qs.filter(lot__product_id=product_id)
+
+        grouped = (
+            qs.values(
+                "lot__product_id",
+                "lot__product__custom_id",
+                "lot__product__name",
+                "lot__product__type",
+            )
+            .annotate(
+                requested_quantity=Sum("requested_quantity"),
+                supplied_quantity=Sum("supplied_quantity"),
+                requisitions_count=Count("requisition", distinct=True),
+                items_count=Count("id"),
+            )
+            .order_by("lot__product__name")
+        )
+
+        rows = [
+            {
+                "product_id": row.get("lot__product_id"),
+                "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
+                "product_name": row.get("lot__product__name") or "—",
+                "product_type": self._product_type_label(row.get("lot__product__type")),
+                "requested_quantity": int(row.get("requested_quantity") or 0),
+                "supplied_quantity": int(row.get("supplied_quantity") or 0),
+                "requisitions_count": int(row.get("requisitions_count") or 0),
+                "items_count": int(row.get("items_count") or 0),
+            }
+            for row in grouped
+        ]
+
+        summary = {
+            "products_count": len(rows),
+            "requested_total": sum(r["requested_quantity"] for r in rows),
+            "supplied_total": sum(r["supplied_quantity"] for r in rows),
+            "requisitions_count": sum(r["requisitions_count"] for r in rows),
+        }
+
+        payload = {
+            "report_type": "product_consumption",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "product_id": product_id,
+            },
+            "summary": summary,
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_product_consumption_pdf
+
+        pdf_bytes, filename = generate_pharmacy_product_consumption_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @action(detail=False, methods=["get"], url_path="mais_requisitados/pdf", url_name="mais-requisitados-pdf")
+    def most_requested_products_pdf(self, request):
+        """PDF com os produtos mais requisitados (baseado em requisições de material)."""
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode emitir relatório de produtos mais requisitados.")
+
+        qs, date_from, date_to = self._base_requisition_items(request)
+        limit = self._parse_int_param(
+            request.query_params.get("limit"),
+            field_name="limit",
+            min_value=1,
+            max_value=200,
+            default=20,
+        )
+
+        grouped = (
+            qs.values(
+                "lot__product_id",
+                "lot__product__custom_id",
+                "lot__product__name",
+                "lot__product__type",
+            )
+            .annotate(
+                requested_quantity=Sum("requested_quantity"),
+                supplied_quantity=Sum("supplied_quantity"),
+                requisitions_count=Count("requisition", distinct=True),
+            )
+            .order_by("-requested_quantity", "lot__product__name")[:limit]
+        )
+
+        rows = []
+        for idx, row in enumerate(grouped, start=1):
+            rows.append(
+                {
+                    "rank": idx,
+                    "product_id": row.get("lot__product_id"),
+                    "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
+                    "product_name": row.get("lot__product__name") or "—",
+                    "product_type": self._product_type_label(row.get("lot__product__type")),
+                    "requested_quantity": int(row.get("requested_quantity") or 0),
+                    "supplied_quantity": int(row.get("supplied_quantity") or 0),
+                    "requisitions_count": int(row.get("requisitions_count") or 0),
+                }
+            )
+
+        payload = {
+            "report_type": "top_requested_products",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "limit": limit,
+            },
+            "summary": {
+                "limit": limit,
+                "products_count": len(rows),
+                "requested_total": sum(r["requested_quantity"] for r in rows),
+                "supplied_total": sum(r["supplied_quantity"] for r in rows),
+            },
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_top_requested_products_pdf
+
+        pdf_bytes, filename = generate_pharmacy_top_requested_products_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @action(detail=False, methods=["get"], url_path="menos_requisitados/pdf", url_name="menos-requisitados-pdf")
+    def least_requested_products_pdf(self, request):
+        """PDF com os produtos menos requisitados (baseado em requisições de material)."""
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode emitir relatório de produtos menos requisitados.")
+
+        qs, date_from, date_to = self._base_requisition_items(request)
+        limit = self._parse_int_param(
+            request.query_params.get("limit"),
+            field_name="limit",
+            min_value=1,
+            max_value=200,
+            default=20,
+        )
+
+        grouped = (
+            qs.values(
+                "lot__product_id",
+                "lot__product__custom_id",
+                "lot__product__name",
+                "lot__product__type",
+            )
+            .annotate(
+                requested_quantity=Sum("requested_quantity"),
+                supplied_quantity=Sum("supplied_quantity"),
+                requisitions_count=Count("requisition", distinct=True),
+            )
+            .order_by("requested_quantity", "lot__product__name")[:limit]
+        )
+
+        rows = []
+        for idx, row in enumerate(grouped, start=1):
+            rows.append(
+                {
+                    "rank": idx,
+                    "product_id": row.get("lot__product_id"),
+                    "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
+                    "product_name": row.get("lot__product__name") or "—",
+                    "product_type": self._product_type_label(row.get("lot__product__type")),
+                    "requested_quantity": int(row.get("requested_quantity") or 0),
+                    "supplied_quantity": int(row.get("supplied_quantity") or 0),
+                    "requisitions_count": int(row.get("requisitions_count") or 0),
+                }
+            )
+
+        payload = {
+            "report_type": "least_requested_products",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "limit": limit,
+            },
+            "summary": {
+                "limit": limit,
+                "products_count": len(rows),
+                "requested_total": sum(r["requested_quantity"] for r in rows),
+                "supplied_total": sum(r["supplied_quantity"] for r in rows),
+            },
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_least_requested_products_pdf
+
+        pdf_bytes, filename = generate_pharmacy_least_requested_products_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
+    @action(detail=False, methods=["get"], url_path="setores_requisicao/pdf", url_name="setores-requisicao-pdf")
+    def product_sector_demand_pdf(self, request):
+        """PDF com os setores que mais requisitaram um produto específico."""
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode emitir relatório de setores por produto.")
+
+        raw_product_id = request.query_params.get("product_id") or request.query_params.get("produto")
+        product_id = self._parse_int_param(
+            raw_product_id,
+            field_name="product_id",
+            min_value=1,
+            max_value=999999999,
+            default=0,
+        )
+
+        product = self.get_queryset().filter(deleted=False, pk=product_id).first()
+        if not product:
+            raise ValidationError({"product_id": "Produto não encontrado no tenant."})
+
+        qs, date_from, date_to = self._base_requisition_items(request)
+        qs = qs.filter(lot__product_id=product_id)
+
+        grouped = (
+            qs.values("requisition__sector", "requisition__requested_by_department")
+            .annotate(
+                requested_quantity=Sum("requested_quantity"),
+                supplied_quantity=Sum("supplied_quantity"),
+                requisitions_count=Count("requisition", distinct=True),
+                items_count=Count("id"),
+            )
+            .order_by("-requested_quantity", "requisition__sector")
+        )
+
+        sector_labels = dict(RequestingSector.choices)
+        rows = [
+            {
+                "sector": sector_labels.get(row.get("requisition__sector"), row.get("requisition__sector") or "—"),
+                "department": row.get("requisition__requested_by_department") or "—",
+                "requested_quantity": int(row.get("requested_quantity") or 0),
+                "supplied_quantity": int(row.get("supplied_quantity") or 0),
+                "requisitions_count": int(row.get("requisitions_count") or 0),
+                "items_count": int(row.get("items_count") or 0),
+            }
+            for row in grouped
+        ]
+
+        payload = {
+            "report_type": "product_sector_demand",
+            "generated_at": timezone.localtime().isoformat(),
+            "filters": {
+                "date_from": date_from.isoformat() if date_from else None,
+                "date_to": date_to.isoformat() if date_to else None,
+                "product_id": product_id,
+            },
+            "summary": {
+                "product_id": product_id,
+                "product_code": product.custom_id or product_id,
+                "product_name": product.name,
+                "sectors_count": len(rows),
+                "requested_total": sum(r["requested_quantity"] for r in rows),
+                "supplied_total": sum(r["supplied_quantity"] for r in rows),
+                "requisitions_count": sum(r["requisitions_count"] for r in rows),
+            },
+            "rows": rows,
+        }
+
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_product_sector_demand_pdf
+
+        pdf_bytes, filename = generate_pharmacy_product_sector_demand_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
 
 class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Sale.objects.all()
@@ -388,6 +715,18 @@ def _requester_sectors_from_user(user) -> set[str]:
     return sectors
 
 
+def _has_non_pharmacy_group(user) -> bool:
+    groups = _user_groups(user)
+    if not groups:
+        return False
+
+    blocked = {
+        _normalize(RBAC_GROUPS["FARMACIA"]),
+        _normalize(RBAC_GROUPS["ADMIN"]),
+    }
+    return any(g not in blocked for g in groups)
+
+
 def _infer_sector_from_user(user) -> str | None:
     sectors = _requester_sectors_from_user(user)
     # Ordem de precedência para utilizadores com múltiplos perfis.
@@ -401,6 +740,8 @@ def _infer_sector_from_user(user) -> str | None:
     for sector in order:
         if sector in sectors:
             return sector
+    if _has_non_pharmacy_group(user):
+        return RequestingSector.OUTROS
     return None
 
 
@@ -696,4 +1037,3 @@ __all__ = [
     "SaleItemViewSet",
     "SaleViewSet",
 ]
-

@@ -8,15 +8,22 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchAll, extractResults } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 type LotDisponivel = {
   id: number
+  product?: number
   product_name?: string
   lot_number?: string
   expiration_date?: string
   saldo?: number
+}
+
+type ProductStockRow = {
+  key: string
+  productName: string
+  totalStock: number
 }
 
 type DraftItem = {
@@ -41,14 +48,19 @@ export default function NovaRequisicaoMateriaisPage() {
       GROUPS.RECEPCAO,
       GROUPS.MEDICINA,
       GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.CONTABILIDADE,
+      GROUPS.MANUTENCAO,
+      GROUPS.RECURSOS_HUMANOS,
     ],
     []
   )
 
   const [lots, setLots] = useState<LotDisponivel[]>([])
+  const [stockLots, setStockLots] = useState<LotDisponivel[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [productQuery, setProductQuery] = useState("")
 
   const [items, setItems] = useState<DraftItem[]>([{ lotId: null, requestedQuantity: 1 }])
 
@@ -58,9 +70,13 @@ export default function NovaRequisicaoMateriaisPage() {
       try {
         setLoadingLots(true)
         setError(null)
-        const res = await apiFetch<LotDisponivel[]>("/pharmacy/lot/disponiveis/")
+        const [availableRes, allLotsRes] = await Promise.all([
+          apiFetch<any>("/pharmacy/lot/disponiveis/"),
+          apiFetchAll<LotDisponivel>("/pharmacy/lot/", { pageSize: 200, maxPages: 25 }),
+        ])
         if (!mounted) return
-        setLots(Array.isArray(res) ? res : [])
+        setLots(extractResults<LotDisponivel>(availableRes))
+        setStockLots(Array.isArray(allLotsRes) ? allLotsRes : [])
       } catch (e: any) {
         if (!mounted) return
         setError(e?.message || "Falha ao carregar lotes disponíveis.")
@@ -75,6 +91,38 @@ export default function NovaRequisicaoMateriaisPage() {
   }, [])
 
   const lotById = useMemo(() => new Map(lots.map((l) => [l.id, l])), [lots])
+  const productStocks = useMemo<ProductStockRow[]>(() => {
+    const source = stockLots.length ? stockLots : lots
+    const byProduct = new Map<string, ProductStockRow>()
+    for (const lot of source) {
+      const stock = Number(lot.saldo || 0)
+      if (stock <= 0) continue
+
+      const rawKey = lot.product ? String(lot.product) : String(lot.product_name || "").trim().toLowerCase()
+      const key = rawKey || `lot-${lot.id}`
+      const name = (lot.product_name || "Produto sem nome").trim()
+
+      const prev = byProduct.get(key)
+      if (prev) {
+        prev.totalStock += stock
+      } else {
+        byProduct.set(key, {
+          key,
+          productName: name,
+          totalStock: stock,
+        })
+      }
+    }
+
+    return Array.from(byProduct.values()).sort((a, b) =>
+      a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" })
+    )
+  }, [lots, stockLots])
+  const filteredProductStocks = useMemo(() => {
+    const q = productQuery.trim().toLowerCase()
+    if (!q) return productStocks
+    return productStocks.filter((item) => item.productName.toLowerCase().includes(q))
+  }, [productQuery, productStocks])
 
   function updateItem(idx: number, patch: Partial<DraftItem>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
@@ -145,8 +193,56 @@ export default function NovaRequisicaoMateriaisPage() {
         ) : null}
 
         <Card
+          title="Produtos em estoque na farmácia"
+          subtitle="Estoque atual agregado por produto (saldo real)."
+        >
+          {loadingLots ? (
+            <div className="text-sm text-[var(--gray-600)]">Carregando produtos…</div>
+          ) : productStocks.length ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={productQuery}
+                  onChange={(e) => setProductQuery(e.target.value)}
+                  placeholder="Buscar produto por nome…"
+                  className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                  disabled={submitting}
+                />
+                <div className="text-xs text-[var(--gray-500)]">
+                  Produtos listados: {filteredProductStocks.length}
+                </div>
+              </div>
+
+              <div className="overflow-auto rounded-xl border border-[var(--border)]">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-[var(--gray-100)] text-left text-[var(--gray-600)]">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold">Produto</th>
+                      <th className="px-3 py-2 font-semibold">Estoque disponível</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[var(--text)]">
+                    {filteredProductStocks.map((row) => (
+                      <tr key={row.key} className="border-t border-[var(--border)]">
+                        <td className="px-3 py-2">{row.productName}</td>
+                        <td className="px-3 py-2">{row.totalStock}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-[var(--gray-600)]">
+              Nenhum produto com saldo em estoque.
+            </div>
+          )}
+        </Card>
+
+        <Card
           title="Itens"
-          subtitle="Selecione o material (lote) e a quantidade desejada."
+          subtitle="Selecione o produto/lote e informe a quantidade desejada."
         >
           {loadingLots ? (
             <div className="text-sm text-[var(--gray-600)]">Carregando lotes disponíveis…</div>
@@ -238,7 +334,7 @@ export default function NovaRequisicaoMateriaisPage() {
             </div>
           ) : (
             <div className="text-sm text-[var(--gray-600)]">
-              Nenhum lote com estoque disponível.
+              Nenhum lote disponível para requisição no momento.
             </div>
           )}
         </Card>
@@ -246,4 +342,3 @@ export default function NovaRequisicaoMateriaisPage() {
     </AppLayout>
   )
 }
-

@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Baby, ClipboardList, PlusCircle } from "lucide-react"
+import { Baby, ClipboardList, PackageSearch, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -94,6 +94,12 @@ export default function MaternidadePage() {
                         href="/recursos/maternity/gestacao"
                         icon={ClipboardList}
                     />
+                    <ActionTile
+                        title="Criar requisição de materiais"
+                        description="Solicitar consumíveis à farmácia para rotinas da maternidade."
+                        href="/farmacia/requisicoes-materiais/nova"
+                        icon={PackageSearch}
+                    />
                 </div>
 
                 <Card
@@ -109,7 +115,6 @@ export default function MaternidadePage() {
         </AppLayout>
     )
 }
-
 
 
 
