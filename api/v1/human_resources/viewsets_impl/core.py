@@ -1,4 +1,6 @@
 from rest_framework.permissions import IsAuthenticated  # Restringe acesso
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
@@ -56,6 +58,37 @@ class EmployeeViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "name", "profession", "email", "phone"]
     ordering_fields = ["name", "profession", "admission_date", "status", "created_at"]
     ordering = ["name"]
+
+    def _set_employee_status(self, employee: Employee, status_value: str):
+        if employee.status != status_value:
+            employee.status = status_value
+            employee.save(update_fields=["status"])
+        return Response(self.get_serializer(employee).data)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Não remove funcionário: converte DELETE em inativação.
+        """
+        employee = self.get_object()
+        return self._set_employee_status(employee, Employee.Status.INACTIVE)
+
+    @action(detail=True, methods=["post"], url_path="desativar", url_name="desativar")
+    def deactivate(self, request, pk=None):
+        employee = self.get_object()
+        return self._set_employee_status(employee, Employee.Status.INACTIVE)
+
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def activate(self, request, pk=None):
+        employee = self.get_object()
+        return self._set_employee_status(employee, Employee.Status.ACTIVE)
+
+    @action(detail=True, methods=["post"], url_path="deactivate", url_name="deactivate")
+    def deactivate_en(self, request, pk=None):
+        return self.deactivate(request, pk=pk)
+
+    @action(detail=True, methods=["post"], url_path="activate", url_name="activate")
+    def activate_en(self, request, pk=None):
+        return self.activate(request, pk=pk)
 
 
 class FamilyDependentViewSet(TenantScopedModelViewSet):

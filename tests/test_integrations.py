@@ -11,6 +11,7 @@ import application.payments.start_payment as start_payment_module
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
 from apps.consultations.models.medical_consultation import MedicalConsultation
+from apps.human_resources.models.employee import Employee
 from apps.tenants.models.tenant import Tenant
 
 
@@ -557,3 +558,58 @@ def test_billing_history_pdf_endpoint_returns_pdf(api_client):
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+
+@pytest.mark.django_db
+def test_identity_user_delete_deactivates_and_activate_restores(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client=api_client)
+    user_model = get_user_model()
+    target = user_model.objects.create_user(
+        username="user_toggle_status",
+        email="user-toggle-status@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    assert target.is_active is True
+
+    delete_response = api_client.delete(f"/api/v1/identity/user/{target.id}/")
+    assert delete_response.status_code == 200
+
+    target.refresh_from_db()
+    assert target.is_active is False
+    assert target.deleted is False
+
+    activate_response = api_client.post(f"/api/v1/identity/user/{target.id}/ativar/")
+    assert activate_response.status_code == 200
+
+    target.refresh_from_db()
+    assert target.is_active is True
+    assert target.deleted is False
+
+
+@pytest.mark.django_db
+def test_employee_delete_inactivates_and_activate_restores(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client=api_client)
+
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Funcionário Teste",
+        status=Employee.Status.ACTIVE,
+    )
+    assert employee.status == Employee.Status.ACTIVE
+
+    delete_response = api_client.delete(f"/api/v1/human_resources/employee/{employee.id}/")
+    assert delete_response.status_code == 200
+
+    employee.refresh_from_db()
+    assert employee.status == Employee.Status.INACTIVE
+    assert employee.deleted is False
+
+    activate_response = api_client.post(f"/api/v1/human_resources/employee/{employee.id}/ativar/")
+    assert activate_response.status_code == 200
+
+    employee.refresh_from_db()
+    assert employee.status == Employee.Status.ACTIVE
+    assert employee.deleted is False
