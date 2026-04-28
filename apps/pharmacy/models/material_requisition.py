@@ -10,6 +10,9 @@ class RequestingSector(models.TextChoices):
     LABORATORIO = "LAB", "Laboratório"
     ENFERMAGEM = "ENF", "Enfermagem"
     RECEPCAO = "REC", "Recepção"
+    MEDICINA = "MED", "Medicina"
+    MEDICINA_OCUPACIONAL = "MOC", "Medicina Ocupacional"
+    OUTROS = "OUT", "Outros setores"
 
 
 class MaterialRequisitionStatus(models.TextChoices):

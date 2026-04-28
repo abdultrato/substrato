@@ -110,8 +110,8 @@ export default function MedicinaOcupacionalPage() {
           />
           <ActionTile
             title="Almoxarifado/Farmácia"
-            description="Consultar disponibilidade de itens e lotes."
-            href="/farmacia"
+            description="Solicitar materiais e acompanhar o estado de avio."
+            href="/farmacia/requisicoes-materiais"
             icon={Pill}
           />
         </div>

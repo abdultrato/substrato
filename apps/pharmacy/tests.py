@@ -12,7 +12,7 @@ import pytest
 from apps.clinical.models.patient import Patient
 from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from apps.pharmacy.models.lot import Lot
-from apps.pharmacy.models.material_requisition import MaterialRequisitionStatus
+from apps.pharmacy.models.material_requisition import MaterialRequisitionStatus, RequestingSector
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.sale import Sale
@@ -254,3 +254,230 @@ def test_material_requisition_api_flow_create_and_fulfill(api_client):
     lot.refresh_from_db()
     assert lot.balance() == 7
     assert InventoryMovement.objects.filter(origin=MovementOrigin.REQUISICAO, material_request_item__isnull=False).exists()
+
+
+@pytest.mark.django_db
+def test_material_requisition_visibility_is_sector_based(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-sec",
+        name="Tenant ReqFar Sector",
+        domain="tenant-reqfar-sec.local",
+        active=True,
+    )
+    User = get_user_model()
+
+    grp_lab, _ = Group.objects.get_or_create(name="Técnico de Laboratório")
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+
+    lab_a = User.objects.create_user(
+        username="lab_a",
+        email="lab-a@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    lab_a.is_staff = True
+    lab_a.save(update_fields=["is_staff"])
+    lab_a.groups.add(grp_lab)
+
+    lab_b = User.objects.create_user(
+        username="lab_b",
+        email="lab-b@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    lab_b.is_staff = True
+    lab_b.save(update_fields=["is_staff"])
+    lab_b.groups.add(grp_lab)
+
+    recep = User.objects.create_user(
+        username="recep_a",
+        email="recep-a@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    recep.is_staff = True
+    recep.save(update_fields=["is_staff"])
+    recep.groups.add(grp_recep)
+
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQSEC1",
+        expiration_date=timezone.localdate() + timedelta(days=30),
+        initial_quantity=12,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=lab_a)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 4}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201
+    req_id = create_resp.data["id"]
+    assert create_resp.data["sector"] == RequestingSector.LABORATORIO
+
+    api_client.force_authenticate(user=lab_b)
+    list_lab_b = api_client.get("/api/v1/pharmacy/requisicaomaterial/")
+    assert list_lab_b.status_code == 200
+    payload_lab = list_lab_b.data if isinstance(list_lab_b.data, list) else list_lab_b.data.get("results", [])
+    assert any(int(row["id"]) == int(req_id) for row in payload_lab)
+
+    api_client.force_authenticate(user=recep)
+    list_recep = api_client.get("/api/v1/pharmacy/requisicaomaterial/")
+    assert list_recep.status_code == 200
+    payload_recep = list_recep.data if isinstance(list_recep.data, list) else list_recep.data.get("results", [])
+    assert all(int(row["id"]) != int(req_id) for row in payload_recep)
+
+
+@pytest.mark.django_db
+def test_material_requisition_medicine_user_can_create(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-med",
+        name="Tenant ReqFar Medicina",
+        domain="tenant-reqfar-med.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_med, _ = Group.objects.get_or_create(name="Médico")
+
+    medic = User.objects.create_user(
+        username="med_user",
+        email="med@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    medic.is_staff = True
+    medic.save(update_fields=["is_staff"])
+    medic.groups.add(grp_med)
+
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQMED1",
+        expiration_date=timezone.localdate() + timedelta(days=40),
+        initial_quantity=10,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=medic)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 3}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    assert create_resp.data["status"] == MaterialRequisitionStatus.PENDING
+    assert create_resp.data["sector"] == RequestingSector.MEDICINA
+
+
+@pytest.mark.django_db
+def test_material_requisition_pharmacy_profile_cannot_create(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-ph",
+        name="Tenant ReqFar Pharmacy",
+        domain="tenant-reqfar-ph.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_ph, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+
+    pharmacist = User.objects.create_user(
+        username="ph_only",
+        email="ph-only@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    pharmacist.is_staff = True
+    pharmacist.save(update_fields=["is_staff"])
+    pharmacist.groups.add(grp_ph)
+
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQPH1",
+        expiration_date=timezone.localdate() + timedelta(days=50),
+        initial_quantity=15,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=pharmacist)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 2}]},
+        format="json",
+    )
+    assert create_resp.status_code == 400
+    assert "não pode criar requisição" in str(create_resp.data).lower()
+
+
+@pytest.mark.django_db
+def test_material_requisition_fulfill_returns_clear_insufficient_stock_error(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-stock",
+        name="Tenant ReqFar Stock",
+        domain="tenant-reqfar-stock.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+    grp_ph, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+
+    requester = User.objects.create_user(
+        username="req_stock",
+        email="req-stock@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_recep)
+
+    pharmacist = User.objects.create_user(
+        username="ph_stock",
+        email="ph-stock@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    pharmacist.is_staff = True
+    pharmacist.save(update_fields=["is_staff"])
+    pharmacist.groups.add(grp_ph)
+
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQSTK1",
+        expiration_date=timezone.localdate() + timedelta(days=30),
+        initial_quantity=2,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 5}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201
+    req_id = create_resp.data["id"]
+    req_item_id = create_resp.data["items"][0]["id"]
+
+    api_client.force_authenticate(user=pharmacist)
+    fulfill_resp = api_client.post(
+        f"/api/v1/pharmacy/requisicaomaterial/{req_id}/aviar/",
+        {"items": [{"id": req_item_id, "quantity": 3}]},
+        format="json",
+    )
+    assert fulfill_resp.status_code == 400
+    msg = str(fulfill_resp.data).lower()
+    assert "não é possível aviar" in msg or "nao e possivel aviar" in msg
+    assert "estoque disponível" in msg or "estoque disponivel" in msg

@@ -57,6 +57,25 @@ function statusLabel(s?: string) {
   }
 }
 
+function sectorLabel(s?: string) {
+  switch (s) {
+    case "LAB":
+      return "Laboratório"
+    case "ENF":
+      return "Enfermagem"
+    case "REC":
+      return "Recepção"
+    case "MED":
+      return "Medicina"
+    case "MOC":
+      return "Medicina Ocupacional"
+    case "OUT":
+      return "Outros setores"
+    default:
+      return s || "—"
+  }
+}
+
 export default function RequisicaoMaterialDetailPage() {
   useAuthGuard()
   const params = useParams()
@@ -64,7 +83,15 @@ export default function RequisicaoMaterialDetailPage() {
   const { user } = useAuth()
 
   const requiredGroups = useMemo(
-    () => [GROUPS.ADMIN, GROUPS.FARMACIA, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.RECEPCAO],
+    () => [
+      GROUPS.ADMIN,
+      GROUPS.FARMACIA,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.RECEPCAO,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ],
     []
   )
   const isPharmacy = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.FARMACIA])
@@ -182,6 +209,10 @@ export default function RequisicaoMaterialDetailPage() {
                 <div className="font-semibold text-[var(--text)]">{statusLabel(data.status)}</div>
               </div>
               <div>
+                <div className="text-[var(--gray-500)]">Setor solicitante</div>
+                <div className="font-semibold text-[var(--text)]">{sectorLabel(data.sector)}</div>
+              </div>
+              <div>
                 <div className="text-[var(--gray-500)]">Solicitante</div>
                 <div className="font-semibold text-[var(--text)]">{data.created_by_name || "—"}</div>
               </div>
@@ -214,6 +245,7 @@ export default function RequisicaoMaterialDetailPage() {
                     <th className="py-2 pr-3">Solicitado</th>
                     <th className="py-2 pr-3">Disponível</th>
                     <th className="py-2 pr-3">Aviado</th>
+                    <th className="py-2 pr-3">Situação</th>
                     {isPharmacy ? <th className="py-2 pr-3">Aviar agora</th> : null}
                   </tr>
                 </thead>
@@ -233,6 +265,9 @@ export default function RequisicaoMaterialDetailPage() {
                         <td className="py-2 pr-3">{it.requested_quantity}</td>
                         <td className="py-2 pr-3">{available !== null ? available : "—"}</td>
                         <td className="py-2 pr-3">{it.supplied_quantity || 0}</td>
+                        <td className="py-2 pr-3">
+                          {remaining <= 0 ? "Aviado" : it.supplied_quantity > 0 ? "Parcial" : "Pendente"}
+                        </td>
                         {isPharmacy ? (
                           <td className="py-2 pr-3">
                             <input

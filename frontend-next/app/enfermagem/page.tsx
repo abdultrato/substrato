@@ -116,8 +116,8 @@ export default function EnfermagemPage() {
           />
           <ActionTile
             title="Materiais e medicação"
-            description="Consultar itens no almoxarifado/farmácia quando aplicável."
-            href="/farmacia"
+            description="Criar requisição de materiais e acompanhar quantidades aviadas."
+            href="/farmacia/requisicoes-materiais"
             icon={PackageSearch}
           />
         </div>

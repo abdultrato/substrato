@@ -206,6 +206,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
             "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
         g["MEDICINA_OCUPACIONAL"]: {
             "clinico-patient": SAFE_METHODS | WRITE_METHODS,
@@ -241,6 +244,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
             "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
+            # Logística interna → requisições à farmácia
+            "pharmacy-lot": SAFE_METHODS,
+            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
         g["FARMACIA"]: {
             # Almoxarifado / estoque

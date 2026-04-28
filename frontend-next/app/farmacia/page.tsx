@@ -132,7 +132,7 @@ export default function FarmaciaPage() {
           subtitle="Escopo do módulo de almoxarifado."
         >
           <div className="text-sm text-slate-700">
-            Integração entre requisição clínica e saída de estoque não está disponível na API v1.
+            Requisições internas de materiais por setor, avio parcial/total e baixa de estoque já estão disponíveis.
           </div>
         </Card>
       </div>

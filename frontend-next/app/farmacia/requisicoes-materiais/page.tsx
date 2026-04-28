@@ -46,13 +46,40 @@ function statusLabel(s?: string) {
   }
 }
 
+function sectorLabel(s?: string) {
+  switch (s) {
+    case "LAB":
+      return "Laboratório"
+    case "ENF":
+      return "Enfermagem"
+    case "REC":
+      return "Recepção"
+    case "MED":
+      return "Medicina"
+    case "MOC":
+      return "Medicina Ocupacional"
+    case "OUT":
+      return "Outros setores"
+    default:
+      return s || "—"
+  }
+}
+
 export default function RequisicoesMateriaisPage() {
   useAuthGuard()
   const { user } = useAuth()
 
   const isPharmacy = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.FARMACIA])
   const requiredGroups = useMemo(
-    () => [GROUPS.ADMIN, GROUPS.FARMACIA, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.RECEPCAO],
+    () => [
+      GROUPS.ADMIN,
+      GROUPS.FARMACIA,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.RECEPCAO,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ],
     []
   )
 
@@ -105,7 +132,7 @@ export default function RequisicoesMateriaisPage() {
       <div className="space-y-6">
         <PageHeader
           title="Requisições de materiais"
-          subtitle={isPharmacy ? "Pendentes para avio na farmácia." : "Minhas requisições ao setor da farmácia."}
+          subtitle={isPharmacy ? "Solicitações criadas pelos outros setores para avio na farmácia." : "Requisições do seu setor ao almoxarifado/farmácia."}
           actions={
             !isPharmacy ? (
               <Link
@@ -166,6 +193,7 @@ export default function RequisicoesMateriaisPage() {
                     <th className="py-2 pr-3">Código</th>
                     <th className="py-2 pr-3">Data/hora</th>
                     <th className="py-2 pr-3">Solicitante</th>
+                    <th className="py-2 pr-3">Setor</th>
                     <th className="py-2 pr-3">Departamento</th>
                     <th className="py-2 pr-3">Estado</th>
                   </tr>
@@ -183,6 +211,7 @@ export default function RequisicoesMateriaisPage() {
                       </td>
                       <td className="py-2 pr-3">{formatDt(r.created_at)}</td>
                       <td className="py-2 pr-3">{r.created_by_name || "—"}</td>
+                      <td className="py-2 pr-3">{sectorLabel(r.sector)}</td>
                       <td className="py-2 pr-3">{r.requested_by_department || "—"}</td>
                       <td className="py-2 pr-3">{statusLabel(r.status)}</td>
                     </tr>

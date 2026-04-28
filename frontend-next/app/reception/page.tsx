@@ -11,6 +11,7 @@ import {
     Receipt,
     UserPlus,
     Users,
+    PackageSearch,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -106,6 +107,12 @@ const atalhos = [
         description: "Marcar consulta médica e (opcionalmente) emitir fatura.",
         href: "/consultas",
         icon: CalendarClock,
+    },
+    {
+        title: "Requisição de materiais",
+        description: "Solicitar consumíveis ao almoxarifado/farmácia e acompanhar avio.",
+        href: "/farmacia/requisicoes-materiais",
+        icon: PackageSearch,
     },
 ]
 

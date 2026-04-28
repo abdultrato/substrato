@@ -94,6 +94,8 @@ class MaterialRequisitionSerializer(serializers.ModelSerializer):
     items = MaterialRequisitionItemSerializer(many=True, read_only=True)
     items_input = MaterialRequisitionItemWriteSerializer(many=True, write_only=True, required=True)
     created_by_name = serializers.SerializerMethodField()
+    sector_label = serializers.SerializerMethodField()
+    status_label = serializers.SerializerMethodField()
 
     def get_created_by_name(self, obj):
         u = getattr(obj, "created_by", None)
@@ -101,6 +103,18 @@ class MaterialRequisitionSerializer(serializers.ModelSerializer):
             return "-"
         name = f"{getattr(u, 'first_name', '')} {getattr(u, 'last_name', '')}".strip()
         return name or getattr(u, "username", "") or str(getattr(u, "id", ""))
+
+    def get_sector_label(self, obj):
+        try:
+            return obj.get_sector_display()
+        except Exception:
+            return obj.sector
+
+    def get_status_label(self, obj):
+        try:
+            return obj.get_status_display()
+        except Exception:
+            return obj.status
 
     class Meta:
         model = MaterialRequisition

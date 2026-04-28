@@ -8,6 +8,7 @@ import {
   FileDown,
   ListChecks,
   Shield,
+  PackageSearch,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -186,6 +187,12 @@ export default function LaboratorioPage() {
             description="Emita o PDF institucional (somente resultados validados)."
             href="/laboratory/requests"
             icon={FileDown}
+          />
+          <ActionTile
+            title="Requisição de materiais"
+            description="Solicite consumíveis ao almoxarifado/farmácia e acompanhe o avio."
+            href="/farmacia/requisicoes-materiais"
+            icon={PackageSearch}
           />
         </div>
 

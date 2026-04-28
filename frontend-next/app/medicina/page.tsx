@@ -12,6 +12,7 @@ import {
   Baby,
   Scissors,
   ImagePlus,
+  Pill,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -140,6 +141,12 @@ export default function MedicinaPage() {
             description="Anexar laudos e imagens por exame médico."
             href="/medicina/medical-results"
             icon={ImagePlus}
+          />
+          <ActionTile
+            title="Requisição de materiais"
+            description="Solicitar insumos médico-cirúrgicos à farmácia."
+            href="/farmacia/requisicoes-materiais"
+            icon={Pill}
           />
         </div>
 

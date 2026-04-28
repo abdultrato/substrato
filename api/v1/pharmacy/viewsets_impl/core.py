@@ -211,14 +211,35 @@ def _is_pharmacy_user(user) -> bool:
     return _normalize(RBAC_GROUPS["FARMACIA"]) in groups or _normalize(RBAC_GROUPS["ADMIN"]) in groups
 
 
-def _infer_sector_from_user(user) -> str | None:
+def _requester_sectors_from_user(user) -> set[str]:
     groups = _user_groups(user)
+    sectors: set[str] = set()
     if _normalize(RBAC_GROUPS["LABORATORIO"]) in groups:
-        return RequestingSector.LABORATORIO
+        sectors.add(RequestingSector.LABORATORIO)
     if _normalize(RBAC_GROUPS["ENFERMAGEM"]) in groups:
-        return RequestingSector.ENFERMAGEM
+        sectors.add(RequestingSector.ENFERMAGEM)
     if _normalize(RBAC_GROUPS["RECEPCAO"]) in groups:
-        return RequestingSector.RECEPCAO
+        sectors.add(RequestingSector.RECEPCAO)
+    if _normalize(RBAC_GROUPS["MEDICINA"]) in groups:
+        sectors.add(RequestingSector.MEDICINA)
+    if _normalize(RBAC_GROUPS["MEDICINA_OCUPACIONAL"]) in groups:
+        sectors.add(RequestingSector.MEDICINA_OCUPACIONAL)
+    return sectors
+
+
+def _infer_sector_from_user(user) -> str | None:
+    sectors = _requester_sectors_from_user(user)
+    # Ordem de precedência para utilizadores com múltiplos perfis.
+    order = [
+        RequestingSector.LABORATORIO,
+        RequestingSector.ENFERMAGEM,
+        RequestingSector.RECEPCAO,
+        RequestingSector.MEDICINA,
+        RequestingSector.MEDICINA_OCUPACIONAL,
+    ]
+    for sector in order:
+        if sector in sectors:
+            return sector
     return None
 
 
@@ -256,14 +277,23 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             return qs
         if not user or not getattr(user, "is_authenticated", False):
             return qs.none()
+        requester_sectors = _requester_sectors_from_user(user)
+        if requester_sectors:
+            return qs.filter(sector__in=list(requester_sectors))
         return qs.filter(created_by=user)
 
     def perform_create(self, serializer):
         user = getattr(self.request, "user", None)
 
         sector = _infer_sector_from_user(user)
-        if not sector and not getattr(user, "is_superuser", False):
-            raise ValidationError("Não foi possível inferir o setor do utilizador para criar a requisição.")
+        if not sector:
+            if getattr(user, "is_superuser", False):
+                sector = RequestingSector.OUTROS
+            else:
+                raise ValidationError(
+                    "Este perfil não pode criar requisição de material. "
+                    "A criação deve ser feita por setores solicitantes."
+                )
 
         department = ""
         try:
@@ -272,7 +302,7 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             department = ""
 
         serializer.save(
-            sector=sector or serializer.validated_data.get("sector") or RequestingSector.RECEPCAO,
+            sector=sector,
             requested_by_department=department,
             status=MaterialRequisitionStatus.PENDING,
         )
@@ -325,7 +355,14 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 if qty > remaining:
                     raise ValidationError({"quantity": f"Quantidade maior que o solicitado (item {item.id})."})
                 if qty > available:
-                    raise ValidationError({"quantity": f"Estoque insuficiente (item {item.id}). Disponível: {available}."})
+                    raise ValidationError(
+                        {
+                            "quantity": (
+                                f"Não é possível aviar {qty} unidade(s) do item {item.id}; "
+                                f"estoque disponível: {available}."
+                            )
+                        }
+                    )
 
                 InventoryMovement.objects.create(
                     tenant=item.tenant,
@@ -404,6 +441,9 @@ class MaterialRequisitionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
             return qs
         if not user or not getattr(user, "is_authenticated", False):
             return qs.none()
+        requester_sectors = _requester_sectors_from_user(user)
+        if requester_sectors:
+            return qs.filter(requisition__sector__in=list(requester_sectors))
         return qs.filter(requisition__created_by=user)
 
 

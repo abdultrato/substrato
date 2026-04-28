@@ -34,7 +34,14 @@ export default function NovaRequisicaoMateriaisPage() {
   const router = useRouter()
 
   const requiredGroups = useMemo(
-    () => [GROUPS.ADMIN, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.RECEPCAO],
+    () => [
+      GROUPS.ADMIN,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.RECEPCAO,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ],
     []
   )
 
@@ -120,7 +127,7 @@ export default function NovaRequisicaoMateriaisPage() {
       <div className="space-y-6">
         <PageHeader
           title="Nova requisição de materiais"
-          subtitle="Solicite um material ao setor da farmácia."
+          subtitle="Informe o material e a quantidade para solicitar ao setor da farmácia."
           actions={
             <Link
               href="/farmacia/requisicoes-materiais"
@@ -139,7 +146,7 @@ export default function NovaRequisicaoMateriaisPage() {
 
         <Card
           title="Itens"
-          subtitle="Selecione um lote com estoque disponível e a quantidade desejada."
+          subtitle="Selecione o material (lote) e a quantidade desejada."
         >
           {loadingLots ? (
             <div className="text-sm text-[var(--gray-600)]">Carregando lotes disponíveis…</div>
