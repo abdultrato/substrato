@@ -3,7 +3,7 @@
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
-from apps.surgery.models.surgery import Surgery
+from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 
 CORE_READ_ONLY_FIELDS = (
@@ -21,7 +21,7 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class SurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     surgeon_name = serializers.SerializerMethodField(method_name="get_surgeon_name")
     procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
@@ -86,8 +86,25 @@ class SurgicalProcedureSerializer(serializers.ModelSerializer):
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
+class SurgerySerializer(BaseSurgerySerializer):
+    class Meta(BaseSurgerySerializer.Meta):
+        model = Surgery
+
+
+class SmallSurgerySerializer(BaseSurgerySerializer):
+    class Meta(BaseSurgerySerializer.Meta):
+        model = SmallSurgery
+
+
+class LargeSurgerySerializer(BaseSurgerySerializer):
+    class Meta(BaseSurgerySerializer.Meta):
+        model = LargeSurgery
+
+
 SERIALIZER_MAP = {
     "surgery": SurgerySerializer,
+    "pequenacirurgia": SmallSurgerySerializer,
+    "grandecirurgia": LargeSurgerySerializer,
     "procedimentocirurgico": SurgicalProcedureSerializer,
 }
 

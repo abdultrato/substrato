@@ -1,6 +1,9 @@
 """Facade module for surgery viewsets."""
 
 from .viewsets_impl import (
+    BaseSurgeryViewSet,
+    LargeSurgeryViewSet,
+    SmallSurgeryViewSet,
     VIEWSET_MAP,
     SurgeryViewSet,
     SurgicalProcedureViewSet,
@@ -8,8 +11,9 @@ from .viewsets_impl import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "BaseSurgeryViewSet",
     "SurgeryViewSet",
-    "SurgeryViewSet",
-    "SurgicalProcedureViewSet",
+    "SmallSurgeryViewSet",
+    "LargeSurgeryViewSet",
     "SurgicalProcedureViewSet",
 ]

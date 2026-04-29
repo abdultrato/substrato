@@ -1353,6 +1353,7 @@ class Command(BaseCommand):
                 applies_vat_by_default=True,
                 scheduled_for=timezone.now() - timedelta(days=random.randint(1, 540)),
                 status=Surgery.Status.COMPLETED if idx % 4 else Surgery.Status.SCHEDULED,
+                surgery_size=Surgery.Size.SMALL if idx % 2 else Surgery.Size.LARGE,
             )
 
             with suppress(Exception):

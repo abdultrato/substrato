@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef } from "react"
@@ -139,10 +140,10 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             return () => window.cancelIdleCallback(idleId)
         }
 
-        const timerId = window.setTimeout(() => {
+        const timerId = setTimeout(() => {
             for (const href of priority) prefetchRoute(href)
         }, 220)
-        return () => window.clearTimeout(timerId)
+        return () => clearTimeout(timerId)
     }, [prefetchRoute, visibleItems])
 
     const menu = (
@@ -154,9 +155,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                     className="group flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title="Ir para o dashboard"
                 >
-                    <img
+                    <Image
                         src="/static/img/logo.png"
                         alt="Substrato"
+                        width={36}
+                        height={36}
                         className="h-9 w-9 rounded-xl object-contain p-1 shadow-sm transition-transform group-hover:scale-105"
                         style={{ backgroundColor: "#fff" }}
                     />

@@ -9,21 +9,36 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.billing.models.invoice import Invoice
-from apps.surgery.models.surgery import Surgery
+from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 
-from ..filters import SurgeryFilter, SurgicalProcedureFilter
-from ..serializers import SurgerySerializer, SurgicalProcedureSerializer
+from ..filters import LargeSurgeryFilter, SmallSurgeryFilter, SurgeryFilter, SurgicalProcedureFilter
+from ..serializers import (
+    LargeSurgerySerializer,
+    SmallSurgerySerializer,
+    SurgerySerializer,
+    SurgicalProcedureSerializer,
+)
 
 
-class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Surgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
-    serializer_class = SurgerySerializer
-    filterset_class = SurgeryFilter
+class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    fixed_surgery_size: str | None = None
     permission_classes = [IsAuthenticated]
-    search_fields = ["custom_id", "procedure", "patient__name", "surgeon__username"]
-    ordering_fields = ["scheduled_for", "created_at", "status"]
+    search_fields = ["custom_id", "procedure", "patient__name", "surgeon__username", "surgery_size"]
+    ordering_fields = ["scheduled_for", "created_at", "status", "surgery_size"]
     ordering = ["-scheduled_for", "-created_at"]
+
+    def perform_create(self, serializer):
+        if self.fixed_surgery_size:
+            serializer.save(surgery_size=self.fixed_surgery_size)
+            return
+        serializer.save()
+
+    def perform_update(self, serializer):
+        if self.fixed_surgery_size:
+            serializer.save(surgery_size=self.fixed_surgery_size)
+            return
+        serializer.save()
 
     @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
     def create_invoice(self, request, pk=None):
@@ -62,6 +77,26 @@ class SurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         )
 
 
+class SurgeryViewSet(BaseSurgeryViewSet):
+    queryset = Surgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    serializer_class = SurgerySerializer
+    filterset_class = SurgeryFilter
+
+
+class SmallSurgeryViewSet(BaseSurgeryViewSet):
+    queryset = SmallSurgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    serializer_class = SmallSurgerySerializer
+    filterset_class = SmallSurgeryFilter
+    fixed_surgery_size = Surgery.Size.SMALL
+
+
+class LargeSurgeryViewSet(BaseSurgeryViewSet):
+    queryset = LargeSurgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    serializer_class = LargeSurgerySerializer
+    filterset_class = LargeSurgeryFilter
+    fixed_surgery_size = Surgery.Size.LARGE
+
+
 class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SurgicalProcedure.objects.all()
     serializer_class = SurgicalProcedureSerializer
@@ -74,12 +109,17 @@ class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
 
 VIEWSET_MAP = {
     "surgery": SurgeryViewSet,
+    "pequenacirurgia": SmallSurgeryViewSet,
+    "grandecirurgia": LargeSurgeryViewSet,
     "procedimentocirurgico": SurgicalProcedureViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
+    "BaseSurgeryViewSet",
     "SurgeryViewSet",
+    "SmallSurgeryViewSet",
+    "LargeSurgeryViewSet",
     "SurgicalProcedureViewSet",
 ]
 

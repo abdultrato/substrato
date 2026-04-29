@@ -53,6 +53,32 @@ describe("modules catalog discovery", () => {
     expect(lot?.resource.adminListHref).toBe("/admin/pharmacy/lot/")
   })
 
+  it("keeps bloodbank admin shortcuts available in static catalog", () => {
+    const donation = findModuleResource("banco_sangue", "doacao", MODULES)
+    const maintenance = findModuleResource("banco_sangue", "manutencaoarmazenamento", MODULES)
+
+    expect(donation?.resource.adminListHref).toBe("/admin/bloodbank/blooddonation/")
+    expect(maintenance?.resource.adminListHref).toBe("/admin/bloodbank/bloodstoragemaintenance/")
+  })
+
+  it("infers bloodbank admin path when route comes from backend discovery", () => {
+    const discovered = discoverModulesFromApiRoot({
+      "bloodbank/transfusao": "/api/v1/bloodbank/transfusao/",
+    })
+    const merged = mergeModules(MODULES, discovered)
+    const transfusion = findModuleResource("banco_sangue", "transfusao", merged)
+
+    expect(transfusion?.resource.adminListHref).toBe("/admin/bloodbank/bloodtransfusion/")
+  })
+
+  it("keeps segregated surgery admin shortcuts available", () => {
+    const small = findModuleResource("cirurgia", "pequenacirurgia", MODULES)
+    const large = findModuleResource("cirurgia", "grandecirurgia", MODULES)
+
+    expect(small?.resource.adminListHref).toBe("/admin/surgery/smallsurgery/")
+    expect(large?.resource.adminListHref).toBe("/admin/surgery/largesurgery/")
+  })
+
   it("hides admin shortcut when backend has no registered model admin", () => {
     const invoiceItem = findModuleResource("faturamento", "faturaitem", MODULES)
     expect(invoiceItem?.resource.adminListHref).toBeUndefined()

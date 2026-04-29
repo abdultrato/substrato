@@ -8,21 +8,40 @@ from django.db import models
 from django.utils import timezone
 
 from core.models.base import NoNameCoreModel
+from core.models.managers import ManagerAtivo
 from infrastructure.orm.fields.money_field import MoneyField
 
 User = settings.AUTH_USER_MODEL
+
+
+class SurgeryTypeManager(ManagerAtivo):
+    surgery_size: str | None = None
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.surgery_size:
+            queryset = queryset.filter(surgery_size=self.surgery_size)
+        return queryset
 
 
 class Surgery(NoNameCoreModel):
     """Registro de cirurgia (MVP) com agendamento, status e custos estimados."""
 
     prefix = "CIR"
+    LEGACY_FIELD_ALIASES = {
+        "porte_cirurgia": "surgery_size",
+        "tipo_cirurgia": "surgery_size",
+    }
 
     class Status(models.TextChoices):
         SCHEDULED = "AGENDADA", "Agendada"
         IN_PROGRESS = "EM_ANDAMENTO", "Em andamento"
         COMPLETED = "CONCLUIDA", "Concluída"
         CANCELED = "CANCELADA", "Cancelada"
+
+    class Size(models.TextChoices):
+        SMALL = "PEQUENA", "Pequena"
+        LARGE = "GRANDE", "Grande"
 
     patient = models.ForeignKey(
 
@@ -95,6 +114,14 @@ class Surgery(NoNameCoreModel):
         default=Status.SCHEDULED,
         db_index=True,
     )
+    surgery_size = models.CharField(
+        db_column="surgery_size",
+        verbose_name="Porte da cirurgia",
+        max_length=10,
+        choices=Size.choices,
+        default=Size.SMALL,
+        db_index=True,
+    )
 
     completed_at = models.DateTimeField(
 
@@ -114,6 +141,7 @@ class Surgery(NoNameCoreModel):
             models.Index(fields=["tenant", "patient", "scheduled_for"]),
             models.Index(fields=["tenant", "surgeon", "scheduled_for"]),
             models.Index(fields=["tenant", "status", "scheduled_for"]),
+            models.Index(fields=["tenant", "surgery_size", "scheduled_for"]),
         ]
 
     def clean(self):
@@ -141,3 +169,37 @@ class Surgery(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.custom_id or f"Cirurgia {self.pk}"
+
+
+class SmallSurgeryManager(SurgeryTypeManager):
+    surgery_size = Surgery.Size.SMALL
+
+
+class LargeSurgeryManager(SurgeryTypeManager):
+    surgery_size = Surgery.Size.LARGE
+
+
+class SmallSurgery(Surgery):
+    objects = SmallSurgeryManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Pequena cirurgia"
+        verbose_name_plural = "Pequenas cirurgias"
+
+    def save(self, *args, **kwargs):
+        self.surgery_size = Surgery.Size.SMALL
+        return super().save(*args, **kwargs)
+
+
+class LargeSurgery(Surgery):
+    objects = LargeSurgeryManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Grande cirurgia"
+        verbose_name_plural = "Grandes cirurgias"
+
+    def save(self, *args, **kwargs):
+        self.surgery_size = Surgery.Size.LARGE
+        return super().save(*args, **kwargs)

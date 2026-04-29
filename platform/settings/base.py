@@ -221,6 +221,13 @@ JAZZMIN_SETTINGS = {
         "farmacia.movimentoestoque": "fas fa-exchange-alt",
         "farmacia.venda": "fas fa-cash-register",
         "farmacia.itemvenda": "fas fa-receipt",
+        "bloodbank": "fas fa-tint",
+        "bloodbank.blooddonation": "fas fa-hand-holding-medical",
+        "bloodbank.bloodunit": "fas fa-box-open",
+        "bloodbank.bloodtransfusion": "fas fa-heartbeat",
+        "bloodbank.bloodstorage": "fas fa-warehouse",
+        "bloodbank.bloodstockmovement": "fas fa-exchange-alt",
+        "bloodbank.bloodstoragemaintenance": "fas fa-tools",
         "faturamento": "fas fa-file-invoice-dollar",
         "faturamento.fatura": "fas fa-file-invoice-dollar",
         "faturamento.faturaitem": "fas fa-list-ul",
@@ -323,6 +330,13 @@ JAZZMIN_SETTINGS = {
         "farmacia.movimentoestoque",
         "farmacia.venda",
         "farmacia.itemvenda",
+        "bloodbank",
+        "bloodbank.blooddonation",
+        "bloodbank.bloodunit",
+        "bloodbank.bloodtransfusion",
+        "bloodbank.bloodstorage",
+        "bloodbank.bloodstockmovement",
+        "bloodbank.bloodstoragemaintenance",
         # Financeiro
         "faturamento",
         "faturamento.fatura",
@@ -422,6 +436,199 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-layer-group",
     "default_icon_children": "far fa-dot-circle",
 }
+
+# ---------------------------------------------------------
+# Jazzmin icons: compatibilidade de chaves legado -> canónico
+# ---------------------------------------------------------
+# Em várias apps, os labels/model_names reais (admin) diferem dos nomes legados
+# usados historicamente nesta configuração. Para garantir que os ícones apareçam
+# no menu lateral e no dashboard, mapeamos aliases e aplicamos fallback.
+_JAZZMIN_ICON_ALIASES = {
+    # App-level
+    "clinical": "clinico",
+    # Identity
+    "identidade.user": "identidade.usuario",
+    # Tenants
+    "inquilinos.tenant": "inquilinos.inquilino",
+    "inquilinos.tenantconfiguration": "inquilinos.configuracaoinquilino",
+    # Clinical
+    "clinical.patient": "clinico.paciente",
+    "clinical.labexam": "clinico.exame",
+    "clinical.labexamfield": "clinico.examecampo",
+    "clinical.medicalexam": "clinico.examemedico",
+    "clinical.labrequest": "clinico.requisicaoanalise",
+    "clinical.result": "clinico.resultado",
+    "clinical.sample": "clinico.resultadoitem",
+    # Medical records
+    "prontuario.medicalrecordentry": "prontuario.registroprontuario",
+    "prontuario.prescriptionitem": "prontuario.prescricaoitem",
+    # Consultations
+    "consultas.medicalconsultation": "consultas.consultamedica",
+    "consultas.consultationspecialty": "consultas.especialidadeconsulta",
+    "consultas.holiday": "consultas.feriado",
+    # Maternity
+    "maternidade.pregnancy": "maternidade.gestacao",
+    # Nursing
+    "enfermagem.nursingrecord": "enfermagem.registroenfermagem",
+    "enfermagem.nursingvitalsign": "enfermagem.sinalvitalenfermagem",
+    "enfermagem.procedure": "enfermagem.procedimento",
+    "enfermagem.procedurecatalog": "enfermagem.procedimentocatalogo",
+    "enfermagem.procedurecatalogmaterial": "enfermagem.procedimentocatalogomaterial",
+    "enfermagem.procedureitem": "enfermagem.procedimentoitem",
+    "enfermagem.procedureitemvalue": "enfermagem.procedimentoitemvalor",
+    "enfermagem.procedurematerial": "enfermagem.procedimentomaterial",
+    "enfermagem.procedurematerialvalue": "enfermagem.procedimentomaterialvalor",
+    # Pharmacy
+    "farmacia.inventorymovement": "farmacia.movimentoestoque",
+    "farmacia.parentcategory": "farmacia.categoriapai",
+    "farmacia.productcategory": "farmacia.categoriaproduto",
+    "farmacia.product": "farmacia.produto",
+    "farmacia.sale": "farmacia.venda",
+    "farmacia.saleitem": "farmacia.itemvenda",
+    # Billing
+    "faturamento.invoice": "faturamento.fatura",
+    # Accounting
+    "contabilidade.account": "contabilidade.conta",
+    "contabilidade.legacyentry": "contabilidade.lancamento",
+    "contabilidade.legacymovement": "contabilidade.movimento",
+    "contabilidade.financialreconciliation": "contabilidade.conciliacaofinanceira",
+    "contabilidade.accountbalance": "contabilidade.saldoconta",
+    # External entities
+    "entidades.company": "entidades.empresa",
+    # Insurer
+    "seguradora.insurer": "seguradora.seguradora",
+    "seguradora.coverageplan": "seguradora.planocobertura",
+    "seguradora.procedureauthorization": "seguradora.autorizacaoprocedimento",
+    # Notifications
+    "notificacoes.notification": "notificacoes.notificacao",
+    "notificacoes.notificationtemplate": "notificacoes.templatenotificacao",
+    "notificacoes.deliverylog": "notificacoes.logenvio",
+    # Monitoring
+    "monitoramento.systemerror": "monitoramento.errosistema",
+    # Surgery
+    "cirurgia.surgery": "cirurgia.cirurgia",
+    "cirurgia.surgicalprocedure": "cirurgia.procedimentocirurgico",
+    # Equipment related apps
+    "inspecoes.dailyinspection": "equipamentos.inspecaodiaria",
+    "manutencoes.maintenance": "equipamentos.manutencao",
+    # Audit activities
+    "auditoria_atividades.useractivity": "audit_activities.atividadeusuario",
+}
+
+_JAZZMIN_ICON_DEFAULTS = {
+    # App-level (dashboard/sidebar groups)
+    "clinical": "fas fa-hospital-user",
+    "identidade": "fas fa-user-shield",
+    "inquilinos": "fas fa-city",
+    "consultas": "fas fa-stethoscope",
+    "prontuario": "fas fa-notes-medical",
+    "maternidade": "fas fa-baby",
+    "enfermagem": "fas fa-user-nurse",
+    "farmacia": "fas fa-prescription-bottle-alt",
+    "bloodbank": "fas fa-tint",
+    "faturamento": "fas fa-file-invoice-dollar",
+    "contabilidade": "fas fa-calculator",
+    "entidades": "fas fa-building",
+    "seguradora": "fas fa-shield-alt",
+    "notificacoes": "fas fa-bell",
+    "monitoramento": "fas fa-heartbeat",
+    "cirurgia": "fas fa-procedures",
+    "equipamentos": "fas fa-tools",
+    "inspecoes": "fas fa-clipboard-check",
+    "manutencoes": "fas fa-wrench",
+    "ocorrencias": "fas fa-exclamation-triangle",
+    "integracoes_equipamentos": "fas fa-microchip",
+    "auditoria_atividades": "fas fa-clipboard-list",
+    "recursos_humanos": "fas fa-users",
+    # Canonical model-level keys (admin registry)
+    "clinical.patient": "fas fa-user-injured",
+    "clinical.labexam": "fas fa-vial",
+    "clinical.labexamfield": "fas fa-sliders-h",
+    "clinical.medicalexam": "fas fa-stethoscope",
+    "clinical.labrequest": "fas fa-file-medical-alt",
+    "clinical.result": "fas fa-notes-medical",
+    "clinical.sample": "fas fa-vials",
+    "identidade.user": "fas fa-user",
+    "inquilinos.tenant": "fas fa-city",
+    "inquilinos.tenantconfiguration": "fas fa-cogs",
+    "consultas.medicalconsultation": "fas fa-calendar-check",
+    "consultas.consultationspecialty": "fas fa-sitemap",
+    "consultas.holiday": "fas fa-calendar-day",
+    "prontuario.medicalrecordentry": "fas fa-book-medical",
+    "prontuario.prescriptionitem": "fas fa-pills",
+    "maternidade.pregnancy": "fas fa-baby",
+    "enfermagem.nursingrecord": "fas fa-notes-medical",
+    "enfermagem.nursingvitalsign": "fas fa-heartbeat",
+    "enfermagem.procedure": "fas fa-syringe",
+    "enfermagem.procedurecatalog": "fas fa-th-list",
+    "enfermagem.procedurecatalogmaterial": "fas fa-boxes",
+    "enfermagem.procedureitem": "fas fa-list",
+    "enfermagem.procedureitemvalue": "fas fa-tag",
+    "enfermagem.procedurematerial": "fas fa-box",
+    "enfermagem.procedurematerialvalue": "fas fa-tag",
+    "farmacia.parentcategory": "fas fa-sitemap",
+    "farmacia.productcategory": "fas fa-tags",
+    "farmacia.product": "fas fa-pills",
+    "farmacia.lot": "fas fa-barcode",
+    "farmacia.inventorymovement": "fas fa-exchange-alt",
+    "farmacia.sale": "fas fa-cash-register",
+    "farmacia.saleitem": "fas fa-receipt",
+    "farmacia.materialrequisition": "fas fa-clipboard-list",
+    "bloodbank.blooddonation": "fas fa-hand-holding-medical",
+    "bloodbank.bloodunit": "fas fa-box-open",
+    "bloodbank.bloodtransfusion": "fas fa-heartbeat",
+    "bloodbank.bloodstorage": "fas fa-warehouse",
+    "bloodbank.bloodstockmovement": "fas fa-exchange-alt",
+    "bloodbank.bloodstoragemaintenance": "fas fa-tools",
+    "faturamento.invoice": "fas fa-file-invoice-dollar",
+    "contabilidade.account": "fas fa-wallet",
+    "contabilidade.accountbalance": "fas fa-chart-pie",
+    "contabilidade.financialreconciliation": "fas fa-balance-scale",
+    "contabilidade.legacyentry": "fas fa-pen-fancy",
+    "contabilidade.legacymovement": "fas fa-arrows-alt-h",
+    "contabilidade.ledgerentry": "fas fa-book",
+    "entidades.company": "fas fa-industry",
+    "seguradora.insurer": "fas fa-shield-alt",
+    "seguradora.coverageplan": "fas fa-clipboard-list",
+    "seguradora.procedureauthorization": "fas fa-stamp",
+    "notificacoes.notification": "fas fa-paper-plane",
+    "notificacoes.notificationtemplate": "fas fa-file-alt",
+    "notificacoes.deliverylog": "fas fa-clipboard-check",
+    "monitoramento.systemerror": "fas fa-bug",
+    "cirurgia.surgery": "fas fa-procedures",
+    "cirurgia.surgicalprocedure": "fas fa-syringe",
+    "equipamentos.equipment": "fas fa-tools",
+    "inspecoes.dailyinspection": "fas fa-clipboard-check",
+    "manutencoes.maintenance": "fas fa-wrench",
+    "ocorrencias.incident": "fas fa-exclamation-triangle",
+    "integracoes_equipamentos.integrationequipment": "fas fa-microscope",
+    "integracoes_equipamentos.integrationcredential": "fas fa-key",
+    "integracoes_equipamentos.integrationdocument": "fas fa-file-alt",
+    "integracoes_equipamentos.integrationanalytemapping": "fas fa-project-diagram",
+    "integracoes_equipamentos.integrationmessage": "fas fa-envelope-open-text",
+    "integracoes_equipamentos.integrationorder": "fas fa-tasks",
+    "integracoes_equipamentos.integrationrouting": "fas fa-route",
+    "auditoria_atividades.useractivity": "fas fa-user-clock",
+    "recursos_humanos.employee": "fas fa-user-tie",
+    "recursos_humanos.jobtitle": "fas fa-briefcase",
+    "recursos_humanos.familydependent": "fas fa-user-friends",
+    "recursos_humanos.absence": "fas fa-user-times",
+    "recursos_humanos.vacation": "fas fa-umbrella-beach",
+    "recursos_humanos.payroll": "fas fa-file-invoice",
+    "recursos_humanos.termination": "fas fa-user-slash",
+    "recursos_humanos.overtime": "fas fa-clock",
+    "recursos_humanos.workschedule": "fas fa-calendar-alt",
+    "recursos_humanos.disciplinaryprocess": "fas fa-gavel",
+    "recursos_humanos.profession": "fas fa-user-md",
+}
+
+_jazzmin_icons = JAZZMIN_SETTINGS.setdefault("icons", {})
+for _canonical_key, _legacy_key in _JAZZMIN_ICON_ALIASES.items():
+    if _canonical_key not in _jazzmin_icons and _legacy_key in _jazzmin_icons:
+        _jazzmin_icons[_canonical_key] = _jazzmin_icons[_legacy_key]
+
+for _icon_key, _icon_value in _JAZZMIN_ICON_DEFAULTS.items():
+    _jazzmin_icons.setdefault(_icon_key, _icon_value)
 
 # ---------------------------------------------------------
 # Compat: filtro legacy 'length_is' (Django 5 removeu)

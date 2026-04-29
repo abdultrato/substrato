@@ -596,6 +596,7 @@ class Command(BaseCommand):
         return obj
 
     def _create_surgery(self, suffix: str, state: SmokeState):
+        index = self._next_counter(Surgery)
         obj = Surgery.objects.create(
             patient=state.patient,
             surgeon=state.surgeon_user,
@@ -604,7 +605,8 @@ class Command(BaseCommand):
             estimated_price=Decimal("12000.00"),
             vat_percentage=Decimal("16.00"),
             applies_vat_by_default=True,
-            scheduled_for=timezone.now() + timedelta(days=self._next_counter(Surgery)),
+            scheduled_for=timezone.now() + timedelta(days=index),
+            surgery_size=Surgery.Size.SMALL if index % 2 else Surgery.Size.LARGE,
         )
         obj.procedures.add(state.keep["surgical_procedure"])
         return obj

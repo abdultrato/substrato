@@ -15,6 +15,7 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -172,6 +173,10 @@ def test_generate_results_pdf_with_validated_item():
         address_street="Rua PDF",
         birth_date=date(1992, 1, 1),
     )
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+    )
 
     exam = LabExam.objects.create(
         tenant=tenant,
@@ -180,6 +185,7 @@ def test_generate_results_pdf_with_validated_item():
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
         turnaround_hours=2,
+        sample_type=sample,
     )
     field = LabExamField.objects.create(
         tenant=tenant,

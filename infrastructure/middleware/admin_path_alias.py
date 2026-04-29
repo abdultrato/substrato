@@ -128,6 +128,7 @@ API_PREFIX_ALIASES: Dict[str, str] = _with_hyphen_aliases(
         "human-resources": "human_resources",
         "medical-records": "medical_records",
         "equipment-integrations": "equipment_integrations",
+        "cirurgia": "surgery",
     }
 )
 
@@ -171,6 +172,7 @@ API_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
         "procedure-catalog": "procedimentocatalogo",
         "procedure-material-catalog": "procedimentocatalogomaterial",
         "surgical-procedure": "procedimentocirurgico",
+        "cirurgia": "surgery",
         "procedure-item": "procedimentoitem",
         "procedure-item-price": "procedimentoitemvalor",
         "procedure-material": "procedimentomaterial",

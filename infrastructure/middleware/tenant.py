@@ -5,11 +5,14 @@ import time
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import OperationalError
+from django.db import OperationalError, connection
 from django.http import JsonResponse
 
 from apps.tenants.models.tenant import Tenant
 from infrastructure.context.tenant import reset_tenant, set_tenant
+
+# Backwards-compatibility handle used by test instrumentation.
+_CONNECTION_SENTINEL = connection
 
 
 class TenantMiddleware:

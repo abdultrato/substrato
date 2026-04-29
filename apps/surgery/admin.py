@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models.surgery import Surgery
+from .models.surgery import LargeSurgery, SmallSurgery, Surgery
 from .models.surgical_procedure import SurgicalProcedure
 
 
@@ -14,9 +14,8 @@ class CoreAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-@admin.register(Surgery)
-class CirurgiaAdmin(CoreAdmin):
-    """Administra cirurgias (agendamento, paciente, cirurgião, status)."""
+class BaseCirurgiaAdmin(CoreAdmin):
+    """Base compartilhada para pequenas e grandes cirurgias."""
     list_display = (
         "scheduled_for",
         "patient",
@@ -24,9 +23,10 @@ class CirurgiaAdmin(CoreAdmin):
         "procedures_lista",
         "estimated_price",
         "vat_percentage",
+        "surgery_size",
         "status",
     )
-    list_filter = ("status",)
+    list_filter = ("surgery_size", "status")
     search_fields = ("procedure", "patient__name", "surgeon__username", "procedures__name")
     ordering = ("-scheduled_for", "-created_at")
     filter_horizontal = ("procedures",)
@@ -42,6 +42,21 @@ class CirurgiaAdmin(CoreAdmin):
         return ", ".join(nomes) if nomes else "-"
 
     procedures_lista.short_description = "Procedimentos"
+
+
+@admin.register(SmallSurgery)
+class PequenaCirurgiaAdmin(BaseCirurgiaAdmin):
+    """Administra pequenas cirurgias."""
+
+
+@admin.register(LargeSurgery)
+class GrandeCirurgiaAdmin(BaseCirurgiaAdmin):
+    """Administra grandes cirurgias."""
+
+
+@admin.register(Surgery)
+class CirurgiaAdmin(BaseCirurgiaAdmin):
+    """Administra todas as cirurgias (visão consolidada)."""
 
 
 @admin.register(SurgicalProcedure)

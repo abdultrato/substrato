@@ -35,7 +35,10 @@ export default function RecursoDetalhePage() {
     const [loadingData, setLoadingData] = useState(true)
     const [deleting, setDeleting] = useState(false)
     const [actionId, setActionId] = useState<number | null>(null)
-    const isCirurgia = groupKey === "cirurgia" && resourceKey === "cirurgia"
+    const cirurgiaKeys = ["cirurgia", "pequenacirurgia", "grandecirurgia"]
+    const isCirurgia =
+        canonicalModuleGroupKey(groupKey) === "cirurgia" &&
+        cirurgiaKeys.includes(resourceKey.toLocaleLowerCase())
 
     const reloadResource = useCallback(async () => {
         if (!found) return

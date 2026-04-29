@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ClipboardList, PlusCircle, Scissors, Settings } from "lucide-react"
+import { ClipboardList, Scissors, Settings } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -20,7 +20,8 @@ export default function CirurgiaPage() {
 
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
-    const [cirurgias, setCirurgias] = useState<number>(0)
+    const [pequenasCirurgias, setPequenasCirurgias] = useState<number>(0)
+    const [grandesCirurgias, setGrandesCirurgias] = useState<number>(0)
     const [procedimentos, setProcedimentos] = useState<number>(0)
 
     useEffect(() => {
@@ -30,13 +31,15 @@ export default function CirurgiaPage() {
                 setLoading(true)
                 setErro(null)
 
-                const [cirs, procs] = await Promise.all([
-                    apiFetch<any>("/cirurgia/cirurgia/"),
+                const [small, large, procs] = await Promise.all([
+                    apiFetch<any>("/cirurgia/pequenacirurgia/"),
+                    apiFetch<any>("/cirurgia/grandecirurgia/"),
                     apiFetch<any>("/cirurgia/procedimentocirurgico/"),
                 ])
 
                 if (!mounted) return
-                setCirurgias(extractTotalCount(cirs))
+                setPequenasCirurgias(extractTotalCount(small))
+                setGrandesCirurgias(extractTotalCount(large))
                 setProcedimentos(extractTotalCount(procs))
             } catch (e: any) {
                 if (!mounted) return
@@ -76,24 +79,27 @@ export default function CirurgiaPage() {
                 ) : null}
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <MetricCard label="Cirurgias" value={loading ? "..." : cirurgias} />
+                    <MetricCard label="Pequenas cirurgias" value={loading ? "..." : pequenasCirurgias} />
+                    <MetricCard label="Grandes cirurgias" value={loading ? "..." : grandesCirurgias} />
                     <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedimentos} />
-                    <MetricCard label="Em andamento" value="—" hint="Filtro por estado" />
-                    <MetricCard label="Concluídas" value="—" hint="Filtro por estado" />
+                    <MetricCard
+                        label="Total"
+                        value={loading ? "..." : pequenasCirurgias + grandesCirurgias}
+                    />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <ActionTile
-                        title="Cirurgias"
-                        description="Listar e gerir cirurgias (CRUD)."
-                        href="/cirurgia/cirurgias"
+                        title="Pequenas cirurgias"
+                        description="Listar e gerir pequenas cirurgias (CRUD)."
+                        href="/recursos/cirurgia/pequenacirurgia"
                         icon={Scissors}
                     />
                     <ActionTile
-                        title="Nova cirurgia"
-                        description="Criar um agendamento/registo."
-                        href="/recursos/cirurgia/cirurgia/novo"
-                        icon={PlusCircle}
+                        title="Grandes cirurgias"
+                        description="Listar e gerir grandes cirurgias (CRUD)."
+                        href="/recursos/cirurgia/grandecirurgia"
+                        icon={ClipboardList}
                     />
                     <ActionTile
                         title="Procedimentos cirúrgicos"
@@ -114,7 +120,7 @@ export default function CirurgiaPage() {
                     subtitle="Este é um MVP focado em agendamento e rastreabilidade."
                 >
                     <div className="text-sm text-slate-700">
-                        A modelagem suporta múltiplos procedimentos por cirurgia e estado (agendada, em andamento, concluída).
+                        A modelagem agora separa pequenas e grandes cirurgias, mantendo os mesmos campos em ambos.
                         Se precisar, adicionamos equipe, sala e checklist.
                     </div>
                 </Card>

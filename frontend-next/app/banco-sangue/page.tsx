@@ -9,6 +9,7 @@ import {
   ArrowLeftRight,
   Layers,
   HeartPulse,
+  type LucideIcon,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -30,10 +31,7 @@ export default function BancoSanguePage() {
 
   if (loading) return null
 
-  const tiles: Record<
-    string,
-    { icon: any; description: string }
-  > = {
+  const tiles: Record<string, { icon: LucideIcon; description: string }> = {
     doacao: {
       icon: Droplet,
       description: "Registrar e acompanhar doacoes e triagem.",
@@ -59,6 +57,27 @@ export default function BancoSanguePage() {
       description: "Agendar e registrar manutencoes dos armazenamentos.",
     },
   }
+
+  const eventCreateLinks = [
+    {
+      key: "movimentoestoque",
+      label: "Novo evento de movimento",
+      href: "/recursos/banco_sangue/movimentoestoque/novo",
+      description: "Entrada, saida, transferencia, reserva, liberacao, descarte e ajustes.",
+    },
+    {
+      key: "transfusao",
+      label: "Nova transfusao",
+      href: "/recursos/banco_sangue/transfusao/novo",
+      description: "Solicitacao e execucao de transfusao com validacoes clinicas.",
+    },
+    {
+      key: "manutencaoarmazenamento",
+      label: "Nova manutencao",
+      href: "/recursos/banco_sangue/manutencaoarmazenamento/novo",
+      description: "Plano preventivo/corretivo e registo de execucao tecnica.",
+    },
+  ]
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
@@ -95,6 +114,44 @@ export default function BancoSanguePage() {
               Catálogo do módulo não encontrado. Verifique `frontend-next/lib/modules.ts`.
             </div>
           )}
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900">Criacao de Eventos</h2>
+          <p className="mt-1 text-xs text-slate-600">
+            Use os atalhos abaixo para criar eventos operacionais do banco de sangue no frontend.
+          </p>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {eventCreateLinks.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="block rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-100 hover:font-semibold"
+              >
+                <div className="text-sm font-semibold">{item.label}</div>
+                <div className="mt-1 text-xs text-slate-600">{item.description}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900">Logica Operacional Exposta</h2>
+          <div className="mt-2 space-y-1 text-xs text-slate-700">
+            <p>
+              1. Na unidade, a acao <strong>Reservar</strong> chama <code>/reservar/</code> e cria um evento de estoque do tipo <code>RESERVE</code>.
+            </p>
+            <p>
+              2. A acao <strong>Liberar reserva</strong> chama <code>/liberar_reserva/</code> e registra evento <code>RELEASE</code>.
+            </p>
+            <p>
+              3. A acao <strong>Transfundir</strong> chama <code>/transfundir/</code>, cria a transfusao concluida e registra saida <code>OUTBOUND</code>.
+            </p>
+            <p>
+              4. Eventos manuais de movimentacao/manutencao seguem as mesmas validacoes do backend por tenant e regras de negocio.
+            </p>
+          </div>
         </div>
       </div>
     </AppLayout>

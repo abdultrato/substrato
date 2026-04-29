@@ -99,7 +99,7 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "enfermagem",
     label: "Enfermagem",
     resources: [
-      { key: "evolucaoenfermagem", label: "Evoluções", endpoint: "/enfermagem/evolucaoenfermagem/", adminListHref: "/admin/enfermagem/evolucaoenfermagem/" },
+      { key: "evolucaoenfermagem", label: "Evoluções", endpoint: "/enfermagem/evolucaoenfermagem/" },
       { key: "procedimento", label: "Procedimentos", endpoint: "/enfermagem/procedimento/", adminListHref: "/admin/enfermagem/procedimento/" },
       { key: "procedimentocatalogo", label: "Catálogo", endpoint: "/enfermagem/procedimentocatalogo/", adminListHref: "/admin/enfermagem/procedimentocatalogo/" },
       { key: "procedimentocatalogomaterial", label: "Materiais do Catálogo", endpoint: "/enfermagem/procedimentocatalogomaterial/", adminListHref: "/admin/enfermagem/procedimentocatalogomaterial/" },
@@ -107,7 +107,7 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "procedimentoitemvalor", label: "Valores do Item", endpoint: "/enfermagem/procedimentoitemvalor/", adminListHref: "/admin/enfermagem/procedimentoitemvalor/" },
       { key: "procedimentomaterial", label: "Materiais do Procedimento", endpoint: "/enfermagem/procedimentomaterial/", adminListHref: "/admin/enfermagem/procedimentomaterial/" },
       { key: "procedimentomaterialvalor", label: "Valores do Material", endpoint: "/enfermagem/procedimentomaterialvalor/", adminListHref: "/admin/enfermagem/procedimentomaterialvalor/" },
-      { key: "prescricaoenfermagem", label: "Prescrições", endpoint: "/enfermagem/prescricaoenfermagem/", adminListHref: "/admin/enfermagem/prescricaoenfermagem/" },
+      { key: "prescricaoenfermagem", label: "Prescrições", endpoint: "/enfermagem/prescricaoenfermagem/" },
       { key: "registroenfermagem", label: "Registros", endpoint: "/enfermagem/registroenfermagem/", adminListHref: "/admin/enfermagem/registroenfermagem/" },
       { key: "sinalvitalenfermagem", label: "Sinais Vitais", endpoint: "/enfermagem/sinalvitalenfermagem/", adminListHref: "/admin/enfermagem/sinalvitalenfermagem/" },
       { key: "enfermaria", label: "Enfermarias", endpoint: "/enfermagem/enfermaria/" },
@@ -168,8 +168,8 @@ const MODULES_BASE: ModuleGroup[] = [
     label: "Identidade",
     resources: [
       { key: "usuario", label: "Usuários", endpoint: "/identidade/usuario/", adminListHref: "/admin/identidade/usuario/" },
-      { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identidade/perfilprofissional/", adminListHref: "/admin/identidade/perfilprofissional/" },
-      { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identidade/passwordresettoken/", adminListHref: "/admin/identidade/passwordresettoken/" },
+      { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identidade/perfilprofissional/" },
+      { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identidade/passwordresettoken/" },
     ],
   },
   {
@@ -191,7 +191,9 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "cirurgia",
     label: "Cirurgia",
     resources: [
-      { key: "cirurgia", label: "Cirurgias", endpoint: "/cirurgia/cirurgia/", adminListHref: "/admin/cirurgia/cirurgia/" },
+      { key: "pequenacirurgia", label: "Pequenas Cirurgias", endpoint: "/cirurgia/pequenacirurgia/", adminListHref: "/admin/surgery/smallsurgery/" },
+      { key: "grandecirurgia", label: "Grandes Cirurgias", endpoint: "/cirurgia/grandecirurgia/", adminListHref: "/admin/surgery/largesurgery/" },
+      { key: "cirurgia", label: "Todas as Cirurgias", endpoint: "/cirurgia/cirurgia/", adminListHref: "/admin/surgery/surgery/" },
       { key: "procedimentocirurgico", label: "Procedimentos Cirúrgicos", endpoint: "/cirurgia/procedimentocirurgico/", adminListHref: "/admin/cirurgia/procedimentocirurgico/" },
     ],
   },
@@ -254,6 +256,13 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/pharmacy/movimentoestoque/": "/admin/pharmacy/inventorymovement/",
   "/pharmacy/sale/": "/admin/pharmacy/sale/",
   "/pharmacy/itemvenda/": "/admin/pharmacy/saleitem/",
+  // Bloodbank
+  "/bloodbank/doacao/": "/admin/bloodbank/blooddonation/",
+  "/bloodbank/unidade/": "/admin/bloodbank/bloodunit/",
+  "/bloodbank/transfusao/": "/admin/bloodbank/bloodtransfusion/",
+  "/bloodbank/armazenamento/": "/admin/bloodbank/bloodstorage/",
+  "/bloodbank/movimentoestoque/": "/admin/bloodbank/bloodstockmovement/",
+  "/bloodbank/manutencaoarmazenamento/": "/admin/bloodbank/bloodstoragemaintenance/",
   // Nursing
   "/enfermagem/procedimento/": "/admin/nursing/procedure/",
   "/enfermagem/procedimentocatalogo/": "/admin/nursing/procedurecatalog/",
@@ -313,8 +322,12 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   // Maternity
   "/maternity/gestacao/": "/admin/maternity/pregnancy/",
   // Surgery
+  "/cirurgia/pequenacirurgia/": "/admin/surgery/smallsurgery/",
+  "/cirurgia/grandecirurgia/": "/admin/surgery/largesurgery/",
   "/cirurgia/cirurgia/": "/admin/surgery/surgery/",
   "/cirurgia/procedimentocirurgico/": "/admin/surgery/surgicalprocedure/",
+  "/surgery/pequenacirurgia/": "/admin/surgery/smallsurgery/",
+  "/surgery/grandecirurgia/": "/admin/surgery/largesurgery/",
   "/surgery/surgery/": "/admin/surgery/surgery/",
   "/surgery/procedimentocirurgico/": "/admin/surgery/surgicalprocedure/",
   // Human resources
@@ -350,13 +363,7 @@ function applyAdminHrefOverrides(modules: ModuleGroup[]): ModuleGroup[] {
     ...group,
     resources: group.resources.map((resource) => {
       const inferred = inferAdminListHref(resource.endpoint)
-      if (!inferred) {
-        return {
-          key: resource.key,
-          label: resource.label,
-          endpoint: resource.endpoint,
-        }
-      }
+      if (!inferred) return { ...resource }
       return { ...resource, adminListHref: inferred }
     }),
   }))

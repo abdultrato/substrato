@@ -14,12 +14,54 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { apiFetch } from "@/lib/api"
 
 type CirurgiaRow = Record<string, any>
+type SurgeryScope = "small" | "large" | "all"
+
+const SCOPE_CONFIG: Record<
+    SurgeryScope,
+    { label: string; endpoint: string; resourceKey: string; adminHref: string; subtitle: string }
+> = {
+    small: {
+        label: "Pequenas",
+        endpoint: "/cirurgia/pequenacirurgia/",
+        resourceKey: "pequenacirurgia",
+        adminHref: "/admin/surgery/smallsurgery/",
+        subtitle: "Agendadas e realizadas (pequenas).",
+    },
+    large: {
+        label: "Grandes",
+        endpoint: "/cirurgia/grandecirurgia/",
+        resourceKey: "grandecirurgia",
+        adminHref: "/admin/surgery/largesurgery/",
+        subtitle: "Agendadas e realizadas (grandes).",
+    },
+    all: {
+        label: "Todas",
+        endpoint: "/cirurgia/cirurgia/",
+        resourceKey: "cirurgia",
+        adminHref: "/admin/surgery/surgery/",
+        subtitle: "Agendadas e realizadas (visão consolidada).",
+    },
+}
 
 function fmtDateTime(value: any): string {
     if (!value) return "-"
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return String(value)
     return d.toLocaleString()
+}
+
+function resolveResourceKey(row: CirurgiaRow): string {
+    const size = String(row.porte_cirurgia || row.surgery_size || "").toUpperCase()
+    if (size === "GRANDE") return "grandecirurgia"
+    if (size === "PEQUENA") return "pequenacirurgia"
+    return "cirurgia"
+}
+
+function fmtSurgerySize(row: CirurgiaRow): string {
+    const size = String(row.porte_cirurgia || row.surgery_size || "").toUpperCase()
+    if (size === "PEQUENA") return "Pequena"
+    if (size === "GRANDE") return "Grande"
+    return "-"
 }
 
 export default function CirurgiaCirurgiasPage() {
@@ -34,6 +76,10 @@ export default function CirurgiaCirurgiasPage() {
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
     const [acaoId, setAcaoId] = useState<number | null>(null)
+    const [scope, setScope] = useState<SurgeryScope>("small")
+
+    const scopeConfig = SCOPE_CONFIG[scope]
+    const defaultResourceKey = scopeConfig.resourceKey
 
     useEffect(() => {
         let mounted = true
@@ -41,7 +87,7 @@ export default function CirurgiaCirurgiasPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<CirurgiaRow>("/cirurgia/cirurgia/", {
+                const { items, meta } = await apiFetchList<CirurgiaRow>(scopeConfig.endpoint, {
                     page,
                     pageSize,
                 })
@@ -65,11 +111,7 @@ export default function CirurgiaCirurgiasPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
-
-    const criarFatura = useCallback(async (_id: number) => {
-        alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
-    }, [])
+    }, [page, pageSize, scopeConfig.endpoint])
 
     const abrirPdf = useCallback(async (faturaId: number) => {
         try {
@@ -94,7 +136,7 @@ export default function CirurgiaCirurgiasPage() {
                 header: "Código",
                 render: (c: CirurgiaRow) => (
                     <Link
-                        href={`/recursos/cirurgia/cirurgia/${c.id}`}
+                        href={`/recursos/cirurgia/${resolveResourceKey(c)}/${c.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {c.id_custom || c.id || "-"}
@@ -103,6 +145,7 @@ export default function CirurgiaCirurgiasPage() {
             },
             { header: "Paciente", render: (c: CirurgiaRow) => c.paciente_nome || "-" },
             { header: "Cirurgião", render: (c: CirurgiaRow) => c.cirurgiao_nome || "-" },
+            { header: "Porte", render: (c: CirurgiaRow) => fmtSurgerySize(c) },
             { header: "Estado", render: (c: CirurgiaRow) => c.estado || "-" },
             { header: "Agendada", render: (c: CirurgiaRow) => fmtDateTime(c.agendada_para) },
             {
@@ -114,7 +157,7 @@ export default function CirurgiaCirurgiasPage() {
                 render: (c: CirurgiaRow) => (
                     <div className="flex flex-wrap gap-2">
                         <Link
-                            href={`/recursos/cirurgia/cirurgia/${c.id}`}
+                            href={`/recursos/cirurgia/${resolveResourceKey(c)}/${c.id}`}
                             className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)]"
                         >
                             Abrir
@@ -141,18 +184,43 @@ export default function CirurgiaCirurgiasPage() {
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
             <div className="space-y-6">
                 <PageHeader
-                    title="Cirurgias"
-                    subtitle="Agendadas e realizadas."
+                    title={`Cirurgias (${scopeConfig.label})`}
+                    subtitle={scopeConfig.subtitle}
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
+                            <div className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--card)] p-1">
+                                {(Object.keys(SCOPE_CONFIG) as SurgeryScope[]).map((option) => (
+                                    <button
+                                        key={option}
+                                        type="button"
+                                        onClick={() => {
+                                            setScope(option)
+                                            setPage(1)
+                                        }}
+                                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                                            scope === option
+                                                ? "bg-[var(--primary-600)] text-white"
+                                                : "text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+                                        }`}
+                                    >
+                                        {SCOPE_CONFIG[option].label}
+                                    </button>
+                                ))}
+                            </div>
                             <Link
-                                href="/recursos/cirurgia/cirurgia/novo"
+                                href="/recursos/cirurgia/pequenacirurgia/novo"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
-                                Novo
+                                Nova pequena
                             </Link>
                             <Link
-                                href="/recursos/cirurgia/cirurgia"
+                                href="/recursos/cirurgia/grandecirurgia/novo"
+                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                            >
+                                Nova grande
+                            </Link>
+                            <Link
+                                href={`/recursos/cirurgia/${defaultResourceKey}`}
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento
@@ -165,7 +233,7 @@ export default function CirurgiaCirurgiasPage() {
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
-                                    href="/admin/surgery/surgery/"
+                                    href={scopeConfig.adminHref}
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
                                 >
                                     Admin

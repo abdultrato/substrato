@@ -399,12 +399,18 @@ function writeClientCache(key: string, value: unknown, ttlMs: number) {
   })
 }
 
+function normalizeCachePath(path: string): string {
+  const withLeadingSlash = path.startsWith("/") ? path : `/${path}`
+  const noQuery = withLeadingSlash.split("?")[0]
+  const trimmedTrailingSlash = noQuery.replace(/\/+$/, "")
+  return trimmedTrailingSlash || "/"
+}
+
 function invalidateClientCacheByPath(path: string) {
-  const p = path.startsWith("/") ? path : `/${path}`
-  const target = p.split("?")[0]
+  const target = normalizeCachePath(path)
   for (const key of clientGetCache.keys()) {
     const parts = key.split(":")
-    const cachedPath = parts[1] || ""
+    const cachedPath = normalizeCachePath(parts[1] || "")
     if (
       cachedPath === target ||
       cachedPath.startsWith(`${target}/`) ||
