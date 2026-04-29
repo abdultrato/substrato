@@ -6,6 +6,7 @@ import { SessionUser } from "@/lib/session"
 import { useAuth } from "@/hooks/useAuth"
 import useTheme from "@/hooks/useTheme"
 import { AlignJustify, ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react"
+import PageActivityReportMenu from "./PageActivityReportMenu"
 
 interface Props {
     user: SessionUser | null
@@ -73,6 +74,8 @@ export default function Header({ user, onMenuClick }: Props) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+                <PageActivityReportMenu />
+
                 <button
                     type="button"
                     onClick={toggleTheme}

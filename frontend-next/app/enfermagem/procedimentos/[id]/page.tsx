@@ -24,6 +24,7 @@ export default function ProcedimentoDetailPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -58,6 +59,22 @@ export default function ProcedimentoDetailPage() {
     }
   }
 
+  async function handleOpenPdf() {
+    setDownloadingPdf(true)
+    setErro(null)
+    try {
+      const endpoint = ensureTrailingSlash("/enfermagem/procedimento/") + `${id}/pdf/`
+      const blob = await apiFetch<Blob>(endpoint, { responseType: "blob" })
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, "_blank", "noopener,noreferrer")
+      setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-6">
@@ -66,6 +83,14 @@ export default function ProcedimentoDetailPage() {
           subtitle="/enfermagem/procedimento/"
           actions={
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleOpenPdf}
+                disabled={downloadingPdf}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {downloadingPdf ? "Gerando PDF..." : "PDF"}
+              </button>
               <Link
                 href={`/enfermagem/procedimentos/${id}/editar`}
                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"

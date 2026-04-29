@@ -7,6 +7,7 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
+from apps.clinical.models.sample import Sample
 from apps.payments.models.payment import Payment
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
@@ -27,12 +28,18 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma Historico",
         price=Decimal("25.00"),
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
+        sample_type=sample,
     )
 
 

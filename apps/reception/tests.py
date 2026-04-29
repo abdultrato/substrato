@@ -12,6 +12,7 @@ from application.reception.care_flow import (
 )
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
+from apps.clinical.models.sample import Sample
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.tenants.models.tenant import Tenant
@@ -33,12 +34,18 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Raio-X",
         price=Decimal("50.00"),
         method=Method.ENZIMATICO,
         sector=Sector.RADIOLOGIA if hasattr(Sector, "RADIOLOGIA") else Sector.HEMATOLOGIA,
+        sample_type=sample,
     )
 
 

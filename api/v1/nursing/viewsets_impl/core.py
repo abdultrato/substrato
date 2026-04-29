@@ -1,5 +1,6 @@
 """ViewSets da API v1 para recursos de Enfermagem."""
 
+from django.http import HttpResponse
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers, status
 from rest_framework.decorators import action
@@ -219,6 +220,20 @@ class ProcedureViewSet(TenantScopedModelViewSet):
         "deleted",
     ]
     ordering = ["-performed_date", "-created_at"]
+
+    @action(detail=True, methods=["get"], url_path="pdf", url_name="pdf")
+    def pdf(self, request, pk=None):
+        """
+        Gera o PDF institucional do procedimento de enfermagem com detalhes clínicos e financeiros.
+        """
+        procedure = self.get_object()
+
+        from tasks.generate_pdf.procedure_pdf_generator import generate_procedure_pdf
+
+        pdf_bytes, filename = generate_procedure_pdf(procedure, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
 
 class ProcedureItemViewSet(TenantScopedModelViewSet):

@@ -13,6 +13,7 @@ from domain.clinical.result_state_machine import ResultStateMachine
 
 from .lab_exam import LabExam
 from .patient import Patient
+from .sample import Sample
 
 User = settings.AUTH_USER_MODEL
 
@@ -92,6 +93,13 @@ class LabRequest(NoNameCoreModel):
         LabExam,
         through="LabRequestItem",
     )
+    samples = models.ManyToManyField(
+        Sample,
+        blank=True,
+        related_name="lab_requests",
+        db_table="clinico_requisicaoanalise_amostras",
+        verbose_name="Amostras agregadas",
+    )
 
     analyst = models.ForeignKey(
 
@@ -131,6 +139,17 @@ class LabRequest(NoNameCoreModel):
 
         default=False,
         db_index=True,
+    )
+    requires_fasting = models.BooleanField(
+        db_column="requires_fasting",
+        default=False,
+        db_index=True,
+        verbose_name="Requer jejum",
+    )
+    fasting_hours = models.PositiveIntegerField(
+        db_column="fasting_hours",
+        default=0,
+        verbose_name="Horas de jejum",
     )
 
     class Meta:
@@ -277,10 +296,79 @@ class LabRequest(NoNameCoreModel):
 
         return MedicalExam.objects.filter(lab_requests__request=self, lab_requests__deleted=False).distinct()
 
+    def _sync_samples_from_items(self):
+        if not self.pk:
+            return
+
+        items_qs = self.items.filter(
+            deleted=False,
+            exam__isnull=False,
+            exam__deleted=False,
+            exam__sample_type__isnull=False,
+        )
+
+        sample_ids = (
+            items_qs
+            .values_list("exam__sample_type_id", flat=True)
+            .distinct()
+        )
+        self.samples.set(sample_ids)
+
+        fasting_qs = items_qs.filter(exam__sample_type__fasting_required=True)
+        requires_fasting = fasting_qs.exists()
+        fasting_hours = 0
+        if requires_fasting:
+            fasting_hours = fasting_qs.aggregate(
+                max_hours=models.Max("exam__sample_type__fasting_hours")
+            ).get("max_hours") or 0
+
+        updates = {}
+        if self.requires_fasting != requires_fasting:
+            updates["requires_fasting"] = requires_fasting
+            self.requires_fasting = requires_fasting
+        if self.fasting_hours != fasting_hours:
+            updates["fasting_hours"] = fasting_hours
+            self.fasting_hours = fasting_hours
+
+        if updates:
+            from django.utils import timezone
+
+            updates["updated_at"] = timezone.now()
+            self.__class__.all_objects.filter(pk=self.pk).update(**updates)
+
+    @property
+    def fasting_summary(self):
+        return {
+            "requires_fasting": bool(self.requires_fasting),
+            "fasting_hours": int(self.fasting_hours or 0),
+        }
+
+    @property
+    def jejum(self):
+        # Compatibilidade legada (português) para representação da regra.
+        return self.fasting_summary
+
+    @property
+    def requer_jejum(self):
+        return bool(self.requires_fasting)
+
+    @property
+    def horas_jejum(self):
+        return int(self.fasting_hours or 0)
+
+    @property
+    def fasting_info(self):
+        return self.fasting_summary
+
     @property
     def itens(self):
         # Compatibilidade legada (português) para relation manager.
         return self.items
+
+    @property
+    def amostras(self):
+        # Compatibilidade legada (português) para relation manager.
+        return self.samples
 
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA
@@ -393,6 +481,8 @@ class LabRequest(NoNameCoreModel):
     criar_resultados_automaticos = create_automatic_results
     aplicar_status = apply_status
     exams_medicos = medical_exams
+    sincronizar_amostras = _sync_samples_from_items
+    info_jejum = fasting_summary
     atualizar_clinical_status = update_clinical_status
     tenant_do_patient = patient_tenant
 

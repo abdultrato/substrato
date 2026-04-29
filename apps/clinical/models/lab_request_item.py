@@ -86,6 +86,14 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
         self.full_clean()
         super().save(*args, **kwargs)
+        if self.request_id:
+            self.request._sync_samples_from_items()
+
+    def delete(self, *args, **kwargs):
+        request = self.request if self.request_id else None
+        super().delete(*args, **kwargs)
+        if request is not None:
+            request._sync_samples_from_items()
 
     # -----------------------------------------------------
 

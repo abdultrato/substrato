@@ -186,15 +186,10 @@ export default function ResultadosMedicosPage() {
 
     setLoading(true)
     try {
-      const res = await fetch("/api/v1/clinical/medicalresultfile/", {
+      await apiFetch("/clinical/medicalresultfile/", {
         method: "POST",
-        credentials: "include",
         body: formData,
       })
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || "Falha ao enviar arquivo.")
-      }
       setFile(null)
       setForm({ ...form, descricao: "" })
       loadArquivos()

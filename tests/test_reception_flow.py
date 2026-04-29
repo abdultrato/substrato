@@ -10,6 +10,7 @@ from application.reception.care_flow import (
 )
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.patient import Patient
+from apps.clinical.models.sample import Sample
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
@@ -27,6 +28,11 @@ def test_reception_flow_billing_payment():
         address_street="Rua A",
         address_city="Maputo",
     )
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
 
     exam = LabExam.objects.create(
         tenant=tenant,
@@ -34,6 +40,7 @@ def test_reception_flow_billing_payment():
         price=Decimal("25.00"),
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
+        sample_type=sample,
     )
 
     checkin = open_checkin(

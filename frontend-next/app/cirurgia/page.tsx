@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ClipboardList, PlusCircle, Scissors, Wrench } from "lucide-react"
+import { ClipboardList, PlusCircle, Scissors, Settings } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -99,7 +99,7 @@ export default function CirurgiaPage() {
                         title="Procedimentos cirúrgicos"
                         description="Gerir catálogo de procedimentos (CRUD)."
                         href="/cirurgia/procedimentos"
-                        icon={Wrench}
+                        icon={Settings}
                     />
                     <ActionTile
                         title="Gerenciamento (API)"

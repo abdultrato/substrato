@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { SessionUser } from "@/lib/session"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
@@ -30,7 +31,7 @@ import {
     CreditCard,
     Bell,
     Bug,
-    Wrench,
+    Settings,
     Moon,
     Sun,
 } from "lucide-react"
@@ -80,7 +81,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/entidades", label: "Empresas", icon: BriefcaseIcon, desc: "Convênios e clientes", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/resources/human-resources", label: "Recursos Humanos", icon: BriefcaseIcon, desc: "Equipa e funcionários", groups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS] },
     { href: "/statistics", label: "Estatísticas", icon: BarChart3, desc: "Indicadores e relatórios", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
-    { href: "/modules/equipment", label: "Equipamentos", icon: Wrench, desc: "Ativos e manutenção", groups: ALL_GROUPS },
+    { href: "/modules/equipment", label: "Equipamentos", icon: Settings, desc: "Ativos e manutenção", groups: ALL_GROUPS },
     { href: "/modules", label: "Módulos", icon: Layers, desc: "Configuração de módulos", groups: [GROUPS.ADMIN, GROUPS.LABORATORIO] },
     { href: "/notifications", label: "Notificações", icon: Bell, desc: "Centro de avisos", groups: [GROUPS.ADMIN] },
     { href: "/audit", label: "Auditoria", icon: Activity, desc: "Trilha de eventos", groups: [GROUPS.ADMIN] },
@@ -91,12 +92,58 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar({ user, open = false, onClose, className }: Props) {
     const pathname = usePathname()
+    const router = useRouter()
     const { isDark, toggle: toggleTheme } = useTheme()
+    const prefetchedRoutesRef = useRef<Set<string>>(new Set())
 
-    function hasAccess(item: NavItem) {
+    const hasAccess = useCallback((item: NavItem) => {
         if (!item.groups) return true
         return userHasAnyGroup(user, item.groups)
-    }
+    }, [user])
+
+    const visibleItems = useMemo(
+        () => NAV_ITEMS.filter(hasAccess),
+        [hasAccess]
+    )
+
+    const prefetchRoute = useCallback((href: string) => {
+        if (!href || prefetchedRoutesRef.current.has(href)) return
+        prefetchedRoutesRef.current.add(href)
+        router.prefetch(href)
+    }, [router])
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        const allowed = new Set(visibleItems.map((item) => item.href))
+        const priority = [
+            "/",
+            "/patients",
+            "/reception",
+            "/consultations",
+            "/requests",
+            "/laboratory",
+            "/invoices",
+            "/farmacia",
+        ].filter((href) => allowed.has(href))
+
+        if (!priority.length) return
+
+        if ("requestIdleCallback" in window && "cancelIdleCallback" in window) {
+            const idleId = window.requestIdleCallback(
+                () => {
+                    for (const href of priority) prefetchRoute(href)
+                },
+                { timeout: 1200 }
+            )
+            return () => window.cancelIdleCallback(idleId)
+        }
+
+        const timerId = window.setTimeout(() => {
+            for (const href of priority) prefetchRoute(href)
+        }, 220)
+        return () => window.clearTimeout(timerId)
+    }, [prefetchRoute, visibleItems])
 
     const menu = (
         <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur">
@@ -133,7 +180,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             </div>
 
             <nav className="flex flex-1 flex-col gap-0.5 px-2 pt-4 pb-6 overflow-y-auto">
-                {NAV_ITEMS.filter(hasAccess).map((item) => {
+                {visibleItems.map((item) => {
                     const Icon = item.icon
                     const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
 
@@ -141,7 +188,10 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         <Link
                             key={item.href}
                             href={item.href}
+                            prefetch
                             onClick={onClose}
+                            onMouseEnter={() => prefetchRoute(item.href)}
+                            onFocus={() => prefetchRoute(item.href)}
                             title={item.desc}
                             aria-current={active ? "page" : undefined}
                             className={`group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${

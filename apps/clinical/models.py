@@ -11,6 +11,7 @@ from .models.medical_result_file import MedicalResultFile
 from .models.patient import Patient
 from .models.result import Result
 from .models.result_item import ResultItem
+from .models.sample import Sample
 
 __all__ = [
     "ClinicalEvent",
@@ -24,4 +25,5 @@ __all__ = [
     "Patient",
     "Result",
     "ResultItem",
+    "Sample",
 ]

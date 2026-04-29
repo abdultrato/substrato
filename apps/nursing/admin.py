@@ -3,12 +3,15 @@
 from decimal import Decimal
 
 from django import forms
-from django.contrib import admin
-from django.http import JsonResponse
-from django.urls import path
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Case, Exists, F, IntegerField, OuterRef, Sum, When
 from django.db.models.functions import Coalesce
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.html import format_html
 
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
@@ -373,6 +376,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "itens_total",
         "materiais_total",
         "total",
+        "pdf_link",
         "created_at",
     )
     search_fields = (
@@ -391,6 +395,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
     ordering = ("-performed_date",)  # Procedimentos mais recentes primeiro
     readonly_fields = (
         "custom_id",
+        "pdf_link",
         "services_subtotal",
         "materials_subtotal",
         "total",
@@ -408,6 +413,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "custom_id",
+                    "pdf_link",
                     "tenant",
                     "patient",
                     "professional",
@@ -476,6 +482,53 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         return obj.materiais.count()
 
     materiais_total.short_description = "Materiais"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        extra = [
+            path(
+                "<path:object_id>/pdf/",
+                self.admin_site.admin_view(self.procedure_pdf_view),
+                name=f"{app_label}_{model_name}_pdf",
+            ),
+        ]
+        return extra + urls
+
+    def pdf_link(self, obj):
+        if not getattr(obj, "pk", None):
+            return "-"
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        url = reverse(f"admin:{app_label}_{model_name}_pdf", args=[obj.pk])
+        return format_html('<a href="{}" target="_blank" rel="noopener">Gerar PDF</a>', url)
+
+    pdf_link.short_description = "PDF"
+
+    def procedure_pdf_view(self, request, object_id: str):
+        procedure = self.get_object(request, object_id)
+        if procedure is None:
+            raise Http404("Procedimento não encontrado.")
+        if not self.has_view_permission(request, procedure):
+            raise PermissionDenied("Sem permissão para visualizar este procedimento.")
+
+        from tasks.generate_pdf.procedure_pdf_generator import generate_procedure_pdf
+
+        try:
+            pdf_bytes, filename = generate_procedure_pdf(procedure, request=request)
+        except Exception as exc:
+            messages.error(request, f"Falha ao gerar PDF: {exc}")
+            return redirect(
+                reverse(
+                    f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_change",
+                    args=[procedure.pk],
+                )
+            )
+
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

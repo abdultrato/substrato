@@ -78,6 +78,13 @@ class LabExam(TenantPropagationMixin, CoreModel):
         verbose_name="Setor do exame",
         db_index=True,
     )
+    sample_type = models.ForeignKey(
+        "clinical.Sample",
+        db_column="sample_id",
+        on_delete=models.PROTECT,
+        related_name="exams",
+        verbose_name="Tipo de amostra",
+    )
 
     # =====================================================
     # META
@@ -93,6 +100,7 @@ class LabExam(TenantPropagationMixin, CoreModel):
         indexes = [
             models.Index(fields=["sector", "deleted"]),
             models.Index(fields=["method"]),
+            models.Index(fields=["sample_type"]),
         ]
 
         constraints = [
@@ -131,6 +139,11 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
         if self.turnaround_hours <= 0:
             erros["turnaround_hours"] = "TRL deve ser maior que zero."
+
+        if not self.sample_type_id:
+            erros["sample_type"] = "Informe o tipo de amostra do exame."
+        elif self.tenant_id and self.sample_type.tenant_id != self.tenant_id:
+            erros["sample_type"] = "A amostra deve pertencer ao mesmo tenant do exame."
 
         if erros:
             raise ValidationError(erros)

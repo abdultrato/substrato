@@ -1,10 +1,11 @@
 """Middleware multi-tenant que configura contexto e banco para cada request."""
 
 import os
+import time
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import OperationalError, connection
+from django.db import OperationalError
 from django.http import JsonResponse
 
 from apps.tenants.models.tenant import Tenant
@@ -17,6 +18,7 @@ class TenantMiddleware:
     """
 
     CACHE_TIMEOUT = 60 * 10
+    LOCAL_CACHE_TIMEOUT = 20
     FAST_REDIRECT_PATHS = {
         "/",
         "/dashboard",
@@ -28,9 +30,20 @@ class TenantMiddleware:
         "/admin/login",
         "/admin/login/",
     }
+    TENANT_LOOKUP_FIELDS = (
+        "id",
+        "name",
+        "identifier",
+        "domain",
+        "active",
+        "commercial_status",
+        "trial_until",
+        "blocked_at",
+    )
 
     def __init__(self, get_response):
         self.get_response = get_response
+        self._local_tenant_cache = {}
 
     def __call__(self, request):
         try:
@@ -46,17 +59,10 @@ class TenantMiddleware:
         ):
             token = set_tenant(None)
             request.tenant = None
-            request.tenant = None
             try:
                 return self.get_response(request)
             finally:
                 reset_tenant(token)
-
-        try:
-            connection.close_if_unusable_or_obsolete()
-            connection.ensure_connection()
-        except OperationalError:
-            return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         if settings.DEBUG:
             tenant = self._resolve_debug_tenant(request)
@@ -64,7 +70,6 @@ class TenantMiddleware:
                 return tenant
 
             token = set_tenant(tenant)
-            request.tenant = tenant
             request.tenant = tenant
             try:
                 return self.get_response(request)
@@ -78,9 +83,9 @@ class TenantMiddleware:
         tenant = self._resolve_tenant(host)
 
         if not tenant and not settings.DEBUG and os.getenv("TENANT_FALLBACK_DEFAULT", "").lower() in {"1", "true", "yes"}:
-            tenant = Tenant.objects.filter(active=True).order_by("id").first()
+            tenant = self._resolve_first_active_tenant()
             if tenant:
-                self._cache_set(f"tenant_domain:{host}", tenant.id, self.CACHE_TIMEOUT)
+                self._cache_tenant_for_host(host, tenant)
 
         if not tenant and request.path.startswith("/api/v1/equipment_integrations/equipment/"):
             try:
@@ -96,7 +101,6 @@ class TenantMiddleware:
                 tenant = None
 
         token = set_tenant(tenant)
-        request.tenant = tenant
         request.tenant = tenant
 
         try:
@@ -125,14 +129,10 @@ class TenantMiddleware:
         except Exception:
             host = ""
 
-        tenant = None
-
         try:
-            if host:
-                tenant = Tenant.objects.filter(domain=host).order_by("id").first()
-
+            tenant = self._resolve_tenant(host) if host else None
             if not tenant:
-                tenant = Tenant.objects.filter(active=True).order_by("id").first()
+                tenant = self._resolve_first_active_tenant()
 
             if not tenant:
                 try:
@@ -143,28 +143,79 @@ class TenantMiddleware:
                         active=True,
                         commercial_status=Tenant.CommercialStatus.TRIAL,
                     )
+                    if host:
+                        self._cache_tenant_for_host(host, tenant)
                 except Exception:
-                    tenant = Tenant.objects.filter(identifier="local").order_by("id").first()
+                    tenant = (
+                        Tenant.objects.only(*self.TENANT_LOOKUP_FIELDS)
+                        .filter(identifier="local")
+                        .order_by("id")
+                        .first()
+                    )
         except OperationalError:
             return JsonResponse({"error": "Base de dados indisponível."}, status=503)
 
         return tenant
 
     def _resolve_tenant(self, host):
+        if not host:
+            return None
+
+        local_hit, local_tenant = self._local_cache_get(host)
+        if local_hit:
+            return local_tenant
+
         cache_key = f"tenant_domain:{host}"
         tenant_id = self._cache_get(cache_key)
 
         if tenant_id:
-            tenant = Tenant.objects.only("id", "active").filter(id=tenant_id, active=True).first()
+            tenant = self._fetch_tenant_by_id(tenant_id)
+            if tenant:
+                self._local_cache_set(host, tenant)
+                return tenant
+            self._cache_delete(cache_key)
+
+        tenant = (
+            Tenant.objects.only(*self.TENANT_LOOKUP_FIELDS)
+            .filter(domain=host, active=True)
+            .first()
+        )
+        if tenant:
+            self._cache_set(cache_key, tenant.id, self.CACHE_TIMEOUT)
+            self._local_cache_set(host, tenant)
+        return tenant
+
+    def _resolve_first_active_tenant(self):
+        cache_key = "tenant:first_active"
+        tenant_id = self._cache_get(cache_key)
+        if tenant_id:
+            tenant = self._fetch_tenant_by_id(tenant_id)
             if tenant:
                 return tenant
             self._cache_delete(cache_key)
 
-        tenant = Tenant.objects.only("id", "active").filter(domain=host, active=True).first()
+        tenant = (
+            Tenant.objects.only(*self.TENANT_LOOKUP_FIELDS)
+            .filter(active=True)
+            .order_by("id")
+            .first()
+        )
         if tenant:
             self._cache_set(cache_key, tenant.id, self.CACHE_TIMEOUT)
-
         return tenant
+
+    def _fetch_tenant_by_id(self, tenant_id):
+        return (
+            Tenant.objects.only(*self.TENANT_LOOKUP_FIELDS)
+            .filter(id=tenant_id, active=True)
+            .first()
+        )
+
+    def _cache_tenant_for_host(self, host, tenant):
+        if not host or not tenant:
+            return
+        self._cache_set(f"tenant_domain:{host}", tenant.id, self.CACHE_TIMEOUT)
+        self._local_cache_set(host, tenant)
 
     def _cache_get(self, key, default=None):
         try:
@@ -185,6 +236,26 @@ class TenantMiddleware:
         except Exception:
             return None
         return key
+
+    def _local_cache_get(self, key):
+        entry = self._local_tenant_cache.get(key)
+        if not entry:
+            return False, None
+
+        expires_at, tenant = entry
+        if expires_at <= time.monotonic():
+            self._local_tenant_cache.pop(key, None)
+            return False, None
+
+        return True, tenant
+
+    def _local_cache_set(self, key, tenant):
+        if len(self._local_tenant_cache) >= 256:
+            self._local_tenant_cache.clear()
+        self._local_tenant_cache[key] = (
+            time.monotonic() + self.LOCAL_CACHE_TIMEOUT,
+            tenant,
+        )
 
 
 InquilinoMiddleware = TenantMiddleware

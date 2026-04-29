@@ -9,6 +9,7 @@ from . import (
     patient as patient,
     result as result,
     result_item as result_item,
+    sample as sample,
 )
 from .clinical_event import ClinicalEvent
 from .clinical_history import ClinicalHistory
@@ -22,6 +23,7 @@ from .medical_result_file import MedicalResultFile
 from .patient import Patient
 from .result import Result
 from .result_item import ResultItem
+from .sample import Sample
 
 __all__ = [
     "ClinicalEvent",
@@ -37,6 +39,7 @@ __all__ = [
     "Patient",
     "Result",
     "ResultItem",
+    "Sample",
     "clinical_event",
     "clinical_history",
     "lab_exam",
@@ -47,4 +50,5 @@ __all__ = [
     "patient",
     "result",
     "result_item",
+    "sample",
 ]

@@ -32,6 +32,7 @@ from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
@@ -406,6 +407,17 @@ def ensure_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
         idx = _count(LabExam) + 1
         tenant = tenants[(idx - 1) % len(tenants)]
         with tenant_ctx(tenant):
+            sample = Sample.objects.filter(
+                tenant=tenant,
+                name="Sangue total",
+                deleted=False,
+            ).order_by("id").first()
+            if sample is None:
+                sample = Sample.objects.create(
+                    tenant=tenant,
+                    name="Sangue total",
+                    bottle_type=Sample.BottleType.EDTA_TUBE,
+                )
             LabExam.objects.create(
                 tenant=tenant,
                 name=f"{faker.word().title()} {faker.word().title()} ({idx})",
@@ -413,6 +425,7 @@ def ensure_exams(n: int, tenants: list[Tenant], faker: Faker) -> list[LabExam]:
                 price=Decimal("150.00") + Decimal(idx),
                 method=method,
                 sector=sector,
+                sample_type=sample,
             )
     return list(LabExam.objects.order_by("id")[:n])
 

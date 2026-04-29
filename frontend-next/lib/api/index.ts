@@ -1,4 +1,5 @@
 import { logout as clearSession } from "../session"
+import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
 
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
@@ -11,6 +12,16 @@ export type ApiFetchOptions = RequestInit & {
    * Default: 1 (uma nova tentativa).
    */
   retryOnTimeout?: number
+  /**
+   * Habilita/desabilita cache client-side para GET JSON.
+   * Default: true.
+   */
+  clientCache?: boolean
+  /**
+   * TTL do cache client-side em ms.
+   * Default: 15000.
+   */
+  clientCacheTtlMs?: number
 }
 export type ApiListMeta = {
   total?: number
@@ -168,119 +179,238 @@ export async function apiFetch<T = any>(
   options: ApiFetchOptions = {}
 ): Promise<T> {
   const rewritten = rewriteUrl(url)
-  // Log rewritten URL for debugging routing mismatches (dev-time only)
-  try {
-    // eslint-disable-next-line no-console
-    console.debug(`[apiFetch] requesting /api/v1${rewritten} from ${url}`)
-  } catch {
-    // ignore
-  }
   const responseType = options.responseType || "json"
   // Por padrão não abortamos requisições automaticamente (0 = sem timeout).
   // Chamadores podem fornecer `timeoutMs` quando desejarem comportamento de timeout.
   const timeoutMs = options.timeoutMs ?? 0
   const maxRetries = Math.max(0, (options.retryOnTimeout ?? 1))
+  const method = methodOf(options)
 
-  // Use o signal fornecido ou crie um novo controller
-  // Tentativas: primeira + retries em caso de AbortError por timeout
-  let attempt = 0
-  let lastErr: any = null
-  for (; attempt <= maxRetries; attempt++) {
-    // Use o signal fornecido ou crie um novo controller a cada tentativa
-    const shouldCreateController = !options.signal
-    const controller = shouldCreateController ? new AbortController() : undefined
-    const signal = options.signal || controller?.signal
+  const useClientCache = shouldUseClientCache(rewritten, options, responseType)
+  const cacheKey = useClientCache ? buildClientCacheKey(rewritten, responseType) : null
+  const cacheTtlMs = options.clientCacheTtlMs ?? DEFAULT_CLIENT_CACHE_TTL_MS
 
-    let timer: ReturnType<typeof setTimeout> | undefined = undefined
+  if (cacheKey) {
+    const cached = readClientCache(cacheKey)
+    if (cached.hit) {
+      return cached.value as T
+    }
+    const inFlight = inFlightGetRequests.get(cacheKey)
+    if (inFlight) {
+      return (await inFlight) as T
+    }
+  }
 
-    const doFetch = async (): Promise<Response> => {
-      return fetch(`/api/v1${rewritten}`, {
-        ...options,
-        credentials: "include",
-        headers: buildHeaders(options),
-        signal,
-      })
+  const runRequest = async (): Promise<T> => {
+    const requestActivity = beginRequestActivity(rewritten, method)
+    // Log rewritten URL for debugging routing mismatches (dev-time only)
+    try {
+      // eslint-disable-next-line no-console
+      console.debug(`[apiFetch] requesting /api/v1${rewritten} from ${url}`)
+    } catch {
+      // ignore
     }
 
     try {
-      // Apenas define timeout se criamos o controller
-      if (shouldCreateController && timeoutMs > 0) {
-        timer = setTimeout(() => controller?.abort(), timeoutMs)
-      }
+      // Use o signal fornecido ou crie um novo controller
+      // Tentativas: primeira + retries em caso de AbortError por timeout
+      let attempt = 0
+      let lastErr: any = null
+      for (; attempt <= maxRetries; attempt++) {
+        // Use o signal fornecido ou crie um novo controller a cada tentativa
+        const shouldCreateController = !options.signal
+        const controller = shouldCreateController ? new AbortController() : undefined
+        const signal = options.signal || controller?.signal
 
-      let res: Response
-      try {
-        res = await doFetch()
-      } catch (err) {
-        // Se abort foi causado pelo nosso controller, tentar novamente (se houver retries)
-        if ((err as any)?.name === "AbortError") {
-          lastErr = err
-          // limpeza e log para diagnóstico
-          if (timer) {
-            clearTimeout(timer)
-          }
-          console.warn(`[apiFetch] AbortError on attempt ${attempt + 1}/${maxRetries + 1} for ${rewritten}`)
-          // se ainda restam tentativas, esperar um pequeno backoff e tentar de novo
-          if (attempt < maxRetries) {
-            const backoff = 200 * (attempt + 1)
-            await new Promise((r) => setTimeout(r, backoff))
-            continue
-          }
-          const e = new Error("Requisição abortada.")
-            ; (e as any).name = "AbortError"
-          throw e
+        let timer: ReturnType<typeof setTimeout> | undefined = undefined
+
+        const doFetch = async (): Promise<Response> => {
+          return fetch(`/api/v1${rewritten}`, {
+            ...options,
+            credentials: "include",
+            headers: buildHeaders(options),
+            signal,
+          })
         }
-        throw err
-      }
 
-      if (res.status === 401) {
-        const newAccess = await refreshAccessToken()
-        if (newAccess) {
+        try {
+          // Apenas define timeout se criamos o controller
+          if (shouldCreateController && timeoutMs > 0) {
+            timer = setTimeout(() => controller?.abort(), timeoutMs)
+          }
+
+          let res: Response
           try {
             res = await doFetch()
           } catch (err) {
+            // Se abort foi causado pelo nosso controller, tentar novamente (se houver retries)
             if ((err as any)?.name === "AbortError") {
               lastErr = err
+              // limpeza e log para diagnóstico
+              if (timer) {
+                clearTimeout(timer)
+              }
+              console.warn(`[apiFetch] AbortError on attempt ${attempt + 1}/${maxRetries + 1} for ${rewritten}`)
+              // se ainda restam tentativas, esperar um pequeno backoff e tentar de novo
               if (attempt < maxRetries) {
                 const backoff = 200 * (attempt + 1)
                 await new Promise((r) => setTimeout(r, backoff))
                 continue
               }
-              throw new Error("Requisição abortada.")
+              const e = new Error("Requisição abortada.")
+                ; (e as any).name = "AbortError"
+              throw e
             }
             throw err
           }
-        } else {
-          // Sessão inválida/expirada: limpa client-side e envia para login.
-          try {
-            clearSession()
-          } catch {
-            // ignore
+
+          if (res.status === 401) {
+            const newAccess = await refreshAccessToken()
+            if (newAccess) {
+              try {
+                res = await doFetch()
+              } catch (err) {
+                if ((err as any)?.name === "AbortError") {
+                  lastErr = err
+                  if (attempt < maxRetries) {
+                    const backoff = 200 * (attempt + 1)
+                    await new Promise((r) => setTimeout(r, backoff))
+                    continue
+                  }
+                  throw new Error("Requisição abortada.")
+                }
+                throw err
+              }
+            } else {
+              // Sessão inválida/expirada: limpa client-side e envia para login.
+              try {
+                clearSession()
+              } catch {
+                // ignore
+              }
+              if (typeof window !== "undefined") {
+                const next = encodeURIComponent(window.location.pathname + window.location.search)
+                window.location.href = `/login?next=${next}`
+              }
+              throw new Error("Sessão expirada. Faça login novamente.")
+            }
           }
-          if (typeof window !== "undefined") {
-            const next = encodeURIComponent(window.location.pathname + window.location.search)
-            window.location.href = `/login?next=${next}`
+
+          if (!res.ok) throw await parseError(res)
+
+          if (res.status === 204) {
+            if (method !== "GET") invalidateClientCacheByPath(rewritten)
+            return null as unknown as T
           }
-          throw new Error("Sessão expirada. Faça login novamente.")
+
+          let parsed: T
+          if (responseType === "blob") parsed = (await res.blob()) as unknown as T
+          else if (responseType === "text") parsed = (await res.text()) as unknown as T
+          else {
+            try {
+              parsed = (await res.json()) as unknown as T
+            } catch {
+              parsed = null as unknown as T
+            }
+          }
+
+          if (method !== "GET") invalidateClientCacheByPath(rewritten)
+          return parsed
+        } finally {
+          // Apenas limpa timer se o criamos
+          if (timer) clearTimeout(timer)
+          // Não faz abort aqui pois a requisição já foi completada
         }
       }
 
-      if (!res.ok) throw await parseError(res)
-
-      if (res.status === 204) return null as unknown as T
-
-      if (responseType === "blob") return (await res.blob()) as unknown as T
-      if (responseType === "text") return (await res.text()) as unknown as T
-
-      try {
-        return (await res.json()) as unknown as T
-      } catch {
-        return null as unknown as T
-      }
+      if (lastErr) throw lastErr
+      throw new Error("Falha ao processar a requisição.")
     } finally {
-      // Apenas limpa timer se o criamos
-      if (timer) clearTimeout(timer)
-      // Não faz abort aqui pois a requisição já foi completada
+      finishRequestActivity(requestActivity)
+    }
+  }
+
+  if (!cacheKey) {
+    return runRequest()
+  }
+
+  const requestPromise = runRequest()
+    .then((result) => {
+      writeClientCache(cacheKey, result, cacheTtlMs)
+      return result
+    })
+    .finally(() => {
+      inFlightGetRequests.delete(cacheKey)
+    })
+
+  inFlightGetRequests.set(cacheKey, requestPromise as Promise<unknown>)
+  return (await requestPromise) as T
+}
+
+const DEFAULT_CLIENT_CACHE_TTL_MS = 15000
+
+type ClientCacheEntry = {
+  value: unknown
+  expiresAt: number
+}
+
+const clientGetCache = new Map<string, ClientCacheEntry>()
+const inFlightGetRequests = new Map<string, Promise<unknown>>()
+
+function methodOf(options: ApiFetchOptions): string {
+  return (options.method || "GET").toUpperCase()
+}
+
+function shouldUseClientCache(
+  rewritten: string,
+  options: ApiFetchOptions,
+  responseType: "json" | "blob" | "text"
+): boolean {
+  if (methodOf(options) !== "GET") return false
+  if (responseType !== "json") return false
+  if (options.cache === "no-store") return false
+  if (options.signal) return false
+  if (options.clientCache === false) return false
+  if (rewritten.startsWith("/auth/")) return false
+  return true
+}
+
+function buildClientCacheKey(
+  rewritten: string,
+  responseType: "json" | "blob" | "text"
+): string {
+  return `GET:${rewritten}:${responseType}`
+}
+
+function readClientCache(key: string): { hit: true; value: unknown } | { hit: false } {
+  const cached = clientGetCache.get(key)
+  if (!cached) return { hit: false }
+  if (cached.expiresAt <= Date.now()) {
+    clientGetCache.delete(key)
+    return { hit: false }
+  }
+  return { hit: true, value: cached.value }
+}
+
+function writeClientCache(key: string, value: unknown, ttlMs: number) {
+  clientGetCache.set(key, {
+    value,
+    expiresAt: Date.now() + Math.max(1000, ttlMs),
+  })
+}
+
+function invalidateClientCacheByPath(path: string) {
+  const p = path.startsWith("/") ? path : `/${path}`
+  const target = p.split("?")[0]
+  for (const key of clientGetCache.keys()) {
+    const parts = key.split(":")
+    const cachedPath = parts[1] || ""
+    if (
+      cachedPath === target ||
+      cachedPath.startsWith(`${target}/`) ||
+      target.startsWith(`${cachedPath}/`)
+    ) {
+      clientGetCache.delete(key)
     }
   }
 }
@@ -481,4 +611,9 @@ export async function apiFetchAll<T = any>(
   }
 
   return all
+}
+
+export function __clearApiClientCacheForTests() {
+  clientGetCache.clear()
+  inFlightGetRequests.clear()
 }

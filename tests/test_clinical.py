@@ -11,6 +11,7 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -33,6 +34,11 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma",
@@ -40,6 +46,7 @@ def _exam(tenant):
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
         turnaround_hours=4,
+        sample_type=sample,
     )
 
 
@@ -80,8 +87,77 @@ def test_request_creates_result_and_items():
 
 
 @pytest.mark.django_db
+def test_request_aggregates_samples_without_duplicates():
+    tenant = _tenant()
+    patient = _patient(tenant)
+
+    sample_a = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
+    sample_b = Sample.objects.create(
+        tenant=tenant,
+        name="Urina",
+        bottle_type=Sample.BottleType.URINE_CONTAINER,
+        fasting_required=True,
+        fasting_hours=8,
+    )
+
+    exam1 = LabExam.objects.create(
+        tenant=tenant,
+        name="Hemograma A",
+        price=Decimal("20.00"),
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
+        turnaround_hours=2,
+        sample_type=sample_a,
+    )
+    exam2 = LabExam.objects.create(
+        tenant=tenant,
+        name="Hemograma B",
+        price=Decimal("25.00"),
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
+        turnaround_hours=2,
+        sample_type=sample_a,
+    )
+    exam3 = LabExam.objects.create(
+        tenant=tenant,
+        name="Sumario Urina",
+        price=Decimal("18.00"),
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
+        turnaround_hours=2,
+        sample_type=sample_b,
+    )
+
+    req = LabRequest.objects.create(tenant=tenant, patient=patient)
+    req.add_exam(exam1)
+    req.add_exam(exam2)
+    req.add_exam(exam3)
+
+    assert set(req.samples.values_list("id", flat=True)) == {sample_a.id, sample_b.id}
+    assert req.samples.count() == 2
+    assert req.requires_fasting is True
+    assert req.fasting_hours == 8
+
+    req.items.get(exam=exam3).delete()
+    req.refresh_from_db()
+
+    assert set(req.samples.values_list("id", flat=True)) == {sample_a.id}
+    assert req.requires_fasting is False
+    assert req.fasting_hours == 0
+
+
+@pytest.mark.django_db
 def test_exam_rejects_zero_price():
     tenant = _tenant()
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     exam = LabExam(
         tenant=tenant,
         name="Exame Zero",
@@ -89,6 +165,7 @@ def test_exam_rejects_zero_price():
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
         turnaround_hours=1,
+        sample_type=sample,
     )
     with pytest.raises(DjangoValidationError):
         exam.full_clean()

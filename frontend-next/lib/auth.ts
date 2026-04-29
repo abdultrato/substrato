@@ -1,4 +1,5 @@
 import { apiFetch } from "./api/index"
+import { beginRequestActivity, finishRequestActivity } from "./requestActivity"
 import { getSessionUser, setSessionUser } from "./session"
 
 const backendBase =
@@ -16,6 +17,7 @@ export async function login(username: string, password: string) {
   // 1. POST para login - seu próprio timeout
   const loginController = new AbortController()
   const loginTimer = setTimeout(() => loginController.abort(), LOGIN_TIMEOUT_MS)
+  const loginActivity = beginRequestActivity("/auth/login/", "POST")
 
   try {
     const res = await fetch(apiUrl("/api/v1/auth/login/"), {
@@ -42,11 +44,13 @@ export async function login(username: string, password: string) {
     throw e
   } finally {
     clearTimeout(loginTimer)
+    finishRequestActivity(loginActivity)
   }
 
   // 2. GET para obter dados do usuário - seu próprio timeout independente
   const userController = new AbortController()
   const userTimer = setTimeout(() => userController.abort(), LOGIN_TIMEOUT_MS)
+  const userActivity = beginRequestActivity("/auth/user/", "GET")
 
   try {
     // Evita camada extra de refresh/retry na apiFetch para reduzir latência no login.
@@ -71,6 +75,7 @@ export async function login(username: string, password: string) {
     throw e
   } finally {
     clearTimeout(userTimer)
+    finishRequestActivity(userActivity)
   }
 }
 

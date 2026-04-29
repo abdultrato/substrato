@@ -12,6 +12,7 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.equipment_integrations.models import (
     IntegrationAnalyteMapping,
     IntegrationCredential,
@@ -40,12 +41,18 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma",
         price=Decimal("30.00"),
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
+        sample_type=sample,
     )
 
 

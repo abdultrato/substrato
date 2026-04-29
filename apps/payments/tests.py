@@ -11,6 +11,7 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
+from apps.clinical.models.sample import Sample
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 from apps.payments.models.payment import Payment
@@ -36,12 +37,18 @@ def _patient(tenant):
 
 
 def _exam(tenant):
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Glicose",
         price=Decimal("20.00"),
         method=Method.ENZIMATICO,
         sector=Sector.BIOQUIMICA,
+        sample_type=sample,
     )
 
 

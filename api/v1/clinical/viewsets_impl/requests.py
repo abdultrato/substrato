@@ -41,6 +41,8 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         "type",
         "status",
         "clinical_status",
+        "requires_fasting",
+        "fasting_hours",
         "requesting_company__name",
         "external_executing_company__name",
     ]
@@ -59,6 +61,8 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         "status",
         "clinical_status",
         "has_critical_result",
+        "requires_fasting",
+        "fasting_hours",
         "version",
     ]
     ordering = ["-created_at"]

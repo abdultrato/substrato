@@ -5,7 +5,7 @@ import {
   Droplet,
   Shield,
   Package,
-  Wrench,
+  Settings,
   ArrowLeftRight,
   Layers,
   HeartPulse,
@@ -55,7 +55,7 @@ export default function BancoSanguePage() {
       description: "Entradas, saidas, reservas e transferencias.",
     },
     manutencaoarmazenamento: {
-      icon: Wrench,
+      icon: Settings,
       description: "Agendar e registrar manutencoes dos armazenamentos.",
     },
   }

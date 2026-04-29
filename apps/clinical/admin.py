@@ -19,6 +19,7 @@ from .models.medical_exam import MedicalExam, MedicalExamField
 from .models.patient import Patient
 from .models.result import Result
 from .models.result_item import ResultItem
+from .models.sample import Sample
 
 # =========================================================
 # RBAC HELPERS (DJANGO ADMIN)
@@ -57,6 +58,108 @@ class CoreAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     ordering = ("-created_at",)
     list_per_page = 50
+
+
+# =========================================================
+# AMOSTRA
+# =========================================================
+
+
+@admin.register(Sample)
+class SampleAdmin(CoreAdmin):
+    """Catálogo de amostras biológicas e parâmetros de coleta."""
+
+    list_display = (
+        "custom_id",
+        "name",
+        "bottle_type",
+        "minimum_volume_ml",
+        "fasting_required",
+        "fasting_hours",
+        "storage_temperature",
+    )
+
+    search_fields = (
+        "custom_id",
+        "name",
+        "bottle_type",
+        "cap_color",
+        "anticoagulant",
+    )
+
+    list_filter = (
+        "bottle_type",
+        "fasting_required",
+    )
+
+    ordering = ("name",)
+    list_per_page = 50
+
+    readonly_fields = (
+        "custom_id",
+        "version",
+        "created_at",
+        "created_by",
+        "created_by_id",
+        "updated_at",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "deleted_by_id",
+    )
+
+    fieldsets = (
+        (
+            "Identificação da Amostra",
+            {
+                "fields": (
+                    "tenant",
+                    "custom_id",
+                    "name",
+                    "bottle_type",
+                    "cap_color",
+                )
+            },
+        ),
+        (
+            "Parâmetros de Coleta",
+            {
+                "fields": (
+                    "minimum_volume_ml",
+                    "fasting_required",
+                    "fasting_hours",
+                    "anticoagulant",
+                    "collection_instructions",
+                )
+            },
+        ),
+        (
+            "Conservação",
+            {
+                "fields": (
+                    "storage_temperature",
+                    "stability_hours",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "created_by",
+                    "created_by_id",
+                    "updated_at",
+                    "updated_by",
+                    "version",
+                    "deleted_at",
+                    "deleted_by",
+                    "deleted_by_id",
+                ),
+            },
+        ),
+    )
 
 
 # =========================================================
@@ -345,6 +448,7 @@ class LabExamAdmin(CoreAdmin):
     list_display = (
         "custom_id",
         "name",
+        "sample_type",
         "sector",
         "method",
         "turnaround_hours",
@@ -356,9 +460,11 @@ class LabExamAdmin(CoreAdmin):
     search_fields = (
         "custom_id",
         "name",
+        "sample_type__name",
     )
 
     list_filter = (
+        "sample_type",
         "sector",
         "method",
     )
@@ -368,6 +474,8 @@ class LabExamAdmin(CoreAdmin):
     list_per_page = 50
 
     inlines = (LabExamFieldInline,)
+    autocomplete_fields = ("sample_type",)
+    list_select_related = ("sample_type",)
 
     readonly_fields = (
         "custom_id",
@@ -390,6 +498,7 @@ class LabExamAdmin(CoreAdmin):
                     "tenant",
                     "custom_id",
                     "name",
+                    "sample_type",
                     "sector",
                     "method",
                 )
@@ -576,6 +685,9 @@ class LabRequestAdmin(CoreAdmin):
         "custom_id",
         "patient",
         "type",
+        "samples_summary",
+        "requires_fasting",
+        "fasting_hours",
         "status",
         "clinical_status",
         "created_at",
@@ -589,6 +701,7 @@ class LabRequestAdmin(CoreAdmin):
     list_filter = (
         "clinical_status",
         "status",
+        "requires_fasting",
     )
 
     autocomplete_fields = (
@@ -607,6 +720,9 @@ class LabRequestAdmin(CoreAdmin):
 
     readonly_fields = (
         "custom_id",
+        "samples_summary",
+        "requires_fasting",
+        "fasting_hours",
         "created_at",
         "created_by_id",
         "created_by",
@@ -641,6 +757,9 @@ class LabRequestAdmin(CoreAdmin):
                     "patient",
                     "type",
                     "analyst",
+                    "samples_summary",
+                    "requires_fasting",
+                    "fasting_hours",
                     "status",
                     "clinical_status",
                 )
@@ -673,6 +792,9 @@ class LabRequestAdmin(CoreAdmin):
             "custom_id",
             "patient",
             "type",
+            "samples_summary",
+            "requires_fasting",
+            "fasting_hours",
             "status",
             "clinical_status",
             "created_at",
@@ -759,6 +881,14 @@ class LabRequestAdmin(CoreAdmin):
         )
 
     view_result_pdf.short_description = "Resultado PDF"
+
+    def samples_summary(self, obj):
+        names = list(obj.samples.values_list("name", flat=True))
+        if not names:
+            return "—"
+        return ", ".join(names)
+
+    samples_summary.short_description = "Amostras"
 
 # =========================================================
 # RESULTADO ITEM INLINE

@@ -9,13 +9,48 @@ from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
 from apps.clinical.models.medical_result_file import MedicalResultFile
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 
 # =====================================================
 # EXAMS
 # =====================================================
 
 
+class SampleFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "nome": "name",
+        "tipo_frasco": "bottle_type",
+        "requer_jejum": "fasting_required",
+    }
+
+    class Meta:
+        model = Sample
+        fields = [
+            "tenant",
+            "custom_id",
+            "deleted",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "name",
+            "bottle_type",
+            "cap_color",
+            "minimum_volume_ml",
+            "fasting_required",
+            "fasting_hours",
+            "storage_temperature",
+            "stability_hours",
+            "anticoagulant",
+        ]
+
+
 class LabExamFilter(SafeFilterSet):
+    legacy_filter_aliases = {
+        "amostra": "sample_type",
+        "tipo_amostra": "sample_type",
+    }
+
     class Meta:
         model = LabExam
         fields = [
@@ -31,6 +66,7 @@ class LabExamFilter(SafeFilterSet):
             "price",
             "method",
             "sector",
+            "sample_type",
         ]
 
 
@@ -156,7 +192,9 @@ class LabRequestFilter(SafeFilterSet):
     legacy_filter_aliases = {
         "analista": "analyst",
         "estado": "status",
+        "horas_jejum": "fasting_hours",
         "paciente": "patient",
+        "requer_jejum": "requires_fasting",
         "status_clinico": "clinical_status",
         "tipo": "type",
     }
@@ -176,6 +214,8 @@ class LabRequestFilter(SafeFilterSet):
             "status",
             "clinical_status",
             "has_critical_result",
+            "requires_fasting",
+            "fasting_hours",
         ]
 
 
@@ -271,6 +311,8 @@ class MedicalResultFileFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
+    "amostra": SampleFilter,
+    "sample": SampleFilter,
     "exam": LabExamFilter,
     "examemedico": MedicalExamFilter,
     "examecampo": LabExamFieldFilter,

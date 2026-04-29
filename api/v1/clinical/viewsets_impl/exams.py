@@ -4,10 +4,51 @@ from rest_framework.viewsets import ModelViewSet
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.medical_exam import MedicalExam
+from apps.clinical.models.sample import Sample
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
-from ..filters import LabExamFilter, MedicalExamFilter
-from ..serializers import LabExamSerializer, MedicalExamSerializer
+from ..filters import LabExamFilter, MedicalExamFilter, SampleFilter
+from ..serializers import LabExamSerializer, MedicalExamSerializer, SampleSerializer
+
+
+@extend_schema(
+    description="Gerenciamento de amostras biológicas",
+    tags=["Clínico - Amostras"],
+)
+class SampleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = Sample.objects.all()
+    serializer_class = SampleSerializer
+    filterset_class = SampleFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "custom_id",
+        "name",
+        "bottle_type",
+        "cap_color",
+        "anticoagulant",
+        "storage_temperature",
+    ]
+    ordering_fields = [
+        "tenant",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "name",
+        "bottle_type",
+        "cap_color",
+        "minimum_volume_ml",
+        "fasting_required",
+        "fasting_hours",
+        "storage_temperature",
+        "stability_hours",
+        "anticoagulant",
+        "version",
+    ]
+    ordering = ["name", "-created_at"]
 
 
 @extend_schema(
@@ -32,7 +73,7 @@ class LabExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     permission_classes = [IsAuthenticated]
     # LabExam does not expose `description`/`active`/`order`.
     # Keep search/order fields aligned with real model fields.
-    search_fields = ["custom_id", "name", "method", "sector"]
+    search_fields = ["custom_id", "name", "method", "sector", "sample_type__name"]
     ordering_fields = [
         "tenant",
         "custom_id",
@@ -48,6 +89,7 @@ class LabExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         "vat_percentage",
         "method",
         "sector",
+        "sample_type",
         "version",
     ]
     ordering = ["-created_at"]

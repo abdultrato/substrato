@@ -1,6 +1,7 @@
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
+from api.v1.audit.views import ActivityReportPdfView
 from api.v1.dashboard.views import DashboardStatsView
 from api.v1.equipment_integrations.views import (
     EquipmentResultsInboxView,
@@ -17,6 +18,11 @@ register_routes(router)
 urlpatterns = [
     path("auth/", include("api.v1.auth.urls")),
     re_path(r"^dashboard/stats/?$", DashboardStatsView.as_view(), name="dashboard-stats"),
+    re_path(
+        r"^audit/atividade/relatorio/pdf/?$",
+        ActivityReportPdfView.as_view(),
+        name="audit-activity-report-pdf",
+    ),
     # Integrações de equipamentos (worklist + inbox HTTP).
     re_path(
         r"^equipment_integrations/equipment/(?P<equipment_custom_id>[^/]+)/worklist/?$",

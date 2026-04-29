@@ -26,6 +26,7 @@ class ProcedureItem(NoNameCoreModel):
         on_delete=models.CASCADE,
         related_name="itens",
         db_index=True,
+        verbose_name="Procedimento",
     )
     catalog = models.ForeignKey(
         "enfermagem.ProcedureCatalog",
@@ -35,23 +36,28 @@ class ProcedureItem(NoNameCoreModel):
         blank=True,
         related_name="itens_lancados",
         db_index=True,
+        verbose_name="Catálogo do Procedimento",
     )
     description = models.CharField(
         db_column="description",
         max_length=255, blank=True, default="", db_index=True)
     quantity = models.PositiveIntegerField(
         db_column="quantity",
-        default=1)
+        default=1, verbose_name="Quantidade",
+        validators=[MinValueValidator(1)],
+    )
     unit_price = models.DecimalField(
         db_column="unit_price",
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
+        verbose_name="Preço Unitário",
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     performed = models.BooleanField(
         db_column="performed",
-        default=True, db_index=True)
+        default=True, db_index=True, verbose_name="Realizado"
+    )
     execution_status = models.CharField(
         db_column="execution_status",
         max_length=3,
@@ -63,6 +69,7 @@ class ProcedureItem(NoNameCoreModel):
         db_column="billed",
         default=False,
         db_index=True,
+        verbose_name="Faturado",
     )
     billed_at = models.DateTimeField(
         db_column="billed_at",
@@ -73,21 +80,25 @@ class ProcedureItem(NoNameCoreModel):
         db_column="executed_at",
         null=True,
         blank=True,
+        verbose_name="Executado em",
     )
     completed_at = models.DateTimeField(
         db_column="completed_at",
         null=True,
         blank=True,
+        verbose_name="Concluído em",
     )
     observation = models.TextField(
         db_column="observation",
-        blank=True, default="")
+        blank=True, default="",
+        verbose_name="Observação"
+    )
 
     class Meta:
         db_table = "enfermagem_procedimentoitem"
         ordering = ["-created_at"]
-        verbose_name = "Item de Procedimento"
-        verbose_name_plural = "Itens de Procedimento"
+        verbose_name = "Procedimento de Enfermagem - Item"
+        verbose_name_plural = "Procedimentos de Enfermagem - Itens"
         indexes = [
             models.Index(fields=["tenant", "procedure"]),
             models.Index(fields=["catalog"]),
@@ -98,7 +109,7 @@ class ProcedureItem(NoNameCoreModel):
 
     def clean(self):
         super().clean()
-        if self.quantity <= 0:
+        if self.quantity <= 0: 
             raise ValidationError({"quantity": "Quantidade deve ser maior que zero."})
         if self.unit_price is not None and self.unit_price < Decimal("0.00"):
             raise ValidationError({"unit_price": "Preço unitário não pode ser negativo."})

@@ -47,6 +47,10 @@ ALLOWED_HOSTS = [
     host.strip() for host in get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()
 ]
 
+# Desliga persistência síncrona de atividade em ambiente local para reduzir latência
+# de resposta durante navegação e desenvolvimento.
+USER_ACTIVITY_IN_DEBUG = get_env("USER_ACTIVITY_IN_DEBUG", "false").lower() in ("1", "true", "yes", "on")
+
 # =========================================================
 # SYSTEM VERSION (UI)
 # =========================================================

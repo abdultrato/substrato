@@ -3,6 +3,7 @@
 import time
 from typing import Any, Dict
 
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 from apps.audit_activities.models.user_activity import UserActivity
@@ -18,6 +19,8 @@ class UserActivityMiddleware(MiddlewareMixin):
         "/metrics",
         "/static",
         "/media",
+        "/_next",
+        "/favicon.ico",
     )
 
     def process_request(self, request):
@@ -41,6 +44,9 @@ class UserActivityMiddleware(MiddlewareMixin):
     # ----------------------------
 
     def _save_activity(self, request, status_code: int):
+        if settings.DEBUG and not getattr(settings, "USER_ACTIVITY_IN_DEBUG", False):
+            return
+
         path = getattr(request, "path", "") or ""
         if any(path.startswith(prefix) for prefix in self.IGNORE_PREFIXES):
             return

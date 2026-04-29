@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { apiFetch, apiFetchList, extractListMeta, extractResults, extractTotalCount } from "@/lib/api"
+import { __clearApiClientCacheForTests, apiFetch, apiFetchList, extractListMeta, extractResults, extractTotalCount } from "@/lib/api"
+import { subscribeRequestActivity } from "@/lib/requestActivity"
 import { logout } from "@/lib/session"
 
 vi.mock("@/lib/session", () => ({
@@ -11,6 +12,7 @@ describe("API facade contract", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal("fetch", vi.fn())
+    __clearApiClientCacheForTests()
   })
 
   afterEach(() => {
@@ -151,5 +153,93 @@ describe("API facade contract", () => {
     expect(response.items).toEqual([{ id: 9 }])
     expect(response.meta.total).toBe(1)
     expect(response.meta.totalPages).toBe(1)
+  })
+
+  it("emite eventos de atividade durante a requisicao", async () => {
+    const events: string[] = []
+    const unsubscribe = subscribeRequestActivity((event) => {
+      events.push(event.phase)
+    })
+
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/patients/")
+    unsubscribe()
+
+    expect(events).toEqual(["start", "finish"])
+  })
+
+  it("reutiliza cache client-side em GETs consecutivos", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [{ id: 1 }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const a = await apiFetch("/patients/")
+    const b = await apiFetch("/patients/")
+
+    expect(a).toEqual({ results: [{ id: 1 }] })
+    expect(b).toEqual({ results: [{ id: 1 }] })
+    expect((global.fetch as any).mock.calls.length).toBe(1)
+  })
+
+  it("invalida cache do recurso após mutação", async () => {
+    ;(global.fetch as any)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [{ id: 1 }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [{ id: 1 }, { id: 2 }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    await apiFetch("/patients/")
+    await apiFetch("/patients/1/", { method: "PUT", body: JSON.stringify({ nome: "Novo nome" }) })
+    const refreshed = await apiFetch("/patients/")
+
+    expect(refreshed).toEqual({ results: [{ id: 1 }, { id: 2 }] })
+    expect((global.fetch as any).mock.calls.length).toBe(3)
+  })
+
+  it("deduplica GETs em voo para a mesma rota", async () => {
+    let resolver: ((res: Response) => void) | null = null
+    const pending = new Promise<Response>((resolve) => {
+      resolver = resolve
+    })
+
+    ;(global.fetch as any).mockImplementation(() => pending)
+
+    const p1 = apiFetch("/invoices/")
+    const p2 = apiFetch("/invoices/")
+
+    resolver?.(
+      new Response(JSON.stringify({ results: [{ id: 7 }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const [r1, r2] = await Promise.all([p1, p2])
+    expect(r1).toEqual({ results: [{ id: 7 }] })
+    expect(r2).toEqual({ results: [{ id: 7 }] })
+    expect((global.fetch as any).mock.calls.length).toBe(1)
   })
 })

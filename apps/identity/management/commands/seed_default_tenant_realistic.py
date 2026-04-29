@@ -44,6 +44,7 @@ from apps.clinical.models.medical_result_file import MedicalResultFile
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
 from apps.consultations.models.medical_consultation import MedicalConsultation
@@ -1119,6 +1120,17 @@ class Command(BaseCommand):
         exams = list(LabExam.objects.filter(tenant=tenant).order_by("id"))
         methods = [c[0] for c in Method.choices]
         sectors = [c[0] for c in Sector.choices]
+        sample = Sample.objects.filter(
+            tenant=tenant,
+            name="Sangue total",
+            deleted=False,
+        ).order_by("id").first()
+        if sample is None:
+            sample = Sample.objects.create(
+                tenant=tenant,
+                name="Sangue total",
+                bottle_type=Sample.BottleType.EDTA_TUBE,
+            )
 
         while len(exams) < target:
             idx = len(exams) + 1
@@ -1133,6 +1145,7 @@ class Command(BaseCommand):
                 applies_vat_by_default=True,
                 method=methods[(idx - 1) % len(methods)] if methods else "ELISA",
                 sector=sectors[(idx - 1) % len(sectors)] if sectors else None,
+                sample_type=sample,
             )
             exams.append(exam)
 

@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
+from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
 from apps.nursing.models import (
     NursingEvolution,
@@ -21,6 +22,7 @@ from apps.nursing.models import (
     ProcedureMaterial,
     ProcedureMaterialValue,
 )
+from apps.payments.models.payment import Payment
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
@@ -421,6 +423,84 @@ def test_procedure_item_api_rejects_invalid_transition(api_client):
     assert response.status_code == 400
     detail = str(response.data.get("detail", ""))
     assert "execution_status" in detail
+
+
+@pytest.mark.django_db
+def test_procedure_pdf_endpoint_returns_pdf(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+    professional = _professional(tenant)
+
+    procedure = Procedure.objects.create(
+        patient=patient,
+        notes="Paciente estável após procedimento.",
+    )
+    procedure.professional.add(professional)
+
+    item = ProcedureItem.objects.create(
+        procedure=procedure,
+        tenant=tenant,
+        description="Curativo compressivo",
+        quantity=1,
+        unit_price=Decimal("25.00"),
+    )
+
+    medication_category = ProductCategory.objects.create(
+        tenant=tenant,
+        name="Medicamentos",
+        description="",
+    )
+    medication = Product.objects.create(
+        tenant=tenant,
+        name="Amoxicilina 500mg",
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal("12.00"),
+        category=medication_category,
+    )
+    medication_lot = Lot.objects.create(
+        tenant=tenant,
+        product=medication,
+        lot_number="LMED-001",
+        expiration_date=timezone.localdate() + timedelta(days=120),
+        initial_quantity=20,
+        sale_price=medication.sale_price,
+    )
+
+    ProcedureMaterial.objects.create(
+        tenant=tenant,
+        procedure=procedure,
+        procedure_item=item,
+        product=medication,
+        lot=medication_lot,
+        quantity=2,
+        unit_cost=Decimal("12.00"),
+    )
+
+    invoice = Invoice.objects.create(
+        tenant=tenant,
+        origin=Invoice.Origin.NURSING,
+        patient=patient,
+        procedure=procedure,
+    )
+    invoice.procedures.add(procedure)
+    invoice.sync_items_from_origin()
+    invoice.status = Invoice.Status.ISSUED
+    invoice.save(update_fields=["status"])
+
+    Payment.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        value=invoice.total_a_pagar,
+        change_amount=Decimal("0.00"),
+        method=Payment.Method.CASH,
+        status=Payment.Status.CONFIRMED,
+    )
+
+    response = api_client.get(f"/api/v1/nursing/procedure/{procedure.id}/pdf/")
+    assert response.status_code == 200
+    assert "application/pdf" in response["Content-Type"]
+    assert len(response.content) > 0
 
 
 _patient = _patient

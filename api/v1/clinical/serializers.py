@@ -20,6 +20,7 @@ from apps.clinical.models.medical_result_file import (
 )
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from core.constants.provenance import Provenance
 
 CORE_READ_ONLY_FIELDS = [
@@ -319,9 +320,12 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     Inclui validação de preço e tempo de response.
     """
 
+    sample_type_name = serializers.CharField(source="sample_type.name", read_only=True)
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
+        "amostra": "sample_type",
+        "tipo_amostra": "sample_type",
         "trl_horas": "turnaround_hours",
         "preco": "price",
         "metodo": "method",
@@ -333,6 +337,10 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     legacy_output_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
+        "amostra": "sample_type",
+        "amostra_nome": "sample_type_name",
+        "tipo_amostra": "sample_type",
+        "tipo_amostra_nome": "sample_type_name",
         "trl_horas": "turnaround_hours",
         "preco": "price",
         "metodo": "method",
@@ -345,7 +353,7 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = LabExam
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "sample_type_name"]
         extra_kwargs = {
             "name": {
                 "required": True,
@@ -384,6 +392,10 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
                 "required": True,
                 "help_text": "Método utilizado para realizar o exam",
             },
+            "sample_type": {
+                "required": True,
+                "help_text": "Tipo de amostra biológica exigida para o exame.",
+            },
             "sector": {
                 # O model permite null/blank (e há constraint de unicidade).
                 # DRF injeta `default=None` para campos nullable em constraints, então
@@ -398,6 +410,42 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         if value is not None and value <= 0:
             raise serializers.ValidationError("Preço deve ser maior que zero.")
         return value
+
+
+class SampleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    """Serializer de amostras biológicas."""
+
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "tipo_frasco": "bottle_type",
+        "cor_tampa": "cap_color",
+        "volume_minimo_ml": "minimum_volume_ml",
+        "requer_jejum": "fasting_required",
+        "horas_jejum": "fasting_hours",
+        "temperatura_conservacao": "storage_temperature",
+        "estabilidade_horas": "stability_hours",
+        "anticoagulante": "anticoagulant",
+        "instrucoes_coleta": "collection_instructions",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "tipo_frasco": "bottle_type",
+        "cor_tampa": "cap_color",
+        "volume_minimo_ml": "minimum_volume_ml",
+        "requer_jejum": "fasting_required",
+        "horas_jejum": "fasting_hours",
+        "temperatura_conservacao": "storage_temperature",
+        "estabilidade_horas": "stability_hours",
+        "anticoagulante": "anticoagulant",
+        "instrucoes_coleta": "collection_instructions",
+    }
+
+    class Meta:
+        model = Sample
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 class MedicalExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -507,6 +555,23 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         queryset=MedicalExam.objects.all(),
         required=False,
     )
+    samples = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class SampleSummarySerializer(serializers.ModelSerializer):
+        class Meta:
+            model = Sample
+            fields = [
+                "id",
+                "custom_id",
+                "name",
+                "bottle_type",
+                "cap_color",
+                "minimum_volume_ml",
+                "fasting_required",
+                "fasting_hours",
+            ]
+
+    sample_details = SampleSummarySerializer(source="samples", many=True, read_only=True)
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "paciente": "patient",
@@ -519,6 +584,9 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "exames": "exams",
         "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
+        "amostras": "samples",
+        "requer_jejum": "requires_fasting",
+        "horas_jejum": "fasting_hours",
         "itens": "items",
     }
     legacy_output_aliases = {
@@ -534,6 +602,10 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "exames": "exams",
         "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
+        "amostras": "samples",
+        "requer_jejum": "requires_fasting",
+        "horas_jejum": "fasting_hours",
+        "detalhes_amostras": "sample_details",
         "itens": "items",
     }
 
@@ -569,7 +641,10 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "requesting_company_name",
             "external_executing_company_name",
             "items",
+            "sample_details",
             "has_critical_result",
+            "requires_fasting",
+            "fasting_hours",
         ]
         extra_kwargs = {
             "patient": {
@@ -678,6 +753,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 for exam in LabExam.objects.filter(id__in=adicionar):
                     instance.add_exam(exam)
 
+                instance._sync_samples_from_items()
+
         elif instance.type == LabRequest.Type.MEDICAL_EXAM:
             if exams is not None:
                 raise serializers.ValidationError({"exams": "Requisição MED não aceita exams laboratoriais."})
@@ -695,6 +772,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
                 for medical_exam in MedicalExam.objects.filter(id__in=adicionar):
                     instance.add_medical_exam(medical_exam)
+
+                instance._sync_samples_from_items()
 
         return instance
 
@@ -903,6 +982,8 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
 
 
 SERIALIZER_MAP = {
+    "amostra": SampleSerializer,
+    "sample": SampleSerializer,
     "exam": LabExamSerializer,
     "examemedico": MedicalExamSerializer,
     "examecampo": LabExamFieldSerializer,

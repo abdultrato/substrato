@@ -7,6 +7,7 @@ quebras em imports antigos.
 
 from .class_views import RequestPdfView, ResultPdfView
 from .billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
+from .activity_reports_pdf_generator import generate_activity_report_pdf
 from .invoice_pdf_generator import generate_invoice_pdf
 from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
@@ -55,6 +56,7 @@ __all__ = [
     "digits_only",
     "draw_header",
     "draw_signatures",
+    "generate_activity_report_pdf",
     "generate_billing_user_history_pdf",
     "generate_invoice_pdf",
     "generate_patient_history_pdf",
@@ -89,6 +91,7 @@ invoice_pdf = invoice_pdf
 invoice_request_pdf = request_invoice_pdf
 gerar_pdf_invoice = generate_invoice_pdf
 gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
+gerar_pdf_atividades = generate_activity_report_pdf
 gerar_pdf_historia_clinica = generate_patient_history_pdf
 gerar_pdf_historia_faturas = generate_patient_invoice_history_pdf
 gerar_pdf_historia_pagamentos = generate_patient_payment_history_pdf

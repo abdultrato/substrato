@@ -16,6 +16,7 @@ from .viewsets_impl import (
     MedicalResultFileViewSet,
     PatientViewSet,
     ResultItemViewSet,
+    SampleViewSet,
 )
 
 __all__ = [
@@ -38,4 +39,6 @@ __all__ = [
     "PatientViewSet",
     "ResultItemViewSet",
     "ResultItemViewSet",
+    "SampleViewSet",
+    "SampleViewSet",
 ]

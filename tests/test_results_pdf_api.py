@@ -15,6 +15,7 @@ from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -54,6 +55,11 @@ def _patient(tenant: Tenant):
 
 def _exam(tenant: Tenant):
     """Cria exame laboratorial base para os cenários de resultado."""
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
     return LabExam.objects.create(
         tenant=tenant,
         name="Hemograma API",
@@ -61,6 +67,7 @@ def _exam(tenant: Tenant):
         method=Method.ENZIMATICO,
         sector=Sector.HEMATOLOGIA,
         turnaround_hours=2,
+        sample_type=sample,
     )
 
 
