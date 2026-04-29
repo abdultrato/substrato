@@ -23,10 +23,11 @@ CORE_READ_ONLY_FIELDS = (
 
 class DoctorSerializer(serializers.ModelSerializer):
     role_name = serializers.CharField(source="role.name", read_only=True)
+    profession_name = serializers.CharField(source="profession.name", read_only=True)
 
     class Meta:
         model = Employee
-        fields = ["id", "name", "profession", "role", "role_name"]
+        fields = ["id", "name", "profession", "profession_name", "role", "role_name"]
 
 
 class MedicalConsultationSerializer(serializers.ModelSerializer):

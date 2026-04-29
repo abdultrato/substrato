@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 import json
 from types import SimpleNamespace
@@ -11,7 +12,13 @@ import application.payments.start_payment as start_payment_module
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
 from apps.consultations.models.medical_consultation import MedicalConsultation
+from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.disciplinary_process import DisciplinaryProcess
 from apps.human_resources.models.employee import Employee
+from apps.human_resources.models.family_dependent import FamilyDependent
+from apps.human_resources.models.overtime import Overtime
+from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.profession import Profession
 from apps.tenants.models.tenant import Tenant
 
 
@@ -615,3 +622,139 @@ def test_employee_delete_inactivates_and_activate_restores(api_client):
     employee.refresh_from_db()
     assert employee.status == Employee.Status.ACTIVE
     assert employee.deleted is False
+
+
+@pytest.mark.django_db
+def test_employee_inherits_profession_and_blocks_career_change_with_open_disciplinary_process():
+    tenant = _tenant()
+    profession = Profession.objects.create(
+        tenant=tenant,
+        name="Analista de RH",
+        base_salary=Decimal("22000.00"),
+        ordinary_hour_value=Decimal("125.0000"),
+        extraordinary_hour_value=Decimal("187.5000"),
+        minimum_progression_months=6,
+        minimum_career_change_months=12,
+        family_allowance_per_dependent=Decimal("600.00"),
+    )
+
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Funcionário RH",
+        profession=profession,
+        admission_date=timezone.localdate() - timedelta(days=800),
+        status=Employee.Status.ACTIVE,
+    )
+
+    assert employee.nominal_salary == Decimal("22000.00")
+    assert employee.ordinary_hour_value == Decimal("125.0000")
+    assert employee.extraordinary_hour_value == Decimal("187.5000")
+    assert employee.minimum_progression_months == 6
+    assert employee.minimum_career_change_months == 12
+    assert employee.family_allowance_per_dependent == Decimal("600.00")
+    assert employee.can_change_career is True
+
+    process = DisciplinaryProcess.objects.create(
+        tenant=tenant,
+        employee=employee,
+        incident_date=timezone.localdate(),
+        severity=DisciplinaryProcess.Severity.SERIOUS,
+        status=DisciplinaryProcess.Status.OPEN,
+        description="Faltas de respeito repetidas em ambiente de trabalho.",
+    )
+
+    assert employee.has_open_disciplinary_process is True
+    assert employee.can_progress_salary is False
+    assert employee.can_change_career is False
+
+    process.status = DisciplinaryProcess.Status.CLOSED
+    process.resolved_at = timezone.localdate()
+    process.save()
+
+    assert employee.has_open_disciplinary_process is False
+    assert employee.can_change_career is True
+
+
+@pytest.mark.django_db
+def test_payroll_recalculate_exposes_month_variables_and_absence_discount_rule():
+    tenant = _tenant()
+    profession = Profession.objects.create(
+        tenant=tenant,
+        name="Técnico",
+        base_salary=Decimal("22000.00"),
+        ordinary_hour_value=Decimal("100.0000"),
+        extraordinary_hour_value=Decimal("150.0000"),
+        family_allowance_per_dependent=Decimal("300.00"),
+    )
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Funcionário Folha",
+        profession=profession,
+        salary_increase=Decimal("1000.00"),
+        admission_date=timezone.localdate() - timedelta(days=500),
+        status=Employee.Status.ACTIVE,
+    )
+
+    FamilyDependent.objects.create(
+        tenant=tenant,
+        employee=employee,
+        name="Dependente Um",
+        relationship=FamilyDependent.Parentesco.FILHO,
+    )
+    FamilyDependent.objects.create(
+        tenant=tenant,
+        employee=employee,
+        name="Dependente Dois",
+        relationship=FamilyDependent.Parentesco.CONJUGE,
+    )
+
+    reference_date = date(timezone.localdate().year, timezone.localdate().month, 10)
+    Absence.objects.create(tenant=tenant, employee=employee, date=reference_date, justified=False)
+    Absence.objects.create(tenant=tenant, employee=employee, date=reference_date + timedelta(days=1), justified=False)
+    Absence.objects.create(tenant=tenant, employee=employee, date=reference_date + timedelta(days=2), justified=True)
+
+    Overtime.objects.create(
+        tenant=tenant,
+        employee=employee,
+        date=reference_date + timedelta(days=3),
+        kind=Overtime.Kind.ORDINARY,
+        hours=Decimal("5.00"),
+    )
+    Overtime.objects.create(
+        tenant=tenant,
+        employee=employee,
+        date=reference_date + timedelta(days=4),
+        kind=Overtime.Kind.EXTRAORDINARY,
+        hours=Decimal("2.00"),
+    )
+
+    payroll = Payroll.objects.create(
+        tenant=tenant,
+        employee=employee,
+        year=reference_date.year,
+        month=reference_date.month,
+        other_discounts_value=Decimal("500.00"),
+    )
+
+    daily_salary = (Decimal("22000.00") / Decimal("22")).quantize(Decimal("0.0000"))
+    absence_discount = (daily_salary * Decimal("3")).quantize(Decimal("0.01"))
+    family_allowance = Decimal("600.00")
+    ordinary_total = (Decimal("5.00") * Decimal("100.0000")).quantize(Decimal("0.01"))
+    extraordinary_total = (Decimal("2.00") * Decimal("150.0000")).quantize(Decimal("0.01"))
+    overtime_total = (ordinary_total + extraordinary_total).quantize(Decimal("0.01"))
+    gross_salary = (Decimal("22000.00") + Decimal("1000.00") + family_allowance + overtime_total).quantize(
+        Decimal("0.01")
+    )
+    expected_total_salary = (gross_salary - absence_discount - Decimal("500.00")).quantize(Decimal("0.01"))
+
+    assert payroll.absence_days == 3
+    assert payroll.discounted_absence_days == 3
+    assert payroll.daily_salary_value == daily_salary
+    assert payroll.absence_discount_value == absence_discount
+    assert payroll.family_dependents_count == 2
+    assert payroll.family_allowance_value == family_allowance
+    assert payroll.ordinary_hours == Decimal("5.00")
+    assert payroll.extraordinary_hours == Decimal("2.00")
+    assert payroll.salary_increase_value == Decimal("1000.00")
+    assert payroll.gross_salary == gross_salary
+    assert payroll.total_salary == expected_total_salary

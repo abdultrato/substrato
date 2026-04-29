@@ -1,11 +1,13 @@
 from rest_framework import serializers  # DRF base
 
 from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.disciplinary_process import DisciplinaryProcess
 from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
 from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.profession import Profession
 from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
@@ -28,9 +30,43 @@ class JobTitleSerializer(serializers.ModelSerializer):
         )
 
 
+class ProfessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profession
+        fields = "__all__"
+        read_only_fields = (
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
+        )
+
+
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
+        fields = "__all__"
+        read_only_fields = (
+            "custom_id",
+            "tenant",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "deleted",
+            "deleted_at",
+            "deleted_by",
+        )
+
+
+class DisciplinaryProcessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DisciplinaryProcess
         fields = "__all__"
         read_only_fields = (
             "custom_id",
@@ -162,6 +198,20 @@ class PayrollSerializer(serializers.ModelSerializer):
             "deleted_at",
             "deleted_by",
             "calculated_overtime_hours",
+            "ordinary_hours",
+            "extraordinary_hours",
+            "ordinary_hour_value",
+            "extraordinary_hour_value",
+            "ordinary_hours_value",
+            "extraordinary_hours_value",
+            "salary_increase_value",
+            "family_dependents_count",
+            "family_allowance_value",
+            "absence_days",
+            "discounted_absence_days",
+            "daily_salary_value",
+            "absence_discount_value",
+            "gross_salary",
             "hourly_value",
             "overtime_value",
             "total_salary",
@@ -170,7 +220,9 @@ class PayrollSerializer(serializers.ModelSerializer):
 
 SERIALIZER_MAP = {
     "role": JobTitleSerializer,  # Alias -> serializer
+    "profissao": ProfessionSerializer,
     "employee": EmployeeSerializer,
+    "processodisciplinar": DisciplinaryProcessSerializer,
     "agregadofamiliar": FamilyDependentSerializer,
     "horario": WorkScheduleSerializer,
     "falta": AbsenceSerializer,

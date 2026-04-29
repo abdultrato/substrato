@@ -47,6 +47,7 @@ from apps.human_resources.models import (
     JobTitle,
     Overtime,
     Payroll,
+    Profession,
     Termination,
     Vacation,
     WorkSchedule,
@@ -424,11 +425,20 @@ class Command(BaseCommand):
 
     def _create_employee(self, suffix: str, state: SmokeState):
         role = state.keep.get("job_title")
+        profession, _ = Profession.objects.get_or_create(
+            tenant=state.tenant,
+            name="Medico",
+            defaults={
+                "base_salary": Decimal("35000.00"),
+                "ordinary_hour_value": Decimal("198.8636"),
+                "extraordinary_hour_value": Decimal("298.2954"),
+            },
+        )
         obj = Employee.objects.create(
             tenant=state.tenant,
             name=f"Funcionario Smoke {suffix}",
             role=role,
-            profession="Medico",
+            profession=profession,
             nuit=f"NUIT-{self._next_counter(Employee)}",
             nib=f"NIB-{self._next_counter(Employee)}",
             document_number=f"DOC-{self._next_counter(Employee)}",

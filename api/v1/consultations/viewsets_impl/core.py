@@ -38,12 +38,12 @@ from ..serializers import (
 
 
 class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = Employee.objects.select_related("role").all()
+    queryset = Employee.objects.select_related("role", "profession").all()
     serializer_class = DoctorSerializer
     filterset_class = DoctorFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["name", "profession", "role__name"]
-    ordering_fields = ["name", "profession", "created_at"]
+    search_fields = ["name", "profession__name", "role__name"]
+    ordering_fields = ["name", "profession__name", "created_at"]
     ordering = ["name"]
 
     def get_queryset(self):

@@ -16,6 +16,10 @@ class Overtime(NoNameCoreModel):
 
     prefix = "HEX"  # Prefixo custom_id
 
+    class Kind(models.TextChoices):
+        ORDINARY = "ORDINARIA", "Ordinária"
+        EXTRAORDINARY = "EXTRAORDINARIA", "Extraordinária"
+
     employee = models.ForeignKey(  # Funcionário que fez a hora extra
         "recursos_humanos.Employee",
         db_column="employee_id",
@@ -29,6 +33,14 @@ class Overtime(NoNameCoreModel):
         db_column="date",
         verbose_name="Data",
         default=timezone.now,
+        db_index=True,
+    )
+    kind = models.CharField(
+        db_column="kind",
+        verbose_name="Tipo de Hora",
+        max_length=20,
+        choices=Kind.choices,
+        default=Kind.EXTRAORDINARY,
         db_index=True,
     )
     hours = models.DecimalField(  # Quantidade de horas
@@ -60,6 +72,7 @@ class Overtime(NoNameCoreModel):
         ordering = ["-date", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "employee", "date"]),
+            models.Index(fields=["tenant", "kind", "date"]),
         ]
 
     def clean(self):

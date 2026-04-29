@@ -1,11 +1,13 @@
 from django.contrib import admin
 
 from .models.absence import Absence
+from .models.disciplinary_process import DisciplinaryProcess
 from .models.employee import Employee
 from .models.family_dependent import FamilyDependent
 from .models.job_title import JobTitle
 from .models.overtime import Overtime
 from .models.payroll import Payroll
+from .models.profession import Profession
 from .models.termination import Termination
 from .models.vacation import Vacation
 from .models.work_schedule import WorkSchedule
@@ -39,11 +41,19 @@ class JobTitleAdmin(CoreAdmin):
     ordering = ("name",)
 
 
+@admin.register(Profession)
+class ProfessionAdmin(CoreAdmin):
+    list_display = ("name", "base_salary", "ordinary_hour_value", "extraordinary_hour_value", "active", "tenant")
+    list_filter = ("active",)
+    search_fields = ("name",)
+    ordering = ("name",)
+
+
 @admin.register(Employee)
 class EmployeeAdmin(CoreAdmin):
     list_display = ("name", "role", "profession", "status", "nominal_salary", "tenant")
-    list_filter = ("status", "role")
-    search_fields = ("name", "profession", "email", "phone")
+    list_filter = ("status", "role", "profession")
+    search_fields = ("name", "profession__name", "email", "phone")
     ordering = ("name",)
     inlines = [FamilyDependentInline]  # Mostra dependentes na mesma tela
 
@@ -87,15 +97,33 @@ class TerminationAdmin(CoreAdmin):
 
 @admin.register(Overtime)
 class OvertimeAdmin(CoreAdmin):
-    list_display = ("date", "employee", "hours", "multiplier")
+    list_display = ("date", "employee", "kind", "hours", "multiplier")
     ordering = ("-date", "-created_at")
 
 
 @admin.register(Payroll)
 class PayrollAdmin(CoreAdmin):
-    list_display = ("year", "month", "employee", "nominal_salary", "calculated_overtime_hours", "total_salary", "closed")
+    list_display = (
+        "year",
+        "month",
+        "employee",
+        "nominal_salary",
+        "salary_increase_value",
+        "absence_days",
+        "absence_discount_value",
+        "family_allowance_value",
+        "total_salary",
+        "closed",
+    )
     list_filter = ("year", "month", "closed")
     ordering = ("-year", "-month", "-created_at")
+
+
+@admin.register(DisciplinaryProcess)
+class DisciplinaryProcessAdmin(CoreAdmin):
+    list_display = ("incident_date", "employee", "severity", "status", "resolved_at")
+    list_filter = ("severity", "status")
+    ordering = ("-incident_date", "-created_at")
 
 
 AgregadoFamiliarInline = FamilyDependentInline  # Alias legado

@@ -5,33 +5,39 @@ from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.disciplinary_process import DisciplinaryProcess
 from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
 from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.profession import Profession
 from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
 
 from ..filters import (
     AbsenceFilter,
+    DisciplinaryProcessFilter,
     EmployeeFilter,
     FamilyDependentFilter,
     JobTitleFilter,
     OvertimeFilter,
     PayrollFilter,
+    ProfessionFilter,
     TerminationFilter,
     VacationFilter,
     WorkScheduleFilter,
 )
 from ..serializers import (
     AbsenceSerializer,
+    DisciplinaryProcessSerializer,
     EmployeeSerializer,
     FamilyDependentSerializer,
     JobTitleSerializer,
     OvertimeSerializer,
     PayrollSerializer,
+    ProfessionSerializer,
     TerminationSerializer,
     VacationSerializer,
     WorkScheduleSerializer,
@@ -51,12 +57,21 @@ class JobTitleViewSet(TenantScopedModelViewSet):
     ordering = ["name"]
 
 
+class ProfessionViewSet(TenantScopedModelViewSet):
+    queryset = Profession.objects.all()
+    serializer_class = ProfessionSerializer
+    filterset_class = ProfessionFilter
+    search_fields = ["custom_id", "name"]
+    ordering_fields = ["name", "active", "created_at"]
+    ordering = ["name"]
+
+
 class EmployeeViewSet(TenantScopedModelViewSet):
-    queryset = Employee.objects.select_related("role").all()
+    queryset = Employee.objects.select_related("role", "profession").all()
     serializer_class = EmployeeSerializer
     filterset_class = EmployeeFilter
-    search_fields = ["custom_id", "name", "profession", "email", "phone"]
-    ordering_fields = ["name", "profession", "admission_date", "status", "created_at"]
+    search_fields = ["custom_id", "name", "profession__name", "email", "phone"]
+    ordering_fields = ["name", "profession__name", "admission_date", "status", "created_at"]
     ordering = ["name"]
 
     def _set_employee_status(self, employee: Employee, status_value: str):
@@ -136,8 +151,16 @@ class OvertimeViewSet(TenantScopedModelViewSet):
     queryset = Overtime.objects.select_related("employee").all()
     serializer_class = OvertimeSerializer
     filterset_class = OvertimeFilter
-    ordering_fields = ["date", "created_at"]
+    ordering_fields = ["date", "kind", "created_at"]
     ordering = ["-date", "-created_at"]
+
+
+class DisciplinaryProcessViewSet(TenantScopedModelViewSet):
+    queryset = DisciplinaryProcess.objects.select_related("employee").all()
+    serializer_class = DisciplinaryProcessSerializer
+    filterset_class = DisciplinaryProcessFilter
+    ordering_fields = ["incident_date", "severity", "status", "created_at"]
+    ordering = ["-incident_date", "-created_at"]
 
 
 class PayrollViewSet(TenantScopedModelViewSet):
@@ -150,7 +173,9 @@ class PayrollViewSet(TenantScopedModelViewSet):
 
 VIEWSET_MAP = {
     "role": JobTitleViewSet,
+    "profissao": ProfessionViewSet,
     "employee": EmployeeViewSet,
+    "processodisciplinar": DisciplinaryProcessViewSet,
     "agregadofamiliar": FamilyDependentViewSet,
     "horario": WorkScheduleViewSet,
     "falta": AbsenceViewSet,
@@ -163,11 +188,13 @@ VIEWSET_MAP = {
 __all__ = [
     "VIEWSET_MAP",
     "AbsenceViewSet",
+    "DisciplinaryProcessViewSet",
     "EmployeeViewSet",
     "FamilyDependentViewSet",
     "JobTitleViewSet",
     "OvertimeViewSet",
     "PayrollViewSet",
+    "ProfessionViewSet",
     "TerminationViewSet",
     "VacationViewSet",
     "WorkScheduleViewSet",

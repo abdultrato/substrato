@@ -62,6 +62,7 @@ from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
 from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.profession import Profession
 from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
@@ -734,11 +735,21 @@ class Command(BaseCommand):
             title = _next_available(titles, idx)
             first = faker.first_name()
             last = faker.last_name()
+            profession_name = title.name if title else "Profissional de Saúde"
+            profession, _ = Profession.objects.get_or_create(
+                tenant=tenant,
+                name=profession_name,
+                defaults={
+                    "base_salary": Decimal("18000.00"),
+                    "ordinary_hour_value": Decimal("102.2727"),
+                    "extraordinary_hour_value": Decimal("153.4091"),
+                },
+            )
             employee = Employee.objects.create(
                 tenant=tenant,
                 name=f"{first} {last}",
                 role=title,
-                profession=title.name if title else "Profissional de Saúde",
+                profession=profession,
                 nuit=f"8410{idx:06d}",
                 nib=f"MZ90{idx:020d}"[:24],
                 document_number=f"EMP-{tenant.id}-{idx:06d}",
