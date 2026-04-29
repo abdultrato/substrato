@@ -21,20 +21,20 @@ export default function ProcedimentoDetailPage() {
   const id = routeParamToString((params as any)?.id)
 
   const [data, setData] = useState<any | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
-    setErro(null)
+    setErrorMessage(null)
     try {
       const endpoint = ensureTrailingSlash("/enfermagem/procedimento/") + `${id}/`
       const res = await apiFetch<any>(endpoint)
       setData(res)
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimento."))
+      setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimento."))
     } finally {
       setLoading(false)
     }
@@ -47,13 +47,13 @@ export default function ProcedimentoDetailPage() {
   async function handleDelete() {
     if (!confirm("Apagar este registro?")) return
     setDeleting(true)
-    setErro(null)
+    setErrorMessage(null)
     try {
       const endpoint = ensureTrailingSlash("/enfermagem/procedimento/") + `${id}/`
       await apiFetch(endpoint, { method: "DELETE" })
       router.push("/enfermagem/procedimentos")
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao apagar."))
+      setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao apagar."))
     } finally {
       setDeleting(false)
     }
@@ -61,7 +61,7 @@ export default function ProcedimentoDetailPage() {
 
   async function handleOpenPdf() {
     setDownloadingPdf(true)
-    setErro(null)
+    setErrorMessage(null)
     try {
       const endpoint = ensureTrailingSlash("/enfermagem/procedimento/") + `${id}/pdf/`
       const blob = await apiFetch<Blob>(endpoint, { responseType: "blob" })
@@ -69,7 +69,7 @@ export default function ProcedimentoDetailPage() {
       window.open(url, "_blank", "noopener,noreferrer")
       setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
+      setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
     } finally {
       setDownloadingPdf(false)
     }
@@ -115,9 +115,9 @@ export default function ProcedimentoDetailPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 

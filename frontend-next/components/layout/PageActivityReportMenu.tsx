@@ -52,7 +52,7 @@ export default function PageActivityReportMenu() {
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [open])
 
-    async function gerarPdf() {
+    async function handleGeneratePdf() {
         try {
             setLoading(true)
             setError(null)
@@ -138,7 +138,7 @@ export default function PageActivityReportMenu() {
                     <div className="mt-3 flex justify-end">
                         <button
                             type="button"
-                            onClick={gerarPdf}
+                            onClick={handleGeneratePdf}
                             disabled={loading}
                             className="inline-flex items-center rounded-lg border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/25 disabled:opacity-60"
                         >

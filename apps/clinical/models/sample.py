@@ -119,6 +119,3 @@ class Sample(CoreModel):
 
     def __str__(self):
         return self.name
-
-
-Amostra = Sample

@@ -31,6 +31,21 @@ type DraftItem = {
   requestedQuantity: number
 }
 
+type RequesterSectorOption = {
+  value: string
+  label: string
+}
+
+type RequesterContextResponse = {
+  is_admin: boolean
+  can_create: boolean
+  sector_locked: boolean
+  requester_sector: string | null
+  requester_sector_label: string
+  requested_by_department: string
+  available_sectors: RequesterSectorOption[]
+}
+
 function formatLotLabel(l: LotDisponivel) {
   const saldo = typeof l.saldo === "number" ? l.saldo : Number(l.saldo || 0)
   return `${l.product_name || "Produto"} — Lote ${l.lot_number || l.id} (disp.: ${saldo})`
@@ -61,6 +76,8 @@ export default function NovaRequisicaoMateriaisPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [productQuery, setProductQuery] = useState("")
+  const [requesterContext, setRequesterContext] = useState<RequesterContextResponse | null>(null)
+  const [requesterSector, setRequesterSector] = useState("")
 
   const [items, setItems] = useState<DraftItem[]>([{ lotId: null, requestedQuantity: 1 }])
 
@@ -70,13 +87,16 @@ export default function NovaRequisicaoMateriaisPage() {
       try {
         setLoadingLots(true)
         setError(null)
-        const [availableRes, allLotsRes] = await Promise.all([
+        const [availableRes, allLotsRes, requesterContextRes] = await Promise.all([
           apiFetch<any>("/pharmacy/lot/disponiveis/"),
           apiFetchAll<LotDisponivel>("/pharmacy/lot/", { pageSize: 200, maxPages: 25 }),
+          apiFetch<RequesterContextResponse>("/pharmacy/requisicaomaterial/requester_context/"),
         ])
         if (!mounted) return
         setLots(extractResults<LotDisponivel>(availableRes))
         setStockLots(Array.isArray(allLotsRes) ? allLotsRes : [])
+        setRequesterContext(requesterContextRes)
+        setRequesterSector(requesterContextRes?.requester_sector || "")
       } catch (e: any) {
         if (!mounted) return
         setError(e?.message || "Falha ao carregar lotes disponíveis.")
@@ -139,6 +159,11 @@ export default function NovaRequisicaoMateriaisPage() {
   async function submit() {
     setError(null)
 
+    if (!requesterSector) {
+      setError("Não foi possível identificar o setor solicitante do utilizador atual.")
+      return
+    }
+
     const payloadItems = items
       .map((it) => ({
         lot: it.lotId,
@@ -155,7 +180,7 @@ export default function NovaRequisicaoMateriaisPage() {
       setSubmitting(true)
       const res = await apiFetch<any>("/pharmacy/requisicaomaterial/", {
         method: "POST",
-        body: JSON.stringify({ items_input: payloadItems }),
+        body: JSON.stringify({ sector: requesterSector, items_input: payloadItems }),
       })
       const id = res?.id ?? null
       if (id) {
@@ -191,6 +216,57 @@ export default function NovaRequisicaoMateriaisPage() {
             {error}
           </div>
         ) : null}
+
+        <Card
+          title="Dados do solicitante"
+          subtitle="O setor requisitante será registado automaticamente para perfis não-admin."
+        >
+          {loadingLots ? (
+            <div className="text-sm text-[var(--gray-600)]">Carregando contexto do solicitante…</div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-12">
+              <div className="md:col-span-6">
+                <label className="block text-sm font-medium text-[var(--gray-700)]">
+                  Setor solicitante
+                </label>
+                {requesterContext?.is_admin ? (
+                  <select
+                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                    value={requesterSector}
+                    onChange={(event) => setRequesterSector(event.target.value)}
+                    disabled={submitting}
+                  >
+                    <option value="">Selecione…</option>
+                    {(requesterContext?.available_sectors || []).map((sectorOption) => (
+                      <option key={sectorOption.value} value={sectorOption.value}>
+                        {sectorOption.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2 text-sm text-[var(--gray-700)]"
+                    value={requesterContext?.requester_sector_label || ""}
+                    readOnly
+                  />
+                )}
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="block text-sm font-medium text-[var(--gray-700)]">
+                  Departamento
+                </label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2 text-sm text-[var(--gray-700)]"
+                  value={requesterContext?.requested_by_department || "—"}
+                  readOnly
+                />
+              </div>
+            </div>
+          )}
+        </Card>
 
         <Card
           title="Produtos em estoque na farmácia"

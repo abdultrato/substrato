@@ -344,19 +344,6 @@ class LabRequest(NoNameCoreModel):
         }
 
     @property
-    def jejum(self):
-        # Compatibilidade legada (português) para representação da regra.
-        return self.fasting_summary
-
-    @property
-    def requer_jejum(self):
-        return bool(self.requires_fasting)
-
-    @property
-    def horas_jejum(self):
-        return int(self.fasting_hours or 0)
-
-    @property
     def fasting_info(self):
         return self.fasting_summary
 
@@ -364,11 +351,6 @@ class LabRequest(NoNameCoreModel):
     def itens(self):
         # Compatibilidade legada (português) para relation manager.
         return self.items
-
-    @property
-    def amostras(self):
-        # Compatibilidade legada (português) para relation manager.
-        return self.samples
 
     # =====================================================
     # SINCRONIZAÇÃO CLÍNICA
@@ -481,8 +463,6 @@ class LabRequest(NoNameCoreModel):
     criar_resultados_automaticos = create_automatic_results
     aplicar_status = apply_status
     exams_medicos = medical_exams
-    sincronizar_amostras = _sync_samples_from_items
-    info_jejum = fasting_summary
     atualizar_clinical_status = update_clinical_status
     tenant_do_patient = patient_tenant
 

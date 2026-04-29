@@ -6,7 +6,6 @@ from .requests import LabRequestItemViewSet, LabRequestViewSet
 from .results import ResultItemViewSet
 
 VIEWSET_MAP = {
-    "amostra": SampleViewSet,
     "exam": LabExamViewSet,
     "examfield": LabExamFieldViewSet,
     "labrequest": LabRequestViewSet,

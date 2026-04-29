@@ -324,8 +324,6 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
-        "amostra": "sample_type",
-        "tipo_amostra": "sample_type",
         "trl_horas": "turnaround_hours",
         "preco": "price",
         "metodo": "method",
@@ -337,10 +335,6 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     legacy_output_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
-        "amostra": "sample_type",
-        "amostra_nome": "sample_type_name",
-        "tipo_amostra": "sample_type",
-        "tipo_amostra_nome": "sample_type_name",
         "trl_horas": "turnaround_hours",
         "preco": "price",
         "metodo": "method",
@@ -418,28 +412,10 @@ class SampleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
-        "tipo_frasco": "bottle_type",
-        "cor_tampa": "cap_color",
-        "volume_minimo_ml": "minimum_volume_ml",
-        "requer_jejum": "fasting_required",
-        "horas_jejum": "fasting_hours",
-        "temperatura_conservacao": "storage_temperature",
-        "estabilidade_horas": "stability_hours",
-        "anticoagulante": "anticoagulant",
-        "instrucoes_coleta": "collection_instructions",
     }
     legacy_output_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
-        "tipo_frasco": "bottle_type",
-        "cor_tampa": "cap_color",
-        "volume_minimo_ml": "minimum_volume_ml",
-        "requer_jejum": "fasting_required",
-        "horas_jejum": "fasting_hours",
-        "temperatura_conservacao": "storage_temperature",
-        "estabilidade_horas": "stability_hours",
-        "anticoagulante": "anticoagulant",
-        "instrucoes_coleta": "collection_instructions",
     }
 
     class Meta:
@@ -584,9 +560,6 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "exames": "exams",
         "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
-        "amostras": "samples",
-        "requer_jejum": "requires_fasting",
-        "horas_jejum": "fasting_hours",
         "itens": "items",
     }
     legacy_output_aliases = {
@@ -602,10 +575,6 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "exames": "exams",
         "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
-        "amostras": "samples",
-        "requer_jejum": "requires_fasting",
-        "horas_jejum": "fasting_hours",
-        "detalhes_amostras": "sample_details",
         "itens": "items",
     }
 
@@ -982,7 +951,6 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
 
 
 SERIALIZER_MAP = {
-    "amostra": SampleSerializer,
     "sample": SampleSerializer,
     "exam": LabExamSerializer,
     "examemedico": MedicalExamSerializer,

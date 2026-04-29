@@ -699,6 +699,15 @@ def _is_pharmacy_user(user) -> bool:
     return _normalize(RBAC_GROUPS["FARMACIA"]) in groups or _normalize(RBAC_GROUPS["ADMIN"]) in groups
 
 
+def _is_admin_user(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False):
+        return True
+    groups = _user_groups(user)
+    return _normalize(RBAC_GROUPS["ADMIN"]) in groups
+
+
 def _requester_sectors_from_user(user) -> set[str]:
     groups = _user_groups(user)
     sectors: set[str] = set()
@@ -745,6 +754,13 @@ def _infer_sector_from_user(user) -> str | None:
     return None
 
 
+def _requesting_department_from_user(user) -> str:
+    try:
+        return getattr(getattr(user, "perfil_professional", None), "department", "") or ""
+    except Exception:
+        return ""
+
+
 class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MaterialRequisition.objects.prefetch_related("items", "items__lot", "items__lot__product").select_related(
         "created_by",
@@ -784,24 +800,60 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             return qs.filter(sector__in=list(requester_sectors))
         return qs.filter(created_by=user)
 
+    @action(detail=False, methods=["get"], url_path="requester_context", url_name="requester_context")
+    def requester_context(self, request):
+        user = getattr(request, "user", None)
+        is_admin = _is_admin_user(user)
+
+        inferred_sector = _infer_sector_from_user(user)
+        requester_sector = inferred_sector
+        if is_admin and not requester_sector:
+            requester_sector = RequestingSector.OUTROS
+
+        sector_labels = dict(RequestingSector.choices)
+        requester_sector_label = sector_labels.get(requester_sector, requester_sector or "")
+        requested_by_department = _requesting_department_from_user(user)
+
+        if is_admin:
+            available_sectors = [{"value": code, "label": label} for code, label in RequestingSector.choices]
+        elif requester_sector:
+            available_sectors = [{"value": requester_sector, "label": requester_sector_label}]
+        else:
+            available_sectors = []
+
+        return Response(
+            {
+                "is_admin": is_admin,
+                "can_create": bool(requester_sector),
+                "sector_locked": not is_admin,
+                "requester_sector": requester_sector,
+                "requester_sector_label": requester_sector_label,
+                "requested_by_department": requested_by_department,
+                "available_sectors": available_sectors,
+            }
+        )
+
     def perform_create(self, serializer):
         user = getattr(self.request, "user", None)
+        is_admin = _is_admin_user(user)
+        requested_sector = serializer.validated_data.get("sector")
 
         sector = _infer_sector_from_user(user)
-        if not sector:
-            if getattr(user, "is_superuser", False):
+        if is_admin:
+            if requested_sector:
+                sector = requested_sector
+            elif not sector:
                 sector = RequestingSector.OUTROS
-            else:
+        else:
+            if not sector:
                 raise ValidationError(
                     "Este perfil não pode criar requisição de material. "
                     "A criação deve ser feita por setores solicitantes."
                 )
+            if requested_sector and requested_sector != sector:
+                raise ValidationError({"sector": "Setor solicitante inválido para o utilizador atual."})
 
-        department = ""
-        try:
-            department = getattr(getattr(user, "perfil_professional", None), "department", "") or ""
-        except Exception:
-            department = ""
+        department = _requesting_department_from_user(user)
 
         serializer.save(
             sector=sector,

@@ -19,8 +19,6 @@ from apps.clinical.models.sample import Sample
 class SampleFilter(SafeFilterSet):
     legacy_filter_aliases = {
         "nome": "name",
-        "tipo_frasco": "bottle_type",
-        "requer_jejum": "fasting_required",
     }
 
     class Meta:
@@ -46,10 +44,7 @@ class SampleFilter(SafeFilterSet):
 
 
 class LabExamFilter(SafeFilterSet):
-    legacy_filter_aliases = {
-        "amostra": "sample_type",
-        "tipo_amostra": "sample_type",
-    }
+    legacy_filter_aliases = {}
 
     class Meta:
         model = LabExam
@@ -192,9 +187,7 @@ class LabRequestFilter(SafeFilterSet):
     legacy_filter_aliases = {
         "analista": "analyst",
         "estado": "status",
-        "horas_jejum": "fasting_hours",
         "paciente": "patient",
-        "requer_jejum": "requires_fasting",
         "status_clinico": "clinical_status",
         "tipo": "type",
     }
@@ -311,7 +304,6 @@ class MedicalResultFileFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "amostra": SampleFilter,
     "sample": SampleFilter,
     "exam": LabExamFilter,
     "examemedico": MedicalExamFilter,

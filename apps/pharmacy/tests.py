@@ -377,6 +377,131 @@ def test_material_requisition_medicine_user_can_create(api_client):
 
 
 @pytest.mark.django_db
+def test_material_requisition_requester_context_prefills_non_admin_sector(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-context",
+        name="Tenant ReqFar Context",
+        domain="tenant-reqfar-context.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+
+    requester = User.objects.create_user(
+        username="recep_context",
+        email="recep-context@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_recep)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    context_resp = api_client.get("/api/v1/pharmacy/requisicaomaterial/requester_context/")
+    assert context_resp.status_code == 200, context_resp.data
+    assert context_resp.data["is_admin"] is False
+    assert context_resp.data["sector_locked"] is True
+    assert context_resp.data["can_create"] is True
+    assert context_resp.data["requester_sector"] == RequestingSector.RECEPCAO
+    assert context_resp.data["requester_sector_label"] == "Recepção"
+    assert context_resp.data["available_sectors"] == [
+        {"value": RequestingSector.RECEPCAO, "label": "Recepção"},
+    ]
+
+
+@pytest.mark.django_db
+def test_material_requisition_non_admin_cannot_override_sector_payload(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-sector-lock",
+        name="Tenant ReqFar Sector Lock",
+        domain="tenant-reqfar-sector-lock.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+
+    requester = User.objects.create_user(
+        username="recep_sector_lock",
+        email="recep-sector-lock@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_recep)
+
+    product = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number="LREQLOCK1",
+        expiration_date=timezone.localdate() + timedelta(days=45),
+        initial_quantity=8,
+        sale_price=product.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {
+            "sector": RequestingSector.LABORATORIO,
+            "items_input": [{"lot": lot.id, "requested_quantity": 2}],
+        },
+        format="json",
+    )
+    assert create_resp.status_code == 400
+    assert "sector" in str(create_resp.data).lower()
+
+
+@pytest.mark.django_db
+def test_material_requisition_admin_can_select_requester_sector(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-admin-sector",
+        name="Tenant ReqFar Admin Sector",
+        domain="tenant-reqfar-admin-sector.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_admin, _ = Group.objects.get_or_create(name="Administrador")
+
+    admin_user = User.objects.create_user(
+        username="admin_reqfar_sector",
+        email="admin-reqfar-sector@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    admin_user.is_staff = True
+    admin_user.save(update_fields=["is_staff"])
+    admin_user.groups.add(grp_admin)
+
+    product = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number="LREQADM1",
+        expiration_date=timezone.localdate() + timedelta(days=45),
+        initial_quantity=8,
+        sale_price=product.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=admin_user)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/requisicaomaterial/",
+        {
+            "sector": RequestingSector.ENFERMAGEM,
+            "items_input": [{"lot": lot.id, "requested_quantity": 2}],
+        },
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    assert create_resp.data["sector"] == RequestingSector.ENFERMAGEM
+
+
+@pytest.mark.django_db
 def test_material_requisition_pharmacy_profile_cannot_create(api_client):
     tenant = Tenant.objects.create(
         identifier="tn-reqfar-ph",
