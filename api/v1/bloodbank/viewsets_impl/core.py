@@ -60,6 +60,18 @@ class BloodStorageViewSet(TenantScopedModelViewSet):
     ordering_fields = ["name", "is_active", "created_at"]
     ordering = ["name"]
 
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed("POST", detail="Armazenamento de sangue é somente leitura.")
+
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PUT", detail="Armazenamento de sangue é somente leitura.")
+
+    def partial_update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PATCH", detail="Armazenamento de sangue é somente leitura.")
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE", detail="Armazenamento de sangue é somente leitura.")
+
 
 class BloodUnitReserveSerializer(serializers.Serializer):
     recipient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())

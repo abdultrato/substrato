@@ -217,3 +217,34 @@ def test_transfused_unit_cannot_change_status_and_manual_stock_adjustment_is_blo
         format="json",
     )
     assert movement_response.status_code == 405
+
+
+@pytest.mark.django_db
+def test_blood_storage_api_is_read_only(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client)
+    storage = BloodStorage.objects.create(
+        tenant=tenant,
+        name="Storage RO",
+        location="Banco de Sangue",
+    )
+
+    list_response = api_client.get("/api/v1/bloodbank/armazenamento/")
+    assert list_response.status_code == 200
+
+    create_response = api_client.post(
+        "/api/v1/bloodbank/armazenamento/",
+        {"name": "Novo Storage", "location": "Bloco 2"},
+        format="json",
+    )
+    assert create_response.status_code == 405
+
+    patch_response = api_client.patch(
+        f"/api/v1/bloodbank/armazenamento/{storage.id}/",
+        {"location": "Alterado"},
+        format="json",
+    )
+    assert patch_response.status_code == 405
+
+    delete_response = api_client.delete(f"/api/v1/bloodbank/armazenamento/{storage.id}/")
+    assert delete_response.status_code == 405
