@@ -4,7 +4,11 @@ import logging
 import time
 
 from django.conf import settings
-from observability.metrics import log_slow_request
+from observability.metrics import (
+    log_slow_request,
+    register_api_request,
+    register_slow_request,
+)
 
 logger = logging.getLogger("api")
 
@@ -55,6 +59,13 @@ class APILoggingMiddleware:
                     duration=duration_ms / 1000,
                     tenant_id=self._get_tenant_id(request),
                 )
+                register_slow_request(request.method)
+
+            register_api_request(
+                method=request.method,
+                status_code=status_code,
+                duration_ms=duration_ms,
+            )
 
             logger.info(
                 "API_REQUEST",

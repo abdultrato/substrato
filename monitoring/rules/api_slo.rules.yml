@@ -1,0 +1,38 @@
+groups:
+  - name: api-slo
+    rules:
+      - alert: ApiLatencyP95Warning
+        expr: histogram_quantile(0.95, sum(rate(substrato_api_request_duration_seconds_bucket[5m])) by (le)) > 1.2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latência API elevada (p95 > 1.2s)"
+          description: "A latência p95 da API ficou acima de 1.2s por 10 minutos."
+
+      - alert: ApiLatencyP95Critical
+        expr: histogram_quantile(0.95, sum(rate(substrato_api_request_duration_seconds_bucket[5m])) by (le)) > 2.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Latência API crítica (p95 > 2.5s)"
+          description: "A latência p95 da API ficou acima de 2.5s por 5 minutos."
+
+      - alert: ApiHigh5xxRate
+        expr: sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m])) / clamp_min(sum(rate(django_http_responses_total_by_status_total[5m])), 1) > 0.03
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taxa de erro 5xx acima de 3%"
+          description: "A API está devolvendo mais de 3% de respostas 5xx por 10 minutos."
+
+      - alert: BackendMetricsDown
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend fora do ar para Prometheus"
+          description: "Prometheus não consegue coletar métricas do backend."

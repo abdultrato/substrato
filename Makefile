@@ -3,6 +3,7 @@
 # ============================================================================
 
 COMPOSE ?= docker compose
+BACKEND_COVERAGE_MIN ?= 35
 
 .PHONY: help build up up-build down logs shell migrate createsuperuser clean test lint
 
@@ -33,12 +34,20 @@ help:
 	@echo ""
 	@echo "Desenvolvimento:"
 	@echo "  make test               - Executar testes"
+	@echo "  make quality-gate       - Executar gates de qualidade (backend + frontend)"
+	@echo "  make quality-gate-backend - Coverage backend com fail-under"
+	@echo "  make quality-gate-frontend - Lint + type-check + coverage frontend"
 	@echo "  make lint               - Rodar linter (ruff)"
 	@echo "  make format             - Formatar código"
 	@echo ""
 	@echo "Celery:"
 	@echo "  make celery-logs        - Ver logs do Celery"
 	@echo "  make celery-inspect     - Inspetar workers"
+	@echo ""
+	@echo "Operações:"
+	@echo "  make ops-health         - Verificar health, metrics e Prometheus rules"
+	@echo "  make ops-alert-rules    - Validar regras Prometheus com promtool"
+	@echo "  make ops-slo            - Resumo rápido de latência/erros no /metrics"
 	@echo ""
 
 build:
@@ -128,6 +137,16 @@ coverage-backend:
 coverage-frontend:
 	cd frontend-next && npm test -- --coverage
 
+quality-gate-backend:
+	pytest --cov=. --cov-report=term-missing --cov-fail-under=$(BACKEND_COVERAGE_MIN)
+
+quality-gate-frontend:
+	cd frontend-next && npm run lint
+	cd frontend-next && npm run type-check
+	cd frontend-next && npm run test -- --coverage --run
+
+quality-gate: quality-gate-backend quality-gate-frontend
+
 test:
 	$(COMPOSE) exec backend pytest
 
@@ -185,5 +204,18 @@ prod-down:
 
 prod-logs:
 	$(COMPOSE) -f docker-compose.prod.yml logs -f
+
+ops-alert-rules:
+	$(COMPOSE) exec prometheus promtool check rules /etc/prometheus/rules/*.rules.yml
+
+ops-health:
+	@echo "== Health checks =="
+	@curl -fsS http://localhost:8000/health/ready >/dev/null && echo "backend /health/ready: OK" || (echo "backend /health/ready: FAIL" && exit 1)
+	@curl -fsS http://localhost:8000/metrics >/dev/null && echo "backend /metrics: OK" || (echo "backend /metrics: FAIL" && exit 1)
+	@$(MAKE) ops-alert-rules
+
+ops-slo:
+	@echo "== SLO quick sample (/metrics) =="
+	@curl -fsS http://localhost:8000/metrics | grep -E "substrato_api_request_duration_seconds|substrato_async_task_execution_duration_seconds|substrato_async_task_enqueue_total" | head -n 30 || true
 
 .DEFAULT_GOAL := help

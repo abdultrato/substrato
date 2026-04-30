@@ -6,10 +6,11 @@ from django.core.exceptions import ValidationError  # Validação de domínio
 from django.db import models  # ORM
 from django.db.models import Q  # Constraints condicionais
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import CoreModel  # Modelo base
 
 
-class LedgerLine(CoreModel):
+class LedgerLine(ScopedPositionMixin, CoreModel):
     """Linha de movimento contábil que compõe um lançamento."""
 
     prefix = "LL"  # Prefixo para IDs amigáveis
@@ -70,6 +71,7 @@ class LedgerLine(CoreModel):
         db_table = "contabilidade_ledgerline"  # Nome da tabela
         verbose_name = "Linha contábil"  # Nome legível
         verbose_name_plural = "Linhas contábeis"  # Nome plural
+        ordering = ["entry", "position", "id"]
         indexes = [
             models.Index(fields=["entry"]),
             models.Index(fields=["tenant", "account", "created_at"]),
@@ -82,6 +84,8 @@ class LedgerLine(CoreModel):
                 name="ledgerline_value_positivo",
             ),
         ]
+
+    position_scope_fields = ("entry",)
 
     # ======================================
     # 🔎 VALIDAÇÕES DE DOMÍNIO

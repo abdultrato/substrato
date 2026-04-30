@@ -293,6 +293,7 @@ class LabExamFieldAdmin(CoreAdmin):
     """Administra campos de exame (componentes do painel de resultados)."""
     list_display = (
         "custom_id",
+        "position",
         "name",
         "exam",
         "type",
@@ -315,7 +316,7 @@ class LabExamFieldAdmin(CoreAdmin):
 
     list_select_related = ("exam",)
 
-    ordering = ("exam", "name")
+    ordering = ("exam", "position", "name")
 
     list_per_page = 50
 
@@ -339,6 +340,7 @@ class LabExamFieldAdmin(CoreAdmin):
                 "fields": (
                     "tenant",
                     "custom_id",
+                    "position",
                     "name",
                     "exam",
                 )
@@ -419,6 +421,7 @@ class LabExamFieldInline(admin.TabularInline):
 
     fields = (
         "tenant",
+        "position",
         "name",
         "type",
         "unit",
@@ -546,10 +549,11 @@ class MedicalExamFieldInline(admin.TabularInline):
     extra = 0
     fields = (
         "tenant",
+        "position",
         "name",
         "type",
     )
-    ordering = ("name",)
+    ordering = ("position", "name")
     show_change_link = True
     verbose_name = "Parâmetro do exam médico"
     verbose_name_plural = "Parâmetros do exam médico"
@@ -654,7 +658,8 @@ class RequestLabItemInline(admin.TabularInline):
 
     autocomplete_fields = ("exam",)
 
-    fields = ("exam",)
+    fields = ("position", "exam")
+    ordering = ("position", "id")
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(exam__isnull=False)
@@ -667,7 +672,8 @@ class RequestMedicalItemInline(admin.TabularInline):
 
     autocomplete_fields = ("medical_exam",)
 
-    fields = ("medical_exam",)
+    fields = ("position", "medical_exam")
+    ordering = ("position", "id")
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(medical_exam__isnull=False)
@@ -905,6 +911,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     fields = (
         "tenant",
+        "position",
         "exam_name",
         "exam_field",
         "reference",
@@ -916,6 +923,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
     readonly_fields = (
         "exam_name",
+        "position",
         "exam_field",
         "reference",
         "colored_result",
@@ -936,6 +944,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
             "exam_field",
             "exam_field__exam",
         ).order_by(
+            "position",
             "exam_field__exam__name",
             "exam_field__name",
         )

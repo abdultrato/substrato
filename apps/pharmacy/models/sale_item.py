@@ -11,10 +11,11 @@ from django.db import models, transaction  # ORM e controle transacional
 from django.db.models import DecimalField, F, Q, Sum  # Funções de agregação
 from django.db.models.functions import Coalesce  # Troca None por zero
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import CoreModel  # Modelo base
 
 
-class SaleItem(CoreModel):
+class SaleItem(ScopedPositionMixin, CoreModel):
     """Linha de item de uma venda, responsável por atualizar estoque."""
 
     prefix = "IVEND"  # Prefixo para IDs amigáveis
@@ -55,6 +56,7 @@ class SaleItem(CoreModel):
         db_table = "farmacia_itemvenda"  # Nome da tabela
         verbose_name = "Item de Venda"  # Nome legível
         verbose_name_plural = "Itens de Venda"  # Nome plural
+        ordering = ["sale", "position", "id"]
 
         indexes = [
             models.Index(fields=["sale"]),
@@ -69,6 +71,8 @@ class SaleItem(CoreModel):
                 name="unique_product_por_sale",
             )
         ]
+
+    position_scope_fields = ("sale",)
 
     # ==========================================
     # TOTAL CALCULADO

@@ -102,6 +102,7 @@ class LabExamFieldFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "created_at",
             "updated_at",
             "created_by",
@@ -125,6 +126,7 @@ class MedicalExamFieldFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "created_at",
             "updated_at",
             "created_by",
@@ -197,6 +199,7 @@ class LabRequestFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "created_at",
             "updated_at",
             "created_by",
@@ -229,6 +232,7 @@ class LabRequestItemFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "created_at",
             "updated_at",
             "created_by",

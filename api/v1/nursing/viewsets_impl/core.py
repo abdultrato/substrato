@@ -1,13 +1,14 @@
 """ViewSets da API v1 para recursos de Enfermagem."""
 
-from django.http import HttpResponse
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import HttpResponse
 from rest_framework import serializers, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.compat import LegacyAliasSerializerMixin
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.nursing.models import (
@@ -227,6 +228,14 @@ class ProcedureViewSet(TenantScopedModelViewSet):
         Gera o PDF institucional do procedimento de enfermagem com detalhes clínicos e financeiros.
         """
         procedure = self.get_object()
+        queued = queue_export_if_requested(
+            request,
+            export_key="procedure_pdf",
+            payload={"procedure_id": procedure.id},
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.procedure_pdf_generator import generate_procedure_pdf
 
@@ -251,6 +260,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "procedure",
         "catalog",
         "description",
@@ -265,7 +275,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         "updated_at",
         "deleted",
     ]
-    ordering = ["-created_at"]
+    ordering = ["procedure", "position", "id"]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -382,6 +392,7 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "procedure",
         "procedure_item",
         "product",
@@ -392,7 +403,7 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
         "updated_at",
         "deleted",
     ]
-    ordering = ["-created_at"]
+    ordering = ["procedure", "position", "id"]
 
 
 class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):

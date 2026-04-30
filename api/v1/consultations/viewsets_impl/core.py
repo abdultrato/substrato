@@ -12,8 +12,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.clinical.services import build_patient_clinical_history, user_can_view_clinical_history
+from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.billing.models.invoice import Invoice
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
@@ -120,6 +121,15 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise ValidationError("Consulta sem paciente associado.")
 
         payload = build_patient_clinical_history(request, patient)
+        queued = queue_export_if_requested(
+            request,
+            export_key="patient_history_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
 
         pdf_bytes, filename = generate_patient_history_pdf(payload, request=request)

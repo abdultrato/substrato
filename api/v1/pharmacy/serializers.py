@@ -59,7 +59,7 @@ class SaleSerializer(serializers.ModelSerializer):
 class MaterialRequisitionItemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaterialRequisitionItem
-        fields = ("lot", "requested_quantity", "notes")
+        fields = ("position", "lot", "requested_quantity", "notes")
 
 
 class MaterialRequisitionItemSerializer(serializers.ModelSerializer):

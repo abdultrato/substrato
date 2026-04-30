@@ -6,10 +6,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
 
 
-class PrescriptionItem(NoNameCoreModel):
+class PrescriptionItem(ScopedPositionMixin, NoNameCoreModel):
     """
     Item de prescrição do Cardex (Prontuário).
 
@@ -90,11 +91,13 @@ class PrescriptionItem(NoNameCoreModel):
         db_table = "prontuario_prescricaoitem"  # Nome legado
         verbose_name = "Item de Prescrição"
         verbose_name_plural = "Itens de Prescrição"
-        ordering = ["-created_at"]
+        ordering = ["record", "position", "id"]
         indexes = [
             models.Index(fields=["tenant", "record"]),
             models.Index(fields=["tenant", "medication"]),
         ]
+
+    position_scope_fields = ("record",)
 
     def clean(self):
         super().clean()

@@ -7,7 +7,8 @@ from celery import shared_task
 from django.db import transaction
 
 from apps.billing.models.invoice import Invoice
-from observability.metrics import INVOICE_RECALCULATION_DURATION
+from infrastructure.task_queue import enqueue_task
+from observability.metrics import INVOICE_RECALCULATION_DURATION, observe_async_task_duration
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +23,31 @@ def recalculate_invoice_task(invoice_id: int) -> None:
     try:
         invoice = Invoice.objects.select_related("patient").get(pk=invoice_id)
     except Invoice.DoesNotExist:
+        observe_async_task_duration("billing:invoice_recalculation", time.perf_counter() - start, status="skipped")
         return
 
-    with transaction.atomic():
-        invoice.recalcular_totais()
-        invoice.persist_totals()
+    try:
+        with transaction.atomic():
+            invoice.recalcular_totais()
+            invoice.persist_totals()
+    except Exception:
+        observe_async_task_duration(
+            "billing:invoice_recalculation",
+            time.perf_counter() - start,
+            status="failed",
+            tenant_id=getattr(invoice, "tenant_id", None),
+        )
+        raise
 
     duration = time.perf_counter() - start
     tenant_id = getattr(invoice, "tenant_id", None)
     INVOICE_RECALCULATION_DURATION.labels(tenant_id or "unknown").observe(duration)
+    observe_async_task_duration(
+        "billing:invoice_recalculation",
+        duration,
+        status="success",
+        tenant_id=tenant_id,
+    )
 
 
 @shared_task(bind=True)
@@ -41,7 +58,12 @@ def recalculate_invoices(self):
     start = time.perf_counter()
 
     for invoice in Invoice.objects.filter(status=Invoice.Status.PENDENTE):
-        recalculate_invoice_task.delay(invoice.id)
+        enqueue_task(
+            recalculate_invoice_task,
+            invoice.id,
+            queue="billing",
+            tenant_id=getattr(invoice, "tenant_id", None),
+        )
 
     duration = time.perf_counter() - start
     logger.info("Recalculo agendado em %.2fs", duration)

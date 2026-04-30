@@ -1,13 +1,14 @@
+from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
-from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.utils.async_exports import queue_export_if_requested
+from api.v1.clinical.services import build_patient_clinical_history, user_can_view_clinical_history
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.patient import Patient
-from api.v1.clinical.services import build_patient_clinical_history, user_can_view_clinical_history
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
 from ..filters import PatientFilter
@@ -143,6 +144,14 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         patient = self.get_object()
         payload = self._montar_historia_clinica(request, patient)
+        queued = queue_export_if_requested(
+            request,
+            export_key="patient_history_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
 
@@ -166,6 +175,15 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         patient = self.get_object()
         payload = self._montar_historia_clinica(request, patient)
+        queued = queue_export_if_requested(
+            request,
+            export_key="patient_invoice_history_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 
         pdf_bytes, filename = generate_patient_invoice_history_pdf(payload, request=request)
@@ -184,6 +202,15 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         patient = self.get_object()
         payload = self._montar_historia_clinica(request, patient)
+        queued = queue_export_if_requested(
+            request,
+            export_key="patient_payment_history_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 
         pdf_bytes, filename = generate_patient_payment_history_pdf(payload, request=request)

@@ -1,0 +1,38 @@
+groups:
+  - name: async-queue
+    rules:
+      - alert: CeleryExporterDown
+        expr: up{job="celery"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Exporter do Celery indisponível"
+          description: "Prometheus não está recebendo métricas do celery_exporter."
+
+      - alert: AsyncTaskEnqueueFailures
+        expr: increase(substrato_async_task_enqueue_total{status="failed"}[10m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Falhas ao enfileirar tarefas assíncronas"
+          description: "Ocorreram falhas de enqueue na última janela de 10 minutos."
+
+      - alert: AsyncTaskFailuresBurst
+        expr: increase(substrato_async_task_execution_duration_seconds_count{status="failed"}[10m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Burst de falhas em tarefas assíncronas"
+          description: "Mais de 5 falhas de execução de tarefas assíncronas em 10 minutos."
+
+      - alert: AsyncExportLatencyP95High
+        expr: histogram_quantile(0.95, sum(rate(substrato_async_task_execution_duration_seconds_bucket{task_name=~"export:.*",status="success"}[10m])) by (le)) > 8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Exportações assíncronas lentas (p95 > 8s)"
+          description: "A geração de documentos assíncronos está acima da latência esperada."

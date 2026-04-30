@@ -6,6 +6,20 @@ from rest_framework.request import Request
 
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
+from infrastructure.cache import CacheService
+
+CLINICAL_HISTORY_CACHE_TTL_SECONDS = 60
+
+
+def _truthy(value) -> bool:
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "sim"}
+
+
+def _clinical_history_cache_key(*, tenant_id, patient_id, document_number: str, limit: int) -> str:
+    document_part = document_number or "-"
+    return f"clinical_history:{tenant_id or 'global'}:{patient_id}:{document_part}:{limit}"
 
 
 def user_can_view_clinical_history(user) -> bool:
@@ -34,14 +48,23 @@ def user_can_view_clinical_history(user) -> bool:
         return False
 
 
-def build_patient_clinical_history(request: Request, patient: Patient) -> dict[str, Any]:
+def build_patient_clinical_history(
+    request: Request | None,
+    patient: Patient,
+    *,
+    limit_override: int | None = None,
+) -> dict[str, Any]:
     tenant = getattr(request, "tenant", None) or getattr(patient, "tenant", None)
 
-    try:
-        limit = int(getattr(getattr(request, "query_params", None), "get", lambda *_: None)("limit") or 200)
-    except Exception:
-        limit = 200
+    if limit_override is None:
+        try:
+            limit = int(getattr(getattr(request, "query_params", None), "get", lambda *_: None)("limit") or 200)
+        except Exception:
+            limit = 200
+    else:
+        limit = int(limit_override)
     limit = max(1, min(limit, 1000))
+    refresh_cache = _truthy(getattr(getattr(request, "query_params", None), "get", lambda *_: None)("refresh"))
 
     # Vincular por número do documento: se houver, incluir eventuais registros
     # associados ao mesmo documento no mesmo tenant.
@@ -52,6 +75,17 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
         if tenant is not None:
             qs_pacs = qs_pacs.filter(tenant=tenant)
         patient_ids = list(qs_pacs.values_list("id", flat=True))
+
+    cache_key = _clinical_history_cache_key(
+        tenant_id=getattr(tenant, "id", None) or getattr(patient, "tenant_id", None),
+        patient_id=patient.id,
+        document_number=document_number,
+        limit=limit,
+    )
+    if not refresh_cache:
+        cached = CacheService.get(cache_key)
+        if isinstance(cached, dict):
+            return cached
 
     # Prontuário (Cardex)
     from api.v1.medical_records.serializers import MedicalRecordEntrySerializer
@@ -151,8 +185,7 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
     if tenant is not None:
         qs_faturas = qs_faturas.filter(tenant=tenant)
 
-    from api.v1.payments.serializers import ReceiptSerializer
-    from api.v1.payments.serializers import PaymentSerializer
+    from api.v1.payments.serializers import PaymentSerializer, ReceiptSerializer
     from apps.payments.models.payment import Payment
     from apps.payments.models.receipt import Receipt
 
@@ -182,7 +215,7 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
     # Serializers
     from ..serializers import LabRequestSerializer, PatientSerializer
 
-    return {
+    payload = {
         "patient": PatientSerializer(patient).data,
         "referencia": {
             "document_number": document_number or None,
@@ -198,4 +231,6 @@ def build_patient_clinical_history(request: Request, patient: Patient) -> dict[s
         "pagamentos": PaymentSerializer(qs_pagamentos[:limit], many=True, context={"request": request}).data,
         "recibos": ReceiptSerializer(qs_recibos[:limit], many=True).data,
     }
+    CacheService.set(cache_key, payload, timeout=CLINICAL_HISTORY_CACHE_TTL_SECONDS)
+    return payload
 

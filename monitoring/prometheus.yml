@@ -8,7 +8,7 @@ alerting:
         - targets: ["alertmanager:9093"]
 
 rule_files:
-  - /etc/prometheus/rules/recalculo_fatura.rules.yml
+  - /etc/prometheus/rules/*.rules.yml
 
 scrape_configs:
   - job_name: backend

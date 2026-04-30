@@ -43,6 +43,8 @@ class IntegrationOrderItemInline(admin.TabularInline):
     """Inline de itens de ordem (worklist)."""
     model = IntegrationOrderItem
     extra = 0
+    fields = ("position", "request_item", "status")
+    ordering = ("position", "id")
 
 
 @admin.register(IntegrationOrder)

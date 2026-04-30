@@ -32,6 +32,8 @@ type EventItem = {
     at?: string
 }
 
+const DASHBOARD_TIMEOUT_MS = 5000
+
 export default function DashboardPage() {
     const { loading } = useAuthGuard()
     const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -43,7 +45,7 @@ export default function DashboardPage() {
         let mounted = true
         async function load() {
             try {
-                const { data } = await http.get("/dashboard/stats/", { timeoutMs: 20000 })
+                const { data } = await http.get("/dashboard/stats/", { timeoutMs: DASHBOARD_TIMEOUT_MS, retryOnTimeout: 0 })
                 if (mounted) {
                     const normalized = normalizeDashboardStats(data)
                     setStats(normalized)
@@ -62,7 +64,7 @@ export default function DashboardPage() {
         let alive = true
         async function loadAnalytics() {
             try {
-                const { data } = await http.get("/dashboard/analytics/?dias=7", { timeoutMs: 20000 })
+                const { data } = await http.get("/dashboard/analytics/?dias=7", { timeoutMs: DASHBOARD_TIMEOUT_MS, retryOnTimeout: 0 })
                 if (alive) setKpis(data?.kpis || {})
             } catch {
                 // silencioso
@@ -70,7 +72,7 @@ export default function DashboardPage() {
         }
         async function loadEvents() {
             try {
-                const { data } = await http.get("/dashboard/events/?limit=10", { timeoutMs: 20000 })
+                const { data } = await http.get("/dashboard/events/?limit=10", { timeoutMs: DASHBOARD_TIMEOUT_MS, retryOnTimeout: 0 })
                 if (alive) setEvents(Array.isArray(data) ? data : [])
             } catch {
                 // silencioso

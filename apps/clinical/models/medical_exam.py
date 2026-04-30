@@ -9,6 +9,7 @@ from django.db.models import Q
 
 from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
 from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
+from core.mixins.model.position import ScopedPositionMixin
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 from infrastructure.orm.fields.medical_exam_method_field import MedicalExamMethodField
@@ -211,7 +212,7 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
     tipos_result_cadastrados = registered_result_types
 
 
-class MedicalExamField(TenantPropagationMixin, CoreModel):
+class MedicalExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
     prefix = "EMC"
 
     exam = models.ForeignKey(
@@ -237,6 +238,9 @@ class MedicalExamField(TenantPropagationMixin, CoreModel):
         db_table = "clinico_examemedicocampo"
         verbose_name = "parâmetro de exam médico"
         verbose_name_plural = "parâmetros de exam médico"
+        ordering = ["exam", "position", "id"]
+
+    position_scope_fields = ("exam",)
 
     def clean(self):
         super().clean()

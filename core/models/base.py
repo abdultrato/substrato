@@ -28,6 +28,7 @@ class BaseModel(models.Model):
         "id_custom": "custom_id",
         "nome": "name",
         "prefixo": "prefix",
+        "posicao": "position",
         "inquilino": "tenant",
         "criado_em": "created_at",
         "atualizado_em": "updated_at",

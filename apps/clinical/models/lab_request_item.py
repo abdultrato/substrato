@@ -3,6 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
@@ -12,7 +13,7 @@ from .result import Result
 from .result_item import ResultItem
 
 
-class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
+class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     """Linha de exame da requisição (lab ou médico)."""
 
     tenant_source = "patient"  # Propaga tenant a partir do paciente
@@ -50,10 +51,13 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
 
     class Meta:
         db_table = "clinico_requisicaoitem"
+        ordering = ["request", "position", "id"]
         indexes = [
             models.Index(fields=["request", "exam"]),
             models.Index(fields=["request", "medical_exam"]),
         ]
+
+    position_scope_fields = ("request",)
 
     # -----------------------------------------------------
 
@@ -114,9 +118,13 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
         fields = getattr(exam_base, "campos", None)
         if fields is None:
             return
-        fields_queryset = fields.all()
+        fields_queryset = fields.all().order_by("position", "id")
 
         items = []
+        next_position = (
+            ResultItem.all_objects.filter(result=result).aggregate(max_position=models.Max("position")).get("max_position")
+            or 0
+        ) + 1
 
         for field in fields_queryset:
             # evita duplicação
@@ -132,8 +140,10 @@ class LabRequestItem(TenantPropagationMixin, NoNameCoreModel):
                         result=result,
                         exam_field=field,
                         tenant=tenant,
+                        position=next_position,
                     )
                 )
+                next_position += 1
             # exams médicos não geram itens específicos (imagem/laudo)
 
         if items:

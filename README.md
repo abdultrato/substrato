@@ -43,9 +43,14 @@ docker compose up --build
 
 ## Qualidade
 ```bash
-python -m quality.english_naming --limit 200
-python -m unittest tests.test_english_naming
-python manage.py check
+make quality-gate
+make ops-health
 ```
+
+## Governança técnica
+- SLOs, gates e política de dívida técnica: `docs/engineering_quality.md`
+- Runbook operacional: `docs/operations_runbook.md`
+- Registro de dívida técnica: `docs/technical_debt_register.md`
+- Fluxo de exportações assíncronas: `docs/async_exports.md`
 
 Os documentos Markdown históricos do projeto foram incorporados ao `SUBSTRATO.md`.

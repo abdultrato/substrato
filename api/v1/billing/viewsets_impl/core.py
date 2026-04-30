@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
+import hashlib
+import json
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -13,11 +15,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.payments.models.payment import Payment
+from infrastructure.cache import CacheService
 from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
@@ -100,6 +104,18 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         "geral": "all",
         "todos": "all",
     }
+    billing_history_cache_ttl_seconds = 60
+
+    def _billing_history_cache_key(self, request) -> str:
+        tenant = getattr(request, "tenant", None)
+        tenant_part = getattr(tenant, "id", None) or "global"
+        query_params = getattr(request, "query_params", {})
+        try:
+            pairs = sorted((k, tuple(query_params.getlist(k))) for k in query_params)
+        except Exception:
+            pairs = sorted((k, str(v)) for k, v in dict(query_params).items())
+        digest = hashlib.sha256(json.dumps(pairs, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+        return f"billing:history:{tenant_part}:{digest}"
 
     @staticmethod
     def _full_name_or_username(user) -> str:
@@ -259,6 +275,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         return scope, None
 
     def _build_billing_history_payload(self, request):
+        refresh_cache = str(request.query_params.get("refresh") or "").strip().lower() in {"1", "true", "t", "sim"}
+        cache_key = self._billing_history_cache_key(request)
+        if not refresh_cache:
+            cached = CacheService.get(cache_key)
+            if isinstance(cached, dict):
+                return cached
+
         period_key, start_dt, end_dt, period_label, period_filters = self._resolve_period(request)
         scope, target_user = self._resolve_scope_and_user(request)
 
@@ -392,7 +415,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 "display_name": self._full_name_or_username(target_user),
             }
 
-        return {
+        payload = {
             "scope": scope,
             "period": {
                 "key": period_key,
@@ -418,6 +441,8 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             "users": users_payload,
             "invoices": invoices_payload,
         }
+        CacheService.set(cache_key, payload, timeout=self.billing_history_cache_ttl_seconds)
+        return payload
 
     @action(detail=True, methods=["post"], url_path="issue", url_name="issue")
     def issue(self, request, pk=None):
@@ -513,6 +538,15 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         invoice = self.get_object()
+        queued = queue_export_if_requested(
+            request,
+            export_key="invoice_pdf",
+            payload={"invoice_id": invoice.id},
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         pdf_bytes, filename = generate_invoice_pdf(invoice, request=request)
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
@@ -528,6 +562,15 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     def billing_history_pdf(self, request):
         """Emite PDF do histórico agregado de faturamento por utilizador."""
         payload = self._build_billing_history_payload(request)
+        queued = queue_export_if_requested(
+            request,
+            export_key="billing_history_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
 
         pdf_bytes, filename = generate_billing_user_history_pdf(payload, request=request)
@@ -561,6 +604,7 @@ class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "deleted",
         "deleted_at",
         "created_at",
@@ -580,7 +624,7 @@ class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
         "item_type",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["invoice", "position", "id"]
 
 
 class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

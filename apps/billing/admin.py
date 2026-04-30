@@ -41,6 +41,7 @@ class InvoiceItemInline(admin.TabularInline):
     )
     raw_id_fields = ("sale_item",)
     fields = (
+        "position",
         "item_type",
         "exam",
         "medical_exam",
@@ -55,6 +56,7 @@ class InvoiceItemInline(admin.TabularInline):
         "iva_linha",
         "total_linha",
     )
+    ordering = ("position", "id")
     readonly_fields = (
         "iva_linha",
         "total_linha",
@@ -95,6 +97,7 @@ class BaseTypedInvoiceItemInline(admin.TabularInline):
 
     model = InvoiceItem
     extra = 1
+    ordering = ("position", "id")
     readonly_fields = ("description", "unit_price", "vat_percentage", "iva_linha", "total_linha")
 
     def get_formset(self, request, obj=None, **kwargs):
@@ -171,6 +174,7 @@ class InvoiceLabItemInline(BaseTypedInvoiceItemInline):
     verbose_name_plural = "Exames laboratoriais"
     autocomplete_fields = ("exam",)
     fields = (
+        "position",
         "exam",
         "description",
         "quantity",
@@ -188,6 +192,7 @@ class InvoiceMedicalExamItemInline(BaseTypedInvoiceItemInline):
     verbose_name_plural = "Exames médicos"
     autocomplete_fields = ("medical_exam",)
     fields = (
+        "position",
         "medical_exam",
         "description",
         "quantity",
@@ -205,6 +210,7 @@ class InvoiceConsultationItemInline(BaseTypedInvoiceItemInline):
     verbose_name_plural = "Consultas médicas"
     autocomplete_fields = ("consultation",)
     fields = (
+        "position",
         "consultation",
         "description",
         "quantity",
@@ -223,6 +229,7 @@ class InvoicePharmacyItemInline(BaseTypedInvoiceItemInline):
     autocomplete_fields = ("product",)
     raw_id_fields = ()
     fields = (
+        "position",
         "product",
         "description",
         "quantity",
@@ -240,6 +247,7 @@ class InvoiceProcedureItemInline(BaseTypedInvoiceItemInline):
     verbose_name_plural = "Procedimentos de enfermagem"
     autocomplete_fields = ("procedure_item",)
     fields = (
+        "position",
         "procedure_item",
         "description",
         "quantity",
@@ -257,6 +265,7 @@ class InvoiceProcedureMaterialInline(BaseTypedInvoiceItemInline):
     verbose_name_plural = "Materiais de enfermagem"
     autocomplete_fields = ("procedure_material",)
     fields = (
+        "position",
         "procedure_material",
         "description",
         "quantity",

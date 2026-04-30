@@ -1,12 +1,14 @@
 export type RequestItemSummary = {
   id: number
   custom_id?: string
+  position?: number
   exam?: number | null
   exam_name?: string
   medical_exam?: number | null
   medical_exam_name?: string
 } & Partial<{
   id_custom: string
+  posicao: number
   exame: number | null
   exame_nome: string
   exame_medico: number | null
@@ -15,14 +17,18 @@ export type RequestItemSummary = {
 
 export type ResultItem = {
   id: number
+  position?: number
   request?: number
   exam_field?: number
+  exam_field_position?: number
   result?: string
   value?: string | number | null
   status?: string
 } & Partial<{
+  posicao: number
   requisicao: number
   exame_campo: number
+  exame_campo_posicao: number
   resultado: string
   valor: string | number | null
   estado: string

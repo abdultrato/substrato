@@ -6,11 +6,12 @@ from django.db import models
 
 from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.units import DefaultUnit
+from core.mixins.model.position import ScopedPositionMixin
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 
 
-class LabExamField(TenantPropagationMixin, CoreModel):
+class LabExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
     """Campo mensurado de um exame laboratorial (valor numérico, texto etc.)."""
 
     prefix = "CMP"  # Prefixo para IDs amigáveis
@@ -100,6 +101,9 @@ class LabExamField(TenantPropagationMixin, CoreModel):
         db_table = "clinico_examecampo"
         verbose_name = "parâmetro"
         verbose_name_plural = "parâmetros do exam"
+        ordering = ["exam", "position", "id"]
+
+    position_scope_fields = ("exam",)
 
     def __str__(self):
         return self.name

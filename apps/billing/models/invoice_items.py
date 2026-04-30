@@ -8,10 +8,11 @@ from django.db import models, transaction  # ORM e transações
 from django.db.models import Q  # Constraints condicionais
 
 from apps.consultations.utils.pricing import calculate_price_multiplier  # Multiplicador por horário
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel  # Modelo base sem campo name
 
 
-class InvoiceItem(NoNameCoreModel):
+class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
     """Linha de fatura que representa um exame, produto, serviço ou ajuste."""
 
     prefix = "FTIT"  # Prefixo de IDs amigáveis
@@ -157,6 +158,7 @@ class InvoiceItem(NoNameCoreModel):
         db_table = "faturamento_faturaitem"
         verbose_name = "Item de Fatura"
         verbose_name_plural = "Invoice Items"
+        ordering = ["invoice", "position", "id"]
         constraints = [
             models.UniqueConstraint(
                 fields=["invoice", "exam"],
@@ -189,6 +191,8 @@ class InvoiceItem(NoNameCoreModel):
                 name="unique_proc_material_por_invoice",
             ),
         ]
+
+    position_scope_fields = ("invoice",)
 
     @property
     def total(self):
@@ -245,18 +249,20 @@ class InvoiceItem(NoNameCoreModel):
         return self.get_item_type_display() or "-"
 
     def _schedule_recalculation(self):
-        try:
-            from tasks.billing.recalculation import recalculate_invoice_task
-        except ImportError:
-            return
-
         invoice_id = getattr(self, "invoice_id", None)
         if not invoice_id:
             return
 
         def _enqueue():
+            from infrastructure.task_queue import enqueue_task
+
             try:
-                recalculate_invoice_task.delay(invoice_id)
+                enqueue_task(
+                    "tasks.billing.recalculation.recalculate_invoice_task",
+                    invoice_id,
+                    queue="billing",
+                    tenant_id=getattr(self, "tenant_id", None),
+                )
                 return
             except Exception:
                 # Fallback local quando o broker não está disponível.

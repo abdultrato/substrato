@@ -70,12 +70,14 @@ class ProcedimentoItemInline(admin.TabularInline):
     model = ProcedureItem
     extra = 1  # Sugere 1 linha para facilitar lançamento
     fields = (
+        "position",
         "catalog",
         "description",
         "quantity",
         "performed",
         "observation",
     )
+    ordering = ("position", "id")
     autocomplete_fields = ("catalog",)
 
 
@@ -89,6 +91,7 @@ class ProcedimentoMaterialInline(admin.TabularInline):
     model = ProcedureMaterial
     extra = 1
     fields = (
+        "position",
         "procedure_item",
         "product",
         "quantity",
@@ -97,6 +100,7 @@ class ProcedimentoMaterialInline(admin.TabularInline):
         "status_estorno",
         "observation",
     )
+    ordering = ("position", "id")
     readonly_fields = ("procedure_item", "unit_cost", "status_estorno")
     autocomplete_fields = ("product",)
 
@@ -587,6 +591,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "procedure",
+        "position",
         "catalog",
         "description",
         "quantity",
@@ -603,7 +608,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_filter = ("performed", "created_at")
     autocomplete_fields = ("procedure", "catalog")
     list_select_related = ("procedure", "procedure__patient", "catalog")
-    ordering = ("-created_at",)  # Últimos itens lançados no topo
+    ordering = ("procedure", "position", "id")
     readonly_fields = (
         "custom_id",
         "created_at",
@@ -619,6 +624,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "procedure",
+                    "position",
                     "catalog",
                     "description",
                     "quantity",
@@ -649,6 +655,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "procedure",
+        "position",
         "procedure_item",
         "product",
         "lot",
@@ -679,7 +686,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "lot",
         "inventory_movement",
     )
-    ordering = ("-created_at",)  # Materiais consumidos mais recentes primeiro
+    ordering = ("procedure", "position", "id")
     readonly_fields = (
         "custom_id",
         "lot",
@@ -699,6 +706,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "procedure",
+                    "position",
                     "procedure_item",
                     "product",
                     "lot",

@@ -25,6 +25,7 @@ ROTULOS_FIXOS = {
     "updated_by": "Atualizado por",
     "deleted_by": "Deletado por",
     "order": "Ordem",
+    "position": "Posição",
     "date": "Data",
     "record_date": "Data de record",
     "performed_date": "Data de realização",

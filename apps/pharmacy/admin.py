@@ -502,11 +502,13 @@ class ItemVendaInline(admin.TabularInline):
     readonly_fields = ("unit_price", "total_linha_formatado",)
 
     fields = (
+        "position",
         "product",
         "quantity",
         "unit_price",
         "total_linha_formatado",
     )
+    ordering = ("position", "id")
 
     def total_linha_formatado(self, obj):
 
@@ -564,6 +566,7 @@ class SaleItemAdmin(admin.ModelAdmin):
     """Admin direto de itens de venda (visualização)."""
     list_display = (
         "sale",
+        "position",
         "product",
         "quantity",
         "unit_price",
@@ -573,7 +576,7 @@ class SaleItemAdmin(admin.ModelAdmin):
 
     search_fields = ("sale__number", "product__name")
     list_filter = ("product", "sale__created_at")
-    ordering = ("-created_at",)
+    ordering = ("sale", "position", "id")
     readonly_fields = (
         "created_at",
         "created_by",
@@ -950,12 +953,14 @@ class MaterialRequisitionItemInline(admin.TabularInline):
     model = MaterialRequisitionItem
     extra = 0
     fields = (
+        "position",
         "lot",
         "requested_quantity",
         "supplied_quantity",
         "available_quantity",
         "notes",
     )
+    ordering = ("position", "id")
     readonly_fields = ("supplied_quantity", "available_quantity")
     autocomplete_fields = ("lot",)
 

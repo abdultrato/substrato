@@ -592,6 +592,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             fields = [
                 "id",
                 "custom_id",
+                "position",
                 "exam",
                 "exam_name",
                 "medical_exam",
@@ -772,6 +773,7 @@ class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     legacy_input_aliases = {
         "id_custom": "custom_id",
+        "posicao": "position",
         "resultado": "result",
         "exame_campo": "exam_field",
         "resultado_valor": "result_value",
@@ -783,6 +785,7 @@ class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     }
     legacy_output_aliases = {
         "id_custom": "custom_id",
+        "posicao": "position",
         "resultado": "result",
         "exame_campo": "exam_field",
         "resultado_valor": "result_value",
@@ -818,6 +821,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
     exam_field_name = serializers.CharField(source="exam_field.name", read_only=True)
     exam_field_unit = serializers.CharField(source="exam_field.unit", read_only=True)
     exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
+    exam_field_position = serializers.IntegerField(source="exam_field.position", read_only=True)
     exam_field_reference = serializers.CharField(source="exam_field.referencia", read_only=True)
     legacy_output_aliases = {
         "id_custom": "custom_id",
@@ -836,6 +840,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
         "exame_campo_nome": "exam_field_name",
         "exame_campo_unidade": "exam_field_unit",
         "exame_campo_tipo": "exam_field_type",
+        "exame_campo_posicao": "exam_field_position",
         "exam_field_referencia": "exam_field_reference",
         "exame_campo_referencia": "exam_field_reference",
     }
@@ -849,6 +854,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
         fields = [
             "id",
             "custom_id",
+            "position",
             "result",
             "request_id",
             "request_code",
@@ -857,6 +863,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
             "exam_id",
             "exam_name",
             "exam_field_name",
+            "exam_field_position",
             "exam_field_unit",
             "exam_field_type",
             "exam_field_reference",
@@ -873,6 +880,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
         read_only_fields = [
             "id",
             "custom_id",
+            "position",
             "result",
             "request_id",
             "request_code",
@@ -881,6 +889,7 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
             "exam_id",
             "exam_name",
             "exam_field_name",
+            "exam_field_position",
             "exam_field_unit",
             "exam_field_type",
             "exam_field_reference",

@@ -18,6 +18,7 @@ class SaleItemFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "description",
             "name",
             "order",
@@ -156,6 +157,7 @@ class MaterialRequisitionFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "deleted",
             "deleted_at",
             "created_at",

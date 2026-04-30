@@ -55,6 +55,7 @@ INVOICE_ITEM_LEGACY_ALIASES = {
     "iva_percentual": "vat_percentage",
     "iva_valor": "vat_amount",
     "material_procedimento": "procedure_material",
+    "posicao": "position",
     "preco_unitario": "unit_price",
     "procedimento_item": "procedure_item",
     "procedimento_material": "procedure_material",

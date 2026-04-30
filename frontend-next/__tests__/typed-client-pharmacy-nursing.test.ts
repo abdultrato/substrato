@@ -21,8 +21,9 @@ describe('typed-client pharmacy & nursing services', () => {
 
     const response = await pharmacyService.listProdutos()
 
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/farmacia\/produto\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/farmacia/produto/',
+      expect.anything(),
       expect.objectContaining({ method: 'GET' })
     )
     expect(response.data[0].nome).toBe('Dipirona')
@@ -34,8 +35,9 @@ describe('typed-client pharmacy & nursing services', () => {
 
     const response = await pharmacyService.createProduto({ nome: 'Ibuprofeno' })
 
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/farmacia\/produto\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/farmacia/produto/',
+      expect.anything(),
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ nome: 'Ibuprofeno' }),
@@ -50,8 +52,9 @@ describe('typed-client pharmacy & nursing services', () => {
 
     const response = await nursingService.createPrescricao({ paciente: 1, observacao: 'Curativo diário' })
 
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/enfermagem\/prescricaoenfermagem\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/enfermagem/prescricaoenfermagem/',
+      expect.anything(),
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ paciente: 1, observacao: 'Curativo diário' }),
@@ -66,8 +69,9 @@ describe('typed-client pharmacy & nursing services', () => {
 
     const response = await paymentsService.listReceipts()
 
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/payments\/receipt\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/payments/receipt/',
+      expect.anything(),
       expect.objectContaining({ method: 'GET' })
     )
     expect(response.data[0].id).toBe(1)
@@ -79,8 +83,9 @@ describe('typed-client pharmacy & nursing services', () => {
 
     const response = await paymentsService.listReconciliations()
 
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/payments\/reconciliation\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/payments/reconciliation/',
+      expect.anything(),
       expect.objectContaining({ method: 'GET' })
     )
     expect(response.data[0].id).toBe(9)

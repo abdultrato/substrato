@@ -52,9 +52,14 @@ class AuthorizationRequestedHandler:
     @staticmethod
     def handle(event) -> None:
         try:
-            from tasks.authorization_worker import process_authorization_task
+            from infrastructure.task_queue import enqueue_task
 
-            process_authorization_task.delay(event.autorizacao_id)
+            enqueue_task(
+                "tasks.authorization_worker.process_authorization_task",
+                event.autorizacao_id,
+                queue="authorization",
+                tenant_id=getattr(event, "tenant_id", None),
+            )
         except Exception:
             logger.exception(
                 "Erro ao enfileirar autorizacao",

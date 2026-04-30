@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
@@ -65,6 +66,15 @@ class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         receipt = self.get_object()
+        queued = queue_export_if_requested(
+            request,
+            export_key="receipt_pdf",
+            payload={"receipt_id": receipt.id},
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.receipt_pdf_generator import generate_receipt_pdf
 
         pdf_bytes, filename = generate_receipt_pdf(receipt, request=request)

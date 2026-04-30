@@ -3,6 +3,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
 
 
@@ -81,7 +82,7 @@ class IntegrationOrder(NoNameCoreModel):
         return f"{self.custom_id} - {self.equipment}"
 
 
-class IntegrationOrderItem(NoNameCoreModel):
+class IntegrationOrderItem(ScopedPositionMixin, NoNameCoreModel):
     prefix = "ORDIT"
 
     class Status(models.TextChoices):
@@ -122,7 +123,7 @@ class IntegrationOrderItem(NoNameCoreModel):
         db_table = "integracoes_equipamentos_integracaoordemitem"
         verbose_name = "Item de order (Integração)"
         verbose_name_plural = "Itens de order (Integração)"
-        ordering = ["-created_at"]
+        ordering = ["order", "position", "id"]
         constraints = [
             models.UniqueConstraint(
                 fields=["order", "request_item"],
@@ -133,6 +134,8 @@ class IntegrationOrderItem(NoNameCoreModel):
         indexes = [
             models.Index(fields=["tenant", "order", "status"]),
         ]
+
+    position_scope_fields = ("order",)
 
     def clean(self):
         super().clean()

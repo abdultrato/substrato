@@ -27,7 +27,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     serializer_class = ResultItemSerializer
     filterset_class = ResultItemFilter
     permission_classes = [IsAuthenticated]
-    # ResultItem does not expose `name`/`description`/`active`/`order`.
+    # ResultItem expõe `position` para ordenar os campos no laudo.
     search_fields = [
         "custom_id",
         "result__request__custom_id",
@@ -43,6 +43,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "deleted",
         "deleted_at",
         "created_at",
@@ -60,7 +61,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         "status",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["result", "position", "id"]
 
     def _is_admin_user(self, user) -> bool:
         if not user or not getattr(user, "is_authenticated", False):

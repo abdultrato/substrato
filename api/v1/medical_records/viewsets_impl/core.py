@@ -31,8 +31,8 @@ class PrescriptionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     filterset_class = PrescriptionItemFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["custom_id", "medication__name", "notes"]
-    ordering_fields = ["created_at", "dosage_value", "dose_count"]
-    ordering = ["-created_at"]
+    ordering_fields = ["position", "created_at", "dosage_value", "dose_count"]
+    ordering = ["record", "position", "id"]
 
 
 VIEWSET_MAP = {

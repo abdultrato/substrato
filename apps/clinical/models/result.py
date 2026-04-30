@@ -70,7 +70,10 @@ class Result(NoNameCoreModel):
         items_to_create = []
         tenant = self.tenant
 
-        request_items = self.request.items.select_related("exam").prefetch_related("exam__campos")
+        request_items = (
+            self.request.items.select_related("exam").prefetch_related("exam__campos").order_by("position", "id")
+        )
+        next_position = 1
 
         for item in request_items:
             # Requisições podem conter itens de exam médico (imagem) que não
@@ -78,14 +81,16 @@ class Result(NoNameCoreModel):
             if not item.exam_id:
                 continue
 
-            for campo in item.exam.campos.all():
+            for campo in item.exam.campos.all().order_by("position", "id"):
                 items_to_create.append(
                     ResultItem(
                         result=self,
                         exam_field=campo,
                         tenant=tenant,  # ESSENCIAL para multi-tenant
+                        position=next_position,
                     )
                 )
+                next_position += 1
 
         if items_to_create:
             ResultItem.objects.bulk_create(items_to_create)

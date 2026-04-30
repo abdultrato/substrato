@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
@@ -102,6 +103,15 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         if not result or not result.items.filter(status=ResultState.VALIDATED).exists():
             raise ValidationError("Não é possível emitir PDF sem nenhum result validado.")
 
+        queued = queue_export_if_requested(
+            request,
+            export_key="lab_results_pdf",
+            payload={"lab_request_id": request_record.id, "apenas_validados": True},
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 
         pdf_bytes, filename = generate_results_pdf(request_record, apenas_validados=True)
@@ -133,6 +143,8 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "result__request",
             "result__request__patient",
         ).order_by(
+            "position",
+            "exam_field__position",
             "exam_field__exam__name",
             "exam_field__name",
             "id",
@@ -196,7 +208,7 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     serializer_class = LabRequestItemSerializer
     filterset_class = LabRequestItemFilter
     permission_classes = [IsAuthenticated]
-    # LabRequestItem does not expose `name`/`description`/`active`/`order`.
+    # LabRequestItem expõe `position` para ordenar os itens na requisição.
     search_fields = [
         "custom_id",
         "request__custom_id",
@@ -212,6 +224,7 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         "created_by",
         "updated_by",
         "custom_id",
+        "position",
         "created_at",
         "updated_at",
         "request",
@@ -219,6 +232,6 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         "medical_exam",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["request", "position", "id"]
 
 

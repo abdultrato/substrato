@@ -2,7 +2,7 @@ groups:
   - name: recalculo-fatura
     rules:
       - alert: RecalculoFaturaDemorado
-        expr: histogram_quantile(0.95, sum(rate(substrato_recalculo_fatura_duration_seconds_bucket[5m])) by (le, tenant_id)) > 1
+        expr: histogram_quantile(0.95, sum(rate(substrato_recalculo_invoice_duration_seconds_bucket[5m])) by (le, tenant_id)) > 1
         for: 5m
         labels:
           severity: warning
@@ -11,7 +11,7 @@ groups:
           description: "P95 acima de 1s por pelo menos 5 minutos. Tente acompanhar a fila Celery/recalculo."
 
       - alert: RecalculoFaturaBurst
-        expr: sum(rate(substrato_recalculo_fatura_duration_seconds_count[1m])) by (tenant_id) > 10
+        expr: sum(rate(substrato_recalculo_invoice_duration_seconds_count[1m])) by (tenant_id) > 10
         for: 2m
         labels:
           severity: info

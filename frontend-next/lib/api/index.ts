@@ -4,12 +4,12 @@ import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
   /**
-   * Timeout em ms para abortar a requisição. Default: 8000.
+   * Timeout em ms para abortar a requisição. Default: 0 (sem timeout automático).
    */
   timeoutMs?: number
   /**
    * Número de tentativas extras quando a requisição for abortada por timeout.
-   * Default: 1 (uma nova tentativa).
+   * Default: 1.
    */
   retryOnTimeout?: number
   /**

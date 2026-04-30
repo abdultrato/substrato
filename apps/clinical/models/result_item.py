@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from domain.clinical.events import ResultValidatedEvent
@@ -20,7 +21,7 @@ from .result import Result
 User = settings.AUTH_USER_MODEL
 
 
-class ResultItem(TenantPropagationMixin, NoNameCoreModel):
+class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     """Linha de resultado para um campo específico do exame."""
 
     tenant_source = "user"  # Propaga tenant via usuário responsável
@@ -118,6 +119,9 @@ class ResultItem(TenantPropagationMixin, NoNameCoreModel):
     class Meta:
         db_table = "clinico_resultadoitem"
         unique_together = ("result", "exam_field")
+        ordering = ["result", "position", "id"]
+
+    position_scope_fields = ("result",)
 
     # =====================================================
     # LAZY IMPORT

@@ -71,6 +71,7 @@ class InvoiceItemFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "order",
             "active",
             "deleted",

@@ -8,6 +8,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      thresholds: {
+        statements: Number(process.env.FRONTEND_COVERAGE_STATEMENTS ?? 35),
+        branches: Number(process.env.FRONTEND_COVERAGE_BRANCHES ?? 25),
+        functions: Number(process.env.FRONTEND_COVERAGE_FUNCTIONS ?? 35),
+        lines: Number(process.env.FRONTEND_COVERAGE_LINES ?? 35),
+      },
       exclude: [
         'node_modules/',
         'dist/',

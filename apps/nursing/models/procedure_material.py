@@ -10,10 +10,11 @@ from apps.pharmacy.models.inventory_movement import (
     MovementType,
 )
 from apps.pharmacy.models.lot import Lot
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
 
 
-class ProcedureMaterial(NoNameCoreModel):
+class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
     """Material consumido/associado a um procedimento de enfermagem."""
     prefix = "PROCMAT"
 
@@ -76,7 +77,7 @@ class ProcedureMaterial(NoNameCoreModel):
 
     class Meta:
         db_table = "enfermagem_procedimentomaterial"
-        ordering = ["-created_at"]
+        ordering = ["procedure", "position", "id"]
         verbose_name = "Material do Procedimento"
         verbose_name_plural = "Materiais do Procedimento"
         indexes = [
@@ -85,6 +86,8 @@ class ProcedureMaterial(NoNameCoreModel):
             models.Index(fields=["product"]),
             models.Index(fields=["lot"]),
         ]
+
+    position_scope_fields = ("procedure",)
 
     @property
     def total_linha(self):

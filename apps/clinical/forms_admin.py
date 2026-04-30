@@ -10,7 +10,10 @@ class ResultItemInlineFormSet(BaseInlineFormSet):
         qs = super().get_queryset()
 
         return qs.select_related("exam_field", "exam_field__exam").order_by(
-            "exam_field__exam__name", "exam_field__name"
+            "position",
+            "exam_field__exam__name",
+            "exam_field__position",
+            "exam_field__name",
         )
 
     # usado para agrupar no template

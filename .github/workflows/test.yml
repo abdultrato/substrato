@@ -78,8 +78,9 @@ jobs:
         DB_PORT: 5432
         REDIS_URL: redis://localhost:6379/0
         DJANGO_SECRET_KEY: test-secret-key
+        BACKEND_COVERAGE_MIN: "35"
       run: |
-        pytest --cov=. --cov-report=xml --cov-report=term-missing
+        pytest --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=${BACKEND_COVERAGE_MIN}
     
     - name: 📈 Upload coverage reports
       uses: codecov/codecov-action@v3
@@ -118,9 +119,20 @@ jobs:
     
     - name: 🔨 Build Next.js
       run: npm run build
-    
+
     - name: 🧪 Run linter
       run: npm run lint
-    
+
+    - name: 🧪 Run type-check
+      run: npm run type-check
+
+    - name: 📊 Run frontend coverage
+      env:
+        FRONTEND_COVERAGE_STATEMENTS: "35"
+        FRONTEND_COVERAGE_BRANCHES: "25"
+        FRONTEND_COVERAGE_FUNCTIONS: "35"
+        FRONTEND_COVERAGE_LINES: "35"
+      run: npm run test -- --coverage --run
+
     - name: ✅ Frontend Summary
       run: echo "Frontend checks completed."

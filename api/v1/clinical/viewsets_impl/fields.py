@@ -21,13 +21,14 @@ class LabExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
     serializer_class = LabExamFieldSerializer
     filterset_class = LabExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # LabExamField does not expose `description`/`active`/`order`.
+    # LabExamField expõe `position` para definir a disposição dos parâmetros.
     # Keep exam fields searchable for frontend workflows.
     search_fields = ["custom_id", "name", "type", "unit", "exam__name", "exam__custom_id"]
     ordering_fields = [
         "tenant",
         "custom_id",
         "name",
+        "position",
         "deleted",
         "deleted_at",
         "created_at",
@@ -44,7 +45,7 @@ class LabExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
         "max_delta",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["exam", "position", "id"]
 
 
 @extend_schema(
@@ -56,12 +57,13 @@ class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     serializer_class = MedicalExamFieldSerializer
     filterset_class = MedicalExamFieldFilter
     permission_classes = [IsAuthenticated]
-    # MedicalExamField does not expose `description`/`active`/`order`.
+    # MedicalExamField expõe `position` para definir a disposição dos parâmetros.
     search_fields = ["custom_id", "name", "type", "exam__name", "exam__custom_id"]
     ordering_fields = [
         "tenant",
         "custom_id",
         "name",
+        "position",
         "deleted",
         "deleted_at",
         "created_at",
@@ -72,6 +74,6 @@ class MedicalExamFieldViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
         "type",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["exam", "position", "id"]
 
 

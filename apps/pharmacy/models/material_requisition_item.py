@@ -4,10 +4,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
 
 
-class MaterialRequisitionItem(NoNameCoreModel):
+class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
     prefix = "REQITM"
 
     requisition = models.ForeignKey(
@@ -52,11 +53,13 @@ class MaterialRequisitionItem(NoNameCoreModel):
         db_table = "farmacia_requisicaomaterialitem"
         verbose_name = "Item da requisição de material"
         verbose_name_plural = "Itens de requisição de material"
-        ordering = ["id"]
+        ordering = ["requisition", "position", "id"]
         indexes = [
             models.Index(fields=["tenant", "requisition"]),
             models.Index(fields=["tenant", "lot"]),
         ]
+
+    position_scope_fields = ("requisition",)
 
     @property
     def available_quantity(self) -> int:

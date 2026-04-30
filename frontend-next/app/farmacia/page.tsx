@@ -9,10 +9,10 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
-import { pharmacyService } from "@/lib/api/typed-client"
+import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
-import { ApiError, isNotFoundLikeError } from "@/lib/errors/api-error"
+import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 export default function FarmaciaPage() {
   const { user } = useAuth()
@@ -31,14 +31,17 @@ export default function FarmaciaPage() {
         setLoading(true)
         setErro(null)
 
-        const listWithFallback = async <T,>(
-          request: Promise<{ data: T[] }>
-        ): Promise<number> => {
+        const countWithFallback = async (endpoint: string): Promise<number> => {
           try {
-            const response = await request
-            return response.data?.length ?? 0
+            const { meta } = await apiFetchList(endpoint, {
+              page: 1,
+              pageSize: 1,
+              timeoutMs: 4000,
+              retryOnTimeout: 0,
+            })
+            return meta.total ?? 0
           } catch (error) {
-            if (error instanceof ApiError && error.isNotFoundError()) {
+            if (isNotFoundLikeError(error)) {
               return 0
             }
             throw error
@@ -46,9 +49,9 @@ export default function FarmaciaPage() {
         }
 
         const [produtosCount, lotesCount, movimentosCount] = await Promise.all([
-          listWithFallback(pharmacyService.listProdutos()),
-          listWithFallback(pharmacyService.listLotes()),
-          listWithFallback(pharmacyService.listMovimentos()),
+          countWithFallback("/farmacia/produto/"),
+          countWithFallback("/farmacia/lote/"),
+          countWithFallback("/farmacia/movimentoestoque/"),
         ])
 
         if (!mounted) return

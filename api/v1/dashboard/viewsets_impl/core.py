@@ -3,7 +3,9 @@ from __future__ import annotations
 import csv
 import datetime as dt
 from decimal import Decimal
+import hashlib
 import io
+import json
 
 from django.db.models import Count, DecimalField, Sum, Value
 from django.db.models.functions import Coalesce
@@ -16,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_request import LabRequest
@@ -34,6 +37,7 @@ from drf_spectacular.utils import (
     OpenApiTypes,
     extend_schema,
 )
+from infrastructure.cache import CacheService
 
 
 def _aware_or_none(value):
@@ -116,9 +120,26 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
     serializer_class = AnalyticsResponseSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
+    cache_ttl_seconds = 60
+
+    def _cache_key(self, request, tenant) -> str:
+        tenant_part = getattr(tenant, "id", None) or "global"
+        query_params = getattr(request, "query_params", {})
+        try:
+            pairs = sorted((k, tuple(query_params.getlist(k))) for k in query_params)
+        except Exception:
+            pairs = sorted((k, str(v)) for k, v in dict(query_params).items())
+        digest = hashlib.sha256(json.dumps(pairs, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+        return f"dashboard:analytics:{tenant_part}:{digest}"
 
     def _compute(self, request) -> dict:
         tenant = getattr(request, "tenant", None)
+        refresh_cache = str(request.query_params.get("refresh") or "").strip().lower() in {"1", "true", "t", "sim"}
+        cache_key = self._cache_key(request, tenant)
+        if not refresh_cache:
+            cached = CacheService.get(cache_key)
+            if isinstance(cached, dict):
+                return cached
 
         limit = int(request.query_params.get("limit") or 10)
         limit = max(1, min(limit, 50))
@@ -309,7 +330,7 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
 
         top_consultations = list(base_cons.values("type").annotate(total=Count("id")).order_by("-total")[:limit])
 
-        return {
+        payload = {
             "range": {
                 "inicio": inicio.isoformat() if inicio else None,
                 "fim": fim.isoformat() if fim else None,
@@ -332,6 +353,8 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             "top_medicamentos": top_medicamentos,
             "top_consultations": top_consultations,
         }
+        CacheService.set(cache_key, payload, timeout=self.cache_ttl_seconds)
+        return payload
 
     @extend_schema(
         parameters=[
@@ -484,6 +507,15 @@ class AnalyticsViewSet(ValidatedSearchOrderingMixin, GenericViewSet):
             return resp
 
         # PDF (default)
+        queued = queue_export_if_requested(
+            request,
+            export_key="analytics_pdf",
+            payload=payload,
+            content_disposition="attachment",
+        )
+        if queued is not None:
+            return queued
+
         from tasks.generate_pdf.analytics_pdf_generator import generate_analytics_pdf
 
         pdf_bytes, filename = generate_analytics_pdf(payload, request=request)

@@ -50,6 +50,7 @@ class LedgerLineInline(admin.TabularInline):
     can_delete = False
 
     readonly_fields = (
+        "position",
         "account",
         "value",
         "nature",

@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from django.db.models import Count, Q, Sum
 from django.db import transaction
+from django.db.models import Count, Q, Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.decorators import action
@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.lot import Lot
@@ -64,6 +65,7 @@ class SaleItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "name",
         "deleted",
         "deleted_at",
@@ -77,7 +79,7 @@ class SaleItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
         "unit_price",
         "version",
     ]
-    ordering = ["-created_at"]
+    ordering = ["sale", "position", "id"]
 
 
 class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -176,6 +178,14 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
             "summary": summary,
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_stock_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_stock_pdf
 
@@ -286,6 +296,14 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
             },
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_movements_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_movements_pdf
 
@@ -424,6 +442,14 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             "summary": summary,
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_product_consumption_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_product_consumption_pdf
 
@@ -494,6 +520,14 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             },
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_top_requested_products_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_top_requested_products_pdf
 
@@ -564,6 +598,14 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             },
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_least_requested_products_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_least_requested_products_pdf
 
@@ -638,6 +680,14 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             },
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_product_sector_demand_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_product_sector_demand_pdf
 
@@ -1032,6 +1082,14 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             },
             "rows": rows,
         }
+        queued = queue_export_if_requested(
+            request,
+            export_key="pharmacy_sector_movements_pdf",
+            payload=payload,
+            content_disposition="inline",
+        )
+        if queued is not None:
+            return queued
 
         from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_sector_movements_pdf
 
@@ -1050,6 +1108,7 @@ class MaterialRequisitionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
     ordering_fields = [
         "tenant",
         "custom_id",
+        "position",
         "deleted",
         "deleted_at",
         "created_at",
@@ -1061,7 +1120,7 @@ class MaterialRequisitionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
         "requested_quantity",
         "supplied_quantity",
     ]
-    ordering = ["-created_at"]
+    ordering = ["requisition", "position", "id"]
 
     def get_queryset(self):
         qs = super().get_queryset()

@@ -22,6 +22,7 @@ class PrescriptionItemFilter(SafeFilterSet):
         model = PrescriptionItem
         fields = [
             "record",
+            "position",
             "medication",
             "dosage_unit",
             "dose_count",

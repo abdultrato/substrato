@@ -168,16 +168,34 @@ export interface PaginatedResult<T> {
   previous?: string
 }
 
+const DEFAULT_TYPED_CLIENT_TIMEOUT_MS = 6000
+
+function resolveTypedClientBaseURL(explicitBaseURL?: string): string {
+  const explicit = (explicitBaseURL || '').trim().replace(/\/$/, '')
+  if (explicit) return explicit
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin.replace(/\/$/, '')
+  }
+
+  const configured = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '')
+    .trim()
+    .replace(/\/$/, '')
+  if (configured) return configured
+
+  return 'http://localhost:8000'
+}
+
 /**
  * Criar cliente API padrão
  */
-export function createPacientesApiClient(baseURL: string = 'http://localhost:8000'): ApiClient {
+export function createPacientesApiClient(baseURL?: string): ApiClient {
   return createApiClient({
-    baseURL,
-    timeout: 15000,
+    baseURL: resolveTypedClientBaseURL(baseURL),
+    timeout: DEFAULT_TYPED_CLIENT_TIMEOUT_MS,
     retryOptions: {
-      maxRetries: 1,
-      initialDelayMs: 300,
+      maxRetries: 0,
+      initialDelayMs: 200,
     },
   })
 }
@@ -188,7 +206,7 @@ export function createPacientesApiClient(baseURL: string = 'http://localhost:800
 export class PacientesService {
   private client: ApiClient
 
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -284,7 +302,7 @@ export class PacientesService {
 export class ExamesService {
   private client: ApiClient
 
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -379,7 +397,7 @@ export class ExamesService {
 export class ConsultationsService {
   private client: ApiClient
 
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -409,7 +427,7 @@ export class ConsultationsService {
  */
 export class InvoicesService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -433,7 +451,7 @@ export class InvoicesService {
  */
 export class PaymentsService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -465,7 +483,7 @@ export class PaymentsService {
  */
 export class ReceptionService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -495,7 +513,7 @@ export class ReceptionService {
  */
 export class EquipmentIntegrationsService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -513,7 +531,7 @@ export class EquipmentIntegrationsService {
  */
 export class TenantsService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -539,7 +557,7 @@ export class TenantsService {
  */
 export class InsurersService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -563,7 +581,7 @@ export class InsurersService {
  */
 export class PharmacyService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 
@@ -667,7 +685,7 @@ export class PharmacyService {
  */
 export class NursingService {
   private client: ApiClient
-  constructor(baseURL: string = 'http://localhost:8000') {
+  constructor(baseURL?: string) {
     this.client = createPacientesApiClient(baseURL)
   }
 

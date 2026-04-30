@@ -5,10 +5,11 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
 from apps.pharmacy.models.lot import Lot
+from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
 
 
-class ProcedureItem(NoNameCoreModel):
+class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
     """Serviço (ato) realizado dentro de um procedimento de enfermagem."""
     prefix = "PROCIT"
 
@@ -96,7 +97,7 @@ class ProcedureItem(NoNameCoreModel):
 
     class Meta:
         db_table = "enfermagem_procedimentoitem"
-        ordering = ["-created_at"]
+        ordering = ["procedure", "position", "id"]
         verbose_name = "Procedimento de Enfermagem - Item"
         verbose_name_plural = "Procedimentos de Enfermagem - Itens"
         indexes = [
@@ -106,6 +107,8 @@ class ProcedureItem(NoNameCoreModel):
             models.Index(fields=["execution_status"]),
             models.Index(fields=["billed"]),
         ]
+
+    position_scope_fields = ("procedure",)
 
     def clean(self):
         super().clean()

@@ -94,6 +94,7 @@ class ProcedureItemFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "procedure",
             "catalog",
             "description",
@@ -116,6 +117,7 @@ class ProcedureMaterialFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "position",
             "procedure",
             "procedure_item",
             "product",

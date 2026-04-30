@@ -9,10 +9,10 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { useAuth } from "@/hooks/useAuth"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
-import { pharmacyService } from "@/lib/api/typed-client"
-import { type MovimentoEstoque, type Lote, type Produto } from "@/lib/validators/schemas"
+
+type MovimentoRow = Record<string, any>
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return "-"
@@ -27,13 +27,11 @@ export default function FarmaciaMovimentosPage() {
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<MovimentoEstoque[]>([])
+  const [data, setData] = useState<MovimentoRow[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [lotes, setLotes] = useState<Map<number, Lote>>(new Map())
-  const [produtos, setProdutos] = useState<Map<number, Produto>>(new Map())
   const [dateFrom, setDateFrom] = useState("")
   const [dateTo, setDateTo] = useState("")
   const [reportType, setReportType] = useState<"ALL" | "ENT" | "SAI" | "AJU">("ALL")
@@ -49,31 +47,22 @@ export default function FarmaciaMovimentosPage() {
       try {
         setLoading(true)
         setErro(null)
-        const [movRes, lotesRes, prodRes] = await Promise.all([
-          pharmacyService.listMovimentos(),
-          pharmacyService.listLotes(),
-          pharmacyService.listProdutos(),
-        ])
+        const { items, meta } = await apiFetchList<MovimentoRow>("/farmacia/movimentoestoque/", {
+          page,
+          pageSize,
+          timeoutMs: 5000,
+          retryOnTimeout: 0,
+        })
 
-        const items = movRes.data || []
-        const lotesMap = new Map<number, Lote>()
-        lotesRes.data?.forEach(l => {
-          if (l.id !== undefined && l.id !== null) lotesMap.set(l.id, l)
-        })
-        const produtoMap = new Map<number, Produto>()
-        prodRes.data?.forEach(p => {
-          if (p.id !== undefined && p.id !== null) produtoMap.set(p.id, p)
-        })
-        const total = items.length
-        const computedTotalPages = Math.max(1, Math.ceil(total / pageSize))
-        const offset = (page - 1) * pageSize
-        const pageItems = items.slice(offset, offset + pageSize)
+        const total = meta.total ?? items.length
+        const computedTotalPages =
+          meta.totalPages ??
+          (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+
         if (!mounted) return
-        setData(pageItems)
+        setData(items)
         setTotalItems(total)
         setTotalPages(computedTotalPages)
-        setLotes(lotesMap)
-        setProdutos(produtoMap)
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
@@ -223,7 +212,7 @@ export default function FarmaciaMovimentosPage() {
     () => [
       {
         header: "Código",
-        render: (m: MovimentoEstoque) => (
+        render: (m: MovimentoRow) => (
           <Link
             href={`/recursos/farmacia/movimentoestoque/${m.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
@@ -232,21 +221,17 @@ export default function FarmaciaMovimentosPage() {
           </Link>
         ),
       },
-      { header: "Lote", render: (m: MovimentoEstoque) => m.lote ?? "-" },
+      { header: "Lote", render: (m: MovimentoRow) => m.lote_numero || m.lot_number || m.lote || m.lot || "-" },
       {
         header: "Produto",
-        render: (m: MovimentoEstoque) => {
-          const lote = m.lote ? lotes.get(m.lote) : null
-          const produto = lote?.produto ? produtos.get(lote.produto) : null
-          return produto?.nome || lote?.produto || "-"
-        },
+        render: (m: MovimentoRow) => m.produto_nome || m.product_name || m.produto || m.product || "-",
       },
-      { header: "Tipo", render: (m: MovimentoEstoque) => m.tipo || "-" },
-      { header: "Origem", render: (m: MovimentoEstoque) => m.origem ?? "-" },
-      { header: "Quantidade", render: (m: MovimentoEstoque) => m.quantidade ?? "-" },
-      { header: "Data", render: (m: MovimentoEstoque) => fmtDate(m.criado_em) },
+      { header: "Tipo", render: (m: MovimentoRow) => m.tipo || m.type || "-" },
+      { header: "Origem", render: (m: MovimentoRow) => m.origem ?? m.origin ?? "-" },
+      { header: "Quantidade", render: (m: MovimentoRow) => m.quantidade ?? m.quantity ?? "-" },
+      { header: "Data", render: (m: MovimentoRow) => fmtDate(m.criado_em || m.created_at) },
     ],
-    [lotes, produtos]
+    []
   )
 
   return (
@@ -380,23 +365,15 @@ export default function FarmaciaMovimentosPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                Produto (opcional)
+                Produto (ID opcional)
               </label>
-              <select
+              <input
+                type="number"
                 value={reportProductId}
                 onChange={(e) => setReportProductId(e.target.value)}
+                placeholder="Ex.: 12"
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="">Todos os produtos</option>
-                {Array.from(produtos.values())
-                  .filter((produto) => produto.id !== undefined && produto.id !== null)
-                  .sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || "")))
-                  .map((produto) => (
-                    <option key={produto.id} value={produto.id}>
-                      {produto.nome || `Produto ${produto.id}`}
-                    </option>
-                  ))}
-              </select>
+              />
             </div>
           </div>
 
@@ -464,7 +441,7 @@ export default function FarmaciaMovimentosPage() {
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
           <>
-            <DataTable<MovimentoEstoque>
+            <DataTable<MovimentoRow>
               columns={columns as any}
               data={data}
               emptyMessage="Nenhum movimento encontrado."

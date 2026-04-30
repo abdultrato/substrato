@@ -16,6 +16,7 @@ class PrescricaoItemInline(admin.TabularInline):
     extra = 0
     autocomplete_fields = ("medication",)
     fields = (
+        "position",
         "medication",
         "dosage_value",
         "dosage_unit",
@@ -23,6 +24,7 @@ class PrescricaoItemInline(admin.TabularInline):
         "dose_count",
         "notes",
     )
+    ordering = ("position", "id")
 
 
 @admin.register(MedicalRecordEntry)
@@ -45,6 +47,7 @@ class MedicalRecordEntryAdmin(CoreAdmin):
 @admin.register(PrescriptionItem)
 class PrescricaoItemAdmin(CoreAdmin):
     list_display = (
+        "position",
         "record",
         "medication",
         "dosage_value",
@@ -60,5 +63,6 @@ class PrescricaoItemAdmin(CoreAdmin):
         "medication__name",
     )
     autocomplete_fields = ("record", "medication")
+    ordering = ("record", "position", "id")
 
 
