@@ -458,15 +458,24 @@ class BloodDonation(NoNameCoreModel):
     def _resolve_unit_status_for_screening(self) -> str:
         if self._has_any_positive_test():
             return BloodUnit.UnitStatus.QUARANTINE
-        if self.screening_status == self.ScreeningStatus.APPROVED:
-            return BloodUnit.UnitStatus.AVAILABLE
-        return BloodUnit.UnitStatus.QUARANTINE
+        return BloodUnit.UnitStatus.AVAILABLE
 
     def _resolve_default_storage(self):
-        return (
+        storage = (
             BloodStorage.objects.filter(tenant_id=self.tenant_id, is_active=True, deleted=False)
             .order_by("name", "id")
             .first()
+        )
+        if storage is not None:
+            return storage
+        return BloodStorage.objects.create(
+            tenant_id=self.tenant_id,
+            name="Banco de Sangue - Principal",
+            location="Banco de Sangue",
+            capacity_units=500,
+            temperature_min_c=2.0,
+            temperature_max_c=6.0,
+            is_active=True,
         )
 
     def _ensure_units_after_completion(self):
@@ -508,7 +517,12 @@ class BloodDonation(NoNameCoreModel):
                 unit.expires_at = self.collected_at + datetime.timedelta(days=35)
 
         unit.save()
-        if created:
+        if created or not BloodStockMovement.objects.filter(
+            tenant_id=self.tenant_id,
+            unit_id=unit.id,
+            movement_type=BloodStockMovement.MovementType.INBOUND,
+            deleted=False,
+        ).exists():
             BloodStockMovement(
                 tenant=unit.tenant,
                 unit=unit,

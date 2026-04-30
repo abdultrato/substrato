@@ -130,6 +130,47 @@ def test_completed_donation_generates_unit_and_positive_serology_keeps_quarantin
 
 
 @pytest.mark.django_db
+def test_completed_donation_auto_creates_storage_unit_and_inbound_stock():
+    tenant = _tenant()
+    donor = _patient(tenant, "Doador Auto")
+    assert BloodStorage.objects.filter(tenant=tenant, deleted=False).count() == 0
+
+    donation = BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        donor_role=BloodDonation.DonorRole.VOLUNTARY,
+        bag_identifier="BAG-AUTO-001",
+        blood_type="O+",
+        donation_type=BloodDonation.DonationType.WHOLE_BLOOD,
+        status=BloodDonation.DonationStatus.COMPLETED,
+        screening_status=BloodDonation.ScreeningStatus.PENDING,
+        collected_at=timezone.now(),
+        processed_at=timezone.now(),
+        volume_ml=450,
+    )
+
+    unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
+    storage = unit.storage
+
+    assert storage is not None
+    assert storage.name == "Banco de Sangue - Principal"
+    assert unit.status == BloodUnit.UnitStatus.AVAILABLE
+    assert BloodUnit.objects.filter(
+        tenant=tenant,
+        donation=donation,
+        status=BloodUnit.UnitStatus.AVAILABLE,
+        deleted=False,
+    ).exists()
+    assert BloodStockMovement.objects.filter(
+        tenant=tenant,
+        unit=unit,
+        movement_type=BloodStockMovement.MovementType.INBOUND,
+        destination_storage=storage,
+        deleted=False,
+    ).exists()
+
+
+@pytest.mark.django_db
 def test_unit_forward_and_return_flow_updates_stock_movement(api_client):
     tenant = _tenant()
     _authenticate_admin(tenant, api_client)
