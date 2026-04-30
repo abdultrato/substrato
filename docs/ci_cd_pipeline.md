@@ -7,6 +7,11 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 3. `security`: SAST e auditoria de dependências.
 4. `docker-build-smoke`: build de imagens backend/frontend sem push.
 
+## Publicação e deploy
+1. `/.github/workflows/build.yml`: publica imagens Docker no GHCR em `push` para `main`, tags `v*` e execução manual.
+2. `/.github/workflows/deploy.yml`: deploy manual com aprovação por ambiente (`staging`/`production`) e validação explícita de segredos.
+3. Workflows legados redundantes de `test`/`lint` foram removidos para evitar execução duplicada de gates.
+
 ## Gates obrigatórios
 1. `ruff check` e `ruff format --check`.
 2. `pytest --cov` com fail-under configurado.
@@ -21,8 +26,9 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 
 ## Regras de promoção
 1. Merge sem CI verde é bloqueado.
-2. Deploy só ocorre após pipeline completo.
-3. Mudanças de infra/config passam por revisão técnica obrigatória.
+2. Build/publish de imagem ocorre só após merge em `main` ou tag de release.
+3. Deploy é manual e exige credenciais válidas por ambiente.
+4. Mudanças de infra/config passam por revisão técnica obrigatória.
 
 ## Variáveis mínimas para CI de produção
 1. `DJANGO_SETTINGS_MODULE=platform.settings.production`
