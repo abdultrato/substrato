@@ -27,6 +27,7 @@ Definir o baseline técnico para operar o Substrato como software empresarial: s
 
 ## Documentos vinculados
 - Segurança: `docs/security_baseline.md`
+- Segurança de supply chain: `docs/supply_chain_security.md`
 - CI/CD: `docs/ci_cd_pipeline.md`
 - Release e rollback: `docs/release_and_rollback.md`
 - Gestão de mudanças: `docs/change_management.md`

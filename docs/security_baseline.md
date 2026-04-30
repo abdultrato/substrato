@@ -24,6 +24,8 @@
 1. SAST backend com `bandit`.
 2. Auditoria de dependências Python com `pip-audit`.
 3. Auditoria de dependências frontend com `npm audit --omit=dev --audit-level=high`.
+4. `Dependency Review` em PR para bloquear dependências vulneráveis.
+5. `CodeQL` contínuo para análise estática multi-linguagem.
 
 ## 5) Gestão de segredos
 1. Nunca versionar segredos reais.
@@ -33,7 +35,12 @@
    - Secret manager do provedor cloud.
 4. Rotação de segredos a cada incidente de exposição.
 
-## 6) Checklist rápido pré-deploy
+## 6) Rastreabilidade de componentes
+1. SBOM backend e frontend gerados no pipeline.
+2. Lockfile frontend versionado para builds determinísticas.
+3. Dependabot mantém atualização contínua de dependências.
+
+## 7) Checklist rápido pré-deploy
 1. `python scripts/production_readiness_check.py`
 2. `python manage.py check --deploy`
 3. Validar `/health/live` e `/health/ready`

@@ -59,5 +59,6 @@ make production-readiness
 - Runbook de release e rollback: `docs/release_and_rollback.md`
 - Política de reporte de vulnerabilidades: `SECURITY.md`
 - Gestão de mudanças (change management): `docs/change_management.md`
+- Segurança de supply chain: `docs/supply_chain_security.md`
 
 Os documentos Markdown históricos do projeto foram incorporados ao `SUBSTRATO.md`.

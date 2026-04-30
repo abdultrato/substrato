@@ -13,6 +13,8 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 3. Workflows legados redundantes de `test`/`lint` foram removidos para evitar execução duplicada de gates.
 4. `/.github/workflows/codeql.yml`: análise SAST contínua com CodeQL para Python e JavaScript.
 5. `/.github/dependabot.yml`: atualização automática semanal de dependências Python, NPM e GitHub Actions.
+6. `/.github/workflows/dependency-review.yml`: bloqueio de PR para vulnerabilidades de dependência de alta severidade.
+7. `/.github/workflows/sbom.yml`: geração e publicação de SBOM para backend e frontend.
 
 ## Gates obrigatórios
 1. `ruff check` e `ruff format --check`.

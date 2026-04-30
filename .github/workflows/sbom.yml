@@ -1,0 +1,74 @@
+name: SBOM Generation
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sbom-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-sbom:
+    name: Backend SBOM (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install cyclonedx-bom
+
+      - name: Generate SBOM
+        run: cyclonedx-py requirements requirements.txt --output-file sbom-backend.json --format json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-backend
+          path: sbom-backend.json
+          if-no-files-found: error
+
+  frontend-sbom:
+    name: Frontend SBOM (NPM)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-next
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend-next/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate SBOM
+        run: npx @cyclonedx/cyclonedx-npm --output-file sbom-frontend.xml
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-frontend
+          path: frontend-next/sbom-frontend.xml
+          if-no-files-found: error
