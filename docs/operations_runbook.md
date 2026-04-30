@@ -16,9 +16,10 @@ Padronizar rotina diária e resposta a incidentes para backend/API, filas assín
 
 ## Rotina por deploy
 1. Executar `make quality-gate`.
-2. Aplicar migrações.
-3. Validar regras de alerta: `make ops-alert-rules`.
-4. Validar endpoint de métricas: `curl http://localhost:8000/metrics`.
+2. Executar `make production-readiness`.
+3. Aplicar migrações.
+4. Validar regras de alerta: `make ops-alert-rules`.
+5. Validar endpoint de métricas: `curl http://localhost:8000/metrics`.
 
 ## Rotina semanal (N2)
 1. Revisar os 10 endpoints mais lentos (p95/p99).

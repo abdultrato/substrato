@@ -15,11 +15,19 @@
 
 ### Backend
 - `pytest --cov=. --cov-report=term-missing --cov-fail-under=35`
+- `ruff check .` e `ruff format . --check`
+- `python scripts/production_readiness_check.py`
 
 ### Frontend
 - `npm run lint`
 - `npm run type-check`
 - `npm run test -- --coverage --run` com thresholds globais em `vitest.config.ts`.
+- `npm run build`
+
+### Segurança
+- `bandit -q -r apps api application core domain infrastructure security services`
+- `pip-audit` (visibilidade de vulnerabilidades de dependências Python)
+- `npm audit --omit=dev --audit-level=high`
 
 ## 3) Política de dívida técnica
 

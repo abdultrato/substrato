@@ -1,55 +1,103 @@
 const path = require("path")
 const { PHASE_DEVELOPMENT_SERVER } = require("next/constants")
 
+function buildCsp(isDevelopment) {
+  const directives = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+    "connect-src 'self' https: http: wss: ws:",
+  ]
+
+  if (!isDevelopment) {
+    directives.push("upgrade-insecure-requests")
+  }
+
+  return directives.join("; ")
+}
+
 /** @type {(phase: string) => import('next').NextConfig} */
-module.exports = (phase) => ({
-  // Django endpoints (admin/docs/schema) depend on trailing slashes.
-  // Without this, Next.js canonicalizes `/foo/` -> `/foo` and Django redirects
-  // back to `/foo/`, creating an infinite redirect loop through the proxy.
-  trailingSlash: true,
+module.exports = (phase) => {
+  const isDevelopment = phase === PHASE_DEVELOPMENT_SERVER
+  const csp = buildCsp(isDevelopment)
 
-  // Disable the Next.js DevTools indicator ("N" badge) in development.
-  devIndicators: false,
+  return {
+    // Django endpoints (admin/docs/schema) depend on trailing slashes.
+    // Without this, Next.js canonicalizes `/foo/` -> `/foo` and Django redirects
+    // back to `/foo/`, creating an infinite redirect loop through the proxy.
+    trailingSlash: true,
 
-  // Keep dev and production build artifacts separate so running `next build`
-  // doesn't break an active `next dev` (common when using Docker bind mounts).
-  distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next",
+    // Segurança e previsibilidade de runtime.
+    reactStrictMode: true,
+    poweredByHeader: false,
+    output: "standalone",
 
-  // Pin the tracing root to this app to avoid monorepo lockfile inference warnings.
-  outputFileTracingRoot: path.resolve(__dirname),
+    // Disable the Next.js DevTools indicator ("N" badge) in development.
+    devIndicators: false,
 
-  async rewrites() {
-    const backend =
-      process.env.BACKEND_URL ||
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "http://127.0.0.1:8000"
+    // Keep dev and production build artifacts separate so running `next build`
+    // doesn't break an active `next dev` (common when using Docker bind mounts).
+    distDir: isDevelopment ? ".next-dev" : ".next",
 
-    return [
-      // API proxy (Django)
-      // Note: `:path*` does not preserve trailing slashes, so we normalize here
-      // to avoid Django <-> Next redirect loops on endpoints that require `/`.
-      { source: "/api", destination: `${backend}/api/` },
-      { source: "/api/", destination: `${backend}/api/` },
-      { source: "/api/:path*", destination: `${backend}/api/:path*/` },
+    // Pin the tracing root to this app to avoid monorepo lockfile inference warnings.
+    outputFileTracingRoot: path.resolve(__dirname),
 
-      // Admin + static/media proxy (useful for links in the UI)
-      { source: "/admin", destination: `${backend}/admin/` },
-      { source: "/admin/", destination: `${backend}/admin/` },
-      { source: "/admin/:path*", destination: `${backend}/admin/:path*/` },
+    async headers() {
+      return [
+        {
+          source: "/:path*",
+          headers: [
+            { key: "Content-Security-Policy", value: csp },
+            { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+            { key: "X-Content-Type-Options", value: "nosniff" },
+            { key: "X-Frame-Options", value: "DENY" },
+            { key: "X-DNS-Prefetch-Control", value: "off" },
+            { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+            { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
+          ],
+        },
+      ]
+    },
 
-      // PDFs (Django views, e.g. /pdf/resultado/<id_custom>/)
-      { source: "/pdf", destination: `${backend}/pdf/` },
-      { source: "/pdf/", destination: `${backend}/pdf/` },
-      { source: "/pdf/:path*", destination: `${backend}/pdf/:path*/` },
+    async rewrites() {
+      const backend =
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        "http://127.0.0.1:8000"
 
-      { source: "/static/:path*", destination: `${backend}/static/:path*` },
-      { source: "/media/:path*", destination: `${backend}/media/:path*` },
+      return [
+        // API proxy (Django)
+        // Note: `:path*` does not preserve trailing slashes, so we normalize here
+        // to avoid Django <-> Next redirect loops on endpoints that require `/`.
+        { source: "/api", destination: `${backend}/api/` },
+        { source: "/api/", destination: `${backend}/api/` },
+        { source: "/api/:path*", destination: `${backend}/api/:path*/` },
 
-      // Healthchecks (used by Replit autoscale and external monitors)
-      { source: "/health/live", destination: `${backend}/health/live/` },
-      { source: "/health/live/", destination: `${backend}/health/live/` },
-      { source: "/health/ready", destination: `${backend}/health/ready/` },
-      { source: "/health/ready/", destination: `${backend}/health/ready/` },
-    ]
-  },
-})
+        // Admin + static/media proxy (useful for links in the UI)
+        { source: "/admin", destination: `${backend}/admin/` },
+        { source: "/admin/", destination: `${backend}/admin/` },
+        { source: "/admin/:path*", destination: `${backend}/admin/:path*/` },
+
+        // PDFs (Django views, e.g. /pdf/resultado/<id_custom>/)
+        { source: "/pdf", destination: `${backend}/pdf/` },
+        { source: "/pdf/", destination: `${backend}/pdf/` },
+        { source: "/pdf/:path*", destination: `${backend}/pdf/:path*/` },
+
+        { source: "/static/:path*", destination: `${backend}/static/:path*` },
+        { source: "/media/:path*", destination: `${backend}/media/:path*` },
+
+        // Healthchecks (used by Replit autoscale and external monitors)
+        { source: "/health/live", destination: `${backend}/health/live/` },
+        { source: "/health/live/", destination: `${backend}/health/live/` },
+        { source: "/health/ready", destination: `${backend}/health/ready/` },
+        { source: "/health/ready/", destination: `${backend}/health/ready/` },
+      ]
+    },
+  }
+}

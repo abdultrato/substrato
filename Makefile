@@ -48,6 +48,7 @@ help:
 	@echo "  make ops-health         - Verificar health, metrics e Prometheus rules"
 	@echo "  make ops-alert-rules    - Validar regras Prometheus com promtool"
 	@echo "  make ops-slo            - Resumo rápido de latência/erros no /metrics"
+	@echo "  make production-readiness - Gate de prontidão para produção"
 	@echo ""
 
 build:
@@ -217,5 +218,8 @@ ops-health:
 ops-slo:
 	@echo "== SLO quick sample (/metrics) =="
 	@curl -fsS http://localhost:8000/metrics | grep -E "substrato_api_request_duration_seconds|substrato_async_task_execution_duration_seconds|substrato_async_task_enqueue_total" | head -n 30 || true
+
+production-readiness:
+	python scripts/production_readiness_check.py
 
 .DEFAULT_GOAL := help

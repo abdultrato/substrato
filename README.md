@@ -45,6 +45,7 @@ docker compose up --build
 ```bash
 make quality-gate
 make ops-health
+make production-readiness
 ```
 
 ## Governança técnica
@@ -52,5 +53,9 @@ make ops-health
 - Runbook operacional: `docs/operations_runbook.md`
 - Registro de dívida técnica: `docs/technical_debt_register.md`
 - Fluxo de exportações assíncronas: `docs/async_exports.md`
+- Modelo empresarial (visão executiva): `docs/enterprise_model.md`
+- Baseline de segurança: `docs/security_baseline.md`
+- Pipeline de CI/CD empresarial: `docs/ci_cd_pipeline.md`
+- Runbook de release e rollback: `docs/release_and_rollback.md`
 
 Os documentos Markdown históricos do projeto foram incorporados ao `SUBSTRATO.md`.
