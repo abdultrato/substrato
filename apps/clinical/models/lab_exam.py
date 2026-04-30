@@ -33,6 +33,7 @@ class LabExam(TenantPropagationMixin, CoreModel):
         verbose_name="Tempo de resposta (em hours)",
         default=24,
         help_text="Tempo de resposta em hours.",
+
     )
 
     price = MoneyField(

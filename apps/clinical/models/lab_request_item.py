@@ -25,6 +25,7 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         db_column="request_id",
         on_delete=models.CASCADE,
         related_name="items",
+        verbose_name="Requisição",
     )
 
     exam = models.ForeignKey(
@@ -33,9 +34,10 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
 
         db_column="exam_id",
         on_delete=models.PROTECT,
-        related_name="lab_requests",
+        related_name="lab_request_items",
         null=True,
         blank=True,
+        verbose_name="Exame laboratorial",
     )
 
     medical_exam = models.ForeignKey(
@@ -44,9 +46,10 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
 
         db_column="medical_exam_id",
         on_delete=models.PROTECT,
-        related_name="lab_requests",
+        related_name="lab_request_items",
         null=True,
         blank=True,
+        verbose_name="Exame médico",
     )
 
     class Meta:
@@ -56,6 +59,8 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
             models.Index(fields=["request", "exam"]),
             models.Index(fields=["request", "medical_exam"]),
         ]
+        verbose_name = "Item de requisição"
+        verbose_name_plural = "Itens de requisições"
 
     position_scope_fields = ("request",)
 

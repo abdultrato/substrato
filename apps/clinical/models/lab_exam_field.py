@@ -23,7 +23,7 @@ class LabExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
         db_column="exam_id",
         on_delete=models.CASCADE,
         related_name="campos",
-        verbose_name="Exame",
+        verbose_name="Exame laboratorial",
     )
 
     type = models.CharField(

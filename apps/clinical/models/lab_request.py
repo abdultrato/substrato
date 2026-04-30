@@ -1,6 +1,5 @@
 """Requisição de exames laboratoriais ou exames médicos."""
 
-from typing import Type
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -51,6 +50,7 @@ class LabRequest(NoNameCoreModel):
         db_column="patient_id",
         on_delete=models.CASCADE,
         related_name="lab_requests",
+        verbose_name="Paciente",
     )
 
     requesting_company = models.ForeignKey(
@@ -87,11 +87,15 @@ class LabRequest(NoNameCoreModel):
         choices=Type.choices,
         default=Type.LABORATORY,
         db_index=True,
+        verbose_name="Tipo de requisição",
     )
 
     exams = models.ManyToManyField(
         LabExam,
         through="LabRequestItem",
+        blank=True,
+        related_name="lab_requests",
+        verbose_name="Exames",
     )
     samples = models.ManyToManyField(
         Sample,
@@ -121,6 +125,7 @@ class LabRequest(NoNameCoreModel):
         choices=ResultState.CHOICES,
         default=ResultState.PENDING,
         db_index=True,
+        verbose_name="Status da requisição",
     )
 
     clinical_status = models.CharField(
@@ -131,6 +136,8 @@ class LabRequest(NoNameCoreModel):
         choices=ClinicalStatus.choices,
         default=ClinicalStatus.NON_URGENT,
         db_index=True,
+        verbose_name="Status clínico",
+
     )
 
     has_critical_result = models.BooleanField(
@@ -139,6 +146,7 @@ class LabRequest(NoNameCoreModel):
 
         default=False,
         db_index=True,
+        verbose_name="Possui resultado crítico",
     )
     requires_fasting = models.BooleanField(
         db_column="requires_fasting",

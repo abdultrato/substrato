@@ -22,6 +22,7 @@ class Result(NoNameCoreModel):
         db_column="request_id",
         on_delete=models.CASCADE,
         related_name="result",
+        verbose_name="requisição",
     )
 
     analyst = models.ForeignKey(
@@ -32,17 +33,23 @@ class Result(NoNameCoreModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="results_analyst",
+        verbose_name="analista",
     )
 
     finalized = models.BooleanField(
 
         db_column="finalized",
 
-        default=False)
+        default=False,
+        verbose_name="finalizado",
+        )
 
     class Meta:
         db_table = "clinico_resultado"
         ordering = ["-created_at"]
+        verbose_name = "resultado"
+        verbose_name_plural = "resultados"
 
     # -----------------------------------------------------
 
