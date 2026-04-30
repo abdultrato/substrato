@@ -29,7 +29,7 @@ class BloodType(models.TextChoices):
     B_POSITIVE = "B+", "B positivo"
     AB_NEGATIVE = "AB-", "AB negativo"
     AB_POSITIVE = "AB+", "AB positivo"
-    UNKNOWN = "UNK", "Nao informado"
+    UNKNOWN = "UNK", "Não informado"
 
 
 class BloodComponentType(models.TextChoices):
@@ -58,7 +58,7 @@ class BloodDonation(NoNameCoreModel):
         NEGATIVE = "NEG", "Negativo"
         POSITIVE = "POS", "Positivo"
         INCONCLUSIVE = "INC", "Inconclusivo"
-        NOT_DONE = "NDO", "Nao realizado"
+        NOT_DONE = "NDO", "Não realizado"
 
     class DonationType(models.TextChoices):
         WHOLE_BLOOD = "WBL", "Sangue total"
@@ -94,7 +94,7 @@ class BloodDonation(NoNameCoreModel):
     replacement_for = models.ForeignKey(
         "clinical.Patient",
         db_column="replacement_for_id",
-        verbose_name="Reposicao para (paciente)",
+        verbose_name="Reposição para (paciente)",
         on_delete=models.SET_NULL,
         related_name="replacement_blood_donations",
         null=True,
@@ -120,7 +120,7 @@ class BloodDonation(NoNameCoreModel):
     )
     blood_type = models.CharField(
         db_column="blood_type",
-        verbose_name="Tipo sanguineo",
+        verbose_name="Tipo sanguíneo",
         max_length=3,
         choices=BloodType.choices,
         default=BloodType.UNKNOWN,
@@ -128,7 +128,7 @@ class BloodDonation(NoNameCoreModel):
     )
     donation_type = models.CharField(
         db_column="donation_type",
-        verbose_name="Tipo de doacao",
+        verbose_name="Tipo de doação",
         max_length=3,
         choices=DonationType.choices,
         default=DonationType.WHOLE_BLOOD,
@@ -136,7 +136,7 @@ class BloodDonation(NoNameCoreModel):
     )
     status = models.CharField(
         db_column="status",
-        verbose_name="Estado da doacao",
+        verbose_name="Estado da doação",
         max_length=3,
         choices=DonationStatus.choices,
         default=DonationStatus.REGISTERED,
@@ -192,13 +192,13 @@ class BloodDonation(NoNameCoreModel):
     )
     blood_pressure_systolic = models.PositiveIntegerField(
         db_column="blood_pressure_systolic",
-        verbose_name="Pressao arterial sistolica (mmHg)",
+        verbose_name="Pressão arterial sistólica (mmHg)",
         null=True,
         blank=True,
     )
     blood_pressure_diastolic = models.PositiveIntegerField(
         db_column="blood_pressure_diastolic",
-        verbose_name="Pressao arterial diastolica (mmHg)",
+        verbose_name="Pressão arterial diastólica (mmHg)",
         null=True,
         blank=True,
     )
@@ -220,7 +220,7 @@ class BloodDonation(NoNameCoreModel):
     # Resultados de triagem laboratorial (por doacao).
     hiv_test = models.CharField(
         db_column="hiv_test",
-        verbose_name="HIV",
+        verbose_name="Teste de HIV",
         max_length=3,
         choices=TestResult.choices,
         default=TestResult.PENDING,
@@ -228,7 +228,7 @@ class BloodDonation(NoNameCoreModel):
     )
     syphilis_rpr_test = models.CharField(
         db_column="syphilis_rpr_test",
-        verbose_name="Sifilis/RPR",
+        verbose_name="Teste de Sífilis/RPR",
         max_length=3,
         choices=TestResult.choices,
         default=TestResult.PENDING,
@@ -236,7 +236,7 @@ class BloodDonation(NoNameCoreModel):
     )
     hepatitis_b_hbsag_test = models.CharField(
         db_column="hepatitis_b_hbsag_test",
-        verbose_name="Hepatite B (HBsAg)",
+        verbose_name="Teste de Hepatite B (HBsAg)",
         max_length=3,
         choices=TestResult.choices,
         default=TestResult.PENDING,
@@ -244,7 +244,7 @@ class BloodDonation(NoNameCoreModel):
     )
     hepatitis_c_anti_hcv_test = models.CharField(
         db_column="hepatitis_c_anti_hcv_test",
-        verbose_name="Hepatite C (anti-HCV)",
+        verbose_name="Teste de Hepatite C (anti-HCV)",
         max_length=3,
         choices=TestResult.choices,
         default=TestResult.PENDING,
@@ -252,7 +252,7 @@ class BloodDonation(NoNameCoreModel):
     )
     malaria_test = models.CharField(
         db_column="malaria_test",
-        verbose_name="Malaria",
+        verbose_name="Teste de Malária",
         max_length=3,
         choices=TestResult.choices,
         default=TestResult.PENDING,
@@ -260,27 +260,27 @@ class BloodDonation(NoNameCoreModel):
     )
     test_notes = models.TextField(
         db_column="test_notes",
-        verbose_name="Observacoes dos exames",
+        verbose_name="Observações dos exames",
         blank=True,
         default="",
     )
     contraindications = models.TextField(
         db_column="contraindications",
-        verbose_name="Contraindicacoes",
+        verbose_name="Contraindicações",
         blank=True,
         default="",
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_donation"
-        verbose_name = "Doacao de Sangue"
-        verbose_name_plural = "Doacoes de Sangue"
+        verbose_name = "Doação de sangue"
+        verbose_name_plural = "Doações de sangue"
         ordering = ["-collected_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(
@@ -295,7 +295,7 @@ class BloodDonation(NoNameCoreModel):
         ]
 
     def __str__(self) -> str:
-        return f"Doacao {self.custom_id or self.pk} - {self.bag_identifier}"
+        return f"Doação {self.custom_id or self.pk} - {self.bag_identifier}"
 
     def clean(self):
         super().clean()
@@ -306,6 +306,11 @@ class BloodDonation(NoNameCoreModel):
         if self.replacement_for_id and self.tenant_id and self.replacement_for.tenant_id != self.tenant_id:
             raise ValidationError(
                 {"replacement_for": "Paciente de reposicao e doacao devem pertencer ao mesmo tenant."}
+            )
+
+        if self.donor_role == self.DonorRole.VOLUNTARY and self.replacement_for_id:
+            raise ValidationError(
+                {"replacement_for": "Doador voluntário não pode ser vinculado a paciente de reposição."}
             )
 
         if self.donor_role == self.DonorRole.REPLACEMENT:
@@ -426,6 +431,93 @@ class BloodDonation(NoNameCoreModel):
             )
         )
 
+    def _quarantine_related_units(self, reason: str):
+        qs = BloodUnit.objects.filter(tenant_id=self.tenant_id, donation_id=self.id, deleted=False)
+        for unit in qs:
+            if unit.status in {
+                BloodUnit.UnitStatus.TRANSFUSED,
+                BloodUnit.UnitStatus.DISCARDED,
+                BloodUnit.UnitStatus.EXPIRED,
+            }:
+                continue
+            if unit.status != BloodUnit.UnitStatus.QUARANTINE:
+                unit.status = BloodUnit.UnitStatus.QUARANTINE
+            unit.reserved_for = None
+            unit.forwarded_to_sector = ""
+            unit.forwarded_at = None
+            unit.forwarded_by = None
+            unit.dispatch_outcome = BloodUnit.DispatchOutcome.PENDING
+            unit.dispatch_outcome_at = None
+            unit.dispatch_outcome_by = None
+            unit.dispatch_outcome_notes = ""
+            unit.notes = (unit.notes or "").strip()
+            suffix = f"[QUARENTENA] {reason}"
+            unit.notes = f"{unit.notes}\n{suffix}".strip() if unit.notes else suffix
+            unit.save()
+
+    def _resolve_unit_status_for_screening(self) -> str:
+        if self._has_any_positive_test():
+            return BloodUnit.UnitStatus.QUARANTINE
+        if self.screening_status == self.ScreeningStatus.APPROVED:
+            return BloodUnit.UnitStatus.AVAILABLE
+        return BloodUnit.UnitStatus.QUARANTINE
+
+    def _resolve_default_storage(self):
+        return (
+            BloodStorage.objects.filter(tenant_id=self.tenant_id, is_active=True, deleted=False)
+            .order_by("name", "id")
+            .first()
+        )
+
+    def _ensure_units_after_completion(self):
+        if self.status != self.DonationStatus.COMPLETED:
+            return
+
+        unit = (
+            BloodUnit.objects.filter(tenant_id=self.tenant_id, donation_id=self.id, deleted=False)
+            .order_by("id")
+            .first()
+        )
+        created = False
+        if unit is None:
+            unit = BloodUnit(
+                tenant_id=self.tenant_id,
+                donation=self,
+                unit_number=f"{self.bag_identifier}-01",
+                component_type=(
+                    BloodComponentType.WHOLE_BLOOD
+                    if self.donation_type == self.DonationType.WHOLE_BLOOD
+                    else BloodComponentType.PLATELETS
+                ),
+                blood_type=self.blood_type,
+                volume_ml=self.volume_ml,
+                collected_at=self.collected_at,
+                expires_at=self.collected_at + datetime.timedelta(days=35),
+                storage=self._resolve_default_storage(),
+                status=self._resolve_unit_status_for_screening(),
+            )
+            created = True
+        else:
+            if unit.status != BloodUnit.UnitStatus.TRANSFUSED:
+                unit.status = self._resolve_unit_status_for_screening()
+            if unit.status == BloodUnit.UnitStatus.QUARANTINE:
+                unit.reserved_for = None
+            if not unit.storage_id:
+                unit.storage = self._resolve_default_storage()
+            if not unit.expires_at or unit.expires_at <= unit.collected_at:
+                unit.expires_at = self.collected_at + datetime.timedelta(days=35)
+
+        unit.save()
+        if created:
+            BloodStockMovement(
+                tenant=unit.tenant,
+                unit=unit,
+                destination_storage=unit.storage,
+                movement_type=BloodStockMovement.MovementType.INBOUND,
+                moved_at=timezone.now(),
+                reason="Entrada automática por doação concluída",
+            ).save()
+
     def _discard_related_units(self, reason: str):
         now = timezone.now()
         qs = BloodUnit.objects.filter(tenant_id=self.tenant_id, donation_id=self.id, deleted=False)
@@ -453,7 +545,7 @@ class BloodDonation(NoNameCoreModel):
         self.full_clean()
         result = super().save(*args, **kwargs)
 
-        # Repositor com exame POSITIVO: torna repositor inapto e descarta sangue.
+        # Repositor com exame POSITIVO: torna repositor inapto e rejeita triagem.
         if self.donor_role == self.DonorRole.REPLACEMENT and self.donor_id and self._has_any_positive_test():
             donor = self.donor
             changed_donor = False
@@ -471,7 +563,10 @@ class BloodDonation(NoNameCoreModel):
                 self.screening_status = self.ScreeningStatus.REJECTED
                 super().save(update_fields=["screening_status"])
 
-            self._discard_related_units("Exame positivo (reposicao)")
+        if self._has_any_positive_test():
+            self._quarantine_related_units("Exame sorológico positivo")
+
+        self._ensure_units_after_completion()
 
         return result
 
@@ -491,7 +586,7 @@ class BloodStorage(NoNameCoreModel):
     )
     location = models.CharField(
         db_column="location",
-        verbose_name="Localizacao",
+        verbose_name="Localização",
         max_length=255,
         blank=True,
         default="",
@@ -503,14 +598,14 @@ class BloodStorage(NoNameCoreModel):
     )
     temperature_min_c = models.DecimalField(
         db_column="temperature_min_c",
-        verbose_name="Temperatura minima (C)",
+        verbose_name="Temperatura mínima (°C)",
         max_digits=4,
         decimal_places=1,
         default=2.0,
     )
     temperature_max_c = models.DecimalField(
         db_column="temperature_max_c",
-        verbose_name="Temperatura maxima (C)",
+        verbose_name="Temperatura máxima (°C)",
         max_digits=4,
         decimal_places=1,
         default=6.0,
@@ -523,27 +618,27 @@ class BloodStorage(NoNameCoreModel):
     )
     last_validation_at = models.DateTimeField(
         db_column="last_validation_at",
-        verbose_name="Ultima validacao",
+        verbose_name="Última validação",
         null=True,
         blank=True,
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_storage"
-        verbose_name = "Armazenamento de Sangue"
-        verbose_name_plural = "Armazenamentos de Sangue"
+        verbose_name = "Armazenamento de sangue"
+        verbose_name_plural = "Armazenamentos de sangue"
         ordering = ["name", "created_at"]
         constraints = [
             models.UniqueConstraint(
                 fields=["tenant", "name"],
                 name="uq_blood_storage_name_per_tenant",
-                violation_error_message="Ja existe um armazenamento com este nome neste tenant.",
+                violation_error_message="Já existe um armazenamento com este nome neste tenant.",
             )
         ]
         indexes = [
@@ -561,7 +656,7 @@ class BloodStorage(NoNameCoreModel):
 
         if self.temperature_min_c > self.temperature_max_c:
             raise ValidationError(
-                {"temperature_min_c": "Temperatura minima nao pode ser maior que a maxima."}
+                {"temperature_min_c": "Temperatura mínima não pode ser maior que a máxima."}
             )
 
 
@@ -574,16 +669,23 @@ class BloodUnit(NoNameCoreModel):
 
     class UnitStatus(models.TextChoices):
         QUARANTINE = "QUA", "Quarentena"
-        AVAILABLE = "AVL", "Disponivel"
+        AVAILABLE = "AVL", "Disponível"
         RESERVED = "RES", "Reservada"
+        FORWARDED = "FWD", "Aviada para setor"
         TRANSFUSED = "TRN", "Transfundida"
         EXPIRED = "EXP", "Expirada"
+        DISCARDED = "DSC", "Descartada"
+
+    class DispatchOutcome(models.TextChoices):
+        PENDING = "PEN", "Pendente"
+        TRANSFUSED = "TRN", "Transfundida"
+        RETURNED = "RET", "Devolvida"
         DISCARDED = "DSC", "Descartada"
 
     donation = models.ForeignKey(
         BloodDonation,
         db_column="donation_id",
-        verbose_name="Doacao de origem",
+        verbose_name="Doação de origem",
         on_delete=models.PROTECT,
         related_name="blood_units",
         db_index=True,
@@ -610,7 +712,7 @@ class BloodUnit(NoNameCoreModel):
     )
     unit_number = models.CharField(
         db_column="unit_number",
-        verbose_name="Numero da unidade",
+        verbose_name="Número da unidade",
         max_length=40,
         db_index=True,
     )
@@ -624,7 +726,7 @@ class BloodUnit(NoNameCoreModel):
     )
     blood_type = models.CharField(
         db_column="blood_type",
-        verbose_name="Tipo sanguineo",
+        verbose_name="Tipo sanguíneo",
         max_length=3,
         choices=BloodType.choices,
         default=BloodType.UNKNOWN,
@@ -653,6 +755,62 @@ class BloodUnit(NoNameCoreModel):
         default=UnitStatus.QUARANTINE,
         db_index=True,
     )
+    forwarded_to_sector = models.CharField(
+        db_column="forwarded_to_sector",
+        verbose_name="Setor de aviação",
+        max_length=80,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+    forwarded_at = models.DateTimeField(
+        db_column="forwarded_at",
+        verbose_name="Data/hora da aviação",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    forwarded_by = models.ForeignKey(
+        User,
+        db_column="forwarded_by_id",
+        verbose_name="Aviada por",
+        on_delete=models.SET_NULL,
+        related_name="blood_units_forwarded",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    dispatch_outcome = models.CharField(
+        db_column="dispatch_outcome",
+        verbose_name="Desfecho da aviação",
+        max_length=3,
+        choices=DispatchOutcome.choices,
+        default=DispatchOutcome.PENDING,
+        db_index=True,
+    )
+    dispatch_outcome_at = models.DateTimeField(
+        db_column="dispatch_outcome_at",
+        verbose_name="Data/hora do desfecho da aviação",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    dispatch_outcome_by = models.ForeignKey(
+        User,
+        db_column="dispatch_outcome_by_id",
+        verbose_name="Desfecho registado por",
+        on_delete=models.SET_NULL,
+        related_name="blood_units_dispatch_outcomes",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    dispatch_outcome_notes = models.TextField(
+        db_column="dispatch_outcome_notes",
+        verbose_name="Observações do desfecho da aviação",
+        blank=True,
+        default="",
+    )
     is_irradiated = models.BooleanField(
         db_column="is_irradiated",
         verbose_name="Irradiada",
@@ -660,15 +818,15 @@ class BloodUnit(NoNameCoreModel):
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_unit"
-        verbose_name = "Unidade de Sangue"
-        verbose_name_plural = "Unidades de Sangue"
+        verbose_name = "Unidade de sangue"
+        verbose_name_plural = "Unidades de sangue"
         ordering = ["-collected_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(
@@ -704,6 +862,12 @@ class BloodUnit(NoNameCoreModel):
         if self.expires_at <= self.collected_at:
             raise ValidationError({"expires_at": "Validade deve ser posterior a data da coleta."})
 
+        if self.status == self.UnitStatus.FORWARDED and not self.forwarded_to_sector:
+            raise ValidationError({"forwarded_to_sector": "Informe o setor para aviar a unidade."})
+
+        if self.status == self.UnitStatus.FORWARDED and not self.forwarded_at:
+            raise ValidationError({"forwarded_at": "Informe a data/hora da aviação."})
+
         if self.reserved_for_id:
             recipient_blood_type = getattr(self.reserved_for, "blood_type", None)
             if not is_blood_compatible(self.blood_type, recipient_blood_type, self.component_type):
@@ -720,7 +884,37 @@ class BloodUnit(NoNameCoreModel):
         if self.status == self.UnitStatus.RESERVED and not self.reserved_for_id:
             raise ValidationError({"reserved_for": "Informe o paciente quando a unidade estiver reservada."})
 
+        if self.dispatch_outcome == self.DispatchOutcome.TRANSFUSED and self.status != self.UnitStatus.TRANSFUSED:
+            raise ValidationError({"dispatch_outcome": "Desfecho transfundida exige estado transfundida."})
+
+        if self.dispatch_outcome == self.DispatchOutcome.RETURNED and self.status != self.UnitStatus.AVAILABLE:
+            raise ValidationError({"dispatch_outcome": "Desfecho devolvida exige estado disponível."})
+
+        if self.dispatch_outcome == self.DispatchOutcome.DISCARDED and self.status != self.UnitStatus.DISCARDED:
+            raise ValidationError({"dispatch_outcome": "Desfecho descartada exige estado descartada."})
+
+        if self._has_positive_serology() and self.status not in {
+            self.UnitStatus.QUARANTINE,
+            self.UnitStatus.TRANSFUSED,
+            self.UnitStatus.DISCARDED,
+            self.UnitStatus.EXPIRED,
+        }:
+            raise ValidationError(
+                {"status": "Unidade com teste sorológico positivo deve permanecer em quarentena até decisão clínica."}
+            )
+
+    def _has_positive_serology(self) -> bool:
+        donation = getattr(self, "donation", None)
+        if donation is None:
+            return False
+        return donation._has_any_positive_test()
+
     def save(self, *args, **kwargs):
+        if self.pk:
+            previous_status = type(self).all_objects.filter(pk=self.pk).values_list("status", flat=True).first()
+            if previous_status == self.UnitStatus.TRANSFUSED and self.status != self.UnitStatus.TRANSFUSED:
+                raise ValidationError({"status": "Unidade transfundida não pode ter estado alterado."})
+
         if self.donation_id:
             if not self.blood_type:
                 self.blood_type = self.donation.blood_type
@@ -744,9 +938,9 @@ class BloodTransfusion(NoNameCoreModel):
         REQUESTED = "REQ", "Solicitada"
         APPROVED = "APR", "Aprovada"
         IN_PROGRESS = "INP", "Em andamento"
-        COMPLETED = "COM", "Concluida"
+        COMPLETED = "COM", "Concluída"
         CANCELED = "CAN", "Cancelada"
-        ADVERSE_REACTION = "REA", "Reacao adversa"
+        ADVERSE_REACTION = "REA", "Reação adversa"
 
     recipient = models.ForeignKey(
         "clinical.Patient",
@@ -785,7 +979,7 @@ class BloodTransfusion(NoNameCoreModel):
 
     status = models.CharField(
         db_column="status",
-        verbose_name="Estado da transfusao",
+        verbose_name="Estado da transfusão",
         max_length=3,
         choices=TransfusionStatus.choices,
         default=TransfusionStatus.REQUESTED,
@@ -793,47 +987,47 @@ class BloodTransfusion(NoNameCoreModel):
     )
     requested_at = models.DateTimeField(
         db_column="requested_at",
-        verbose_name="Data/hora da solicitacao",
+        verbose_name="Data/hora da solicitação",
         default=timezone.now,
         db_index=True,
     )
     started_at = models.DateTimeField(
         db_column="started_at",
-        verbose_name="Data/hora de inicio",
+        verbose_name="Data/hora de início",
         null=True,
         blank=True,
         db_index=True,
     )
     finished_at = models.DateTimeField(
         db_column="finished_at",
-        verbose_name="Data/hora de termino",
+        verbose_name="Data/hora de término",
         null=True,
         blank=True,
         db_index=True,
     )
     indication = models.TextField(
         db_column="indication",
-        verbose_name="Indicacao clinica",
+        verbose_name="Indicação clínica",
         blank=True,
         default="",
     )
     reaction_notes = models.TextField(
         db_column="reaction_notes",
-        verbose_name="Registro de reacao",
+        verbose_name="Registo de reação",
         blank=True,
         default="",
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_transfusion"
-        verbose_name = "Transfusao de Sangue"
-        verbose_name_plural = "Transfusoes de Sangue"
+        verbose_name = "Transfusão de sangue"
+        verbose_name_plural = "Transfusões de sangue"
         ordering = ["-requested_at", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "status", "requested_at"]),
@@ -842,7 +1036,7 @@ class BloodTransfusion(NoNameCoreModel):
         ]
 
     def __str__(self) -> str:
-        return f"Transfusao {self.custom_id or self.pk} - {self.get_status_display()}"
+        return f"Transfusão {self.custom_id or self.pk} - {self.get_status_display()}"
 
     def clean(self):
         super().clean()
@@ -901,10 +1095,12 @@ class BloodStockMovement(NoNameCoreModel):
 
     class MovementType(models.TextChoices):
         INBOUND = "INB", "Entrada"
-        OUTBOUND = "OUT", "Saida"
-        TRANSFER = "TRF", "Transferencia"
+        OUTBOUND = "OUT", "Saída"
+        TRANSFER = "TRF", "Transferência"
         RESERVE = "RSV", "Reserva"
-        RELEASE = "RLS", "Liberacao"
+        RELEASE = "RLS", "Liberação"
+        FORWARD = "FWD", "Aviação para setor"
+        RETURN = "RTN", "Devolução ao banco de sangue"
         DISCARD = "DSC", "Descarte"
         EXPIRE = "EXP", "Baixa por validade"
         ADJUSTMENT = "ADJ", "Ajuste manual"
@@ -937,14 +1133,14 @@ class BloodStockMovement(NoNameCoreModel):
     )
     movement_type = models.CharField(
         db_column="movement_type",
-        verbose_name="Tipo de movimentacao",
+        verbose_name="Tipo de movimentação",
         max_length=3,
         choices=MovementType.choices,
         db_index=True,
     )
     moved_at = models.DateTimeField(
         db_column="moved_at",
-        verbose_name="Data/hora da movimentacao",
+        verbose_name="Data/hora da movimentação",
         default=timezone.now,
         db_index=True,
     )
@@ -966,15 +1162,15 @@ class BloodStockMovement(NoNameCoreModel):
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_stock_movement"
-        verbose_name = "Movimentacao de Estoque de Sangue"
-        verbose_name_plural = "Movimentacoes de Estoque de Sangue"
+        verbose_name = "Movimentação de stock de sangue"
+        verbose_name_plural = "Movimentações de stock de sangue"
         ordering = ["-moved_at", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "movement_type", "moved_at"]),
@@ -1007,6 +1203,17 @@ class BloodStockMovement(NoNameCoreModel):
                     {"destination_storage": "Origem e destino devem ser diferentes para transferencia."}
                 )
 
+        if self.movement_type == self.MovementType.FORWARD and not self.source_storage_id:
+            raise ValidationError({"source_storage": "Aviação exige armazenamento de origem."})
+
+        if self.movement_type == self.MovementType.RETURN and not self.destination_storage_id:
+            raise ValidationError({"destination_storage": "Devolução exige armazenamento de destino."})
+
+        if self.movement_type == self.MovementType.ADJUSTMENT:
+            raise ValidationError(
+                {"movement_type": "Ajuste manual está bloqueado. O stock depende do fluxo de doação/transfusão."}
+            )
+
 
 class BloodStorageMaintenance(NoNameCoreModel):
     """
@@ -1018,14 +1225,14 @@ class BloodStorageMaintenance(NoNameCoreModel):
     class MaintenanceType(models.TextChoices):
         PREVENTIVE = "PRV", "Preventiva"
         CORRECTIVE = "COR", "Corretiva"
-        CALIBRATION = "CAL", "Calibracao"
-        SANITIZATION = "SAN", "Higienizacao"
-        TEMPERATURE_VALIDATION = "TMP", "Validacao de temperatura"
+        CALIBRATION = "CAL", "Calibração"
+        SANITIZATION = "SAN", "Higienização"
+        TEMPERATURE_VALIDATION = "TMP", "Validação de temperatura"
 
     class MaintenanceStatus(models.TextChoices):
         SCHEDULED = "SCH", "Agendada"
         IN_PROGRESS = "INP", "Em andamento"
-        COMPLETED = "COM", "Concluida"
+        COMPLETED = "COM", "Concluída"
         CANCELED = "CAN", "Cancelada"
 
     storage = models.ForeignKey(
@@ -1038,7 +1245,7 @@ class BloodStorageMaintenance(NoNameCoreModel):
     )
     maintenance_type = models.CharField(
         db_column="maintenance_type",
-        verbose_name="Tipo de manutencao",
+        verbose_name="Tipo de manutenção",
         max_length=3,
         choices=MaintenanceType.choices,
         default=MaintenanceType.PREVENTIVE,
@@ -1046,7 +1253,7 @@ class BloodStorageMaintenance(NoNameCoreModel):
     )
     status = models.CharField(
         db_column="status",
-        verbose_name="Estado da manutencao",
+        verbose_name="Estado da manutenção",
         max_length=3,
         choices=MaintenanceStatus.choices,
         default=MaintenanceStatus.SCHEDULED,
@@ -1066,13 +1273,13 @@ class BloodStorageMaintenance(NoNameCoreModel):
     )
     next_due_at = models.DateTimeField(
         db_column="next_due_at",
-        verbose_name="Proxima manutencao prevista",
+        verbose_name="Próxima manutenção prevista",
         null=True,
         blank=True,
     )
     technician_name = models.CharField(
         db_column="technician_name",
-        verbose_name="Tecnico responsavel",
+        verbose_name="Técnico responsável",
         max_length=120,
         blank=True,
         default="",
@@ -1085,21 +1292,21 @@ class BloodStorageMaintenance(NoNameCoreModel):
     )
     actions_taken = models.TextField(
         db_column="actions_taken",
-        verbose_name="Acoes executadas",
+        verbose_name="Ações executadas",
         blank=True,
         default="",
     )
     notes = models.TextField(
         db_column="notes",
-        verbose_name="Observacoes",
+        verbose_name="Observações",
         blank=True,
         default="",
     )
 
     class Meta:
         db_table = "bloodbank_blood_storage_maintenance"
-        verbose_name = "Manutencao de Banco de Sangue"
-        verbose_name_plural = "Manutencoes de Banco de Sangue"
+        verbose_name = "Manutenção de banco de sangue"
+        verbose_name_plural = "Manutenções de banco de sangue"
         ordering = ["-scheduled_at", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "status", "scheduled_at"]),
@@ -1108,7 +1315,7 @@ class BloodStorageMaintenance(NoNameCoreModel):
         ]
 
     def __str__(self) -> str:
-        return f"Manutencao {self.storage.name} - {self.get_maintenance_type_display()}"
+        return f"Manutenção {self.storage.name} - {self.get_maintenance_type_display()}"
 
     def clean(self):
         super().clean()
@@ -1121,4 +1328,5 @@ class BloodStorageMaintenance(NoNameCoreModel):
 
         if self.status == self.MaintenanceStatus.COMPLETED and not self.performed_at:
             raise ValidationError({"performed_at": "Informe a data de execucao para manutencao concluida."})
+
 

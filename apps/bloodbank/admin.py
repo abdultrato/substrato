@@ -32,6 +32,7 @@ class BloodDonationAdmin(BloodBankCoreAdmin):
         "custom_id",
         "bag_identifier",
         "donor",
+        "replacement_for",
         "blood_type",
         "donor_role",
         "status",
@@ -75,6 +76,8 @@ class BloodUnitAdmin(BloodBankCoreAdmin):
         "blood_type",
         "component_type",
         "status",
+        "forwarded_to_sector",
+        "dispatch_outcome",
         "storage",
         "reserved_for",
         "expires_at",
@@ -87,9 +90,16 @@ class BloodUnitAdmin(BloodBankCoreAdmin):
     search_fields = BloodBankCoreAdmin.search_fields + (
         "unit_number",
         "donation__bag_identifier",
+        "forwarded_to_sector",
     )
     list_select_related = ("donation", "storage", "reserved_for")
     ordering = ("-collected_at", "-created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BloodTransfusion)
@@ -126,6 +136,18 @@ class BloodStockMovementAdmin(BloodBankCoreAdmin):
     search_fields = BloodBankCoreAdmin.search_fields + ("unit__unit_number", "reason")
     list_select_related = ("unit", "source_storage", "destination_storage", "performed_by")
     ordering = ("-moved_at", "-created_at")
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in self.model._meta.fields] + list(self.readonly_fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BloodStorageMaintenance)

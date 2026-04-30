@@ -163,6 +163,14 @@ class Employee(CoreModel):
             return Decimal("0.00")
 
     @property
+    def salary_base(self) -> Decimal:
+        return Decimal(self.nominal_salary or Decimal("0.00")).quantize(Decimal("0.01"))
+
+    @property
+    def salary_liquido(self) -> Decimal:
+        return self.current_salary
+
+    @property
     def tenure_months(self) -> int:
         """Meses completos desde a admissão."""
         if not self.admission_date:

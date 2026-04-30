@@ -60,6 +60,11 @@ class Payroll(NoNameCoreModel):
         verbose_name="Aumento Salarial no Mês",
         default=Decimal("0.00"),
     )
+    tenure_increase_value = MoneyField(
+        db_column="tenure_increase_value",
+        verbose_name="Aumento por tempo de serviço",
+        default=Decimal("0.00"),
+    )
     family_dependents_count = models.PositiveSmallIntegerField(
         db_column="family_dependents_count",
         verbose_name="Quantidade de agregados familiares",
@@ -214,6 +219,7 @@ class Payroll(NoNameCoreModel):
 
         non_negative_money_fields = [
             "salary_increase_value",
+            "tenure_increase_value",
             "family_allowance_value",
             "absence_discount_value",
             "other_discounts_value",
@@ -304,6 +310,11 @@ class Payroll(NoNameCoreModel):
                 self.base_month_hours = self.employee.base_month_hours or 176
 
             self.salary_increase_value = Decimal(self.employee.salary_increase or Decimal("0.00"))
+            progression_window = int(self.employee.minimum_progression_months or 0) or 12
+            tenure_cycles = int(self.employee.tenure_months // progression_window)
+            self.tenure_increase_value = (
+                Decimal(tenure_cycles) * Decimal(self.employee.salary_increase or Decimal("0.00"))
+            ).quantize(Decimal("0.01"))
 
             if Decimal(self.ordinary_hour_value or Decimal("0.0000")) <= Decimal("0.0000"):
                 self.ordinary_hour_value = Decimal(self.employee.ordinary_hour_value or Decimal("0.0000"))
@@ -355,6 +366,7 @@ class Payroll(NoNameCoreModel):
         gross_salary = (
             Decimal(self.nominal_salary or Decimal("0.00"))
             + Decimal(self.salary_increase_value or Decimal("0.00"))
+            + Decimal(self.tenure_increase_value or Decimal("0.00"))
             + Decimal(self.family_allowance_value or Decimal("0.00"))
             + Decimal(overtime_total_value or Decimal("0.00"))
         ).quantize(Decimal("0.01"))
@@ -368,6 +380,14 @@ class Payroll(NoNameCoreModel):
 
         total = (gross_salary - total_discounts).quantize(Decimal("0.01"))
         self.total_salary = total if total >= Decimal("0.00") else Decimal("0.00")
+
+    @property
+    def salary_base(self) -> Decimal:
+        return Decimal(self.nominal_salary or Decimal("0.00")).quantize(Decimal("0.01"))
+
+    @property
+    def salary_liquido(self) -> Decimal:
+        return Decimal(self.total_salary or Decimal("0.00")).quantize(Decimal("0.01"))
 
     def save(self, *args, **kwargs):
         if not self.tenant_id and self.employee_id:

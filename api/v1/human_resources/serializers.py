@@ -205,6 +205,7 @@ class PayrollSerializer(serializers.ModelSerializer):
             "ordinary_hours_value",
             "extraordinary_hours_value",
             "salary_increase_value",
+            "tenure_increase_value",
             "family_dependents_count",
             "family_allowance_value",
             "absence_days",

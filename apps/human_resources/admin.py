@@ -51,11 +51,19 @@ class ProfessionAdmin(CoreAdmin):
 
 @admin.register(Employee)
 class EmployeeAdmin(CoreAdmin):
-    list_display = ("name", "role", "profession", "status", "nominal_salary", "tenant")
+    list_display = ("name", "role", "profession", "status", "salary_base_admin", "salary_liquido_admin", "tenant")
     list_filter = ("status", "role", "profession")
     search_fields = ("name", "profession__name", "email", "phone")
     ordering = ("name",)
     inlines = [FamilyDependentInline]  # Mostra dependentes na mesma tela
+
+    @admin.display(description="Salário base")
+    def salary_base_admin(self, obj: Employee):
+        return obj.salary_base
+
+    @admin.display(description="Salário líquido")
+    def salary_liquido_admin(self, obj: Employee):
+        return obj.salary_liquido
 
 
 @admin.register(FamilyDependent)
@@ -107,16 +115,25 @@ class PayrollAdmin(CoreAdmin):
         "year",
         "month",
         "employee",
-        "nominal_salary",
+        "salary_base_admin",
+        "salary_liquido_admin",
         "salary_increase_value",
+        "tenure_increase_value",
         "absence_days",
         "absence_discount_value",
         "family_allowance_value",
-        "total_salary",
         "closed",
     )
     list_filter = ("year", "month", "closed")
     ordering = ("-year", "-month", "-created_at")
+
+    @admin.display(description="Salário base")
+    def salary_base_admin(self, obj: Payroll):
+        return obj.salary_base
+
+    @admin.display(description="Salário líquido")
+    def salary_liquido_admin(self, obj: Payroll):
+        return obj.salary_liquido
 
 
 @admin.register(DisciplinaryProcess)

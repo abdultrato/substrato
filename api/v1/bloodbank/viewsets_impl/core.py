@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -71,6 +71,25 @@ class BloodUnitTransfuseSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True, default="")
 
 
+class BloodUnitForwardSerializer(serializers.Serializer):
+    sector = serializers.CharField(max_length=80)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class BloodUnitDispatchOutcomeSerializer(serializers.Serializer):
+    outcome = serializers.ChoiceField(choices=BloodUnit.DispatchOutcome.choices)
+    recipient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all(), required=False, allow_null=True)
+    indication = serializers.CharField(required=False, allow_blank=True, default="")
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        outcome = attrs.get("outcome")
+        recipient = attrs.get("recipient")
+        if outcome == BloodUnit.DispatchOutcome.TRANSFUSED and recipient is None:
+            raise serializers.ValidationError({"recipient": "Informe o paciente quando o desfecho for transfundida."})
+        return attrs
+
+
 class BloodUnitViewSet(TenantScopedModelViewSet):
     queryset = BloodUnit.objects.select_related("donation", "storage", "reserved_for").all()
     serializer_class = BloodUnitSerializer
@@ -78,6 +97,45 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "unit_number", "donation__bag_identifier", "reserved_for__name"]
     ordering_fields = ["collected_at", "expires_at", "status", "created_at"]
     ordering = ["-collected_at", "-created_at"]
+
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed("POST", detail="Unidade de sangue não pode ser criada manualmente.")
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE", detail="Unidade de sangue não pode ser removida manualmente.")
+
+    @staticmethod
+    def _current_user(request):
+        return request.user if request.user.is_authenticated else None
+
+    @staticmethod
+    def _save_with_validation(instance):
+        try:
+            instance.save()
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+
+    @staticmethod
+    def _create_completed_transfusion(*, unit: BloodUnit, recipient: Patient, user, indication: str, notes: str):
+        now = timezone.now()
+        transfusion = BloodTransfusion(
+            tenant=unit.tenant,
+            recipient=recipient,
+            blood_unit=unit,
+            requested_by=user,
+            performed_by=user,
+            status=BloodTransfusion.TransfusionStatus.COMPLETED,
+            requested_at=now,
+            started_at=now,
+            finished_at=now,
+            indication=indication,
+            notes=notes,
+        )
+        try:
+            transfusion.save()
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+        return transfusion, now
 
     @action(detail=True, methods=["post"], url_path="reservar", url_name="reservar")
     @transaction.atomic
@@ -91,20 +149,23 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
             raise ValidationError({"status": "Unidade expirada/descartada nao pode ser reservada."})
         if unit.status in {BloodUnit.UnitStatus.TRANSFUSED}:
             raise ValidationError({"status": "Unidade ja foi transfundida."})
+        if unit.status == BloodUnit.UnitStatus.QUARANTINE:
+            raise ValidationError({"status": "Unidade em quarentena nao pode ser reservada."})
+        if unit.status == BloodUnit.UnitStatus.FORWARDED:
+            raise ValidationError({"status": "Unidade já foi aviada para setor."})
+        if unit.status == BloodUnit.UnitStatus.RESERVED and unit.reserved_for_id == recipient.id:
+            return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
 
         unit.reserved_for = recipient
         unit.status = BloodUnit.UnitStatus.RESERVED
-        try:
-            unit.save()
-        except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+        self._save_with_validation(unit)
 
         BloodStockMovement(
             tenant=unit.tenant,
             unit=unit,
             source_storage=unit.storage,
             movement_type=BloodStockMovement.MovementType.RESERVE,
-            performed_by=request.user if request.user.is_authenticated else None,
+            performed_by=self._current_user(request),
             moved_at=timezone.now(),
             reason="Reserva",
         ).save()
@@ -121,22 +182,130 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
 
         unit.reserved_for = None
         unit.status = BloodUnit.UnitStatus.AVAILABLE
-        try:
-            unit.save()
-        except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+        self._save_with_validation(unit)
 
         BloodStockMovement(
             tenant=unit.tenant,
             unit=unit,
             source_storage=unit.storage,
             movement_type=BloodStockMovement.MovementType.RELEASE,
-            performed_by=request.user if request.user.is_authenticated else None,
+            performed_by=self._current_user(request),
             moved_at=timezone.now(),
             reason="Liberacao de reserva",
         ).save()
 
         return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="aviar", url_name="aviar")
+    @transaction.atomic
+    def forward_to_sector(self, request, pk=None):
+        unit: BloodUnit = self.get_object()
+        payload = BloodUnitForwardSerializer(data=request.data or {})
+        payload.is_valid(raise_exception=True)
+        sector: str = payload.validated_data["sector"].strip()
+        notes: str = payload.validated_data.get("notes", "")
+
+        if unit.is_expired or unit.status in {BloodUnit.UnitStatus.EXPIRED, BloodUnit.UnitStatus.DISCARDED}:
+            raise ValidationError({"status": "Unidade expirada/descartada nao pode ser aviada."})
+        if unit.status == BloodUnit.UnitStatus.TRANSFUSED:
+            raise ValidationError({"status": "Unidade ja foi transfundida."})
+        if unit.status == BloodUnit.UnitStatus.QUARANTINE:
+            raise ValidationError({"status": "Unidade em quarentena nao pode ser aviada."})
+        if unit.status == BloodUnit.UnitStatus.FORWARDED:
+            raise ValidationError({"status": "Unidade já foi aviada para um setor."})
+
+        now = timezone.now()
+        unit.status = BloodUnit.UnitStatus.FORWARDED
+        unit.forwarded_to_sector = sector
+        unit.forwarded_at = now
+        unit.forwarded_by = self._current_user(request)
+        unit.dispatch_outcome = BloodUnit.DispatchOutcome.PENDING
+        unit.dispatch_outcome_at = None
+        unit.dispatch_outcome_by = None
+        unit.dispatch_outcome_notes = ""
+        if notes:
+            unit.notes = (f"{unit.notes}\n{notes}" if unit.notes else notes).strip()
+        self._save_with_validation(unit)
+
+        BloodStockMovement(
+            tenant=unit.tenant,
+            unit=unit,
+            source_storage=unit.storage,
+            movement_type=BloodStockMovement.MovementType.FORWARD,
+            performed_by=self._current_user(request),
+            moved_at=now,
+            reason=f"Aviada para o setor {sector}",
+            notes=notes,
+        ).save()
+
+        return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="registrar_desfecho_aviacao", url_name="registrar-desfecho-aviacao")
+    @transaction.atomic
+    def register_dispatch_outcome(self, request, pk=None):
+        unit: BloodUnit = self.get_object()
+        payload = BloodUnitDispatchOutcomeSerializer(data=request.data or {})
+        payload.is_valid(raise_exception=True)
+
+        if unit.status != BloodUnit.UnitStatus.FORWARDED:
+            raise ValidationError({"status": "Apenas unidades aviadas podem receber desfecho."})
+
+        outcome = payload.validated_data["outcome"]
+        recipient: Patient | None = payload.validated_data.get("recipient")
+        indication: str = payload.validated_data.get("indication", "")
+        notes: str = payload.validated_data.get("notes", "")
+        now = timezone.now()
+        user = self._current_user(request)
+        transfusion = None
+
+        if outcome == BloodUnit.DispatchOutcome.RETURNED:
+            unit.status = BloodUnit.UnitStatus.AVAILABLE
+            unit.reserved_for = None
+            movement_type = BloodStockMovement.MovementType.RETURN
+            movement_kwargs = {"destination_storage": unit.storage}
+            reason = "Unidade devolvida ao banco de sangue"
+        elif outcome == BloodUnit.DispatchOutcome.DISCARDED:
+            unit.status = BloodUnit.UnitStatus.DISCARDED
+            unit.reserved_for = None
+            movement_type = BloodStockMovement.MovementType.DISCARD
+            movement_kwargs = {"source_storage": unit.storage}
+            reason = "Unidade descartada após aviação"
+        else:
+            assert recipient is not None
+            transfusion, _ = self._create_completed_transfusion(
+                unit=unit,
+                recipient=recipient,
+                user=user,
+                indication=indication,
+                notes=notes,
+            )
+            unit.reserved_for = recipient
+            unit.status = BloodUnit.UnitStatus.TRANSFUSED
+            movement_type = BloodStockMovement.MovementType.OUTBOUND
+            movement_kwargs = {"source_storage": unit.storage}
+            reason = "Transfusão após aviação"
+
+        unit.dispatch_outcome = outcome
+        unit.dispatch_outcome_at = now
+        unit.dispatch_outcome_by = user
+        unit.dispatch_outcome_notes = notes
+        self._save_with_validation(unit)
+
+        BloodStockMovement(
+            tenant=unit.tenant,
+            unit=unit,
+            movement_type=movement_type,
+            performed_by=user,
+            moved_at=now,
+            reason=reason,
+            notes=notes,
+            **movement_kwargs,
+        ).save()
+
+        response_payload = {"unit": BloodUnitSerializer(instance=unit).data}
+        if transfusion is not None:
+            response_payload["transfusion"] = BloodTransfusionSerializer(instance=transfusion).data
+        return Response(response_payload, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="transfundir", url_name="transfundir")
     @transaction.atomic
@@ -152,44 +321,36 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
             raise ValidationError({"status": "Unidade expirada/descartada nao pode ser transfundida."})
         if unit.status == BloodUnit.UnitStatus.TRANSFUSED:
             raise ValidationError({"status": "Unidade ja foi transfundida."})
+        if unit.status == BloodUnit.UnitStatus.QUARANTINE:
+            raise ValidationError({"status": "Unidade em quarentena nao pode ser transfundida."})
         if unit.status == BloodUnit.UnitStatus.RESERVED and unit.reserved_for_id != recipient.id:
             raise ValidationError({"reserved_for": "Unidade reservada para outro paciente."})
 
-        # Create transfusion record (COMPLETED by default).
-        now = timezone.now()
-        transfusion = BloodTransfusion(
-            tenant=unit.tenant,
+        transfusion, now = self._create_completed_transfusion(
+            unit=unit,
             recipient=recipient,
-            blood_unit=unit,
-            requested_by=request.user if request.user.is_authenticated else None,
-            performed_by=request.user if request.user.is_authenticated else None,
-            status=BloodTransfusion.TransfusionStatus.COMPLETED,
-            requested_at=now,
-            started_at=now,
-            finished_at=now,
+            user=self._current_user(request),
             indication=indication,
             notes=notes,
         )
-        try:
-            transfusion.save()
-        except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
 
         unit.reserved_for = recipient
         unit.status = BloodUnit.UnitStatus.TRANSFUSED
-        try:
-            unit.save()
-        except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+        unit.dispatch_outcome = BloodUnit.DispatchOutcome.TRANSFUSED
+        unit.dispatch_outcome_at = now
+        unit.dispatch_outcome_by = self._current_user(request)
+        unit.dispatch_outcome_notes = notes
+        self._save_with_validation(unit)
 
         BloodStockMovement(
             tenant=unit.tenant,
             unit=unit,
             source_storage=unit.storage,
             movement_type=BloodStockMovement.MovementType.OUTBOUND,
-            performed_by=request.user if request.user.is_authenticated else None,
+            performed_by=self._current_user(request),
             moved_at=now,
             reason="Transfusao",
+            notes=notes,
         ).save()
 
         return Response(
@@ -217,6 +378,18 @@ class BloodStockMovementViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "unit__unit_number", "reason"]
     ordering_fields = ["moved_at", "movement_type", "created_at"]
     ordering = ["-moved_at", "-created_at"]
+
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed("POST", detail="Movimento de stock é gerado automaticamente pelo fluxo operacional.")
+
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PUT", detail="Movimento de stock não pode ser alterado manualmente.")
+
+    def partial_update(self, request, *args, **kwargs):
+        raise MethodNotAllowed("PATCH", detail="Movimento de stock não pode ser alterado manualmente.")
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE", detail="Movimento de stock não pode ser removido manualmente.")
 
 
 class BloodStorageMaintenanceViewSet(TenantScopedModelViewSet):

@@ -742,7 +742,8 @@ def test_payroll_recalculate_exposes_month_variables_and_absence_discount_rule()
     ordinary_total = (Decimal("5.00") * Decimal("100.0000")).quantize(Decimal("0.01"))
     extraordinary_total = (Decimal("2.00") * Decimal("150.0000")).quantize(Decimal("0.01"))
     overtime_total = (ordinary_total + extraordinary_total).quantize(Decimal("0.01"))
-    gross_salary = (Decimal("22000.00") + Decimal("1000.00") + family_allowance + overtime_total).quantize(
+    tenure_increase = Decimal("1000.00")
+    gross_salary = (Decimal("22000.00") + Decimal("1000.00") + tenure_increase + family_allowance + overtime_total).quantize(
         Decimal("0.01")
     )
     expected_total_salary = (gross_salary - absence_discount - Decimal("500.00")).quantize(Decimal("0.01"))
@@ -756,5 +757,7 @@ def test_payroll_recalculate_exposes_month_variables_and_absence_discount_rule()
     assert payroll.ordinary_hours == Decimal("5.00")
     assert payroll.extraordinary_hours == Decimal("2.00")
     assert payroll.salary_increase_value == Decimal("1000.00")
+    assert payroll.tenure_increase_value == tenure_increase
     assert payroll.gross_salary == gross_salary
     assert payroll.total_salary == expected_total_salary
+    assert payroll.salary_liquido == expected_total_salary
