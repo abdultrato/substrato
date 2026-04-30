@@ -6,4 +6,3 @@ class BloodBankConfig(AppConfig):
     name = "apps.bloodbank"
     label = "bloodbank"
     verbose_name = "Banco de Sangue e Hemoterapia"
-
