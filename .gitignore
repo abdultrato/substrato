@@ -235,3 +235,6 @@ uploads/
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
+
+# Frontend lockfile must be versioned for deterministic CI/CD
+!frontend-next/package-lock.json

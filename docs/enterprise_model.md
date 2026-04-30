@@ -8,7 +8,7 @@ Definir o baseline técnico para operar o Substrato como software empresarial: s
 2. Escalabilidade horizontal: API stateless, cache distribuído, workers assíncronos.
 3. Operabilidade: health checks, métricas, alertas e runbooks.
 4. Qualidade contínua: lint, testes, coverage, readiness e build containerizados.
-5. Governança: documentação viva, gates de merge e rastreabilidade de decisão.
+5. Governança: documentação viva, gates de merge, ownership explícito e rastreabilidade de decisão.
 
 ## Arquitetura alvo
 1. Backend: Django + DRF + Celery.
@@ -23,6 +23,7 @@ Definir o baseline técnico para operar o Substrato como software empresarial: s
 3. `DB_ENGINE=postgres` em produção.
 4. `python scripts/production_readiness_check.py` obrigatório antes de deploy.
 5. Deploy bloqueado quando `manage.py check --deploy` falhar.
+6. Dependências e workflows versionados com lockfile, Dependabot e CodeQL ativos.
 
 ## Documentos vinculados
 - Segurança: `docs/security_baseline.md`

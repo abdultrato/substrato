@@ -1,0 +1,15 @@
+# Propriedade padrão do repositório
+* @abdulltrato
+
+# Domínio clínico e banco de sangue
+/apps/clinical/ @abdulltrato
+/apps/bloodbank/ @abdulltrato
+
+# Frontend
+/frontend-next/ @abdulltrato
+
+# Infra, workflows e documentação operacional
+/.github/ @abdulltrato
+/docs/ @abdulltrato
+/docker-compose*.yml @abdulltrato
+/Dockerfile* @abdulltrato
