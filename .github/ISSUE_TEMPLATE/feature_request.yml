@@ -1,0 +1,37 @@
+name: "Feature request"
+description: "Proposta de melhoria funcional/técnica"
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema a resolver
+      description: Que problema de negócio ou técnico esta melhoria resolve.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Solução sugerida de forma objetiva.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Impacto esperado
+      description: Impacto em utilizadores, operação, segurança e desempenho.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: riscos
+    attributes:
+      label: Avaliação inicial
+      options:
+        - label: Pode afetar fluxos críticos
+        - label: Pode exigir migração de base de dados
+        - label: Pode exigir atualização de documentação/runbook

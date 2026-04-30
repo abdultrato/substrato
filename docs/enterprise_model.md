@@ -29,5 +29,6 @@ Definir o baseline técnico para operar o Substrato como software empresarial: s
 - Segurança: `docs/security_baseline.md`
 - CI/CD: `docs/ci_cd_pipeline.md`
 - Release e rollback: `docs/release_and_rollback.md`
+- Gestão de mudanças: `docs/change_management.md`
 - Qualidade/SLOs: `docs/engineering_quality.md`
 - Operações: `docs/operations_runbook.md`

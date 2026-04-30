@@ -1,0 +1,58 @@
+name: "Bug report"
+description: "Reporte estruturado de defeito"
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: O que estava a ser feito quando o problema ocorreu.
+      placeholder: Ex. durante criação de requisição laboratorial...
+    validations:
+      required: true
+
+  - type: textarea
+    id: comportamento-atual
+    attributes:
+      label: Comportamento atual
+      description: Resultado observado.
+    validations:
+      required: true
+
+  - type: textarea
+    id: comportamento-esperado
+    attributes:
+      label: Comportamento esperado
+      description: Resultado esperado.
+    validations:
+      required: true
+
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      description: Sequência objetiva de passos.
+      placeholder: |
+        1. Aceder a ...
+        2. Clicar em ...
+        3. Ver erro ...
+    validations:
+      required: true
+
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Ex. local, staging, production
+      placeholder: staging
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidencias
+    attributes:
+      label: Evidências
+      description: Logs, stacktrace, screenshots ou payloads relevantes.
+    validations:
+      required: false

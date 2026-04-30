@@ -58,5 +58,6 @@ make production-readiness
 - Pipeline de CI/CD empresarial: `docs/ci_cd_pipeline.md`
 - Runbook de release e rollback: `docs/release_and_rollback.md`
 - Política de reporte de vulnerabilidades: `SECURITY.md`
+- Gestão de mudanças (change management): `docs/change_management.md`
 
 Os documentos Markdown históricos do projeto foram incorporados ao `SUBSTRATO.md`.

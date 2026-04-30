@@ -32,6 +32,7 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 3. Deploy é manual e exige credenciais válidas por ambiente.
 4. Mudanças de infra/config passam por revisão técnica obrigatória.
 5. Dependências críticas devem ser tratadas via PR de segurança antes de release.
+6. Todo PR deve preencher checklist de segurança, validação e rollback.
 
 ## Variáveis mínimas para CI de produção
 1. `DJANGO_SETTINGS_MODULE=platform.settings.production`
