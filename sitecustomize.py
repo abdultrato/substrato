@@ -44,7 +44,8 @@ def _patch_django_timezone_utc() -> None:
     except Exception:
         return
 
-    if not hasattr(django_timezone, "utc"):
+    # Evita acionar __getattr__ deprecado no Django (RemovedInDjango50Warning).
+    if "utc" not in getattr(django_timezone, "__dict__", {}):
         django_timezone.utc = UTC
 
 
