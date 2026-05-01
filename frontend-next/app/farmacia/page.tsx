@@ -100,7 +100,7 @@ export default function FarmaciaPage() {
           <MetricCard label="Produtos" value={loading ? "..." : produtos} />
           <MetricCard label="Lotes" value={loading ? "..." : lotes} />
           <MetricCard label="Movimentos" value={loading ? "..." : movimentos} />
-          <MetricCard label="Inventário" value="—" hint="Indisponível na API v1" />
+          <MetricCard label="Inventário" value="—" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -131,7 +131,7 @@ export default function FarmaciaPage() {
         </div>
 
         <Card
-          title="Cobertura da API v1"
+          title="Visão do módulo"
           subtitle="Escopo do módulo de almoxarifado."
         >
           <div className="text-sm text-slate-700">

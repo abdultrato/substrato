@@ -18,7 +18,7 @@ export default function ModulosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Módulos"
-          subtitle="Acesso rápido a todos os apps do Django atualmente expostos na API v1."
+          subtitle="Acesso rápido a todos os apps do Django disponíveis no sistema."
         />
 
         {isFetching ? (

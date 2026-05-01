@@ -17,8 +17,8 @@ export default function RecursosPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
-          title="Recursos da API v1"
-          subtitle="Navegue pelos módulos expostos no backend (api/v1)."
+          title="Recursos do sistema"
+          subtitle="Navegue pelos módulos disponíveis no backend."
         />
 
         {isFetching ? (

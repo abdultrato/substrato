@@ -82,6 +82,29 @@
         ]
       }
     },
+    "/api/v1/audit/atividade/relatorio/pdf/": {
+      "get": {
+        "operationId": "listActivityReportPdfs",
+        "description": "Gera PDF de actividade da p\u00e1gina atual por janela temporal.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/worklist/": {
       "get": {
         "operationId": "listEquipmentWorklists",
@@ -1325,6 +1348,38 @@
         ]
       }
     },
+    "/api/v1/clinical/labrequest/{id}/resultado_itens/": {
+      "get": {
+        "operationId": "resultItemsLegacyLabRequest",
+        "description": "Alias legado em portugu\u00eas para compatibilidade do frontend.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de exam.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabRequest"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/clinical/labrequest/{id}/pdf_resultados/": {
       "get": {
         "operationId": "resultsPdfLabRequest",
@@ -1449,7 +1504,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este lab request item.",
+            "description": "Um valor inteiro \u00fanico que identifica este Item de requisi\u00e7\u00e3o.",
             "schema": {
               "type": "string"
             }
@@ -1497,7 +1552,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este lab request item.",
+            "description": "Um valor inteiro \u00fanico que identifica este Item de requisi\u00e7\u00e3o.",
             "schema": {
               "type": "string"
             }
@@ -1564,7 +1619,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este lab request item.",
+            "description": "Um valor inteiro \u00fanico que identifica este Item de requisi\u00e7\u00e3o.",
             "schema": {
               "type": "string"
             }
@@ -1631,7 +1686,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este lab request item.",
+            "description": "Um valor inteiro \u00fanico que identifica este Item de requisi\u00e7\u00e3o.",
             "schema": {
               "type": "string"
             }
@@ -2919,10 +2974,202 @@
         ]
       }
     },
+    "/api/v1/clinical/patient/{id}/clinical_history/pdf/": {
+      "get": {
+        "operationId": "clinicalHistoryPdfPatient",
+        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3ria cl\u00ednica.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/clinical/patient/{id}/historia_clinica/": {
       "get": {
         "operationId": "historiaClinicaPatient",
         "description": "ViewSet para gerenciar pacientes.\n\nCampos principais:\n- name: Nome completo (obrigat\u00f3rio)\n- email: Email \u00fanico para contato\n- birth_date: Data de nascimento (para c\u00e1lculo de idade)\n- gender: G\u00eanero (M/F)\n- document_number: Documento de identidade (\u00fanico)\n- address: Endere\u00e7o residencial\n- pregnant: Indicador de gesta\u00e7\u00e3o",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/patient/{id}/historia_clinica/pdf/": {
+      "get": {
+        "operationId": "historiaClinicaPdfPatient",
+        "description": "Emite PDF do hist\u00f3rico cl\u00ednico agregado do paciente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/patient/{id}/historia_faturas/pdf/": {
+      "get": {
+        "operationId": "historiaFaturasPdfPatient",
+        "description": "Emite PDF com hist\u00f3rico de faturas do paciente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/patient/{id}/historia_pagamentos/pdf/": {
+      "get": {
+        "operationId": "historiaPagamentosPdfPatient",
+        "description": "Emite PDF com hist\u00f3rico de pagamentos do paciente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/patient/{id}/invoice_history/pdf/": {
+      "get": {
+        "operationId": "invoiceHistoryPdfPatient",
+        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3rico de faturas.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Entrada.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Patient"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/patient/{id}/payment_history/pdf/": {
+      "get": {
+        "operationId": "paymentHistoryPdfPatient",
+        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3rico de pagamentos.",
         "parameters": [
           {
             "name": "id",
@@ -3226,6 +3473,314 @@
             "in": "path",
             "required": true,
             "description": "Um valor inteiro \u00fanico que identifica este result item.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/sample/": {
+      "get": {
+        "operationId": "listSamples",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sample"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createSample",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sample"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/clinical/sample/{id}/": {
+      "get": {
+        "operationId": "retrieveSample",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Amostra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sample"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateSample",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Amostra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sample"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateSample",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Amostra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Sample"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sample"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroySample",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Amostra.",
             "schema": {
               "type": "string"
             }
@@ -3625,6 +4180,134 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/consultations/consultation/{id}/clinical_history/": {
+      "get": {
+        "operationId": "clinicalHistoryMedicalConsultation",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Consulta M\u00e9dica.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicalConsultation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/consultations/consultation/{id}/clinical_history/pdf/": {
+      "get": {
+        "operationId": "clinicalHistoryPdfMedicalConsultation",
+        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3ria cl\u00ednica por consulta.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Consulta M\u00e9dica.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicalConsultation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/consultations/consultation/{id}/historia_clinica/": {
+      "get": {
+        "operationId": "historiaClinicaMedicalConsultation",
+        "description": "Retorna a hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.\n\nEste endpoint existe para evitar que o frontend fa\u00e7a v\u00e1rias chamadas e\nconsolide dados sens\u00edveis localmente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Consulta M\u00e9dica.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicalConsultation"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/consultations/consultation/{id}/historia_clinica/pdf/": {
+      "get": {
+        "operationId": "historiaClinicaPdfMedicalConsultation",
+        "description": "Emite o PDF da hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Consulta M\u00e9dica.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicalConsultation"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -6922,7 +7605,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Procedimento (Cat\u00e1logo).",
+            "description": "Um valor inteiro \u00fanico que identifica este Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -6970,7 +7653,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Procedimento (Cat\u00e1logo).",
+            "description": "Um valor inteiro \u00fanico que identifica este Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -7037,7 +7720,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Procedimento (Cat\u00e1logo).",
+            "description": "Um valor inteiro \u00fanico que identifica este Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -7104,7 +7787,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Procedimento (Cat\u00e1logo).",
+            "description": "Um valor inteiro \u00fanico que identifica este Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -7538,7 +8221,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -7586,7 +8269,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -7653,7 +8336,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -7720,7 +8403,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -8978,6 +9661,38 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure/{id}/pdf/": {
+      "get": {
+        "operationId": "pdfProcedure",
+        "description": "Gera o PDF institucional do procedimento de enfermagem com detalhes cl\u00ednicos e financeiros.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Procedure"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -12765,6 +13480,50 @@
         ]
       }
     },
+    "/api/v1/pharmacy/lot/disponiveis/": {
+      "get": {
+        "operationId": "disponiveisLot",
+        "description": "Lista lotes FEFO com saldo > 0 e n\u00e3o vencidos.\n\u00datil para cria\u00e7\u00e3o de requisi\u00e7\u00f5es internas (log\u00edstica).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lot"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/lot/estoque/pdf/": {
+      "get": {
+        "operationId": "stockPdfLot",
+        "description": "Gera PDF do estoque existente (snapshot atual de lotes com saldo).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lot"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/pharmacy/lot/{id}/": {
       "get": {
         "operationId": "retrieveLot",
@@ -13058,6 +13817,28 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryMovement"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/movimentoestoque/historico/pdf/": {
+      "get": {
+        "operationId": "historyPdfInventoryMovement",
+        "description": "Gera PDF de hist\u00f3rico de entradas/sa\u00eddas/ajustes.",
+        "parameters": [],
+        "responses": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -13381,6 +14162,94 @@
         ]
       }
     },
+    "/api/v1/pharmacy/product/menos_requisitados/pdf/": {
+      "get": {
+        "operationId": "leastRequestedProductsPdfProduct",
+        "description": "PDF com os produtos menos requisitados (baseado em requisi\u00e7\u00f5es de material).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/mais_requisitados/pdf/": {
+      "get": {
+        "operationId": "mostRequestedProductsPdfProduct",
+        "description": "PDF com os produtos mais requisitados (baseado em requisi\u00e7\u00f5es de material).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/consumo/pdf/": {
+      "get": {
+        "operationId": "productConsumptionPdfProduct",
+        "description": "PDF de consumo farmac\u00eautico consolidado por produto.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/setores_requisicao/pdf/": {
+      "get": {
+        "operationId": "productSectorDemandPdfProduct",
+        "description": "PDF com os setores que mais requisitaram um produto espec\u00edfico.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/pharmacy/product/{id}/": {
       "get": {
         "operationId": "retrieveProduct",
@@ -13573,6 +14442,666 @@
             "in": "path",
             "required": true,
             "description": "Um valor inteiro \u00fanico que identifica este Produto.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/": {
+      "get": {
+        "operationId": "listMaterialRequisitions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialRequisition"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createMaterialRequisition",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/requester_context/": {
+      "get": {
+        "operationId": "requesterContextMaterialRequisition",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/historico_movimentos/pdf/": {
+      "get": {
+        "operationId": "sectorMovementsPdfMaterialRequisition",
+        "description": "PDF de movimentos de insumos por setor solicitante.\nUso principal: equipe da farm\u00e1cia.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/{id}/": {
+      "get": {
+        "operationId": "retrieveMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterialitem/": {
+      "get": {
+        "operationId": "listMaterialRequisitionItems",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialRequisitionItem"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createMaterialRequisitionItem",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisitionItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterialitem/{id}/": {
+      "get": {
+        "operationId": "retrieveMaterialRequisitionItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Item da requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisitionItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateMaterialRequisitionItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Item da requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisitionItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateMaterialRequisitionItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Item da requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisitionItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisitionItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyMaterialRequisitionItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Item da requisi\u00e7\u00e3o de material.",
             "schema": {
               "type": "string"
             }
@@ -13982,6 +15511,50 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/billing/invoice/historico_faturamento/": {
+      "get": {
+        "operationId": "billingHistoryInvoice",
+        "description": "Retorna hist\u00f3rico agregado de faturamento por utilizador.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invoice"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/billing/invoice/historico_faturamento/pdf/": {
+      "get": {
+        "operationId": "billingHistoryPdfInvoice",
+        "description": "Emite PDF do hist\u00f3rico agregado de faturamento por utilizador.",
+        "parameters": [],
+        "responses": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -14962,7 +16535,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15010,7 +16583,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15077,7 +16650,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15144,7 +16717,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Armazenamento de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15270,7 +16843,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Doacao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Doa\u00e7\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15318,7 +16891,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Doacao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Doa\u00e7\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15385,7 +16958,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Doacao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Doa\u00e7\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15452,7 +17025,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Doacao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Doa\u00e7\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15578,7 +17151,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Manutencao de Banco de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Manuten\u00e7\u00e3o de banco de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15626,7 +17199,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Manutencao de Banco de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Manuten\u00e7\u00e3o de banco de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15693,7 +17266,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Manutencao de Banco de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Manuten\u00e7\u00e3o de banco de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15760,7 +17333,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Manutencao de Banco de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Manuten\u00e7\u00e3o de banco de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15886,7 +17459,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Movimentacao de Estoque de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Movimenta\u00e7\u00e3o de stock de sangue.",
             "schema": {
               "type": "string"
             }
@@ -15934,7 +17507,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Movimentacao de Estoque de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Movimenta\u00e7\u00e3o de stock de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16001,7 +17574,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Movimentacao de Estoque de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Movimenta\u00e7\u00e3o de stock de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16068,7 +17641,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Movimentacao de Estoque de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Movimenta\u00e7\u00e3o de stock de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16194,7 +17767,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Transfusao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Transfus\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16242,7 +17815,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Transfusao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Transfus\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16309,7 +17882,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Transfusao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Transfus\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16376,7 +17949,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Transfusao de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Transfus\u00e3o de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16502,7 +18075,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16550,7 +18123,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16617,7 +18190,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -16684,7 +18257,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -17602,7 +19175,7 @@
       },
       "delete": {
         "operationId": "destroyUser",
-        "description": "",
+        "description": "N\u00e3o remove usu\u00e1rio: converte DELETE em desativa\u00e7\u00e3o de conta.",
         "parameters": [
           {
             "name": "id",
@@ -23303,6 +24876,622 @@
         ]
       }
     },
+    "/api/v1/surgery/grandecirurgia/": {
+      "get": {
+        "operationId": "listLargeSurgeries",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LargeSurgery"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createLargeSurgery",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LargeSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/grandecirurgia/{id}/": {
+      "get": {
+        "operationId": "retrieveLargeSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Grande cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LargeSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateLargeSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Grande cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LargeSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateLargeSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Grande cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LargeSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyLargeSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Grande cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/pequenacirurgia/": {
+      "get": {
+        "operationId": "listSmallSurgeries",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SmallSurgery"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createSmallSurgery",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmallSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/pequenacirurgia/{id}/": {
+      "get": {
+        "operationId": "retrieveSmallSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Pequena cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmallSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateSmallSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Pequena cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmallSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateSmallSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Pequena cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmallSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroySmallSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Pequena cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/surgery/procedimentocirurgico/": {
       "get": {
         "operationId": "listSurgicalProcedures",
@@ -24803,7 +26992,7 @@
       },
       "delete": {
         "operationId": "destroyEmployee",
-        "description": "",
+        "description": "N\u00e3o remove funcion\u00e1rio: converte DELETE em inativa\u00e7\u00e3o.",
         "parameters": [
           {
             "name": "id",
@@ -26383,6 +28572,622 @@
         ]
       }
     },
+    "/api/v1/human_resources/processodisciplinar/": {
+      "get": {
+        "operationId": "listDisciplinaryProcesses",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DisciplinaryProcess"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createDisciplinaryProcess",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplinaryProcess"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/processodisciplinar/{id}/": {
+      "get": {
+        "operationId": "retrieveDisciplinaryProcess",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Processo Disciplinar.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplinaryProcess"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateDisciplinaryProcess",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Processo Disciplinar.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplinaryProcess"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateDisciplinaryProcess",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Processo Disciplinar.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DisciplinaryProcess"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisciplinaryProcess"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyDisciplinaryProcess",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Processo Disciplinar.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/profissao/": {
+      "get": {
+        "operationId": "listProfessions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Profession"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProfession",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profession"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/profissao/{id}/": {
+      "get": {
+        "operationId": "retrieveProfession",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Profiss\u00e3o.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profession"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProfession",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Profiss\u00e3o.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profession"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProfession",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Profiss\u00e3o.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Profession"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profession"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProfession",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Profiss\u00e3o.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/human_resources/role/": {
       "get": {
         "operationId": "listJobTitles",
@@ -26775,6 +29580,66 @@
                 "schema": {
                   "$ref": "#/components/schemas/SystemError"
                 }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/monitoring/export_job/{id}/": {
+      "get": {
+        "operationId": "retrieveExportJobViewSet",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/monitoring/export_job/{id}/download/": {
+      "get": {
+        "operationId": "downloadExportJobViewSet",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             },
             "description": ""
@@ -27681,7 +30546,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -27732,7 +30597,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -27783,7 +30648,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -27834,7 +30699,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Item de Procedimento.",
+            "description": "Um valor inteiro \u00fanico que identifica este Procedimento de Enfermagem - Item.",
             "schema": {
               "type": "string"
             }
@@ -27865,6 +30730,108 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProcedureItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/{id}/aviar/": {
+      "post": {
+        "operationId": "fulfillMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/requisicaomaterial/{id}/arquivar/": {
+      "post": {
+        "operationId": "onHoldMaterialRequisition",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/MaterialRequisition"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
                 }
               }
             },
@@ -28233,6 +31200,108 @@
         ]
       }
     },
+    "/api/v1/bloodbank/unidade/{id}/aviar/": {
+      "post": {
+        "operationId": "forwardToSectorBloodUnit",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodUnit"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/bloodbank/unidade/{id}/registrar_desfecho_aviacao/": {
+      "post": {
+        "operationId": "registerDispatchOutcomeBloodUnit",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodUnit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodUnit"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/bloodbank/unidade/{id}/liberar_reserva/": {
       "post": {
         "operationId": "releaseBloodUnit",
@@ -28242,7 +31311,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -28293,7 +31362,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -28344,7 +31413,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "Um valor inteiro \u00fanico que identifica este Unidade de Sangue.",
+            "description": "Um valor inteiro \u00fanico que identifica este Unidade de sangue.",
             "schema": {
               "type": "string"
             }
@@ -28375,6 +31444,210 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BloodUnit"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/identity/user/{id}/ativar/": {
+      "post": {
+        "operationId": "activateUser",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Usu\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/identity/user/{id}/activate/": {
+      "post": {
+        "operationId": "activateEnUser",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Usu\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/identity/user/{id}/desativar/": {
+      "post": {
+        "operationId": "deactivateUser",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Usu\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/identity/user/{id}/deactivate/": {
+      "post": {
+        "operationId": "deactivateEnUser",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Usu\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
                 }
               }
             },
@@ -28827,6 +32100,108 @@
         ]
       }
     },
+    "/api/v1/surgery/grandecirurgia/{id}/criar_invoice/": {
+      "post": {
+        "operationId": "createInvoiceLargeSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Grande cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/LargeSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LargeSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/pequenacirurgia/{id}/criar_invoice/": {
+      "post": {
+        "operationId": "createInvoiceSmallSurgery",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Pequena cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SmallSurgery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmallSurgery"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/surgery/surgery/{id}/criar_invoice/": {
       "post": {
         "operationId": "createInvoiceSurgery",
@@ -28877,6 +32252,210 @@
           "api"
         ]
       }
+    },
+    "/api/v1/human_resources/employee/{id}/ativar/": {
+      "post": {
+        "operationId": "activateEmployee",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Funcion\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/employee/{id}/activate/": {
+      "post": {
+        "operationId": "activateEnEmployee",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Funcion\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/employee/{id}/desativar/": {
+      "post": {
+        "operationId": "deactivateEmployee",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Funcion\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/human_resources/employee/{id}/deactivate/": {
+      "post": {
+        "operationId": "deactivateEnEmployee",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Funcion\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Employee"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Employee"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
     }
   },
   "components": {
@@ -28914,17 +32493,11 @@
           },
           "status_code": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "duration_ms": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "ip": {
             "type": "string",
@@ -29132,6 +32705,10 @@
             "type": "integer",
             "readOnly": true
           },
+          "sample_type_name": {
+            "type": "string",
+            "readOnly": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -29292,11 +32869,16 @@
           "tenant": {
             "type": "string",
             "readOnly": true
+          },
+          "sample_type": {
+            "type": "integer",
+            "description": "Tipo de amostra biol\u00f3gica exigida para o exame."
           }
         },
         "required": [
           "name",
-          "method"
+          "method",
+          "sample_type"
         ]
       },
       "LabExamField": {
@@ -29330,15 +32912,15 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
             "description": "Nome do par\u00e2metro/campo do exam",
             "maxLength": 120
+          },
+          "position": {
+            "type": "integer"
           },
           "type": {
             "enum": [
@@ -29452,6 +33034,70 @@
               "type": "integer"
             }
           },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true
+          },
+          "sample_details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "readOnly": true
+                },
+                "custom_id": {
+                  "type": "string",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                "bottle_type": {
+                  "enum": [
+                    "TUBO_SECO",
+                    "TUBO_EDTA",
+                    "TUBO_CITRATO",
+                    "TUBO_FLUORETO",
+                    "FRASCO_URINA",
+                    "FRASCO_FEZES",
+                    "FRASCO_ESTERIL",
+                    "HEMOCULTURA",
+                    "OUTRO"
+                  ],
+                  "type": "string"
+                },
+                "cap_color": {
+                  "type": "string",
+                  "description": "Ex.: roxa, vermelha, azul, amarela.",
+                  "maxLength": 80
+                },
+                "minimum_volume_ml": {
+                  "type": "string",
+                  "format": "decimal",
+                  "multipleOf": 0.01,
+                  "maximum": 100000,
+                  "minimum": "0.01"
+                },
+                "fasting_required": {
+                  "type": "boolean"
+                },
+                "fasting_hours": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "readOnly": true
+          },
           "patient_name": {
             "type": "string",
             "readOnly": true
@@ -29481,6 +33127,9 @@
                   "type": "string",
                   "readOnly": true,
                   "nullable": true
+                },
+                "position": {
+                  "type": "integer"
                 },
                 "exam": {
                   "type": "integer",
@@ -29567,6 +33216,14 @@
             "type": "boolean",
             "readOnly": true
           },
+          "requires_fasting": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "fasting_hours": {
+            "type": "integer",
+            "readOnly": true
+          },
           "created_by": {
             "type": "string",
             "readOnly": true,
@@ -29640,10 +33297,10 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
+          },
+          "position": {
+            "type": "integer"
           },
           "created_by": {
             "type": "integer",
@@ -29729,10 +33386,7 @@
           },
           "turnaround_hours": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Tempo de response em hours.",
-            "minimum": 0
+            "description": "Tempo de response em hours."
           },
           "price": {
             "type": "string",
@@ -29848,14 +33502,14 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
             "maxLength": 120
+          },
+          "position": {
+            "type": "integer"
           },
           "type": {
             "enum": [
@@ -29929,10 +33583,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "type": {
             "enum": [
@@ -30034,11 +33685,8 @@
           },
           "gestational_age_weeks": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
             "nullable": true,
-            "description": "Semanas de gesta\u00e7\u00e3o (preencher se pregnant)",
-            "minimum": 0
+            "description": "Semanas de gesta\u00e7\u00e3o (preencher se pregnant)"
           },
           "birth_date": {
             "type": "string",
@@ -30490,10 +34138,10 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
+          },
+          "position": {
+            "type": "integer"
           },
           "result_value": {
             "type": "string",
@@ -30501,7 +34149,8 @@
             "multipleOf": 0.01,
             "maximum": 10000000000,
             "minimum": -10000000000,
-            "nullable": true
+            "nullable": true,
+            "description": "Valor medido do par\u00e2metro"
           },
           "clinical_status": {
             "type": "string",
@@ -30564,6 +34213,117 @@
           "tenant",
           "result",
           "exam_field"
+        ]
+      },
+      "Sample": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "bottle_type": {
+            "enum": [
+              "TUBO_SECO",
+              "TUBO_EDTA",
+              "TUBO_CITRATO",
+              "TUBO_FLUORETO",
+              "FRASCO_URINA",
+              "FRASCO_FEZES",
+              "FRASCO_ESTERIL",
+              "HEMOCULTURA",
+              "OUTRO"
+            ],
+            "type": "string"
+          },
+          "cap_color": {
+            "type": "string",
+            "description": "Ex.: roxa, vermelha, azul, amarela.",
+            "maxLength": 80
+          },
+          "minimum_volume_ml": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 100000,
+            "minimum": "0.01"
+          },
+          "fasting_required": {
+            "type": "boolean"
+          },
+          "fasting_hours": {
+            "type": "integer"
+          },
+          "storage_temperature": {
+            "type": "string",
+            "description": "Ex.: ambiente, refrigerado (2-8\u00b0C), congelado (-20\u00b0C).",
+            "maxLength": 120
+          },
+          "stability_hours": {
+            "type": "integer"
+          },
+          "anticoagulant": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "collection_instructions": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "MedicalConsultation": {
@@ -30727,8 +34487,12 @@
             "maxLength": 120
           },
           "profession": {
+            "type": "integer",
+            "nullable": true
+          },
+          "profession_name": {
             "type": "string",
-            "maxLength": 120
+            "readOnly": true
           },
           "role": {
             "type": "integer",
@@ -30933,10 +34697,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31008,10 +34769,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31085,10 +34843,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31182,10 +34937,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31271,10 +35023,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "number": {
             "type": "string",
@@ -31339,10 +35088,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31425,18 +35171,12 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "estimated_observation_hours": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
             "nullable": true,
-            "description": "Tempo estimado de observa\u00e7\u00e3o em hours (quando aplic\u00e1vel).",
-            "minimum": 0
+            "description": "Tempo estimado de observa\u00e7\u00e3o em hours (quando aplic\u00e1vel)."
           },
           "admission_date": {
             "type": "string",
@@ -31526,10 +35266,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31603,10 +35340,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -31641,10 +35375,7 @@
           },
           "estimated_duration_minutes": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Tempo m\u00e9dio esperado para execu\u00e7\u00e3o do procedimento.",
-            "minimum": 0
+            "description": "Tempo m\u00e9dio esperado para execu\u00e7\u00e3o do procedimento."
           },
           "active": {
             "type": "boolean"
@@ -31701,10 +35432,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "default_quantity": {
             "type": "string",
@@ -31807,10 +35535,10 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
+          },
+          "position": {
+            "type": "integer"
           },
           "description": {
             "type": "string",
@@ -31818,9 +35546,7 @@
           },
           "quantity": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "minimum": 1
           },
           "performed": {
             "type": "boolean"
@@ -31914,10 +35640,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "unit_price": {
             "type": "string",
@@ -31992,16 +35715,14 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
+          },
+          "position": {
+            "type": "integer"
           },
           "quantity": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "minimum": 1,
-            "format": "int64"
+            "minimum": 1
           },
           "observation": {
             "type": "string"
@@ -32078,10 +35799,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "unit_cost": {
             "type": "string",
@@ -32172,10 +35890,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "performed_date": {
             "type": "string",
@@ -32312,10 +36027,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -32393,10 +36105,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -32416,24 +36125,15 @@
           },
           "heart_rate": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "respiratory_rate": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "oxygen_saturation": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "collected_at": {
             "type": "string",
@@ -32499,10 +36199,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -33078,20 +36775,18 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
             "maxLength": 120
           },
+          "position": {
+            "type": "integer"
+          },
           "quantity": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "minimum": 1,
-            "format": "int64"
+            "minimum": 1
           },
           "unit_price": {
             "type": "string",
@@ -33138,6 +36833,14 @@
             "type": "integer",
             "readOnly": true
           },
+          "saldo": {
+            "type": "string",
+            "readOnly": true
+          },
+          "product_name": {
+            "type": "string",
+            "readOnly": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -33163,10 +36866,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -33182,9 +36882,7 @@
           },
           "initial_quantity": {
             "type": "integer",
-            "maximum": 9223372036854775807,
             "minimum": 1,
-            "format": "int64",
             "description": "Quantidade inicial do lote."
           },
           "sale_price": {
@@ -33254,10 +36952,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -33275,15 +36970,14 @@
             "enum": [
               "VEND",
               "PROC",
-              "AJUS"
+              "AJUS",
+              "REQ"
             ],
             "type": "string"
           },
           "quantity": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "minimum": 1,
-            "format": "int64"
+            "minimum": 1
           },
           "created_by": {
             "type": "integer",
@@ -33304,6 +36998,10 @@
             "type": "integer"
           },
           "sale_item": {
+            "type": "integer",
+            "nullable": true
+          },
+          "material_request_item": {
             "type": "integer",
             "nullable": true
           }
@@ -33347,10 +37045,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -33408,6 +37103,362 @@
           "tenant"
         ]
       },
+      "MaterialRequisition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "readOnly": true
+                },
+                "available_quantity": {
+                  "type": "string",
+                  "readOnly": true
+                },
+                "product_name": {
+                  "type": "string",
+                  "readOnly": true
+                },
+                "lot_number": {
+                  "type": "string",
+                  "readOnly": true
+                },
+                "lot_expiration_date": {
+                  "type": "string",
+                  "format": "date",
+                  "readOnly": true
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "readOnly": true
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "readOnly": true
+                },
+                "custom_id": {
+                  "type": "string",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "deleted": {
+                  "type": "boolean",
+                  "readOnly": true
+                },
+                "deleted_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "version": {
+                  "type": "integer",
+                  "readOnly": true
+                },
+                "position": {
+                  "type": "integer"
+                },
+                "requested_quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "supplied_quantity": {
+                  "type": "integer",
+                  "readOnly": true
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "created_by": {
+                  "type": "string",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "updated_by": {
+                  "type": "string",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "deleted_by": {
+                  "type": "string",
+                  "readOnly": true,
+                  "nullable": true
+                },
+                "tenant": {
+                  "type": "string",
+                  "readOnly": true
+                },
+                "requisition": {
+                  "type": "integer"
+                },
+                "lot": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "requested_quantity",
+                "requisition",
+                "lot"
+              ]
+            },
+            "readOnly": true
+          },
+          "items_input": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": "integer"
+                },
+                "lot": {
+                  "type": "integer"
+                },
+                "requested_quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "lot",
+                "requested_quantity"
+              ]
+            },
+            "writeOnly": true
+          },
+          "created_by_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "sector_label": {
+            "type": "string",
+            "readOnly": true
+          },
+          "status_label": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "sector": {
+            "enum": [
+              "LAB",
+              "ENF",
+              "REC",
+              "MED",
+              "MOC",
+              "OUT"
+            ],
+            "type": "string"
+          },
+          "requested_by_department": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Departamento do utilizador no momento da requisi\u00e7\u00e3o."
+          },
+          "status": {
+            "enum": [
+              "PEN",
+              "PAR",
+              "FUL",
+              "HLD"
+            ],
+            "type": "string",
+            "readOnly": true
+          },
+          "hold_reason": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "fulfilled_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "on_hold_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "fulfilled_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "on_hold_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "items_input"
+        ]
+      },
+      "MaterialRequisitionItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "available_quantity": {
+            "type": "string",
+            "readOnly": true
+          },
+          "product_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lot_number": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lot_expiration_date": {
+            "type": "string",
+            "format": "date",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "position": {
+            "type": "integer"
+          },
+          "requested_quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "supplied_quantity": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "requisition": {
+            "type": "integer"
+          },
+          "lot": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requested_quantity",
+          "requisition",
+          "lot"
+        ]
+      },
       "Sale": {
         "type": "object",
         "properties": {
@@ -33440,10 +37491,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "number": {
             "type": "string",
@@ -33776,6 +37824,9 @@
             "type": "integer",
             "readOnly": true
           },
+          "position": {
+            "type": "integer"
+          },
           "item_type": {
             "enum": [
               "EXA",
@@ -33908,10 +37959,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -33922,10 +37970,7 @@
             "maxLength": 255
           },
           "capacity_units": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "temperature_min_c": {
             "type": "string",
@@ -34004,10 +38049,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "donor_role": {
             "enum": [
@@ -34068,10 +38110,7 @@
             "nullable": true
           },
           "volume_ml": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "donor_weight_kg": {
             "type": "string",
@@ -34091,31 +38130,19 @@
           },
           "donor_height_cm": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "blood_pressure_systolic": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "blood_pressure_diastolic": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "pulse_bpm": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "temperature_c": {
             "type": "string",
@@ -34248,10 +38275,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "maintenance_type": {
             "enum": [
@@ -34354,10 +38378,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "movement_type": {
             "enum": [
@@ -34366,6 +38387,8 @@
               "TRF",
               "RSV",
               "RLS",
+              "FWD",
+              "RTN",
               "DSC",
               "EXP",
               "ADJ"
@@ -34451,10 +38474,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "status": {
             "enum": [
@@ -34557,10 +38577,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "unit_number": {
             "type": "string",
@@ -34591,10 +38608,7 @@
             "type": "string"
           },
           "volume_ml": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "collected_at": {
             "type": "string",
@@ -34609,10 +38623,37 @@
               "QUA",
               "AVL",
               "RES",
+              "FWD",
               "TRN",
               "EXP",
               "DSC"
             ],
+            "type": "string"
+          },
+          "forwarded_to_sector": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "forwarded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dispatch_outcome": {
+            "enum": [
+              "PEN",
+              "TRN",
+              "RET",
+              "DSC"
+            ],
+            "type": "string"
+          },
+          "dispatch_outcome_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dispatch_outcome_notes": {
             "type": "string"
           },
           "is_irradiated": {
@@ -34644,6 +38685,14 @@
             "nullable": true
           },
           "reserved_for": {
+            "type": "integer",
+            "nullable": true
+          },
+          "forwarded_by": {
+            "type": "integer",
+            "nullable": true
+          },
+          "dispatch_outcome_by": {
             "type": "integer",
             "nullable": true
           }
@@ -34892,10 +38941,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "time_zone": {
             "type": "string",
@@ -34913,10 +38959,7 @@
             "type": "boolean"
           },
           "user_limit": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "holiday_consultation_percentage_surcharge": {
             "type": "string",
@@ -34976,10 +39019,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "key": {
             "type": "string",
@@ -35040,10 +39080,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "description": {
             "type": "string",
@@ -35054,10 +39091,7 @@
             "maxLength": 120
           },
           "order": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "type": {
             "enum": [
@@ -35068,16 +39102,10 @@
             "type": "string"
           },
           "user_limit": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "monthly_request_limit": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "monthly_price": {
             "type": "string",
@@ -35150,10 +39178,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -35239,22 +39264,13 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "active_users": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "current_month_requests": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "created_by": {
             "type": "integer",
@@ -35794,20 +39810,14 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "description": {
             "type": "string",
             "nullable": true
           },
           "order": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "request_id": {
             "type": "string",
@@ -35895,10 +39905,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "description": {
             "type": "string",
@@ -35909,10 +39916,7 @@
             "maxLength": 120
           },
           "order": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "external_code": {
             "type": "string",
@@ -35985,10 +39989,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "description": {
             "type": "string",
@@ -35999,10 +40000,7 @@
             "maxLength": 120
           },
           "order": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "coverage_percentage": {
             "type": "string",
@@ -36083,6 +40081,9 @@
             "type": "integer",
             "readOnly": true
           },
+          "position": {
+            "type": "integer"
+          },
           "dosage_value": {
             "type": "string",
             "format": "decimal",
@@ -36103,18 +40104,12 @@
           },
           "interval_hours": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
             "nullable": true,
-            "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose.",
-            "minimum": 0
+            "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose."
           },
           "dose_count": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Quantidade total de doses. Para dose \u00fanica, informe 1.",
-            "minimum": 0
+            "description": "Quantidade total de doses. Para dose \u00fanica, informe 1."
           },
           "notes": {
             "type": "string"
@@ -36211,6 +40206,9 @@
                   "type": "integer",
                   "readOnly": true
                 },
+                "position": {
+                  "type": "integer"
+                },
                 "dosage_value": {
                   "type": "string",
                   "format": "decimal",
@@ -36231,18 +40229,12 @@
                 },
                 "interval_hours": {
                   "type": "integer",
-                  "maximum": 9223372036854775807,
-                  "format": "int64",
                   "nullable": true,
-                  "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose.",
-                  "minimum": 0
+                  "description": "Intervalo entre doses. Obrigat\u00f3rio quando houver mais de uma dose."
                 },
                 "dose_count": {
                   "type": "integer",
-                  "maximum": 9223372036854775807,
-                  "format": "int64",
-                  "description": "Quantidade total de doses. Para dose \u00fanica, informe 1.",
-                  "minimum": 0
+                  "description": "Quantidade total de doses. Para dose \u00fanica, informe 1."
                 },
                 "notes": {
                   "type": "string"
@@ -36437,24 +40429,15 @@
           },
           "total_deliveries": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Hist\u00f3rico obst\u00e9trico: total de partos j\u00e1 realizados.",
-            "minimum": 0
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos j\u00e1 realizados."
           },
           "normal_deliveries": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Hist\u00f3rico obst\u00e9trico: total de partos vaginais.",
-            "minimum": 0
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos vaginais."
           },
           "cesareans": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Hist\u00f3rico obst\u00e9trico: total de partos por cesariana.",
-            "minimum": 0
+            "description": "Hist\u00f3rico obst\u00e9trico: total de partos por cesariana."
           },
           "status": {
             "enum": [
@@ -36498,6 +40481,310 @@
           "responsible_doctor": {
             "type": "integer",
             "nullable": true
+          }
+        },
+        "required": [
+          "patient"
+        ]
+      },
+      "LargeSurgery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "surgeon_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "procedure_names": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "procedure": {
+            "type": "string",
+            "description": "Use quando o procedure n\u00e3o estiver no cat\u00e1logo.",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string"
+          },
+          "estimated_price": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "vat_percentage": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000,
+            "minimum": -1000
+          },
+          "applies_vat_by_default": {
+            "type": "boolean"
+          },
+          "scheduled_for": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "enum": [
+              "AGENDADA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA",
+              "CANCELADA"
+            ],
+            "type": "string"
+          },
+          "surgery_size": {
+            "enum": [
+              "PEQUENA",
+              "GRANDE"
+            ],
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "canceled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "surgeon": {
+            "type": "integer",
+            "nullable": true
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "patient"
+        ]
+      },
+      "SmallSurgery": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "surgeon_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "procedure_names": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "invoice_status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "procedure": {
+            "type": "string",
+            "description": "Use quando o procedure n\u00e3o estiver no cat\u00e1logo.",
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string"
+          },
+          "estimated_price": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "vat_percentage": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000,
+            "minimum": -1000
+          },
+          "applies_vat_by_default": {
+            "type": "boolean"
+          },
+          "scheduled_for": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "enum": [
+              "AGENDADA",
+              "EM_ANDAMENTO",
+              "CONCLUIDA",
+              "CANCELADA"
+            ],
+            "type": "string"
+          },
+          "surgery_size": {
+            "enum": [
+              "PEQUENA",
+              "GRANDE"
+            ],
+            "type": "string"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "canceled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "surgeon": {
+            "type": "integer",
+            "nullable": true
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
           }
         },
         "required": [
@@ -36689,6 +40976,13 @@
             ],
             "type": "string"
           },
+          "surgery_size": {
+            "enum": [
+              "PEQUENA",
+              "GRANDE"
+            ],
+            "type": "string"
+          },
           "completed_at": {
             "type": "string",
             "format": "date-time",
@@ -36769,10 +41063,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -36864,10 +41155,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "date": {
             "type": "string",
@@ -36945,16 +41233,9 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "profession": {
             "type": "string",
             "maxLength": 120
           },
@@ -37007,10 +41288,34 @@
           },
           "base_month_hours": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "description": "Horas contratuais base por m\u00eas (ex.: 176).",
-            "minimum": 0
+            "description": "Horas contratuais base por m\u00eas (ex.: 176)."
+          },
+          "ordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000
+          },
+          "extraordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000
+          },
+          "minimum_progression_months": {
+            "type": "integer"
+          },
+          "minimum_career_change_months": {
+            "type": "integer"
+          },
+          "family_allowance_per_dependent": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
           },
           "created_by": {
             "type": "string",
@@ -37032,6 +41337,10 @@
             "readOnly": true
           },
           "role": {
+            "type": "integer",
+            "nullable": true
+          },
+          "profession": {
             "type": "integer",
             "nullable": true
           }
@@ -37073,10 +41382,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "date": {
             "type": "string",
@@ -37149,10 +41455,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "start_date": {
             "type": "string",
@@ -37234,22 +41537,13 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "year": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "month": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "nominal_salary": {
             "type": "string",
@@ -37259,17 +41553,137 @@
             "minimum": -10000000000
           },
           "base_month_hours": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "overtime_hour_multiplier": {
             "type": "string",
             "format": "decimal",
             "multipleOf": 0.01,
             "maximum": 100,
-            "minimum": -100
+            "minimum": -100,
+            "description": "Usado como fallback quando o valor extraordin\u00e1rio n\u00e3o estiver definido no funcion\u00e1rio."
+          },
+          "salary_increase_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "tenure_increase_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "family_dependents_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "family_allowance_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "absence_days": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "discounted_absence_days": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "daily_salary_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000,
+            "readOnly": true
+          },
+          "absence_discount_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "other_discounts_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "disciplinary_discount_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "ordinary_hours": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000,
+            "minimum": -1000000,
+            "readOnly": true
+          },
+          "extraordinary_hours": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000,
+            "minimum": -1000000,
+            "readOnly": true
+          },
+          "ordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000,
+            "readOnly": true
+          },
+          "extraordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000,
+            "readOnly": true
+          },
+          "ordinary_hours_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "extraordinary_hours_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
+          },
+          "gross_salary": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "readOnly": true
           },
           "calculated_overtime_hours": {
             "type": "string",
@@ -37368,14 +41782,18 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "date": {
             "type": "string",
             "format": "date"
+          },
+          "kind": {
+            "enum": [
+              "ORDINARIA",
+              "EXTRAORDINARIA"
+            ],
+            "type": "string"
           },
           "hours": {
             "type": "string",
@@ -37455,10 +41873,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "weekday": {
             "enum": [
@@ -37470,9 +41885,7 @@
               5,
               6
             ],
-            "type": "integer",
-            "minimum": -9223372036854775808,
-            "maximum": 9223372036854775807
+            "type": "integer"
           },
           "start_time": {
             "type": "string"
@@ -37513,6 +41926,211 @@
           "employee"
         ]
       },
+      "DisciplinaryProcess": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer"
+          },
+          "incident_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "incident_type": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "severity": {
+            "enum": [
+              "LEVE",
+              "MODERADA",
+              "GRAVE",
+              "GRAVISSIMA"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "Incidentes, maus comportamentos e atitudes que prejudicam a empresa ou colaboradores."
+          },
+          "action_taken": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ABERTO",
+              "ENCERRADO"
+            ],
+            "type": "string"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "employee": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "employee"
+        ]
+      },
+      "Profession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string"
+          },
+          "base_salary": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "ordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000
+          },
+          "extraordinary_hour_value": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.0001,
+            "maximum": 100000000,
+            "minimum": -100000000
+          },
+          "minimum_progression_months": {
+            "type": "integer"
+          },
+          "minimum_career_change_months": {
+            "type": "integer"
+          },
+          "family_allowance_per_dependent": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000,
+            "description": "Valor adicional por cada agregado familiar ativo do funcion\u00e1rio."
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "JobTitle": {
         "type": "object",
         "properties": {
@@ -37546,10 +42164,7 @@
             "nullable": true
           },
           "version": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "name": {
             "type": "string",
@@ -37642,17 +42257,11 @@
             "type": "string"
           },
           "status_code": {
-            "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "minimum": 0
+            "type": "integer"
           },
           "duration_ms": {
             "type": "integer",
-            "maximum": 9223372036854775807,
-            "format": "int64",
-            "nullable": true,
-            "minimum": 0
+            "nullable": true
           },
           "user_agent": {
             "type": "string",

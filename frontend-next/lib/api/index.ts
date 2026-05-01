@@ -98,10 +98,10 @@ function rewriteUrl(url: string): string {
     ["/recepcao", "/reception"],
     ["/recepcao/", "/reception"],
     ["/recepcao/workspace", "/reception/workspace"],
-    ["/prontuario", "/medical_records"],
-    ["/prontuario/", "/medical_records"],
     ["/prontuario/registro", "/medical_records/record"],
     ["/prontuario/registro/", "/medical_records/record/"],
+    ["/prontuario", "/medical_records"],
+    ["/prontuario/", "/medical_records"],
   ]
 
   for (const [from, to] of aliases) {

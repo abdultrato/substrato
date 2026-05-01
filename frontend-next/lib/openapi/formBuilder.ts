@@ -154,6 +154,18 @@ function pathSegments(path: string): string[] {
   return n.split("/").filter(Boolean)
 }
 
+function normalizeEndpointAlias(endpoint: string): string {
+  const normalized = normalizePath(endpoint)
+  if (normalized === "/prontuario/registro") return "/medical_records/record"
+  if (normalized.startsWith("/prontuario/registro/")) {
+    return normalized.replace("/prontuario/registro", "/medical_records/record")
+  }
+  if (normalized === "/prontuario" || normalized.startsWith("/prontuario/")) {
+    return normalized.replace("/prontuario", "/medical_records")
+  }
+  return normalized
+}
+
 function matchesTemplate(template: string, actual: string): boolean {
   const t = pathSegments(template)
   const a = pathSegments(actual)
@@ -168,7 +180,12 @@ function matchesTemplate(template: string, actual: string): boolean {
 
 function findPathItem(endpoint: string) {
   const paths = (schema as any).paths || {}
+  const canonicalEndpoint = normalizeEndpointAlias(endpoint)
   const candidates = [
+    `/api/v1${canonicalEndpoint}`,
+    `/api/v1${canonicalEndpoint}`.replace(/\/$/, ""),
+    canonicalEndpoint,
+    canonicalEndpoint.replace(/\/$/, ""),
     `/api/v1${endpoint}`,
     `/api/v1${endpoint}`.replace(/\/$/, ""),
     endpoint,

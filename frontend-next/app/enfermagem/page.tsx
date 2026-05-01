@@ -85,7 +85,7 @@ export default function EnfermagemPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Requisições pendentes" value={loading ? "..." : requisicoesPendentes} />
           <MetricCard label="Procedimentos" value={loading ? "..." : procedimentos} />
-          <MetricCard label="Colheitas" value={loading ? "..." : "—"} hint="Indisponível na API v1" />
+          <MetricCard label="Colheitas" value={loading ? "..." : "—"} />
           <MetricCard label="Sinais vitais" value={loading ? "..." : "—"} hint="Entrada via módulo Enfermagem" />
         </div>
 
@@ -123,7 +123,7 @@ export default function EnfermagemPage() {
         </div>
 
         <Card
-          title="Cobertura da API v1"
+          title="Visão do módulo"
           subtitle="Resumo do escopo disponível para o módulo de enfermagem."
         >
           <div className="text-sm text-slate-700">

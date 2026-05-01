@@ -71,6 +71,32 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/reconciliation/")
   })
 
+  it("reescreve alias de prontuario registro para medical_records/record", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/prontuario/registro/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/medical_records/record/")
+  })
+
+  it("reescreve detalhe de prontuario registro sem quebrar o path do recurso", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 42 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/prontuario/registro/42/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/medical_records/record/42/")
+  })
+
   it("renova a sessao em 401 e repete o request original", async () => {
     ;(global.fetch as any)
       .mockResolvedValueOnce(new Response("unauthorized", { status: 401 }))

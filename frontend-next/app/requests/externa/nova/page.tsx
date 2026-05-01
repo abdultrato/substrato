@@ -9,6 +9,14 @@ import { useRouter } from "next/navigation";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
+function toArray<T>(raw: any): T[] {
+    if (Array.isArray(raw)) return raw as T[];
+    if (raw && typeof raw === "object" && Array.isArray((raw as any).results)) {
+        return (raw as any).results as T[];
+    }
+    return [];
+}
+
 export default function NovaRequisicaoExternaPage() {
     useAuthGuard();
     const router = useRouter();
@@ -39,7 +47,8 @@ export default function NovaRequisicaoExternaPage() {
 
     async function carregarPacientes() {
         try {
-            setPacientes(await apiFetch("/clinical/patient/"));
+            const raw = await apiFetch("/clinical/patient/");
+            setPacientes(toArray<Paciente>(raw));
         } catch {
             setPacientes([]);
         }
@@ -47,7 +56,8 @@ export default function NovaRequisicaoExternaPage() {
 
     async function carregarEmpresas() {
         try {
-            setEmpresas(await apiFetch("/entities/company/"));
+            const raw = await apiFetch("/entities/company/");
+            setEmpresas(toArray<Entidade>(raw));
         } catch {
             setEmpresas([]);
         }
@@ -55,7 +65,10 @@ export default function NovaRequisicaoExternaPage() {
 
     async function carregarExames() {
         try {
-            setExames(await apiFetch("/clinical/exam/"));
+            const raw = await apiFetch(
+                tipo === "MED" ? "/clinical/medicalexam/" : "/clinical/exam/"
+            );
+            setExames(toArray<Exame | ExameMedico>(raw));
         } catch {
             setExames([]);
         }

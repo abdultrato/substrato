@@ -2,6 +2,7 @@
 
 
 from django.conf import settings
+from django.core.exceptions import FieldError
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 
@@ -302,7 +303,18 @@ class LabRequest(NoNameCoreModel):
         """
         from .medical_exam import MedicalExam
 
-        return MedicalExam.objects.filter(lab_requests__request=self, lab_requests__deleted=False).distinct()
+        try:
+            return MedicalExam.objects.filter(
+                lab_request_items__request=self,
+                lab_request_items__deleted=False,
+            ).distinct()
+        except FieldError:
+            # Compatibilidade defensiva para ambientes com estado antigo de
+            # relação reversa (evita 500 em rollout parcial de migrações/código).
+            return MedicalExam.objects.filter(
+                lab_requests__request=self,
+                lab_requests__deleted=False,
+            ).distinct()
 
     def _sync_samples_from_items(self):
         if not self.pk:

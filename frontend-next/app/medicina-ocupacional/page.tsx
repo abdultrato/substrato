@@ -6,7 +6,6 @@ import { useEffect, useState } from "react"
 import { FilePlus2, HeartPulse, ScrollText, Pill, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -79,8 +78,8 @@ export default function MedicinaOcupacionalPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Pacientes (ocupacional)" value={loading ? "..." : pacientes} />
           <MetricCard label="Requisições (lab)" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Procedimentos" value="—" hint="Indisponível na API v1" />
-          <MetricCard label="Medicação" value="—" hint="Indisponível na API v1" />
+          <MetricCard label="Procedimentos" value="—" />
+          <MetricCard label="Medicação" value="—" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -116,14 +115,6 @@ export default function MedicinaOcupacionalPage() {
           />
         </div>
 
-        <Card
-          title="Cobertura da API v1"
-          subtitle="Resumo do que está disponível para medicina ocupacional."
-        >
-          <div className="text-sm text-slate-700">
-            Requisições clínicas unificadas e integração com enfermagem/farmácia não estão disponíveis na API v1.
-          </div>
-        </Card>
       </div>
     </AppLayout>
   )

@@ -16,7 +16,6 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -89,8 +88,8 @@ export default function MedicinaPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
           <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Anamnese" value="—" hint="Indisponível na API v1" />
-          <MetricCard label="Diagnósticos" value="—" hint="Indisponível na API v1" />
+          <MetricCard label="Anamnese" value="—" />
+          <MetricCard label="Diagnósticos" value="—" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -150,29 +149,6 @@ export default function MedicinaPage() {
           />
         </div>
 
-        <Card
-          title="Cobertura da API v1"
-          subtitle="Resumo do que está disponível para o módulo de medicina."
-        >
-          <div className="text-sm text-slate-700">
-            Disponível:
-            <ul className="mt-2 list-disc pl-5">
-              <li>Cadastro de pacientes</li>
-              <li>Requisição de análises laboratoriais</li>
-              <li>Catálogo de exames laboratoriais</li>
-              <li>Geração de PDF de resultados (via API v1: <code>/api/v1/clinical/labrequest/&lt;id&gt;/pdf_resultados/</code>)</li>
-            </ul>
-
-            <div className="mt-4">
-              Indisponível na API v1:
-              <ul className="mt-2 list-disc pl-5">
-                <li>Atendimento clínico (anamnese, hipóteses, diagnósticos, plano)</li>
-                <li>Requisições clínicas unificadas (laboratório, exames médicos, procedimentos, farmácia)</li>
-                <li>Vínculo entre requisição e execução em enfermagem/farmácia</li>
-              </ul>
-            </div>
-          </div>
-        </Card>
       </div>
     </AppLayout>
   )

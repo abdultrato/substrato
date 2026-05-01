@@ -10,6 +10,14 @@ import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
 import { routeParamToString } from "@/lib/routeParams";
 
+function toArray<T>(raw: any): T[] {
+    if (Array.isArray(raw)) return raw as T[];
+    if (raw && typeof raw === "object" && Array.isArray((raw as any).results)) {
+        return (raw as any).results as T[];
+    }
+    return [];
+}
+
 export default function EditarRequisicaoPage () {
     const params = useParams();
     const id = routeParamToString( (params as any)?.id );
@@ -31,16 +39,16 @@ export default function EditarRequisicaoPage () {
         try {
             setLoading( true );
             setError( null );
-            const req = await apiFetch<Requisicao>( `/requisicoes/${id}/` );
+            const req = await apiFetch<Requisicao>( `/clinical/labrequest/${id}/` );
             const tipoReq = (req?.tipo as any) || "LAB";
 
-            const [pacs, exs] = await Promise.all( [
+            const [pacsRaw, exsRaw] = await Promise.all( [
                 apiFetch( "/pacientes/" ),
-                apiFetch( tipoReq === "MED" ? "/exames-medicos/" : "/exames/" ),
+                apiFetch( tipoReq === "MED" ? "/clinical/medicalexam/" : "/exames/" ),
             ] );
 
-            setPacientes( pacs || [] );
-            setExames( exs || [] );
+            setPacientes( toArray<Paciente>(pacsRaw) );
+            setExames( toArray<Exame | ExameMedico>( exsRaw ) );
 
             setPaciente( req.paciente?.toString() || "" );
             setTipo( tipoReq );
@@ -85,12 +93,12 @@ export default function EditarRequisicaoPage () {
             if ( tipo === "MED" ) payload.exames_medicos = selecionados
             else payload.exames = selecionados
 
-            await apiFetch( `/requisicoes/${id}/`, {
+            await apiFetch( `/clinical/labrequest/${id}/`, {
                 method: "PATCH",
                 body: JSON.stringify( payload ),
             } );
 
-            router.push( `/requisicoes/${id}` );
+            router.push( `/requests/${id}` );
         } catch ( err: any ) {
             setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao salvar" ));
         } finally {
