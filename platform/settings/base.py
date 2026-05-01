@@ -659,6 +659,13 @@ JAZZMIN_UI_TWEAKS = {
 # MIDDLEWARE
 # =========================================================
 
+ENABLE_TENANT_LIMIT_MIDDLEWARE = get_env("ENABLE_TENANT_LIMIT_MIDDLEWARE", "true").lower() in ("1", "true", "yes", "on")
+ENABLE_TENANT_AUDIT_MIDDLEWARE = get_env("ENABLE_TENANT_AUDIT_MIDDLEWARE", "true").lower() in ("1", "true", "yes", "on")
+ENABLE_LEGACY_USER_ACTIVITY_MIDDLEWARE = (
+    get_env("ENABLE_LEGACY_USER_ACTIVITY_MIDDLEWARE", "false").lower() in ("1", "true", "yes", "on")
+)
+ENABLE_API_LOGGING_MIDDLEWARE = get_env("ENABLE_API_LOGGING_MIDDLEWARE", "true").lower() in ("1", "true", "yes", "on")
+
 MIDDLEWARE = [
     *(["django_prometheus.middleware.PrometheusBeforeMiddleware"] if _module_available("django_prometheus") else []),
     "django.middleware.security.SecurityMiddleware",
@@ -678,12 +685,13 @@ MIDDLEWARE = [
     # request context
     "infrastructure.middleware.request_user.RequestUserMiddleware",
     # limites por tenant
-    "infrastructure.middleware.limits.TenantLimitMiddleware",
+    *(["infrastructure.middleware.limits.TenantLimitMiddleware"] if ENABLE_TENANT_LIMIT_MIDDLEWARE else []),
     # auditoria
-    "infrastructure.middleware.audit.TenantAuditMiddleware",
-    "infrastructure.middleware.user_activity.UserActivityMiddleware",
+    *(["infrastructure.middleware.audit.TenantAuditMiddleware"] if ENABLE_TENANT_AUDIT_MIDDLEWARE else []),
+    # Middleware legado (duplicava persistência de atividade em BD).
+    *(["infrastructure.middleware.user_activity.UserActivityMiddleware"] if ENABLE_LEGACY_USER_ACTIVITY_MIDDLEWARE else []),
     # logging
-    "infrastructure.middleware.performance.APILoggingMiddleware",
+    *(["infrastructure.middleware.performance.APILoggingMiddleware"] if ENABLE_API_LOGGING_MIDDLEWARE else []),
     *(["django_prometheus.middleware.PrometheusAfterMiddleware"] if _module_available("django_prometheus") else []),
 ]
 

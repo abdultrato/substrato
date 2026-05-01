@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { SessionUser } from "@/lib/session"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
@@ -54,6 +54,9 @@ interface NavItem {
 }
 
 const ALL_GROUPS = Object.values(GROUPS)
+const SESSION_PREFETCHED_ROUTES = new Set<string>()
+const PRIORITY_PREFETCH_DELAY_MS = 120
+const PRIORITY_PREFETCH_LIMIT = 5
 
 /**
  * Definição dos menus com RBAC
@@ -95,7 +98,6 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     const pathname = usePathname()
     const router = useRouter()
     const { isDark, toggle: toggleTheme } = useTheme()
-    const prefetchedRoutesRef = useRef<Set<string>>(new Set())
 
     const hasAccess = useCallback((item: NavItem) => {
         if (!item.groups) return true
@@ -108,8 +110,8 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     )
 
     const prefetchRoute = useCallback((href: string) => {
-        if (!href || prefetchedRoutesRef.current.has(href)) return
-        prefetchedRoutesRef.current.add(href)
+        if (!href || SESSION_PREFETCHED_ROUTES.has(href)) return
+        SESSION_PREFETCHED_ROUTES.add(href)
         router.prefetch(href)
     }, [router])
 
@@ -126,24 +128,41 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             "/laboratory",
             "/invoices",
             "/farmacia",
-        ].filter((href) => allowed.has(href))
+        ]
+            .filter((href) => allowed.has(href))
+            .slice(0, PRIORITY_PREFETCH_LIMIT)
 
         if (!priority.length) return
 
-        if ("requestIdleCallback" in window && "cancelIdleCallback" in window) {
-            const idleId = window.requestIdleCallback(
-                () => {
-                    for (const href of priority) prefetchRoute(href)
-                },
-                { timeout: 1200 }
-            )
-            return () => window.cancelIdleCallback(idleId)
+        let cancelled = false
+        let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+        const scheduleQueue = () => {
+            const queue = [...priority]
+            const run = () => {
+                if (cancelled) return
+                const next = queue.shift()
+                if (!next) return
+                prefetchRoute(next)
+                if (queue.length) timeoutId = setTimeout(run, PRIORITY_PREFETCH_DELAY_MS)
+            }
+            run()
         }
 
-        const timerId = setTimeout(() => {
-            for (const href of priority) prefetchRoute(href)
-        }, 220)
-        return () => clearTimeout(timerId)
+        if ("requestIdleCallback" in window && "cancelIdleCallback" in window) {
+            const idleId = window.requestIdleCallback(scheduleQueue, { timeout: 1200 })
+            return () => {
+                cancelled = true
+                if (timeoutId) clearTimeout(timeoutId)
+                window.cancelIdleCallback(idleId)
+            }
+        }
+
+        timeoutId = setTimeout(scheduleQueue, 220)
+        return () => {
+            cancelled = true
+            if (timeoutId) clearTimeout(timeoutId)
+        }
     }, [prefetchRoute, visibleItems])
 
     const menu = (
@@ -191,10 +210,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         <Link
                             key={item.href}
                             href={item.href}
-                            prefetch
+                            prefetch={false}
                             onClick={onClose}
                             onMouseEnter={() => prefetchRoute(item.href)}
                             onFocus={() => prefetchRoute(item.href)}
+                            onTouchStart={() => prefetchRoute(item.href)}
                             title={item.desc}
                             aria-current={active ? "page" : undefined}
                             className={`group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${

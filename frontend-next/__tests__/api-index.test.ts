@@ -242,4 +242,52 @@ describe("API facade contract", () => {
     expect(r2).toEqual({ results: [{ id: 7 }] })
     expect((global.fetch as any).mock.calls.length).toBe(1)
   })
+
+  it("serve cache stale e revalida em background sem bloquear a resposta", async () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"))
+
+      ;(global.fetch as any)
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ results: [{ id: 1 }] }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ results: [{ id: 1 }, { id: 2 }] }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        )
+
+      const first = await apiFetch("/patients/", {
+        clientCacheTtlMs: 10,
+        staleWhileRevalidateMs: 5000,
+      })
+      expect(first).toEqual({ results: [{ id: 1 }] })
+      expect((global.fetch as any).mock.calls.length).toBe(1)
+
+      vi.setSystemTime(new Date("2026-01-01T00:00:01.200Z"))
+      const stale = await apiFetch("/patients/", {
+        clientCacheTtlMs: 10,
+        staleWhileRevalidateMs: 5000,
+      })
+      expect(stale).toEqual({ results: [{ id: 1 }] })
+      expect((global.fetch as any).mock.calls.length).toBe(2)
+
+      await Promise.resolve()
+      await Promise.resolve()
+
+      const refreshed = await apiFetch("/patients/", {
+        clientCacheTtlMs: 10,
+        staleWhileRevalidateMs: 5000,
+        staleWhileRevalidate: false,
+      })
+      expect(refreshed).toEqual({ results: [{ id: 1 }, { id: 2 }] })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

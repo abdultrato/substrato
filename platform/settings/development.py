@@ -67,8 +67,10 @@ USE_X_FORWARDED_HOST = True
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-REDIS_URL = os.getenv("REDIS_URL")
-if REDIS_URL:
+# Em desenvolvimento, só usa Redis quando USE_REDIS=true.
+# Isso evita latência alta quando REDIS_URL está definido mas o serviço não está ativo.
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
+if USE_REDIS and REDIS_URL:
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
@@ -76,6 +78,10 @@ if REDIS_URL:
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "IGNORE_EXCEPTIONS": True,
+                # Timeouts curtos para não travar requests em ambiente local.
+                "SOCKET_CONNECT_TIMEOUT": float(os.getenv("REDIS_SOCKET_CONNECT_TIMEOUT", "0.2")),
+                "SOCKET_TIMEOUT": float(os.getenv("REDIS_SOCKET_TIMEOUT", "0.2")),
+                "RETRY_ON_TIMEOUT": False,
             },
         }
     }
@@ -91,6 +97,23 @@ SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
+# Em desenvolvimento, reduzir overhead de request para navegação mais instantânea.
+# Mantemos apenas middlewares essenciais ao fluxo funcional local.
+_DEV_DISABLED_MIDDLEWARE = {
+    "infrastructure.middleware.limits.TenantLimitMiddleware",
+    "infrastructure.middleware.audit.TenantAuditMiddleware",
+    "infrastructure.middleware.user_activity.UserActivityMiddleware",
+    "infrastructure.middleware.performance.APILoggingMiddleware",
+}
+MIDDLEWARE = [mw for mw in MIDDLEWARE if mw not in _DEV_DISABLED_MIDDLEWARE]
 
-LOGGING["root"]["level"] = "DEBUG"
+# Reduz ruído de logs frequentes (ex.: rbac_denied) que pode degradar I/O em dev.
+_dev_loggers = LOGGING.setdefault("loggers", {})
+_dev_loggers.setdefault("security.permissions.rbac", {"handlers": ["console"], "propagate": False})
+_dev_loggers["security.permissions.rbac"]["level"] = os.getenv("DEV_RBAC_LOG_LEVEL", "WARNING").upper()
+_dev_loggers.setdefault("metrics", {"handlers": ["console"], "propagate": False})
+_dev_loggers["metrics"]["level"] = os.getenv("DEV_METRICS_LOG_LEVEL", "WARNING").upper()
+
+
+LOGGING["root"]["level"] = os.getenv("DEV_ROOT_LOG_LEVEL", "INFO").upper()
 """Ajustes adicionais de desenvolvimento (debug, ferramentas locais)."""

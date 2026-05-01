@@ -22,6 +22,16 @@ export type ApiFetchOptions = RequestInit & {
    * Default: 15000.
    */
   clientCacheTtlMs?: number
+  /**
+   * Janela extra (ms) para retornar cache expirado enquanto revalida em background.
+   * Default: 120000.
+   */
+  staleWhileRevalidateMs?: number
+  /**
+   * Permite servir cache expirado por curto período enquanto revalida em background.
+   * Default: true.
+   */
+  staleWhileRevalidate?: boolean
 }
 export type ApiListMeta = {
   total?: number
@@ -189,10 +199,27 @@ export async function apiFetch<T = any>(
   const useClientCache = shouldUseClientCache(rewritten, options, responseType)
   const cacheKey = useClientCache ? buildClientCacheKey(rewritten, responseType) : null
   const cacheTtlMs = options.clientCacheTtlMs ?? DEFAULT_CLIENT_CACHE_TTL_MS
+  const staleWhileRevalidateMs = options.staleWhileRevalidateMs ?? DEFAULT_STALE_WHILE_REVALIDATE_MS
+  const allowStaleWhileRevalidate = options.staleWhileRevalidate !== false
 
   if (cacheKey) {
     const cached = readClientCache(cacheKey)
-    if (cached.hit) {
+    if (cached.hit && cached.state === "fresh") {
+      return cached.value as T
+    }
+    if (cached.hit && cached.state === "stale" && allowStaleWhileRevalidate) {
+      if (!inFlightGetRequests.has(cacheKey)) {
+        const refreshPromise = runRequest(false)
+          .then((result) => {
+            writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
+            return result
+          })
+          .catch(() => cached.value)
+          .finally(() => {
+            inFlightGetRequests.delete(cacheKey)
+          })
+        inFlightGetRequests.set(cacheKey, refreshPromise as Promise<unknown>)
+      }
       return cached.value as T
     }
     const inFlight = inFlightGetRequests.get(cacheKey)
@@ -201,8 +228,8 @@ export async function apiFetch<T = any>(
     }
   }
 
-  const runRequest = async (): Promise<T> => {
-    const requestActivity = beginRequestActivity(rewritten, method)
+  async function runRequest(trackActivity = true): Promise<T> {
+    const requestActivity = trackActivity ? beginRequestActivity(rewritten, method) : null
     // Log rewritten URL for debugging routing mismatches (dev-time only)
     try {
       // eslint-disable-next-line no-console
@@ -326,7 +353,7 @@ export async function apiFetch<T = any>(
       if (lastErr) throw lastErr
       throw new Error("Falha ao processar a requisição.")
     } finally {
-      finishRequestActivity(requestActivity)
+      if (requestActivity) finishRequestActivity(requestActivity)
     }
   }
 
@@ -336,7 +363,7 @@ export async function apiFetch<T = any>(
 
   const requestPromise = runRequest()
     .then((result) => {
-      writeClientCache(cacheKey, result, cacheTtlMs)
+      writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
       return result
     })
     .finally(() => {
@@ -348,10 +375,12 @@ export async function apiFetch<T = any>(
 }
 
 const DEFAULT_CLIENT_CACHE_TTL_MS = 15000
+const DEFAULT_STALE_WHILE_REVALIDATE_MS = 120000
 
 type ClientCacheEntry = {
   value: unknown
   expiresAt: number
+  staleUntil: number
 }
 
 const clientGetCache = new Map<string, ClientCacheEntry>()
@@ -382,20 +411,38 @@ function buildClientCacheKey(
   return `GET:${rewritten}:${responseType}`
 }
 
-function readClientCache(key: string): { hit: true; value: unknown } | { hit: false } {
+function readClientCache(
+  key: string
+): { hit: true; state: "fresh" | "stale"; value: unknown } | { hit: false } {
   const cached = clientGetCache.get(key)
   if (!cached) return { hit: false }
-  if (cached.expiresAt <= Date.now()) {
+  const now = Date.now()
+  if (cached.expiresAt > now) {
+    return { hit: true, state: "fresh", value: cached.value }
+  }
+  if (cached.staleUntil > now) {
+    return { hit: true, state: "stale", value: cached.value }
+  }
+  if (cached.staleUntil <= now) {
     clientGetCache.delete(key)
     return { hit: false }
   }
-  return { hit: true, value: cached.value }
+  return { hit: false }
 }
 
-function writeClientCache(key: string, value: unknown, ttlMs: number) {
+function writeClientCache(
+  key: string,
+  value: unknown,
+  ttlMs: number,
+  staleWhileRevalidateMs: number
+) {
+  const safeTtlMs = Math.max(1000, ttlMs)
+  const safeSWRMs = Math.max(0, staleWhileRevalidateMs)
+  const now = Date.now()
   clientGetCache.set(key, {
     value,
-    expiresAt: Date.now() + Math.max(1000, ttlMs),
+    expiresAt: now + safeTtlMs,
+    staleUntil: now + safeTtlMs + safeSWRMs,
   })
 }
 

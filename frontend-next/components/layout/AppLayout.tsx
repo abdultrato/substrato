@@ -8,7 +8,6 @@ import Header from "./Header"
 import Footer from "./Footer"
 import AccessDenied from "@/components/auth/AccessDenied"
 import { userHasAnyGroup } from "@/lib/rbac"
-import { usePathname } from "next/navigation"
 
 interface Props {
     children: ReactNode
@@ -26,7 +25,6 @@ export default function AppLayout ( {
     const { loading } = useAuthGuard()
     const { user } = useAuth()
     const [navOpen, setNavOpen] = useState( false )
-    const pathname = usePathname()
 
     useEffect( () => {
         if ( typeof window === "undefined" ) return
@@ -65,7 +63,7 @@ export default function AppLayout ( {
                     <Header user={user} onMenuClick={() => setNavOpen( true )} />
 
                     <main className="flex-1 px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
-                        <div key={pathname} className="page-transition">
+                        <div className="page-transition">
                             <AccessDenied requiredGroups={requiredGroups} user={user} />
                         </div>
                     </main>
@@ -98,7 +96,7 @@ export default function AppLayout ( {
                 <Header user={user} onMenuClick={() => setNavOpen( true )} />
 
                 <main className="flex-1 overflow-y-auto px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
-                    <div key={pathname} className="page-transition">
+                    <div className="page-transition">
                         {children}
                     </div>
                 </main>

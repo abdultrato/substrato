@@ -599,7 +599,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "medical_exam_name",
             ]
 
-    items = LabRequestItemSummarySerializer(source="items", many=True, read_only=True)
+    items = LabRequestItemSummarySerializer(many=True, read_only=True)
 
     class Meta:
         model = LabRequest

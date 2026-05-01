@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Loader2, Sparkles } from "lucide-react"
 import {
   subscribeRequestActivity,
@@ -8,6 +8,7 @@ import {
 import type { RequestActivityStartEvent } from "@/lib/requestActivity"
 
 const SHOW_DELAY_MS = 250
+const FLUSH_INTERVAL_MS = 80
 
 function pickLatest(events: RequestActivityStartEvent[]): RequestActivityStartEvent | null {
   if (!events.length) return null
@@ -17,27 +18,46 @@ function pickLatest(events: RequestActivityStartEvent[]): RequestActivityStartEv
 }
 
 export default function RequestActivityIndicator() {
-  const [pending, setPending] = useState<Record<string, RequestActivityStartEvent>>({})
+  const [pendingEntries, setPendingEntries] = useState<RequestActivityStartEvent[]>([])
   const [visible, setVisible] = useState(false)
   const [now, setNow] = useState(Date.now())
+  const pendingRef = useRef<Map<string, RequestActivityStartEvent>>(new Map())
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushPending = useCallback(() => {
+    flushTimerRef.current = null
+    setPendingEntries(Array.from(pendingRef.current.values()))
+  }, [])
+
+  const scheduleFlush = useCallback((immediate = false) => {
+    if (immediate) {
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
+      flushPending()
+      return
+    }
+    if (flushTimerRef.current) return
+    flushTimerRef.current = setTimeout(() => flushPending(), FLUSH_INTERVAL_MS)
+  }, [flushPending])
 
   useEffect(() => {
     return subscribeRequestActivity((event) => {
       if (event.phase === "start") {
-        setPending((prev) => ({ ...prev, [event.id]: event }))
+        pendingRef.current.set(event.id, event)
+        scheduleFlush()
         return
       }
-
-      setPending((prev) => {
-        if (!prev[event.id]) return prev
-        const next = { ...prev }
-        delete next[event.id]
-        return next
-      })
+      if (!pendingRef.current.has(event.id)) return
+      pendingRef.current.delete(event.id)
+      scheduleFlush()
     })
+  }, [scheduleFlush])
+
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current) clearTimeout(flushTimerRef.current)
+    }
   }, [])
 
-  const pendingEntries = useMemo(() => Object.values(pending), [pending])
   const pendingCount = pendingEntries.length
   const latest = useMemo(() => pickLatest(pendingEntries), [pendingEntries])
 
