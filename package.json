@@ -3,11 +3,11 @@
     "dev": "npm --prefix frontend-next run dev",
     "dev:frontend": "npm --prefix frontend-next run dev",
     "dev:backend": "python manage.py runserver 0.0.0.0:8000",
-    "dev:full": "concurrently -k -n django,next \"python manage.py runserver 0.0.0.0:8000\" \"npm --prefix frontend-next run dev\"",
+      "dev:full": "concurrently -k -n django,next \"python manage.py runserver 0.0.0.0:8000\" \"npm --prefix frontend-next run dev\"",
     "test:frontend": "npm --prefix frontend-next test -- --run"
   },
   "dependencies": {
-    "codex": "^0.2.3",
+      "codex": "^0.2.3",
     "concurrently": "^9.2.1",
     "http-proxy-middleware": "^3.0.5",
     "openai": "^6.34.0"
