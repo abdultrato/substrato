@@ -7,7 +7,7 @@ import pytest
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.tenants.models.tenant import Tenant
-from observability.audit import ActiveUsersView, register_event
+from observability.audit import ActiveUsersView, register_cloud_event, register_event
 
 
 def test_register_event_logs_structured_context():
@@ -30,6 +30,30 @@ def test_register_event_logs_structured_context():
             "endpoint": "/api/v1/billing/invoice/",
             "method": "POST",
             "status": 201,
+        },
+    )
+
+
+def test_register_cloud_event_logs_structured_context():
+    with patch("observability.audit.logger.info") as logger_info:
+        register_cloud_event(
+            action="cluster_failover",
+            status="completed",
+            source_cluster_id="cluster-a",
+            target_cluster_id="cluster-b",
+            deployment_id="dep-1",
+            details={"migrated_deployments": 1, "tasks_enqueued": 2},
+        )
+
+    logger_info.assert_called_once_with(
+        "AUDIT_CLOUD",
+        extra={
+            "action": "cluster_failover",
+            "status": "completed",
+            "source_cluster_id": "cluster-a",
+            "target_cluster_id": "cluster-b",
+            "deployment_id": "dep-1",
+            "details": {"migrated_deployments": 1, "tasks_enqueued": 2},
         },
     )
 

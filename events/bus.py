@@ -7,6 +7,8 @@ from typing import Any
 
 from django.db import transaction
 
+from .runtime_bridge import mirror_event_to_runtime
+
 logger = logging.getLogger("eventos")
 
 
@@ -61,15 +63,16 @@ class EventBus:
 
         if not handlers:
             logger.debug(f"Nenhum handler para {event_type.__name__}")
-            return
+        else:
+            logger.debug(f"Publicando {event_type.__name__} para {len(handlers)} handler(s)")
 
-        logger.debug(f"Publicando {event_type.__name__} para {len(handlers)} handler(s)")
+            for handler in handlers:
+                try:
+                    handler(event)
+                except Exception:
+                    logger.exception(f"Erro no handler {handler.__name__} para {event_type.__name__}")
 
-        for handler in handlers:
-            try:
-                handler(event)
-            except Exception:
-                logger.exception(f"Erro no handler {handler.__name__} para {event_type.__name__}")
+        mirror_event_to_runtime(event)
 
     # =====================================================
     # PUBLICAÇÃO APÓS COMMIT

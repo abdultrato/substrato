@@ -251,6 +251,17 @@ from django.core.cache import cache
 cache.clear()
 print("✅ Cache limpo!")
 PY
+
+  # ============================================================================
+  # SUBSTRATO OS runtime - sync inicial da outbox
+  # ============================================================================
+
+  log "🔁 Sincronizando outbox do SUBSTRATO OS..."
+  if ! python manage.py sync_substrato_outbox \
+    --batch-size "${SUBSTRATO_OS_SYNC_BATCH_SIZE:-500}" \
+    --retry-after-seconds "${SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS:-10}"; then
+    echo "[substrato] ⚠️  sync_substrato_outbox falhou, prosseguindo."
+  fi
 fi
 
 

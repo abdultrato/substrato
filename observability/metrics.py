@@ -71,6 +71,18 @@ ASYNC_TASK_EXECUTION_DURATION_SECONDS = Histogram(
     buckets=(0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 30, 60),
 )
 
+CLOUD_ROLLOUT_TASKS_TOTAL = Counter(
+    "substrato_cloud_rollout_tasks_total",
+    "Total de tarefas de rollout cloud enfileiradas.",
+    ["cluster_id", "module_key", "action"],
+)
+
+CLOUD_FAILOVER_TOTAL = Counter(
+    "substrato_cloud_failover_total",
+    "Total de operações de failover cloud executadas.",
+    ["source_cluster_id", "target_cluster_id", "status"],
+)
+
 
 def _status_group(status_code: int | None) -> str:
     try:
@@ -118,6 +130,22 @@ def observe_async_task_duration(task_name: str, duration_seconds: float, status:
         (status or "unknown").lower(),
         str(tenant_id or "unknown"),
     ).observe(max(0.0, float(duration_seconds or 0.0)))
+
+
+def register_cloud_rollout_task(cluster_id: str, module_key: str, action: str) -> None:
+    CLOUD_ROLLOUT_TASKS_TOTAL.labels(
+        str(cluster_id or "unknown"),
+        str(module_key or "unknown"),
+        str(action or "unknown"),
+    ).inc()
+
+
+def register_cloud_failover(source_cluster_id: str, target_cluster_id: str, status: str) -> None:
+    CLOUD_FAILOVER_TOTAL.labels(
+        str(source_cluster_id or "unknown"),
+        str(target_cluster_id or "unknown"),
+        str(status or "unknown"),
+    ).inc()
 
 
 def get_runtime_metrics():
@@ -171,12 +199,16 @@ __all__ = [
     "API_SLOW_REQUESTS_TOTAL",
     "ASYNC_TASK_ENQUEUE_TOTAL",
     "ASYNC_TASK_EXECUTION_DURATION_SECONDS",
+    "CLOUD_FAILOVER_TOTAL",
+    "CLOUD_ROLLOUT_TASKS_TOTAL",
     "INVOICE_RECALCULATION_DURATION",
     "START_TIME",
     "get_metrics",
     "get_runtime_metrics",
     "log_slow_request",
     "observe_async_task_duration",
+    "register_cloud_failover",
+    "register_cloud_rollout_task",
     "register_api_request",
     "register_async_task_enqueue",
     "register_error",

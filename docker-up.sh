@@ -69,6 +69,31 @@ service_runtime_status() {
   echo "$status"
 }
 
+container_env_value() {
+  local service="$1"
+  local key="$2"
+  local cid=""
+  local raw=""
+
+  cid=$($COMPOSE ps -q "$service" 2>/dev/null || true)
+  if [[ -z "${cid:-}" ]]; then
+    return 0
+  fi
+
+  raw=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$cid" 2>/dev/null || true)
+  awk -F= -v k="$key" '$1 == k {print substr($0, length(k) + 2)}' <<<"$raw" | tail -n 1
+}
+
+normalize_bool() {
+  local value="${1:-}"
+  value="$(tr '[:upper:]' '[:lower:]' <<<"$value")"
+  if [[ "$value" == "1" || "$value" == "true" || "$value" == "yes" || "$value" == "on" ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
 service_is_ready() {
   local service="$1"
   local status=""
@@ -96,15 +121,22 @@ Opções:
   --build      força rebuild das imagens
   --no-build   nunca tenta build (falha se imagem não existir)
   --no-wait    não aguarda healthcheck/estado running
+  --no-sync-outbox  não executa sync_substrato_outbox ao final do bootstrap
   -h, --help   mostra esta ajuda
 
 Variáveis de ambiente:
   DOCKER_UP_BUILD=auto|always|never   (padrão: auto)
   DOCKER_UP_FAST_IF_RUNNING=0|1       (padrão: 1)
   DOCKER_UP_NO_WAIT=0|1               (padrão: 0)
+  DOCKER_UP_SYNC_OUTBOX=0|1           (padrão: 1)
   DOCKER_UP_WAIT_TIMEOUT=<segundos>   (padrão: 90)
   DOCKER_UP_FRONTEND_READY_PATH=<rota> (padrão: /login/)
   DOCKER_UP_FRONTEND_TIMEOUT=<segundos> (padrão: 12)
+  SUBSTRATO_OS_RUNTIME_ENABLED=true|false (padrão: true)
+  SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY=true|false (padrão: false)
+  SUBSTRATO_OS_OUTBOX_PATH=<caminho no container> (padrão: /app/substrato_os_outbox.sqlite3)
+  SUBSTRATO_OS_SYNC_BATCH_SIZE=<inteiro> (padrão: 500)
+  SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS=<inteiro> (padrão: 10)
   DB_HOST_PORT=<porta>                (expõe o Postgres no host)
   REDIS_HOST_PORT=<porta>             (expõe o Redis no host)
 EOF
@@ -113,6 +145,7 @@ EOF
 BUILD_MODE="${DOCKER_UP_BUILD:-auto}"
 FAST_IF_RUNNING="${DOCKER_UP_FAST_IF_RUNNING:-1}"
 NO_WAIT="${DOCKER_UP_NO_WAIT:-0}"
+SYNC_OUTBOX="${DOCKER_UP_SYNC_OUTBOX:-1}"
 WAIT_TIMEOUT="${DOCKER_UP_WAIT_TIMEOUT:-90}"
 FRONTEND_READY_PATH="${DOCKER_UP_FRONTEND_READY_PATH:-/login/}"
 FRONTEND_TIMEOUT="${DOCKER_UP_FRONTEND_TIMEOUT:-12}"
@@ -131,6 +164,9 @@ for arg in "$@"; do
     ;;
   --no-wait)
     NO_WAIT="1"
+    ;;
+  --no-sync-outbox)
+    SYNC_OUTBOX="0"
     ;;
   -h|--help)
     print_help
@@ -151,6 +187,11 @@ fi
 
 if [[ "$FAST_IF_RUNNING" != "0" && "$FAST_IF_RUNNING" != "1" ]]; then
   err "✗ DOCKER_UP_FAST_IF_RUNNING inválido: $FAST_IF_RUNNING (use 0|1)"
+  exit 1
+fi
+
+if [[ "$SYNC_OUTBOX" != "0" && "$SYNC_OUTBOX" != "1" ]]; then
+  err "✗ DOCKER_UP_SYNC_OUTBOX inválido: $SYNC_OUTBOX (use 0|1)"
   exit 1
 fi
 
@@ -270,6 +311,40 @@ fi
 
 log "✓ Redis no host: localhost:${REDIS_HOST_PORT}"
 
+runtime_enabled_raw="${SUBSTRATO_OS_RUNTIME_ENABLED:-$(load_env_value "SUBSTRATO_OS_RUNTIME_ENABLED" ".env")}"
+if [[ -z "$runtime_enabled_raw" ]]; then
+  runtime_enabled_raw="true"
+fi
+export SUBSTRATO_OS_RUNTIME_ENABLED="$(normalize_bool "$runtime_enabled_raw")"
+
+runtime_offline_raw="${SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY:-$(load_env_value "SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY" ".env")}"
+if [[ -z "$runtime_offline_raw" ]]; then
+  runtime_offline_raw="false"
+fi
+export SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY="$(normalize_bool "$runtime_offline_raw")"
+
+outbox_path_raw="${SUBSTRATO_OS_OUTBOX_PATH:-$(load_env_value "SUBSTRATO_OS_OUTBOX_PATH" ".env")}"
+if [[ -z "$outbox_path_raw" ]]; then
+  outbox_path_raw="/app/substrato_os_outbox.sqlite3"
+fi
+export SUBSTRATO_OS_OUTBOX_PATH="$outbox_path_raw"
+
+SUBSTRATO_OS_SYNC_BATCH_SIZE="${SUBSTRATO_OS_SYNC_BATCH_SIZE:-500}"
+SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS="${SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS:-10}"
+
+if ! [[ "$SUBSTRATO_OS_SYNC_BATCH_SIZE" =~ ^[0-9]+$ ]] || [[ "$SUBSTRATO_OS_SYNC_BATCH_SIZE" -lt 1 ]]; then
+  err "✗ SUBSTRATO_OS_SYNC_BATCH_SIZE inválido: $SUBSTRATO_OS_SYNC_BATCH_SIZE"
+  exit 1
+fi
+
+if ! [[ "$SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS" =~ ^[0-9]+$ ]] || [[ "$SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS" -lt 0 ]]; then
+  err "✗ SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS inválido: $SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS"
+  exit 1
+fi
+
+log "✓ SUBSTRATO OS runtime: enabled=${SUBSTRATO_OS_RUNTIME_ENABLED}, offline_only=${SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY}"
+log "✓ SUBSTRATO OS outbox: ${SUBSTRATO_OS_OUTBOX_PATH}"
+
 # Habilitar BuildKit
 export DOCKER_BUILDKIT=1
 export COMPOSE_DOCKER_CLI_BUILD=1
@@ -294,8 +369,27 @@ esac
 did_compose_up=1
 
 if [[ "$FORCE_UP" == "0" && "$FAST_IF_RUNNING" == "1" && "$BUILD_MODE" != "always" ]] && all_core_services_ready; then
-  did_compose_up=0
-  log "ℹ️  Stack já está saudável; pulando \`compose up\` (use --force-up para forçar)."
+  backend_runtime_enabled="$(normalize_bool "$(container_env_value backend SUBSTRATO_OS_RUNTIME_ENABLED)")"
+  backend_runtime_offline="$(normalize_bool "$(container_env_value backend SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY)")"
+  backend_outbox_path="$(container_env_value backend SUBSTRATO_OS_OUTBOX_PATH)"
+
+  runtime_env_matches=1
+  if [[ "$backend_runtime_enabled" != "$SUBSTRATO_OS_RUNTIME_ENABLED" ]]; then
+    runtime_env_matches=0
+  fi
+  if [[ "$backend_runtime_offline" != "$SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY" ]]; then
+    runtime_env_matches=0
+  fi
+  if [[ "$backend_outbox_path" != "$SUBSTRATO_OS_OUTBOX_PATH" ]]; then
+    runtime_env_matches=0
+  fi
+
+  if [[ "$runtime_env_matches" == "1" ]]; then
+    did_compose_up=0
+    log "ℹ️  Stack já está saudável; pulando \`compose up\` (use --force-up para forçar)."
+  else
+    log "ℹ️  Stack saudável, mas env do runtime mudou; executando \`compose up\` para aplicar alterações."
+  fi
 fi
 
 if [[ "$did_compose_up" == "1" ]]; then
@@ -374,6 +468,19 @@ else
   log "ℹ️  curl não encontrado; pulando smoke tests."
 fi
 
+if [[ "$SYNC_OUTBOX" == "1" ]]; then
+  log "✓ Sincronizando outbox do SUBSTRATO OS..."
+  if $COMPOSE exec -T backend python manage.py sync_substrato_outbox \
+    --batch-size "$SUBSTRATO_OS_SYNC_BATCH_SIZE" \
+    --retry-after-seconds "$SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS"; then
+    ok "✓ Outbox sincronizada"
+  else
+    log "⚠️  Falha ao sincronizar outbox automaticamente (execute manualmente: $COMPOSE exec backend python manage.py sync_substrato_outbox --force)"
+  fi
+else
+  log "ℹ️  Sync da outbox desativado por DOCKER_UP_SYNC_OUTBOX=0"
+fi
+
 echo ""
 echo -e "${GREEN}=================================================="
 echo "✅ Substrato iniciado!"
@@ -394,5 +501,6 @@ echo "  Diagnóstico:    ${YELLOW}./scripts/stack_doctor.sh --fix${NC}"
 echo "  Rebuild total:  ${YELLOW}./docker-up.sh --build${NC}"
 echo "  Shell Django:   ${YELLOW}$COMPOSE exec backend python manage.py shell${NC}"
 echo "  Superuser:      ${YELLOW}$COMPOSE exec backend python manage.py createsuperuser${NC}"
+echo "  Sync outbox:    ${YELLOW}$COMPOSE exec backend python manage.py sync_substrato_outbox${NC}"
 echo "  Parar stack:    ${YELLOW}$COMPOSE down${NC}"
 echo ""

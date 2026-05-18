@@ -44,3 +44,25 @@ def register_event(
 
 registrar_evento = register_event
 """Registro de eventos de auditoria para monitoramento e trilha."""
+
+
+def register_cloud_event(
+    *,
+    action: str,
+    status: str,
+    source_cluster_id: str | None = None,
+    target_cluster_id: str | None = None,
+    deployment_id: str | None = None,
+    details: dict | None = None,
+):
+    logger.info(
+        "AUDIT_CLOUD",
+        extra={
+            "action": action,
+            "status": status,
+            "source_cluster_id": source_cluster_id,
+            "target_cluster_id": target_cluster_id,
+            "deployment_id": deployment_id,
+            "details": details or {},
+        },
+    )

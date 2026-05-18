@@ -50,6 +50,7 @@ VIEWSET_GROUPS = {
 
 def register_routes(router):
     registered_routes: set[tuple[str, str]] = set()
+    permission_exceptions = {"monitoring-export_job", "monitoring-cloud_control"}
 
     def _register(route: str, basename: str, viewset):
         key = (route, basename)
@@ -57,7 +58,7 @@ def register_routes(router):
             return
         # Enforce RBAC uniformly for all registered ViewSets.
         # Exceção: export_job usa controle próprio por tenant/user no payload do job.
-        if basename != "monitoring-export_job":
+        if basename not in permission_exceptions:
             viewset.permission_classes = [RBACPermission]
         router.register(route, viewset, basename=basename)
         registered_routes.add(key)

@@ -66,6 +66,23 @@ SYSTEM_VERSION_DISPLAY = (get_env("SYSTEM_VERSION_DISPLAY", "") or "").strip() o
 REDIS_URL = get_env("REDIS_URL", "redis://127.0.0.1:6379/1")
 
 # =========================================================
+# SUBSTRATO OS RUNTIME (eventos/cache/outbox)
+# =========================================================
+SUBSTRATO_OS_RUNTIME_ENABLED = get_env("SUBSTRATO_OS_RUNTIME_ENABLED", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY = get_env("SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+SUBSTRATO_OS_OUTBOX_PATH = get_env("SUBSTRATO_OS_OUTBOX_PATH", str(BASE_DIR / "substrato_os_outbox.sqlite3"))
+
+# =========================================================
 # PROMETHEUS (django-prometheus)
 # =========================================================
 #
