@@ -47,6 +47,12 @@ jobs:
           echo "DEPLOY_URL=${{ vars.PRODUCTION_URL || 'https://example.com' }}" >> $GITHUB_ENV
         fi
         echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+    - name: 🧮 Compute image URIs
+      run: |
+        REPO_LOWER="$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')"
+        echo "BACKEND_IMAGE=ghcr.io/${REPO_LOWER}/backend:${IMAGE_TAG}" >> $GITHUB_ENV
+        echo "FRONTEND_IMAGE=ghcr.io/${REPO_LOWER}/frontend:${IMAGE_TAG}" >> $GITHUB_ENV
     
     - name: 🔎 Validate deploy secrets
       run: |
@@ -64,20 +70,113 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
     
-    - name: 📦 Deploy backend to ECS
+    - name: 📦 Deploy services to ECS
       id: deploy
+      env:
+        AWS_ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
+        AWS_ECS_SERVICE_BACKEND: ${{ secrets.AWS_ECS_SERVICE_BACKEND }}
+        AWS_ECS_SERVICE_FRONTEND: ${{ secrets.AWS_ECS_SERVICE_FRONTEND }}
+        AWS_ECS_CONTAINER_BACKEND: ${{ secrets.AWS_ECS_CONTAINER_BACKEND }}
+        AWS_ECS_CONTAINER_FRONTEND: ${{ secrets.AWS_ECS_CONTAINER_FRONTEND }}
       run: |
-        echo "Deploying backend image tag '${{ env.IMAGE_TAG }}' to ${{ env.DEPLOY_ENV }}..."
-        aws ecs update-service \
-          --cluster "${{ secrets.AWS_ECS_CLUSTER }}" \
-          --service "${{ secrets.AWS_ECS_SERVICE_BACKEND }}" \
-          --force-new-deployment
+        set -euo pipefail
 
-        echo "Deploying frontend image tag '${{ env.IMAGE_TAG }}' to ${{ env.DEPLOY_ENV }}..."
-        aws ecs update-service \
-          --cluster "${{ secrets.AWS_ECS_CLUSTER }}" \
-          --service "${{ secrets.AWS_ECS_SERVICE_FRONTEND }}" \
-          --force-new-deployment
+        echo "Deploying backend image '${BACKEND_IMAGE}' to ${{ env.DEPLOY_ENV }}..."
+        echo "Deploying frontend image '${FRONTEND_IMAGE}' to ${{ env.DEPLOY_ENV }}..."
+
+        register_and_deploy () {
+          local service_name="$1"
+          local target_image="$2"
+          local target_container="$3"
+          local label="$4"
+          local base_task_arn
+          local new_task_arn
+
+          base_task_arn="$(aws ecs describe-services \
+            --cluster "${AWS_ECS_CLUSTER}" \
+            --services "${service_name}" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+
+          aws ecs describe-task-definition \
+            --task-definition "${base_task_arn}" \
+            --query 'taskDefinition' \
+            > "taskdef-${label}.json"
+
+          TASKDEF_IN="taskdef-${label}.json" \
+          TASKDEF_OUT="taskdef-${label}-payload.json" \
+          TARGET_IMAGE="${target_image}" \
+          TARGET_CONTAINER="${target_container}" \
+          python - <<'PY'
+        import json
+        import os
+        import sys
+        
+        taskdef_in = os.environ["TASKDEF_IN"]
+        taskdef_out = os.environ["TASKDEF_OUT"]
+        target_image = (os.environ.get("TARGET_IMAGE") or "").strip()
+        target_container = (os.environ.get("TARGET_CONTAINER") or "").strip()
+        
+        if not target_image:
+            raise SystemExit("TARGET_IMAGE is required")
+        
+        with open(taskdef_in, encoding="utf-8") as fp:
+            taskdef = json.load(fp)
+        
+        for key in (
+            "taskDefinitionArn",
+            "revision",
+            "status",
+            "requiresAttributes",
+            "compatibilities",
+            "registeredAt",
+            "registeredBy",
+            "deregisteredAt",
+        ):
+            taskdef.pop(key, None)
+        
+        containers = taskdef.get("containerDefinitions") or []
+        if not containers:
+            raise SystemExit("Task definition has no containerDefinitions")
+        
+        if target_container:
+            matches = [c for c in containers if c.get("name") == target_container]
+            if len(matches) != 1:
+                names = ", ".join(c.get("name", "<unnamed>") for c in containers)
+                raise SystemExit(
+                    f"Container '{target_container}' not found in task definition. Available: {names}"
+                )
+            container = matches[0]
+        else:
+            container = containers[0]
+        
+        container["image"] = target_image
+        
+        with open(taskdef_out, "w", encoding="utf-8") as fp:
+            json.dump(taskdef, fp, separators=(",", ":"))
+        PY
+
+          new_task_arn="$(aws ecs register-task-definition \
+            --cli-input-json "file://taskdef-${label}-payload.json" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+
+          aws ecs update-service \
+            --cluster "${AWS_ECS_CLUSTER}" \
+            --service "${service_name}" \
+            --task-definition "${new_task_arn}" \
+            --force-new-deployment \
+            > /dev/null
+
+          aws ecs wait services-stable \
+            --cluster "${AWS_ECS_CLUSTER}" \
+            --services "${service_name}"
+
+          echo "${label} task definition: ${new_task_arn}"
+        }
+
+        register_and_deploy "${AWS_ECS_SERVICE_BACKEND}" "${BACKEND_IMAGE}" "${AWS_ECS_CONTAINER_BACKEND}" "backend"
+        register_and_deploy "${AWS_ECS_SERVICE_FRONTEND}" "${FRONTEND_IMAGE}" "${AWS_ECS_CONTAINER_FRONTEND}" "frontend"
 
         echo "url=${{ env.DEPLOY_URL }}" >> $GITHUB_OUTPUT
     

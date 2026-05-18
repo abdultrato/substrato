@@ -27,10 +27,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Prepare Pages artifact
+        run: |
+          set -euo pipefail
+          rm -rf .pages-dist
+          mkdir -p .pages-dist/static/img .pages-dist/frontend-next/app
+          cp index.html styles.css script.js .pages-dist/
+          cp static/img/logo.png .pages-dist/static/img/logo.png
+          cp frontend-next/app/login-side.png .pages-dist/frontend-next/app/login-side.png
+          touch .pages-dist/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '.pages-dist'
 
       - name: Deploy to GitHub Pages
         id: deploy
