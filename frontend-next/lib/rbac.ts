@@ -5,6 +5,8 @@ export const GROUPS = {
   RECEPCAO: "Recepcionista",
   LABORATORIO: "Técnico de Laboratório",
   ENFERMAGEM: "Enfermeiro",
+  PROFESSOR: "Professor",
+  STUDENT: "Estudante",
   FARMACIA: "Técnico de Farmácia",
   MANUTENCAO: "Manutenção",
   MEDICINA: "Médico",
@@ -26,14 +28,19 @@ const GROUP_SYNONYMS: Record<string, string[]> = {
     "superusuario",
     "staff",
   ],
+  Professor: ["teacher", "professor", "docente"],
+  Estudante: ["student", "estudante", "aluno", "discente"],
 }
 
 export type WorkspaceKey =
   | "dashboard"
   | "reception"
   | "laboratory"
+  | "healthcare"
   | "blood-bank"
   | "nursing"
+  | "education"
+  | "education-student"
   | "medicine"
   | "pharmacy"
   | "occupational-medicine"
@@ -55,6 +62,20 @@ export const WORKSPACES: WorkspaceDef[] = [
     href: "/",
     description: "Overview of the day and operational metrics.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
+  },
+  {
+    key: "healthcare",
+    label: "Healthcare",
+    href: "/healthcare",
+    description: "Unified clinical workspace for healthcare teams.",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ],
   },
   {
     key: "reception",
@@ -83,6 +104,20 @@ export const WORKSPACES: WorkspaceDef[] = [
     href: "/nursing",
     description: "Collections, procedures, and operational support.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
+  },
+  {
+    key: "education",
+    label: "Education",
+    href: "/education",
+    description: "Academic workflows for teachers and coordinators.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.PROFESSOR],
+  },
+  {
+    key: "education-student",
+    label: "Student Area",
+    href: "/education/student",
+    description: "Student dashboard for classes, grades, and attendance.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.STUDENT],
   },
   {
     key: "medicine",
@@ -178,6 +213,19 @@ export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[
 }
 
 export function getDefaultWorkspaceHref(user: SessionUser | null): string {
+  if (
+    userHasAnyGroup(user, [
+      GROUPS.RECEPCAO,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ])
+  ) {
+    return "/healthcare"
+  }
+  if (userHasAnyGroup(user, [GROUPS.STUDENT])) return "/education/student"
+  if (userHasAnyGroup(user, [GROUPS.PROFESSOR])) return "/education"
   // Admin + contabilidade usam o dashboard como home por padrão.
   if (userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE])) return "/"
 

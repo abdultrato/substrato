@@ -38,6 +38,9 @@ export default function LoginPage () {
         router.prefetch( "/" )
         router.prefetch( "/patients" )
         router.prefetch( "/laboratory/requests" )
+        router.prefetch( "/education" )
+        router.prefetch( "/education/student" )
+        router.prefetch( "/healthcare" )
     }, [router])
 
     async function handleSubmit ( e: any ) {

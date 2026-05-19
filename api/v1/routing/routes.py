@@ -5,6 +5,7 @@ from api.v1.bloodbank.viewsets import VIEWSET_MAP as BLOODBANK_VIEWSET_MAP
 from api.v1.clinical.viewsets import VIEWSET_MAP as CLINICAL_VIEWSET_MAP
 from api.v1.consultations.viewsets import VIEWSET_MAP as CONSULTATIONS_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
+from api.v1.education.viewsets import VIEWSET_MAP as EDUCATION_VIEWSET_MAP
 from api.v1.equipment.viewsets import VIEWSET_MAP as EQUIPMENT_VIEWSET_MAP
 from api.v1.external_entities.viewsets import VIEWSET_MAP as EXTERNAL_ENTITIES_VIEWSET_MAP
 from api.v1.human_resources.viewsets import VIEWSET_MAP as HUMAN_RESOURCES_VIEWSET_MAP
@@ -45,6 +46,7 @@ VIEWSET_GROUPS = {
     "surgery": SURGERY_VIEWSET_MAP,
     "human_resources": HUMAN_RESOURCES_VIEWSET_MAP,
     "monitoring": MONITORING_VIEWSET_MAP,
+    "education": EDUCATION_VIEWSET_MAP,
 }
 
 

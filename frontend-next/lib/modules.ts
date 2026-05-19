@@ -145,6 +145,21 @@ const MODULES_BASE: ModuleGroup[] = [
     ],
   },
   {
+    key: "education",
+    label: "Education",
+    resources: [
+      { key: "student", label: "Students", endpoint: "/education/student/", adminListHref: "/admin/education/studentprofile/" },
+      { key: "teacher", label: "Teachers", endpoint: "/education/teacher/", adminListHref: "/admin/education/teacherprofile/" },
+      { key: "course", label: "Courses", endpoint: "/education/course/", adminListHref: "/admin/education/course/" },
+      { key: "classroom", label: "Classrooms", endpoint: "/education/classroom/", adminListHref: "/admin/education/classroom/" },
+      { key: "enrollment", label: "Enrollments", endpoint: "/education/enrollment/", adminListHref: "/admin/education/enrollment/" },
+      { key: "attendance", label: "Attendance", endpoint: "/education/attendance/", adminListHref: "/admin/education/attendancerecord/" },
+      { key: "grade", label: "Grades", endpoint: "/education/grade/", adminListHref: "/admin/education/graderecord/" },
+      { key: "examination", label: "Examinations", endpoint: "/education/examination/", adminListHref: "/admin/education/examination/" },
+      { key: "content", label: "Learning Content", endpoint: "/education/content/", adminListHref: "/admin/education/learningcontent/" },
+    ],
+  },
+  {
     key: "tenants",
     label: "Inquilinos",
     resources: [
@@ -289,6 +304,16 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/consultations/doctors/": "/admin/human-resources/employee/",
   "/consultations/specialty/": "/admin/consultations/consultationspecialty/",
   "/consultations/holiday/": "/admin/consultations/holiday/",
+  // Education
+  "/education/student/": "/admin/education/studentprofile/",
+  "/education/teacher/": "/admin/education/teacherprofile/",
+  "/education/course/": "/admin/education/course/",
+  "/education/classroom/": "/admin/education/classroom/",
+  "/education/enrollment/": "/admin/education/enrollment/",
+  "/education/attendance/": "/admin/education/attendancerecord/",
+  "/education/grade/": "/admin/education/graderecord/",
+  "/education/examination/": "/admin/education/examination/",
+  "/education/content/": "/admin/education/learningcontent/",
   // Tenants
   "/inquilinos/inquilino/": "/admin/tenants/tenant/",
   "/inquilinos/configuracaoinquilino/": "/admin/tenants/tenantconfiguration/",
@@ -384,6 +409,9 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   recursos_humanos: "human_resources",
   consultations: "consultations",
   consultas: "consultations",
+  education: "education",
+  educacao: "education",
+  educação: "education",
   accounting: "accounting",
   contabilidade: "accounting",
   notifications: "notifications",

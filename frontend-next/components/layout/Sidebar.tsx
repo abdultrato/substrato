@@ -33,6 +33,7 @@ import {
     Bell,
     Bug,
     Settings,
+    GraduationCap,
     Moon,
     Sun,
 } from "lucide-react"
@@ -63,9 +64,12 @@ const PRIORITY_PREFETCH_LIMIT = 5
  */
 const NAV_ITEMS: NavItem[] = [
     { href: "/", label: "Dashboard", icon: ClipboardList, desc: "Visão geral e indicadores", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
+    { href: "/healthcare", label: "Healthcare", icon: Stethoscope, desc: "Hub clínico unificado", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/reception", label: "Recepção", icon: BriefcaseIcon, desc: "Triagem e atendimento", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO] },
     { href: "/patients", label: "Pacientes", icon: Users, desc: "Cadastro e histórico", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/consultations", label: "Consultas", icon: CalendarClock, desc: "Agenda clínica", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.CONTABILIDADE] },
+    { href: "/education", label: "Educação", icon: GraduationCap, desc: "Fluxos académicos de docência", groups: [GROUPS.ADMIN, GROUPS.PROFESSOR] },
+    { href: "/education/student", label: "Área do Estudante", icon: GraduationCap, desc: "Aulas, notas e presença", groups: [GROUPS.ADMIN, GROUPS.STUDENT] },
     { href: "/requests", label: "Requisições", icon: FileText, desc: "Pedidos clínicos", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/medical-records", label: "Prontuário", icon: ScrollText, desc: "Histórico médico", groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/medicine", label: "Medicina", icon: Stethoscope, desc: "Atendimento médico", groups: [GROUPS.ADMIN, GROUPS.MEDICINA] },
@@ -122,8 +126,10 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
         const priority = [
             "/",
             "/patients",
+            "/healthcare",
             "/reception",
             "/consultations",
+            "/education",
             "/requests",
             "/laboratory",
             "/invoices",
