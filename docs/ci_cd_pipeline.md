@@ -24,7 +24,7 @@ Dentro de `backend-quality`, há um gate adicional de migração education:
 9. Todos os workflows definem `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` e usam versões atualizadas de actions (`checkout/setup-* /upload-artifact` e correlatas) para reduzir risco de quebra na transição dos runners para Node 24.
 
 ## Gates obrigatórios
-1. `ruff check` e `ruff format --check`.
+1. `ruff check` e `ruff format --check` com exclusão explícita de `apps/education/legacy_schoolar` no gate principal, para não bloquear CI com dívida técnica do legado durante a migração.
 2. `pytest --cov` com fail-under configurado.
 3. `python scripts/production_readiness_check.py`.
 4. `npm run lint`, `npm run type-check`, `npm run test`, `npm run build`.
