@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from urllib.parse import urlparse
 
 from django.db.models import Avg, Count, Q
@@ -147,13 +147,14 @@ class ActivityReportPdfView(APIView):
         raw_date = (request.query_params.get("date") or "").strip()
         if raw_date:
             try:
-                date_ref = datetime.strptime(raw_date, "%Y-%m-%d").date()
-            except Exception as exc:
+                date_ref = date.fromisoformat(raw_date)
+            except ValueError as exc:
                 raise ValidationError({"date": "Use o formato YYYY-MM-DD."}) from exc
         else:
             date_ref = now.date()
 
-        end = timezone.make_aware(datetime(date_ref.year, date_ref.month, date_ref.day, 0, 0, 0)) + timedelta(days=1)
+        tz = timezone.get_current_timezone()
+        end = datetime(date_ref.year, date_ref.month, date_ref.day, 0, 0, 0, tzinfo=tz) + timedelta(days=1)
         days = self.PERIOD_DAYS[period]
         start = end - timedelta(days=days)
 
@@ -248,22 +249,19 @@ class ActivityReportPdfView(APIView):
             average_duration_ms=Avg("duration_ms"),
         )
 
-        detail_rows = (
-            activities_qs.order_by("-created_at")
-            .values(
-                "created_at",
-                "method",
-                "path",
-                "status_code",
-                "duration_ms",
-                "view_basename",
-                "view_action",
-                "user__username",
-                "user__first_name",
-                "user__last_name",
-                "metadata",
-            )[:limit]
-        )
+        detail_rows = activities_qs.order_by("-created_at").values(
+            "created_at",
+            "method",
+            "path",
+            "status_code",
+            "duration_ms",
+            "view_basename",
+            "view_action",
+            "user__username",
+            "user__first_name",
+            "user__last_name",
+            "metadata",
+        )[:limit]
 
         entries = []
         for row in detail_rows:

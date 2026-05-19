@@ -1,6 +1,6 @@
-import django_filters
-
 """FilterSet para logs de auditoria de atividades."""
+
+import django_filters
 
 from api.core.filters import SafeFilterSet
 from apps.audit_activities.models.user_activity import UserActivity

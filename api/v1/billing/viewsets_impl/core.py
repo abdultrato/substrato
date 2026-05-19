@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 import hashlib
 import json
@@ -150,6 +150,10 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raise ValidationError({field_name: f"Valor deve estar entre {min_value} e {max_value}."})
         return parsed
 
+    @staticmethod
+    def _aware_midnight(year: int, month: int, day: int) -> datetime:
+        return datetime(year, month, day, 0, 0, 0, tzinfo=timezone.get_current_timezone())
+
     def _resolve_period(self, request):
         now = timezone.localtime()
 
@@ -170,13 +174,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raw_date = (request.query_params.get("date") or "").strip()
             if raw_date:
                 try:
-                    date_ref = datetime.strptime(raw_date, "%Y-%m-%d").date()
-                except Exception as exc:
+                    date_ref = date.fromisoformat(raw_date)
+                except ValueError as exc:
                     raise ValidationError({"date": "Use o formato YYYY-MM-DD."}) from exc
             else:
                 date_ref = now.date()
 
-            start = timezone.make_aware(datetime(date_ref.year, date_ref.month, date_ref.day, 0, 0, 0))
+            start = self._aware_midnight(date_ref.year, date_ref.month, date_ref.day)
             end = start + timedelta(days=1)
             label = f"Diário {date_ref.strftime('%d/%m/%Y')}"
             filters = {"date": date_ref.isoformat(), "year": date_ref.year}
@@ -190,11 +194,8 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 max_value=12,
                 default=now.month,
             )
-            start = timezone.make_aware(datetime(year, month, 1, 0, 0, 0))
-            if month == 12:
-                end = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0))
-            else:
-                end = timezone.make_aware(datetime(year, month + 1, 1, 0, 0, 0))
+            start = self._aware_midnight(year, month, 1)
+            end = self._aware_midnight(year + 1, 1, 1) if month == 12 else self._aware_midnight(year, month + 1, 1)
             label = f"Mensal {month:02d}/{year}"
             filters = {"year": year, "month": month}
             return period, start, end, label, filters
@@ -210,11 +211,8 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             )
             month_start = ((quarter - 1) * 3) + 1
             month_end = month_start + 3
-            start = timezone.make_aware(datetime(year, month_start, 1, 0, 0, 0))
-            if month_end > 12:
-                end = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0))
-            else:
-                end = timezone.make_aware(datetime(year, month_end, 1, 0, 0, 0))
+            start = self._aware_midnight(year, month_start, 1)
+            end = self._aware_midnight(year + 1, 1, 1) if month_end > 12 else self._aware_midnight(year, month_end, 1)
             label = f"Trimestral T{quarter}/{year}"
             filters = {"year": year, "quarter": quarter}
             return period, start, end, label, filters
@@ -230,17 +228,14 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             )
             month_start = 1 if semester == 1 else 7
             month_end = 7 if semester == 1 else 13
-            start = timezone.make_aware(datetime(year, month_start, 1, 0, 0, 0))
-            if month_end == 13:
-                end = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0))
-            else:
-                end = timezone.make_aware(datetime(year, month_end, 1, 0, 0, 0))
+            start = self._aware_midnight(year, month_start, 1)
+            end = self._aware_midnight(year + 1, 1, 1) if month_end == 13 else self._aware_midnight(year, month_end, 1)
             label = f"Semestral S{semester}/{year}"
             filters = {"year": year, "semester": semester}
             return period, start, end, label, filters
 
-        start = timezone.make_aware(datetime(year, 1, 1, 0, 0, 0))
-        end = timezone.make_aware(datetime(year + 1, 1, 1, 0, 0, 0))
+        start = self._aware_midnight(year, 1, 1)
+        end = self._aware_midnight(year + 1, 1, 1)
         label = f"Anual {year}"
         filters = {"year": year}
         return period, start, end, label, filters
@@ -265,9 +260,12 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             qs = user_model.objects.filter(pk=user_id)
             tenant = getattr(request, "tenant", None)
             request_user = getattr(request, "user", None)
-            if tenant is not None and not getattr(request_user, "is_superuser", False):
-                if hasattr(user_model, "tenant"):
-                    qs = qs.filter(tenant=tenant)
+            if (
+                tenant is not None
+                and not getattr(request_user, "is_superuser", False)
+                and hasattr(user_model, "tenant")
+            ):
+                qs = qs.filter(tenant=tenant)
             target_user = qs.first()
             if not target_user:
                 raise ValidationError({"user_id": "Utilizador não encontrado no tenant."})
@@ -366,24 +364,21 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 }
             )
 
-        invoice_rows = (
-            invoices_qs.order_by("-created_at")
-            .values(
-                "id",
-                "custom_id",
-                "status",
-                "origin",
-                "subtotal",
-                "vat_amount",
-                "total",
-                "created_at",
-                "created_by",
-                "created_by__username",
-                "created_by__first_name",
-                "created_by__last_name",
-                "patient__name",
-            )[:limit]
-        )
+        invoice_rows = invoices_qs.order_by("-created_at").values(
+            "id",
+            "custom_id",
+            "status",
+            "origin",
+            "subtotal",
+            "vat_amount",
+            "total",
+            "created_at",
+            "created_by",
+            "created_by__username",
+            "created_by__first_name",
+            "created_by__last_name",
+            "patient__name",
+        )[:limit]
 
         invoices_payload = []
         for row in invoice_rows:
