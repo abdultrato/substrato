@@ -139,6 +139,12 @@ Variáveis de ambiente:
   SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS=<inteiro> (padrão: 10)
   DB_HOST_PORT=<porta>                (expõe o Postgres no host)
   REDIS_HOST_PORT=<porta>             (expõe o Redis no host)
+  DOCKER_UP_CREATE_GLOBAL_ADMIN=0|1  (cria usuário global-admin após bootstrap)
+  DOCKER_UP_CREATE_HEALTH_ADMIN=0|1  (cria usuário admin para healthcare após bootstrap)
+  DOCKER_UP_CREATE_EDU_ADMIN=0|1     (cria usuário admin para education após bootstrap)
+  DOCKER_UP_CREATE_USERS_RESET_PWD=0|1 (se 1, redefine senha para os usuários criados)
+  DOCKER_UP_CREATE_USERS_PASSWORD=<senha> (opcional: senha padrao para usuarios criados; prefira usar variavel de ambiente segura)
+  DOCKER_UP_USE_NOHUP=0|1              (se 1, executa comandos longos via nohup em background)
 EOF
 }
 
@@ -150,6 +156,12 @@ WAIT_TIMEOUT="${DOCKER_UP_WAIT_TIMEOUT:-90}"
 FRONTEND_READY_PATH="${DOCKER_UP_FRONTEND_READY_PATH:-/login/}"
 FRONTEND_TIMEOUT="${DOCKER_UP_FRONTEND_TIMEOUT:-12}"
 FORCE_UP=0
+CREATE_GLOBAL_ADMIN="${DOCKER_UP_CREATE_GLOBAL_ADMIN:-0}"
+CREATE_HEALTH_ADMIN="${DOCKER_UP_CREATE_HEALTH_ADMIN:-0}"
+CREATE_EDU_ADMIN="${DOCKER_UP_CREATE_EDU_ADMIN:-0}"
+CREATE_USERS_RESET_PWD="${DOCKER_UP_CREATE_USERS_RESET_PWD:-0}"
+CREATE_USERS_PASSWORD="${DOCKER_UP_CREATE_USERS_PASSWORD:-}"
+USE_NOHUP="${DOCKER_UP_USE_NOHUP:-0}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -167,6 +179,18 @@ for arg in "$@"; do
     ;;
   --no-sync-outbox)
     SYNC_OUTBOX="0"
+    ;;
+  --create-global-admin)
+    CREATE_GLOBAL_ADMIN=1
+    ;;
+  --create-health-admin)
+    CREATE_HEALTH_ADMIN=1
+    ;;
+  --create-edu-admin)
+    CREATE_EDU_ADMIN=1
+    ;;
+  --use-nohup)
+    USE_NOHUP=1
     ;;
   -h|--help)
     print_help
@@ -470,15 +494,82 @@ fi
 
 if [[ "$SYNC_OUTBOX" == "1" ]]; then
   log "✓ Sincronizando outbox do SUBSTRATO OS..."
-  if $COMPOSE exec -T backend python manage.py sync_substrato_outbox \
-    --batch-size "$SUBSTRATO_OS_SYNC_BATCH_SIZE" \
-    --retry-after-seconds "$SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS"; then
-    ok "✓ Outbox sincronizada"
+  cmd="$COMPOSE exec -T backend python manage.py sync_substrato_outbox --batch-size \"$SUBSTRATO_OS_SYNC_BATCH_SIZE\" --retry-after-seconds \"$SUBSTRATO_OS_SYNC_RETRY_AFTER_SECONDS\""
+  if [[ "${USE_NOHUP}" == "1" ]]; then
+    run_exec_command "$cmd"
+    ok "✓ Outbox sincronização iniciada em background"
   else
-    log "⚠️  Falha ao sincronizar outbox automaticamente (execute manualmente: $COMPOSE exec backend python manage.py sync_substrato_outbox --force)"
+    if eval "$cmd"; then
+      ok "✓ Outbox sincronizada"
+    else
+      log "⚠️  Falha ao sincronizar outbox automaticamente (execute manualmente: $COMPOSE exec backend python manage.py sync_substrato_outbox --force)"
+    fi
   fi
 else
   log "ℹ️  Sync da outbox desativado por DOCKER_UP_SYNC_OUTBOX=0"
+fi
+
+
+# Helper para executar comandos possivelmente em background com nohup
+run_exec_command() {
+  local cmd="$*"
+  if [[ "${USE_NOHUP}" == "1" ]]; then
+    mkdir -p "/tmp/docker-up-logs"
+    ts=$(date +%Y%m%d%H%M%S)
+    logfile="/tmp/docker-up-logs/docker-up-${ts}.log"
+    log "ℹ️  Executando em background (nohup): ${cmd} -> ${logfile}"
+    nohup sh -c "${cmd}" >"${logfile}" 2>&1 &
+  else
+    eval "${cmd}"
+  fi
+}
+
+# Criação opcional de usuários RBAC (desenvolvimento/demo)
+if [[ "${CREATE_GLOBAL_ADMIN}" == "1" || "${CREATE_HEALTH_ADMIN}" == "1" || "${CREATE_EDU_ADMIN}" == "1" ]]; then
+  log "✓ Criando usuários RBAC solicitados..."
+  # Convenções de username/senha padrão; pode ser sobrescrito via env/alias manualmente.
+  DEFAULT_PWD="admin123"
+  # Use password from env if provided (avoids passing via CLI history)
+  if [[ -n "${CREATE_USERS_PASSWORD}" ]]; then
+    DEFAULT_PWD="${CREATE_USERS_PASSWORD}"
+  else
+    DEFAULT_PWD="admin123"
+  fi
+  RESET_FLAG=""
+  if [[ "${CREATE_USERS_RESET_PWD}" == "1" ]]; then
+    RESET_FLAG="--reset-password"
+  fi
+
+  # Função auxiliar para executar o comando com timeout/erro tratado
+  run_create_user() {
+    local username="$1"; shift
+    local group="$1"; shift
+    local name="$1"; shift
+    log "-> Criando: ${username} (grupo: ${group})"
+    cmd="$COMPOSE exec -T backend python manage.py create_user_rbac --username \"${username}\" --password \"${DEFAULT_PWD}\" --name \"${name}\" --email \"${username}@local\" --group \"${group}\" ${RESET_FLAG}"
+    if [[ "${USE_NOHUP}" == "1" ]]; then
+      run_exec_command "$cmd"
+      ok "✓ Usuário ${username} criação iniciada em background"
+    else
+      if eval "$cmd"; then
+        ok "✓ Usuário ${username} criado/atualizado"
+      else
+        err "✗ Falha ao criar/atualizar ${username}"
+      fi
+    fi
+  }
+
+  # Mapear grupos: global -> ADMIN, healthcare -> MEDICINA, education -> PROFESSOR
+  if [[ "${CREATE_GLOBAL_ADMIN}" == "1" ]]; then
+    run_create_user "global-admin" "ADMIN" "Global Administrator"
+  fi
+  if [[ "${CREATE_HEALTH_ADMIN}" == "1" ]]; then
+    run_create_user "health-admin" "MEDICINA" "Healthcare Administrator"
+  fi
+  if [[ "${CREATE_EDU_ADMIN}" == "1" ]]; then
+    run_create_user "education-admin" "PROFESSOR" "Education Administrator"
+  fi
+  ok "✓ Criação de usuários finalizada (se aplicável)"
 fi
 
 echo ""

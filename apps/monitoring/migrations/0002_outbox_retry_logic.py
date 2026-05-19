@@ -37,12 +37,7 @@ class Migration(migrations.Migration):
                 max_length=140,
                 blank=True,
                 default='',
-                db_index=True,
                 unique=True,  # Adicionar constraint UNIQUE
             ),
-        ),
-        migrations.AlterUniqueTogether(
-            name='transactionaloutboxevent',
-            unique_together={('idempotency_key',)},
         ),
     ]

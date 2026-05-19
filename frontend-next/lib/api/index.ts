@@ -52,6 +52,9 @@ function rewriteUrl(url: string): string {
   if (u === "/monitoring/telemetry" || u === "/monitoring/telemetry/") return "/monitoring/telemetry"
   if (u.startsWith("/monitoring/telemetry/")) return u
 
+  // Audit endpoints are canonical as /audit on the backend.
+  if (u === "/audit" || u.startsWith("/audit/")) return u
+
   // Canonical frontend URLs are English; rewrite to backend resources where needed.
   if (u === "/consultations" || u === "/consultations/") return "/consultations/consultation"
   if (u.startsWith("/consultations/")) {

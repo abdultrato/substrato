@@ -71,6 +71,19 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/receipt/")
   })
 
+  it("preserva o endpoint de auditoria sem reescrever para /auditoria", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/audit/atividade/relatorio/pdf/?period=daily")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/audit/atividade/relatorio/pdf/?period=daily")
+  })
+
   it("reescreve alias legado de seguradora para insurer", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {

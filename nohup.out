@@ -1,0 +1,57 @@
+==================================================
+🐳 Substrato - Docker Setup
+==================================================
+[1;33m✓ Verificando Docker...[0m
+[0;32m✓ Docker OK[0m
+[1;33mℹ️  .env já existe[0m
+[1;33mℹ️  Reutilizando porta atual do PostgreSQL: localhost:5434[0m
+[1;33m✓ PostgreSQL no host: localhost:5434[0m
+[1;33mℹ️  Reutilizando porta atual do Redis: localhost:6380[0m
+[1;33m✓ Redis no host: localhost:6380[0m
+[1;33m✓ SUBSTRATO OS runtime: enabled=true, offline_only=false[0m
+[1;33m✓ SUBSTRATO OS outbox: /app/substrato_os_outbox.sqlite3[0m
+[1;33m✓ Build mode: auto (sem rebuild forçado)[0m
+[1;33mℹ️  Stack já está saudável; pulando `compose up` (use --force-up para forçar).[0m
+[1;33m✓ Aguardando containers (timeout: 90s)...[0m
+   → db [0;32m✓ (healthy)[0m
+   → redis [0;32m✓ (healthy)[0m
+   → backend [0;32m✓ (healthy)[0m
+   → frontend [0;32m✓ (running)[0m
+[1;33m✓ Status dos containers:[0m
+NAME                    IMAGE                   COMMAND                  SERVICE       CREATED        STATUS                 PORTS
+substrato_backend       substrato-backend       "/app/entrypoint.sh …"   backend       2 hours ago    Up 2 hours (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+substrato_celery        substrato-celery        "/usr/local/bin/subs…"   celery        35 hours ago   Up 4 hours             8000/tcp
+substrato_celery_beat   substrato-celery_beat   "/usr/local/bin/subs…"   celery_beat   35 hours ago   Up 4 hours             8000/tcp
+substrato_db            postgres:15-alpine      "docker-entrypoint.s…"   db            2 hours ago    Up 2 hours (healthy)   0.0.0.0:5434->5432/tcp, [::]:5434->5432/tcp
+substrato_frontend      node:20-bookworm-slim   "docker-entrypoint.s…"   frontend      35 hours ago   Up 4 hours             0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+substrato_nginx         nginx:alpine            "/docker-entrypoint.…"   nginx         35 hours ago   Up 4 hours             0.0.0.0:80->80/tcp, [::]:80->80/tcp
+substrato_redis         redis:7-alpine          "docker-entrypoint.s…"   redis         2 hours ago    Up 2 hours (healthy)   0.0.0.0:6380->6379/tcp, [::]:6380->6379/tcp
+[1;33m✓ Verificando endpoints HTTP...[0m
+   → Backend:  200 (0.003034s)
+   → Frontend: 200 (0.168182s)
+   → Nginx:    200 (0.159910s)
+[1;33m✓ Sincronizando outbox do SUBSTRATO OS...[0m
+[2026-05-19 12:46:28,769] INFO pdf.engine PDF fontes: Tinos ativado (/app/static/fonts/Tinos-Regular.ttf, /app/static/fonts/Tinos-Bold.ttf).
+Outbox sincronizada (delivered=0, failed=0, remaining=0).
+[0;32m✓ Outbox sincronizada[0m
+
+[0;32m==================================================
+✅ Substrato iniciado!
+==================================================\033[0m
+
+[0;32mURLs:[0m
+  • Backend:  \033[1;33mhttp://localhost:8000\033[0m
+  • Admin:    \033[1;33mhttp://localhost:8000/admin\033[0m
+  • Frontend: \033[1;33mhttp://localhost:3000\033[0m
+  • Nginx:    \033[1;33mhttp://localhost\033[0m
+  • PostgreSQL:\033[1;33m localhost:5434\033[0m
+
+[0;32mComandos úteis:[0m
+  Logs:           \033[1;33mdocker compose logs -f\033[0m
+  Diagnóstico:    \033[1;33m./scripts/stack_doctor.sh --fix\033[0m
+  Rebuild total:  \033[1;33m./docker-up.sh --build\033[0m
+  Shell Django:   \033[1;33mdocker compose exec backend python manage.py shell\033[0m
+  Superuser:      \033[1;33mdocker compose exec backend python manage.py createsuperuser\033[0m
+  Sync outbox:    \033[1;33mdocker compose exec backend python manage.py sync_substrato_outbox\033[0m
+  Parar stack:    \033[1;33mdocker compose down\033[0m
+
