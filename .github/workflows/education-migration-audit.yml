@@ -1,0 +1,229 @@
+name: Education Migration Audit
+
+on:
+  schedule:
+    - cron: "20 3 * * *"
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail workflow if final audit has divergences"
+        required: true
+        default: true
+        type: boolean
+      auto_fix:
+        description: "Run safe auto-fix before final audit"
+        required: true
+        default: false
+        type: boolean
+      fallback_tenant:
+        description: "Fallback tenant identifier/id (optional)"
+        required: false
+        default: ""
+        type: string
+      legacy_db_path:
+        description: "Path to legacy SQLite file inside runner/repo (optional)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: education-migration-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Run Education Migration Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run audit
+        env:
+          DJANGO_SETTINGS_MODULE: platform.settings.development
+          DJANGO_SECRET_KEY: migration-audit-manual-secret
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_STRICT: ${{ github.event.inputs.strict }}
+          DISPATCH_AUTO_FIX: ${{ github.event.inputs.auto_fix }}
+          DISPATCH_FALLBACK_TENANT: ${{ github.event.inputs.fallback_tenant }}
+          DISPATCH_LEGACY_DB_PATH: ${{ github.event.inputs.legacy_db_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          strict="${DISPATCH_STRICT:-true}"
+          auto_fix="${DISPATCH_AUTO_FIX:-false}"
+          fallback_tenant="${DISPATCH_FALLBACK_TENANT:-}"
+          legacy_db_path="${DISPATCH_LEGACY_DB_PATH:-}"
+
+          if [[ "${EVENT_NAME}" == "schedule" ]]; then
+            strict="true"
+            auto_fix="false"
+            fallback_tenant=""
+            legacy_db_path=""
+          fi
+
+          args=(--format json --output logs/education-migration-audit-manual.json --output-markdown logs/education-migration-audit-manual.md)
+
+          if [[ "${strict}" == "true" ]]; then
+            args+=(--strict)
+          fi
+          if [[ "${auto_fix}" == "true" ]]; then
+            args+=(--auto-fix)
+          fi
+          if [[ -n "${fallback_tenant}" ]]; then
+            args+=(--fallback-tenant "${fallback_tenant}")
+          fi
+          if [[ -n "${legacy_db_path}" ]]; then
+            if [[ ! -f "${legacy_db_path}" ]]; then
+              echo "Legacy DB path not found in runner: ${legacy_db_path}"
+              exit 1
+            fi
+            args+=(--legacy-db "${legacy_db_path}")
+          fi
+
+          python manage.py education_migration_audit "${args[@]}"
+
+      - name: Publish migration summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ -f logs/education-migration-audit-manual.md ]]; then
+            cat logs/education-migration-audit-manual.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Education migration audit report was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload audit artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-migration-audit-manual-${{ github.run_id }}
+          path: |
+            logs/education-migration-audit-manual.json
+            logs/education-migration-audit-manual.md
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Extract audit overview outputs
+        id: audit_overview
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          python scripts/extract_education_audit_overview.py --input logs/education-migration-audit-manual.json --github-output "$GITHUB_OUTPUT"
+
+      - name: Notify scheduled failure via issue
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const title = 'Education migration audit failed (scheduled)';
+            const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            const body = [
+              'A execução agendada do workflow `education-migration-audit` falhou.',
+              '',
+              `- Data (UTC): ${new Date().toISOString()}`,
+              `- Workflow run: ${runUrl}`,
+              `- Audit status: ${{ steps.audit_overview.outputs.status }}`,
+              `- Divergent segments: ${{ steps.audit_overview.outputs.divergent_segments_csv }}`,
+              `- Divergent segments count: ${{ steps.audit_overview.outputs.divergent_segments_count }}`,
+              `- Total missing in target: ${{ steps.audit_overview.outputs.total_missing }}`,
+              `- Total extra in target: ${{ steps.audit_overview.outputs.total_extra }}`,
+              `- Warnings: ${{ steps.audit_overview.outputs.warnings_total }}`,
+              '',
+              'Ação recomendada:',
+              '1. Abrir o run e rever o relatório Markdown/JSON anexado.',
+              '2. Corrigir divergências e reexecutar a auditoria manual com `auto_fix` quando aplicável.',
+            ].join('\n');
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const existing = openIssues.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+              });
+            }
+
+      - name: Resolve scheduled failure issue on success
+        if: ${{ success() && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const title = 'Education migration audit failed (scheduled)';
+            const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const existing = openIssues.find((issue) => issue.title === title);
+            if (!existing) {
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: existing.number,
+              body: [
+                'A execução agendada de auditoria voltou a passar.',
+                '',
+                `- Data (UTC): ${new Date().toISOString()}`,
+                `- Workflow run: ${runUrl}`,
+                `- Audit status: ${{ steps.audit_overview.outputs.status }}`,
+                `- Divergent segments: ${{ steps.audit_overview.outputs.divergent_segments_csv }}`,
+                `- Divergent segments count: ${{ steps.audit_overview.outputs.divergent_segments_count }}`,
+                `- Total missing in target: ${{ steps.audit_overview.outputs.total_missing }}`,
+                `- Total extra in target: ${{ steps.audit_overview.outputs.total_extra }}`,
+                `- Warnings: ${{ steps.audit_overview.outputs.warnings_total }}`,
+                '',
+                'Encerrando incidente automaticamente.',
+              ].join('\n'),
+            });
+
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number: existing.number,
+              state: 'closed',
+            });

@@ -7,6 +7,11 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 3. `security`: SAST e auditoria de dependências.
 4. `docker-build-smoke`: build de imagens backend/frontend sem push.
 
+Dentro de `backend-quality`, há um gate adicional de migração education:
+1. `python manage.py education_migration_audit --strict --output logs/education-migration-audit-ci.json --output-markdown logs/education-migration-audit-ci.md --format json`
+2. Relatórios JSON e Markdown são publicados como artefacto versionado por execução.
+3. O relatório Markdown é publicado em `GITHUB_STEP_SUMMARY` para leitura imediata no run.
+
 ## Publicação e deploy
 1. `/.github/workflows/build.yml`: publica imagens Docker no GHCR em `push` para `main`, tags `v*` e execução manual.
 2. `/.github/workflows/deploy.yml`: deploy manual com aprovação por ambiente (`staging`/`production`) e validação explícita de segredos.
@@ -15,6 +20,7 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 5. `/.github/dependabot.yml`: atualização automática semanal de dependências Python, NPM e GitHub Actions.
 6. `/.github/workflows/dependency-review.yml`: bloqueio de PR para vulnerabilidades de dependência de alta severidade.
 7. `/.github/workflows/sbom.yml`: geração e publicação de SBOM para backend e frontend.
+8. `/.github/workflows/education-migration-audit.yml`: auditoria de migração education em modo manual e agendado (`cron` diário às `03:20 UTC`), com opções `strict`/`auto_fix` no modo manual, saída JSON+Markdown, resumo no run (incluindo cenários de falha), extração centralizada de `overview` em outputs do workflow via `scripts/extract_education_audit_overview.py`, notificação automática por issue quando a execução agendada falha, detalhe de métricas (`status`, segmentos divergentes, contagem de segmentos divergentes, `missing/extra`, `warnings`) na issue com base no bloco `overview` do JSON de auditoria, fecho automático dessa issue quando o agendado volta a passar, `concurrency` ativo e retenção de artefactos por 30 dias.
 
 ## Gates obrigatórios
 1. `ruff check` e `ruff format --check`.
@@ -22,6 +28,7 @@ O workflow principal é `/.github/workflows/ci.yml` com quatro estágios:
 3. `python scripts/production_readiness_check.py`.
 4. `npm run lint`, `npm run type-check`, `npm run test`, `npm run build`.
 5. `bandit` e `npm audit` em dependências de produção.
+6. `education_migration_audit --strict` para bloquear regressão da trilha de migração `schoolar-s -> education`.
 
 ## Estratégia de branches
 1. `main`: release branch.

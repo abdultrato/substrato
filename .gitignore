@@ -238,3 +238,11 @@ uploads/
 
 # Frontend lockfile must be versioned for deterministic CI/CD
 !frontend-next/package-lock.json
+
+# Legacy Schoolar local env files (keep only examples tracked)
+apps/education/legacy_schoolar/.env
+apps/education/legacy_schoolar/.env.*
+!apps/education/legacy_schoolar/.env.example
+apps/education/legacy_schoolar/frontend/.env
+apps/education/legacy_schoolar/frontend/.env.*
+!apps/education/legacy_schoolar/frontend/.env.example

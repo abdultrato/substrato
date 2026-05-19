@@ -5,7 +5,8 @@
 COMPOSE ?= docker compose
 BACKEND_COVERAGE_MIN ?= 35
 
-.PHONY: help build up up-build down logs shell migrate createsuperuser clean test lint
+.PHONY: help build up up-build down logs shell migrate createsuperuser clean test lint \
+	education-migration-preview education-migration-audit education-migration-audit-markdown education-migration-audit-strict education-migration-audit-fix
 
 help:
 	@echo "🐳 Substrato - Docker Commands"
@@ -49,6 +50,11 @@ help:
 	@echo "  make ops-alert-rules    - Validar regras Prometheus com promtool"
 	@echo "  make ops-slo            - Resumo rápido de latência/erros no /metrics"
 	@echo "  make production-readiness - Gate de prontidão para produção"
+	@echo "  make education-migration-preview - Inventário rápido de migração education"
+	@echo "  make education-migration-audit   - Auditoria de divergências (education)"
+	@echo "  make education-migration-audit-markdown - Auditoria com relatório Markdown em logs/"
+	@echo "  make education-migration-audit-strict - Auditoria strict (falha se divergente)"
+	@echo "  make education-migration-audit-fix - Auto-fix + strict para education"
 	@echo ""
 
 build:
@@ -221,5 +227,20 @@ ops-slo:
 
 production-readiness:
 	python scripts/production_readiness_check.py
+
+education-migration-preview:
+	python manage.py education_migrate_legacy --format text
+
+education-migration-audit:
+	python manage.py education_migration_audit --format text
+
+education-migration-audit-markdown:
+	python manage.py education_migration_audit --output-markdown logs/education-migration-audit.md --format markdown
+
+education-migration-audit-strict:
+	python manage.py education_migration_audit --strict --format text
+
+education-migration-audit-fix:
+	python manage.py education_migration_audit --auto-fix --strict --format text
 
 .DEFAULT_GOAL := help

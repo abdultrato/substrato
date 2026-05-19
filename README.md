@@ -56,6 +56,7 @@ make production-readiness
 - Modelo empresarial (visão executiva): `docs/enterprise_model.md`
 - Baseline de segurança: `docs/security_baseline.md`
 - Pipeline de CI/CD empresarial: `docs/ci_cd_pipeline.md`
+- Runbook de migração education: `docs/education_migration_runbook.md`
 - Runbook de release e rollback: `docs/release_and_rollback.md`
 - Política de reporte de vulnerabilidades: `SECURITY.md`
 - Gestão de mudanças (change management): `docs/change_management.md`

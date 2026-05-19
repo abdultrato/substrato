@@ -99,11 +99,38 @@ jobs:
           DB_PORT: "5432"
         run: python scripts/production_readiness_check.py
 
+      - name: Education migration audit gate (strict)
+        env:
+          DJANGO_SETTINGS_MODULE: platform.settings.development
+          DJANGO_SECRET_KEY: test-secret-key
+          DB_ENGINE: postgres
+          DB_NAME: substrato_ci
+          DB_USER: substrato_ci
+          DB_PASSWORD: substrato_ci
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          python manage.py education_migration_audit --strict --output logs/education-migration-audit-ci.json --output-markdown logs/education-migration-audit-ci.md --format json
+
+      - name: Publish education migration summary
+        run: |
+          cat logs/education-migration-audit-ci.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload backend coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage-backend
           path: coverage.xml
+          if-no-files-found: error
+
+      - name: Upload education migration audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-migration-audit-ci-${{ github.run_id }}
+          path: |
+            logs/education-migration-audit-ci.json
+            logs/education-migration-audit-ci.md
           if-no-files-found: error
 
   frontend-quality:
