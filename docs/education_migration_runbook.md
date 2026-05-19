@@ -81,3 +81,4 @@ pytest -q tests/test_education_migrate_legacy_command.py tests/test_education_mi
 10. O JSON inclui `overview` com resumo executivo: `status`, `segments_match/divergent`, `divergent_segments`, `total_missing_in_target`, `total_extra_in_target`, `warnings_total` e flags de `auto_fix`.
 11. O workflow extrai `overview` para outputs internos e reutiliza os mesmos valores em notificações de falha e de recuperação, reduzindo duplicação de lógica.
 12. A extração de outputs do `overview` é implementada por `scripts/extract_education_audit_overview.py`, que também pode ser executado localmente para diagnóstico rápido.
+13. O workflow `education-migration-audit` aplica `python manage.py migrate --noinput` antes da auditoria para garantir o esquema mínimo no runner limpo.

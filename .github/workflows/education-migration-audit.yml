@@ -55,6 +55,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Apply database migrations
+        env:
+          DJANGO_SETTINGS_MODULE: platform.settings.development
+          DJANGO_SECRET_KEY: migration-audit-manual-secret
+        run: |
+          python manage.py migrate --noinput
+
       - name: Run audit
         env:
           DJANGO_SETTINGS_MODULE: platform.settings.development
