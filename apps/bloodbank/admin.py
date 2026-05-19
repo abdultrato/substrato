@@ -39,13 +39,15 @@ class BloodDonationAdmin(BloodBankCoreAdmin):
         "screening_status",
         "collected_at",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + (
+    list_filter = (
+        *BloodBankCoreAdmin.list_filter,
         "status",
         "screening_status",
         "blood_type",
         "donor_role",
     )
-    search_fields = BloodBankCoreAdmin.search_fields + (
+    search_fields = (
+        *BloodBankCoreAdmin.search_fields,
         "bag_identifier",
         "donor__name",
     )
@@ -63,8 +65,8 @@ class BloodStorageAdmin(BloodBankCoreAdmin):
         "temperature_max_c",
         "is_active",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + ("is_active",)
-    search_fields = BloodBankCoreAdmin.search_fields + ("name", "location")
+    list_filter = (*BloodBankCoreAdmin.list_filter, "is_active")
+    search_fields = (*BloodBankCoreAdmin.search_fields, "name", "location")
     ordering = ("name",)
 
     def get_readonly_fields(self, request, obj=None):
@@ -94,12 +96,14 @@ class BloodUnitAdmin(BloodBankCoreAdmin):
         "reserved_for",
         "expires_at",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + (
+    list_filter = (
+        *BloodBankCoreAdmin.list_filter,
         "status",
         "blood_type",
         "component_type",
     )
-    search_fields = BloodBankCoreAdmin.search_fields + (
+    search_fields = (
+        *BloodBankCoreAdmin.search_fields,
         "unit_number",
         "donation__bag_identifier",
         "forwarded_to_sector",
@@ -125,8 +129,9 @@ class BloodTransfusionAdmin(BloodBankCoreAdmin):
         "started_at",
         "finished_at",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + ("status",)
-    search_fields = BloodBankCoreAdmin.search_fields + (
+    list_filter = (*BloodBankCoreAdmin.list_filter, "status")
+    search_fields = (
+        *BloodBankCoreAdmin.search_fields,
         "recipient__name",
         "blood_unit__unit_number",
     )
@@ -144,8 +149,8 @@ class BloodStockMovementAdmin(BloodBankCoreAdmin):
         "destination_storage",
         "moved_at",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + ("movement_type",)
-    search_fields = BloodBankCoreAdmin.search_fields + ("unit__unit_number", "reason")
+    list_filter = (*BloodBankCoreAdmin.list_filter, "movement_type")
+    search_fields = (*BloodBankCoreAdmin.search_fields, "unit__unit_number", "reason")
     list_select_related = ("unit", "source_storage", "destination_storage", "performed_by")
     ordering = ("-moved_at", "-created_at")
 
@@ -173,7 +178,7 @@ class BloodStorageMaintenanceAdmin(BloodBankCoreAdmin):
         "performed_at",
         "next_due_at",
     )
-    list_filter = BloodBankCoreAdmin.list_filter + ("maintenance_type", "status")
-    search_fields = BloodBankCoreAdmin.search_fields + ("storage__name", "technician_name")
+    list_filter = (*BloodBankCoreAdmin.list_filter, "maintenance_type", "status")
+    search_fields = (*BloodBankCoreAdmin.search_fields, "storage__name", "technician_name")
     list_select_related = ("storage",)
     ordering = ("-scheduled_at", "-created_at")
