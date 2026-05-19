@@ -1,8 +1,11 @@
-from .managers import AtivoManager
-from .querysets import AtivoQuerySet
+"""Extensões ORM (managers/querysets)."""
+
+from .managers import AtivoManager, TenantAwareManager
+from .querysets import AtivoQuerySet, TenantAwareQuerySet
 
 __all__ = [
     "AtivoManager",
     "AtivoQuerySet",
+    "TenantAwareManager",
+    "TenantAwareQuerySet",
 ]
-"""Extensões ORM (managers/querysets)."""

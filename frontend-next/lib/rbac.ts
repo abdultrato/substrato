@@ -73,7 +73,7 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "blood-bank",
     label: "Blood Bank",
-    href: "/banco-sangue",
+    href: "/bloodbank",
     description: "Donations, units, transfusions, and stock movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
@@ -94,7 +94,7 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "pharmacy",
     label: "Pharmacy",
-    href: "/farmacia",
+    href: "/pharmacy",
     description: "Stock, lots, and warehouse movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
   },
@@ -108,7 +108,7 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "accounting",
     label: "Accounting",
-    href: "/contabilidade",
+    href: "/accounting",
     description: "Accounts, entries, and audit workflows.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE],
   },

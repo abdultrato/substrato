@@ -79,8 +79,8 @@ export default function AuditoriaUsuarioDetalhePage() {
         setErro(null)
 
         const [u, acts] = await Promise.all([
-          apiFetch<any>(`/auditoria/usuarios/${encodeURIComponent(userId)}/`),
-          apiFetch<any>(`/auditoria/atividade/?usuario=${encodeURIComponent(userId)}`),
+          apiFetch<any>(`/audit/users/${encodeURIComponent(userId)}/`),
+          apiFetch<any>(`/audit/atividade/?usuario=${encodeURIComponent(userId)}`),
         ])
 
         const items = acts && (acts as any).results ? (acts as any).results : acts

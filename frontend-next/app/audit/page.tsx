@@ -49,7 +49,7 @@ export default function AuditoriaUsuariosPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<any>("/auditoria/usuarios/")
+        const res = await apiFetch<any>("/audit/users/")
         const items = res && res.results ? res.results : res
         if (!mounted) return
         setRows(Array.isArray(items) ? items.map(normalizeUserRow) : [])

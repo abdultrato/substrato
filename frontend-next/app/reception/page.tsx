@@ -81,13 +81,13 @@ const atalhos = [
     {
         title: "Criar requisição",
         description: "Encaminhar o paciente direto para a jornada laboratorial.",
-        href: "/requests/nova",
+        href: "/requests/new",
         icon: FilePlus2,
     },
     {
         title: "Requisição externa",
         description: "Criar requisição para empresa solicitante ou terceirizada.",
-        href: "/requests/externa/nova",
+        href: "/requests/external/new",
         icon: FileText,
     },
     {
@@ -99,19 +99,19 @@ const atalhos = [
     {
         title: "Recibos",
         description: "Consultar recibos já gerados no módulo de pagamentos.",
-        href: "/recibos",
+        href: "/receipts",
         icon: Receipt,
     },
     {
         title: "Agendar consulta",
         description: "Marcar consulta médica e (opcionalmente) emitir fatura.",
-        href: "/consultas",
+        href: "/consultations",
         icon: CalendarClock,
     },
     {
         title: "Criar requisição de materiais",
         description: "Abrir o formulário para solicitar consumíveis ao almoxarifado/farmácia.",
-        href: "/farmacia/requisicoes-materiais/nova",
+        href: "/pharmacy/material-requests/new",
         icon: PackageSearch,
     },
 ]
@@ -128,7 +128,7 @@ export default function RecepcaoPage() {
     useEffect(() => {
         async function carregarWorkspace() {
             try {
-                const data = await apiFetch<any>("/recepcao/workspace/")
+                const data = await apiFetch<any>("/reception/workspace/")
                 setWorkspace(normalizeReceptionWorkspace(data))
             } catch (error) {
                 setErro(

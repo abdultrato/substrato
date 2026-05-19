@@ -1,9 +1,15 @@
-from domain.clinical.result_state import ResultState
+from application.clinical.commands import ValidateResultCommand
+from application.clinical.handlers import handle_validate_result
 
 
 def validate_result(result_item, user=None):
-    result_item.transition(ResultState.VALIDATED, user=user)
-    return result_item
+    return handle_validate_result(
+        ValidateResultCommand(
+            result_item=result_item,
+            user=user,
+            idempotent=False,
+        )
+    )
 
 
 validar_resultado = validate_result

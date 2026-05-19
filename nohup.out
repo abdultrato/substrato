@@ -1,8 +1,0 @@
-[2026-04-23 00:41:29,288] INFO django.utils.autoreload Watching for file changes with StatReloader
-[2026-04-23 00:41:29,492] INFO pdf.engine PDF fontes: Tinos ativado (/home/runner/workspace/static/fonts/Tinos-Regular.ttf, /home/runner/workspace/static/fonts/Tinos-Bold.ttf).
-Error: That port is already in use.
-npm error Missing script: "dev"
-npm error
-npm error To see a list of scripts, run:
-npm error   npm run
-npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-04-22T22_42_19_708Z-debug-0.log

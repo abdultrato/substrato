@@ -42,7 +42,7 @@ type ResultadoItensResponse = {
 }
 
 async function abrirPdfResultados(requisicaoId: number) {
-  const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
+  const blob = await apiFetch<Blob>(`/requests/${requisicaoId}/pdf_resultados/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
@@ -76,7 +76,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
       setLoading(true)
       setErro(null)
 
-      const res = await apiFetch<ResultadoItensResponse>(`/requisicoes/${requisicaoId}/resultado_itens/`)
+      const res = await apiFetch<ResultadoItensResponse>(`/requests/${requisicaoId}/resultado_itens/`)
 
       setRequisicao(res.requisicao)
       setItens(Array.isArray(res.itens) ? res.itens : [])

@@ -18,7 +18,7 @@ export default function ExameDetailPage () {
     const [campos, setCampos] = useState<ExameCampo[]>( [] );
 
     const carregar = useCallback( async () => {
-        const ex = await apiFetch<Exame>( `/exames/${id}/` );
+        const ex = await apiFetch<Exame>( `/exams/${id}/` );
         setExame( ex );
 
         const r = await apiFetch<any>( `/clinical/examfield/?exame=${id}` );

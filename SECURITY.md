@@ -10,7 +10,7 @@
 
 ## Como reportar vulnerabilidades
 1. Não abrir vulnerabilidades em issues públicas.
-2. Reportar por email para `security@substrato.example` (substituir pelo endereço oficial).
+2. Reportar por email para `security@substrato.os`
 3. Incluir no reporte:
    - descrição técnica;
    - impacto e vetor de exploração;

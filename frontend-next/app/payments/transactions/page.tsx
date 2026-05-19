@@ -2,13 +2,14 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
+import { reconciliarTransacao, verificarTransacao } from "@/lib/api/payments"
 import { GROUPS } from "@/lib/rbac"
 
 type TransacaoRow = Record<string, any>
@@ -28,6 +29,23 @@ export default function PagamentosTransacoesPage() {
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
+    const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null)
+    const [detalheGateway, setDetalheGateway] = useState<string | null>(null)
+
+    const carregar = useCallback(async () => {
+        const { items, meta } = await apiFetchList<TransacaoRow>("/payments/transaction/", {
+            page,
+            pageSize,
+        })
+        const total = meta.total ?? items.length
+        const computedTotalPages =
+            meta.totalPages ??
+            (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+        setData(items)
+        setTotalItems(total || 0)
+        setTotalPages(computedTotalPages)
+        if (page > computedTotalPages) setPage(computedTotalPages)
+    }, [page, pageSize])
 
     useEffect(() => {
         let mounted = true
@@ -35,19 +53,7 @@ export default function PagamentosTransacoesPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<TransacaoRow>("/payments/transaction/", {
-                    page,
-                    pageSize,
-                })
-                const total = meta.total ?? items.length
-                const computedTotalPages =
-                    meta.totalPages ??
-                    (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
-                if (!mounted) return
-                setData(items)
-                setTotalItems(total || 0)
-                setTotalPages(computedTotalPages)
-                if (page > computedTotalPages) setPage(computedTotalPages)
+                await carregar()
             } catch (e: any) {
                 if (!mounted) return
                 setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar transações."))
@@ -59,7 +65,33 @@ export default function PagamentosTransacoesPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
+    }, [carregar])
+
+    const executarAcao = useCallback(
+        async (id: number, tipo: "verificar" | "reconciliar") => {
+            const key = `${tipo}:${id}`
+            try {
+                setAcaoEmCurso(key)
+                setErro(null)
+                setDetalheGateway(null)
+
+                if (tipo === "verificar") {
+                    const resposta = await verificarTransacao(id)
+                    setDetalheGateway(JSON.stringify(resposta.gateway_payload ?? {}, null, 2))
+                } else {
+                    const resposta = await reconciliarTransacao(id, true)
+                    setDetalheGateway(JSON.stringify(resposta.reconciliation ?? {}, null, 2))
+                }
+
+                await carregar()
+            } catch (e: any) {
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao executar ação na transação."))
+            } finally {
+                setAcaoEmCurso(null)
+            }
+        },
+        [carregar]
+    )
 
     const columns = useMemo(
         () => [
@@ -67,7 +99,7 @@ export default function PagamentosTransacoesPage() {
                 header: "ID",
                 render: (t: TransacaoRow) => (
                     <Link
-                        href={`/recursos/payments/transaction/${t.id}`}
+                        href={`/resources/payments/transaction/${t.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {t.id || "-"}
@@ -75,11 +107,37 @@ export default function PagamentosTransacoesPage() {
                 ),
             },
             { header: "Gateway", render: (t: TransacaoRow) => t.gateway || "-" },
-            { header: "Referência", render: (t: TransacaoRow) => t.referencia_externa || "-" },
+            { header: "Referência", render: (t: TransacaoRow) => t.referencia_externa || t.external_reference || "-" },
             { header: "Status", render: (t: TransacaoRow) => t.status || "-" },
-            { header: "Criado em", render: (t: TransacaoRow) => fmtDateTime(t.criado_em) },
+            { header: "Criado em", render: (t: TransacaoRow) => fmtDateTime(t.criado_em || t.created_at) },
+            {
+                header: "Ações",
+                render: (t: TransacaoRow) => {
+                    const id = Number(t.id)
+                    const verifyKey = `verificar:${id}`
+                    const reconcileKey = `reconciliar:${id}`
+                    return (
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                className="inline-flex items-center rounded-lg border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                                disabled={acaoEmCurso !== null}
+                                onClick={() => executarAcao(id, "verificar")}
+                            >
+                                {acaoEmCurso === verifyKey ? "Verificando..." : "Verificar"}
+                            </button>
+                            <button
+                                className="inline-flex items-center rounded-lg border border-blue-200 px-2 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-50 disabled:opacity-50"
+                                disabled={acaoEmCurso !== null}
+                                onClick={() => executarAcao(id, "reconciliar")}
+                            >
+                                {acaoEmCurso === reconcileKey ? "Reconciliando..." : "Reconciliar"}
+                            </button>
+                        </div>
+                    )
+                },
+            },
         ],
-        []
+        [acaoEmCurso, executarAcao]
     )
 
     return (
@@ -91,13 +149,13 @@ export default function PagamentosTransacoesPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/payments/transaction/novo"
+                                href="/resources/payments/transaction/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
                             </Link>
                             <Link
-                                href="/recursos/pagamentos/transacao"
+                                href="/resources/payments/transacao"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento
@@ -116,6 +174,12 @@ export default function PagamentosTransacoesPage() {
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                         {erro}
                     </div>
+                ) : null}
+
+                {detalheGateway ? (
+                    <pre className="overflow-x-auto rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
+                        {detalheGateway}
+                    </pre>
                 ) : null}
 
                 <div className="flex flex-wrap items-center justify-between gap-3">

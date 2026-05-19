@@ -16,7 +16,7 @@ type RequisicaoRow = Record<string, any>
 type RequisicaoList = { items: RequisicaoRow[]; meta: ApiListMeta; raw: any }
 
 async function abrirPdfResultados(requisicaoId: number) {
-  const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
+  const blob = await apiFetch<Blob>(`/requests/${requisicaoId}/pdf_resultados/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
@@ -41,7 +41,7 @@ export default function LaboratorioRequisicoesPage() {
   const { data, isFetching, isError, error } = useQuery<RequisicaoList>({
     queryKey: ["lab-requests", estado],
     queryFn: () =>
-      apiFetchList<RequisicaoRow>(`/requisicoes/?tipo=LAB&estado=${encodeURIComponent(estado)}`),
+      apiFetchList<RequisicaoRow>(`/requests/?tipo=LAB&estado=${encodeURIComponent(estado)}`),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
   })

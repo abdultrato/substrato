@@ -52,10 +52,10 @@ export default function RequisicoesPage() {
             <div className="page-box">
                 <h1>Requisições</h1>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <Link href="/requests/nova" className="btn-primary">
+                    <Link href="/requests/new" className="btn-primary">
                         Nova requisição
                     </Link>
-                    <Link href="/requests/externa/nova" className="btn-secondary">
+                    <Link href="/requests/external/new" className="btn-secondary">
                         Nova requisição externa
                     </Link>
                 </div>

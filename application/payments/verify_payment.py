@@ -1,8 +1,13 @@
 def verify_payment(transaction, gateway_name=None):
-    from integrations.payments.registry import get_gateway
+    from .commands import VerifyPaymentCommand
+    from .handlers import handle_verify_payment
 
-    gateway = get_gateway(gateway_name or transaction.gateway)
-    return gateway.status(transaction.external_reference)
+    return handle_verify_payment(
+        VerifyPaymentCommand(
+            transaction=transaction,
+            gateway_name=gateway_name,
+        )
+    )
 
 
 verificar_pagamento = verify_payment

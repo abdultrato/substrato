@@ -11,16 +11,24 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
-from application.reception.care_flow import (
-    create_invoice_for_checkin,
-    create_request_for_checkin,
-    execute_full_flow,
-    get_care_summary,
-    register_payment_for_checkin,
+from application.reception.care_flow import get_care_summary
+from application.reception.commands import (
+    CreateInvoiceForCheckinCommand,
+    CreateRequestForCheckinCommand,
+    ExecuteFullFlowCommand,
+    LinkInvoiceToCheckinCommand,
+    LinkRequestToCheckinCommand,
+    RegisterPaymentForCheckinCommand,
 )
 from application.reception.get_workspace import execute as get_workspace_date
-from apps.billing.models.invoice import Invoice
-from apps.clinical.models.lab_request import LabRequest
+from application.reception.handlers import (
+    handle_create_invoice_for_checkin,
+    handle_create_request_for_checkin,
+    handle_execute_full_flow,
+    handle_link_invoice_to_checkin,
+    handle_link_request_to_checkin,
+    handle_register_payment_for_checkin,
+)
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 
@@ -144,10 +152,13 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
 
         checkin = self.get_object()
         self.execute_safely(
-            create_request_for_checkin,
-            checkin=checkin,
-            exam_ids=payload.validated_data["exams_ids"],
-            clinical_status=payload.validated_data.get("clinical_status"),
+            handle_create_request_for_checkin,
+            CreateRequestForCheckinCommand(
+                checkin=checkin,
+                exam_ids=payload.validated_data["exams_ids"],
+                clinical_status=payload.validated_data.get("clinical_status"),
+                idempotent=True,
+            ),
         )
         return Response(get_care_summary(checkin))
 
@@ -159,9 +170,12 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
 
         checkin = self.get_object()
         self.execute_safely(
-            create_invoice_for_checkin,
-            checkin=checkin,
-            issue=payload.validated_data.get("issue", True),
+            handle_create_invoice_for_checkin,
+            CreateInvoiceForCheckinCommand(
+                checkin=checkin,
+                issue=payload.validated_data.get("issue", True),
+                idempotent=True,
+            ),
         )
         return Response(get_care_summary(checkin))
 
@@ -173,16 +187,19 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
 
         checkin = self.get_object()
         self.execute_safely(
-            register_payment_for_checkin,
-            checkin=checkin,
-            value=payload.validated_data.get("value"),
-            method=payload.validated_data.get("method"),
-            external_reference=payload.validated_data.get("external_reference", ""),
-            insurer_id=payload.validated_data.get("insurer_id"),
-            coverage_plan_id=payload.validated_data.get("coverage_plan_id"),
-            authorization_number=payload.validated_data.get("authorization_number", ""),
-            insurance_date=payload.validated_data.get("insurance_date"),
-            confirm=payload.validated_data.get("confirm", True),
+            handle_register_payment_for_checkin,
+            RegisterPaymentForCheckinCommand(
+                checkin=checkin,
+                value=payload.validated_data.get("value"),
+                method=payload.validated_data.get("method"),
+                external_reference=payload.validated_data.get("external_reference", ""),
+                insurer_id=payload.validated_data.get("insurer_id"),
+                coverage_plan_id=payload.validated_data.get("coverage_plan_id"),
+                authorization_number=payload.validated_data.get("authorization_number", ""),
+                insurance_date=payload.validated_data.get("insurance_date"),
+                confirm=payload.validated_data.get("confirm", True),
+                idempotent=True,
+            ),
         )
         return Response(get_care_summary(checkin))
 
@@ -192,12 +209,14 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        lab_request = get_object_or_404(
-            LabRequest.objects.filter(tenant=self.get_tenant()),
-            pk=payload.validated_data["request_id"],
+        self.execute_safely(
+            handle_link_request_to_checkin,
+            LinkRequestToCheckinCommand(
+                checkin=checkin,
+                tenant=self.get_tenant(),
+                request_id=payload.validated_data["request_id"],
+            ),
         )
-
-        self.execute_safely(checkin.register_request, lab_request)
         return Response(self.get_serializer(checkin).data)
 
     @action(detail=True, methods=["post"], url_path="vincular_invoice", url_name="vincular-invoice")
@@ -206,12 +225,14 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         payload.is_valid(raise_exception=True)
 
         checkin = self.get_object()
-        invoice = get_object_or_404(
-            Invoice.objects.filter(tenant=self.get_tenant()),
-            pk=payload.validated_data["invoice_id"],
+        self.execute_safely(
+            handle_link_invoice_to_checkin,
+            LinkInvoiceToCheckinCommand(
+                checkin=checkin,
+                tenant=self.get_tenant(),
+                invoice_id=payload.validated_data["invoice_id"],
+            ),
         )
-
-        self.execute_safely(checkin.register_invoice, invoice)
         return Response(self.get_serializer(checkin).data)
 
 
@@ -226,10 +247,12 @@ class ReceptionCareViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewS
         payload.is_valid(raise_exception=True)
 
         summary = self.execute_safely(
-            execute_full_flow,
-            tenant=self.get_tenant(),
-            user=request.user,
-            **payload.validated_data,
+            handle_execute_full_flow,
+            ExecuteFullFlowCommand(
+                tenant=self.get_tenant(),
+                user=request.user,
+                **payload.validated_data,
+            ),
         )
         return Response(summary, status=status.HTTP_201_CREATED)
 

@@ -1,5 +1,7 @@
-from apps.payments.models.transaction import Transaction
 from integrations.payments.registry import get_gateway
+
+from .commands import StartPaymentCommand
+from .handlers import handle_start_payment
 
 
 def execute(value, reference, phone=None, gateway_name=None):
@@ -13,17 +15,12 @@ def execute(value, reference, phone=None, gateway_name=None):
 
 
 def start_payment(invoice, value, phone=None, gateway_name=None):
-    reference = f"FAT-{invoice.id}"
-    gateway = get_gateway(gateway_name)
-
-    if gateway.name in {"mpesa", "emola", "mkesh"} and not phone:
-        raise ValueError("Telefone é obrigatório para pagamentos Mobile Money.")
-
-    response = gateway.charge(value, reference, phone=phone)
-
-    return Transaction.objects.create(
-        external_reference=reference,
-        gateway=gateway.name,
-        status=response.get("status", "pendente"),
-        gateway_response=response,
+    return handle_start_payment(
+        StartPaymentCommand(
+            invoice=invoice,
+            value=value,
+            phone=phone,
+            gateway_name=gateway_name,
+            idempotent=True,
+        )
     )

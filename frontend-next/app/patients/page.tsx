@@ -55,7 +55,7 @@ export default function PacientesPage () {
 
     const { data, isFetching, isError, error: queryError, refetch } = useQuery<PacienteList>( {
         queryKey: ["pacientes", page, pageSize],
-        queryFn: () => apiFetchList<Paciente>( "/pacientes/", { page, pageSize } ),
+        queryFn: () => apiFetchList<Paciente>( "/patients/", { page, pageSize } ),
         placeholderData: keepPreviousData,
         staleTime: 20_000,
     } );
@@ -126,7 +126,7 @@ export default function PacientesPage () {
 
     async function salvarPaciente () {
         if ( !podeEditar ) {
-            setError( "Sem permissão para criar/editar pacientes." );
+            setError( "Sem permissão para criar/edit pacientes." );
             return;
         }
         if ( !form.nome.trim() ) {
@@ -138,9 +138,9 @@ export default function PacientesPage () {
             setSaving( true );
 
             if ( editingId ) {
-                await apiFetch( `/pacientes/${editingId}/`, { method: "PUT", body: JSON.stringify( form ) } );
+                await apiFetch( `/patients/${editingId}/`, { method: "PUT", body: JSON.stringify( form ) } );
             } else {
-                await apiFetch( "/pacientes/", { method: "POST", body: JSON.stringify( form ) } );
+                await apiFetch( "/patients/", { method: "POST", body: JSON.stringify( form ) } );
             }
 
             resetForm();
@@ -174,7 +174,7 @@ export default function PacientesPage () {
         }
         if ( !confirm( "Deseja remover este paciente?" ) ) return;
 
-        await apiFetch( `/pacientes/${id}/`, { method: "DELETE" } );
+        await apiFetch( `/patients/${id}/`, { method: "DELETE" } );
         refetch();
     }
 
@@ -406,7 +406,7 @@ export default function PacientesPage () {
                     <div className="page-box" style={{ marginBottom: 20 }}>
                         <h2>Somente leitura</h2>
                         <p style={{ color: "#555", marginTop: 6 }}>
-                            O seu perfil pode consultar pacientes, mas não pode criar/editar.
+                            O seu perfil pode consultar pacientes, mas não pode criar/edit.
                         </p>
                     </div>
                 )}

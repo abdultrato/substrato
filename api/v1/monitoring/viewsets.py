@@ -3,6 +3,7 @@
 from .viewsets_impl import (
     CloudControlViewSet,
     ExportJobViewSet,
+    TelemetryViewSet,
     VIEWSET_MAP,
     SystemErrorViewSet,
 )
@@ -12,4 +13,5 @@ __all__ = [
     "ExportJobViewSet",
     "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "SystemErrorViewSet",
+    "TelemetryViewSet",
 ]

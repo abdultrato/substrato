@@ -27,8 +27,8 @@ export default function NotificacoesPage() {
                 setErro(null)
 
                 const [n, l] = await Promise.all([
-                    apiFetch<any>("/notificacoes/notificacao/"),
-                    apiFetch<any>("/notificacoes/logenvio/"),
+                    apiFetch<any>("/notifications/notificacao/"),
+                    apiFetch<any>("/notifications/logenvio/"),
                 ])
 
                 if (!mounted) return
@@ -92,7 +92,7 @@ export default function NotificacoesPage() {
                     <ActionTile
                         title="Gerenciamento (API)"
                         description="Acesso direto à interface genérica do módulo."
-                        href="/recursos/notificacoes"
+                        href="/resources/notifications"
                         icon={ClipboardList}
                     />
                 </div>

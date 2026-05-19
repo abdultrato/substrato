@@ -31,7 +31,7 @@ export default function ExamesPage () {
             setLoading( true );
             setError( null );
 
-            const { items, meta } = await apiFetchList<Exame>( "/exames/", {
+            const { items, meta } = await apiFetchList<Exame>( "/exams/", {
                 page,
                 pageSize,
             } );
@@ -55,7 +55,7 @@ export default function ExamesPage () {
 
     async function remover ( id: number ) {
         if ( !confirm( "Remover exame?" ) ) return;
-        await apiFetch( `/exames/${id}/`, { method: "DELETE" } );
+        await apiFetch( `/exams/${id}/`, { method: "DELETE" } );
         carregar();
     }
 
@@ -64,7 +64,7 @@ export default function ExamesPage () {
             <div className="page-box">
                 <h1>Exames</h1>
 
-                <Link href="/exames/novo" className="btn-primary">
+                <Link href="/exams/new" className="btn-primary">
                     Novo exame
                 </Link>
 
@@ -114,7 +114,7 @@ export default function ExamesPage () {
                                 <td>{e.trl_horas}</td>
                                 <td>{e.preco}</td>
                                 <td>
-                                    <Link href={`/exames/${e.id}`}>Ver</Link>{" "}
+                                    <Link href={`/exams/${e.id}`}>Ver</Link>{" "}
                                     <button onClick={() => remover( e.id )}>Apagar</button>
                                 </td>
                             </tr>

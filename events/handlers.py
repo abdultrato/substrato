@@ -13,35 +13,9 @@ class ResultValidatedHandler:
 
     @staticmethod
     def handle(event) -> None:
-        # 🔒 Import lazy para evitar circular import
-        from apps.clinical.models.clinical_history import ClinicalHistory
-        from apps.clinical.models.result_item import ResultItem
+        from domain.clinical.handlers.result_validated_handler import ResultValidatedHandler as DomainHandler
 
-        item = (
-            ResultItem.all_objects.select_related(
-                "resultado",
-                "resultado__requisicao",
-                "resultado__requisicao__paciente",
-                "exame_campo",
-            )
-            .only(
-                "resultado_valor",
-                "data_validacao",
-                "exame_campo__nome",
-                "resultado__requisicao__paciente",
-            )
-            .get(pk=event.resultado_id)
-        )
-
-        paciente = item.resultado.requisicao.paciente
-
-        descricao = f"Resultado validado: {item.exame_campo.nome} = {item.resultado_valor}"
-
-        # HistoricoClinico é um log simples (sem tipo_evento).
-        ClinicalHistory.objects.create(
-            paciente=paciente,
-            descricao=descricao,
-        )
+        DomainHandler.handle(event)
 
 
 class AuthorizationRequestedHandler:

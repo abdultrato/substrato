@@ -17,10 +17,11 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from application.billing.commands import ConfirmPendingInvoicePaymentCommand, IssueInvoiceCommand
+from application.billing.handlers import handle_confirm_pending_invoice_payment, handle_issue_invoice
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
-from apps.payments.models.payment import Payment
 from infrastructure.cache import CacheService
 from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
@@ -444,10 +445,25 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         CacheService.set(cache_key, payload, timeout=self.billing_history_cache_ttl_seconds)
         return payload
 
+    def _execute_command(self, handler, command):
+        try:
+            return handler(command)
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
     @action(detail=True, methods=["post"], url_path="issue", url_name="issue")
     def issue(self, request, pk=None):
-        invoice = self.get_object()
-        invoice.issue()
+        invoice = self._execute_command(
+            handle_issue_invoice,
+            IssueInvoiceCommand(
+                invoice=self.get_object(),
+                idempotent=True,
+            ),
+        )
         return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["post"], url_path="void", url_name="void")
@@ -474,33 +490,14 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         url_name="confirm-payment",
     )
     def confirm_payment(self, request, pk=None):
-        invoice = self.get_object()
-        invoice = self._confirm_pending_payment(invoice)
+        invoice = self._execute_command(
+            handle_confirm_pending_invoice_payment,
+            ConfirmPendingInvoicePaymentCommand(
+                invoice=self.get_object(),
+                idempotent=True,
+            ),
+        )
         return Response(self.get_serializer(invoice).data)
-
-    def _invoice_payments(self, invoice: Invoice):
-        payments_qs = getattr(invoice, "payments", None)
-        if payments_qs is None:
-            payments_qs = getattr(invoice, "pagamentos", None)
-        if payments_qs is None:
-            raise ValidationError("Invoice payments relation not available.")
-        return payments_qs
-
-    def _confirm_pending_payment(self, invoice: Invoice) -> Invoice:
-        payments_qs = self._invoice_payments(invoice)
-        payment = payments_qs.filter(status=Payment.Status.PENDING, deleted=False).order_by("-created_at").first()
-        if not payment:
-            raise ValidationError("No pending payment to confirm.")
-
-        try:
-            payment.confirm()
-        except DjangoValidationError as exc:
-            if hasattr(exc, "message_dict"):
-                raise ValidationError(exc.message_dict) from exc
-            raise ValidationError(exc.messages) from exc
-
-        invoice.refresh_from_db()
-        return invoice
 
     @action(
         detail=True,
@@ -509,8 +506,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         url_name="confirm-payment-legacy",
     )
     def confirm_payment_legacy(self, request, pk=None):
-        invoice = self.get_object()
-        invoice = self._confirm_pending_payment(invoice)
+        invoice = self._execute_command(
+            handle_confirm_pending_invoice_payment,
+            ConfirmPendingInvoicePaymentCommand(
+                invoice=self.get_object(),
+                idempotent=True,
+            ),
+        )
         return Response(self.get_serializer(invoice).data)
 
     @action(
@@ -521,8 +523,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     )
     def confirm_payment_pt(self, request, pk=None):
         """Alias em português para confirmar pagamento pendente."""
-        invoice = self.get_object()
-        invoice = self._confirm_pending_payment(invoice)
+        invoice = self._execute_command(
+            handle_confirm_pending_invoice_payment,
+            ConfirmPendingInvoicePaymentCommand(
+                invoice=self.get_object(),
+                idempotent=True,
+            ),
+        )
         return Response(self.get_serializer(invoice).data)
 
     @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")

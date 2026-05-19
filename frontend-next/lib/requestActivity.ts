@@ -115,7 +115,7 @@ function resolveTask(path: string): TaskDescriptor {
       },
     },
     {
-      match: /\/billing\/invoice\/|\/faturas\//,
+      match: /\/billing\/invoice\/|\/invoices\//,
       task: {
         label: "faturas",
         detail: "Estamos a consolidar totais, estado e ligações de cobrança.",
@@ -178,21 +178,21 @@ function resolveTask(path: string): TaskDescriptor {
       },
     },
     {
-      match: /\/notificacoes\//,
+      match: /\/notifications\//,
       task: {
         label: "notificações",
         detail: "Estamos a preparar notificações e respetivos logs de envio.",
       },
     },
     {
-      match: /\/monitoramento\//,
+      match: /\/monitoring\//,
       task: {
         label: "monitoramento do sistema",
         detail: "Estamos a compilar sinais de saúde e eventos de erro.",
       },
     },
     {
-      match: /\/auditoria\//,
+      match: /\/audit\//,
       task: {
         label: "auditoria",
         detail: "Estamos a consultar trilhos de atividade e conformidade.",

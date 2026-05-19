@@ -40,7 +40,7 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/recibos/")
+    await apiFetch("/receipts/")
 
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/receipt/")
   })
@@ -66,7 +66,7 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/reconciliacoes/")
+    await apiFetch("/reconciliations/")
 
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/payments/reconciliation/")
   })
@@ -79,7 +79,7 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/prontuario/registro/")
+    await apiFetch("/medical-records/registro/")
 
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/medical_records/record/")
   })
@@ -92,7 +92,7 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/prontuario/registro/42/")
+    await apiFetch("/medical-records/registro/42/")
 
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/medical_records/record/42/")
   })

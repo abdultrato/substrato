@@ -61,7 +61,7 @@ export default function PacienteDetalhePage() {
             setLoading(true);
             setError(null);
             setPaciente(null);
-            const data = await apiFetch(`/pacientes/${idStr}/`);
+            const data = await apiFetch(`/patients/${idStr}/`);
             setPaciente(data);
         } catch (err: any) {
             setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao carregar paciente"));
@@ -159,7 +159,7 @@ export default function PacienteDetalhePage() {
                     {podeVerHistoriaClinica ? (
                         <button
                             className="btn-secondary"
-                            onClick={() => router.push(`/patients/${idStr}/historia-clinica`)}
+                            onClick={() => router.push(`/patients/${idStr}/medical-history`)}
                         >
                             História clínica
                         </button>

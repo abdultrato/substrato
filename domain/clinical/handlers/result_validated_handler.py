@@ -1,7 +1,5 @@
 """Handler para registrar histórico quando um resultado é validado."""
 
-from core.constants.clinical_event_type import ClinicalEventType
-
 
 class ResultValidatedHandler:
     @staticmethod
@@ -16,7 +14,6 @@ class ResultValidatedHandler:
             )
             .only(
                 "result_value",
-                "validation_date",
                 "exam_field__name",
                 "result__request__patient",
             )
@@ -28,9 +25,7 @@ class ResultValidatedHandler:
 
         ClinicalHistory.objects.create(
             patient=patient,
-            event_type=ClinicalEventType.RESULTADO_VALIDADO,
             description=description,
-            event_date=result.validation_date,
         )
 
 

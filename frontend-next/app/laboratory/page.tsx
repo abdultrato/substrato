@@ -24,7 +24,7 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 type RequisicaoRow = Record<string, any>
 
 async function abrirPdfResultados(requisicaoId: number) {
-  const blob = await apiFetch<Blob>(`/requisicoes/${requisicaoId}/pdf_resultados/`, {
+  const blob = await apiFetch<Blob>(`/requests/${requisicaoId}/pdf_resultados/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
@@ -67,9 +67,9 @@ export default function LaboratorioPage() {
           reqCriticas,
           resItensPendentes,
         ] = await Promise.all([
-          apiFetch<any>("/requisicoes/?tipo=LAB&estado=pendente"),
-          apiFetch<any>("/requisicoes/?tipo=LAB&estado=aguardando_validacao"),
-          apiFetch<any>("/requisicoes/?tipo=LAB&possui_resultado_critico=true"),
+          apiFetch<any>("/requests/?tipo=LAB&estado=pendente"),
+          apiFetch<any>("/requests/?tipo=LAB&estado=aguardando_validacao"),
+          apiFetch<any>("/requests/?tipo=LAB&possui_resultado_critico=true"),
           apiFetch<any>("/clinical/resultitem/?estado=pendente"),
         ])
 
@@ -191,7 +191,7 @@ export default function LaboratorioPage() {
           <ActionTile
             title="Criar requisição de materiais"
             description="Abrir o formulário para solicitar consumíveis ao almoxarifado/farmácia."
-            href="/farmacia/requisicoes-materiais/nova"
+            href="/pharmacy/material-requests/new"
             icon={PackageSearch}
           />
         </div>

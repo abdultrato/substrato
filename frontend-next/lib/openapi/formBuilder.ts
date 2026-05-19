@@ -156,12 +156,12 @@ function pathSegments(path: string): string[] {
 
 function normalizeEndpointAlias(endpoint: string): string {
   const normalized = normalizePath(endpoint)
-  if (normalized === "/prontuario/registro") return "/medical_records/record"
-  if (normalized.startsWith("/prontuario/registro/")) {
-    return normalized.replace("/prontuario/registro", "/medical_records/record")
+  if (normalized === "/medical-records/registro") return "/medical_records/record"
+  if (normalized.startsWith("/medical-records/registro/")) {
+    return normalized.replace("/medical-records/registro", "/medical_records/record")
   }
-  if (normalized === "/prontuario" || normalized.startsWith("/prontuario/")) {
-    return normalized.replace("/prontuario", "/medical_records")
+  if (normalized === "/medical-records" || normalized.startsWith("/medical-records/")) {
+    return normalized.replace("/medical-records", "/medical_records")
   }
   return normalized
 }

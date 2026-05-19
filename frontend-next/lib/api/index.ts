@@ -1,5 +1,6 @@
 import { logout as clearSession } from "../session"
 import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
+import { reportFrontendApiError, reportFrontendTelemetry } from "../monitoring/telemetry"
 
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
@@ -45,7 +46,13 @@ export type ApiListMeta = {
 function rewriteUrl(url: string): string {
   const u = url.startsWith("/") ? url : `/${url}`
 
-  // Friendly aliases kept at the UI layer, rewritten to the English API routes.
+  // Telemetria de erros e listagem canónicas (sem alias PT para evitar ambiguidades).
+  if (u === "/monitoring/error" || u === "/monitoring/error/") return "/monitoring/error"
+  if (u.startsWith("/monitoring/error/")) return u
+  if (u === "/monitoring/telemetry" || u === "/monitoring/telemetry/") return "/monitoring/telemetry"
+  if (u.startsWith("/monitoring/telemetry/")) return u
+
+  // Canonical frontend URLs are English; rewrite to backend resources where needed.
   if (u === "/consultations" || u === "/consultations/") return "/consultations/consultation"
   if (u.startsWith("/consultations/")) {
     const rest = u.slice("/consultations/".length)
@@ -57,54 +64,47 @@ function rewriteUrl(url: string): string {
     }
   }
 
-  const aliases: Array<[string, string]> = [
+  const mappings: Array<[string, string]> = [
     ["/patients", "/clinical/patient"],
-    ["/pacientes", "/clinical/patient"],
-    ["/pacientes/", "/clinical/patient"],
     ["/exams", "/clinical/exam"],
-    ["/exames", "/clinical/exam"],
-    ["/exames/", "/clinical/exam"],
     ["/medical-exams", "/clinical/medicalexam"],
-    ["/exames-medicos", "/clinical/medicalexam"],
-    ["/exames-medicos/", "/clinical/medicalexam"],
-    ["/lab-requests", "/clinical/labrequest"],
-    ["/requisicoes", "/clinical/labrequest"],
-    ["/requisicoes/", "/clinical/labrequest"],
+    ["/requests", "/clinical/labrequest"],
     ["/invoices", "/billing/invoice"],
-    ["/faturas", "/billing/invoice"],
-    ["/faturas/", "/billing/invoice"],
+    ["/invoice-items", "/billing/invoiceitem"],
     ["/companies", "/entities/company"],
-    ["/entidades/empresa", "/entities/company"],
-    ["/entidades", "/entities/company"],
-    ["/entidades/", "/entities/company"],
+    ["/entities", "/entities/company"],
     ["/payments/payment", "/payments/payment"],
-    ["/pagamentos", "/payments/payment"],
-    ["/pagamentos/", "/payments/payment"],
-    ["/payments/recibo", "/payments/receipt"],
-    ["/recibos", "/payments/receipt"],
-    ["/recibos/", "/payments/receipt"],
+    ["/payments/receipt", "/payments/receipt"],
     ["/payments/transaction", "/payments/transaction"],
+    ["/payments/reconciliation", "/payments/reconciliation"],
+    ["/payments", "/payments/payment"],
+    ["/receipts", "/payments/receipt"],
     ["/transactions", "/payments/transaction"],
-    ["/transactions/", "/payments/transaction"],
-    ["/payments/reconciliacao", "/payments/reconciliation"],
-    ["/reconciliacoes", "/payments/reconciliation"],
-    ["/reconciliacoes/", "/payments/reconciliation"],
+    ["/reconciliations", "/payments/reconciliation"],
     ["/seguradora/seguradora", "/insurer/insurer"],
     ["/seguradora/planocobertura", "/insurer/planocobertura"],
     ["/seguradora/autorizacaoprocedimento", "/insurer/autorizacaoprocedimento"],
-    ["/billing/invoiceitem", "/billing/invoiceitem"],
-    ["/itens-fatura", "/billing/invoiceitem"],
-    ["/itens-fatura/", "/billing/invoiceitem"],
-    ["/recepcao", "/reception"],
-    ["/recepcao/", "/reception"],
-    ["/recepcao/workspace", "/reception/workspace"],
-    ["/prontuario/registro", "/medical_records/record"],
-    ["/prontuario/registro/", "/medical_records/record/"],
-    ["/prontuario", "/medical_records"],
-    ["/prontuario/", "/medical_records"],
+    ["/medical-records/registro", "/medical_records/record"],
+    ["/medical-records/record", "/medical_records/record"],
+    ["/medical-records", "/medical_records"],
+
+    // Legacy backend modules still exposed with Portuguese slugs.
+    ["/nursing", "/enfermagem"],
+    ["/surgery", "/cirurgia"],
+    ["/maternity", "/maternidade"],
+    ["/audit", "/auditoria"],
+    ["/notifications", "/notificacoes"],
+    ["/monitoring", "/monitoramento"],
+    ["/reception/checkin", "/recepcao/checkin"],
+    ["/reception/atendimento", "/recepcao/atendimento"],
+    ["/pharmacy/produto", "/farmacia/produto"],
+    ["/pharmacy/lote", "/farmacia/lote"],
+    ["/pharmacy/movimentoestoque", "/farmacia/movimentoestoque"],
+    ["/pharmacy/venda", "/farmacia/venda"],
+    ["/pharmacy/itemvenda", "/farmacia/itemvenda"],
   ]
 
-  for (const [from, to] of aliases) {
+  for (const [from, to] of mappings) {
     if (u === from || u.startsWith(`${from}/`)) {
       return u.replace(from, to)
     }
@@ -143,7 +143,32 @@ function buildHeaders(options: ApiFetchOptions): HeadersInit {
   return { ...headers, ...(options.headers || {}) }
 }
 
-async function parseError(res: Response): Promise<Error> {
+function shouldSkipErrorTelemetry(url?: string): boolean {
+  return !!url && url.includes("/monitoring/telemetry")
+}
+
+function emitApiErrorTelemetry(params: {
+  requestUrl?: string
+  method?: string
+  statusCode: number
+  message: string
+  responseBody?: unknown
+}) {
+  if (typeof window === "undefined") return
+  if (shouldSkipErrorTelemetry(params.requestUrl)) return
+  reportFrontendApiError({
+    requestUrl: params.requestUrl || "",
+    method: params.method || "GET",
+    statusCode: params.statusCode,
+    message: params.message,
+    responseBody: params.responseBody,
+  })
+}
+
+async function parseError(
+  res: Response,
+  context?: { requestUrl?: string; method?: string }
+): Promise<Error> {
   const withStatus = (error: Error): Error => {
     ;(error as Error & { status?: number }).status = res.status
     return error
@@ -166,6 +191,13 @@ async function parseError(res: Response): Promise<Error> {
                 : JSON.stringify(value)
           const err = new Error(`${field}: ${firstMessage}`)
             ; (err as any).validation = j
+          emitApiErrorTelemetry({
+            requestUrl: context?.requestUrl,
+            method: context?.method,
+            statusCode: res.status,
+            message: err.message,
+            responseBody: j,
+          })
           return withStatus(err)
         }
       }
@@ -175,11 +207,31 @@ async function parseError(res: Response): Promise<Error> {
         (typeof j === "string" ? j : JSON.stringify(j))
       const err = new Error(msg || res.statusText)
         ; (err as any).validation = j
+      emitApiErrorTelemetry({
+        requestUrl: context?.requestUrl,
+        method: context?.method,
+        statusCode: res.status,
+        message: err.message,
+        responseBody: j,
+      })
       return withStatus(err)
     }
     const text = await res.text()
+    emitApiErrorTelemetry({
+      requestUrl: context?.requestUrl,
+      method: context?.method,
+      statusCode: res.status,
+      message: text || res.statusText,
+      responseBody: text,
+    })
     return withStatus(new Error(text || res.statusText))
   } catch {
+    emitApiErrorTelemetry({
+      requestUrl: context?.requestUrl,
+      method: context?.method,
+      statusCode: res.status,
+      message: res.statusText || "Erro de API",
+    })
     return withStatus(new Error(res.statusText))
   }
 }
@@ -288,6 +340,19 @@ export async function apiFetch<T = any>(
                 ; (e as any).name = "AbortError"
               throw e
             }
+            if (!shouldSkipErrorTelemetry(rewritten)) {
+              reportFrontendTelemetry({
+                event_type: "frontend.network_error",
+                message: (err as any)?.message || "Falha de rede",
+                error_name: (err as any)?.name || "NetworkError",
+                exception_class: (err as any)?.name || "NetworkError",
+                request_url: rewritten,
+                request_method: method,
+                metadata: {
+                  stage: "doFetch",
+                },
+              })
+            }
             throw err
           }
 
@@ -323,7 +388,12 @@ export async function apiFetch<T = any>(
             }
           }
 
-          if (!res.ok) throw await parseError(res)
+          if (!res.ok) {
+            throw await parseError(res, {
+              requestUrl: rewritten,
+              method,
+            })
+          }
 
           if (res.status === 204) {
             if (method !== "GET") invalidateClientCacheByPath(rewritten)

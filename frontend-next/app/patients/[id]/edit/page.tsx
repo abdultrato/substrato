@@ -63,8 +63,8 @@ export default function EditarPacientePage() {
                 throw new Error("ID de paciente inválido.")
             }
             const [data, emps] = await Promise.all([
-                apiFetch<Paciente>(`/pacientes/${pacienteId}/`),
-                apiFetch<Entidade[]>("/entidades/"),
+                apiFetch<Paciente>(`/patients/${pacienteId}/`),
+                apiFetch<Entidade[]>("/entities/"),
             ]);
 
             setEmpresas(emps || []);
@@ -159,7 +159,7 @@ export default function EditarPacientePage() {
         setError(null);
 
         try {
-            await apiFetch(`/pacientes/${pacienteId}/`, {
+            await apiFetch(`/patients/${pacienteId}/`, {
                 method: "PUT",
                 body: JSON.stringify(form),
             });

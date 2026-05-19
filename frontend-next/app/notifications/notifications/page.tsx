@@ -42,7 +42,7 @@ export default function NotificacoesListaPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<NotifRow>("/notificacoes/notificacao/", {
+                const { items, meta } = await apiFetchList<NotifRow>("/notifications/notificacao/", {
                     page,
                     pageSize,
                 })
@@ -74,7 +74,7 @@ export default function NotificacoesListaPage() {
                 header: "ID",
                 render: (n: NotifRow) => (
                     <Link
-                        href={`/recursos/notificacoes/notificacao/${n.id}`}
+                        href={`/resources/notifications/notificacao/${n.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {n.id || "-"}
@@ -100,13 +100,13 @@ export default function NotificacoesListaPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/notificacoes/notificacao/novo"
+                                href="/resources/notifications/notificacao/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
                             </Link>
                             <Link
-                                href="/recursos/notificacoes/notificacao"
+                                href="/resources/notifications/notificacao"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

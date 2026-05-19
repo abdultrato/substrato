@@ -8,6 +8,7 @@ from typing import Any
 from django.db import transaction
 
 from .runtime_bridge import mirror_event_to_runtime
+from .transactional_outbox import enqueue_event_for_outbox, outbox_enabled
 
 logger = logging.getLogger("eventos")
 
@@ -83,7 +84,15 @@ class EventBus:
         Garante execução somente após commit do banco.
         """
 
-        transaction.on_commit(lambda: self.publish(event))
+        def _run_after_commit() -> None:
+            if outbox_enabled():
+                try:
+                    enqueue_event_for_outbox(event)
+                except Exception:
+                    logger.exception("Falha ao persistir evento no transactional outbox")
+            self.publish(event)
+
+        transaction.on_commit(_run_after_commit)
 
 
 # =====================================================

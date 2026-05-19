@@ -42,7 +42,7 @@ export default function NotificacoesLogsPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<LogRow>("/notificacoes/logenvio/", {
+                const { items, meta } = await apiFetchList<LogRow>("/notifications/logenvio/", {
                     page,
                     pageSize,
                 })
@@ -74,7 +74,7 @@ export default function NotificacoesLogsPage() {
                 header: "ID",
                 render: (l: LogRow) => (
                     <Link
-                        href={`/recursos/notificacoes/logenvio/${l.id}`}
+                        href={`/resources/notifications/logenvio/${l.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {l.id || "-"}
@@ -98,7 +98,7 @@ export default function NotificacoesLogsPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/notificacoes/logenvio"
+                                href="/resources/notifications/logenvio"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

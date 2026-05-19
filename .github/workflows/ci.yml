@@ -69,7 +69,7 @@ jobs:
 
       - name: Run backend tests with coverage
         env:
-          DJANGO_SETTINGS_MODULE: plataforma.settings.development
+          DJANGO_SETTINGS_MODULE: platform.settings.development
           DJANGO_SECRET_KEY: test-secret-key
           DB_ENGINE: postgres
           DB_NAME: substrato_ci

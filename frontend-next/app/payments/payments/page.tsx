@@ -2,7 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import MoneyValue from "@/components/ui/MoneyValue"
 import { apiFetchList } from "@/lib/api"
+import { confirmarPagamento, estornarPagamento } from "@/lib/api/payments"
 import { GROUPS } from "@/lib/rbac"
 
 type PagamentoRow = Record<string, any>
@@ -29,6 +30,22 @@ export default function PagamentosListaPage() {
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
+    const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null)
+
+    const carregar = useCallback(async () => {
+        const { items, meta } = await apiFetchList<PagamentoRow>("/payments/payment/", {
+            page,
+            pageSize,
+        })
+        const total = meta.total ?? items.length
+        const computedTotalPages =
+            meta.totalPages ??
+            (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+        setData(items)
+        setTotalItems(total || 0)
+        setTotalPages(computedTotalPages)
+        if (page > computedTotalPages) setPage(computedTotalPages)
+    }, [page, pageSize])
 
     useEffect(() => {
         let mounted = true
@@ -36,19 +53,7 @@ export default function PagamentosListaPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const { items, meta } = await apiFetchList<PagamentoRow>("/payments/payment/", {
-                    page,
-                    pageSize,
-                })
-                const total = meta.total ?? items.length
-                const computedTotalPages =
-                    meta.totalPages ??
-                    (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
-                if (!mounted) return
-                setData(items)
-                setTotalItems(total || 0)
-                setTotalPages(computedTotalPages)
-                if (page > computedTotalPages) setPage(computedTotalPages)
+                await carregar()
             } catch (e: any) {
                 if (!mounted) return
                 setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar pagamentos."))
@@ -60,7 +65,28 @@ export default function PagamentosListaPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
+    }, [carregar])
+
+    const executarAcao = useCallback(
+        async (id: number, tipo: "confirmar" | "estornar") => {
+            const key = `${tipo}:${id}`
+            try {
+                setAcaoEmCurso(key)
+                setErro(null)
+                if (tipo === "confirmar") {
+                    await confirmarPagamento(id)
+                } else {
+                    await estornarPagamento(id)
+                }
+                await carregar()
+            } catch (e: any) {
+                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao executar ação no pagamento."))
+            } finally {
+                setAcaoEmCurso(null)
+            }
+        },
+        [carregar]
+    )
 
     const columns = useMemo(
         () => [
@@ -68,20 +94,53 @@ export default function PagamentosListaPage() {
                 header: "Código",
                 render: (p: PagamentoRow) => (
                     <Link
-                        href={`/recursos/payments/payment/${p.id}`}
+                        href={`/resources/payments/payment/${p.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {p.id_custom || p.id || "-"}
                     </Link>
                 ),
             },
-            { header: "Fatura", render: (p: PagamentoRow) => p.fatura || "-" },
-            { header: "Método", render: (p: PagamentoRow) => p.metodo || "-" },
-            { header: "Status", render: (p: PagamentoRow) => p.status || "-" },
-            { header: "Valor", render: (p: PagamentoRow) => <MoneyValue value={p.valor} /> },
-            { header: "Pago em", render: (p: PagamentoRow) => fmtDateTime(p.pago_em) },
+            { header: "Fatura", render: (p: PagamentoRow) => p.fatura || p.invoice || "-" },
+            { header: "Método", render: (p: PagamentoRow) => p.metodo || p.method || "-" },
+            { header: "Status", render: (p: PagamentoRow) => p.status || p.estado || "-" },
+            { header: "Valor", render: (p: PagamentoRow) => <MoneyValue value={p.valor ?? p.value} /> },
+            { header: "Pago em", render: (p: PagamentoRow) => fmtDateTime(p.pago_em ?? p.paid_at) },
+            {
+                header: "Ações",
+                render: (p: PagamentoRow) => {
+                    const id = Number(p.id)
+                    const status = String(p.status || p.estado || "").toUpperCase()
+                    const confirmKey = `confirmar:${id}`
+                    const refundKey = `estornar:${id}`
+
+                    return (
+                        <div className="flex flex-wrap gap-2">
+                            {status === "PEN" ? (
+                                <button
+                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                    disabled={acaoEmCurso !== null}
+                                    onClick={() => executarAcao(id, "confirmar")}
+                                >
+                                    {acaoEmCurso === confirmKey ? "Confirmando..." : "Confirmar"}
+                                </button>
+                            ) : null}
+                            {status === "CON" ? (
+                                <button
+                                    className="inline-flex items-center rounded-lg border border-amber-200 px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                                    disabled={acaoEmCurso !== null}
+                                    onClick={() => executarAcao(id, "estornar")}
+                                >
+                                    {acaoEmCurso === refundKey ? "Estornando..." : "Estornar"}
+                                </button>
+                            ) : null}
+                            {status !== "PEN" && status !== "CON" ? <span className="text-xs text-slate-500">-</span> : null}
+                        </div>
+                    )
+                },
+            },
         ],
-        []
+        [acaoEmCurso, executarAcao]
     )
 
     return (
@@ -93,13 +152,13 @@ export default function PagamentosListaPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/recursos/payments/payment/novo"
+                                href="/resources/payments/payment/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
                             </Link>
                             <Link
-                                href="/recursos/pagamentos/pagamento"
+                                href="/resources/payments/pagamento"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

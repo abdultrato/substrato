@@ -243,6 +243,10 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert confirm_response.status_code == 200
     assert _response_data(confirm_response)["estado"] == Invoice.Status.PAID
 
+    confirm_again_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirmar_pagamento/")
+    assert confirm_again_response.status_code == 200
+    assert _response_data(confirm_again_response)["estado"] == Invoice.Status.PAID
+
     receipt_response = api_client.get(f"/api/v1/payments/receipt/?fatura={invoice_id}")
 
     assert receipt_response.status_code == 200
@@ -305,8 +309,10 @@ def test_payment_api_rejects_confirmed_overpayment_without_change(api_client):
     assert "change_amount" in detail_text or "troco" in detail_text
 
 
+@pytest.mark.django_db
 def test_start_payment_uses_gateway_registry_and_requires_phone_for_mobile_money(monkeypatch):
     captured = {}
+    import application.payments.handlers as payment_handlers
 
     class DummyGateway:
         name = "stripe"
@@ -325,7 +331,9 @@ def test_start_payment_uses_gateway_registry_and_requires_phone_for_mobile_money
         return kwargs
 
     monkeypatch.setattr(start_payment_module, "get_gateway", lambda name=None: gateway)
+    monkeypatch.setattr(payment_handlers, "get_gateway", lambda name=None: gateway)
     monkeypatch.setattr(start_payment_module.Transaction.objects, "create", fake_create)
+    monkeypatch.setattr(payment_handlers.Transaction.objects, "create", fake_create)
 
     transaction = start_payment_module.start_payment(
         SimpleNamespace(id=77),
@@ -339,7 +347,7 @@ def test_start_payment_uses_gateway_registry_and_requires_phone_for_mobile_money
     assert gateway.calls == [(Decimal("55.00"), "FAT-77", None)]
 
     monkeypatch.setattr(
-        start_payment_module,
+        payment_handlers,
         "get_gateway",
         lambda name=None: type(
             "MobileGateway",

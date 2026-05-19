@@ -86,7 +86,7 @@ export default function PagamentosPage() {
                     <ActionTile
                         title="Recibos"
                         description="Gerados automaticamente quando a fatura é paga."
-                        href="/recibos"
+                        href="/receipts"
                         icon={Receipt}
                     />
                     <ActionTile
@@ -98,7 +98,7 @@ export default function PagamentosPage() {
                     <ActionTile
                         title="Reconciliações"
                         description="Confirmações e auditoria por transação."
-                        href="/payments/reconciliacoes"
+                        href="/payments/reconciliations"
                         icon={ShieldCheck}
                     />
                 </div>
@@ -106,13 +106,13 @@ export default function PagamentosPage() {
                 <Card title="Gerenciamento" subtitle="Criação e edição via interface genérica.">
                     <div className="flex flex-wrap gap-2">
                         <Link
-                            href="/recursos/pagamentos"
+                            href="/resources/payments"
                             className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                         >
                             Abrir recursos (Pagamentos)
                         </Link>
                         <Link
-                            href="/recursos/payments/payment/novo"
+                            href="/resources/payments/payment/new"
                             className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                         >
                             Novo pagamento

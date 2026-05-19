@@ -1,5 +1,10 @@
+from datetime import timedelta
+
+from django.db.models import Count, Q
+from django.db.models.functions import TruncDay, TruncHour
 from django.http import HttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated  # Protege o endpoint
@@ -7,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet  # Apenas leitura
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.monitoring.models.outbox_event import TransactionalOutboxEvent
 from apps.monitoring.models.system_error import SystemError
 from events.runtime_bridge import get_runtime, runtime_enabled
 from substrato_os.cloud import CloudControlPlaneError
@@ -28,6 +34,291 @@ class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     search_fields = ["path", "exception_class", "message", "user__username"]
     ordering_fields = ["created_at", "status_code", "exception_class"]
     ordering = ["-created_at", "-id"]
+
+
+def _coerce_int(value, *, default: int, min_value: int | None = None, max_value: int | None = None) -> int:
+    try:
+        parsed = int(value)
+    except Exception:
+        parsed = int(default)
+
+    if min_value is not None and parsed < min_value:
+        return int(min_value)
+    if max_value is not None and parsed > max_value:
+        return int(max_value)
+    return parsed
+
+
+def _client_ip_from_request(request) -> str | None:
+    try:
+        xff = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+        if xff:
+            return xff
+        remote = (request.META.get("REMOTE_ADDR") or "").strip()
+        return remote or None
+    except Exception:
+        return None
+
+
+class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
+    http_method_names = ["get", "post", "head", "options"]
+    permission_classes = [IsAdminUser]
+
+    def get_permissions(self):
+        # Ingestão de erros do frontend: qualquer usuário autenticado.
+        if getattr(self, "action", "") == "create":
+            return [IsAuthenticated()]
+        # Leitura de agregados: somente administradores.
+        return [IsAdminUser()]
+
+    def create(self, request):
+        tenant = getattr(request, "tenant", None)
+        if tenant is None:
+            return Response({"detail": "Tenant não identificado."}, status=400)
+
+        payload = request.data if isinstance(request.data, dict) else {}
+        message = str(payload.get("message") or "").strip()
+        if not message:
+            return Response({"detail": "message é obrigatório."}, status=400)
+
+        status_code = _coerce_int(payload.get("status_code"), default=520, min_value=0, max_value=999)
+        method = str(payload.get("method") or "FRONTEND").strip().upper()[:10] or "FRONTEND"
+        path = str(payload.get("path") or payload.get("route") or "/frontend").strip()
+        full_path = str(payload.get("url") or payload.get("full_path") or path).strip()
+        event_type = str(payload.get("event_type") or "frontend.error").strip()
+
+        duration_raw = payload.get("duration_ms")
+        duration_ms = None
+        if duration_raw not in (None, ""):
+            duration_ms = _coerce_int(duration_raw, default=0, min_value=0, max_value=86_400_000)
+
+        metadata_payload = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+        metadata = {
+            "source": "frontend",
+            "event_type": event_type,
+            "route": str(payload.get("route") or "")[:500],
+            "request_url": str(payload.get("request_url") or "")[:500],
+            "request_method": str(payload.get("request_method") or "")[:20],
+            "status_code": status_code,
+            **metadata_payload,
+        }
+
+        user = getattr(request, "user", None)
+        user = user if getattr(user, "is_authenticated", False) else None
+
+        try:
+            record = SystemError.objects.create(
+                tenant=tenant,
+                user=user,
+                method=method,
+                path=(path or "/frontend")[:255],
+                full_path=full_path,
+                status_code=status_code,
+                duration_ms=duration_ms,
+                ip=_client_ip_from_request(request),
+                user_agent=(str(payload.get("user_agent") or request.META.get("HTTP_USER_AGENT") or ""))[:255],
+                view_basename=(str(payload.get("view_basename") or "frontend"))[:120],
+                view_action=(str(payload.get("view_action") or event_type))[:120],
+                object_id=(str(payload.get("object_id") or ""))[:80],
+                exception_class=(str(payload.get("error_name") or payload.get("exception_class") or "FrontendError"))[:120],
+                message=message[:500],
+                traceback=str(payload.get("stack") or payload.get("traceback") or ""),
+                metadata=metadata,
+            )
+        except Exception:
+            # Telemetria não deve quebrar o fluxo do utilizador.
+            return Response({"accepted": False}, status=202)
+
+        return Response(
+            {
+                "accepted": True,
+                "id": record.id,
+                "custom_id": record.custom_id,
+            },
+            status=201,
+        )
+
+    def list(self, request):
+        tenant = getattr(request, "tenant", None)
+        if tenant is None:
+            return Response({"detail": "Tenant não identificado."}, status=400)
+
+        now = timezone.now()
+        days = _coerce_int(request.query_params.get("days"), default=7, min_value=1, max_value=365)
+        top = _coerce_int(request.query_params.get("top"), default=8, min_value=3, max_value=25)
+        bucket_param = str(request.query_params.get("bucket") or "auto").strip().lower()
+        bucket = "hour" if (bucket_param == "hour" or (bucket_param == "auto" and days <= 2)) else "day"
+        range_start = now - timedelta(days=days)
+
+        errors_qs = SystemError.objects.filter(
+            tenant=tenant,
+            created_at__gte=range_start,
+            created_at__lte=now,
+        )
+
+        frontend_filter = Q(method="FRONTEND")
+        total_errors = errors_qs.count()
+        frontend_errors = errors_qs.filter(frontend_filter).count()
+        backend_errors = max(0, total_errors - frontend_errors)
+        client_4xx = errors_qs.filter(status_code__gte=400, status_code__lt=500).count()
+        server_5xx = errors_qs.filter(status_code__gte=500, status_code__lt=600).count()
+
+        by_status = list(
+            errors_qs.values("status_code")
+            .annotate(total=Count("id"))
+            .order_by("-total", "status_code")[:top]
+        )
+        by_exception = list(
+            errors_qs.exclude(exception_class="")
+            .values("exception_class")
+            .annotate(total=Count("id"))
+            .order_by("-total", "exception_class")[:top]
+        )
+        by_path = list(
+            errors_qs.exclude(path="")
+            .values("path")
+            .annotate(total=Count("id"))
+            .order_by("-total", "path")[:top]
+        )
+        by_method = list(
+            errors_qs.values("method")
+            .annotate(total=Count("id"))
+            .order_by("-total", "method")[:top]
+        )
+
+        bucket_expr = TruncHour("created_at") if bucket == "hour" else TruncDay("created_at")
+        timeline_rows = list(
+            errors_qs.annotate(bucket_value=bucket_expr)
+            .values("bucket_value")
+            .annotate(
+                total=Count("id"),
+                frontend=Count("id", filter=frontend_filter),
+                backend=Count("id", filter=~frontend_filter),
+                client_4xx=Count("id", filter=Q(status_code__gte=400, status_code__lt=500)),
+                server_5xx=Count("id", filter=Q(status_code__gte=500, status_code__lt=600)),
+            )
+            .order_by("bucket_value")
+        )
+        timeline = [
+            {
+                "bucket": row["bucket_value"].isoformat() if row.get("bucket_value") else None,
+                "total": row["total"],
+                "frontend": row["frontend"],
+                "backend": row["backend"],
+                "client_4xx": row["client_4xx"],
+                "server_5xx": row["server_5xx"],
+            }
+            for row in timeline_rows
+        ]
+
+        outbox_qs = TransactionalOutboxEvent.objects.filter(
+            occurred_at__gte=range_start,
+            occurred_at__lte=now,
+        )
+        tenant_identifier = str(getattr(tenant, "identifier", "") or "").strip()
+        if tenant_identifier:
+            outbox_qs = outbox_qs.filter(tenant_identifier=tenant_identifier)
+
+        outbox_total = outbox_qs.count()
+        outbox_status_rows = list(outbox_qs.values("status").annotate(total=Count("id")).order_by("-total", "status"))
+        outbox_status_totals = {row["status"]: row["total"] for row in outbox_status_rows}
+        outbox_event_rows = list(
+            outbox_qs.values("event_type").annotate(total=Count("id")).order_by("-total", "event_type")[:top]
+        )
+        outbox_recent_failures = list(
+            outbox_qs.filter(
+                status__in=[
+                    TransactionalOutboxEvent.Status.FAILED,
+                    TransactionalOutboxEvent.Status.DEAD_LETTER,
+                ]
+            )
+            .order_by("-updated_at", "-id")
+            .values(
+                "event_id",
+                "event_type",
+                "status",
+                "attempts",
+                "available_at",
+                "last_error",
+            )[:20]
+        )
+
+        recent_rows = list(
+            errors_qs.select_related("user")
+            .order_by("-created_at", "-id")
+            .values(
+                "id",
+                "custom_id",
+                "created_at",
+                "method",
+                "path",
+                "status_code",
+                "exception_class",
+                "message",
+                "user__username",
+            )[:20]
+        )
+        recent_events = [
+            {
+                "id": row["id"],
+                "custom_id": row["custom_id"],
+                "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+                "method": row["method"],
+                "path": row["path"],
+                "status_code": row["status_code"],
+                "exception_class": row["exception_class"],
+                "message": row["message"],
+                "user": row["user__username"] or "",
+            }
+            for row in recent_rows
+        ]
+
+        return Response(
+            {
+                "range": {
+                    "start": range_start.isoformat(),
+                    "end": now.isoformat(),
+                    "days": days,
+                    "bucket": bucket,
+                },
+                "totals": {
+                    "errors_total": total_errors,
+                    "frontend_errors": frontend_errors,
+                    "backend_errors": backend_errors,
+                    "client_4xx": client_4xx,
+                    "server_5xx": server_5xx,
+                    "unique_paths": errors_qs.exclude(path="").values("path").distinct().count(),
+                    "unique_exception_classes": errors_qs.exclude(exception_class="")
+                    .values("exception_class")
+                    .distinct()
+                    .count(),
+                    "unique_users": errors_qs.exclude(user__isnull=True).values("user").distinct().count(),
+                },
+                "by_status": by_status,
+                "by_exception": by_exception,
+                "by_path": by_path,
+                "by_method": by_method,
+                "timeline": timeline,
+                "outbox": {
+                    "total": outbox_total,
+                    "pending": outbox_status_totals.get(TransactionalOutboxEvent.Status.PENDING, 0),
+                    "delivered": outbox_status_totals.get(TransactionalOutboxEvent.Status.DELIVERED, 0),
+                    "failed": outbox_status_totals.get(TransactionalOutboxEvent.Status.FAILED, 0),
+                    "dead_letter": outbox_status_totals.get(TransactionalOutboxEvent.Status.DEAD_LETTER, 0),
+                    "by_status": outbox_status_rows,
+                    "by_event_type": outbox_event_rows,
+                    "recent_failures": [
+                        {
+                            **row,
+                            "event_id": str(row["event_id"]) if row.get("event_id") else "",
+                            "available_at": row["available_at"].isoformat() if row.get("available_at") else None,
+                        }
+                        for row in outbox_recent_failures
+                    ],
+                },
+                "recent_events": recent_events,
+            }
+        )
 
 
 class ExportJobViewSet(ValidatedSearchOrderingMixin, ViewSet):
@@ -341,6 +632,7 @@ class CloudControlViewSet(ValidatedSearchOrderingMixin, ViewSet):
 
 VIEWSET_MAP = {
     "error": SystemErrorViewSet,
+    "telemetry": TelemetryViewSet,
     "export_job": ExportJobViewSet,
     "cloud_control": CloudControlViewSet,
 }
@@ -350,4 +642,5 @@ __all__ = [
     "CloudControlViewSet",
     "ExportJobViewSet",
     "SystemErrorViewSet",
+    "TelemetryViewSet",
 ]

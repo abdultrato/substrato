@@ -27,9 +27,9 @@ const items = [
     { label: "Requisições", href: "/requests", icon: ClipboardList },
     { label: "Exames", href: "/exams", icon: FlaskConical },
     { label: "Faturas", href: "/invoices", icon: FileText },
-    { label: "Empresas", href: "/entidades", icon: Building2 },
+    { label: "Empresas", href: "/entities", icon: Building2 },
     { label: "Estatísticas", href: "/statistics", icon: BarChart3 },
-    { label: "Definições", href: "/definicoes", icon: Settings },
+    { label: "Definições", href: "/settings", icon: Settings },
 ]
 
 export default function MobileSidebar({ open, onClose }: Props) {

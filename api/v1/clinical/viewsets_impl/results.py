@@ -1,6 +1,4 @@
-from decimal import Decimal, InvalidOperation
-
-from django.db import transaction
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -8,8 +6,17 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from application.clinical.commands import (
+    SaveResultValueCommand,
+    StartResultAnalysisCommand,
+    ValidateResultCommand,
+)
+from application.clinical.handlers import (
+    handle_save_result_value,
+    handle_start_result_analysis,
+    handle_validate_result,
+)
 from apps.clinical.models.result_item import ResultItem
-from domain.clinical.result_state import ResultState
 from drf_spectacular.utils import extend_schema
 
 from ..filters import ResultItemFilter
@@ -90,28 +97,36 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise PermissionDenied("Use as ações: lancar, gravar e validar.")
         return super().partial_update(request, *args, **kwargs)
 
-    @action(detail=True, methods=["post"], url_path="lancar", url_name="lancar")
-    def start_analysis(self, request, pk=None):
-        """Move the result item to EM_ANALISE."""
-        item = self.get_object()
-        if item.status == ResultState.IN_ANALYSIS:
-            return Response(LaboratoryResultItemSerializer(item).data)
-
+    def _execute_command(self, handler, command):
         try:
-            item.transition(ResultState.IN_ANALYSIS, user=getattr(request, "user", None))
+            return handler(command)
+        except DjangoValidationError as err:
+            if hasattr(err, "message_dict"):
+                raise ValidationError(err.message_dict) from err
+            if hasattr(err, "messages"):
+                raise ValidationError(err.messages) from err
+            raise ValidationError(str(err)) from err
         except Exception as err:
             raise ValidationError(str(err)) from err
 
-        item.refresh_from_db()
-        return Response(LaboratoryResultItemSerializer(item).data)
+    @action(detail=True, methods=["post"], url_path="lancar", url_name="lancar")
+    def start_analysis(self, request, pk=None):
+        """Move the result item to EM_ANALISE."""
+        updated = self._execute_command(
+            handle_start_result_analysis,
+            StartResultAnalysisCommand(
+                result_item=self.get_object(),
+                user=getattr(request, "user", None),
+                idempotent=True,
+            ),
+        )
+        return Response(LaboratoryResultItemSerializer(updated).data)
 
     @action(detail=True, methods=["post"], url_path="gravar", url_name="gravar")
     def save_result(self, request, pk=None):
         """
         Save the result value and move to AGUARDANDO_VALIDACAO.
         """
-        item = self.get_object()
-
         payload = request.data or {}
         raw = None
         for field_name in ("result_value", "resultado_valor", "value", "valor"):
@@ -119,56 +134,26 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
                 raw = payload.get(field_name)
                 break
 
-        if raw is None or (isinstance(raw, str) and not raw.strip()):
-            raise ValidationError({"result_value": "Informe um valor antes de gravar."})
-
-        try:
-            value = Decimal(str(raw).replace(",", "."))
-        except (InvalidOperation, TypeError, ValueError) as err:
-            raise ValidationError({"result_value": "Valor inválido."}) from err
-
-        from domain.clinical.result_state_machine import InvalidTransitionError, ResultStateMachine
-
-        with transaction.atomic():
-            locked = (
-                ResultItem.all_objects.select_for_update()
-                .select_related(
-                    "result",
-                    "result__request",
-                    "result__request__patient",
-                    "exam_field",
-                    "exam_field__exam",
-                )
-                .get(pk=item.pk)
-            )
-
-            try:
-                ResultStateMachine.validate_transition(
-                    locked.status,
-                    ResultState.AWAITING_VALIDATION,
-                )
-            except InvalidTransitionError as err:
-                raise ValidationError(str(err)) from err
-
-            locked.result_value = value
-            locked.status = ResultState.AWAITING_VALIDATION
-            locked.save()
-
-        locked.refresh_from_db()
-        return Response(LaboratoryResultItemSerializer(locked).data)
+        updated = self._execute_command(
+            handle_save_result_value,
+            SaveResultValueCommand(
+                result_item=self.get_object(),
+                raw_value=raw,
+                idempotent=True,
+            ),
+        )
+        return Response(LaboratoryResultItemSerializer(updated).data)
 
     @action(detail=True, methods=["post"], url_path="validar", url_name="validar")
     def validate_result(self, request, pk=None):
         """Move the result item to VALIDADO."""
-        item = self.get_object()
-        if item.status == ResultState.VALIDATED:
-            return Response(LaboratoryResultItemSerializer(item).data)
-
-        try:
-            item.transition(ResultState.VALIDATED, user=getattr(request, "user", None))
-        except Exception as err:
-            raise ValidationError(str(err)) from err
-
-        item.refresh_from_db()
-        return Response(LaboratoryResultItemSerializer(item).data)
+        updated = self._execute_command(
+            handle_validate_result,
+            ValidateResultCommand(
+                result_item=self.get_object(),
+                user=getattr(request, "user", None),
+                idempotent=True,
+            ),
+        )
+        return Response(LaboratoryResultItemSerializer(updated).data)
 

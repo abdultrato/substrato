@@ -97,7 +97,7 @@ export default function FaturasPage() {
     try {
       setCarregando(true)
       setErro(null)
-      const res = await apiFetch<any>("/faturas/")
+      const res = await apiFetch<any>("/invoices/")
       const items = res && (res as any).results ? (res as any).results : res
       setFaturas(Array.isArray(items) ? items : [])
     } catch (e: any) {
@@ -149,7 +149,7 @@ export default function FaturasPage() {
     }
     try {
       setAcaoId(id)
-      await apiFetch(`/faturas/${id}/emitir/`, { method: "POST" })
+      await apiFetch(`/invoices/${id}/emitir/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao emitir fatura."))
@@ -166,7 +166,7 @@ export default function FaturasPage() {
     if (!confirm("Anular esta fatura?")) return
     try {
       setAcaoId(id)
-      await apiFetch(`/faturas/${id}/anular/`, { method: "POST" })
+      await apiFetch(`/invoices/${id}/anular/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao anular fatura."))
@@ -178,7 +178,7 @@ export default function FaturasPage() {
   const baixarPdf = useCallback(async (id: number) => {
     try {
       setAcaoId(id)
-      const blob = await apiFetch<Blob>(`/faturas/${id}/pdf/`, {
+      const blob = await apiFetch<Blob>(`/invoices/${id}/pdf/`, {
         method: "GET",
         responseType: "blob",
       })
@@ -225,7 +225,7 @@ export default function FaturasPage() {
         if (scope === "user") params.set("user_id", String(reportUserId))
         params.set("limit", "300")
 
-        const blob = await apiFetch<Blob>(`/faturas/historico_faturamento/pdf/?${params.toString()}`, {
+        const blob = await apiFetch<Blob>(`/invoices/historico_faturamento/pdf/?${params.toString()}`, {
           responseType: "blob",
         })
         const url = window.URL.createObjectURL(blob)
@@ -302,7 +302,7 @@ export default function FaturasPage() {
       }
       try {
         setAcaoId(id)
-        await apiFetch(`/faturas/${id}/confirmar_pagamento/`, { method: "POST" })
+        await apiFetch(`/invoices/${id}/confirmar_pagamento/`, { method: "POST" })
         await carregar()
         if (selectedFatura?.id === id) {
           const atual = faturas.find((f) => f.id === id)
@@ -350,7 +350,7 @@ export default function FaturasPage() {
           <div className="flex flex-wrap gap-2">
             {f.estado === "RASC" ? (
               <Link
-                href={`/invoices/rascunho/${f.id}`}
+                href={`/invoices/draft/${f.id}`}
                 className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
               >
                 {podeAlterar ? "Editar rascunho" : "Ver rascunho"}
@@ -466,7 +466,7 @@ export default function FaturasPage() {
             <div className="flex flex-wrap items-center gap-2">
               {podeCriar ? (
                 <Link
-                  href="/invoices/nova"
+                  href="/invoices/new"
                   className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
                 >
                   Nova fatura
@@ -675,7 +675,7 @@ export default function FaturasPage() {
                         <div className="text-xs text-gray-500">Paciente: {f.paciente || "-"}</div>
                       </div>
                       <Link
-                        href={`/invoices/rascunho/${f.id}`}
+                        href={`/invoices/draft/${f.id}`}
                         className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
                       >
                         {podeAlterar ? "Editar" : "Ver"}

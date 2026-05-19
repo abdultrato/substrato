@@ -24,7 +24,7 @@ export default function MonitoramentoPage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const res = await apiFetch<any>("/monitoramento/erro/")
+                const res = await apiFetch<any>("/monitoring/error/")
                 if (!mounted) return
                 setErros(extractTotalCount(res))
             } catch (e: any) {

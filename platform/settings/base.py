@@ -83,6 +83,18 @@ SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY = get_env("SUBSTRATO_OS_RUNTIME_OFFLINE_ONLY",
 SUBSTRATO_OS_OUTBOX_PATH = get_env("SUBSTRATO_OS_OUTBOX_PATH", str(BASE_DIR / "substrato_os_outbox.sqlite3"))
 
 # =========================================================
+# TRANSACTIONAL OUTBOX (Django DB)
+# =========================================================
+TRANSACTIONAL_OUTBOX_ENABLED = get_env("TRANSACTIONAL_OUTBOX_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+TRANSACTIONAL_OUTBOX_RETRY_AFTER_SECONDS = int(get_env("TRANSACTIONAL_OUTBOX_RETRY_AFTER_SECONDS", "30"))
+TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS = int(get_env("TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS", "10"))
+
+# =========================================================
 # PROMETHEUS (django-prometheus)
 # =========================================================
 #
@@ -694,6 +706,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     # multi-tenant
     "infrastructure.middleware.tenant.TenantMiddleware",
+    "infrastructure.middleware.tenant_enforcer.TenantEnforcerMiddleware",
     # captura de erros (persistência em BD para monitoramento)
     "infrastructure.middleware.errors.ErrorCaptureMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",

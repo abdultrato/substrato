@@ -3,28 +3,28 @@ import { canonicalModuleGroupKey } from "@/lib/modules"
 
 export function requiredGroupsForResourceGroup(groupKey: string): string[] {
   switch (canonicalModuleGroupKey(groupKey)) {
-    case "enfermagem":
+    case "nursing":
       return [GROUPS.ADMIN, GROUPS.ENFERMAGEM]
-    case "recursos_humanos":
+    case "human_resources":
       return [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
-    case "farmacia":
+    case "pharmacy":
       return [GROUPS.ADMIN, GROUPS.FARMACIA]
-    case "banco_sangue":
+    case "bloodbank":
       return [GROUPS.ADMIN, GROUPS.LABORATORIO]
-    case "contabilidade":
+    case "accounting":
       return [GROUPS.ADMIN, GROUPS.CONTABILIDADE]
-    case "pagamentos":
+    case "payments":
       // Pagamentos: contabilidade (auditoria/controle) e recepção (lançamento).
       return [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.RECEPCAO]
-    case "prontuario":
+    case "medical_records":
       return [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
-    case "maternidade":
+    case "maternity":
       return [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
-    case "cirurgia":
+    case "surgery":
       return [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
-    case "consultas":
+    case "consultations":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
-    case "entidades":
+    case "entities":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA_OCUPACIONAL]
     default:
       return [GROUPS.ADMIN]

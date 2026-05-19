@@ -1,12 +1,29 @@
 """ViewSets da API v1 para pagamentos/recibos/reconciliações/transações."""
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from application.payments.commands import (
+    ConfirmPaymentCommand,
+    ConfirmReconciliationCommand,
+    ReconcileTransactionCommand,
+    RefundPaymentCommand,
+    VerifyPaymentCommand,
+)
+from application.payments.handlers import (
+    handle_confirm_payment,
+    handle_confirm_reconciliation,
+    handle_reconcile_transaction,
+    handle_refund_payment,
+    handle_verify_payment,
+)
 from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
@@ -44,6 +61,46 @@ class PaymentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         "version",
     ]
     ordering = ["-created_at"]
+
+    def _execute_command(self, handler, command):
+        try:
+            return handler(command)
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+    @action(detail=True, methods=["post"], url_path="confirm", url_name="confirm")
+    def confirm(self, request, pk=None):
+        payment = self._execute_command(
+            handle_confirm_payment,
+            ConfirmPaymentCommand(
+                payment=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(payment).data)
+
+    @action(detail=True, methods=["post"], url_path="confirmar", url_name="confirmar")
+    def confirm_legacy(self, request, pk=None):
+        return self.confirm(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="refund", url_name="refund")
+    def refund(self, request, pk=None):
+        payment = self._execute_command(
+            handle_refund_payment,
+            RefundPaymentCommand(
+                payment=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(payment).data)
+
+    @action(detail=True, methods=["post"], url_path="estornar", url_name="estornar")
+    def refund_legacy(self, request, pk=None):
+        return self.refund(request, pk)
 
 
 class ReceiptViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -92,6 +149,31 @@ class ReconciliationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     ordering_fields = ["transaction", "confirmed", "confirmation_date", "created_at"]
     ordering = ["-created_at"]
 
+    def _execute_command(self, handler, command):
+        try:
+            return handler(command)
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+    @action(detail=True, methods=["post"], url_path="confirm", url_name="confirm")
+    def confirm(self, request, pk=None):
+        reconciliation = self._execute_command(
+            handle_confirm_reconciliation,
+            ConfirmReconciliationCommand(
+                reconciliation=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(reconciliation).data)
+
+    @action(detail=True, methods=["post"], url_path="confirmar", url_name="confirmar")
+    def confirm_legacy(self, request, pk=None):
+        return self.confirm(request, pk)
+
 
 class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Transaction.objects.all()
@@ -101,6 +183,100 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     search_fields = ["external_reference", "gateway", "status"]
     ordering_fields = ["external_reference", "gateway", "status", "gateway_response", "created_at"]
     ordering = ["-created_at"]
+
+    def _execute_command(self, handler, command):
+        try:
+            return handler(command)
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+    @staticmethod
+    def _to_bool(value, default: bool) -> bool:
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        text = str(value).strip().lower()
+        if text in {"1", "true", "t", "yes", "y", "sim"}:
+            return True
+        if text in {"0", "false", "f", "no", "n", "nao", "não"}:
+            return False
+        return default
+
+    def _gateway_name(self, request):
+        payload = request.data or {}
+        return (
+            payload.get("gateway_name")
+            or payload.get("gateway")
+            or request.query_params.get("gateway_name")
+            or request.query_params.get("gateway")
+        )
+
+    @action(detail=True, methods=["post"], url_path="verify", url_name="verify")
+    def verify(self, request, pk=None):
+        transaction = self.get_object()
+        payload = self._execute_command(
+            handle_verify_payment,
+            VerifyPaymentCommand(
+                transaction=transaction,
+                gateway_name=self._gateway_name(request),
+            ),
+        )
+        transaction.refresh_from_db()
+        return Response(
+            {
+                "transaction": self.get_serializer(transaction).data,
+                "gateway_payload": payload,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="verificar", url_name="verificar")
+    def verify_legacy(self, request, pk=None):
+        return self.verify(request, pk)
+
+    @action(detail=True, methods=["post"], url_path="reconcile", url_name="reconcile")
+    def reconcile(self, request, pk=None):
+        payload = request.data or {}
+        confirm_when_paid = self._to_bool(
+            payload.get("confirm_when_paid", request.query_params.get("confirm_when_paid")),
+            default=True,
+        )
+
+        transaction = self._execute_command(
+            handle_reconcile_transaction,
+            ReconcileTransactionCommand(
+                transaction=self.get_object(),
+                gateway_name=self._gateway_name(request),
+                confirm_when_paid=confirm_when_paid,
+                idempotent=True,
+            ),
+        )
+
+        reconciliation = Reconciliation.objects.filter(transaction=transaction).first()
+        reconciliation_payload = None
+        if reconciliation is not None:
+            reconciliation_payload = {
+                "id": reconciliation.id,
+                "confirmed": reconciliation.confirmed,
+                "confirmation_date": (
+                    reconciliation.confirmation_date.isoformat() if reconciliation.confirmation_date else None
+                ),
+            }
+
+        return Response(
+            {
+                "transaction": self.get_serializer(transaction).data,
+                "reconciliation": reconciliation_payload,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="reconciliar", url_name="reconciliar")
+    def reconcile_legacy(self, request, pk=None):
+        return self.reconcile(request, pk)
 
 
 VIEWSET_MAP = {

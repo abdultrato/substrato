@@ -3,6 +3,8 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from application.billing.commands import IssueInvoiceCommand, SyncInvoiceFromOriginCommand
+from application.billing.handlers import handle_issue_invoice, handle_sync_invoice_from_origin
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_request import LabRequest
@@ -170,10 +172,20 @@ def create_invoice_for_checkin(
     )
     invoice.full_clean()
     invoice.save()
-    invoice.sync_items_from_origin()
+    invoice = handle_sync_invoice_from_origin(
+        SyncInvoiceFromOriginCommand(
+            invoice=invoice,
+            idempotent=False,
+        )
+    )
 
     if issue and invoice.items.filter(deleted=False).exists():
-        invoice.issue()
+        invoice = handle_issue_invoice(
+            IssueInvoiceCommand(
+                invoice=invoice,
+                idempotent=False,
+            )
+        )
 
     checkin.register_invoice(invoice)
     return invoice
