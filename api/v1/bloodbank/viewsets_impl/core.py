@@ -125,7 +125,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
         try:
             instance.save()
         except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages}) from err
 
     @staticmethod
     def _create_completed_transfusion(*, unit: BloodUnit, recipient: Patient, user, indication: str, notes: str):
@@ -146,7 +146,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
         try:
             transfusion.save()
         except DjangoValidationError as err:
-            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages})
+            raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages}) from err
         return transfusion, now
 
     @action(detail=True, methods=["post"], url_path="reservar", url_name="reservar")
@@ -425,10 +425,9 @@ VIEWSET_MAP = {
 __all__ = [
     "VIEWSET_MAP",
     "BloodDonationViewSet",
-    "BloodStorageViewSet",
-    "BloodUnitViewSet",
-    "BloodTransfusionViewSet",
     "BloodStockMovementViewSet",
     "BloodStorageMaintenanceViewSet",
+    "BloodStorageViewSet",
+    "BloodTransfusionViewSet",
+    "BloodUnitViewSet",
 ]
-

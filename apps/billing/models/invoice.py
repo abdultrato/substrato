@@ -217,10 +217,6 @@ class Invoice(NoNameCoreModel):
     # VALIDAÇÃO DE ORIGEM
     # ==========================================
 
-    def clean(self):
-        # Permite combinações flexíveis de origem; não bloqueia por contagem de referências.
-        super().clean()
-
     def persist_totals(self):
         self.recalculate_totals()
         if not self.pk:
@@ -266,7 +262,7 @@ class Invoice(NoNameCoreModel):
                     output_field=DecimalField(max_digits=12, decimal_places=2),
                 ),
                 Decimal("0.00"),
-            )
+            ),
         )
         return (totais["total_pago"] or Decimal("0.00")) - (totais["total_troco"] or Decimal("0.00"))
 
@@ -624,12 +620,6 @@ class Invoice(NoNameCoreModel):
         if self.origin == self.Origin.NURSING:
             from apps.pharmacy.models.lot import Lot
 
-            procedures = []
-            if self.procedure_id:
-                procedures = [self.procedure]
-            elif self.pk:
-                procedures = list(self.procedures.all())
-
             billed_material_ids = list(
                 self.items.filter(
                     deleted=False,
@@ -698,7 +688,6 @@ class Invoice(NoNameCoreModel):
             self.register_history("EMISSAO", "Fatura emitida", linhas=linhas)
         except Exception:
             pass
-
 
     # ==========================================
     # BLOQUEIO DE ALTERAÇÃO

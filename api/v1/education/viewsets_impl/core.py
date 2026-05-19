@@ -81,9 +81,8 @@ class StudentProfileViewSet(TenantScopedEducationViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
-        if user and not getattr(user, "is_superuser", False):
-            if _is_student_user(user):
-                return qs.filter(user=user)
+        if user and not getattr(user, "is_superuser", False) and _is_student_user(user):
+            return qs.filter(user=user)
         return qs
 
 
@@ -98,9 +97,8 @@ class TeacherProfileViewSet(TenantScopedEducationViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
-        if user and not getattr(user, "is_superuser", False):
-            if _is_teacher_user(user):
-                return qs.filter(user=user)
+        if user and not getattr(user, "is_superuser", False) and _is_teacher_user(user):
+            return qs.filter(user=user)
         return qs
 
 
@@ -162,7 +160,9 @@ class EnrollmentViewSet(TenantScopedEducationViewSet):
 
 
 class AttendanceRecordViewSet(TenantScopedEducationViewSet):
-    queryset = AttendanceRecord.objects.select_related("enrollment", "enrollment__student", "enrollment__classroom").all()
+    queryset = AttendanceRecord.objects.select_related(
+        "enrollment", "enrollment__student", "enrollment__classroom"
+    ).all()
     serializer_class = AttendanceRecordSerializer
     filterset_class = AttendanceRecordFilter
     search_fields = ["custom_id", "enrollment__student__student_code", "notes"]
@@ -250,6 +250,7 @@ VIEWSET_MAP = {
 }
 
 __all__ = [
+    "VIEWSET_MAP",
     "AttendanceRecordViewSet",
     "ClassroomViewSet",
     "CourseViewSet",
@@ -259,5 +260,4 @@ __all__ = [
     "LearningContentViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
-    "VIEWSET_MAP",
 ]

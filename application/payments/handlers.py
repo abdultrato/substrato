@@ -83,9 +83,8 @@ def handle_reconcile_transaction(command: ReconcileTransactionCommand) -> Transa
         if updated_fields:
             transaction.save(update_fields=updated_fields)
 
-        if command.confirm_when_paid and _is_paid_status(next_status):
-            if not reconciliation.confirmed:
-                reconciliation.confirm()
+        if command.confirm_when_paid and _is_paid_status(next_status) and not reconciliation.confirmed:
+            reconciliation.confirm()
 
     transaction.refresh_from_db()
     return transaction

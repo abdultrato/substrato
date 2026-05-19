@@ -232,9 +232,7 @@ def register_payment_for_checkin(
             raise ValidationError({"payment": {"insurer_id": "Seguradora não encontrada para este tenant."}})
 
         if coverage_plan_id:
-            coverage_plan = CoveragePlan.objects.filter(
-                tenant=checkin.tenant, pk=coverage_plan_id
-            ).first()
+            coverage_plan = CoveragePlan.objects.filter(tenant=checkin.tenant, pk=coverage_plan_id).first()
             if not coverage_plan:
                 raise ValidationError(
                     {"payment": {"coverage_plan_id": "Plano de cobertura não encontrado para este tenant."}}
@@ -296,11 +294,7 @@ def get_care_summary(checkin):
     invoice_items = list(invoice.items.filter(deleted=False)) if invoice else []
     invoice_creator = getattr(invoice, "created_by", None) if invoice else None
     billed_item_sectors = sorted(
-        {
-            setor
-            for setor in (getattr(item, "billed_sector", "") for item in invoice_items)
-            if (setor or "").strip()
-        }
+        {setor for setor in (getattr(item, "billed_sector", "") for item in invoice_items) if (setor or "").strip()}
     )
 
     return {
@@ -485,9 +479,8 @@ def execute_full_flow(
             clinical_status=dados_request.get("clinical_status"),
         )
 
-    if payment:
-        if not checkin_obj.request_id and not request_obj:
-            raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
+    if payment and not checkin_obj.request_id and not request_obj:
+        raise ValidationError("Fluxo financeiro requer uma requisição vinculada.")
 
     if billing or payment:
         billing_data = dict(billing or {})

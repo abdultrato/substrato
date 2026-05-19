@@ -135,7 +135,12 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
         date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
         date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
 
-        qs = self.get_queryset().select_related("product").filter(deleted=False).order_by("product__name", "expiration_date")
+        qs = (
+            self.get_queryset()
+            .select_related("product")
+            .filter(deleted=False)
+            .order_by("product__name", "expiration_date")
+        )
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
         if date_to:
@@ -238,9 +243,13 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
             raise ValidationError({"limit": "Valor inválido para limit."}) from exc
         limit = max(1, min(limit, 2000))
 
-        qs = self.get_queryset().filter(deleted=False).select_related(
-            "lot__product",
-            "material_request_item__requisition",
+        qs = (
+            self.get_queryset()
+            .filter(deleted=False)
+            .select_related(
+                "lot__product",
+                "material_request_item__requisition",
+            )
         )
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
@@ -812,7 +821,9 @@ def _requesting_department_from_user(user) -> str:
 
 
 class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MaterialRequisition.objects.prefetch_related("items", "items__lot", "items__lot__product").select_related(
+    queryset = MaterialRequisition.objects.prefetch_related(
+        "items", "items__lot", "items__lot__product"
+    ).select_related(
         "created_by",
         "fulfilled_by",
         "on_hold_by",
@@ -820,7 +831,13 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     serializer_class = MaterialRequisitionSerializer
     filterset_class = MaterialRequisitionFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["custom_id", "requested_by_department", "created_by__username", "created_by__first_name", "created_by__last_name"]
+    search_fields = [
+        "custom_id",
+        "requested_by_department",
+        "created_by__username",
+        "created_by__first_name",
+        "created_by__last_name",
+    ]
     ordering_fields = [
         "tenant",
         "custom_id",
@@ -949,8 +966,8 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 qty_raw = it.get("quantity", remaining)
                 try:
                     qty = int(qty_raw)
-                except Exception:
-                    raise ValidationError({"quantity": f"Quantidade inválida para item {item.id}."})
+                except Exception as err:
+                    raise ValidationError({"quantity": f"Quantidade inválida para item {item.id}."}) from err
 
                 if qty <= 0:
                     continue
@@ -983,7 +1000,9 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             requisition.refresh_from_db()
             items = list(requisition.items.all())
             any_supplied = any((i.supplied_quantity or 0) > 0 for i in items)
-            all_supplied = all((i.supplied_quantity or 0) >= (i.requested_quantity or 0) for i in items) if items else False
+            all_supplied = (
+                all((i.supplied_quantity or 0) >= (i.requested_quantity or 0) for i in items) if items else False
+            )
 
             next_status = requisition.status
             if all_supplied:
@@ -1011,7 +1030,9 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         requisition.hold_reason = reason
         requisition.on_hold_at = timezone.now()
         requisition.on_hold_by = user
-        requisition.save(update_fields=["status", "hold_reason", "on_hold_at", "on_hold_by", "updated_at", "updated_by"])
+        requisition.save(
+            update_fields=["status", "hold_reason", "on_hold_at", "on_hold_by", "updated_at", "updated_by"]
+        )
 
         return Response(self.get_serializer(requisition).data)
 

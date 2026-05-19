@@ -116,9 +116,7 @@ class RegisterReceptionPaymentSerializer(LegacyAliasSerializerMixin, serializers
         method = attrs.get("method") or Payment.Method.CASH
         if method == Payment.Method.HEALTH_INSURANCE:
             if not attrs.get("insurer_id"):
-                raise serializers.ValidationError(
-                    {"insurer_id": "Informe a insurer para payment via seguro de saúde."}
-                )
+                raise serializers.ValidationError({"insurer_id": "Informe a insurer para payment via seguro de saúde."})
             if not (attrs.get("authorization_number") or "").strip():
                 raise serializers.ValidationError(
                     {"authorization_number": "Informe o número de autorização do seguro."}
@@ -174,7 +172,6 @@ class CareFlowCreateSerializer(LegacyAliasSerializerMixin, serializers.Serialize
         patient_id = attrs.get("patient_id")
         patient = attrs.get("patient")
         request = attrs.get("request")
-        billing = attrs.get("billing")
         payment = attrs.get("payment")
 
         if not patient_id and not patient:
