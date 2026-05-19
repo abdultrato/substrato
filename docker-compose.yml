@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "${DB_HOST_PORT:-5433}:5432"
+      - "5434:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U substrato_user -d substrato" ]
       interval: 10s
@@ -35,7 +35,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "${REDIS_HOST_PORT:-6379}:6379"
+      - "6380:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -53,11 +53,13 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_backend
+    entrypoint: /app/entrypoint.sh
     command: gunicorn platform.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
     environment:
       DJANGO_ENV: development
       DJANGO_SETTINGS_MODULE: platform.settings.development
       DJANGO_DEBUG: "True"
+      SKIP_MIGRATIONS: "1"
 
       DJANGO_SECRET_KEY: dev-insecure-key-change-in-production
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,0.0.0.0

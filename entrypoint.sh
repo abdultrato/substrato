@@ -105,8 +105,12 @@ PY
 if [ "$is_celery_like" -eq 1 ]; then
   log "⏭️  Celery detectado; pulando migrations/bootstrap."
 else
-  log "🔄 Executando migrations..."
-  python manage.py migrate --noinput
+  if [ "${SKIP_MIGRATIONS:-0}" = "1" ]; then
+    log "⏭️  SKIP_MIGRATIONS=1; pulando migrations/bootstrap (dev workaround)."
+  else
+    log "🔄 Executando migrations..."
+    python manage.py migrate --noinput
+  fi
 
 
   # ============================================================================
