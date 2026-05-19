@@ -37,7 +37,7 @@ jobs:
     
     steps:
     - name: 📥 Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     
     - name: 📝 Set environment
       id: env
@@ -197,3 +197,4 @@ jobs:
       run: |
         echo "✅ Deployment to ${{ env.DEPLOY_ENV }} completed!"
         echo "📍 URL: ${{ env.DEPLOY_URL }}"
+

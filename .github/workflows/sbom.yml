@@ -23,10 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -40,7 +40,7 @@ jobs:
         run: cyclonedx-py requirements requirements.txt --output-file sbom-backend.json --format json
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-backend
           path: sbom-backend.json
@@ -54,10 +54,10 @@ jobs:
         working-directory: frontend-next
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: npm
@@ -70,8 +70,9 @@ jobs:
         run: npx @cyclonedx/cyclonedx-npm --output-file sbom-frontend.xml
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-frontend
           path: frontend-next/sbom-frontend.xml
           if-no-files-found: error
+

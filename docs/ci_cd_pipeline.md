@@ -21,7 +21,7 @@ Dentro de `backend-quality`, há um gate adicional de migração education:
 6. `/.github/workflows/dependency-review.yml`: bloqueio de PR para vulnerabilidades de dependência de alta severidade.
 7. `/.github/workflows/sbom.yml`: geração e publicação de SBOM para backend e frontend.
 8. `/.github/workflows/education-migration-audit.yml`: auditoria de migração education em modo manual e agendado (`cron` diário às `03:20 UTC`), com opções `strict`/`auto_fix` no modo manual, saída JSON+Markdown, resumo no run (incluindo cenários de falha), extração centralizada de `overview` em outputs do workflow via `scripts/extract_education_audit_overview.py`, notificação automática por issue quando a execução agendada falha, detalhe de métricas (`status`, segmentos divergentes, contagem de segmentos divergentes, `missing/extra`, `warnings`) na issue com base no bloco `overview` do JSON de auditoria, fecho automático dessa issue quando o agendado volta a passar, `concurrency` ativo e retenção de artefactos por 30 dias.
-9. Todos os workflows definem `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` para antecipar a transição dos runners GitHub Actions para Node 24 e reduzir risco de quebra por depreciação.
+9. Todos os workflows definem `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` e usam versões atualizadas de actions (`checkout/setup-* /upload-artifact` e correlatas) para reduzir risco de quebra na transição dos runners para Node 24.
 
 ## Gates obrigatórios
 1. `ruff check` e `ruff format --check`.
