@@ -3,29 +3,30 @@
 Inclui comentários em português explicando os principais pontos linha a linha.
 """
 
-from django import forms
-from django.contrib import admin
-from django.core.exceptions import ValidationError
-from django.forms import ValidationError as FormValidationError
-from django.forms.models import BaseInlineFormSet
 from decimal import Decimal
 
+from django import forms
+from django.contrib import admin
 from django.db.models import (
     Case,
+    DecimalField,
     Exists,
+    ExpressionWrapper,
     F,
     IntegerField,
     Min,
-    Sum,
-    When,
-    DecimalField,
-    ExpressionWrapper,
-    Value,
     OuterRef,
     Subquery,
+    Sum,
+    Value,
+    When,
 )
 from django.db.models.functions import Coalesce
+from django.forms import ValidationError as FormValidationError
+from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html, format_html_join
+
+from infrastructure.context.tenant import get_tenant
 
 from .models.inventory_movement import (
     InventoryMovement,
@@ -33,14 +34,12 @@ from .models.inventory_movement import (
     MovementType,
 )
 from .models.lot import Lot
+from .models.material_requisition import MaterialRequisition
+from .models.material_requisition_item import MaterialRequisitionItem
 from .models.product import Product
 from .models.product_category import ParentCategory, ProductCategory
 from .models.sale import Sale
 from .models.sale_item import SaleItem
-from .models.lot import Lot  # for stock check in inline
-from .models.material_requisition import MaterialRequisition
-from .models.material_requisition_item import MaterialRequisitionItem
-from infrastructure.context.tenant import get_tenant
 
 # =========================================================
 # PRODUTO

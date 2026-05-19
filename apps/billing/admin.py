@@ -120,9 +120,7 @@ class BaseTypedInvoiceItemInline(admin.TabularInline):
                     normalized_error = {}
                     for key, value in error.error_dict.items():
                         target_key = key
-                        if key == "item_type" and key not in self.fields:
-                            target_key = NON_FIELD_ERRORS
-                        elif key != NON_FIELD_ERRORS and key not in self.fields:
+                        if (key == "item_type" and key not in self.fields) or (key != NON_FIELD_ERRORS and key not in self.fields):
                             target_key = NON_FIELD_ERRORS
                         normalized_error.setdefault(target_key, [])
                         normalized_error[target_key].extend(value)

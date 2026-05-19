@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import ast
+import copy
 from datetime import UTC
 import importlib.util
 from pathlib import Path
 import pkgutil
-import copy
 
 
 def _patch_legacy_ast_aliases() -> None:

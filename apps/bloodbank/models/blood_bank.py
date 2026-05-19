@@ -9,11 +9,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from core.models.base import NoNameCoreModel
 from apps.bloodbank.services.compatibility import (
     compatibility_error_message,
     is_blood_compatible,
 )
+from core.models.base import NoNameCoreModel
 
 User = settings.AUTH_USER_MODEL
 

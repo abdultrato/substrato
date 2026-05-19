@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from contextlib import contextmanager, suppress
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 import random
 
 from django.apps import apps
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
 from django.utils import timezone
 from faker import Faker
 
@@ -25,9 +23,9 @@ from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.bloodbank.models.blood_bank import (
     BloodDonation,
+    BloodStockMovement,
     BloodStorage,
     BloodStorageMaintenance,
-    BloodStockMovement,
     BloodTransfusion,
     BloodType,
     BloodUnit,
@@ -56,16 +54,9 @@ from apps.equipment_integrations.models.message import IntegrationDocument, Inte
 from apps.equipment_integrations.models.order import IntegrationOrder, IntegrationOrderItem
 from apps.equipment_integrations.models.routing import IntegrationRouting
 from apps.external_entities.models.company import Company
-from apps.human_resources.models.absence import Absence
 from apps.human_resources.models.employee import Employee
-from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
-from apps.human_resources.models.overtime import Overtime
-from apps.human_resources.models.payroll import Payroll
 from apps.human_resources.models.profession import Profession
-from apps.human_resources.models.termination import Termination
-from apps.human_resources.models.vacation import Vacation
-from apps.human_resources.models.work_schedule import WorkSchedule
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
@@ -92,7 +83,6 @@ from apps.nursing.models import (
     ProcedureCatalog,
     ProcedureCatalogMaterial,
     ProcedureItem,
-    ProcedureMaterial,
     Ward,
     WardAdmission,
     WardBed,
@@ -155,7 +145,7 @@ def _phone(i: int) -> str:
 
 def _rand_decimal(min_value: float, max_value: float, digits: int = 2) -> Decimal:
     value = random.uniform(min_value, max_value)
-    fmt = "{:.%df}" % digits
+    fmt = f"{{:.{digits}f}}"
     return Decimal(fmt.format(value))
 
 
@@ -508,7 +498,7 @@ class Command(BaseCommand):
             self.ensure_professional_profiles(users, employees, faker)
             self.ensure_password_tokens(users, target=30)
 
-            parents, categories = self.ensure_pharmacy_categories(tenant, faker)
+            _parents, categories = self.ensure_pharmacy_categories(tenant, faker)
             products = self.ensure_products(tenant, faker, categories, target=220)
             lots = self.ensure_lots(tenant, products, target=420)
 
@@ -578,7 +568,7 @@ class Command(BaseCommand):
             self.ensure_reconciliation(transactions, target=500)
 
             self.ensure_accounting(tenant, invoices, target=260)
-            insurers, coverage_plans = self.ensure_insurer_data(tenant, target_insurers=12, target_plans=36)
+            _insurers, coverage_plans = self.ensure_insurer_data(tenant, target_insurers=12, target_plans=36)
             self.ensure_authorizations(tenant, requests, coverage_plans, target=360)
 
             equipment = self.ensure_equipment(tenant, faker, target=70)

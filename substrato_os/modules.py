@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 import re
 
 MODULE_KEY_PATTERN = re.compile(r"^[a-z0-9_.-]+$")
 
 
-class ModuleState(str, Enum):
+class ModuleState(StrEnum):
     REGISTERED = "registered"
     LOADED = "loaded"
     FAILED = "failed"

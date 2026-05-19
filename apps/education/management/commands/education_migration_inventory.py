@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import json
-from datetime import datetime, timezone
 
 from django.core.management.base import BaseCommand
 from django.db import connection
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             }
 
         payload = {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "segments": segments,
         }
 

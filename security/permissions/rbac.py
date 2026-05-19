@@ -92,10 +92,6 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "billing-invoicehistory": SAFE_METHODS,
             "payments-recibo": SAFE_METHODS,
             "payments-payment": SAFE_METHODS | frozenset({"POST"}),
-            "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
-            "consultations-medicos": SAFE_METHODS,
-            "consultations-specialty": SAFE_METHODS,
-            "consultations-feriado": SAFE_METHODS,
             "external_entities-empresa": SAFE_METHODS | WRITE_METHODS,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,

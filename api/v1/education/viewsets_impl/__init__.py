@@ -1,4 +1,5 @@
 from .core import (
+    VIEWSET_MAP,
     AttendanceRecordViewSet,
     ClassroomViewSet,
     CourseViewSet,
@@ -8,10 +9,10 @@ from .core import (
     LearningContentViewSet,
     StudentProfileViewSet,
     TeacherProfileViewSet,
-    VIEWSET_MAP,
 )
 
 __all__ = [
+    "VIEWSET_MAP",
     "AttendanceRecordViewSet",
     "ClassroomViewSet",
     "CourseViewSet",
@@ -21,5 +22,4 @@ __all__ = [
     "LearningContentViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
-    "VIEWSET_MAP",
 ]

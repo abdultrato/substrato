@@ -2,8 +2,7 @@
 
 
 from django.conf import settings
-from django.core.exceptions import FieldError
-from django.core.exceptions import ValidationError
+from django.core.exceptions import FieldError, ValidationError
 from django.db import IntegrityError, models, transaction
 
 from core.constants.laboratory.clinical_status import ClinicalStatus

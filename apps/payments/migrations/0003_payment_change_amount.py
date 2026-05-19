@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from django.db import migrations
+
 import infrastructure.orm.fields.money_field
 
 

@@ -794,7 +794,7 @@ class Command(BaseCommand):
         with connection.cursor() as cursor:
             cursor.execute(query, params)
             col_names = [col[0] for col in cursor.description or []]
-            return [dict(zip(col_names, row)) for row in cursor.fetchall()]
+            return [dict(zip(col_names, row, strict=False)) for row in cursor.fetchall()]
 
     @staticmethod
     def _warn_once(context: dict, message: str) -> None:
@@ -917,6 +917,4 @@ class Command(BaseCommand):
     def _truthy(value) -> bool:
         if isinstance(value, bool):
             return value
-        if value in (1, "1", "true", "True", "yes", "YES", "on", "ON"):
-            return True
-        return False
+        return value in (1, "1", "true", "True", "yes", "YES", "on", "ON")

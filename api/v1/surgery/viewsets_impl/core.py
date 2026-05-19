@@ -117,9 +117,9 @@ VIEWSET_MAP = {
 __all__ = [
     "VIEWSET_MAP",
     "BaseSurgeryViewSet",
-    "SurgeryViewSet",
-    "SmallSurgeryViewSet",
     "LargeSurgeryViewSet",
+    "SmallSurgeryViewSet",
+    "SurgeryViewSet",
     "SurgicalProcedureViewSet",
 ]
 

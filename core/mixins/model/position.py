@@ -44,10 +44,7 @@ class ScopedPositionMixin(PositionMixin):
 
         for field_name in self.position_scope_fields:
             field = self._meta.get_field(field_name)
-            if field.is_relation:
-                key = f"{field_name}_id"
-            else:
-                key = field_name
+            key = f"{field_name}_id" if field.is_relation else field_name
 
             value = getattr(self, key, None)
             if value in (None, ""):

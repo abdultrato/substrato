@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import io
 from decimal import Decimal
+import io
 
 from django.utils import timezone
 from reportlab.lib import colors
@@ -12,6 +12,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from apps.pharmacy.models.product import Product
+
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,

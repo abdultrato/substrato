@@ -4,10 +4,11 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 
+from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
+
 from .models.consultation_specialty import ConsultationSpecialty
 from .models.holiday import Holiday
 from .models.medical_consultation import MedicalConsultation
-from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 
 
 class CoreAdmin(admin.ModelAdmin):

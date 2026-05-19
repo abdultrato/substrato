@@ -1,5 +1,6 @@
 """Configuração do Django Admin para o módulo de Enfermagem."""
 
+from contextlib import suppress
 from decimal import Decimal
 
 from django import forms
@@ -83,7 +84,7 @@ class ProcedimentoItemInline(admin.TabularInline):
 
 class ProcedimentoMaterialInline(admin.TabularInline):
     """Inline para materiais consumidos em um procedimento de enfermagem.
-    
+
     Permite edição de quantidade com estorno automático de estoque.
     Ao alterar quantidade, o sistema cria um movimento de entrada (estorno)
     e um novo movimento de saída com a quantidade atualizada.
@@ -109,7 +110,7 @@ class ProcedimentoMaterialInline(admin.TabularInline):
         if not obj.inventory_movement:
             return "Pendente (não lançado)"
         return f"✓ Lançado: {obj.inventory_movement.custom_id}"
-    
+
     status_estorno.short_description = "Status Estoque"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -144,10 +145,8 @@ class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
                 unit_cost.widget.attrs["readonly"] = True
 
             if getattr(self.instance, "product_id", None) and unit_cost is not None:
-                try:
+                with suppress(Exception):
                     self.initial["default_unit_cost"] = self.instance.product.sale_price
-                except Exception:
-                    pass
 
     form = ProcedimentoCatalogoMaterialInlineForm
 
@@ -754,12 +753,12 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
                     material.delete()
                     contador += 1
                 except Exception as e:
-                    messages.error(request, f"Erro ao estornar {material.custom_id}: {str(e)}")
-        
+                    messages.error(request, f"Erro ao estornar {material.custom_id}: {e!s}")
+
         messages.success(request, f"{contador} material(ais) estimado(s) com sucesso.")
-    
+
     fazer_estorno.short_description = "Fazer estorno completo dos materiais selecionados"
-    
+
     actions = ["fazer_estorno"]
 
 

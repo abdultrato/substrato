@@ -1,7 +1,7 @@
 """Geração do PDF da história clínica agregada do paciente."""
 
+from collections.abc import Iterable
 import io
-from typing import Iterable
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT

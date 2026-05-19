@@ -112,7 +112,7 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
 
     def clean(self):
         super().clean()
-        if self.quantity <= 0: 
+        if self.quantity <= 0:
             raise ValidationError({"quantity": "Quantidade deve ser maior que zero."})
         if self.unit_price is not None and self.unit_price < Decimal("0.00"):
             raise ValidationError({"unit_price": "Preço unitário não pode ser negativo."})

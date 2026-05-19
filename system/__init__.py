@@ -1,4 +1,4 @@
-"""Utilitários e views relacionados ao subsistema de sistema."""
+"""Utilitários e views relacionados ao subsistema de sistema.
 
 Importante: este pacote nao e um Django app. Evitamos imports "eager" de
 submodulos que registram models (ex.: `system.modelos`) para nao quebrar

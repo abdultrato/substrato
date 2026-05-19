@@ -1,4 +1,4 @@
-# ruff: noqa: F403
+# ruff: noqa: F403, F405
 
 import os
 

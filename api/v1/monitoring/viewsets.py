@@ -1,17 +1,17 @@
 """Facade module for monitoring viewsets."""
 
 from .viewsets_impl import (
+    VIEWSET_MAP,
     CloudControlViewSet,
     ExportJobViewSet,
-    TelemetryViewSet,
-    VIEWSET_MAP,
     SystemErrorViewSet,
+    TelemetryViewSet,
 )
 
 __all__ = [
+    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "CloudControlViewSet",
     "ExportJobViewSet",
-    "VIEWSET_MAP",  # Alias -> ViewSet para roteamento dinâmico
     "SystemErrorViewSet",
     "TelemetryViewSet",
 ]

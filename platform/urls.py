@@ -6,10 +6,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import HttpResponse, JsonResponse
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.decorators.http import require_GET
 from django.views.generic import RedirectView
-from infrastructure.middleware.admin_path_alias import ADMIN_SLUG_ALIASES
+
 if find_spec("django_prometheus"):
     from django_prometheus.exports import ExportToDjangoView
 else:

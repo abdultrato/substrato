@@ -1,7 +1,8 @@
 """Middleware que registra atividades de usuário para auditoria."""
 
+from contextlib import suppress
 import time
-from typing import Any, Dict
+from typing import Any
 
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
@@ -27,19 +28,14 @@ class UserActivityMiddleware(MiddlewareMixin):
         request._activity_start = time.monotonic()
 
     def process_response(self, request, response):
-        try:
+        with suppress(Exception):
             self._save_activity(request, getattr(response, "status_code", None) or 0)
-        except Exception:
-            # Não quebra a resposta em caso de falha na auditoria.
-            pass
         return response
 
     def process_exception(self, request, exception):
-        try:
+        with suppress(Exception):
             self._save_activity(request, 500)
-        except Exception:
-            pass
-        return None
+        return
 
     # ----------------------------
 
@@ -71,11 +67,9 @@ class UserActivityMiddleware(MiddlewareMixin):
                     object_id = str(resolver.kwargs[key])[:80]
                     break
 
-        metadata: Dict[str, Any] = {}
-        try:
+        metadata: dict[str, Any] = {}
+        with suppress(Exception):
             metadata["query_params"] = request.GET.dict()
-        except Exception:
-            pass
 
         tenant = getattr(request, "tenant", None)
         tenant_id = getattr(tenant, "id", None) or getattr(tenant, "pk", None)

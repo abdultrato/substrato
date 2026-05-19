@@ -5,22 +5,13 @@ frontend e por endpoints internos. Também mantém aliases legados para evitar
 quebras em imports antigos.
 """
 
-from .class_views import RequestPdfView, ResultPdfView
-from .billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
 from .activity_reports_pdf_generator import generate_activity_report_pdf
+from .billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
+from .class_views import RequestPdfView, ResultPdfView
 from .invoice_pdf_generator import generate_invoice_pdf
 from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
-from .pharmacy_reports_pdf_generator import (
-    generate_pharmacy_least_requested_products_pdf,
-    generate_pharmacy_movements_pdf,
-    generate_pharmacy_product_consumption_pdf,
-    generate_pharmacy_product_sector_demand_pdf,
-    generate_pharmacy_sector_movements_pdf,
-    generate_pharmacy_stock_pdf,
-    generate_pharmacy_top_requested_products_pdf,
-)
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -31,6 +22,15 @@ from .pdf_base import (
     draw_signatures,
     generate_qr_code,
     on_page,
+)
+from .pharmacy_reports_pdf_generator import (
+    generate_pharmacy_least_requested_products_pdf,
+    generate_pharmacy_movements_pdf,
+    generate_pharmacy_product_consumption_pdf,
+    generate_pharmacy_product_sector_demand_pdf,
+    generate_pharmacy_sector_movements_pdf,
+    generate_pharmacy_stock_pdf,
+    generate_pharmacy_top_requested_products_pdf,
 )
 from .request_pdf_generator import generate_request_pdf
 from .result_pdf_generator import generate_results_pdf
@@ -62,13 +62,13 @@ __all__ = [
     "generate_patient_history_pdf",
     "generate_patient_invoice_history_pdf",
     "generate_patient_payment_history_pdf",
+    "generate_pharmacy_least_requested_products_pdf",
     "generate_pharmacy_movements_pdf",
     "generate_pharmacy_product_consumption_pdf",
-    "generate_pharmacy_top_requested_products_pdf",
-    "generate_pharmacy_least_requested_products_pdf",
     "generate_pharmacy_product_sector_demand_pdf",
     "generate_pharmacy_sector_movements_pdf",
     "generate_pharmacy_stock_pdf",
+    "generate_pharmacy_top_requested_products_pdf",
     "generate_qr_code",
     "generate_request_pdf",
     "generate_results_pdf",

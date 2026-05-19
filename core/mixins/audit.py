@@ -1,8 +1,6 @@
-# LOCAL: nucleo/mixins/audit.py
-
-from django.conf import settings
 """Campos de auditoria (created/updated by/at)."""
 
+from django.conf import settings
 from django.db import models
 
 from infrastructure.context.request_user import get_current_user

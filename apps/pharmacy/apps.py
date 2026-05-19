@@ -1,5 +1,7 @@
 """Configuração da aplicação de farmácia."""
 
+from contextlib import suppress
+
 from django.apps import AppConfig
 
 
@@ -14,8 +16,5 @@ class PharmacyConfig(AppConfig):
     def ready(self):
         """Carrega sinais ao iniciar a app."""
         # Registra sinais de estoque (ex.: entrada automática ao criar lote).
-        try:
+        with suppress(Exception):
             from . import signals  # noqa: F401  # Import para disparar registradores
-        except Exception:
-            # Em caso de erro de import, não quebrar a inicialização.
-            pass

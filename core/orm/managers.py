@@ -39,10 +39,10 @@ class AllObjectsManager(models.Manager.from_queryset(AtivoQuerySet)):
 class TenantAwareManager(models.Manager.from_queryset(TenantAwareQuerySet)):
     """
     Manager que força filtro automático por tenant_id.
-    
+
     Garante que queries sempre retornam apenas dados do tenant no contexto.
     Lança erro em tempo de execução se tenant não estiver definido.
-    
+
     Use: Model.objects.for_tenant()
     Ou bypass com: Model.objects.todos_os_dados() (apenas admin)
     """

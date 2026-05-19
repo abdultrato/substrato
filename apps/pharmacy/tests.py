@@ -3,9 +3,9 @@
 from datetime import timedelta  # Para manipular datas de validade
 from decimal import Decimal  # Para valores monetários
 
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 

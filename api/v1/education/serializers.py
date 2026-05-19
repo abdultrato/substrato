@@ -12,7 +12,6 @@ from apps.education.models import (
     TeacherProfile,
 )
 
-
 _READ_ONLY_FIELDS = (
     "custom_id",
     "tenant",

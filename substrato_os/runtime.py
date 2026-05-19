@@ -6,11 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from .cloud import (
-    ClusterFailoverResult,
     CloudCluster,
     CloudControlPlaneError,
+    ClusterFailoverResult,
     ClusterNode,
     ModuleDeployment,
+    RolloutAction,
     SQLiteCloudControlPlane,
 )
 from .distributed import DistributedTask, EdgeNode, ReplicationEntry, SQLiteDistributedRuntime

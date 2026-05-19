@@ -32,5 +32,5 @@ def _ensure_project_platform_package() -> None:
 
 _ensure_project_platform_package()
 
-from platform.settings.development import *  # noqa: F403
+from platform.settings.development import *  # noqa: E402,F403
 

@@ -56,7 +56,7 @@ def _create_completed_donation(*, tenant: Tenant, donor: Patient, replacement_fo
     screening_status = (
         BloodDonation.ScreeningStatus.REJECTED if positive else BloodDonation.ScreeningStatus.APPROVED
     )
-    donation = BloodDonation.objects.create(
+    return BloodDonation.objects.create(
         tenant=tenant,
         donor=donor,
         donor_role=(
@@ -79,7 +79,6 @@ def _create_completed_donation(*, tenant: Tenant, donor: Patient, replacement_fo
         hepatitis_c_anti_hcv_test=test_result,
         malaria_test=test_result,
     )
-    return donation
 
 
 @pytest.mark.django_db

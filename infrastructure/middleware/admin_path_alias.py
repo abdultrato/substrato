@@ -1,9 +1,9 @@
 """Middleware que permite aliases adicionais para a rota do admin do Django."""
 
-from typing import Dict
+from contextlib import suppress
 
 
-def _with_hyphen_aliases(mapping: Dict[str, str]) -> Dict[str, str]:
+def _with_hyphen_aliases(mapping: dict[str, str]) -> dict[str, str]:
     """
     Add hyphen-variants for slugs that use underscores.
     Example: {"external_entities": "..."} -> also accepts "external-entities".
@@ -17,7 +17,7 @@ def _with_hyphen_aliases(mapping: Dict[str, str]) -> Dict[str, str]:
 
 
 # Admin: English slugs -> existing Portuguese app labels (only when different).
-ADMIN_SLUG_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+ADMIN_SLUG_ALIASES: dict[str, str] = _with_hyphen_aliases(
     {
         "equipment-integrations": "integracoes_equipamentos",
         "accounting": "contabilidade",
@@ -48,7 +48,7 @@ ADMIN_SLUG_ALIASES: Dict[str, str] = _with_hyphen_aliases(
 )
 
 # Admin models: English slugs -> canonical model_name.
-ADMIN_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+ADMIN_MODEL_ALIASES: dict[str, str] = _with_hyphen_aliases(
     {
         # Clinical
         "paciente": "patient",
@@ -122,7 +122,7 @@ ADMIN_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
 )
 
 # API: prefix aliases (third path segment: /api/v1/<prefix>/...)
-API_PREFIX_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+API_PREFIX_ALIASES: dict[str, str] = _with_hyphen_aliases(
     {
         "external-entities": "external_entities",
         "human-resources": "human_resources",
@@ -135,7 +135,7 @@ API_PREFIX_ALIASES: Dict[str, str] = _with_hyphen_aliases(
 # API: model/resource aliases (fourth segment: /api/v1/<prefix>/<model>/...)
 # API: model/resource aliases (fourth segment: /api/v1/<prefix>/<model>/...)
 # Keep the list tight to avoid accidental rewrites; extend as needed.
-API_MODEL_ALIASES: Dict[str, str] = _with_hyphen_aliases(
+API_MODEL_ALIASES: dict[str, str] = _with_hyphen_aliases(
     {
         "company": "empresa",
         "nursing-vital-sign": "sinalvitalenfermagem",
@@ -201,7 +201,7 @@ class AdminPathAliasMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def _apply_aliases(self, segment: str, mapping: Dict[str, str]) -> tuple[str, bool]:
+    def _apply_aliases(self, segment: str, mapping: dict[str, str]) -> tuple[str, bool]:
         key = segment.lower()
         if key in mapping:
             replacement = mapping[key]
@@ -247,11 +247,8 @@ class AdminPathAliasMiddleware:
             request.META["PATH_INFO"] = new_path
             # Align .path with rewritten path to avoid template/context mismatches.
             if hasattr(request, "path"):
-                try:
+                with suppress(Exception):
                     request.path = new_path
-                except Exception:
-                    # Some request objects may not allow assignment; ignore.
-                    pass
 
         response = self.get_response(request)
 

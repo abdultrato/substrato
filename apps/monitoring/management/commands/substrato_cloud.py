@@ -146,13 +146,13 @@ class Command(BaseCommand):
                 return
             for deployment in deployments:
                 self.stdout.write(
-                    (
+
                         f"{deployment.deployment_id} "
                         f"cluster={deployment.cluster_id} "
                         f"module={deployment.module_key}:{deployment.module_version} "
                         f"ready={deployment.ready_replicas}/{deployment.desired_replicas} "
                         f"status={deployment.status}"
-                    )
+
                 )
             return
 

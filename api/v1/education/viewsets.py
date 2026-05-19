@@ -1,6 +1,7 @@
 """Facade module for education viewsets."""
 
 from .viewsets_impl import (
+    VIEWSET_MAP,
     AttendanceRecordViewSet,
     ClassroomViewSet,
     CourseViewSet,
@@ -10,10 +11,10 @@ from .viewsets_impl import (
     LearningContentViewSet,
     StudentProfileViewSet,
     TeacherProfileViewSet,
-    VIEWSET_MAP,
 )
 
 __all__ = [
+    "VIEWSET_MAP",
     "AttendanceRecordViewSet",
     "ClassroomViewSet",
     "CourseViewSet",
@@ -23,5 +24,4 @@ __all__ = [
     "LearningContentViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
-    "VIEWSET_MAP",
 ]

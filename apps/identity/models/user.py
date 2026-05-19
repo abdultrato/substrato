@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 
@@ -17,6 +16,7 @@ class IdentityUserManager(UserManager):
         # Adiciona grupo ADMIN e reforça flags staff/superuser defensivamente.
         try:
             from django.contrib.auth.models import Group
+
             from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
             admin_group, _ = Group.objects.get_or_create(name=RBAC_GROUPS["ADMIN"])

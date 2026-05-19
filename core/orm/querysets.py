@@ -69,7 +69,7 @@ class AtivoQuerySet(models.QuerySet):
 class TenantAwareQuerySet(AtivoQuerySet):
     """
     QuerySet que força filtro automático por tenant_id.
-    
+
     Garante que queries sempre retornam apenas dados do tenant no contexto.
     Lança erro se tenant não estiver definido no contexto.
     """
@@ -77,8 +77,8 @@ class TenantAwareQuerySet(AtivoQuerySet):
     def _get_tenant_from_context(self):
         """Extrair tenant_id do contexto"""
         from infrastructure.context.tenant import get_tenant
-        tenant = get_tenant()
-        return tenant
+
+        return get_tenant()
 
     def _has_tenant_filter(self) -> bool:
         """Verificar se query já tem filtro de tenant_id"""
@@ -97,15 +97,15 @@ class TenantAwareQuerySet(AtivoQuerySet):
         # Se é bypass, deixa passar
         if self._can_bypass_tenant():
             return super()._fetch_all()
-        
+
         # Verificar se modelo tem campo tenant
         if not hasattr(self.model, 'tenant'):
             return super()._fetch_all()
-        
+
         # Se query já tem tenant filter, OK
         if self._has_tenant_filter():
             return super()._fetch_all()
-        
+
         # Se modelo é multi-tenant mas não tem filter, raise error
         raise RuntimeError(
             f"QuerySet para {self.model.__name__} deve incluir filtro 'tenant_id'. "
@@ -116,13 +116,13 @@ class TenantAwareQuerySet(AtivoQuerySet):
         """Filtrar por tenant explícito"""
         if tenant_id is None:
             tenant_id = self._get_tenant_from_context()
-        
+
         if tenant_id is None:
             raise RuntimeError(
-                f"Tenant ID não definido no contexto. "
-                f"Configure TenantMiddleware ou passe tenant_id explicitamente."
+                "Tenant ID não definido no contexto. "
+                "Configure TenantMiddleware ou passe tenant_id explicitamente."
             )
-        
+
         return self.filter(tenant_id=tenant_id)
 
     def todos_os_dados(self):

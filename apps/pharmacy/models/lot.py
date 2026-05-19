@@ -3,6 +3,8 @@
 Os comentários explicam cada linha para facilitar entendimento em português.
 """
 
+from decimal import Decimal  # Operações monetárias com precisão
+
 from django.core.exceptions import ValidationError  # Exceções de validação de domínio
 from django.core.validators import MinValueValidator  # Validador mínimo
 from django.db import models  # ORM do Django
@@ -11,7 +13,6 @@ from django.db.models.functions import Coalesce  # Substitui None por zero
 from django.utils import timezone  # Datas locais
 
 from core.models.base import CoreModel  # Modelo base
-from decimal import Decimal  # Operações monetárias com precisão
 
 
 class Lot(CoreModel):

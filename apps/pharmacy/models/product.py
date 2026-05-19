@@ -9,8 +9,8 @@ from decimal import Decimal  # Suporte a valores monetários com precisão fixa
 from django.core.validators import MaxValueValidator, MinValueValidator  # Validadores numéricos
 from django.db import models  # Ferramentas de modelagem do Django
 
-from core.models.base import CoreModel  # Modelo base comum com campos de auditoria
 from apps.pharmacy import utils  # Funções utilitárias de estoque
+from core.models.base import CoreModel  # Modelo base comum com campos de auditoria
 
 
 class Product(CoreModel):

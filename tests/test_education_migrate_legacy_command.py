@@ -1,5 +1,5 @@
-import json
 from io import StringIO
+import json
 import sqlite3
 
 from django.contrib.auth import get_user_model

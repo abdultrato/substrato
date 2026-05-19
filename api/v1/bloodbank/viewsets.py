@@ -13,10 +13,10 @@ from .viewsets_impl import (
 __all__ = [
     "VIEWSET_MAP",
     "BloodDonationViewSet",
-    "BloodStorageViewSet",
-    "BloodUnitViewSet",
-    "BloodTransfusionViewSet",
     "BloodStockMovementViewSet",
     "BloodStorageMaintenanceViewSet",
+    "BloodStorageViewSet",
+    "BloodTransfusionViewSet",
+    "BloodUnitViewSet",
 ]
 

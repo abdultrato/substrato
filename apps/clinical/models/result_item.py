@@ -44,7 +44,7 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
         db_column="exam_field_id",
         on_delete=models.CASCADE,
-        related_name="results", 
+        related_name="results",
         verbose_name="Campo do exame",
     )
 
@@ -52,7 +52,7 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     result_value = models.DecimalField(
         db_column="result_value",
         verbose_name="Valor do resultado",
-        max_digits=12, decimal_places=2, 
+        max_digits=12, decimal_places=2,
         null=True, blank=True)
 
     clinical_status = models.CharField(

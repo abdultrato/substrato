@@ -4,6 +4,7 @@ import logging
 import time
 
 from django.conf import settings
+
 from observability.metrics import (
     log_slow_request,
     register_api_request,

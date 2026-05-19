@@ -1,11 +1,11 @@
 """Testes unitários do pacote `tasks.generate_pdf`."""
 
-from django.http import HttpRequest
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from django.http import HttpRequest
 import pytest
 
 from apps.clinical.models.lab_exam import LabExam
@@ -22,11 +22,16 @@ from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.sector import Sector
 from core.constants.laboratory.units import DefaultUnit
 from domain.clinical.result_state import ResultState
-from tasks.generate_pdf.pdf_base import _should_draw_signatures, institutional_user_identity, user_name, user_primary_group
 from tasks.generate_pdf import pdf_base
 from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_history_pdf
 from tasks.generate_pdf.patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from tasks.generate_pdf.patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
+from tasks.generate_pdf.pdf_base import (
+    _should_draw_signatures,
+    institutional_user_identity,
+    user_name,
+    user_primary_group,
+)
 from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 from tasks.generate_pdf.views import request_pdf
 
