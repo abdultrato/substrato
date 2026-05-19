@@ -48,7 +48,11 @@ def is_holiday(tenant, date_time) -> bool:
     else:
         local_date = date_time.date()
 
-    Holiday = apps.get_model("consultas", "Feriado")
+    try:
+        Holiday = apps.get_model("consultas", "Holiday")
+    except LookupError:
+        # Compatibilidade com snapshots antigos que referenciavam o nome PT.
+        Holiday = apps.get_model("consultas", "Feriado")
     return Holiday.objects.filter(tenant_id=tenant_id, date=local_date, active=True).exists()
 
 

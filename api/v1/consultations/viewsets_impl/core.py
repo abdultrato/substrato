@@ -156,7 +156,11 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if tenant is None:
             raise ValidationError("Tenant não identificado.")
 
-        specialty_id = (request.query_params.get("specialty") or "").strip()
+        specialty_id = (
+            request.query_params.get("specialty")
+            or request.query_params.get("especialidade")
+            or ""
+        ).strip()
         if not specialty_id:
             raise ValidationError({"specialty": "Informe o id da specialty."})
 
@@ -164,7 +168,11 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if not specialty:
             raise ValidationError({"specialty": "Especialidade não encontrada."})
 
-        raw_dt = (request.query_params.get("scheduled_for") or "").strip()
+        raw_dt = (
+            request.query_params.get("scheduled_for")
+            or request.query_params.get("agendada_para")
+            or ""
+        ).strip()
         dt = parse_datetime(raw_dt) if raw_dt else None
         if raw_dt and not dt:
             # Accept YYYY-MM-DD as a convenience fallback.
@@ -176,7 +184,12 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if not dt:
             dt = timezone.now()
 
-        manual_holiday = (request.query_params.get("manual_holiday") or "").lower() in {"1", "true", "t", "sim"}
+        manual_holiday_raw = (
+            request.query_params.get("manual_holiday")
+            or request.query_params.get("feriado_manual")
+            or ""
+        )
+        manual_holiday = manual_holiday_raw.lower() in {"1", "true", "t", "sim"}
 
         consultation = MedicalConsultation(
             tenant=tenant,
@@ -195,20 +208,30 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         except Exception:
             currency = "MZN"
 
-        return Response(
+        payload = {
+            "specialty": specialty.id,
+            "specialty_name": specialty.name,
+            "base_price": str(specialty.base_price or Decimal("0.00")),
+            "manual_holiday": bool(manual_holiday),
+            "is_holiday": bool(consultation._is_holiday()),
+            "schedule_type": consultation.schedule_type,
+            "price_multiplier": str(consultation.price_multiplier or Decimal("1.00")),
+            "price_final": str(consultation.price or Decimal("0.00")),
+            "currency": currency,
+        }
+        payload.update(
             {
-                "specialty": specialty.id,
-                "specialty_name": specialty.name,
-                "base_price": str(specialty.base_price or Decimal("0.00")),
-                "manual_holiday": bool(manual_holiday),
-                "is_holiday": bool(consultation._is_holiday()),
-                "schedule_type": consultation.schedule_type,
-                "price_multiplier": str(consultation.price_multiplier or Decimal("1.00")),
-                "price_final": str(consultation.price or Decimal("0.00")),
-                "currency": currency,
-            },
-            status=status.HTTP_200_OK,
+                "especialidade": payload["specialty"],
+                "especialidade_nome": payload["specialty_name"],
+                "preco_base": payload["base_price"],
+                "feriado_manual": payload["manual_holiday"],
+                "tipo_horario": payload["schedule_type"],
+                "multiplicador_preco": payload["price_multiplier"],
+                "preco_final": payload["price_final"],
+                "moeda": payload["currency"],
+            }
         )
+        return Response(payload, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_path="schedule", url_name="schedule")
     def schedule(self, request):
@@ -224,22 +247,22 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         qs = self.get_queryset()
 
-        doctor_id = (request.query_params.get("doctor") or "").strip()
+        doctor_id = (request.query_params.get("doctor") or request.query_params.get("medico") or "").strip()
         if doctor_id:
             qs = qs.filter(doctor_id=doctor_id)
 
-        status = (request.query_params.get("status") or "").strip()
-        if status:
-            qs = qs.filter(status=status)
+        requested_status = (request.query_params.get("status") or request.query_params.get("estado") or "").strip()
+        if requested_status:
+            qs = qs.filter(status=requested_status)
 
-        start = (request.query_params.get("start") or "").strip()
+        start = (request.query_params.get("start") or request.query_params.get("inicio") or "").strip()
         if start:
             dt = parse_datetime(start)
             if not dt:
                 raise ValidationError({"start": "Datetime inválido (use ISO 8601)."})
             qs = qs.filter(scheduled_for__gte=dt)
 
-        end = (request.query_params.get("end") or "").strip()
+        end = (request.query_params.get("end") or request.query_params.get("fim") or "").strip()
         if end:
             dt = parse_datetime(end)
             if not dt:
@@ -359,6 +382,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     @action(detail=False, methods=["get"], url_path="agenda", url_name="agenda")
     def schedule_legacy(self, request):
         return self.schedule(request)
+
+    @action(detail=False, methods=["get"], url_path="preco", url_name="preco")
+    def price_preview_legacy(self, request):
+        return self.price_preview(request)
 
     @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
     def create_invoice_legacy(self, request, pk=None):

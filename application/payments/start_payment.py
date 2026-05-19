@@ -1,7 +1,10 @@
+from apps.payments.models.transaction import Transaction
 from integrations.payments.registry import get_gateway
 
 from .commands import StartPaymentCommand
 from .handlers import handle_start_payment
+
+__all__ = ["Transaction", "execute", "start_payment"]
 
 
 def execute(value, reference, phone=None, gateway_name=None):

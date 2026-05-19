@@ -124,6 +124,7 @@ ADMIN_MODEL_ALIASES: dict[str, str] = _with_hyphen_aliases(
 # API: prefix aliases (third path segment: /api/v1/<prefix>/...)
 API_PREFIX_ALIASES: dict[str, str] = _with_hyphen_aliases(
     {
+        "entities": "external_entities",
         "external-entities": "external_entities",
         "human-resources": "human_resources",
         "medical-records": "medical_records",

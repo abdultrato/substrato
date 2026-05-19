@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from api.v1.compat import LegacyAliasSerializerMixin
 from apps.billing.models.invoice import Invoice
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
@@ -21,7 +22,42 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class DoctorSerializer(serializers.ModelSerializer):
+DOCTOR_LEGACY_ALIASES = {
+    "nome": "name",
+    "profissao": "profession_name",
+    "cargo_nome": "role_name",
+    "id_custom": "custom_id",
+}
+
+CONSULTATION_SPECIALTY_LEGACY_ALIASES = {
+    "nome": "name",
+    "preco_base": "base_price",
+    "ativo": "active",
+    "id_custom": "custom_id",
+}
+
+MEDICAL_CONSULTATION_LEGACY_ALIASES = {
+    "id_custom": "custom_id",
+    "paciente": "patient",
+    "paciente_nome": "patient_name",
+    "medico": "doctor",
+    "medico_nome": "doctor_name",
+    "especialidade": "specialty",
+    "tipo": "type",
+    "agendada_para": "scheduled_for",
+    "estado": "status",
+    "preco": "price",
+    "multiplicador_preco": "price_multiplier",
+    "tipo_horario": "schedule_type",
+    "feriado_manual": "manual_holiday",
+    "fatura_id": "invoice_id",
+    "fatura_codigo": "invoice_code",
+    "fatura_estado": "invoice_status",
+}
+
+
+class DoctorSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_output_aliases = DOCTOR_LEGACY_ALIASES
     role_name = serializers.CharField(source="role.name", read_only=True)
     profession_name = serializers.CharField(source="profession.name", read_only=True)
 
@@ -30,7 +66,9 @@ class DoctorSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "profession", "profession_name", "role", "role_name"]
 
 
-class MedicalConsultationSerializer(serializers.ModelSerializer):
+class MedicalConsultationSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = MEDICAL_CONSULTATION_LEGACY_ALIASES
+    legacy_output_aliases = MEDICAL_CONSULTATION_LEGACY_ALIASES
     # Allow creating a consultation with `specialty`; the model syncs type/price.
     type = serializers.CharField(required=False, allow_blank=True)
     patient_name = serializers.CharField(source="patient.name", read_only=True)
@@ -93,14 +131,26 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class ConsultationSpecialtySerializer(serializers.ModelSerializer):
+class ConsultationSpecialtySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = CONSULTATION_SPECIALTY_LEGACY_ALIASES
+    legacy_output_aliases = CONSULTATION_SPECIALTY_LEGACY_ALIASES
+
     class Meta:
         model = ConsultationSpecialty
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class HolidaySerializer(serializers.ModelSerializer):
+class HolidaySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = {
+        "nome": "name",
+        "data": "date",
+        "descricao": "description",
+        "ativo": "active",
+        "id_custom": "custom_id",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
     class Meta:
         model = Holiday
         fields = "__all__"
@@ -121,11 +171,15 @@ class CreateConsultationInvoiceSerializer(serializers.Serializer):
         return attrs
 
 
-class RescheduleConsultationSerializer(serializers.Serializer):
+class RescheduleConsultationSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    legacy_input_aliases = {"agendada_para": "scheduled_for"}
+    legacy_output_aliases = {"agendada_para": "scheduled_for"}
     scheduled_for = serializers.DateTimeField()
 
 
-class CancelConsultationSerializer(serializers.Serializer):
+class CancelConsultationSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+    legacy_input_aliases = {"motivo": "reason"}
+    legacy_output_aliases = {"motivo": "reason"}
     reason = serializers.CharField(required=False, allow_blank=True, max_length=255)
 
 
