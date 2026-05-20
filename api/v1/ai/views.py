@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from apps.ai_assistant.models import AiInvestigation, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
+from apps.ai_assistant.services.investigation_followup import AiInvestigationFollowUpBuilder, AiInvestigationFollowUpError
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
 from apps.ai_assistant.services.registry import AiToolRegistry
@@ -16,6 +17,7 @@ from apps.ai_assistant.services.registry import AiToolRegistry
 from .serializers import (
     AiActionConfirmSerializer,
     AiChatRequestSerializer,
+    AiInvestigationFollowUpSerializer,
     AiInvestigationSerializer,
     AiInvestigationUpdateSerializer,
     AiOperationalTaskSerializer,
@@ -174,6 +176,30 @@ class AiAssistantInvestigationDetailView(APIView):
         investigation.updated_by = request.user
         investigation.save(update_fields=["status", "updated_by", "updated_at"])
         return Response(AiInvestigationSerializer(investigation).data)
+
+
+class AiAssistantInvestigationFollowUpView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, investigation_id: int):
+        investigation = ai_investigation_queryset(request).filter(id=investigation_id).first()
+        if investigation is None:
+            raise NotFound("Investigação da IA não encontrada.")
+
+        serializer = AiInvestigationFollowUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tenant = request_tenant(request)
+        try:
+            action = AiInvestigationFollowUpBuilder().prepare(
+                investigation=investigation,
+                tenant=tenant,
+                user=request.user,
+                action_type=serializer.validated_data["action_type"],
+                language=serializer.validated_data.get("language") or "pt",
+            )
+        except AiInvestigationFollowUpError as exc:
+            raise ValidationError({"action_type": str(exc)}) from exc
+        return Response(AiSuggestedActionSerializer(action).data, status=status.HTTP_201_CREATED)
 
 
 class AiAssistantTasksView(APIView):

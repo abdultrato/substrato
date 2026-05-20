@@ -3,9 +3,10 @@
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ArrowLeft, CheckCircle2, ExternalLink, Lightbulb, RefreshCcw, ShieldAlert } from "lucide-react"
+import { ArrowLeft, CheckCircle2, ClipboardCheck, ExternalLink, FileText, Lightbulb, RefreshCcw, ShieldAlert } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import AiActionPanel, { type AiSuggestedAction } from "@/components/ai/AiActionPanel"
 import { type AiInvestigation, type AiInvestigationFinding, type AiInvestigationStep } from "@/components/ai/AiInvestigationPanel"
 import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
@@ -85,10 +86,14 @@ function InvestigationStepCard({ step }: { step: AiInvestigationStep }) {
 export default function AiInvestigationDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [investigation, setInvestigation] = useState<AiInvestigation | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState("")
+  const [preparingFollowUp, setPreparingFollowUp] = useState("")
+  const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
+  const [actions, setActions] = useState<AiSuggestedAction[]>([])
+  const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
   const [error, setError] = useState("")
 
   const loadInvestigation = useCallback(async () => {
@@ -128,6 +133,45 @@ export default function AiInvestigationDetailPage() {
       setError(err?.message || t("Falha ao actualizar o estado da investigação.", "Failed to update investigation status."))
     } finally {
       setSavingStatus("")
+    }
+  }
+
+  async function prepareFollowUp(actionType: "create_operational_task" | "prepare_ai_report_export") {
+    if (!id || !investigation || preparingFollowUp) return
+    setPreparingFollowUp(actionType)
+    setError("")
+    try {
+      const result = await apiFetch<AiSuggestedAction>(`/ai/assistant/investigations/${encodeURIComponent(id)}/follow-up/`, {
+        method: "POST",
+        clientCache: false,
+        timeoutMs: 30_000,
+        body: JSON.stringify({ action_type: actionType, language }),
+      })
+      setActions((current) => [result, ...current.filter((item) => item.id !== result.id)])
+    } catch (err: any) {
+      setError(err?.message || t("Falha ao preparar seguimento da investigação.", "Failed to prepare investigation follow-up."))
+    } finally {
+      setPreparingFollowUp("")
+    }
+  }
+
+  async function handleConfirmAction(action: AiSuggestedAction) {
+    if (confirmingActionId) return
+    setConfirmingActionId(action.id)
+    setError("")
+    try {
+      const result = await apiFetch<AiSuggestedAction>(`/ai/assistant/actions/${action.id}/confirm/`, {
+        method: "POST",
+        clientCache: false,
+        timeoutMs: 45_000,
+        body: JSON.stringify({ confirmation_text: action.confirmation_summary || action.action_type }),
+      })
+      setActionResults((current) => ({ ...current, [action.id]: result }))
+      setActions((current) => current.map((item) => (item.id === action.id ? { ...item, ...result } : item)))
+    } catch (err: any) {
+      setError(err?.message || t("Falha ao confirmar a acção da IA.", "Failed to confirm the AI action."))
+    } finally {
+      setConfirmingActionId(null)
     }
   }
 
@@ -269,6 +313,43 @@ export default function AiInvestigationDetailPage() {
                   </div>
                 ) : null}
               </div>
+            </Card>
+
+            <Card
+              title={t("Seguimento operacional", "Operational follow-up")}
+              subtitle={t(
+                "Prepare uma tarefa ou relatório a partir desta investigação. A execução continua dependente de confirmação e nova validação de permissões.",
+                "Prepare a task or report from this investigation. Execution still requires confirmation and permission revalidation."
+              )}
+            >
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={preparingFollowUp === "create_operational_task"}
+                  disabled={Boolean(preparingFollowUp)}
+                  onClick={() => void prepareFollowUp("create_operational_task")}
+                >
+                  <ClipboardCheck size={15} />
+                  {t("Preparar tarefa", "Prepare task")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={preparingFollowUp === "prepare_ai_report_export"}
+                  disabled={Boolean(preparingFollowUp)}
+                  onClick={() => void prepareFollowUp("prepare_ai_report_export")}
+                >
+                  <FileText size={15} />
+                  {t("Preparar relatório", "Prepare report")}
+                </Button>
+              </div>
+              <AiActionPanel
+                actions={actions}
+                confirmingId={confirmingActionId}
+                results={actionResults}
+                onConfirm={handleConfirmAction}
+              />
             </Card>
 
             <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">

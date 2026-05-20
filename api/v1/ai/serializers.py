@@ -93,6 +93,11 @@ class AiInvestigationUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=AiInvestigation.Status.choices, required=True)
 
 
+class AiInvestigationFollowUpSerializer(serializers.Serializer):
+    action_type = serializers.ChoiceField(choices=("create_operational_task", "prepare_ai_report_export"), required=True)
+    language = serializers.ChoiceField(choices=("pt", "en"), required=False, default="pt")
+
+
 class AiActionConfirmSerializer(serializers.Serializer):
     confirmation_text = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
 

@@ -757,6 +757,38 @@ tests/
 - Utilizador arquiva ou reabre a investigação sem afectar dados de outro utilizador.
 - Perguntas recomendadas podem voltar para `/ai` como ponto de partida para nova conversa.
 
+## Próximo Nível Implementado: Seguimento Operacional da Investigação
+Este incremento fecha o ciclo entre investigação e execução controlada. Uma investigação já auditada pode preparar uma tarefa operacional ou um relatório, mas continua sem executar efeitos de escrita durante a preparação. A confirmação usa o mesmo endpoint seguro de acções da IA, com nova validação de tenant, ownership e RBAC.
+
+### Estrutura Criada
+```text
+apps/ai_assistant/services/
+  investigation_followup.py
+api/v1/ai/
+  serializers.py
+    AiInvestigationFollowUpSerializer
+  views.py
+    AiAssistantInvestigationFollowUpView
+  urls.py
+frontend-next/app/ai/investigations/[id]/page.tsx
+tests/test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. `POST /api/v1/ai/assistant/investigations/{id}/follow-up/` prepara apenas acções confirmáveis.
+2. `create_operational_task` cria `AiSuggestedAction` pendente com `source_type=ai_investigation`.
+3. `prepare_ai_report_export` cria `AiSuggestedAction` pendente com métricas derivadas dos achados e fontes da investigação.
+4. O endpoint respeita tenant, ownership e escopo já aplicado às investigações.
+5. A página de detalhe mostra botões para preparar tarefa ou relatório e usa o painel de confirmação já existente.
+6. A execução final continua exclusivamente em `/api/v1/ai/assistant/actions/{id}/confirm/`.
+
+### Critérios de Aceite do Nível
+- Utilizador abre uma investigação e prepara uma tarefa de seguimento.
+- A tarefa só é criada depois de confirmação explícita.
+- Utilizador abre uma investigação e prepara um relatório auditável.
+- O relatório só é gerado depois de confirmação explícita.
+- Utilizador sem acesso à investigação não consegue preparar seguimento.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/

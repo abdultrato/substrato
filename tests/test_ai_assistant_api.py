@@ -300,6 +300,70 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_investigation_followup_prepares_confirmable_actions(api_client):
+    tenant = _tenant(identifier="tn-ai-investigation-followup", domain="tn-ai-investigation-followup.local")
+    admin = _user(tenant, "admin_ai_investigation_followup", GROUPS["ADMIN"], is_staff=True)
+    other = _user(tenant, "other_ai_investigation_followup", GROUPS["RECEPCAO"])
+    session = AiSession.objects.create(tenant=tenant, user=admin, title="Investigação", language="pt")
+    investigation = AiInvestigation.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=admin,
+        title="Investigação operacional",
+        question="O que devo priorizar hoje?",
+        intent="operational_health",
+        findings=[{"title": "Erros 5xx", "detail": "3", "severity": "warning"}],
+        sources=[{"type": "endpoint", "label": "Command Center", "href": "/monitoring/command-center"}],
+        tool_names=["get_command_center_alerts"],
+        result_summary="Há erros operacionais que exigem seguimento.",
+    )
+
+    _authenticate(api_client, tenant, admin)
+    task_response = api_client.post(
+        f"/api/v1/ai/assistant/investigations/{investigation.id}/follow-up/",
+        {"action_type": "create_operational_task", "language": "pt"},
+        format="json",
+    )
+
+    assert task_response.status_code == 201, _response_data(task_response)
+    task_action_data = _response_data(task_response)
+    assert task_action_data["action_type"] == "create_operational_task"
+    task_action = AiSuggestedAction.objects.get(id=task_action_data["id"])
+    assert task_action.status == AiSuggestedAction.Status.PENDING_CONFIRMATION
+    assert task_action.payload["source_type"] == "ai_investigation"
+    assert task_action.payload["metadata"]["ai_investigation_id"] == investigation.id
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{task_action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    task = AiOperationalTask.objects.get(action=task_action)
+    assert task.source_type == "ai_investigation"
+    assert task.metadata["prepared_payload"]["metadata"]["ai_investigation_id"] == investigation.id
+
+    report_response = api_client.post(
+        f"/api/v1/ai/assistant/investigations/{investigation.id}/follow-up/",
+        {"action_type": "prepare_ai_report_export", "language": "pt"},
+        format="json",
+    )
+    assert report_response.status_code == 201, _response_data(report_response)
+    report_action = AiSuggestedAction.objects.get(id=_response_data(report_response)["id"])
+    assert report_action.action_type == "prepare_ai_report_export"
+    assert report_action.payload["ai_investigation_id"] == investigation.id
+    assert report_action.payload["report_kind"] == "command_center"
+
+    _authenticate(api_client, tenant, other)
+    hidden_response = api_client.post(
+        f"/api/v1/ai/assistant/investigations/{investigation.id}/follow-up/",
+        {"action_type": "prepare_ai_report_export", "language": "pt"},
+        format="json",
+    )
+    assert hidden_response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_ai_chat_is_tenant_scoped_when_reusing_session_id(api_client):
     tenant_a = _tenant(identifier="tn-ai-a", domain="tn-ai-a.local")
     tenant_b = _tenant(identifier="tn-ai-b", domain="tn-ai-b.local")
