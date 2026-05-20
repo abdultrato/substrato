@@ -1,6 +1,7 @@
+from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Count, Q
+from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncDay, TruncHour
 from django.http import HttpResponse
 from django.urls import reverse
@@ -50,6 +51,19 @@ def _coerce_int(value, *, default: int, min_value: int | None = None, max_value:
     return parsed
 
 
+def _coerce_float(value, *, default: float, min_value: float | None = None, max_value: float | None = None) -> float:
+    try:
+        parsed = float(value)
+    except Exception:
+        parsed = float(default)
+
+    if min_value is not None and parsed < min_value:
+        return float(min_value)
+    if max_value is not None and parsed > max_value:
+        return float(max_value)
+    return parsed
+
+
 def _client_ip_from_request(request) -> str | None:
     try:
         xff = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
@@ -59,6 +73,176 @@ def _client_ip_from_request(request) -> str | None:
         return remote or None
     except Exception:
         return None
+
+
+def _percent(part: int, whole: int) -> float:
+    if whole <= 0:
+        return 0.0
+    return round((part / whole) * 100, 2)
+
+
+def _next_report_run(now, frequency: str):
+    local_now = timezone.localtime(now)
+    if frequency == "daily":
+        candidate = local_now.replace(hour=6, minute=0, second=0, microsecond=0)
+        if candidate <= local_now:
+            candidate += timedelta(days=1)
+        return candidate
+
+    if frequency == "weekly":
+        candidate = local_now.replace(hour=6, minute=0, second=0, microsecond=0)
+        days_until_monday = (7 - candidate.weekday()) % 7
+        if days_until_monday == 0 and candidate <= local_now:
+            days_until_monday = 7
+        return candidate + timedelta(days=days_until_monday)
+
+    year = local_now.year + (1 if local_now.month == 12 else 0)
+    month = 1 if local_now.month == 12 else local_now.month + 1
+    return local_now.replace(year=year, month=month, day=1, hour=6, minute=0, second=0, microsecond=0)
+
+
+COMMAND_CENTER_MODULES = (
+    {
+        "key": "clinical",
+        "label_pt": "Clínico",
+        "label_en": "Clinical",
+        "prefixes": ("/api/v1/clinical/", "/clinical/"),
+        "critical_paths": ("/api/v1/clinical/labrequest/", "/api/v1/clinical/resultitem/"),
+    },
+    {
+        "key": "reception",
+        "label_pt": "Recepção",
+        "label_en": "Reception",
+        "prefixes": ("/api/v1/reception/", "/reception/", "/api/v1/recepcao/", "/recepcao/"),
+        "critical_paths": ("/api/v1/reception/checkin/", "/api/v1/reception/atendimento/"),
+    },
+    {
+        "key": "equipment",
+        "label_pt": "Equipamentos",
+        "label_en": "Equipment",
+        "prefixes": ("/api/v1/equipment/", "/equipment/"),
+    },
+    {
+        "key": "entities",
+        "label_pt": "Entidades",
+        "label_en": "Entities",
+        "prefixes": ("/api/v1/external_entities/", "/external_entities/", "/entities/"),
+    },
+    {
+        "key": "billing",
+        "label_pt": "Faturamento",
+        "label_en": "Billing",
+        "prefixes": ("/api/v1/billing/", "/billing/"),
+    },
+    {
+        "key": "payments",
+        "label_pt": "Pagamentos",
+        "label_en": "Payments",
+        "prefixes": ("/api/v1/payments/", "/payments/"),
+    },
+    {
+        "key": "pharmacy",
+        "label_pt": "Farmácia",
+        "label_en": "Pharmacy",
+        "prefixes": ("/api/v1/pharmacy/", "/pharmacy/", "/api/v1/farmacia/", "/farmacia/"),
+    },
+    {
+        "key": "bloodbank",
+        "label_pt": "Banco de Sangue",
+        "label_en": "Blood Bank",
+        "prefixes": ("/api/v1/bloodbank/", "/bloodbank/"),
+    },
+    {
+        "key": "nursing",
+        "label_pt": "Enfermagem",
+        "label_en": "Nursing",
+        "prefixes": ("/api/v1/nursing/", "/nursing/", "/api/v1/enfermagem/", "/enfermagem/"),
+    },
+    {
+        "key": "insurer",
+        "label_pt": "Seguradora",
+        "label_en": "Insurer",
+        "prefixes": ("/api/v1/insurer/", "/insurer/", "/seguradora/"),
+    },
+    {
+        "key": "accounting",
+        "label_pt": "Contabilidade",
+        "label_en": "Accounting",
+        "prefixes": ("/api/v1/accounting/", "/accounting/", "/contabilidade/"),
+    },
+    {
+        "key": "consultations",
+        "label_pt": "Consultas",
+        "label_en": "Consultations",
+        "prefixes": ("/api/v1/consultations/", "/consultations/"),
+    },
+    {
+        "key": "education",
+        "label_pt": "Educação",
+        "label_en": "Education",
+        "prefixes": ("/api/v1/education/", "/education/"),
+    },
+    {
+        "key": "tenants",
+        "label_pt": "Inquilinos",
+        "label_en": "Tenants",
+        "prefixes": ("/api/v1/tenants/", "/tenants/"),
+    },
+    {
+        "key": "notifications",
+        "label_pt": "Notificações",
+        "label_en": "Notifications",
+        "prefixes": ("/api/v1/notifications/", "/notifications/", "/notificacoes/"),
+    },
+    {
+        "key": "identity",
+        "label_pt": "Identidade",
+        "label_en": "Identity",
+        "prefixes": ("/api/v1/identity/", "/identity/"),
+    },
+    {
+        "key": "medical_records",
+        "label_pt": "Prontuário",
+        "label_en": "Medical Records",
+        "prefixes": ("/api/v1/medical_records/", "/medical-records/", "/prontuario/"),
+    },
+    {
+        "key": "maternity",
+        "label_pt": "Maternidade",
+        "label_en": "Maternity",
+        "prefixes": ("/api/v1/maternity/", "/maternity/", "/maternidade/"),
+    },
+    {
+        "key": "surgery",
+        "label_pt": "Cirurgia",
+        "label_en": "Surgery",
+        "prefixes": ("/api/v1/surgery/", "/surgery/", "/cirurgia/"),
+    },
+    {
+        "key": "human_resources",
+        "label_pt": "Recursos Humanos",
+        "label_en": "Human Resources",
+        "prefixes": ("/api/v1/human_resources/", "/human-resources/", "/recursos-humanos/"),
+    },
+    {
+        "key": "monitoring",
+        "label_pt": "Monitoramento",
+        "label_en": "Monitoring",
+        "prefixes": ("/api/v1/monitoring/", "/monitoring/", "/monitoramento/"),
+    },
+    {
+        "key": "audit",
+        "label_pt": "Audit",
+        "label_en": "Audit",
+        "prefixes": ("/api/v1/audit/", "/audit/", "/auditoria/"),
+    },
+    {
+        "key": "dashboard",
+        "label_pt": "Dashboard",
+        "label_en": "Dashboard",
+        "prefixes": ("/api/v1/dashboard/", "/dashboard/"),
+    },
+)
 
 
 class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
@@ -137,6 +321,457 @@ class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
                 "custom_id": record.custom_id,
             },
             status=201,
+        )
+
+    def _resolve_module_for_path(self, path: str):
+        normalized = (path or "").strip().lower()
+        if not normalized:
+            return None
+        for module in COMMAND_CENTER_MODULES:
+            for prefix in module.get("prefixes", ()):
+                if normalized.startswith(str(prefix).lower()):
+                    return module
+        return None
+
+    def _empty_module_stats(self, module: dict) -> dict:
+        return {
+            "module_key": module.get("key"),
+            "label_pt": module.get("label_pt"),
+            "label_en": module.get("label_en"),
+            "total_requests": 0,
+            "success_count": 0,
+            "client_4xx": 0,
+            "server_5xx": 0,
+            "error_4xx_5xx": 0,
+            "success_rate": 0.0,
+            "avg_duration_ms": 0.0,
+            "slo_target": 0.0,
+            "slo_gap": 0.0,
+            "slo_state": "neutral",
+        }
+
+    def _aggregate_command_center_stats(self, *, tenant, range_start, now, slo_target: float):
+        module_stats = {m["key"]: self._empty_module_stats(m) for m in COMMAND_CENTER_MODULES}
+        weighted_duration_sum = defaultdict(float)
+
+        activity_path_rows = list(
+            UserActivity.objects.filter(
+                tenant=tenant,
+                deleted=False,
+                created_at__gte=range_start,
+                created_at__lte=now,
+                status_code__gt=0,
+            )
+            .exclude(path="")
+            .values("path")
+            .annotate(
+                total=Count("id"),
+                success=Count("id", filter=Q(status_code__gte=200, status_code__lt=400)),
+                client_4xx=Count("id", filter=Q(status_code__gte=400, status_code__lt=500)),
+                server_5xx=Count("id", filter=Q(status_code__gte=500, status_code__lt=600)),
+                avg_duration_ms=Avg("duration_ms"),
+            )
+            .order_by("-total")
+        )
+
+        unmapped = {
+            "module_key": "unmapped",
+            "label_pt": "Outros",
+            "label_en": "Other",
+            "total_requests": 0,
+            "success_count": 0,
+            "client_4xx": 0,
+            "server_5xx": 0,
+            "error_4xx_5xx": 0,
+            "success_rate": 0.0,
+            "avg_duration_ms": 0.0,
+            "slo_target": float(slo_target),
+            "slo_gap": 0.0,
+            "slo_state": "neutral",
+        }
+
+        critical_path_by_module = {
+            m["key"]: tuple(str(path).lower() for path in m.get("critical_paths", ()) if path)
+            for m in COMMAND_CENTER_MODULES
+        }
+        critical_path_hits = defaultdict(int)
+        route_5xx_totals = defaultdict(int)
+
+        for row in activity_path_rows:
+            path = row.get("path") or ""
+            module = self._resolve_module_for_path(path)
+            target = module_stats[module["key"]] if module else unmapped
+
+            total = int(row.get("total") or 0)
+            success = int(row.get("success") or 0)
+            client_4xx = int(row.get("client_4xx") or 0)
+            server_5xx = int(row.get("server_5xx") or 0)
+            avg_duration = float(row.get("avg_duration_ms") or 0.0)
+
+            target["total_requests"] += total
+            target["success_count"] += success
+            target["client_4xx"] += client_4xx
+            target["server_5xx"] += server_5xx
+            target["error_4xx_5xx"] += client_4xx + server_5xx
+            weighted_duration_sum[target["module_key"]] += avg_duration * total
+
+            normalized_path = str(path).strip()
+            if server_5xx > 0 and normalized_path:
+                route_5xx_totals[normalized_path] += server_5xx
+
+            if module:
+                critical_prefixes = critical_path_by_module.get(module["key"], ())
+                if critical_prefixes and any(normalized_path.lower().startswith(prefix) for prefix in critical_prefixes):
+                    critical_path_hits[module["key"]] += total
+
+        system_error_5xx_rows = list(
+            SystemError.objects.filter(
+                tenant=tenant,
+                created_at__gte=range_start,
+                created_at__lte=now,
+                status_code__gte=500,
+                status_code__lt=600,
+            )
+            .exclude(path="")
+            .values("path")
+            .annotate(total=Count("id"))
+        )
+        for row in system_error_5xx_rows:
+            route_5xx_totals[str(row.get("path") or "")] += int(row.get("total") or 0)
+
+        module_rows = []
+        for module in COMMAND_CENTER_MODULES:
+            current = module_stats[module["key"]]
+            total_requests = int(current["total_requests"])
+            success_count = int(current["success_count"])
+            success_rate = _percent(success_count, total_requests)
+            avg_duration_ms = (
+                round(weighted_duration_sum[current["module_key"]] / total_requests, 2)
+                if total_requests
+                else 0.0
+            )
+            gap = round(success_rate - slo_target, 2)
+            if total_requests == 0:
+                slo_state = "neutral"
+            elif success_rate < max(0.0, slo_target - 5):
+                slo_state = "critical"
+            elif success_rate < slo_target:
+                slo_state = "warning"
+            else:
+                slo_state = "healthy"
+
+            module_rows.append(
+                {
+                    **current,
+                    "success_rate": success_rate,
+                    "avg_duration_ms": avg_duration_ms,
+                    "slo_target": float(slo_target),
+                    "slo_gap": gap,
+                    "slo_state": slo_state,
+                    "critical_path_hits": int(critical_path_hits.get(module["key"], 0)),
+                }
+            )
+
+        if unmapped["total_requests"] > 0:
+            total_requests = int(unmapped["total_requests"])
+            success_rate = _percent(int(unmapped["success_count"]), total_requests)
+            avg_duration_ms = round(weighted_duration_sum["unmapped"] / total_requests, 2) if total_requests else 0.0
+            gap = round(success_rate - slo_target, 2)
+            module_rows.append(
+                {
+                    **unmapped,
+                    "success_rate": success_rate,
+                    "avg_duration_ms": avg_duration_ms,
+                    "slo_gap": gap,
+                    "slo_state": "warning" if success_rate < slo_target else "healthy",
+                    "critical_path_hits": 0,
+                }
+            )
+
+        module_rows.sort(key=lambda row: (row.get("slo_state") != "critical", row.get("success_rate", 0.0), row.get("module_key")))
+
+        global_total = sum(int(row.get("total_requests") or 0) for row in module_rows)
+        global_success = sum(int(row.get("success_count") or 0) for row in module_rows)
+        global_client_4xx = sum(int(row.get("client_4xx") or 0) for row in module_rows)
+        global_server_5xx = sum(int(row.get("server_5xx") or 0) for row in module_rows)
+        global_error_4xx_5xx = sum(int(row.get("error_4xx_5xx") or 0) for row in module_rows)
+        global_success_rate = _percent(global_success, global_total)
+        global_avg_duration_ms = (
+            round(sum(weighted_duration_sum.values()) / global_total, 2) if global_total else 0.0
+        )
+
+        top_failing_routes = [
+            {"path": path, "server_5xx": total}
+            for path, total in sorted(route_5xx_totals.items(), key=lambda item: (-item[1], item[0]))[:10]
+            if path
+        ]
+
+        return {
+            "module_rows": module_rows,
+            "global_totals": {
+                "total_requests": global_total,
+                "success_count": global_success,
+                "client_4xx": global_client_4xx,
+                "server_5xx": global_server_5xx,
+                "error_4xx_5xx": global_error_4xx_5xx,
+                "success_rate": global_success_rate,
+                "avg_duration_ms": global_avg_duration_ms,
+                "modules_below_slo": len(
+                    [row for row in module_rows if row.get("total_requests") and row.get("success_rate", 0.0) < slo_target]
+                ),
+                "active_modules": len([row for row in module_rows if row.get("total_requests")]),
+            },
+            "top_failing_routes": top_failing_routes,
+        }
+
+    def _build_command_center_alerts(
+        self,
+        *,
+        module_rows: list[dict],
+        global_totals: dict,
+        top_failing_routes: list[dict],
+        slo_target: float,
+        route_threshold: int,
+        client_4xx_threshold: int,
+        server_5xx_threshold: int,
+        outbox_pending: int,
+        outbox_failed: int,
+    ) -> list[dict]:
+        alerts: list[dict] = []
+
+        global_success_rate = float(global_totals.get("success_rate") or 0.0)
+        if global_totals.get("total_requests", 0) > 0 and global_success_rate < slo_target:
+            severity = "critical" if global_success_rate < max(0.0, slo_target - 5.0) else "warning"
+            alerts.append(
+                {
+                    "id": "global_slo_breach",
+                    "severity": severity,
+                    "category": "slo",
+                    "title_pt": "SLO global abaixo da meta",
+                    "title_en": "Global SLO below target",
+                    "description_pt": f"Taxa de sucesso global em {global_success_rate}% (meta {slo_target}%).",
+                    "description_en": f"Global success rate at {global_success_rate}% (target {slo_target}%).",
+                    "value": global_success_rate,
+                    "target": slo_target,
+                }
+            )
+
+        client_4xx = int(global_totals.get("client_4xx") or 0)
+        if client_4xx >= client_4xx_threshold:
+            alerts.append(
+                {
+                    "id": "client_4xx_spike",
+                    "severity": "warning",
+                    "category": "http",
+                    "title_pt": "Pico de erros do cliente (4xx)",
+                    "title_en": "Client error spike (4xx)",
+                    "description_pt": f"Foram registados {client_4xx} erros 4xx no período.",
+                    "description_en": f"{client_4xx} HTTP 4xx errors were recorded in the period.",
+                    "value": client_4xx,
+                    "target": client_4xx_threshold,
+                }
+            )
+
+        server_5xx = int(global_totals.get("server_5xx") or 0)
+        if server_5xx >= server_5xx_threshold:
+            alerts.append(
+                {
+                    "id": "server_5xx_spike",
+                    "severity": "critical",
+                    "category": "http",
+                    "title_pt": "Pico de erros do servidor (5xx)",
+                    "title_en": "Server error spike (5xx)",
+                    "description_pt": f"Foram registados {server_5xx} erros 5xx no período.",
+                    "description_en": f"{server_5xx} HTTP 5xx errors were recorded in the period.",
+                    "value": server_5xx,
+                    "target": server_5xx_threshold,
+                }
+            )
+
+        for row in module_rows:
+            if not row.get("total_requests"):
+                continue
+            success_rate = float(row.get("success_rate") or 0.0)
+            if success_rate >= slo_target:
+                continue
+            severity = "critical" if success_rate < max(0.0, slo_target - 5.0) else "warning"
+            alerts.append(
+                {
+                    "id": f"module_slo_{row.get('module_key')}",
+                    "severity": severity,
+                    "category": "module_slo",
+                    "module_key": row.get("module_key"),
+                    "title_pt": f"Módulo {row.get('label_pt')} abaixo da meta",
+                    "title_en": f"Module {row.get('label_en')} below target",
+                    "description_pt": f"Taxa de sucesso em {success_rate}% (meta {slo_target}%).",
+                    "description_en": f"Success rate at {success_rate}% (target {slo_target}%).",
+                    "value": success_rate,
+                    "target": slo_target,
+                }
+            )
+
+        for route in top_failing_routes:
+            total_5xx = int(route.get("server_5xx") or 0)
+            if total_5xx < route_threshold:
+                continue
+            alerts.append(
+                {
+                    "id": f"route_5xx_{route.get('path')}",
+                    "severity": "critical",
+                    "category": "critical_route",
+                    "path": route.get("path"),
+                    "title_pt": "Rota crítica com falhas 5xx",
+                    "title_en": "Critical route with 5xx failures",
+                    "description_pt": f"A rota {route.get('path')} registou {total_5xx} erros 5xx.",
+                    "description_en": f"Route {route.get('path')} recorded {total_5xx} HTTP 5xx errors.",
+                    "value": total_5xx,
+                    "target": route_threshold,
+                }
+            )
+
+        if outbox_pending > 0 or outbox_failed > 0:
+            severity = "critical" if outbox_failed > 0 else "warning"
+            alerts.append(
+                {
+                    "id": "outbox_backlog",
+                    "severity": severity,
+                    "category": "eventing",
+                    "title_pt": "Backlog de eventos na outbox",
+                    "title_en": "Outbox event backlog",
+                    "description_pt": f"Pendente: {outbox_pending} | Falhados/dead-letter: {outbox_failed}.",
+                    "description_en": f"Pending: {outbox_pending} | Failed/dead-letter: {outbox_failed}.",
+                    "value": outbox_pending + outbox_failed,
+                    "target": 0,
+                }
+            )
+
+        alerts.sort(
+            key=lambda item: (
+                0 if item.get("severity") == "critical" else 1 if item.get("severity") == "warning" else 2,
+                item.get("id") or "",
+            )
+        )
+        return alerts
+
+    @action(detail=False, methods=["get"], url_path="command_center", url_name="command-center")
+    def command_center(self, request):
+        tenant = getattr(request, "tenant", None)
+        if tenant is None:
+            return Response({"detail": "Tenant não identificado."}, status=400)
+
+        now = timezone.now()
+        days = _coerce_int(request.query_params.get("days"), default=30, min_value=1, max_value=365)
+        slo_target = _coerce_float(request.query_params.get("slo_target"), default=99.0, min_value=80.0, max_value=100.0)
+        route_threshold = _coerce_int(
+            request.query_params.get("route_5xx_threshold"),
+            default=3,
+            min_value=1,
+            max_value=500,
+        )
+        client_4xx_threshold = _coerce_int(
+            request.query_params.get("client_4xx_threshold"),
+            default=30,
+            min_value=1,
+            max_value=10000,
+        )
+        server_5xx_threshold = _coerce_int(
+            request.query_params.get("server_5xx_threshold"),
+            default=10,
+            min_value=1,
+            max_value=10000,
+        )
+        range_start = now - timedelta(days=days)
+
+        aggregates = self._aggregate_command_center_stats(
+            tenant=tenant,
+            range_start=range_start,
+            now=now,
+            slo_target=slo_target,
+        )
+
+        outbox_qs = TransactionalOutboxEvent.objects.filter(
+            occurred_at__gte=range_start,
+            occurred_at__lte=now,
+        )
+        tenant_identifier = str(getattr(tenant, "identifier", "") or "").strip()
+        if tenant_identifier:
+            outbox_qs = outbox_qs.filter(tenant_identifier=tenant_identifier)
+
+        outbox_pending = outbox_qs.filter(status=TransactionalOutboxEvent.Status.PENDING).count()
+        outbox_failed = outbox_qs.filter(
+            status__in=[
+                TransactionalOutboxEvent.Status.FAILED,
+                TransactionalOutboxEvent.Status.DEAD_LETTER,
+            ]
+        ).count()
+
+        alerts = self._build_command_center_alerts(
+            module_rows=aggregates["module_rows"],
+            global_totals=aggregates["global_totals"],
+            top_failing_routes=aggregates["top_failing_routes"],
+            slo_target=slo_target,
+            route_threshold=route_threshold,
+            client_4xx_threshold=client_4xx_threshold,
+            server_5xx_threshold=server_5xx_threshold,
+            outbox_pending=outbox_pending,
+            outbox_failed=outbox_failed,
+        )
+
+        now_iso = now.isoformat()
+        scheduled_reports = [
+            {
+                "key": "executive_snapshot",
+                "label_pt": "Resumo executivo",
+                "label_en": "Executive snapshot",
+                "frequency": "daily",
+                "next_run_at": _next_report_run(now, "daily").isoformat(),
+                "delivery": "email|dashboard",
+                "active": True,
+            },
+            {
+                "key": "module_slo_review",
+                "label_pt": "Revisão de SLO por módulo",
+                "label_en": "Module SLO review",
+                "frequency": "weekly",
+                "next_run_at": _next_report_run(now, "weekly").isoformat(),
+                "delivery": "dashboard",
+                "active": True,
+            },
+            {
+                "key": "governance_audit",
+                "label_pt": "Auditoria de governança",
+                "label_en": "Governance audit",
+                "frequency": "monthly",
+                "next_run_at": _next_report_run(now, "monthly").isoformat(),
+                "delivery": "dashboard|pdf",
+                "active": True,
+            },
+        ]
+
+        return Response(
+            {
+                "generated_at": now_iso,
+                "range": {
+                    "start": range_start.isoformat(),
+                    "end": now_iso,
+                    "days": days,
+                },
+                "thresholds": {
+                    "slo_target": slo_target,
+                    "route_5xx_threshold": route_threshold,
+                    "client_4xx_threshold": client_4xx_threshold,
+                    "server_5xx_threshold": server_5xx_threshold,
+                },
+                "global_totals": aggregates["global_totals"],
+                "modules": aggregates["module_rows"],
+                "top_failing_routes": aggregates["top_failing_routes"],
+                "alerts": alerts,
+                "outbox": {
+                    "pending": outbox_pending,
+                    "failed_or_dead_letter": outbox_failed,
+                },
+                "scheduled_reports": scheduled_reports,
+            }
         )
 
     def list(self, request):

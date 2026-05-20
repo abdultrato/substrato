@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Bug, ClipboardList, ShieldAlert } from "lucide-react"
+import { Activity, Bug, ClipboardList, ShieldAlert } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -165,6 +165,12 @@ export default function MonitoramentoPage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <ActionTile
+                        title="Command Center"
+                        description="Painel operacional com alertas automáticos, SLO por módulo e rotas críticas."
+                        href="/monitoring/command-center"
+                        icon={Activity}
+                    />
                     <ActionTile
                         title="Erros do sistema"
                         description="Lista detalhada com rota, código e mensagem."

@@ -161,3 +161,79 @@ def test_telemetry_summary_aggregates_errors_and_outbox(api_client):
     assert data["outbox"]["delivered"] == 1
     assert len(data["timeline"]) >= 1
     assert any(item["status_code"] == 500 for item in data["by_status"])
+
+
+@pytest.mark.django_db
+def test_command_center_returns_module_health_and_alerts(api_client):
+    tenant = _tenant()
+    admin_user = _authenticate(api_client, tenant, username="admin_command_center", is_staff=True)
+
+    UserActivity.objects.create(
+        tenant=tenant,
+        user=admin_user,
+        method="GET",
+        path="/api/v1/clinical/labrequest/",
+        full_path="/api/v1/clinical/labrequest/?page=1",
+        status_code=200,
+        duration_ms=120,
+    )
+    UserActivity.objects.create(
+        tenant=tenant,
+        user=admin_user,
+        method="POST",
+        path="/api/v1/clinical/resultitem/",
+        full_path="/api/v1/clinical/resultitem/",
+        status_code=500,
+        duration_ms=220,
+        message="Failure",
+    )
+    UserActivity.objects.create(
+        tenant=tenant,
+        user=admin_user,
+        method="GET",
+        path="/api/v1/pharmacy/produto/",
+        full_path="/api/v1/pharmacy/produto/",
+        status_code=404,
+        duration_ms=90,
+        message="Not found",
+    )
+
+    SystemError.objects.create(
+        tenant=tenant,
+        method="GET",
+        path="/api/v1/clinical/resultitem/",
+        full_path="/api/v1/clinical/resultitem/",
+        status_code=502,
+        exception_class="BadGateway",
+        message="Gateway error",
+        metadata={},
+    )
+
+    TransactionalOutboxEvent.objects.create(
+        event_type="clinical.request.created",
+        tenant_identifier=tenant.identifier,
+        status=TransactionalOutboxEvent.Status.PENDING,
+        payload={"request_id": "REQ-1"},
+    )
+    TransactionalOutboxEvent.objects.create(
+        event_type="clinical.request.created",
+        tenant_identifier=tenant.identifier,
+        status=TransactionalOutboxEvent.Status.FAILED,
+        payload={"request_id": "REQ-2"},
+    )
+
+    response = api_client.get(
+        "/api/v1/monitoring/telemetry/command_center/?days=30&slo_target=99&route_5xx_threshold=1&server_5xx_threshold=1"
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+
+    assert data["global_totals"]["total_requests"] == 3
+    assert data["global_totals"]["client_4xx"] == 1
+    assert data["global_totals"]["server_5xx"] == 1
+    assert data["outbox"]["pending"] == 1
+    assert data["outbox"]["failed_or_dead_letter"] == 1
+    assert len(data["scheduled_reports"]) >= 3
+    assert any(item["module_key"] == "clinical" for item in data["modules"])
+    assert any(item["category"] == "critical_route" for item in data["alerts"])
