@@ -6,12 +6,30 @@
 
 {% block content %}
 <style>
+  .admin-lang-switch {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 999;
+  }
   .login-logo img {
     background-color: #fff;
     border-radius: 1rem;
     padding: 0.4rem;
   }
 </style>
+{% get_current_language as LANGUAGE_CODE %}
+<form action="{% url 'set_language' %}" method="post" class="admin-lang-switch">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if LANGUAGE_CODE|slice:":2" == "pt" %}
+    <input type="hidden" name="language" value="en">
+    <button type="submit" class="admin-submit">Mudar para Inglês</button>
+  {% else %}
+    <input type="hidden" name="language" value="pt">
+    <button type="submit" class="admin-submit">chenge to portuguese</button>
+  {% endif %}
+</form>
 <div class="admin-login-wrap">
   <div class="admin-login-visual" aria-hidden="true" style="background-color: #fff;"></div>
 
@@ -27,7 +45,11 @@
       </div>
       <div class="admin-title-block">
         <div class="admin-title">{{ jazzmin_settings.site_header }}</div>
-        <p class="admin-subtitle">Infrastrutura de unificada de gestao em saude</p>
+        {% if LANGUAGE_CODE|slice:":2" == "pt" %}
+          <p class="admin-subtitle">Estrutura Unificada de Gestão</p>
+        {% else %}
+          <p class="admin-subtitle">Unified Management Structure</p>
+        {% endif %}
       </div>
     </div>
 

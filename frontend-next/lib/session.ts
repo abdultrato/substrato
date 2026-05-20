@@ -15,6 +15,7 @@ export type SessionUser = {
 }
 
 import { clearTokens } from "./tokens"
+import { getCurrentLanguage, toBackendLanguage } from "./language"
 
 function getStorage(): Storage | null {
   if (typeof window === "undefined") return null
@@ -70,7 +71,11 @@ export function isAuthenticated() {
 
 export function logout() {
   try {
-    fetch("/api/v1/auth/logout/", { method: "POST", credentials: "include" })
+    fetch("/api/v1/auth/logout/", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Accept-Language": toBackendLanguage(getCurrentLanguage()) },
+    })
   } catch {}
   clearTokens()
   clearSessionUser()

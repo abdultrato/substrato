@@ -21,6 +21,10 @@ from apps.nursing.models import (
 
 
 class NursingRecordSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    lab_request_code = serializers.CharField(source="lab_request.custom_id", read_only=True)
+    lab_request_status = serializers.CharField(source="lab_request.status", read_only=True)
+
     class Meta:
         model = NursingRecord
         fields = "__all__"

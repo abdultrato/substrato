@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block usertools %}
+  {{ block.super }}
+  {% get_current_language as LANGUAGE_CODE %}
+  <form action="{% url 'set_language' %}" method="post" style="display:inline-block; margin-left: 12px;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% if LANGUAGE_CODE|slice:":2" == "pt" %}
+      <input type="hidden" name="language" value="en">
+      <button type="submit" class="button" style="min-height: 30px; padding: 4px 10px;">
+        Mudar para Inglês
+      </button>
+    {% else %}
+      <input type="hidden" name="language" value="pt">
+      <button type="submit" class="button" style="min-height: 30px; padding: 4px 10px;">
+        chenge to portuguese
+      </button>
+    {% endif %}
+  </form>
+{% endblock %}

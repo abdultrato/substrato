@@ -8,6 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -87,6 +88,7 @@ const BLOODBANK_MAINTENANCE_STATUS: Record<string, string> = {
 
 export default function ResourceListPage({
   title,
+  subtitle,
   endpoint,
   adminListHref,
   createHref,
@@ -94,6 +96,7 @@ export default function ResourceListPage({
   requiredGroups,
 }: {
   title: string
+  subtitle?: string
   endpoint: string
   adminListHref?: string
   createHref?: string
@@ -102,6 +105,7 @@ export default function ResourceListPage({
 }) {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
+  const { t, tr } = useLanguage()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const [data, setData] = useState<Row[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -122,7 +126,7 @@ export default function ResourceListPage({
         const items = res && (res as any).results ? (res as any).results : res
         if (mounted) setData(Array.isArray(items) ? items : [])
       } catch (e: any) {
-        if (mounted) setError(e?.message || "Falha ao carregar dados.")
+        if (mounted) setError(e?.message || t("Falha ao carregar dados.", "Failed to load data."))
       } finally {
         if (mounted) setLoadingData(false)
       }
@@ -131,7 +135,7 @@ export default function ResourceListPage({
     return () => {
       mounted = false
     }
-  }, [endpoint])
+  }, [endpoint, t])
 
   useEffect(() => {
     let mounted = true
@@ -163,7 +167,7 @@ export default function ResourceListPage({
   const columns = useMemo(
     () => [
       {
-        header: "Código",
+        header: t("Código", "Code"),
         render: (row: Row) => {
           const label = pickCode(row)
           if (!rowHref) return label
@@ -178,20 +182,20 @@ export default function ResourceListPage({
         },
       },
       {
-        header: "Nome",
+        header: t("Nome", "Name"),
         render: (row: Row) => pickLabel(row) || "-",
       },
       {
-        header: "Estado",
+        header: t("Estado", "Status"),
         render: (row: Row) =>
-          row.estado || row.status || row.status_comercial || "-",
+          tr(String(row.estado || row.status || row.status_comercial || "-")),
       },
       {
-        header: "Criado em",
+        header: t("Criado em", "Created at"),
         render: (row: Row) => fmtDate(row.criado_em || row.created_at),
       },
     ],
-    [rowHref]
+    [rowHref, t, tr]
   )
 
   if (loading) return null
@@ -201,7 +205,7 @@ export default function ResourceListPage({
       <div className="mx-auto w-full max-w-6xl space-y-3">
         <PageHeader
           title={title}
-          subtitle={endpoint}
+          subtitle={subtitle || t("Registos disponíveis no módulo selecionado.", "Available records in the selected module.")}
           actions={
             <>
               {createHref ? (
@@ -209,7 +213,7 @@ export default function ResourceListPage({
                   href={createHref}
                   className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)]"
                 >
-                  Novo
+                  {t("Novo", "New")}
                 </Link>
               ) : null}
 
@@ -218,7 +222,7 @@ export default function ResourceListPage({
                   href={adminListHref}
                   className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                 >
-                  Abrir na administração
+                  {t("Abrir na administração", "Open in administration")}
                 </Link>
               ) : null}
             </>
@@ -232,12 +236,12 @@ export default function ResourceListPage({
         )}
 
         {loadingData ? (
-          <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
+          <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
         ) : (
           <DataTable<Row>
             columns={columns as any}
             data={data}
-            emptyMessage="Nenhum registo encontrado."
+            emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
           />
         )}
       </div>

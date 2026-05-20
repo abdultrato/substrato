@@ -9,9 +9,11 @@ import useAuth from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function LoginPage () {
     useAuthGuard( { requireAuth: false } )
+    const { t } = useLanguage()
 
     const router = useRouter();
     const { signIn } = useAuth()
@@ -36,6 +38,7 @@ export default function LoginPage () {
      */
     useEffect(() => {
         router.prefetch( "/" )
+        router.prefetch( "/workspaces" )
         router.prefetch( "/patients" )
         router.prefetch( "/laboratory/requests" )
         router.prefetch( "/education" )
@@ -50,7 +53,7 @@ export default function LoginPage () {
         try {
             const sessionUser = await login( user, pass );
             if ( !sessionUser ) {
-                setError( "Falha ao obter sessão. Tente novamente." )
+                setError( t("Falha ao obter sessão. Tente novamente.", "Failed to retrieve session. Please try again.") )
                 return
             }
             signIn( sessionUser )
@@ -60,7 +63,7 @@ export default function LoginPage () {
                     : null
             router.push( next || getDefaultWorkspaceHref( sessionUser ) );
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Utilizador ou palavra-passe inválidos" );
+            setError( e instanceof Error ? e.message : t("Utilizador ou palavra-passe inválidos", "Invalid user or password") );
         }
     }
 
@@ -71,7 +74,7 @@ export default function LoginPage () {
 
         const v = resetId.trim()
         if ( !v ) {
-            setError( "Informe e-mail, telefone ou utilizador." )
+            setError( t("Informe e-mail, telefone ou utilizador.", "Provide e-mail, phone or username.") )
             return
         }
 
@@ -85,10 +88,10 @@ export default function LoginPage () {
                 method: "POST",
                 body: JSON.stringify( payload ),
             } )
-            setResetInfo( res?.detail || "Se o utilizador existir, enviaremos instruções." )
+            setResetInfo( res?.detail || t("Se o utilizador existir, enviaremos instruções.", "If the user exists, we will send instructions.") )
             setView( "reset_confirm" )
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Falha ao solicitar reposição de palavra-passe." )
+            setError( e instanceof Error ? e.message : t("Falha ao solicitar reposição de palavra-passe.", "Failed to request password reset.") )
         }
     }
 
@@ -98,15 +101,15 @@ export default function LoginPage () {
         setResetInfo( "" )
 
         if ( !resetToken.trim() ) {
-            setError( "Informe o código recebido." )
+            setError( t("Informe o código recebido.", "Provide the received code.") )
             return
         }
         if ( !resetPass ) {
-            setError( "Informe a nova palavra-passe." )
+            setError( t("Informe a nova palavra-passe.", "Provide the new password.") )
             return
         }
         if ( resetPass !== resetPass2 ) {
-            setError( "A confirmação da palavra-passe não coincide." )
+            setError( t("A confirmação da palavra-passe não coincide.", "Password confirmation does not match.") )
             return
         }
 
@@ -115,14 +118,14 @@ export default function LoginPage () {
                 method: "POST",
                 body: JSON.stringify( { token: resetToken.trim(), new_password: resetPass } ),
             } )
-            setResetInfo( "Palavra-passe reposta com sucesso. Já pode entrar." )
+            setResetInfo( t("Palavra-passe reposta com sucesso. Já pode entrar.", "Password reset successful. You can sign in now.") )
             setView( "login" )
             setResetId( "" )
             setResetToken( "" )
             setResetPass( "" )
             setResetPass2( "" )
         } catch (e) {
-            setError( e instanceof Error ? e.message : "Falha ao repor a palavra-passe." )
+            setError( e instanceof Error ? e.message : t("Falha ao repor a palavra-passe.", "Failed to reset password.") )
         }
     }
 
@@ -131,12 +134,12 @@ export default function LoginPage () {
                 <div className="login-card">
                     <div className="login-image">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/static/img/logo.png" alt="Logo do Substrato" />
+                        <img src="/static/img/logo.png" alt={t("Logo do Substrato", "Substrato logo")} />
                     </div>
 
                 <div className="login-form">
                     <h1 className="login-title">Substrato</h1>
-                    <p className="login-subtitle">Infraestrutura unificada de gestão em saúde</p>
+                    <p className="login-subtitle">{t("Estrutura Unificada de Gestão", "Unified Management Structure")}</p>
 
                     {error && <div className="login-error">{error}</div>}
                     {resetInfo && (
@@ -153,7 +156,7 @@ export default function LoginPage () {
                                     id="utilizador"
                                     name="utilizador"
                                     autoComplete="username"
-                                    placeholder="Utilizador"
+                                    placeholder={t("Utilizador", "Username")}
                                     value={user}
                                     onChange={e => setUser( e.target.value )}
                                 />
@@ -164,7 +167,7 @@ export default function LoginPage () {
                                         id="palavra-passe"
                                         name="palavra_passe"
                                         type={showPass ? "text" : "password"}
-                                        placeholder="Palavra-passe"
+                                        placeholder={t("Palavra-passe", "Password")}
                                         value={pass}
                                         onChange={e => setPass( e.target.value )}
                                         autoComplete="current-password"
@@ -173,13 +176,13 @@ export default function LoginPage () {
                                         type="button"
                                         onClick={() => setShowPass( (v) => !v )}
                                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showPass ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                        aria-label={showPass ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
                                     >
                                         {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                                     </button>
                                 </div>
 
-                                <button>Entrar</button>
+                                <button>{t("Entrar", "Sign in")}</button>
                             </form>
 
                             <button
@@ -191,7 +194,7 @@ export default function LoginPage () {
                                     setView( "reset_request" )
                                 }}
                             >
-                                Esqueci a palavra-passe
+                                {t("Esqueci a palavra-passe", "Forgot password")}
                             </button>
                         </>
                     ) : view === "reset_request" ? (
@@ -201,12 +204,12 @@ export default function LoginPage () {
                                     className="login-input"
                                     id="identificador-reposicao"
                                     name="identificador_reposicao"
-                                    placeholder="E-mail, telefone ou utilizador"
+                                    placeholder={t("E-mail, telefone ou utilizador", "E-mail, phone or username")}
                                     value={resetId}
                                     onChange={e => setResetId( e.target.value )}
                                 />
 
-                                <button>Enviar código</button>
+                                <button>{t("Enviar código", "Send code")}</button>
                             </form>
 
                             <button
@@ -218,7 +221,7 @@ export default function LoginPage () {
                                     setView( "login" )
                                 }}
                             >
-                                Voltar ao login
+                                {t("Voltar ao login", "Back to login")}
                             </button>
                         </>
                     ) : (
@@ -228,7 +231,7 @@ export default function LoginPage () {
                                     className="login-input"
                                     id="codigo-reposicao"
                                     name="codigo_reposicao"
-                                    placeholder="Código recebido"
+                                    placeholder={t("Código recebido", "Received code")}
                                     value={resetToken}
                                     onChange={e => setResetToken( e.target.value )}
                                 />
@@ -239,7 +242,7 @@ export default function LoginPage () {
                                         id="nova-palavra-passe"
                                         name="nova_palavra_passe"
                                         type={showResetPass ? "text" : "password"}
-                                        placeholder="Nova palavra-passe"
+                                        placeholder={t("Nova palavra-passe", "New password")}
                                         value={resetPass}
                                         onChange={e => setResetPass( e.target.value )}
                                         autoComplete="new-password"
@@ -248,7 +251,7 @@ export default function LoginPage () {
                                         type="button"
                                         onClick={() => setShowResetPass( (v) => !v )}
                                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showResetPass ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                        aria-label={showResetPass ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
                                     >
                                         {showResetPass ? <EyeOff size={14} /> : <Eye size={14} />}
                                     </button>
@@ -260,7 +263,7 @@ export default function LoginPage () {
                                         id="confirmacao-nova-palavra-passe"
                                         name="confirmacao_nova_palavra_passe"
                                         type={showResetPass2 ? "text" : "password"}
-                                        placeholder="Confirmar nova palavra-passe"
+                                        placeholder={t("Confirmar nova palavra-passe", "Confirm new password")}
                                         value={resetPass2}
                                         onChange={e => setResetPass2( e.target.value )}
                                         autoComplete="new-password"
@@ -269,13 +272,13 @@ export default function LoginPage () {
                                         type="button"
                                         onClick={() => setShowResetPass2( (v) => !v )}
                                         className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showResetPass2 ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+                                        aria-label={showResetPass2 ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
                                     >
                                         {showResetPass2 ? <EyeOff size={14} /> : <Eye size={14} />}
                                     </button>
                                 </div>
 
-                                <button>Repor palavra-passe</button>
+                                <button>{t("Repor palavra-passe", "Reset password")}</button>
                             </form>
 
                             <button
@@ -287,7 +290,7 @@ export default function LoginPage () {
                                     setView( "login" )
                                 }}
                             >
-                                Voltar ao login
+                                {t("Voltar ao login", "Back to login")}
                             </button>
                         </>
                     )}

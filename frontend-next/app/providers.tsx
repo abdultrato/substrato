@@ -6,16 +6,22 @@ import ToastContainer from "@/components/ui/ToastContainer"
 import RequestActivityIndicator from "@/components/ui/RequestActivityIndicator"
 import NavigationWarmup from "@/components/navigation/NavigationWarmup"
 import FrontendErrorTelemetry from "@/components/monitoring/FrontendErrorTelemetry"
+import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
+import { LanguageProvider } from "@/hooks/useLanguage"
 
 export default function Providers ( { children }: { children: React.ReactNode } ) {
     // Envolve toda a árvore com React Query e container de toasts.
     return (
-        <QueryClientProvider client={queryClient}>
-            <NavigationWarmup />
-            <FrontendErrorTelemetry />
-            {children}
-            <RequestActivityIndicator />
-            <ToastContainer />
-        </QueryClientProvider>
+        <LanguageProvider>
+            <QueryClientProvider client={queryClient}>
+                <AutoTranslateTree>
+                    <NavigationWarmup />
+                    <FrontendErrorTelemetry />
+                    {children}
+                    <RequestActivityIndicator />
+                    <ToastContainer />
+                </AutoTranslateTree>
+            </QueryClientProvider>
+        </LanguageProvider>
     )
 }

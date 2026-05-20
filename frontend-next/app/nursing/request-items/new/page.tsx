@@ -16,7 +16,7 @@ export default function NovoItemRequisicaoPage() {
       <div className="space-y-6">
         <PageHeader
           title="Novo item de requisição"
-          subtitle="/clinical/labrequestitem/"
+          subtitle="Preencha os dados para criar um novo item de requisição."
           actions={
             <Link
               href="/nursing/request-items"

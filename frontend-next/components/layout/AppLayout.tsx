@@ -7,6 +7,8 @@ import Sidebar from "./Sidebar"
 import Header from "./Header"
 import Footer from "./Footer"
 import AccessDenied from "@/components/auth/AccessDenied"
+import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
+import { useLanguage } from "@/hooks/useLanguage"
 import { userHasAnyGroup } from "@/lib/rbac"
 
 interface Props {
@@ -22,9 +24,13 @@ export default function AppLayout ( {
     rightAside,
     rightAsideWidth = "20rem",
 }: Props ) {
+    const sidebarDesktopWidth = "16rem"
     const { loading } = useAuthGuard()
     const { user } = useAuth()
+    const { t } = useLanguage()
     const [navOpen, setNavOpen] = useState( false )
+    const [desktopSidebarVisible, setDesktopSidebarVisible] = useState( true )
+    const footerLeftOffset = desktopSidebarVisible ? sidebarDesktopWidth : "0px"
 
     useEffect( () => {
         if ( typeof window === "undefined" ) return
@@ -43,10 +49,33 @@ export default function AppLayout ( {
         }
     }, [navOpen] )
 
+    useEffect( () => {
+        if ( typeof window === "undefined" ) return
+        const stored = window.localStorage.getItem( "substrato.desktopSidebarVisible" )
+        if ( stored === null ) return
+        setDesktopSidebarVisible( stored === "1" )
+    }, [] )
+
+    useEffect( () => {
+        if ( typeof window === "undefined" ) return
+        window.localStorage.setItem(
+            "substrato.desktopSidebarVisible",
+            desktopSidebarVisible ? "1" : "0",
+        )
+    }, [desktopSidebarVisible] )
+
+    function handleMenuClick () {
+        if ( typeof window !== "undefined" && window.innerWidth < 768 ) {
+            setNavOpen( true )
+            return
+        }
+        setDesktopSidebarVisible( ( prev ) => !prev )
+    }
+
     if ( loading ) {
         return (
             <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-                Carregando...
+                {t("Carregando...", "Loading...")}
             </div>
         )
     }
@@ -57,14 +86,21 @@ export default function AppLayout ( {
     if ( requiredGroups?.length && !userHasAnyGroup( user, requiredGroups ) ) {
         return (
             <div className="flex min-h-screen flex-col md:flex-row">
-                <Sidebar user={user} open={navOpen} onClose={() => setNavOpen( false )} />
+                <Sidebar
+                    user={user}
+                    open={navOpen}
+                    onClose={() => setNavOpen( false )}
+                    className={desktopSidebarVisible ? "" : "md:hidden"}
+                />
 
-                <div className="flex flex-1 flex-col">
-                    <Header user={user} onMenuClick={() => setNavOpen( true )} />
+                <div className="flex min-w-0 flex-1 flex-col">
+                    <Header user={user} onMenuClick={handleMenuClick} />
 
-                    <main className="flex-1 px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
+                    <main className="flex-1 overflow-x-auto px-2 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-14">
                         <div className="page-transition">
-                            <AccessDenied requiredGroups={requiredGroups} user={user} />
+                            <AutoTranslateTree>
+                                <AccessDenied requiredGroups={requiredGroups} user={user} />
+                            </AutoTranslateTree>
                         </div>
                     </main>
                 </div>
@@ -74,11 +110,14 @@ export default function AppLayout ( {
                         className="hidden flex-col border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex"
                         style={{ width: rightAsideWidth }}
                     >
-                        {rightAside}
+                        <AutoTranslateTree>{rightAside}</AutoTranslateTree>
                     </aside>
                 ) : null}
 
-                <Footer rightOffset={rightAside ? rightAsideWidth : "0px"} />
+                <Footer
+                    leftOffset={footerLeftOffset}
+                    rightOffset={rightAside ? rightAsideWidth : "0px"}
+                />
             </div>
         )
     }
@@ -89,15 +128,15 @@ export default function AppLayout ( {
                 user={user}
                 open={navOpen}
                 onClose={() => setNavOpen( false )}
-                className="h-screen overflow-y-auto md:sticky md:top-0"
+                className={`h-screen overflow-y-auto md:sticky md:top-0 ${desktopSidebarVisible ? "" : "md:hidden"}`}
             />
 
-            <div className="flex flex-1 flex-col h-screen overflow-hidden">
-                <Header user={user} onMenuClick={() => setNavOpen( true )} />
+            <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
+                <Header user={user} onMenuClick={handleMenuClick} />
 
-                <main className="flex-1 overflow-y-auto px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:px-3 md:py-3 md:pb-14">
+                <main className="flex-1 overflow-x-auto overflow-y-auto px-2 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-14">
                     <div className="page-transition">
-                        {children}
+                        <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
                 </main>
             </div>
@@ -107,11 +146,14 @@ export default function AppLayout ( {
                     className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:sticky md:top-0 md:flex"
                     style={{ width: rightAsideWidth }}
                 >
-                    {rightAside}
+                    <AutoTranslateTree>{rightAside}</AutoTranslateTree>
                 </aside>
             ) : null}
 
-            <Footer rightOffset={rightAside ? rightAsideWidth : "0px"} />
+            <Footer
+                leftOffset={footerLeftOffset}
+                rightOffset={rightAside ? rightAsideWidth : "0px"}
+            />
         </div>
     )
 }

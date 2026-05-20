@@ -10,6 +10,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import activate, get_language
 from rest_framework import serializers, status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -175,6 +176,15 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 
 class DetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
+class LanguageSwitchRequestSerializer(serializers.Serializer):
+    language = serializers.ChoiceField(choices=[code for code, _label in getattr(settings, "LANGUAGES", [])])
+
+
+class LanguageSwitchResponseSerializer(serializers.Serializer):
+    current_language = serializers.CharField()
     detail = serializers.CharField()
 
 
@@ -534,3 +544,36 @@ class PasswordChangeView(APIView):
         user.set_password(new_password)
         user.save(update_fields=["password"])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LanguageSwitchView(APIView):
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser, FormParser]
+
+    @extend_schema(
+        request=LanguageSwitchRequestSerializer,
+        responses={200: LanguageSwitchResponseSerializer},
+    )
+    def post(self, request):
+        serializer = LanguageSwitchRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        language = serializer.validated_data["language"]
+
+        activate(language)
+
+        response = Response(
+            {
+                "current_language": get_language(),
+                "detail": "Idioma atualizado com sucesso.",
+            },
+            status=status.HTTP_200_OK,
+        )
+        response.set_cookie(
+            getattr(settings, "LANGUAGE_COOKIE_NAME", "django_language"),
+            language,
+            max_age=getattr(settings, "LANGUAGE_COOKIE_AGE", 60 * 60 * 24 * 365),
+            path=getattr(settings, "LANGUAGE_COOKIE_PATH", "/"),
+            secure=request.is_secure(),
+            samesite=getattr(settings, "LANGUAGE_COOKIE_SAMESITE", "Lax"),
+        )
+        return response

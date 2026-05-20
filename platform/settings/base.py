@@ -738,6 +738,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "infrastructure.middleware.admin_path_alias.AdminPathAliasMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -911,7 +912,16 @@ MEDIA_ROOT = BASE_DIR / "media"
 # INTERNATIONALIZATION
 # =========================================================
 
-LANGUAGE_CODE = "pt-br"
+LANGUAGE_CODE = "pt"
+LANGUAGES = [
+    ("pt", "Português (Portugal)"),
+    ("en", "English"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
+LANGUAGE_COOKIE_NAME = "django_language"
+LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 365  # 1 ano
+LANGUAGE_COOKIE_PATH = "/"
+LANGUAGE_COOKIE_SAMESITE = "Lax"
 
 TIME_ZONE = get_env("DJANGO_TIME_ZONE", "Africa/Maputo")
 

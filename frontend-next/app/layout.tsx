@@ -21,6 +21,11 @@ const display = Plus_Jakarta_Sans({
 const themeInitScript = `
 (function () {
   try {
+    var languageKey = "substrato_language";
+    var storedLanguage = localStorage.getItem(languageKey);
+    var normalizedLanguage = storedLanguage && storedLanguage.toLowerCase().indexOf("en") === 0 ? "en" : "pt";
+    document.documentElement.lang = normalizedLanguage;
+
     var key = "substrato_theme";
     var raw = localStorage.getItem(key);
     var pref = raw ? JSON.parse(raw) : "system";

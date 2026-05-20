@@ -5,8 +5,8 @@ import { useState, useRef, useEffect } from "react"
 import { SessionUser } from "@/lib/session"
 import { useAuth } from "@/hooks/useAuth"
 import useTheme from "@/hooks/useTheme"
+import { useLanguage } from "@/hooks/useLanguage"
 import { AlignJustify, ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react"
-import PageActivityReportMenu from "./PageActivityReportMenu"
 
 interface Props {
     user: SessionUser | null
@@ -16,12 +16,13 @@ interface Props {
 export default function Header({ user, onMenuClick }: Props) {
     const { signOut } = useAuth()
     const { isDark, toggle: toggleTheme } = useTheme()
+    const { t } = useLanguage()
     const [open, setOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
 
     const composed =
         `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || ""
-    const name = (user?.full_name || composed || user?.username || "Utilizador").trim()
+    const name = (user?.full_name || composed || user?.username || t("Utilizador", "User")).trim()
     const fotoUrl = user?.foto_url || user?.photo_url || null
     function toggle() {
         setOpen((v) => !v)
@@ -44,16 +45,17 @@ export default function Header({ user, onMenuClick }: Props) {
             <div className="flex min-w-0 flex-1 items-start gap-2">
                 <button
                     type="button"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 md:hidden"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     onClick={onMenuClick}
-                    aria-label="Abrir menu"
+                    aria-label={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
+                    title={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
                 >
                     <AlignJustify size={18} />
                 </button>
                 <Link
                     href="/"
                     className="group flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                    title="Ir para o dashboard"
+                    title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <div
                         className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm transition-transform group-hover:scale-105"
@@ -74,14 +76,12 @@ export default function Header({ user, onMenuClick }: Props) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
-                <PageActivityReportMenu />
-
                 <button
                     type="button"
                     onClick={toggleTheme}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-                    aria-label={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
-                    title={isDark ? "Modo claro" : "Modo escuro"}
+                    aria-label={isDark ? t("Mudar para modo claro", "Switch to light mode") : t("Mudar para modo escuro", "Switch to dark mode")}
+                    title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
                     {isDark ? <Sun size={16} /> : <Moon size={16} />}
                 </button>
@@ -119,7 +119,7 @@ export default function Header({ user, onMenuClick }: Props) {
                                 className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <User size={16} />
-                                Perfil
+                                {t("Perfil", "Profile")}
                             </Link>
 
                             <Link
@@ -128,7 +128,7 @@ export default function Header({ user, onMenuClick }: Props) {
                                 className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <Settings size={16} />
-                                Configurações
+                                {t("Configurações", "Settings")}
                             </Link>
 
                             <div className="my-1 border-t border-white/15" />
@@ -138,7 +138,7 @@ export default function Header({ user, onMenuClick }: Props) {
                                 className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-500/15"
                             >
                                 <LogOut size={16} />
-                                Terminar sessão
+                                {t("Terminar sessão", "Sign out")}
                             </button>
                         </div>
                     )}

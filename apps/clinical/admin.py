@@ -161,7 +161,6 @@ class SampleAdmin(CoreAdmin):
         ),
     )
 
-
 # =========================================================
 # PACIENTE
 # =========================================================
@@ -452,6 +451,7 @@ class LabExamAdmin(CoreAdmin):
         "custom_id",
         "name",
         "sample_type",
+        "sample_options_summary",
         "sector",
         "method",
         "turnaround_hours",
@@ -464,10 +464,12 @@ class LabExamAdmin(CoreAdmin):
         "custom_id",
         "name",
         "sample_type__name",
+        "sample_options__name",
     )
 
     list_filter = (
         "sample_type",
+        "sample_options",
         "sector",
         "method",
     )
@@ -477,7 +479,7 @@ class LabExamAdmin(CoreAdmin):
     list_per_page = 50
 
     inlines = (LabExamFieldInline,)
-    autocomplete_fields = ("sample_type",)
+    autocomplete_fields = ("sample_type", "sample_options")
     list_select_related = ("sample_type",)
 
     readonly_fields = (
@@ -502,6 +504,7 @@ class LabExamAdmin(CoreAdmin):
                     "custom_id",
                     "name",
                     "sample_type",
+                    "sample_options",
                     "sector",
                     "method",
                 )
@@ -536,6 +539,14 @@ class LabExamAdmin(CoreAdmin):
             },
         ),
     )
+
+    def sample_options_summary(self, obj):
+        names = [sample.name for sample in obj.get_sample_options()]
+        if not names:
+            return "—"
+        return ", ".join(names)
+
+    sample_options_summary.short_description = "Opções de amostra"
 
 
 # =========================================================

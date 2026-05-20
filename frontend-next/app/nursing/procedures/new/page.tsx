@@ -16,7 +16,7 @@ export default function NovoProcedimentoPage() {
       <div className="space-y-6">
         <PageHeader
           title="Novo procedimento"
-          subtitle="/nursing/procedimento/"
+          subtitle="Preencha os dados para criar um novo procedimento."
           actions={
             <Link
               href="/nursing/procedures"

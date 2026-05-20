@@ -127,6 +127,8 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
         "custom_id",
         "name",
         "patient__name",
+        "lab_request__custom_id",
+        "origin_role",
         "observation",
     ]
     ordering_fields = [
@@ -134,6 +136,9 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
         "custom_id",
         "name",
         "patient",
+        "lab_request",
+        "record_kind",
+        "origin_role",
         "priority",
         "record_date",
         "created_at",

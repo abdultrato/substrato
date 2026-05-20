@@ -315,31 +315,89 @@ class LabRequest(NoNameCoreModel):
                 lab_requests__deleted=False,
             ).distinct()
 
+    def _collection_items_queryset(self):
+        return (
+            self.items.filter(
+                deleted=False,
+                exam__isnull=False,
+                exam__deleted=False,
+            )
+            .select_related("exam", "exam__sample_type")
+            .prefetch_related("exam__sample_options")
+            .order_by("position", "id")
+        )
+
+    def build_collection_guidance(self):
+        """
+        Estrutura operacional para orientar a enfermagem na coleta:
+        exame -> opções de amostra -> frasco/tubo -> volume mínimo.
+        """
+        guidance = []
+
+        for item in self._collection_items_queryset():
+            exam = getattr(item, "exam", None)
+            if exam is None:
+                continue
+
+            sample_options = []
+            for sample in exam.get_sample_options():
+                sample_options.append(
+                    {
+                        "sample_id": sample.id,
+                        "sample_code": sample.custom_id,
+                        "sample_name": sample.name,
+                        "bottle_type": sample.bottle_type,
+                        "bottle_type_label": sample.get_bottle_type_display(),
+                        "cap_color": sample.cap_color or "",
+                        "minimum_volume_ml": str(sample.minimum_volume_ml),
+                        "fasting_required": bool(sample.fasting_required),
+                        "fasting_hours": int(sample.fasting_hours or 0),
+                        "collection_instructions": sample.collection_instructions or "",
+                    }
+                )
+
+            guidance.append(
+                {
+                    "item_id": item.id,
+                    "item_code": item.custom_id,
+                    "exam_id": exam.id,
+                    "exam_code": exam.custom_id,
+                    "exam_name": exam.name,
+                    "sample_options": sample_options,
+                }
+            )
+
+        return guidance
+
+    def _sync_nursing_collection_entry(self):
+        if self.type != self.Type.LABORATORY:
+            return
+
+        from apps.nursing.services.lab_request_intake import sync_lab_collection_record
+
+        sync_lab_collection_record(self)
+
     def _sync_samples_from_items(self):
         if not self.pk:
             return
 
-        items_qs = self.items.filter(
-            deleted=False,
-            exam__isnull=False,
-            exam__deleted=False,
-            exam__sample_type__isnull=False,
-        )
+        guidance = self.build_collection_guidance()
 
-        sample_ids = (
-            items_qs
-            .values_list("exam__sample_type_id", flat=True)
-            .distinct()
-        )
-        self.samples.set(sample_ids)
-
-        fasting_qs = items_qs.filter(exam__sample_type__fasting_required=True)
-        requires_fasting = fasting_qs.exists()
+        sample_ids = set()
+        requires_fasting = False
         fasting_hours = 0
-        if requires_fasting:
-            fasting_hours = fasting_qs.aggregate(
-                max_hours=models.Max("exam__sample_type__fasting_hours")
-            ).get("max_hours") or 0
+
+        for exam_entry in guidance:
+            for sample in exam_entry.get("sample_options", []):
+                sample_id = sample.get("sample_id")
+                if sample_id:
+                    sample_ids.add(sample_id)
+
+                if bool(sample.get("fasting_required")):
+                    requires_fasting = True
+                    fasting_hours = max(fasting_hours, int(sample.get("fasting_hours") or 0))
+
+        self.samples.set(sorted(sample_ids))
 
         updates = {}
         if self.requires_fasting != requires_fasting:
@@ -354,6 +412,8 @@ class LabRequest(NoNameCoreModel):
 
             updates["updated_at"] = timezone.now()
             self.__class__.all_objects.filter(pk=self.pk).update(**updates)
+
+        transaction.on_commit(self._sync_nursing_collection_entry)
 
     @property
     def fasting_summary(self):

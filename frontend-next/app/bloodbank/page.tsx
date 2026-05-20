@@ -111,7 +111,7 @@ export default function BancoSanguePage() {
             ))
           ) : (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Catálogo do módulo não encontrado. Verifique `frontend-next/lib/modules.ts`.
+              Catálogo do módulo não encontrado. Contacte o administrador do sistema.
             </div>
           )}
         </div>
@@ -140,13 +140,13 @@ export default function BancoSanguePage() {
           <h2 className="text-sm font-semibold text-slate-900">Logica Operacional Exposta</h2>
           <div className="mt-2 space-y-1 text-xs text-slate-700">
             <p>
-              1. Na unidade, a acao <strong>Reservar</strong> chama <code>/reservar/</code> e cria um evento de estoque do tipo <code>RESERVE</code>.
+              1. Na unidade, a acao <strong>Reservar</strong> cria automaticamente um evento de estoque do tipo <code>RESERVE</code>.
             </p>
             <p>
-              2. A acao <strong>Liberar reserva</strong> chama <code>/liberar_reserva/</code> e registra evento <code>RELEASE</code>.
+              2. A acao <strong>Liberar reserva</strong> registra automaticamente o evento <code>RELEASE</code>.
             </p>
             <p>
-              3. A acao <strong>Transfundir</strong> chama <code>/transfundir/</code>, cria a transfusao concluida e registra saida <code>OUTBOUND</code>.
+              3. A acao <strong>Transfundir</strong> cria a transfusao concluida e registra a saida <code>OUTBOUND</code>.
             </p>
             <p>
               4. Eventos manuais de movimentacao/manutencao seguem as mesmas validacoes do backend por tenant e regras de negocio.

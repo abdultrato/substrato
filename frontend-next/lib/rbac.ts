@@ -6,7 +6,11 @@ export const GROUPS = {
   LABORATORIO: "Técnico de Laboratório",
   ENFERMAGEM: "Enfermeiro",
   PROFESSOR: "Professor",
+  DIRETOR_ESCOLA: "Diretor da Escola",
+  DIRETOR_ADJUNTO_PEDAGOGICO: "Diretor Adjunto Pedagógico",
+  ENCARREGADO_EDUCACAO: "Encarregado de Educação",
   STUDENT: "Estudante",
+  ESTUDANTE: "Estudante",
   FARMACIA: "Técnico de Farmácia",
   MANUTENCAO: "Manutenção",
   MEDICINA: "Médico",
@@ -29,6 +33,25 @@ const GROUP_SYNONYMS: Record<string, string[]> = {
     "staff",
   ],
   Professor: ["teacher", "professor", "docente"],
+  "Diretor da Escola": [
+    "director da escola",
+    "diretor da escola",
+    "school director",
+    "headmaster",
+    "principal",
+  ],
+  "Diretor Adjunto Pedagógico": [
+    "director adjunto pedagogico",
+    "diretor adjunto pedagogico",
+    "deputy pedagogical director",
+    "vice principal",
+  ],
+  "Encarregado de Educação": [
+    "encarregado de educacao",
+    "encarregado de educação",
+    "guardian",
+    "parent",
+  ],
   Estudante: ["student", "estudante", "aluno", "discente"],
 }
 
@@ -110,14 +133,19 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Education",
     href: "/education",
     description: "Academic workflows for teachers and coordinators.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.PROFESSOR],
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.PROFESSOR,
+      GROUPS.DIRETOR_ESCOLA,
+      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+    ],
   },
   {
     key: "education-student",
     label: "Student Area",
     href: "/education/student",
     description: "Student dashboard for classes, grades, and attendance.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.STUDENT],
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.STUDENT, GROUPS.ENCARREGADO_EDUCACAO],
   },
   {
     key: "medicine",
@@ -213,6 +241,8 @@ export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[
 }
 
 export function getDefaultWorkspaceHref(user: SessionUser | null): string {
+  if (userHasAnyGroup(user, [GROUPS.ADMIN])) return "/workspaces"
+
   if (
     userHasAnyGroup(user, [
       GROUPS.RECEPCAO,
@@ -224,10 +254,25 @@ export function getDefaultWorkspaceHref(user: SessionUser | null): string {
   ) {
     return "/healthcare"
   }
-  if (userHasAnyGroup(user, [GROUPS.STUDENT])) return "/education/student"
-  if (userHasAnyGroup(user, [GROUPS.PROFESSOR])) return "/education"
-  // Admin + contabilidade usam o dashboard como home por padrão.
-  if (userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE])) return "/"
+  if (
+    userHasAnyGroup(user, [
+      GROUPS.STUDENT,
+      GROUPS.ESTUDANTE,
+      GROUPS.ENCARREGADO_EDUCACAO,
+    ])
+  ) {
+    return "/education/student"
+  }
+  if (
+    userHasAnyGroup(user, [
+      GROUPS.PROFESSOR,
+      GROUPS.DIRETOR_ESCOLA,
+      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+    ])
+  ) {
+    return "/education"
+  }
+  if (userHasAnyGroup(user, [GROUPS.CONTABILIDADE])) return "/"
 
   const first = getAccessibleWorkspaces(user).find((w) => w.key !== "dashboard")
   return first?.href || "/"

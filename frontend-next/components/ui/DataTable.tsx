@@ -1,6 +1,7 @@
 "use client"
 
 import { ReactNode } from "react"
+import { useLanguage } from "@/hooks/useLanguage"
 
 interface Column<T> {
     header: string
@@ -20,10 +21,12 @@ export default function DataTable<T> ( {
     data,
     emptyMessage = "Nenhum registro encontrado.",
 }: Props<T> ) {
+    const { tr } = useLanguage()
+
     if ( !data.length ) {
         return (
             <div className="py-6 text-center text-sm text-muted-foreground">
-                {emptyMessage}
+                {tr(emptyMessage)}
             </div>
         )
     }
@@ -38,7 +41,7 @@ export default function DataTable<T> ( {
                                 key={idx}
                                 className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide"
                             >
-                                {col.header}
+                                {tr(col.header)}
                             </th>
                         ) )}
                     </tr>
@@ -52,9 +55,12 @@ export default function DataTable<T> ( {
                                     key={idx}
                                     className={`px-3 py-2 align-top ${col.className ?? ""}`}
                                 >
-                                    {col.render
-                                        ? col.render( row )
-                                        : ( row[col.accessor as keyof T] as ReactNode )}
+                                    {(() => {
+                                        const value = col.render
+                                            ? col.render( row )
+                                            : ( row[col.accessor as keyof T] as ReactNode )
+                                        return typeof value === "string" ? tr(value) : value
+                                    })()}
                                 </td>
                             ) )}
                         </tr>

@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
@@ -17,6 +18,7 @@ export default function RecursosRecursoPage() {
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
+    const { t, tr } = useLanguage()
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
@@ -28,17 +30,17 @@ export default function RecursosRecursoPage() {
             <AppLayout requiredGroups={requiredGroups}>
                 <div className="space-y-6">
                     <PageHeader
-                        title="Recurso não encontrado"
-                        subtitle={`${groupKey}/${resourceKey}`}
+                        title={t("Recurso não encontrado", "Resource not found")}
+                        subtitle={t("O recurso solicitado não existe no catálogo atual.", "The requested resource does not exist in the current catalog.")}
                     />
                     <div className="text-sm text-[var(--gray-700)]">
-                        O recurso solicitado não existe na lista atual.
+                        {t("O recurso solicitado não existe na lista atual.", "The requested resource does not exist in the current list.")}
                     </div>
                     <Link
                         href={`/resources/${groupKey}`}
                         className="text-sm text-[var(--gray-700)] underline"
                     >
-                        Voltar
+                        {t("Voltar", "Back")}
                     </Link>
                 </div>
             </AppLayout>
@@ -49,7 +51,8 @@ export default function RecursosRecursoPage() {
 
     return (
         <ResourceListPage
-            title={`${found.group.label} / ${found.resource.label}`}
+            title={`${tr(found.group.label)} / ${tr(found.resource.label)}`}
+            subtitle={t("Registos disponíveis no recurso selecionado.", "Available records in the selected resource.")}
             endpoint={found.resource.endpoint}
             adminListHref={found.resource.adminListHref}
             createHref={`${basePath}/new`}

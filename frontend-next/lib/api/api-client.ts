@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import { parseResponseError } from '@/lib/errors/api-error'
 import { withRetry, type RetryOptions } from '@/lib/errors/retry'
+import { getCurrentLanguage, toBackendLanguage } from '@/lib/language'
 export type { RetryOptions } from '@/lib/errors/retry'
 
 /**
@@ -187,6 +188,7 @@ export class ApiClient {
           ...this.config.headers,
           ...options?.headers,
           'Content-Type': 'application/json',
+          'Accept-Language': toBackendLanguage(getCurrentLanguage()),
         }
 
         let config: RequestConfig = {

@@ -86,6 +86,17 @@ class LabExam(TenantPropagationMixin, CoreModel):
         related_name="exams",
         verbose_name="Tipo de amostra",
     )
+    sample_options = models.ManyToManyField(
+        "clinical.Sample",
+        blank=True,
+        related_name="exam_sample_options",
+        db_table="clinico_exame_opcoes_amostras",
+        verbose_name="Opções de amostra",
+        help_text=(
+            "Amostras alternativas aceites pelo exame. "
+            "O tipo de amostra principal também é considerado automaticamente."
+        ),
+    )
 
     # =====================================================
     # META
@@ -155,4 +166,18 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
     def __str__(self):
         return f"{self.name or 'exam sem name'}"
+
+    def get_sample_options(self):
+        """
+        Retorna as opções de amostra aceites pelo exame.
+        Sempre inclui `sample_type` como fallback de compatibilidade.
+        """
+        options = list(self.sample_options.all().order_by("name", "id"))
+        option_ids = {item.id for item in options if item.id}
+
+        sample_type = getattr(self, "sample_type", None)
+        if sample_type and sample_type.id and sample_type.id not in option_ids:
+            options.insert(0, sample_type)
+
+        return options
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "./useAuth"
+import { getDefaultWorkspaceHref } from "@/lib/rbac"
 
 interface Options {
     redirectTo?: string
@@ -21,7 +22,7 @@ export default function useAuthGuard ( options: Options = {} ) {
     const router = useRouter()
     const pathname = usePathname()
 
-    const { authenticated, loading } = useAuth()
+    const { user, authenticated, loading } = useAuth()
 
     useEffect( () => {
         if ( loading ) return
@@ -34,9 +35,9 @@ export default function useAuthGuard ( options: Options = {} ) {
 
         // página pública com login (ex: login page)
         if ( !requireAuth && authenticated ) {
-            router.replace( "/" )
+            router.replace( getDefaultWorkspaceHref( user ) )
         }
-    }, [authenticated, loading, pathname, redirectTo, requireAuth, router] )
+    }, [authenticated, loading, pathname, redirectTo, requireAuth, router, user] )
 
     return {
         authenticated,

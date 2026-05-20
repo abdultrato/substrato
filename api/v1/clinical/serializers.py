@@ -321,6 +321,7 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     """
 
     sample_type_name = serializers.CharField(source="sample_type.name", read_only=True)
+    sample_options_details = serializers.SerializerMethodField()
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
@@ -347,7 +348,7 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = LabExam
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "sample_type_name"]
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "sample_type_name", "sample_options_details"]
         extra_kwargs = {
             "name": {
                 "required": True,
@@ -390,6 +391,10 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
                 "required": True,
                 "help_text": "Tipo de amostra biológica exigida para o exame.",
             },
+            "sample_options": {
+                "required": False,
+                "help_text": "Opções de amostras aceites para o exame.",
+            },
             "sector": {
                 # O model permite null/blank (e há constraint de unicidade).
                 # DRF injeta `default=None` para campos nullable em constraints, então
@@ -404,6 +409,74 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         if value is not None and value <= 0:
             raise serializers.ValidationError("Preço deve ser maior que zero.")
         return value
+
+    def validate(self, attrs):
+        tenant = attrs.get("tenant") or getattr(self.instance, "tenant", None)
+        request = self.context.get("request")
+        if tenant is None and request is not None:
+            tenant = getattr(request, "tenant", None)
+
+        sample_type = attrs.get("sample_type") or getattr(self.instance, "sample_type", None)
+        sample_options = attrs.get("sample_options", None)
+
+        if sample_type is not None and tenant is not None and sample_type.tenant_id != getattr(tenant, "id", None):
+            raise serializers.ValidationError({"sample_type": "A amostra principal deve pertencer ao tenant atual."})
+
+        if sample_options is not None and tenant is not None:
+            invalid_ids = [
+                sample.id for sample in sample_options
+                if sample.tenant_id != getattr(tenant, "id", None)
+            ]
+            if invalid_ids:
+                raise serializers.ValidationError(
+                    {"sample_options": f"Existem amostras fora do tenant atual: {', '.join(map(str, invalid_ids))}."}
+                )
+
+        return attrs
+
+    def _normalized_sample_options(self, sample_type, sample_options):
+        options = list(sample_options or [])
+        option_ids = {item.id for item in options if getattr(item, "id", None)}
+
+        if sample_type is not None and sample_type.id and sample_type.id not in option_ids:
+            options.insert(0, sample_type)
+
+        return options
+
+    def create(self, validated_data):
+        sample_options = validated_data.pop("sample_options", None)
+        instance = super().create(validated_data)
+        normalized = self._normalized_sample_options(instance.sample_type, sample_options)
+        instance.sample_options.set(normalized)
+        return instance
+
+    def update(self, instance, validated_data):
+        sample_options = validated_data.pop("sample_options", None)
+        instance = super().update(instance, validated_data)
+
+        if sample_options is None:
+            sample_options = list(instance.sample_options.all())
+        normalized = self._normalized_sample_options(instance.sample_type, sample_options)
+        instance.sample_options.set(normalized)
+
+        return instance
+
+    def get_sample_options_details(self, obj):
+        options = []
+        for sample in obj.get_sample_options():
+            options.append(
+                {
+                    "id": sample.id,
+                    "custom_id": sample.custom_id,
+                    "name": sample.name,
+                    "bottle_type": sample.bottle_type,
+                    "bottle_type_display": sample.get_bottle_type_display(),
+                    "minimum_volume_ml": str(sample.minimum_volume_ml),
+                    "fasting_required": bool(sample.fasting_required),
+                    "fasting_hours": int(sample.fasting_hours or 0),
+                }
+            )
+        return options
 
 
 class SampleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -532,6 +605,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         required=False,
     )
     samples = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    collection_guidance = serializers.SerializerMethodField()
 
     class SampleSummarySerializer(serializers.ModelSerializer):
         class Meta:
@@ -576,6 +650,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "exames_medicos": "medical_exams",
         "exams_medicos": "medical_exams",
         "itens": "items",
+        "guia_coleta": "collection_guidance",
+        "guia_colheita": "collection_guidance",
     }
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
@@ -586,6 +662,28 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     class LabRequestItemSummarySerializer(serializers.ModelSerializer):
         exam_name = serializers.CharField(source="exam.name", read_only=True)
         medical_exam_name = serializers.CharField(source="medical_exam.name", read_only=True)
+        sample_options = serializers.SerializerMethodField()
+
+        def get_sample_options(self, obj):
+            exam = getattr(obj, "exam", None)
+            if exam is None:
+                return []
+
+            payload = []
+            for sample in exam.get_sample_options():
+                payload.append(
+                    {
+                        "id": sample.id,
+                        "custom_id": sample.custom_id,
+                        "name": sample.name,
+                        "bottle_type": sample.bottle_type,
+                        "bottle_type_display": sample.get_bottle_type_display(),
+                        "minimum_volume_ml": str(sample.minimum_volume_ml),
+                        "fasting_required": bool(sample.fasting_required),
+                        "fasting_hours": int(sample.fasting_hours or 0),
+                    }
+                )
+            return payload
 
         class Meta:
             model = LabRequestItem
@@ -597,6 +695,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "exam_name",
                 "medical_exam",
                 "medical_exam_name",
+                "sample_options",
             ]
 
     items = LabRequestItemSummarySerializer(many=True, read_only=True)
@@ -612,6 +711,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "external_executing_company_name",
             "items",
             "sample_details",
+            "collection_guidance",
             "has_critical_result",
             "requires_fasting",
             "fasting_hours",
@@ -668,6 +768,9 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 raise serializers.ValidationError({"medical_exams": "Informe ao menos um exam médico."})
 
         return attrs
+
+    def get_collection_guidance(self, obj):
+        return obj.build_collection_guidance()
 
     def create(self, validated_date):
         # `exams` (LAB) é ManyToMany com `through`. `medical_exams` (MED) é derivado dos itens.

@@ -17,6 +17,12 @@ CANONICAL_GROUPS: list[str] = [
     "Técnico de Farmácia",
     "Medicina Ocupacional",
     "Contabilidade",
+    # Educacao
+    "Professor",
+    "Diretor da Escola",
+    "Diretor Adjunto Pedagógico",
+    "Encarregado de Educação",
+    "Estudante",
 ]
 
 ALIASES: dict[str, list[str]] = {
@@ -33,6 +39,20 @@ ALIASES: dict[str, list[str]] = {
     ],
     "Médico": [
         "Medico",
+    ],
+    "Diretor da Escola": [
+        "Director da Escola",
+        "Diretor da Escola",
+        "Diretor de Escola",
+        "Director de Escola",
+    ],
+    "Diretor Adjunto Pedagógico": [
+        "Director Adjunto Pedagógico",
+        "Director Adjunto Pedagogico",
+        "Diretor Adjunto Pedagogico",
+    ],
+    "Encarregado de Educação": [
+        "Encarregado de Educacao",
     ],
 }
 
@@ -122,10 +142,17 @@ class Command(BaseCommand):
             return canonical
 
         for name in targets:
-            # Ensure canonical group + merge aliases.
+            # Bring groups that match explicit aliases into the canonical bucket.
+            canonical_norm = _normalize(name)
             for alias in ALIASES.get(name, []):
-                # Touch aliases in the index so they can be merged if they exist.
-                _ = existing_by_norm.get(_normalize(alias), [])
+                alias_norm = _normalize(alias)
+                alias_groups = existing_by_norm.get(alias_norm, [])
+                if not alias_groups:
+                    continue
+                bucket = existing_by_norm.setdefault(canonical_norm, [])
+                for alias_group in alias_groups:
+                    if alias_group not in bucket:
+                        bucket.append(alias_group)
             group = ensure_group(name)
 
             if name == "Administrador":

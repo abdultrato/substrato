@@ -56,6 +56,42 @@ export default function EnfermagemRequisicoesPage() {
       { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
       { header: "Prioridade", render: (r: RequisicaoRow) => r.status_clinico || "-" },
       { header: "Crítico", render: (r: RequisicaoRow) => (r.possui_resultado_critico ? "SIM" : "—") },
+      {
+        header: "Guia de coleta",
+        render: (r: RequisicaoRow) => {
+          const guidance = (r.guia_colheita || r.guia_coleta || r.collection_guidance || []) as Array<any>
+          if (!Array.isArray(guidance) || guidance.length === 0) {
+            return <span className="text-xs text-slate-500">Sem orientação disponível.</span>
+          }
+
+          return (
+            <div className="space-y-2">
+              {guidance.map((entry, idx) => {
+                const samples = Array.isArray(entry?.sample_options) ? entry.sample_options : []
+                return (
+                  <div key={`${entry?.item_id || idx}`} className="rounded-lg bg-slate-50 px-2 py-1.5">
+                    <div className="text-xs font-semibold text-slate-800">
+                      {entry?.exam_name || "Exame sem nome"}
+                    </div>
+                    {samples.length ? (
+                      <div className="mt-1 space-y-1">
+                        {samples.map((sample: any, sampleIdx: number) => (
+                          <div key={`${sample?.id || sampleIdx}`} className="text-[11px] text-slate-700">
+                            {(sample?.sample_name || "Amostra")} • {(sample?.bottle_type_label || sample?.bottle_type || "Frasco não definido")} •
+                            {" "}mínimo {(sample?.minimum_volume_ml || "0")} ml
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-slate-500">Sem amostras configuradas.</div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        },
+      },
     ],
     []
   )

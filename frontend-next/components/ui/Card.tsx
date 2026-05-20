@@ -1,4 +1,7 @@
+"use client"
+
 import { ReactNode } from "react"
+import { useLanguage } from "@/hooks/useLanguage"
 
 interface Props {
     title?: string
@@ -13,6 +16,8 @@ export default function Card ( {
     actions,
     children,
 }: Props ) {
+    const { tr } = useLanguage()
+
     return (
         <div className="rounded-2xl border border-border bg-card shadow-sm">
             {( title || actions ) && (
@@ -20,12 +25,12 @@ export default function Card ( {
                     <div>
                         {title && (
                             <h3 className="text-sm font-semibold text-foreground">
-                                {title}
+                                {tr(title)}
                             </h3>
                         )}
                         {subtitle && (
                             <p className="mt-1 text-xs text-muted-foreground">
-                                {subtitle}
+                                {tr(subtitle)}
                             </p>
                         )}
                     </div>

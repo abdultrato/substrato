@@ -87,6 +87,7 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/admin/login/?next=/admin/", permanent=False), name="root"),
     # Alias explícito de dashboard.
     path("dashboard/", RedirectView.as_view(url="/admin/", permanent=False), name="dashboard"),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("health/live", health_live),
     path("health/live/", health_live),
     path("health/ready", health_ready),

@@ -176,6 +176,46 @@ def _ensure_groups_permissions() -> None:
     ]:
         _grant_group_model_perms(rh, app_label=app_label, model=model, actions=actions)
 
+    # Educação - perfis de gestão/docência.
+    education_manage_roles = [
+        RBAC_GROUPS["PROFESSOR"],
+        RBAC_GROUPS["DIRETOR_ESCOLA"],
+        RBAC_GROUPS["DIRETOR_ADJUNTO_PEDAGOGICO"],
+    ]
+    for role_name in education_manage_roles:
+        role_group = _ensure_group(role_name)
+        for app_label, model, actions in [
+            ("education", "studentprofile", ["view", "add", "change"]),
+            ("education", "teacherprofile", ["view", "add", "change"]),
+            ("education", "course", ["view", "add", "change"]),
+            ("education", "classroom", ["view", "add", "change"]),
+            ("education", "enrollment", ["view", "add", "change"]),
+            ("education", "attendancerecord", ["view", "add", "change"]),
+            ("education", "graderecord", ["view", "add", "change"]),
+            ("education", "examination", ["view", "add", "change"]),
+            ("education", "learningcontent", ["view", "add", "change"]),
+        ]:
+            _grant_group_model_perms(role_group, app_label=app_label, model=model, actions=actions)
+
+    # Educação - perfis de leitura.
+    education_read_roles = [
+        RBAC_GROUPS["ESTUDANTE"],
+        RBAC_GROUPS["ENCARREGADO_EDUCACAO"],
+    ]
+    for role_name in education_read_roles:
+        role_group = _ensure_group(role_name)
+        for app_label, model, actions in [
+            ("education", "studentprofile", ["view"]),
+            ("education", "course", ["view"]),
+            ("education", "classroom", ["view"]),
+            ("education", "enrollment", ["view"]),
+            ("education", "attendancerecord", ["view"]),
+            ("education", "graderecord", ["view"]),
+            ("education", "examination", ["view"]),
+            ("education", "learningcontent", ["view"]),
+        ]:
+            _grant_group_model_perms(role_group, app_label=app_label, model=model, actions=actions)
+
 
 class Command(BaseCommand):
     help = "Cria 1 user por grupo (RBAC), com senha padrao, para testes e demos."
@@ -234,6 +274,21 @@ class Command(BaseCommand):
             _RoleUser("recepcao", "recepcao@local", "Recepcionista", RBAC_GROUPS["RECEPCAO"]),
             _RoleUser("laboratorio", "laboratorio@local", "Tecnico de Laboratorio", RBAC_GROUPS["LABORATORIO"]),
             _RoleUser("enfermagem", "enfermagem@local", "Enfermeiro", RBAC_GROUPS["ENFERMAGEM"]),
+            _RoleUser("professor", "professor@local", "Professor", RBAC_GROUPS["PROFESSOR"]),
+            _RoleUser("diretor_escola", "diretor_escola@local", "Diretor da Escola", RBAC_GROUPS["DIRETOR_ESCOLA"]),
+            _RoleUser(
+                "diretor_adjunto_pedagogico",
+                "diretor_adjunto_pedagogico@local",
+                "Diretor Adjunto Pedagogico",
+                RBAC_GROUPS["DIRETOR_ADJUNTO_PEDAGOGICO"],
+            ),
+            _RoleUser(
+                "encarregado_educacao",
+                "encarregado_educacao@local",
+                "Encarregado de Educacao",
+                RBAC_GROUPS["ENCARREGADO_EDUCACAO"],
+            ),
+            _RoleUser("estudante", "estudante@local", "Estudante", RBAC_GROUPS["ESTUDANTE"]),
             _RoleUser("doctor", "doctor@local", "Medico", RBAC_GROUPS["MEDICINA"]),
             _RoleUser("farmacia", "farmacia@local", "Tecnico de Farmacia", RBAC_GROUPS["FARMACIA"]),
             _RoleUser("ocupacional", "ocupacional@local", "Medicina Ocupacional", RBAC_GROUPS["MEDICINA_OCUPACIONAL"]),

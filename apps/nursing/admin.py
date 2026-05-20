@@ -313,6 +313,9 @@ class NursingRecordAdmin(admin.ModelAdmin):
         "custom_id",
         "name",
         "patient",
+        "lab_request",
+        "record_kind",
+        "origin_role",
         "priority",
         "record_date",
         "created_at",
@@ -321,8 +324,12 @@ class NursingRecordAdmin(admin.ModelAdmin):
         "custom_id",
         "name",
         "patient__name",
+        "lab_request__custom_id",
+        "origin_role",
     )
     list_filter = (
+        "record_kind",
+        "origin_role",
         "priority",
         "record_date",
     )
@@ -346,8 +353,12 @@ class NursingRecordAdmin(admin.ModelAdmin):
                     "custom_id",
                     "name",
                     "patient",
+                    "lab_request",
+                    "record_kind",
+                    "origin_role",
                     "priority",
                     "observation",
+                    "collection_guidance",
                     "record_date",
                 )
             },

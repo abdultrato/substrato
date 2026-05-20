@@ -1,10 +1,11 @@
 "use client"
 
+import { useLanguage } from "@/hooks/useLanguage"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 
-function fmtValue(key: string, value: any): string {
+function fmtValue(key: string, value: any, tr: (value: string) => string): string {
   if (value === null || value === undefined || value === "") return "-"
-  if (typeof value === "boolean") return value ? "Sim" : "Não"
+  if (typeof value === "boolean") return value ? tr("Sim") : tr("Não")
   if (typeof value === "number") return String(value)
 
   // ISO-ish dates
@@ -13,7 +14,7 @@ function fmtValue(key: string, value: any): string {
     if (!Number.isNaN(d.getTime()) && /T|\d{4}-\d{2}-\d{2}/.test(value)) {
       return d.toLocaleString()
     }
-    return value
+    return tr(value)
   }
 
   if (typeof value === "object") {
@@ -39,6 +40,7 @@ export default function ResourceDetailsCard({
   endpoint: string
   data: Record<string, any>
 }) {
+  const { tr } = useLanguage()
   const entries = Object.entries(data || {})
     .filter(([k]) => !isInternalField(k))
     .filter(([k]) => k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by")
@@ -53,7 +55,7 @@ export default function ResourceDetailsCard({
             </div>
             <div className="md:col-span-2">
               <div className="whitespace-pre-wrap text-sm text-foreground">
-                {fmtValue(k, v)}
+                {fmtValue(k, v, tr)}
               </div>
             </div>
           </div>

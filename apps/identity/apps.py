@@ -10,6 +10,12 @@ class IdentityConfig(AppConfig):
     verbose_name = "Identidade e Acesso do Usuário"  # Nome no admin
 
     def ready(self):
+        # Mantém rótulos/verbose names coerentes no Admin com nomes internos em inglês.
+        with suppress(Exception):
+            from core.utils.verbose_names import aplicar_verbose_names_globais
+
+            aplicar_verbose_names_globais()
+
         # Garante sincronização automática de flags (staff/superuser) via signals.
         with suppress(Exception):
             from . import signals  # noqa: F401

@@ -28,6 +28,9 @@ GROUPS = {
     "LABORATORIO": "Técnico de Laboratório",
     "ENFERMAGEM": "Enfermeiro",
     "PROFESSOR": "Professor",
+    "DIRETOR_ESCOLA": "Diretor da Escola",
+    "DIRETOR_ADJUNTO_PEDAGOGICO": "Diretor Adjunto Pedagógico",
+    "ENCARREGADO_EDUCACAO": "Encarregado de Educação",
     "TEACHER": "Teacher",
     "ESTUDANTE": "Estudante",
     "STUDENT_EN": "Student",
@@ -43,6 +46,27 @@ GROUPS = {
 def _policy() -> dict[str, dict[str, frozenset[str]]]:
     # Keys for groups are normalized to be resilient to old date without accents.
     g = {k: _normalize(v) for k, v in GROUPS.items()}
+    education_manage = {
+        "education-student": SAFE_METHODS | WRITE_METHODS,
+        "education-teacher": SAFE_METHODS | WRITE_METHODS,
+        "education-course": SAFE_METHODS | WRITE_METHODS,
+        "education-classroom": SAFE_METHODS | WRITE_METHODS,
+        "education-enrollment": SAFE_METHODS | WRITE_METHODS,
+        "education-attendance": SAFE_METHODS | WRITE_METHODS,
+        "education-grade": SAFE_METHODS | WRITE_METHODS,
+        "education-examination": SAFE_METHODS | WRITE_METHODS,
+        "education-content": SAFE_METHODS | WRITE_METHODS,
+    }
+    education_read = {
+        "education-student": SAFE_METHODS,
+        "education-course": SAFE_METHODS,
+        "education-classroom": SAFE_METHODS,
+        "education-enrollment": SAFE_METHODS,
+        "education-attendance": SAFE_METHODS,
+        "education-grade": SAFE_METHODS,
+        "education-examination": SAFE_METHODS,
+        "education-content": SAFE_METHODS,
+    }
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -248,48 +272,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
-        g["PROFESSOR"]: {
-            "education-student": SAFE_METHODS | WRITE_METHODS,
-            "education-teacher": SAFE_METHODS | WRITE_METHODS,
-            "education-course": SAFE_METHODS | WRITE_METHODS,
-            "education-classroom": SAFE_METHODS | WRITE_METHODS,
-            "education-enrollment": SAFE_METHODS | WRITE_METHODS,
-            "education-attendance": SAFE_METHODS | WRITE_METHODS,
-            "education-grade": SAFE_METHODS | WRITE_METHODS,
-            "education-examination": SAFE_METHODS | WRITE_METHODS,
-            "education-content": SAFE_METHODS | WRITE_METHODS,
-        },
-        g["ESTUDANTE"]: {
-            "education-student": SAFE_METHODS,
-            "education-course": SAFE_METHODS,
-            "education-classroom": SAFE_METHODS,
-            "education-enrollment": SAFE_METHODS,
-            "education-attendance": SAFE_METHODS,
-            "education-grade": SAFE_METHODS,
-            "education-examination": SAFE_METHODS,
-            "education-content": SAFE_METHODS,
-        },
-        g["TEACHER"]: {
-            "education-student": SAFE_METHODS | WRITE_METHODS,
-            "education-teacher": SAFE_METHODS | WRITE_METHODS,
-            "education-course": SAFE_METHODS | WRITE_METHODS,
-            "education-classroom": SAFE_METHODS | WRITE_METHODS,
-            "education-enrollment": SAFE_METHODS | WRITE_METHODS,
-            "education-attendance": SAFE_METHODS | WRITE_METHODS,
-            "education-grade": SAFE_METHODS | WRITE_METHODS,
-            "education-examination": SAFE_METHODS | WRITE_METHODS,
-            "education-content": SAFE_METHODS | WRITE_METHODS,
-        },
-        g["STUDENT_EN"]: {
-            "education-student": SAFE_METHODS,
-            "education-course": SAFE_METHODS,
-            "education-classroom": SAFE_METHODS,
-            "education-enrollment": SAFE_METHODS,
-            "education-attendance": SAFE_METHODS,
-            "education-grade": SAFE_METHODS,
-            "education-examination": SAFE_METHODS,
-            "education-content": SAFE_METHODS,
-        },
+        g["PROFESSOR"]: education_manage,
+        g["DIRETOR_ESCOLA"]: education_manage,
+        g["DIRETOR_ADJUNTO_PEDAGOGICO"]: education_manage,
+        g["TEACHER"]: education_manage,
+        g["ESTUDANTE"]: education_read,
+        g["ENCARREGADO_EDUCACAO"]: education_read,
+        g["STUDENT_EN"]: education_read,
         g["FARMACIA"]: {
             # Almoxarifado / estoque
             "farmacia-product": SAFE_METHODS | WRITE_METHODS,

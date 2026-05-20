@@ -9,6 +9,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 type PeriodKey = "daily" | "weekly" | "monthly" | "quarterly" | "annual"
 type ModeKey = "general" | "activity" | "complete"
+type DropdownDirection = "up" | "down"
 
 const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
     { value: "daily", label: "Diário (1 dia)" },
@@ -34,6 +35,14 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function PageActivityReportMenu() {
+    return <PageActivityReportMenuWithDirection direction="down" />
+}
+
+type Props = {
+    direction?: DropdownDirection
+}
+
+export function PageActivityReportMenuWithDirection({ direction = "down" }: Props) {
     const pathname = usePathname() || "/"
     const [open, setOpen] = useState(false)
     const [period, setPeriod] = useState<PeriodKey>("daily")
@@ -78,6 +87,8 @@ export default function PageActivityReportMenu() {
         }
     }
 
+    const isUp = direction === "up"
+
     return (
         <div className="relative" ref={containerRef}>
             <button
@@ -91,7 +102,12 @@ export default function PageActivityReportMenu() {
             </button>
 
             {open ? (
-                <div className="absolute right-0 z-50 mt-1.5 w-80 rounded-2xl border border-white/20 bg-black/70 p-3 text-white shadow-lg backdrop-blur">
+                <div
+                    className={[
+                        "absolute right-0 z-50 w-80 rounded-2xl border border-white/20 bg-black/70 p-3 text-white shadow-lg backdrop-blur",
+                        isUp ? "bottom-10 mb-1.5" : "mt-1.5",
+                    ].join(" ")}
+                >
                     <div className="text-sm font-semibold text-white">Relatório de actividade</div>
                     <div className="mt-1 text-xs text-white/70">Página: {pathname}</div>
 

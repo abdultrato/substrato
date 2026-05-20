@@ -1,6 +1,7 @@
 import { apiFetch } from "./api/index"
 import { beginRequestActivity, finishRequestActivity } from "./requestActivity"
 import { getSessionUser, setSessionUser } from "./session"
+import { getCurrentLanguage, toBackendLanguage } from "./language"
 
 const backendBase =
   (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "").replace(/\/$/, "")
@@ -22,7 +23,10 @@ export async function login(username: string, password: string) {
   try {
     const res = await fetch(apiUrl("/api/v1/auth/login/"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": toBackendLanguage(getCurrentLanguage()),
+      },
       body: JSON.stringify({ username, password }),
       credentials: "include",
       signal: loginController.signal,
@@ -57,7 +61,10 @@ export async function login(username: string, password: string) {
     const userRes = await fetch(apiUrl("/api/v1/auth/user/"), {
       method: "GET",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Accept-Language": toBackendLanguage(getCurrentLanguage()),
+      },
       cache: "no-store",
       signal: userController.signal,
     })
@@ -93,7 +100,13 @@ export function isAuthenticated() {
 
 export function logout() {
   try {
-    fetch("/api/v1/auth/logout/", { method: "POST", credentials: "include" })
+    fetch("/api/v1/auth/logout/", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Accept-Language": toBackendLanguage(getCurrentLanguage()),
+      },
+    })
   } catch (e) {
     // ignore
   }

@@ -80,7 +80,7 @@ export default function ProcedimentoDetailPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Procedimento — ${id}`}
-          subtitle="/nursing/procedimento/"
+          subtitle="Detalhes do procedimento selecionado."
           actions={
             <div className="flex flex-wrap gap-2">
               <button

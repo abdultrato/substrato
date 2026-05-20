@@ -9,6 +9,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
@@ -21,6 +22,7 @@ export default function EditarRecursoPage() {
     const resourceKey = routeParamToString((params as any)?.resource)
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
+    const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
@@ -58,14 +60,14 @@ export default function EditarRecursoPage() {
             <AppLayout requiredGroups={requiredGroups}>
                 <div className="space-y-6">
                     <PageHeader
-                        title="Recurso não encontrado"
-                        subtitle={`${groupKey}/${resourceKey}`}
+                        title={t("Recurso não encontrado", "Resource not found")}
+                        subtitle={t("O recurso solicitado não existe no catálogo atual.", "The requested resource does not exist in the current catalog.")}
                     />
                     <Link
                         href={`/resources/${groupKey}`}
                         className="text-sm text-gray-700 underline"
                     >
-                        Voltar
+                        {t("Voltar", "Back")}
                     </Link>
                 </div>
             </AppLayout>
@@ -78,14 +80,14 @@ export default function EditarRecursoPage() {
         <AppLayout requiredGroups={requiredGroups}>
             <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
-                    title={`Editar ${found.resource.label} — ${id}`}
-                    subtitle={found.resource.endpoint}
+                    title={`${t("Editar", "Edit")} ${tr(found.resource.label)} — ${id}`}
+                    subtitle={t("Atualize os dados do registo selecionado.", "Update the selected record data.")}
                     actions={
                         <Link
                             href={`${basePath}/${id}`}
                             className="text-sm text-[var(--gray-700)] underline"
                         >
-                            Voltar
+                            {t("Voltar", "Back")}
                         </Link>
                     }
                 />
@@ -97,13 +99,13 @@ export default function EditarRecursoPage() {
                 )}
 
                 {loadingData ? (
-                    <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
+                    <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
                 ) : (
                     <AutoForm
                         endpoint={`${found.resource.endpoint.replace(/\/$/, "")}/${id}/`}
                         method="put"
                         initialValues={initial || {}}
-                        submitLabel="Salvar"
+                        submitLabel={t("Salvar", "Save")}
                         config={getResourceFormConfig(groupKey, resourceKey, found.resource.endpoint)}
                         onSuccess={() => router.push(`/resources/${groupKey}/${resourceKey}/${id}`)}
                     />

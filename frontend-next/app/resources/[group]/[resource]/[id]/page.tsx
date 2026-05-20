@@ -9,6 +9,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { findModuleResource } from "@/lib/modules"
@@ -26,6 +27,7 @@ export default function RecursoDetalhePage() {
     const resourceKey = routeParamToString((params as any)?.resource)
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
+    const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
@@ -170,14 +172,14 @@ export default function RecursoDetalhePage() {
             <AppLayout requiredGroups={requiredGroups}>
                 <div className="space-y-6">
                     <PageHeader
-                        title="Recurso não encontrado"
-                        subtitle={`${groupKey}/${resourceKey}`}
+                        title={t("Recurso não encontrado", "Resource not found")}
+                        subtitle={t("O recurso solicitado não existe no catálogo atual.", "The requested resource does not exist in the current catalog.")}
                     />
                     <Link
                         href={`/resources/${groupKey}`}
                         className="text-sm text-[var(--gray-700)] underline"
                     >
-                        Voltar
+                        {t("Voltar", "Back")}
                     </Link>
                 </div>
             </AppLayout>
@@ -188,8 +190,8 @@ export default function RecursoDetalhePage() {
         <AppLayout requiredGroups={requiredGroups}>
             <div className="space-y-6">
                 <PageHeader
-                    title={`${found.resource.label} — ${id}`}
-                    subtitle={found.resource.endpoint}
+                    title={`${tr(found.resource.label)} — ${id}`}
+                    subtitle={t("Detalhes do registo selecionado.", "Details of the selected record.")}
                     actions={
                         <div className="flex gap-3">
                             {isBloodUnit ? (
@@ -240,20 +242,20 @@ export default function RecursoDetalhePage() {
                                 href={`${basePath}/${id}/edit`}
                                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                             >
-                                Editar
+                                {t("Editar", "Edit")}
                             </Link>
                             <button
                                 onClick={handleDelete}
                                 disabled={deleting}
                                 className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
                             >
-                                {deleting ? "Apagando..." : "Apagar"}
+                                {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
                             </button>
                             <Link
                                 href={basePath}
                                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                             >
-                                Voltar
+                                {t("Voltar", "Back")}
                             </Link>
                         </div>
                     }
@@ -266,7 +268,7 @@ export default function RecursoDetalhePage() {
                 )}
 
                 {loadingData ? (
-                    <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
+                    <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
                 ) : (
                     isBloodbank && data ? (
                         <ResourceDetailsCard endpoint={found.resource.endpoint} data={data} />

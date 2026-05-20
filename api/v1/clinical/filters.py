@@ -62,6 +62,7 @@ class LabExamFilter(SafeFilterSet):
             "method",
             "sector",
             "sample_type",
+            "sample_options",
         ]
 
 

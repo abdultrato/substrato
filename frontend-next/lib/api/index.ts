@@ -1,6 +1,7 @@
 import { logout as clearSession } from "../session"
 import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
 import { reportFrontendApiError, reportFrontendTelemetry } from "../monitoring/telemetry"
+import { getCurrentLanguage, toBackendLanguage } from "../language"
 
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
@@ -119,7 +120,10 @@ function rewriteUrl(url: string): string {
 async function refreshAccessToken(): Promise<string | null> {
   const res = await fetch("/api/v1/auth/refresh/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Accept-Language": toBackendLanguage(getCurrentLanguage()),
+    },
     credentials: "include",
   })
 
@@ -130,20 +134,20 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 function buildHeaders(options: ApiFetchOptions): HeadersInit {
-  const headers: Record<string, string> = {}
-
-  // Default JSON headers unless caller overrides or sends FormData.
-  const hasContentType =
-    !!(options.headers as any)?.["Content-Type"] ||
-    !!(options.headers as any)?.["content-type"]
+  const headers = new Headers(options.headers || {})
+  const hasContentType = headers.has("Content-Type")
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData
 
   if (!hasContentType && !isFormData) {
-    headers["Content-Type"] = "application/json"
+    headers.set("Content-Type", "application/json")
   }
 
-  return { ...headers, ...(options.headers || {}) }
+  if (!headers.has("Accept-Language")) {
+    headers.set("Accept-Language", toBackendLanguage(getCurrentLanguage()))
+  }
+
+  return headers
 }
 
 function shouldSkipErrorTelemetry(url?: string): boolean {

@@ -8,8 +8,10 @@ import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { useLanguage } from "@/hooks/useLanguage"
 
 export default function EducationPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [students, setStudents] = useState(0)
@@ -39,7 +41,11 @@ export default function EducationPage() {
         setEnrollments(extractTotalCount(enrollmentsRes))
       } catch (e: any) {
         if (!mounted) return
-        setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o módulo Education."))
+        setError(
+          isNotFoundLikeError(e)
+            ? null
+            : (e?.message || t("Falha ao carregar o módulo Education.", "Failed to load the Education module."))
+        )
       } finally {
         if (mounted) setLoading(false)
       }
@@ -49,7 +55,7 @@ export default function EducationPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 
@@ -64,9 +70,12 @@ export default function EducationPage() {
 
         <WorkspaceHub
           title="Substrato Education"
-          subtitle="Domínio académico no mesmo design operacional do healthcare."
+          subtitle={t(
+            "Domínio académico no mesmo design operacional do healthcare.",
+            "Academic domain within the same operational design as healthcare."
+          )}
           adminHref="/admin/education/"
-          secondaryCta={{ href: "/education/student", label: "Área do Estudante" }}
+          secondaryCta={{ href: "/education/student", label: t("Área do Estudante", "Student Area") }}
           metrics={[
             { label: "Students", value: metricValue || students },
             { label: "Teachers", value: metricValue || teachers },
@@ -74,16 +83,45 @@ export default function EducationPage() {
             { label: "Enrollments", value: metricValue || enrollments },
           ]}
           actions={[
-            { title: "Students", description: "Gestão de perfis estudantis.", href: "/resources/education/student", icon: GraduationCap },
-            { title: "Teachers", description: "Gestão de docentes e turmas.", href: "/resources/education/teacher", icon: Users },
-            { title: "Courses", description: "Catálogo curricular e carga horária.", href: "/resources/education/course", icon: BookOpen },
-            { title: "Enrollments", description: "Matrículas e vínculo por turma.", href: "/resources/education/enrollment", icon: CalendarCheck },
+            {
+              title: "Students",
+              description: t("Gestão de perfis estudantis.", "Student profile management."),
+              href: "/resources/education/student",
+              icon: GraduationCap,
+            },
+            {
+              title: "Teachers",
+              description: t("Gestão de docentes e turmas.", "Teacher and class management."),
+              href: "/resources/education/teacher",
+              icon: Users,
+            },
+            {
+              title: "Courses",
+              description: t("Catálogo curricular e carga horária.", "Curriculum catalog and workload."),
+              href: "/resources/education/course",
+              icon: BookOpen,
+            },
+            {
+              title: "Enrollments",
+              description: t("Matrículas e vínculo por turma.", "Enrollments and class assignment."),
+              href: "/resources/education/enrollment",
+              icon: CalendarCheck,
+            },
           ]}
-          noteTitle="Governança da migração"
+          noteTitle={t("Governança da migração", "Migration governance")}
           notes={[
-            "Identidade e autenticação permanecem centralizadas no Substrato.",
-            "Regras de domínio Education vivem em apps/education e services/education.",
-            "Legado Schoolar-S está isolado em apps/education/legacy_schoolar para extração gradual.",
+            t(
+              "Identidade e autenticação permanecem centralizadas no Substrato.",
+              "Identity and authentication remain centralized in Substrato."
+            ),
+            t(
+              "Regras de domínio Education vivem em apps/education e services/education.",
+              "Education domain rules live in apps/education and services/education."
+            ),
+            t(
+              "Legado Schoolar-S está isolado em apps/education/legacy_schoolar para extração gradual.",
+              "Schoolar-S legacy is isolated in apps/education/legacy_schoolar for gradual extraction."
+            ),
           ]}
         />
       </div>

@@ -1,4 +1,7 @@
+"use client"
+
 import { ReactNode } from "react"
+import { useLanguage } from "@/hooks/useLanguage"
 
 interface Props {
     title: string
@@ -11,16 +14,18 @@ export default function PageHeader ( {
     subtitle,
     actions,
 }: Props ) {
+    const { tr } = useLanguage()
+
     return (
         <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
                 <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
-                    {title}
+                    {tr(title)}
                 </h1>
 
                 {subtitle && (
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                        {subtitle}
+                        {tr(subtitle)}
                     </p>
                 )}
             </div>

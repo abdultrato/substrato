@@ -73,7 +73,7 @@ class LabExamViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     permission_classes = [IsAuthenticated]
     # LabExam does not expose `description`/`active`/`order`.
     # Keep search/order fields aligned with real model fields.
-    search_fields = ["custom_id", "name", "method", "sector", "sample_type__name"]
+    search_fields = ["custom_id", "name", "method", "sector", "sample_type__name", "sample_options__name"]
     ordering_fields = [
         "tenant",
         "custom_id",

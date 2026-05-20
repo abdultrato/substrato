@@ -6,6 +6,7 @@ import { useParams } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleGroup } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
@@ -18,6 +19,7 @@ export default function RecursosGrupoPage() {
   const groupKey = routeParamToString((params as any)?.group)
   const { loading } = useAuthGuard()
   const { user } = useAuth()
+  const { t, tr } = useLanguage()
   const { modules } = useModulesCatalog()
   const moduleGroup = findModuleGroup(groupKey, modules)
   const requiredGroups = requiredGroupsForResourceGroup(groupKey)
@@ -30,15 +32,18 @@ export default function RecursosGrupoPage() {
     return (
       <AppLayout requiredGroups={requiredGroups}>
         <div className="space-y-6">
-          <PageHeader title="Módulo não encontrado" subtitle={groupKey} />
+          <PageHeader
+            title={t("Módulo não encontrado", "Module not found")}
+            subtitle={t("O módulo solicitado não existe no catálogo atual.", "The requested module does not exist in the current catalog.")}
+          />
           <div className="text-sm text-gray-600">
-            O módulo solicitado não existe na lista atual.
+            {t("O módulo solicitado não existe na lista atual.", "The requested module does not exist in the current list.")}
           </div>
           <Link
             href={hrefVoltar}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Voltar
+            {t("Voltar", "Back")}
           </Link>
         </div>
       </AppLayout>
@@ -48,7 +53,10 @@ export default function RecursosGrupoPage() {
   return (
     <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
-        <PageHeader title={moduleGroup.label} subtitle="Recursos disponíveis" />
+        <PageHeader
+          title={tr(moduleGroup.label)}
+          subtitle={t("Recursos disponíveis", "Available resources")}
+        />
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {moduleGroup.resources.map((r) => (
@@ -58,9 +66,11 @@ export default function RecursosGrupoPage() {
               className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-sm transition hover:bg-[var(--gray-100)]"
             >
               <div className="text-sm font-semibold text-[var(--text)]">
-                {r.label}
+                {tr(r.label)}
               </div>
-              <div className="mt-1 text-xs text-[var(--gray-500)]">{r.endpoint}</div>
+              <div className="mt-1 text-xs text-[var(--gray-500)]">
+                {t("Abrir lista", "Open list")}
+              </div>
             </Link>
           ))}
         </div>
@@ -70,7 +80,7 @@ export default function RecursosGrupoPage() {
             href={hrefVoltar}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Voltar
+            {t("Voltar", "Back")}
           </Link>
         </div>
       </div>

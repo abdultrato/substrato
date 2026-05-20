@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import { useAuth } from "@/hooks/useAuth"
+import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -68,6 +69,7 @@ async function abrirPdfFatura(faturaId: number) {
 
 export default function ConsultasPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
 
   const canWrite = userHasAnyGroup(user, [
     GROUPS.ADMIN,
@@ -91,6 +93,15 @@ export default function ConsultasPage() {
   const [feriado, setFeriado] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
+
+  const localizeErrorMessage = useCallback((message?: string) => {
+    const raw = (message || "").trim()
+    if (!raw) return t("Ocorreu um erro inesperado.", "An unexpected error occurred.")
+    if (/^internal server error$/i.test(raw)) {
+      return t("Erro interno do servidor.", "Internal server error.")
+    }
+    return raw
+  }, [t])
 
   const carregar = useCallback(async () => {
     const [cons, pacs, meds, especs] = await Promise.all([
@@ -120,7 +131,11 @@ export default function ConsultasPage() {
         if (!mounted) return
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar consultas."))
+        setErro(
+          isNotFoundLikeError(e)
+            ? null
+            : localizeErrorMessage(e?.message) || t("Falha ao carregar consultas.", "Failed to load consultations.")
+        )
       } finally {
         if (mounted) setLoading(false)
       }
@@ -129,18 +144,18 @@ export default function ConsultasPage() {
     return () => {
       mounted = false
     }
-  }, [carregar])
+  }, [carregar, localizeErrorMessage, t])
 
   async function criarConsulta(e: any) {
     e.preventDefault()
     if (!canWrite) return
 
     if (!pacienteId) {
-      alert("Selecione um paciente.")
+      alert(t("Selecione um paciente.", "Select a patient."))
       return
     }
     if (!especialidadeId) {
-      alert("Selecione uma especialidade.")
+      alert(t("Selecione uma especialidade.", "Select a specialty."))
       return
     }
 
@@ -174,19 +189,19 @@ export default function ConsultasPage() {
 
       await carregar()
     } catch (e: any) {
-      alert(e?.message || "Falha ao criar consulta.")
+      alert(localizeErrorMessage(e?.message) || t("Falha ao criar consulta.", "Failed to create consultation."))
     } finally {
       setSalvando(false)
     }
   }
 
   const criarFatura = useCallback(async (_consultaId: number) => {
-    alert("Criar fatura apenas em Faturamento/Recepção.")
-  }, [])
+    alert(t("Criar fatura apenas em Faturamento/Receção.", "Create invoice only in Billing/Reception."))
+  }, [t])
 
   const cancelarConsulta = useCallback(async (consultaId: number) => {
     if (!canWrite) return
-    if (!confirm("Cancelar esta consulta?")) return
+    if (!confirm(t("Cancelar esta consulta?", "Cancel this consultation?"))) return
     try {
       await apiFetch(`/consultations/${consultaId}/cancelar/`, {
         method: "POST",
@@ -194,13 +209,13 @@ export default function ConsultasPage() {
       })
       await carregar()
     } catch (e: any) {
-      alert(e?.message || "Falha ao cancelar consulta.")
+      alert(localizeErrorMessage(e?.message) || t("Falha ao cancelar consulta.", "Failed to cancel consultation."))
     }
-  }, [canWrite, carregar])
+  }, [canWrite, carregar, localizeErrorMessage, t])
 
   const concluirConsulta = useCallback(async (consultaId: number) => {
     if (!canWrite) return
-    if (!confirm("Marcar esta consulta como concluída?")) return
+    if (!confirm(t("Marcar esta consulta como concluída?", "Mark this consultation as completed?"))) return
     try {
       await apiFetch(`/consultations/${consultaId}/concluir/`, {
         method: "POST",
@@ -208,9 +223,9 @@ export default function ConsultasPage() {
       })
       await carregar()
     } catch (e: any) {
-      alert(e?.message || "Falha ao concluir consulta.")
+      alert(localizeErrorMessage(e?.message) || t("Falha ao concluir consulta.", "Failed to complete consultation."))
     }
-  }, [canWrite, carregar])
+  }, [canWrite, carregar, localizeErrorMessage, t])
 
   const remarcarConsulta = useCallback(async (row: ConsultaRow) => {
     if (!canWrite) return
@@ -220,7 +235,7 @@ export default function ConsultasPage() {
       : ""
 
     const input = prompt(
-      "Nova data/hora (YYYY-MM-DDTHH:mm):",
+      t("Nova data/hora (YYYY-MM-DDTHH:mm):", "New date/time (YYYY-MM-DDTHH:mm):"),
       defaultValue
     )
     if (!input) return
@@ -235,35 +250,43 @@ export default function ConsultasPage() {
       })
       await carregar()
     } catch (e: any) {
-      alert(e?.message || "Falha ao remarcar consulta.")
+      alert(localizeErrorMessage(e?.message) || t("Falha ao remarcar consulta.", "Failed to reschedule consultation."))
     }
-  }, [canWrite, carregar])
+  }, [canWrite, carregar, localizeErrorMessage, t])
 
   const columns = useMemo(
     () => {
       const labelHorario = (value?: string) => {
-        if (!value) return "Normal"
-        if (value === "FIM_SEMANA") return "Fim de semana"
-        if (value === "FORA_EXPEDIENTE") return "Fora de expediente"
-        if (value === "FERIADO_MANUAL") return "Feriado"
-        return "Normal"
+        if (!value) return t("Normal", "Normal")
+        if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
+        if (value === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
+        if (value === "FERIADO_MANUAL") return t("Feriado", "Holiday")
+        return t("Normal", "Normal")
+      }
+
+      const labelEstado = (value?: string) => {
+        if (!value) return "-"
+        if (value === "MARCADA") return t("Marcada", "Scheduled")
+        if (value === "CONCLUIDA") return t("Concluída", "Completed")
+        if (value === "CANCELADA") return t("Cancelada", "Canceled")
+        return value
       }
 
       return [
-        { header: "Código", render: (r: ConsultaRow) => r.id_custom || r.id },
-        { header: "Paciente", render: (r: ConsultaRow) => r.paciente_nome || "-" },
-        { header: "Médico", render: (r: ConsultaRow) => r.medico_nome || "—" },
-        { header: "Tipo", render: (r: ConsultaRow) => r.tipo || "-" },
-        { header: "Estado", render: (r: ConsultaRow) => r.estado || "-" },
-        { header: "Horário", render: (r: ConsultaRow) => labelHorario(r.tipo_horario) },
-        { header: "Agendada", render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
-        { header: "Preço", render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
+        { header: t("Código", "Code"), render: (r: ConsultaRow) => r.id_custom || r.id },
+        { header: t("Paciente", "Patient"), render: (r: ConsultaRow) => r.paciente_nome || "-" },
+        { header: t("Médico", "Doctor"), render: (r: ConsultaRow) => r.medico_nome || "—" },
+        { header: t("Tipo", "Type"), render: (r: ConsultaRow) => r.tipo || "-" },
+        { header: t("Estado", "Status"), render: (r: ConsultaRow) => labelEstado(r.estado) },
+        { header: t("Horário", "Schedule"), render: (r: ConsultaRow) => labelHorario(r.tipo_horario) },
+        { header: t("Agendada", "Scheduled"), render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
+        { header: t("Preço", "Price"), render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
         {
-          header: "Fatura",
+          header: t("Fatura", "Invoice"),
           render: (r: ConsultaRow) => r.fatura_codigo || "—",
         },
         {
-          header: "Ações",
+          header: t("Ações", "Actions"),
           render: (r: ConsultaRow) => (
             <div className="flex flex-wrap gap-2">
               {canWrite && r.estado === "MARCADA" ? (
@@ -272,7 +295,7 @@ export default function ConsultasPage() {
                   onClick={() => remarcarConsulta(r)}
                   className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                 >
-                  Remarcar
+                  {t("Remarcar", "Reschedule")}
                 </button>
               ) : null}
 
@@ -282,7 +305,7 @@ export default function ConsultasPage() {
                   onClick={() => concluirConsulta(r.id)}
                   className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                 >
-                  Concluir
+                  {t("Concluir", "Complete")}
                 </button>
               ) : null}
 
@@ -292,7 +315,7 @@ export default function ConsultasPage() {
                   onClick={() => cancelarConsulta(r.id)}
                   className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
                 >
-                  Cancelar
+                  {t("Cancelar", "Cancel")}
                 </button>
               ) : null}
 
@@ -302,7 +325,7 @@ export default function ConsultasPage() {
                 onClick={() => abrirPdfFatura(Number(r.fatura_id))}
                 className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
-                PDF Fatura
+                {t("PDF Fatura", "Invoice PDF")}
               </button>
             ) : (
               <span className="text-xs text-gray-500">—</span>
@@ -312,17 +335,17 @@ export default function ConsultasPage() {
       },
       ]
     },
-    [canWrite, cancelarConsulta, concluirConsulta, remarcarConsulta]
+    [canWrite, cancelarConsulta, concluirConsulta, remarcarConsulta, t]
   )
 
   const tipoHorarioLabel = useMemo(() => {
     const tipo = precoPreview?.tipo_horario
-    if (!tipo) return "Normal"
-    if (tipo === "FIM_SEMANA") return "Fim de semana"
-    if (tipo === "FORA_EXPEDIENTE") return "Fora de expediente"
-    if (tipo === "FERIADO_MANUAL") return "Feriado"
-    return "Normal"
-  }, [precoPreview?.tipo_horario])
+    if (!tipo) return t("Normal", "Normal")
+    if (tipo === "FIM_SEMANA") return t("Fim de semana", "Weekend")
+    if (tipo === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
+    if (tipo === "FERIADO_MANUAL") return t("Feriado", "Holiday")
+    return t("Normal", "Normal")
+  }, [precoPreview?.tipo_horario, t])
 
   useEffect(() => {
     let mounted = true
@@ -366,8 +389,11 @@ export default function ConsultasPage() {
     >
       <div className="space-y-6">
         <PageHeader
-          title="Consultas"
-          subtitle="Marcação, registo e faturamento de consultas médicas."
+          title={t("Consultas", "Consultations")}
+          subtitle={t(
+            "Marcação, registo e faturamento de consultas médicas.",
+            "Scheduling, recording, and billing for medical consultations."
+          )}
         />
 
         {erro ? (
@@ -377,17 +403,20 @@ export default function ConsultasPage() {
         ) : null}
 
         {canWrite ? (
-          <Card title="Nova consulta" subtitle="Crie a consulta e, se necessário, emita a fatura.">
+          <Card
+            title={t("Nova consulta", "New consultation")}
+            subtitle={t("Crie a consulta e, se necessário, emita a fatura.", "Create the consultation and issue the invoice if needed.")}
+          >
             <form onSubmit={criarConsulta} className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Paciente</label>
+                <label className="text-xs text-gray-600">{t("Paciente", "Patient")}</label>
                 <select
                   value={pacienteId}
                   onChange={(e) => setPacienteId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   required
                 >
-                  <option value="">Selecione</option>
+                  <option value="">{t("Selecione", "Select")}</option>
                   {pacientes.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.nome}
@@ -397,16 +426,16 @@ export default function ConsultasPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Médico (opcional)</label>
+                <label className="text-xs text-gray-600">{t("Médico (opcional)", "Doctor (optional)")}</label>
                 <select
                   value={medicoId}
                   onChange={(e) => setMedicoId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 >
-                  <option value="">Sem médico</option>
+                  <option value="">{t("Sem médico", "No doctor")}</option>
                   {medicos.map((m) => {
                     const detalhe = m.cargo_nome || m.profissao
-                    const label = [m.nome || `Médico ${m.id}`, detalhe].filter(Boolean).join(" · ")
+                    const label = [m.nome || `${t("Médico", "Doctor")} ${m.id}`, detalhe].filter(Boolean).join(" · ")
                     return (
                       <option key={m.id} value={m.id}>
                         {label}
@@ -417,19 +446,19 @@ export default function ConsultasPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Especialidade</label>
+                <label className="text-xs text-gray-600">{t("Especialidade", "Specialty")}</label>
                 <select
                   value={especialidadeId}
                   onChange={(e) => setEspecialidadeId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   required
                 >
-                  <option value="">Selecione</option>
+                  <option value="">{t("Selecione", "Select")}</option>
                   {especialidades
                     .filter((x) => x.ativo !== false)
                     .map((esp) => (
                       <option key={esp.id} value={esp.id}>
-                        {esp.nome || `Especialidade ${esp.id}`}
+                        {esp.nome || `${t("Especialidade", "Specialty")} ${esp.id}`}
                       </option>
                     ))}
                 </select>
@@ -437,14 +466,14 @@ export default function ConsultasPage() {
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">
-                  Preço {precoPreview?.moeda ? `(${precoPreview.moeda})` : "(MZN)"}
+                  {t("Preço", "Price")} {precoPreview?.moeda ? `(${precoPreview.moeda})` : "(MZN)"}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
                     value={precoPreview?.preco_final || ""}
                     readOnly
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
-                    placeholder={especialidadeId ? "Calculando..." : "Selecione uma especialidade"}
+                    placeholder={especialidadeId ? t("Calculando...", "Calculating...") : t("Selecione uma especialidade", "Select a specialty")}
                   />
 
                   <div className="flex flex-col items-start">
@@ -455,14 +484,14 @@ export default function ConsultasPage() {
                       <span className="text-[11px] text-gray-500">x{precoPreview.multiplicador_preco}</span>
                     ) : null}
                     {precoPreview?.feriado_manual ? (
-                      <span className="text-[11px] text-amber-700">Feriado marcado</span>
+                      <span className="text-[11px] text-amber-700">{t("Feriado marcado", "Holiday marked")}</span>
                     ) : null}
                   </div>
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-gray-600">Agendada para (opcional)</label>
+                <label className="text-xs text-gray-600">{t("Agendada para (opcional)", "Scheduled for (optional)")}</label>
                 <input
                   type="datetime-local"
                   value={agendadaPara}
@@ -480,8 +509,13 @@ export default function ConsultasPage() {
                   className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
                 />
                 <div className="flex flex-col leading-tight">
-                  <label htmlFor="feriado-manual" className="text-xs font-semibold text-gray-700">Feriado</label>
-                  <span className="text-[11px] text-gray-500">Marca 2x o valor quando não for fim de semana/fora de expediente.</span>
+                  <label htmlFor="feriado-manual" className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</label>
+                  <span className="text-[11px] text-gray-500">
+                    {t(
+                      "Marca 2x o valor quando não for fim de semana/fora de expediente.",
+                      "Applies 2x pricing when it's not weekend/after hours."
+                    )}
+                  </span>
                 </div>
               </div>
 
@@ -490,27 +524,30 @@ export default function ConsultasPage() {
                   disabled={salvando}
                   className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
                 >
-                  {salvando ? "Salvando..." : "Criar consulta"}
+                  {salvando ? t("Salvando...", "Saving...") : t("Criar consulta", "Create consultation")}
                 </button>
               </div>
             </form>
           </Card>
         ) : (
-          <Card title="Modo leitura" subtitle="Contabilidade pode ver, mas não alterar.">
+          <Card title={t("Modo leitura", "Read-only mode")} subtitle={t("Contabilidade pode ver, mas não alterar.", "Accounting can view, but cannot edit.")}>
             <div className="text-sm text-gray-600">
-              Este módulo está disponível para auditoria e estatística. Para criar/edit consultas, use uma conta com permissão clínica.
+              {t(
+                "Este módulo está disponível para auditoria e estatística. Para criar/edit consultas, use uma conta com permissão clínica.",
+                "This module is available for auditing and statistics. To create/edit consultations, use an account with clinical permissions."
+              )}
             </div>
           </Card>
         )}
 
-        <Card title="Lista de consultas" subtitle="Consultas do tenant atual.">
+        <Card title={t("Lista de consultas", "Consultations list")} subtitle={t("Consultas do tenant atual.", "Consultations for the current tenant.")}>
           {loading ? (
-            <div className="text-sm text-gray-500">Carregando...</div>
+            <div className="text-sm text-gray-500">{t("Carregando...", "Loading...")}</div>
           ) : (
             <DataTable<ConsultaRow>
               columns={columns as any}
               data={consultas}
-              emptyMessage="Nenhuma consulta encontrada."
+              emptyMessage={t("Nenhuma consulta encontrada.", "No consultations found.")}
             />
           )}
         </Card>

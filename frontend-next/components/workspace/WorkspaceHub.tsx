@@ -7,6 +7,7 @@ import ActionTile from "@/components/ui/ActionTile"
 import Card from "@/components/ui/Card"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
+import { useLanguage } from "@/hooks/useLanguage"
 
 type WorkspaceMetric = {
   label: string
@@ -28,8 +29,8 @@ type WorkspaceHubProps = {
   secondaryCta?: { href: string; label: string }
   metrics: WorkspaceMetric[]
   actions: WorkspaceAction[]
-  noteTitle: string
-  notes: string[]
+  noteTitle?: string
+  notes?: string[]
 }
 
 export default function WorkspaceHub({
@@ -40,8 +41,10 @@ export default function WorkspaceHub({
   metrics,
   actions,
   noteTitle,
-  notes,
+  notes = [],
 }: WorkspaceHubProps) {
+  const { t } = useLanguage()
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -61,7 +64,7 @@ export default function WorkspaceHub({
               href={adminHref}
               className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
             >
-              Administração
+              {t("Administração", "Administration")}
             </Link>
           </div>
         }
@@ -85,13 +88,15 @@ export default function WorkspaceHub({
         ))}
       </div>
 
-      <Card title={noteTitle}>
-        <div className="text-sm text-foreground-2 space-y-1">
-          {notes.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
-        </div>
-      </Card>
+      {noteTitle && notes.length ? (
+        <Card title={noteTitle}>
+          <div className="text-sm text-foreground-2 space-y-1">
+            {notes.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        </Card>
+      ) : null}
     </div>
   )
 }

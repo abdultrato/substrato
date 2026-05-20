@@ -53,7 +53,7 @@ export default function EditarItemRequisicaoPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Editar item de requisição — ${id}`}
-          subtitle="/clinical/labrequestitem/"
+          subtitle="Atualize os dados do item de requisição selecionado."
           actions={
             <Link
               href={`/nursing/request-items/${id}`}

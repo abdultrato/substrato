@@ -8,6 +8,7 @@ import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
@@ -20,6 +21,7 @@ export default function NovoRecursoPage() {
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
+    const { t, tr } = useLanguage()
     const { user } = useAuth()
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
@@ -32,14 +34,14 @@ export default function NovoRecursoPage() {
             <AppLayout requiredGroups={requiredGroups}>
                 <div className="space-y-6">
                     <PageHeader
-                        title="Recurso não encontrado"
-                        subtitle={`${groupKey}/${resourceKey}`}
+                        title={t("Recurso não encontrado", "Resource not found")}
+                        subtitle={t("O recurso solicitado não existe no catálogo atual.", "The requested resource does not exist in the current catalog.")}
                     />
                     <Link
                         href={`/resources/${groupKey}`}
                         className="text-sm text-gray-700 underline"
                     >
-                        Voltar
+                        {t("Voltar", "Back")}
                     </Link>
                 </div>
             </AppLayout>
@@ -50,14 +52,14 @@ export default function NovoRecursoPage() {
         <AppLayout requiredGroups={requiredGroups}>
             <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
-                    title={`Novo ${found.resource.label}`}
-                    subtitle={found.resource.endpoint}
+                    title={`${t("Novo", "New")} ${tr(found.resource.label)}`}
+                    subtitle={t("Preencha os dados para criar um novo registo.", "Fill in the fields to create a new record.")}
                     actions={
                         <Link
                             href={`/resources/${groupKey}/${resourceKey}`}
                             className="text-sm text-[var(--gray-700)] underline"
                         >
-                            Voltar
+                            {t("Voltar", "Back")}
                         </Link>
                     }
                 />
@@ -83,7 +85,7 @@ export default function NovoRecursoPage() {
                 <AutoForm
                     endpoint={found.resource.endpoint}
                     method="post"
-                    submitLabel="Criar"
+                    submitLabel={t("Criar", "Create")}
                     initialValues={initialValues}
                     config={effectiveConfig}
                     onSuccess={() => {

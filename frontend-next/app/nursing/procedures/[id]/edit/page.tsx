@@ -53,7 +53,7 @@ export default function EditarProcedimentoPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Editar procedimento — ${id}`}
-          subtitle="/nursing/procedimento/"
+          subtitle="Atualize os dados do procedimento selecionado."
           actions={
             <Link
               href={`/nursing/procedures/${id}`}
