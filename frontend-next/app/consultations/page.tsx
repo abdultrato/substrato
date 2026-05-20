@@ -93,6 +93,10 @@ export default function ConsultasPage() {
   const [feriado, setFeriado] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
+  const [remarcarModalOpen, setRemarcarModalOpen] = useState(false)
+  const [remarcando, setRemarcando] = useState(false)
+  const [consultaRemarcar, setConsultaRemarcar] = useState<ConsultaRow | null>(null)
+  const [novaDataHoraConsulta, setNovaDataHoraConsulta] = useState("")
 
   const localizeErrorMessage = useCallback((message?: string) => {
     const raw = (message || "").trim()
@@ -227,32 +231,49 @@ export default function ConsultasPage() {
     }
   }, [canWrite, carregar, localizeErrorMessage, t])
 
+  const fecharModalRemarcacao = useCallback(() => {
+    if (remarcando) return
+    setRemarcarModalOpen(false)
+    setConsultaRemarcar(null)
+    setNovaDataHoraConsulta("")
+  }, [remarcando])
+
   const remarcarConsulta = useCallback(async (row: ConsultaRow) => {
     if (!canWrite) return
     const current = row.agendada_para ? new Date(row.agendada_para) : null
     const defaultValue = current && !Number.isNaN(current.getTime())
       ? current.toISOString().slice(0, 16) // yyyy-mm-ddThh:mm
       : ""
+    setConsultaRemarcar(row)
+    setNovaDataHoraConsulta(defaultValue)
+    setRemarcarModalOpen(true)
+  }, [canWrite])
 
-    const input = prompt(
-      t("Nova data/hora (YYYY-MM-DDTHH:mm):", "New date/time (YYYY-MM-DDTHH:mm):"),
-      defaultValue
-    )
-    if (!input) return
+  const confirmarRemarcacaoConsulta = useCallback(async () => {
+    if (!consultaRemarcar?.id) return
+    if (!novaDataHoraConsulta.trim()) {
+      alert(t("Informe a nova data/hora da consulta.", "Provide the new consultation date/time."))
+      return
+    }
+    const d = new Date(novaDataHoraConsulta)
+    const value = Number.isNaN(d.getTime()) ? novaDataHoraConsulta : d.toISOString()
 
-    const d = new Date(input)
-    const value = Number.isNaN(d.getTime()) ? input : d.toISOString()
-
+    setRemarcando(true)
     try {
-      await apiFetch(`/consultations/${row.id}/remarcar/`, {
+      await apiFetch(`/consultations/${consultaRemarcar.id}/remarcar/`, {
         method: "POST",
         body: JSON.stringify({ agendada_para: value }),
       })
+      setRemarcarModalOpen(false)
+      setConsultaRemarcar(null)
+      setNovaDataHoraConsulta("")
       await carregar()
     } catch (e: any) {
       alert(localizeErrorMessage(e?.message) || t("Falha ao remarcar consulta.", "Failed to reschedule consultation."))
+    } finally {
+      setRemarcando(false)
     }
-  }, [canWrite, carregar, localizeErrorMessage, t])
+  }, [carregar, consultaRemarcar?.id, localizeErrorMessage, novaDataHoraConsulta, t])
 
   const columns = useMemo(
     () => {
@@ -552,6 +573,71 @@ export default function ConsultasPage() {
           )}
         </Card>
       </div>
+
+      {remarcarModalOpen ? (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+            onClick={fecharModalRemarcacao}
+          />
+          <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+            <div className="border-b border-[var(--border)] px-4 py-3">
+              <h3 className="text-sm font-semibold text-[var(--text)]">
+                {t("Remarcar consulta", "Reschedule consultation")}
+              </h3>
+              <p className="mt-1 text-xs text-[var(--gray-600)]">
+                {t("Atualize a data e hora da consulta selecionada.", "Update the date and time of the selected consultation.")}
+              </p>
+            </div>
+
+            <div className="space-y-3 px-4 py-4">
+              <div className="text-xs text-[var(--gray-600)]">
+                {t("Consulta:", "Consultation:")}{" "}
+                <span className="font-semibold text-[var(--text)]">
+                  {consultaRemarcar?.id_custom || consultaRemarcar?.id || "-"}
+                </span>
+                {" · "}
+                {t("Paciente:", "Patient:")}{" "}
+                <span className="font-semibold text-[var(--text)]">
+                  {consultaRemarcar?.paciente_nome || "-"}
+                </span>
+              </div>
+
+              <label className="space-y-1">
+                <span className="text-xs text-[var(--gray-600)]">
+                  {t("Nova data/hora", "New date/time")}
+                </span>
+                <input
+                  type="datetime-local"
+                  value={novaDataHoraConsulta}
+                  onChange={(e) => setNovaDataHoraConsulta(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
+                  autoFocus
+                />
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] px-4 py-3">
+              <button
+                type="button"
+                onClick={fecharModalRemarcacao}
+                disabled={remarcando}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {t("Cancelar", "Cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmarRemarcacaoConsulta}
+                disabled={remarcando}
+                className="inline-flex items-center rounded-lg bg-[var(--primary-700)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--primary-800)] disabled:opacity-60"
+              >
+                {remarcando ? t("Atualizando...", "Updating...") : t("Atualizar data/hora", "Update date/time")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppLayout>
   )
 }
