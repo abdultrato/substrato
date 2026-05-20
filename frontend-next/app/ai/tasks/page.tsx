@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ArrowLeft, ClipboardCheck, RefreshCcw } from "lucide-react"
+import { ArrowLeft, ClipboardCheck, ExternalLink, RefreshCcw, Search } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AiTaskPanel, { type AiOperationalTask } from "@/components/ai/AiTaskPanel"
@@ -10,6 +10,7 @@ import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
+import TextInput from "@/components/ui/TextInput"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
@@ -28,6 +29,9 @@ const TASK_GROUPS = [
   GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
 ]
 
+const STATUS_OPTIONS = ["", "open", "in_progress", "done", "cancelled"]
+const PRIORITY_OPTIONS = ["", "low", "normal", "high", "critical"]
+
 function formatDate(value?: string | null) {
   if (!value) return "—"
   try {
@@ -42,11 +46,32 @@ function formatDate(value?: string | null) {
   }
 }
 
+function humanize(value?: string | null) {
+  return String(value || "—").replace(/_/g, " ")
+}
+
+function statusVariant(status?: string): "default" | "success" | "warning" | "danger" | "info" {
+  if (status === "done") return "success"
+  if (status === "cancelled") return "default"
+  if (status === "in_progress") return "info"
+  return "warning"
+}
+
+function priorityVariant(priority?: string): "default" | "success" | "warning" | "danger" | "info" {
+  if (priority === "critical") return "danger"
+  if (priority === "high") return "warning"
+  if (priority === "low") return "default"
+  return "info"
+}
+
 export default function AiOperationalTasksPage() {
   const { t } = useLanguage()
   const [tasks, setTasks] = useState<AiOperationalTask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [query, setQuery] = useState("")
+  const [status, setStatus] = useState("")
+  const [priority, setPriority] = useState("")
 
   const highlightedTaskId = useMemo(() => {
     if (typeof window === "undefined") return ""
@@ -57,7 +82,13 @@ export default function AiOperationalTasksPage() {
     setLoading(true)
     setError("")
     try {
-      const result = await apiFetch<AiOperationalTask[]>("/ai/assistant/tasks/", {
+      const params = new URLSearchParams()
+      if (query.trim()) params.set("q", query.trim())
+      if (status) params.set("status", status)
+      if (priority) params.set("priority", priority)
+      params.set("limit", "150")
+      const suffix = params.toString()
+      const result = await apiFetch<AiOperationalTask[]>(`/ai/assistant/tasks/${suffix ? `?${suffix}` : ""}`, {
         clientCache: false,
         timeoutMs: 30_000,
       })
@@ -67,13 +98,14 @@ export default function AiOperationalTasksPage() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [priority, query, status, t])
 
   useEffect(() => {
     void loadTasks()
   }, [loadTasks])
 
   const openTasks = tasks.filter((task) => task.status === "open").length
+  const inProgressTasks = tasks.filter((task) => task.status === "in_progress").length
   const criticalTasks = tasks.filter((task) => task.priority === "critical").length
 
   return (
@@ -102,7 +134,7 @@ export default function AiOperationalTasksPage() {
           }
         />
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <Card>
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("Total", "Total")}
@@ -117,11 +149,54 @@ export default function AiOperationalTasksPage() {
           </Card>
           <Card>
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("Em execução", "In progress")}
+            </div>
+            <div className="mt-1 font-display text-3xl font-semibold text-foreground">{inProgressTasks}</div>
+          </Card>
+          <Card>
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t("Críticas", "Critical")}
             </div>
             <div className="mt-1 font-display text-3xl font-semibold text-foreground">{criticalTasks}</div>
           </Card>
         </div>
+
+        <Card title={t("Filtros da fila", "Queue filters")}>
+          <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.8fr_auto]">
+            <TextInput
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("Pesquisar por título, módulo, equipa ou referência", "Search by title, module, team or reference")}
+              leftIcon={<Search size={16} />}
+            />
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+            >
+              {STATUS_OPTIONS.map((item) => (
+                <option key={item || "all"} value={item}>
+                  {item ? humanize(item) : t("Todos os estados", "All statuses")}
+                </option>
+              ))}
+            </select>
+            <select
+              value={priority}
+              onChange={(event) => setPriority(event.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+            >
+              {PRIORITY_OPTIONS.map((item) => (
+                <option key={item || "all"} value={item}>
+                  {item ? humanize(item) : t("Todas as prioridades", "All priorities")}
+                </option>
+              ))}
+            </select>
+            <Button type="button" loading={loading} onClick={() => void loadTasks()}>
+              <Search size={15} />
+              {t("Pesquisar", "Search")}
+            </Button>
+          </div>
+        </Card>
 
         <Card title={t("Fila operacional", "Operational queue")}>
           {error ? (
@@ -147,10 +222,11 @@ export default function AiOperationalTasksPage() {
             {tasks.map((task) => {
               const highlighted = String(task.id) === highlightedTaskId
               return (
-                <div
+                <Link
                   key={task.id}
+                  href={`/ai/tasks/${task.id}`}
                   className={`rounded-2xl border p-3 transition ${
-                    highlighted ? "border-primary bg-primary/5 shadow-sm" : "border-border bg-background"
+                    highlighted ? "block border-primary bg-primary/5 shadow-sm" : "block border-border bg-background hover:border-primary/40 hover:bg-muted/30"
                   }`}
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -161,10 +237,10 @@ export default function AiOperationalTasksPage() {
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{task.description}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <Badge variant="success">{task.status || "open"}</Badge>
+                        <Badge variant={statusVariant(task.status)}>{humanize(task.status || "open")}</Badge>
                         <Badge variant="info">{task.assigned_group || "—"}</Badge>
-                        <Badge variant={task.priority === "critical" ? "danger" : task.priority === "high" ? "warning" : "default"}>
-                          {task.priority || "normal"}
+                        <Badge variant={priorityVariant(task.priority)}>
+                          {humanize(task.priority || "normal")}
                         </Badge>
                         {task.module_key ? <Badge variant="default">{task.module_key}</Badge> : null}
                       </div>
@@ -173,10 +249,14 @@ export default function AiOperationalTasksPage() {
                       <div>{task.custom_id || `#${task.id}`}</div>
                       <div>{t("Prazo", "Due")}: {formatDate(task.due_at)}</div>
                       {task.source_reference ? <div>{task.source_reference}</div> : null}
+                      <div className="mt-2 inline-flex items-center gap-1 text-primary">
+                        <ExternalLink size={13} />
+                        {t("Abrir", "Open")}
+                      </div>
                     </div>
                   </div>
                   {highlighted ? <AiTaskPanel task={task} /> : null}
-                </div>
+                </Link>
               )
             })}
           </div>

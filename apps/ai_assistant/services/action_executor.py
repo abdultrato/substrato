@@ -78,7 +78,7 @@ class AiActionExecutor:
         )
 
         now = timezone.now()
-        href = f"/ai/tasks?task={task.id}"
+        href = f"/ai/tasks/{task.id}"
         action.status = AiSuggestedAction.Status.CONFIRMED
         action.confirmed_by = user
         action.confirmed_at = now

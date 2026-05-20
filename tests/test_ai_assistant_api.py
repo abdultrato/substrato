@@ -572,11 +572,29 @@ def test_ai_confirm_operational_task_creates_task_and_exposes_queue(api_client):
     assert task.status == AiOperationalTask.Status.OPEN
     assert task.assigned_group == GROUPS["ENFERMAGEM"]
     assert data["operational_task"]["id"] == task.id
-    assert data["href"] == f"/ai/tasks?task={task.id}"
+    assert data["href"] == f"/ai/tasks/{task.id}"
 
-    list_response = api_client.get("/api/v1/ai/assistant/tasks/", format="json")
+    list_response = api_client.get(
+        "/api/v1/ai/assistant/tasks/?status=open&priority=high&module=nursing&q=pendências",
+        format="json",
+    )
     assert list_response.status_code == 200, _response_data(list_response)
     assert any(item["id"] == task.id for item in _response_data(list_response))
+
+    detail_response = api_client.get(f"/api/v1/ai/assistant/tasks/{task.id}/", format="json")
+    assert detail_response.status_code == 200, _response_data(detail_response)
+    assert _response_data(detail_response)["id"] == task.id
+
+    patch_response = api_client.patch(
+        f"/api/v1/ai/assistant/tasks/{task.id}/",
+        {"status": "in_progress", "priority": "critical"},
+        format="json",
+    )
+    assert patch_response.status_code == 200, _response_data(patch_response)
+    task.refresh_from_db()
+    assert task.status == AiOperationalTask.Status.IN_PROGRESS
+    assert task.priority == AiOperationalTask.Priority.CRITICAL
+    assert task.metadata["lifecycle_history"][-1]["to_status"] == "in_progress"
 
 
 @pytest.mark.django_db

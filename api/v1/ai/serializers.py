@@ -130,6 +130,16 @@ class AiOperationalTaskSerializer(serializers.ModelSerializer):
         return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
 
 
+class AiOperationalTaskUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=AiOperationalTask.Status.choices, required=False)
+    priority = serializers.ChoiceField(choices=AiOperationalTask.Priority.choices, required=False)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError("Informe pelo menos estado ou prioridade.")
+        return attrs
+
+
 class AiSuggestedActionSerializer(serializers.ModelSerializer):
     href = serializers.SerializerMethodField()
     operational_task = serializers.SerializerMethodField()

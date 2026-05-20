@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.db.models import Count, Q
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -21,6 +22,7 @@ from .serializers import (
     AiInvestigationSerializer,
     AiInvestigationUpdateSerializer,
     AiOperationalTaskSerializer,
+    AiOperationalTaskUpdateSerializer,
     AiSessionDetailSerializer,
     AiSessionSerializer,
     AiSuggestedActionSerializer,
@@ -48,6 +50,19 @@ def ai_investigation_queryset(request):
     queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False).select_related("created_by", "session")
     if not policy.is_admin_like(request.user):
         queryset = queryset.filter(created_by=request.user)
+    return queryset
+
+
+def ai_task_queryset(request):
+    tenant = request_tenant(request)
+    if tenant is None:
+        raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+    policy = AiPolicyGuard()
+    queryset = AiOperationalTask.objects.filter(tenant=tenant, deleted=False).select_related("created_by", "session")
+    if not policy.is_admin_like(request.user):
+        groups = policy.user_group_names(request.user)
+        queryset = queryset.filter(Q(assigned_group__in=groups) | Q(created_by=request.user))
     return queryset
 
 
@@ -206,16 +221,39 @@ class AiAssistantTasksView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        tenant = request_tenant(request)
-        if tenant is None:
-            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+        queryset = ai_task_queryset(request)
+        status_value = str(request.query_params.get("status") or "").strip()
+        priority = str(request.query_params.get("priority") or "").strip()
+        assigned_group = str(request.query_params.get("assigned_group") or "").strip()
+        module_key = str(request.query_params.get("module") or request.query_params.get("module_key") or "").strip()
+        source_type = str(request.query_params.get("source_type") or "").strip()
+        query = str(request.query_params.get("q") or "").strip()
 
-        policy = AiPolicyGuard()
-        queryset = AiOperationalTask.objects.filter(tenant=tenant, deleted=False).select_related("created_by")
-        if not policy.is_admin_like(request.user):
-            groups = policy.user_group_names(request.user)
-            queryset = queryset.filter(Q(assigned_group__in=groups) | Q(created_by=request.user))
-        queryset = queryset.order_by("-created_at", "-id")[:100]
+        if status_value:
+            queryset = queryset.filter(status=status_value)
+        if priority:
+            queryset = queryset.filter(priority=priority)
+        if assigned_group:
+            queryset = queryset.filter(assigned_group=assigned_group)
+        if module_key:
+            queryset = queryset.filter(module_key=module_key)
+        if source_type:
+            queryset = queryset.filter(source_type=source_type)
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query)
+                | Q(description__icontains=query)
+                | Q(source_reference__icontains=query)
+                | Q(module_key__icontains=query)
+                | Q(assigned_group__icontains=query)
+            )
+
+        try:
+            limit = min(max(int(request.query_params.get("limit") or 100), 1), 250)
+        except (TypeError, ValueError):
+            limit = 100
+
+        queryset = queryset.order_by("-created_at", "-id")[:limit]
         return Response(AiOperationalTaskSerializer(queryset, many=True).data)
 
 
@@ -223,20 +261,46 @@ class AiAssistantTaskDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, task_id: int):
-        tenant = request_tenant(request)
-        task = (
-            AiOperationalTask.objects.filter(tenant=tenant, id=task_id, deleted=False)
-            .select_related("created_by")
-            .first()
-        )
+        task = ai_task_queryset(request).filter(id=task_id).first()
         if task is None:
             raise NotFound("Tarefa operacional da IA não encontrada.")
 
-        policy = AiPolicyGuard()
-        if not policy.is_admin_like(request.user):
-            groups = policy.user_group_names(request.user)
-            if task.assigned_group not in groups and task.created_by_id != request.user.id:
-                raise NotFound("Tarefa operacional da IA não encontrada.")
+        return Response(AiOperationalTaskSerializer(task).data)
+
+    def patch(self, request, task_id: int):
+        task = ai_task_queryset(request).filter(id=task_id).first()
+        if task is None:
+            raise NotFound("Tarefa operacional da IA não encontrada.")
+
+        serializer = AiOperationalTaskUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        previous_status = task.status
+        previous_priority = task.priority
+        update_fields = ["updated_by", "updated_at", "metadata"]
+        if "status" in data:
+            task.status = data["status"]
+            update_fields.append("status")
+        if "priority" in data:
+            task.priority = data["priority"]
+            update_fields.append("priority")
+
+        history = list((task.metadata or {}).get("lifecycle_history") or [])
+        history.append(
+            {
+                "at": timezone.now().isoformat(),
+                "by_user_id": getattr(request.user, "id", None),
+                "by_username": getattr(request.user, "username", "") or getattr(request.user, "email", ""),
+                "from_status": previous_status,
+                "to_status": task.status,
+                "from_priority": previous_priority,
+                "to_priority": task.priority,
+            }
+        )
+        task.metadata = {**(task.metadata or {}), "lifecycle_history": history[-50:]}
+        task.updated_by = request.user
+        task.save(update_fields=list(dict.fromkeys(update_fields)))
         return Response(AiOperationalTaskSerializer(task).data)
 
 

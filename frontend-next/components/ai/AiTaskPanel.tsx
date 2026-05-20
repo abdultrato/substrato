@@ -16,7 +16,12 @@ export type AiOperationalTask = {
   priority?: string
   status?: string
   due_at?: string | null
+  source_type?: string
   source_reference?: string
+  metadata?: Record<string, any>
+  created_by_name?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export default function AiTaskPanel({ task, href }: { task?: AiOperationalTask | null; href?: string }) {

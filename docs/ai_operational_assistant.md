@@ -789,6 +789,41 @@ tests/test_ai_assistant_api.py
 - O relatório só é gerado depois de confirmação explícita.
 - Utilizador sem acesso à investigação não consegue preparar seguimento.
 
+## Próximo Nível Implementado: Ciclo de Vida das Tarefas da IA
+Este incremento transforma as tarefas confirmadas em objectos operacionais acompanháveis. A tarefa deixa de ser apenas resultado de uma confirmação e passa a ter fila filtrável, detalhe próprio, gestão de estado, gestão de prioridade e histórico de ciclo de vida em metadados.
+
+### Estrutura Criada
+```text
+api/v1/ai/
+  serializers.py
+    AiOperationalTaskUpdateSerializer
+  views.py
+    filtros de tarefas
+    PATCH de estado/prioridade
+frontend-next/app/ai/tasks/
+  page.tsx
+  [id]/page.tsx
+frontend-next/components/ai/
+  AiActionPanel.tsx
+  AiTaskPanel.tsx
+tests/test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. `GET /api/v1/ai/assistant/tasks/` aceita filtros por texto, estado, prioridade, equipa, módulo, origem e limite.
+2. `GET /api/v1/ai/assistant/tasks/{id}/` respeita tenant, grupo responsável e criador da tarefa.
+3. `PATCH /api/v1/ai/assistant/tasks/{id}/` altera apenas estado e prioridade.
+4. Cada alteração de ciclo grava `metadata.lifecycle_history` com utilizador, data, estado anterior/novo e prioridade anterior/nova.
+5. A confirmação de tarefa passa a apontar para `/ai/tasks/{id}`.
+6. O frontend mostra fila filtrável e página de detalhe com acções `open`, `in_progress`, `done` e `cancelled`.
+
+### Critérios de Aceite do Nível
+- Utilizador confirma uma tarefa da IA e recebe ligação directa para o detalhe.
+- Utilizador autorizado filtra tarefas por estado, prioridade e texto.
+- Utilizador autorizado abre uma tarefa e muda o estado para `in_progress` ou `done`.
+- A prioridade pode ser ajustada sem perder histórico.
+- Utilizador sem grupo responsável nem ownership não consegue abrir ou alterar a tarefa.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/

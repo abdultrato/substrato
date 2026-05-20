@@ -71,7 +71,7 @@ export default function AiActionPanel({ actions, confirmingId, results, onConfir
             <AiTaskPanel
               key={action.id}
               task={effective.operational_task}
-              href={href || `/ai/tasks?task=${effective.operational_task.id}`}
+              href={href || `/ai/tasks/${effective.operational_task.id}`}
             />
           )
         }
