@@ -6,6 +6,7 @@ from django.utils.dateparse import parse_datetime
 from apps.ai_assistant.models import AiOperationalTask, AiSuggestedAction
 from services.reports.async_exports import create_export_job, mark_export_job_processing, mark_export_job_ready
 
+from .crud import AiCrudActionRunner
 from .report_builder import build_operational_report_file
 
 
@@ -23,6 +24,8 @@ class AiActionExecutor:
             return self._execute_report_export(action=action, user=user, tenant=tenant)
         if action.action_type == "create_operational_task":
             return self._execute_operational_task(action=action, user=user, tenant=tenant)
+        if action.action_type in {"ai_crud_create", "ai_crud_update", "ai_crud_delete"}:
+            return AiCrudActionRunner().execute(action=action, user=user, tenant=tenant)
         action.status = AiSuggestedAction.Status.FAILED
         action.result_summary = "Tipo de acção ainda não tem executor confirmado."
         action.save(update_fields=["status", "result_summary", "updated_at"])

@@ -238,7 +238,43 @@ def get_resource_descriptors() -> tuple[ResourceDescriptor, ...]:
     return tuple(descriptors)
 
 
-def user_can_read_resource(*, user, basename: str) -> bool:
+def descriptor_by_basename(basename: str) -> ResourceDescriptor | None:
+    normalized = (basename or "").strip()
+    if not normalized:
+        return None
+    return next((descriptor for descriptor in get_resource_descriptors() if descriptor.basename == normalized), None)
+
+
+def viewset_for_descriptor(descriptor: ResourceDescriptor):
+    return (VIEWSET_GROUPS.get(descriptor.prefix) or {}).get(descriptor.route_name)
+
+
+def match_resource_descriptors(message: str, *, limit: int = 8) -> list[ResourceDescriptor]:
+    normalized = normalize_text(message)
+    if not normalized:
+        return []
+
+    scored: list[tuple[int, ResourceDescriptor]] = []
+    for descriptor in get_resource_descriptors():
+        score = 0
+        for keyword in descriptor.keywords:
+            if not keyword or keyword not in normalized:
+                continue
+            score += 10 if " " in keyword else 4
+        if score:
+            scored.append((score, descriptor))
+
+    scored.sort(key=lambda item: (-item[0], item[1].label_pt, item[1].basename))
+    best_score = scored[0][0] if scored else 0
+    threshold = max(4, best_score - 6)
+    return [descriptor for score, descriptor in scored if score >= threshold][:limit]
+
+
+def user_can_method_resource(*, user, basename: str, method: str) -> bool:
+    method = (method or "").strip().upper()
+    if not method:
+        return False
+
     policy = AiPolicyGuard()
     if policy.is_admin_like(user):
         return True
@@ -247,7 +283,14 @@ def user_can_read_resource(*, user, basename: str) -> bool:
     for group in user_groups:
         methods_by_resource = ROLE_POLICY.get(normalize_group(group)) or {}
         methods = methods_by_resource.get(basename)
-        if methods and SAFE_METHODS.intersection(methods):
+        if methods and method in methods:
+            return True
+    return False
+
+
+def user_can_read_resource(*, user, basename: str) -> bool:
+    for method in SAFE_METHODS:
+        if user_can_method_resource(user=user, basename=basename, method=method):
             return True
     return False
 

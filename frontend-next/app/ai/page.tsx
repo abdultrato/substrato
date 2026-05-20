@@ -213,6 +213,7 @@ export default function AiOperationalPage() {
       t("Quem sou eu neste sistema?", "Who am I in this system?"),
       t("Que dados posso investigar?", "What data can I investigate?"),
       t("Quantos pacientes existem?", "How many patients exist?"),
+      t("Crie um paciente chamado Paciente Teste.", "Create a patient called Test Patient."),
       t("Mostre erros do sistema.", "Show system errors."),
       t("Investigue o que devo priorizar hoje.", "Investigate what I should prioritize today."),
       t("Quais alertas activos existem agora?", "What active alerts exist now?"),
@@ -385,8 +386,8 @@ export default function AiOperationalPage() {
         <PageHeader
           title={t("IA Operacional", "Operational AI")}
           subtitle={t(
-            "Copiloto auditável para contexto pessoal, investigação segura de dados e fluxos operacionais.",
-            "Auditable copilot for personal context, secure data investigation and operational workflows."
+            "Copiloto auditável para contexto pessoal, investigação segura de dados e CRUD conversacional com confirmação.",
+            "Auditable copilot for personal context, secure data investigation and confirmable conversational CRUD."
           )}
           actions={
             <div className="flex flex-wrap gap-2">
@@ -420,15 +421,15 @@ export default function AiOperationalPage() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
                 <BrainCircuit size={15} />
-                {t("Modo leitura com auditoria", "Read-only mode with audit")}
+                {t("Modo operacional com confirmação", "Operational mode with confirmation")}
               </div>
               <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">
-                {t("Identifica-o pelo login e só consulta o que o seu perfil permite.", "It identifies you by login and only queries what your profile allows.")}
+                {t("Identifica-o pelo login e só consulta ou altera o que o seu perfil permite.", "It identifies you by login and only queries or changes what your profile allows.")}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
                 {t(
-                  "Pergunte quem está autenticado, que dados pode investigar ou peça contagens/listagens específicas. Se o RBAC bloquear o recurso, a resposta será uma recusa explícita.",
-                  "Ask who is authenticated, what data can be investigated or request specific counts/lists. If RBAC blocks the resource, the answer is an explicit refusal."
+                  "Pergunte quem está autenticado, que dados pode investigar ou peça para criar/alterar registos. Escrita só acontece depois de confirmação e nova validação no backend.",
+                  "Ask who is authenticated, what data can be investigated or request record creation/updates. Writes only happen after confirmation and backend revalidation."
                 )}
               </p>
             </div>
@@ -451,9 +452,9 @@ export default function AiOperationalPage() {
               <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60">
                   <Sparkles size={14} />
-                  {t("Primeira ferramenta", "First tool")}
+                  {t("Fluxo seguro", "Secure flow")}
                 </div>
-                <div className="mt-1 text-sm font-semibold">{t("Contexto + RBAC", "Context + RBAC")}</div>
+                <div className="mt-1 text-sm font-semibold">{t("CRUD + RBAC", "CRUD + RBAC")}</div>
               </div>
             </div>
           </div>
@@ -474,8 +475,8 @@ export default function AiOperationalPage() {
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t(
-                          "A IA pergunta o que deve ser investigado, consulta dados autorizados e recusa recursos fora do seu perfil.",
-                          "The AI asks what should be investigated, queries authorized data and refuses resources outside your profile."
+                          "A IA pergunta o que falta, prepara acções confirmáveis e recusa recursos fora do seu perfil.",
+                          "The AI asks for missing data, prepares confirmable actions and refuses resources outside your profile."
                         )}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -548,8 +549,8 @@ export default function AiOperationalPage() {
                 onChange={(event) => setComposer(event.target.value)}
                 rows={3}
                 placeholder={t(
-                  "Ex.: Quem sou eu e que dados posso investigar?",
-                  "Example: Who am I and what data can I investigate?"
+                  "Ex.: Crie um paciente chamado Paciente Teste, contacto +258 84 000 0000",
+                  "Example: Create a patient called Test Patient, phone +258 84 000 0000"
                 )}
                 onKeyDown={(event) => {
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
@@ -560,8 +561,8 @@ export default function AiOperationalPage() {
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-muted-foreground">
                   {t(
-                    "Ctrl+Enter envia. A resposta deve citar fontes internas quando usa dados do sistema.",
-                    "Ctrl+Enter sends. The answer should cite internal sources when it uses system data."
+                    "Ctrl+Enter envia. Acções de escrita ficam pendentes até confirmar no botão gerado pela IA.",
+                    "Ctrl+Enter sends. Write actions remain pending until confirmed with the AI-generated button."
                   )}
                 </p>
                 <Button type="submit" loading={loading} disabled={!composer.trim()}>

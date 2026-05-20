@@ -26,6 +26,10 @@ class LocalLlmGateway:
         if denied_result:
             return self._access_denied_answer(denied_result.get("result") or {}, language=language)
 
+        crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
+        if crud_result:
+            return self._crud_answer(crud_result.get("result") or {}, language=language)
+
         user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
         data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
         if user_context_result and len(tool_results) == 1:
@@ -278,6 +282,93 @@ class LocalLlmGateway:
                 "Próximo passo sugerido: indique um código/referência específica se quiser uma investigação mais estreita.",
             ]
         )
+
+    def _crud_answer(self, result: dict[str, Any], *, language: str) -> str:
+        crud = result.get("crud") or {}
+        status = crud.get("status") or ""
+        resource = crud.get("resource") or {}
+        label = resource.get("label_en") if language == "en" else resource.get("label_pt")
+        label = label or ("resource" if language == "en" else "recurso")
+        operation = crud.get("operation") or "create"
+        operation_label = self._crud_operation_label(operation=operation, language=language)
+
+        if status == "collecting":
+            captured = crud.get("payload") or {}
+            prompt = crud.get("prompt_en") if language == "en" else crud.get("prompt_pt")
+            if language == "en":
+                direct = f"I started a conversational {operation_label} flow for {label}."
+                if captured:
+                    direct += f" I already captured: {', '.join(captured.keys())}."
+                return "\n\n".join(
+                    [
+                        direct,
+                        prompt or "Send the missing fields and I will prepare the action for confirmation.",
+                        "Internal evidence used: API resource catalog, serializer field metadata and RBAC.",
+                        "Limitation: nothing was written yet. The record will only be changed after explicit confirmation.",
+                    ]
+                )
+            direct = f"Iniciei o fluxo conversacional de {operation_label} para {label}."
+            if captured:
+                direct += f" Já recolhi: {', '.join(captured.keys())}."
+            return "\n\n".join(
+                [
+                    direct,
+                    prompt or "Envie os campos em falta e preparo a acção para confirmação.",
+                    "Evidência interna usada: catálogo da API, metadados do serializer e RBAC.",
+                    "Limitação: nada foi gravado ainda. O registo só muda depois de confirmação explícita.",
+                ]
+            )
+
+        if status == "needs_resource":
+            prompt = crud.get("prompt_en") if language == "en" else crud.get("prompt_pt")
+            if language == "en":
+                return "\n\n".join(
+                    [
+                        "I understood the CRUD intent, but I still need the target resource.",
+                        prompt or "Tell me which module/resource should receive this operation.",
+                        "Internal evidence used: API resource catalog.",
+                    ]
+                )
+            return "\n\n".join(
+                [
+                    "Entendi a intenção de CRUD, mas ainda preciso do recurso de destino.",
+                    prompt or "Diga em que módulo/recurso devo executar esta operação.",
+                    "Evidência interna usada: catálogo de recursos da API.",
+                ]
+            )
+
+        if status == "ready":
+            payload = crud.get("payload") or {}
+            if language == "en":
+                return "\n\n".join(
+                    [
+                        f"I prepared the {operation_label} action for {label}.",
+                        f"Fields to apply: {', '.join(payload.keys()) or 'none'}. Use the confirmation button to execute it.",
+                        "Internal evidence used: API resource catalog, serializer validation metadata and RBAC.",
+                        "Limitation: the write is still pending. Confirmation revalidates tenant and permissions before touching the database.",
+                    ]
+                )
+            return "\n\n".join(
+                [
+                    f"Preparei a acção de {operation_label} para {label}.",
+                    f"Campos a aplicar: {', '.join(payload.keys()) or 'nenhum'}. Use o botão de confirmação para executar.",
+                    "Evidência interna usada: catálogo da API, metadados de validação do serializer e RBAC.",
+                    "Limitação: a escrita ainda está pendente. A confirmação revalida tenant e permissões antes de tocar na base de dados.",
+                ]
+            )
+
+        if language == "en":
+            return "I did not find a complete CRUD operation to prepare."
+        return "Não encontrei uma operação de CRUD completa para preparar."
+
+    def _crud_operation_label(self, *, operation: str, language: str) -> str:
+        labels = {
+            "create": ("criação", "creation"),
+            "update": ("alteração", "update"),
+            "delete": ("remoção", "deletion"),
+        }
+        pt, en = labels.get(operation, (operation, operation))
+        return en if language == "en" else pt
 
     def _module_summary(self, modules: list[dict[str, Any]], *, language: str) -> str:
         affected = [item for item in modules if item.get("slo_state") in {"critical", "warning"}]

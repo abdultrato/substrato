@@ -8,7 +8,9 @@ from django.conf import settings
 from django.db import transaction
 
 from apps.ai_assistant.models import AiMessage, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.services.crud import CRUD_DRAFT_KEY
 from apps.ai_assistant.tools.base import AiToolContext
+from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 
 from .audit import AiAuditLogger
 from .investigation import AiInvestigationBuilder
@@ -66,8 +68,9 @@ class AiOrchestrator:
                 metadata={"active_module": active_module, "context": context},
             )
 
-            arguments = self._build_tool_arguments(message=message, context=context)
+            arguments = self._build_tool_arguments(message=message, context=context, session_id=session.id)
             selected_tools = self.registry.select_tools(message=message, active_module=active_module)
+            selected_tools = self._with_crud_draft_tool(selected_tools=selected_tools, session=session)
             tool_results: list[dict[str, Any]] = []
             blocked_tools: list[dict[str, Any]] = []
             tool_call_payload: list[dict[str, Any]] = []
@@ -205,7 +208,7 @@ class AiOrchestrator:
                 "provider": self.gateway.provider,
             }
 
-    def _build_tool_arguments(self, *, message: str, context: dict[str, Any]) -> dict[str, Any]:
+    def _build_tool_arguments(self, *, message: str, context: dict[str, Any], session_id: int | None = None) -> dict[str, Any]:
         filters = context.get("filters") if isinstance(context.get("filters"), dict) else {}
         days = filters.get("days") or context.get("days")
         request_code = filters.get("request_code") or filters.get("request") or context.get("request_code") or ""
@@ -220,7 +223,22 @@ class AiOrchestrator:
             if match:
                 request_code = match.group(0).upper()
         default_days = 30 if re.search(r"\b(relatorio|relatório|report|export|exportar)\b", message or "", flags=re.IGNORECASE) else 7
-        return {"days": days or default_days, "top": filters.get("top") or 8, "request_code": request_code, "message": message}
+        return {
+            "days": days or default_days,
+            "top": filters.get("top") or 8,
+            "request_code": request_code,
+            "message": message,
+            "ai_session_id": session_id,
+        }
+
+    def _with_crud_draft_tool(self, *, selected_tools: list, session) -> list:
+        metadata = session.metadata or {}
+        has_draft = isinstance(metadata.get(CRUD_DRAFT_KEY), dict)
+        if not has_draft:
+            return selected_tools
+        if any(getattr(tool, "name", "") == PrepareCrudOperationTool.name for tool in selected_tools):
+            return selected_tools
+        return [*selected_tools, self.registry.get(PrepareCrudOperationTool.name)]
 
     def _collect_sources(self, tool_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         sources: list[dict[str, Any]] = []
@@ -365,6 +383,33 @@ class AiOrchestrator:
                     "label_pt": prepared.get("label_pt") or "Criar tarefa operacional",
                     "label_en": prepared.get("label_en") or "Create operational task",
                     "allowed_groups": list(prepared.get("allowed_groups") or payload.get("allowed_groups") or []),
+                },
+                requires_confirmation=bool(prepared.get("requires_confirmation", True)),
+                confirmation_summary=confirmation_summary,
+            )
+            action_payloads.append(self._action_payload(action))
+
+        crud_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
+        if crud_result and crud_result.get("prepared_action"):
+            prepared = crud_result.get("prepared_action") or {}
+            payload = dict(prepared.get("payload") or {})
+            confirmation_summary = (
+                prepared.get("confirmation_summary_en")
+                if language == "en"
+                else prepared.get("confirmation_summary_pt")
+            ) or (
+                "Confirm operational CRUD action." if language == "en" else "Confirmar acção CRUD operacional."
+            )
+            action = self.audit.create_suggested_action(
+                tenant=tenant,
+                session=session,
+                user=user,
+                action_type=str(prepared.get("action_type") or "ai_crud_create"),
+                payload={
+                    **payload,
+                    "label_pt": prepared.get("label_pt") or "Confirmar alteração",
+                    "label_en": prepared.get("label_en") or "Confirm change",
+                    "allowed_groups": list(payload.get("allowed_groups") or []),
                 },
                 requires_confirmation=bool(prepared.get("requires_confirmation", True)),
                 confirmation_summary=confirmation_summary,

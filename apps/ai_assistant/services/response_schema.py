@@ -32,6 +32,7 @@ def build_response_schema(
 
     return {
         "cards": cards,
+        "crud": _crud_schema(tool_results=tool_results, language=language),
         "evidence": [
             {
                 "type": source.get("type") or "source",
@@ -50,6 +51,25 @@ def build_response_schema(
             for action in suggested_actions
         ],
         "investigation": _investigation_schema(investigation=investigation, language=language),
+    }
+
+
+def _crud_schema(*, tool_results: list[dict[str, Any]], language: str) -> dict[str, Any] | None:
+    crud_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
+    if not crud_result:
+        return None
+    crud = crud_result.get("crud") or {}
+    resource = crud.get("resource") or {}
+    return {
+        "status": crud.get("status") or "",
+        "operation": crud.get("operation") or "",
+        "resource_label": resource.get("label_en") if language == "en" else resource.get("label_pt"),
+        "payload": crud.get("payload") or {},
+        "object_ref": crud.get("object_ref") or "",
+        "missing_fields": crud.get("missing_fields") or [],
+        "needs_object_ref": bool(crud.get("needs_object_ref")),
+        "needs_fields": bool(crud.get("needs_fields")),
+        "available_fields": (crud.get("available_fields") or [])[:40],
     }
 
 

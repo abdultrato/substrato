@@ -4,6 +4,7 @@ from typing import Any
 
 from apps.ai_assistant.tools.clinical import ClinicalOperationalSummaryTool, LabRequestCollectionGuidanceTool
 from apps.ai_assistant.tools.command_center import CommandCenterAlertsTool
+from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 from apps.ai_assistant.tools.data_explorer import ExploreDatabaseTool
 from apps.ai_assistant.tools.education import EducationSummaryTool
 from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
@@ -28,6 +29,7 @@ class AiToolRegistry:
             FinancialOperationalSummaryTool.name: FinancialOperationalSummaryTool(),
             PharmacyStockSummaryTool.name: PharmacyStockSummaryTool(),
             EducationSummaryTool.name: EducationSummaryTool(),
+            PrepareCrudOperationTool.name: PrepareCrudOperationTool(),
             PrepareOperationalReportTool.name: PrepareOperationalReportTool(),
             PrepareOperationalTaskTool.name: PrepareOperationalTaskTool(),
         }
@@ -142,6 +144,49 @@ class AiToolRegistry:
 
         if any(term in normalized for term in ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
             selected.append(self._tools[PrepareOperationalReportTool.name])
+
+        if "tarefa" not in normalized and "task" not in normalized and any(
+            term in normalized
+            for term in (
+                "criar",
+                "crie",
+                "inserir",
+                "insira",
+                "cadastrar",
+                "cadastre",
+                "registar",
+                "registe",
+                "registrar",
+                "adicione",
+                "adicionar",
+                "novo",
+                "nova",
+                "actualizar",
+                "atualizar",
+                "actualize",
+                "atualize",
+                "alterar",
+                "altere",
+                "editar",
+                "edite",
+                "corrigir",
+                "corrija",
+                "apagar",
+                "apague",
+                "remover",
+                "remova",
+                "eliminar",
+                "elimine",
+                "excluir",
+                "exclua",
+                "create",
+                "insert",
+                "update",
+                "delete",
+                "remove",
+            )
+        ):
+            selected.append(self._tools[PrepareCrudOperationTool.name])
 
         if any(
             term in normalized

@@ -11,7 +11,7 @@ from .resource_catalog import (
     ResourceDescriptor,
     accessible_resources_for_user,
     descriptors_by_module,
-    get_resource_descriptors,
+    match_resource_descriptors,
     normalize_text,
     scoped_queryset_for_resource,
     user_can_read_resource,
@@ -223,23 +223,10 @@ class ExploreDatabaseTool(AiTool):
         if not normalized:
             return []
 
-        scored: list[tuple[int, ResourceDescriptor]] = []
-        for descriptor in get_resource_descriptors():
-            score = 0
-            for keyword in descriptor.keywords:
-                if not keyword or keyword not in normalized:
-                    continue
-                score += 10 if " " in keyword else 4
-            if score:
-                scored.append((score, descriptor))
-
-        if not scored and any(term in normalized for term in (normalize_text(item) for item in DATA_QUERY_TERMS)):
+        matches = match_resource_descriptors(message)
+        if not matches and any(term in normalized for term in (normalize_text(item) for item in DATA_QUERY_TERMS)):
             return []
-
-        scored.sort(key=lambda item: (-item[0], item[1].label_pt, item[1].basename))
-        best_score = scored[0][0] if scored else 0
-        threshold = max(4, best_score - 6)
-        return [descriptor for score, descriptor in scored if score >= threshold][:8]
+        return matches
 
     def _apply_search(self, *, queryset: QuerySet, message: str) -> QuerySet:
         model = queryset.model

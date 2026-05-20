@@ -240,6 +240,171 @@ def test_ai_data_explorer_denies_resource_without_rbac(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_conversational_crud_collects_patient_data_then_creates_record(api_client):
+    tenant = _tenant(identifier="tn-ai-crud", domain="tn-ai-crud.local")
+    user = _user(tenant, "recepcao_ai_crud", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    first_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Crie um paciente", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert first_response.status_code == 200, _response_data(first_response)
+    first_data = _response_data(first_response)
+    assert "fluxo conversacional" in first_data["answer"]
+    assert not first_data["suggested_actions"]
+    assert any(call["tool_name"] == "prepare_crud_operation" and call["status"] == "success" for call in first_data["tool_calls"])
+
+    session = AiSession.objects.get(id=first_data["session_id"])
+    assert session.metadata["crud_draft"]["resource_basename"] == "clinical-patient"
+
+    second_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "session_id": first_data["session_id"],
+            "message": "nome Paciente Conversa",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert second_response.status_code == 200, _response_data(second_response)
+    second_data = _response_data(second_response)
+    action_payload = next(action for action in second_data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "clinical-patient"
+    assert action.payload["data"]["name"] == "Paciente Conversa"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    assert Patient.objects.filter(tenant=tenant, name="Paciente Conversa").exists()
+    action.refresh_from_db()
+    assert action.status == AiSuggestedAction.Status.CONFIRMED
+    session.refresh_from_db()
+    assert "crud_draft" not in session.metadata
+
+
+@pytest.mark.django_db
+def test_ai_conversational_crud_prepares_direct_patient_create(api_client):
+    tenant = _tenant(identifier="tn-ai-crud-direct", domain="tn-ai-crud-direct.local")
+    user = _user(tenant, "recepcao_ai_crud_direct", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie paciente nome Paciente Direto contacto +258 84 111 2222",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["data"]["name"] == "Paciente Direto"
+    assert action.payload["data"]["contact"] == "+258 84 111 2222"
+
+
+@pytest.mark.django_db
+def test_ai_conversational_crud_updates_patient_after_confirmation(api_client):
+    tenant = _tenant(identifier="tn-ai-crud-update", domain="tn-ai-crud-update.local")
+    user = _user(tenant, "recepcao_ai_crud_update", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Antigo")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere paciente id {patient.id} nome Paciente Actualizado",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["object_ref"] == str(patient.id)
+    assert action.payload["data"]["name"] == "Paciente Actualizado"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    patient.refresh_from_db()
+    assert patient.name == "Paciente Actualizado"
+
+
+@pytest.mark.django_db
+def test_ai_conversational_crud_deletes_patient_after_confirmation(api_client):
+    tenant = _tenant(identifier="tn-ai-crud-delete", domain="tn-ai-crud-delete.local")
+    admin = _user(tenant, "admin_ai_crud_delete", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Removivel")
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova paciente id {patient.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["object_ref"] == str(patient.id)
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = Patient.all_objects.get(id=patient.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_conversational_crud_denies_write_without_resource_permission(api_client):
+    tenant = _tenant(identifier="tn-ai-crud-denied", domain="tn-ai-crud-denied.local")
+    user = _user(tenant, "enfermagem_ai_crud_denied", GROUPS["ENFERMAGEM"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Crie paciente nome Paciente Bloqueado", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Patient.objects.filter(tenant=tenant, name="Paciente Bloqueado").exists()
+
+
+@pytest.mark.django_db
 def test_ai_investigations_endpoint_is_user_scoped(api_client):
     tenant = _tenant(identifier="tn-ai-investigations", domain="tn-ai-investigations.local")
     owner = _user(tenant, "owner_ai_investigation", GROUPS["RECEPCAO"])

@@ -1,14 +1,14 @@
 # IA Operacional do Substrato
 
 ## Estado
-Proposta técnica implementável.
+Base operacional implementada e em evolução incremental.
 
 Este documento define a estrutura base da IA do Substrato. A intenção não é criar um chatbot genérico, mas uma camada operacional segura que entende o domínio do sistema, respeita as permissões existentes e transforma dados dispersos em orientação prática para utilizadores autorizados.
 
 ## Decisão Central
-A primeira versão da IA deve ser um **copiloto operacional em modo leitura**, integrado ao Command Center e aos módulos principais do projeto.
+A IA deve ser um **copiloto operacional com acções confirmáveis**, integrado ao Command Center e aos módulos principais do projecto.
 
-Escrita, notificações, exportações, tarefas e qualquer ação com impacto operacional devem ser tratadas como **ações preparadas**, nunca executadas diretamente pela resposta do modelo. A execução só acontece depois de confirmação explícita do utilizador e nova validação de RBAC/tenant no backend.
+Leitura pode ser respondida directamente quando o RBAC permitir. Escrita, notificações, exportações, tarefas e qualquer acção com impacto operacional devem ser tratadas como **acções preparadas**, nunca executadas directamente pela resposta do modelo. A execução só acontece depois de confirmação explícita do utilizador e nova validação de RBAC/tenant no backend.
 
 ## Objetivos
 1. Reduzir o tempo para encontrar informação operacional.
@@ -275,6 +275,33 @@ sequenceDiagram
     T->>D: cria job/exportação/notificação
     A-->>F: ação concluída + fonte
 ```
+
+## Fase Actual: CRUD Conversacional Confirmável
+A IA passa a actuar como uma camada conversacional para operações CRUD, sem ganhar privilégios próprios.
+
+Fluxo esperado:
+1. O utilizador autenticado pede uma operação, por exemplo: "crie um paciente", "altere o paciente X" ou "remova o registo Y".
+2. A IA identifica a intenção (`create`, `update`, `delete`) e tenta resolver o recurso no catálogo real da API.
+3. O recurso é validado contra o RBAC do utilizador para o método HTTP correspondente (`POST`, `PATCH`, `DELETE`).
+4. A IA inspecciona o serializer do ViewSet para descobrir campos editáveis, campos obrigatórios, aliases PT/EN e escolhas.
+5. Se faltarem dados, o rascunho fica guardado em `AiSession.metadata["crud_draft"]` e a IA pede apenas o que falta.
+6. Se os dados já estiverem completos, a IA cria uma `AiSuggestedAction` pendente de confirmação.
+7. Ao confirmar, o backend executa o mesmo ViewSet registado em `api/v1/routing/routes.py`, revalidando tenant, RBAC, serializer e regras do módulo.
+
+Estrutura implementada:
+- `apps/ai_assistant/services/crud.py`: motor de rascunhos, extracção de campos, preparação e executor CRUD.
+- `apps/ai_assistant/tools/crud.py`: ferramenta `prepare_crud_operation`.
+- `apps/ai_assistant/tools/resource_catalog.py`: resolução de recursos, ViewSets e autorização por método.
+- `apps/ai_assistant/services/orchestrator.py`: injecção de `session_id`, continuação de rascunhos e criação de acções sugeridas.
+- `apps/ai_assistant/services/action_executor.py`: execução de `ai_crud_create`, `ai_crud_update` e `ai_crud_delete`.
+- `frontend-next/app/ai/page.tsx`: experiência de conversa orientada a CRUD confirmável.
+
+Garantias:
+- A IA nunca grava durante a resposta textual.
+- Cada escrita exige `AiSuggestedAction` e confirmação explícita.
+- A confirmação reusa os ViewSets existentes, logo herda validação, tenant e permissões do backend.
+- O fluxo é genérico para os recursos registados nas apps, não apenas para pacientes.
+- Recursos sem permissão de escrita retornam recusa explícita.
 
 ## Ferramentas Iniciais
 ### Command Center

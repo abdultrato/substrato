@@ -29,14 +29,14 @@ type Props = {
   onConfirm: (action: AiSuggestedAction) => Promise<void>
 }
 
-function ActionLink({ href, label }: { href: string; label: string }) {
-  if (href.startsWith("/api/")) {
+function ActionLink({ href, label, download = false }: { href: string; label: string; download?: boolean }) {
+  if (href.startsWith("/api/") || download) {
     return (
       <a
         href={href}
         className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary-hover"
       >
-        <Download size={14} />
+        {download ? <Download size={14} /> : <ExternalLink size={14} />}
         {label}
       </a>
     )
@@ -82,6 +82,7 @@ export default function AiActionPanel({ actions, confirmingId, results, onConfir
               key={action.id}
               href={href}
               label={result && action.action_type === "prepare_ai_report_export" ? t("Transferir relatório", "Download report") : label}
+              download={action.action_type === "prepare_ai_report_export"}
             />
           )
         }
