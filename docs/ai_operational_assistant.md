@@ -1,261 +1,728 @@
 # IA Operacional do Substrato
 
-## Objetivo
-Criar uma IA integrada ao Substrato para apoiar utilizadores finais e equipas operacionais em saúde, educação, finanças, farmácia, enfermagem, administração e monitoramento.
+## Estado
+Proposta técnica implementável.
 
-A IA deve funcionar como copiloto de operação, análise e navegação, respeitando sempre tenant, RBAC, auditoria, idioma escolhido pelo utilizador e limites de segurança clínica/financeira.
+Este documento define a estrutura base da IA do Substrato. A intenção não é criar um chatbot genérico, mas uma camada operacional segura que entende o domínio do sistema, respeita as permissões existentes e transforma dados dispersos em orientação prática para utilizadores autorizados.
 
-## Princípios
-1. Multi-tenant obrigatório: a IA só pode ler dados do tenant ativo.
-2. RBAC obrigatório: a IA herda exatamente as permissões do utilizador autenticado.
-3. Auditoria completa: toda pergunta, resposta, ferramenta invocada e ação proposta deve gerar log rastreável.
-4. Leitura antes de escrita: a primeira versão deve operar em modo consulta, resumo, recomendação e navegação.
-5. Confirmação humana para ações: qualquer criação, alteração, faturamento, notificação ou execução operacional precisa de confirmação explícita.
-6. Sem decisão clínica autónoma: a IA pode resumir, sinalizar risco e sugerir investigação, mas não diagnosticar nem prescrever.
-7. Sem decisão financeira autónoma: a IA pode preparar cobranças, reconciliações e relatórios, mas não confirmar pagamento sem aprovação.
-8. Idioma persistente: todas as respostas devem respeitar PT-PT ou EN conforme a preferência ativa do utilizador.
+## Decisão Central
+A primeira versão da IA deve ser um **copiloto operacional em modo leitura**, integrado ao Command Center e aos módulos principais do projeto.
 
-## Escopo Inicial
-### Copiloto administrativo
-- Consultar pacientes, requisições, consultas, faturas, pagamentos, recibos e seguradora.
-- Explicar estados operacionais: pendente, validado, faturado, pago, cancelado, crítico.
-- Abrir links internos e preparar filtros de páginas.
+Escrita, notificações, exportações, tarefas e qualquer ação com impacto operacional devem ser tratadas como **ações preparadas**, nunca executadas diretamente pela resposta do modelo. A execução só acontece depois de confirmação explícita do utilizador e nova validação de RBAC/tenant no backend.
 
-### Assistente operacional
-- Ler dados do Command Center.
-- Explicar alertas 4xx/5xx, rotas críticas, módulos abaixo de SLO e backlog da outbox.
-- Sugerir próximos passos de triagem para administradores.
+## Objetivos
+1. Reduzir o tempo para encontrar informação operacional.
+2. Explicar alertas, erros, atrasos e filas de trabalho em linguagem compreensível.
+3. Apoiar relatórios executivos, clínicos, financeiros e escolares.
+4. Ajudar utilizadores a navegar para a página certa com filtros já preparados.
+5. Preservar segurança clínica, financeira e multi-tenant.
+6. Criar uma base auditável para futuras automações.
 
-### Assistente clínico operacional
-- Resumir histórico de paciente para utilizadores autorizados.
-- Resumir requisições laboratoriais, exames solicitados, estado de amostras e resultados.
-- Destacar resultados críticos já marcados pelo sistema.
-- Não gerar diagnóstico ou prescrição autónoma.
+## Não Objetivos
+1. Substituir profissionais clínicos, financeiros ou administrativos.
+2. Diagnosticar, prescrever ou validar resultados clínicos autonomamente.
+3. Confirmar pagamentos, apagar dados ou alterar registos sem confirmação.
+4. Expor dados de um tenant a outro tenant.
+5. Treinar modelos externos com dados sensíveis do projeto.
+6. Criar automação invisível sem trilha de auditoria.
 
-### Assistente de relatórios
-- Gerar resumos executivos, clínicos, financeiros e escolares.
-- Preparar filtros por período, módulo, utilizador, setor, estado e tenant.
-- Acionar exportações PDF/CSV/Word apenas após confirmação.
+## Princípios Obrigatórios
+1. **Tenant primeiro**: todo acesso a dados recebe `tenant` resolvido pelo middleware.
+2. **Permissões do utilizador**: a IA nunca deve ter mais acesso do que o utilizador autenticado.
+3. **Auditoria por defeito**: sessão, mensagem, ferramenta, erro, política e ação devem ser registados.
+4. **Fontes internas**: respostas factuais devem apontar os dados internos usados.
+5. **Minimização de dados**: enviar ao modelo apenas o necessário para responder.
+6. **Ação em duas fases**: preparar primeiro, confirmar depois.
+7. **Explicabilidade operacional**: a IA deve dizer o que encontrou, onde encontrou e qual é a limitação.
+8. **Idioma persistente**: PT-PT e EN devem seguir a preferência do utilizador.
 
-### Assistente de navegação
-- Converter intenção do utilizador em rota interna.
-- Exemplo: "mostrar requisições críticas de hoje" deve abrir a página correta com filtros aplicados.
+## Relação com a Arquitetura Atual
+A IA deve aproveitar superfícies já existentes no Substrato:
 
-## Fora de Escopo na Primeira Versão
-1. Alterar dados clínicos sem confirmação.
-2. Confirmar pagamentos automaticamente.
-3. Apagar registos.
-4. Enviar mensagens externas sem confirmação.
-5. Treinar modelo com dados sensíveis do tenant.
-6. Expor dados entre tenants.
-7. Usar prompts sem rastreabilidade.
+- Multi-tenant: `TenantMiddleware` e modelos com `tenant`.
+- RBAC: grupos, permissões e viewsets protegidos.
+- Auditoria: `UserActivity` e logs de atividade.
+- Monitorização: `SystemError`, telemetria e Command Center.
+- Eventos: outbox/eventos operacionais já definidos para a evolução do sistema.
+- Frontend: Next.js em `frontend-next`, `AppLayout`, `useLanguage`, `apiFetch`, componentes `Card`, `MetricCard`, `DataTable`.
 
-## Arquitetura Base
+## Arquitetura de Alto Nível
+```mermaid
+flowchart LR
+    U[Utilizador autenticado] --> UI[Frontend /ai]
+    UI --> API[AI Assistant API]
+    API --> P[AiPolicyGuard]
+    P --> O[AiOrchestrator]
+    O --> R[AiToolRegistry]
+    R --> T1[Command Center Tool]
+    R --> T2[Clinical Tools]
+    R --> T3[Billing/Payments Tools]
+    R --> T4[Education Tools]
+    R --> T5[Navigation/Report Tools]
+    O --> L[LLM Gateway]
+    O --> A[AiAuditLogger]
+    A --> DB[(DB Substrato)]
+    T1 --> DB
+    T2 --> DB
+    T3 --> DB
+    T4 --> DB
+    T5 --> DB
+```
+
+## Camadas
 ### Frontend
-- Página principal: `/ai`
-- Entrada global opcional no footer/header: "Assistente IA".
-- Componentes:
-  - `AiChatPanel`: conversa principal.
-  - `AiContextBar`: contexto ativo, tenant, idioma, módulo e permissões.
-  - `AiToolCallCard`: mostra ferramentas consultadas e resultados resumidos.
-  - `AiConfirmationDialog`: confirmação antes de qualquer ação.
-  - `AiCitationList`: fontes internas usadas na resposta.
+Responsável pela experiência do utilizador, contexto visual, confirmação de ações e exibição de fontes.
 
-### Backend
-- App sugerida: `apps/ai_assistant`
-- API sugerida: `/api/v1/ai/assistant/`
-- Endpoints iniciais:
-  - `POST /api/v1/ai/assistant/chat/`
-  - `GET /api/v1/ai/assistant/sessions/`
-  - `GET /api/v1/ai/assistant/sessions/{id}/`
-  - `POST /api/v1/ai/assistant/actions/{id}/confirm/`
-  - `POST /api/v1/ai/assistant/actions/{id}/cancel/`
+Local sugerido:
+- `frontend-next/app/ai/page.tsx`
+- `frontend-next/components/ai/`
+- `frontend-next/lib/ai/`
 
-### Serviços
-- `AiOrchestrator`: recebe mensagem, resolve contexto e coordena ferramentas.
-- `AiPolicyGuard`: aplica RBAC, tenant, limites de segurança e modo leitura/escrita.
-- `AiToolRegistry`: lista ferramentas disponíveis por grupo/permissão.
-- `AiResponseBuilder`: monta resposta, fontes e ações sugeridas.
-- `AiAuditLogger`: grava sessões, mensagens, ferramentas, latência e decisões.
+Componentes sugeridos:
+- `AiChatPanel`: conversa principal.
+- `AiComposer`: entrada de texto, anexos futuros e comandos rápidos.
+- `AiContextPanel`: tenant, módulo ativo, idioma, permissões e escopo.
+- `AiToolTrace`: ferramentas usadas, duração e estado.
+- `AiSources`: links internos e objetos consultados.
+- `AiSuggestedActions`: ações preparadas aguardando confirmação.
+- `AiActionConfirmDialog`: confirmação e impacto antes de executar.
+- `AiSafetyNotice`: bloqueios, falta de permissão e limites clínicos/financeiros.
 
-### Modelo de Dados
-- `AiSession`
-  - tenant, user, title, language, active_module, created_at, updated_at.
-- `AiMessage`
-  - session, role, content, metadata, token_count, created_at.
-- `AiToolCall`
-  - session, message, tool_name, input_redacted, output_summary, status, duration_ms.
-- `AiSuggestedAction`
-  - session, action_type, payload, status, requires_confirmation, confirmed_by, confirmed_at.
-- `AiPolicyEvent`
-  - session, severity, reason, blocked, metadata.
+### API
+Responsável por receber mensagens, validar contexto, persistir sessão e acionar orquestração.
 
-## Ferramentas Internas da IA
-### Leitura
-- `search_patients`
-- `get_patient_summary`
-- `search_lab_requests`
-- `get_lab_request_status`
-- `search_invoices`
-- `search_payments`
-- `search_pharmacy_stock`
-- `get_command_center_alerts`
-- `get_module_health`
-- `get_user_activity_summary`
-- `get_education_summary`
+Local sugerido:
+- `apps/ai_assistant/`
+- `api/v1/ai/`
 
-### Preparação de ações
-- `prepare_report_export`
-- `prepare_internal_notification`
-- `prepare_task_assignment`
-- `prepare_filtered_navigation`
+Endpoints iniciais:
+- `POST /api/v1/ai/assistant/chat/`
+- `GET /api/v1/ai/assistant/sessions/`
+- `GET /api/v1/ai/assistant/sessions/{id}/`
+- `POST /api/v1/ai/assistant/actions/{id}/confirm/`
+- `POST /api/v1/ai/assistant/actions/{id}/cancel/`
+- `GET /api/v1/ai/assistant/tools/`
 
-### Escrita com confirmação humana
-- `confirm_report_export`
-- `confirm_internal_notification`
-- `confirm_task_assignment`
+### Orquestração
+Responsável por decidir quais ferramentas usar, montar contexto seguro e produzir resposta final.
 
-Nenhuma ferramenta de escrita deve executar diretamente a partir do prompt. A IA prepara a ação, apresenta impacto e aguarda confirmação explícita.
+Serviços:
+- `AiOrchestrator`
+- `AiPolicyGuard`
+- `AiToolRegistry`
+- `AiToolRunner`
+- `AiResponseBuilder`
+- `AiAuditLogger`
+- `AiContextBuilder`
+- `LlmGateway`
 
-## Segurança e Privacidade
-### Proteção de dados
-- Nunca enviar campos sensíveis ao provedor de IA sem minimização.
-- Redigir dados desnecessários: documento, telefone, email, endereço, IP e identificadores externos quando não forem necessários.
-- Preferir resumos internos a payloads completos.
-- Usar IDs internos e links de detalhe em vez de expor grandes blocos de dados.
+### Ferramentas
+Cada ferramenta deve ser uma classe pequena, testável e explicitamente registrada.
 
-### RBAC
-- A IA deve usar as mesmas regras do backend.
-- Se o utilizador não tem acesso a um endpoint, a ferramenta correspondente não aparece no registry.
-- Tentativas bloqueadas devem gerar `AiPolicyEvent`.
+Contrato base:
+```python
+class AiTool:
+    name: str
+    description: str
+    required_groups: tuple[str, ...]
+    mode: Literal["read", "prepare_action", "write_confirmed"]
 
-### Auditoria
-- Toda conversa deve ser auditável por tenant.
-- Toda ferramenta deve registar:
-  - utilizador;
-  - tenant;
-  - ferramenta;
-  - input redigido;
-  - resultado resumido;
-  - duração;
-  - estado;
-  - erro, quando houver.
+    def run(self, *, tenant, user, arguments: dict) -> dict:
+        ...
+```
 
-### Prompts
-- Prompt de sistema versionado no repositório.
-- Prompt deve incluir:
-  - regras de segurança;
-  - proibição de decisão clínica autónoma;
-  - proibição de escrita sem confirmação;
-  - política de idioma;
-  - política de citação de fontes internas.
+Regras:
+1. Ferramentas recebem `tenant` e `user`, nunca resolvem por conta própria.
+2. Ferramentas usam querysets já filtrados por tenant.
+3. Ferramentas retornam payload resumido e fontes internas.
+4. Ferramentas não retornam campos sensíveis quando não forem necessários.
+5. Ferramentas de escrita só rodam no endpoint de confirmação.
 
-## Integração com Command Center
-A IA deve consumir o endpoint operacional já previsto para o Command Center:
+## Modelo de Dados
+### `AiSession`
+Campos:
+- `tenant`
+- `user`
+- `title`
+- `language`
+- `active_module`
+- `status`: `active`, `closed`, `archived`
+- `created_at`
+- `updated_at`
+- `last_message_at`
 
-- `GET /api/v1/monitoring/telemetry/command_center/`
+Índices:
+- `(tenant, user, updated_at)`
+- `(tenant, status, updated_at)`
 
-Casos de uso:
-- "Por que o sistema está com erro?"
-- "Quais módulos estão abaixo do SLO?"
-- "Mostre as rotas críticas com 5xx."
-- "Prepare um resumo executivo dos últimos 7 dias."
-- "Que equipa deve agir primeiro?"
+### `AiMessage`
+Campos:
+- `session`
+- `role`: `user`, `assistant`, `system`, `tool`
+- `content`
+- `content_redacted`
+- `metadata`
+- `token_input_count`
+- `token_output_count`
+- `created_at`
 
-## Integração com Eventos
-Na fase de orquestração, a IA deve ler eventos do outbox/event bus e explicar cadeias operacionais.
+Índices:
+- `(session, created_at)`
+- `(session, role, created_at)`
+
+### `AiToolCall`
+Campos:
+- `session`
+- `message`
+- `tool_name`
+- `mode`
+- `input_redacted`
+- `output_summary`
+- `sources`
+- `status`: `pending`, `success`, `blocked`, `error`
+- `duration_ms`
+- `error_message`
+- `created_at`
+
+Índices:
+- `(session, tool_name, created_at)`
+- `(status, created_at)`
+
+### `AiSuggestedAction`
+Campos:
+- `session`
+- `created_by`
+- `action_type`
+- `payload`
+- `payload_redacted`
+- `status`: `pending_confirmation`, `confirmed`, `cancelled`, `expired`, `failed`
+- `requires_confirmation`
+- `confirmation_summary`
+- `confirmed_by`
+- `confirmed_at`
+- `executed_at`
+- `result_summary`
+
+Índices:
+- `(tenant, status, created_at)`
+- `(session, status, created_at)`
+
+### `AiPolicyEvent`
+Campos:
+- `session`
+- `user`
+- `severity`: `info`, `warning`, `critical`
+- `policy_key`
+- `reason`
+- `blocked`
+- `metadata`
+- `created_at`
+
+Índices:
+- `(tenant, severity, created_at)`
+- `(tenant, policy_key, created_at)`
+
+## Fluxo de Chat
+```mermaid
+sequenceDiagram
+    participant U as Utilizador
+    participant F as Frontend
+    participant A as AI API
+    participant P as PolicyGuard
+    participant O as Orchestrator
+    participant T as ToolRegistry
+    participant L as LLM Gateway
+    participant D as DB
+
+    U->>F: envia pergunta
+    F->>A: POST /chat
+    A->>D: cria AiMessage(user)
+    A->>P: valida tenant, RBAC, idioma e escopo
+    P-->>A: permitido
+    A->>O: processa mensagem
+    O->>T: seleciona ferramentas permitidas
+    T->>D: consulta dados internos
+    D-->>T: resultados filtrados
+    T-->>O: resumo + fontes
+    O->>L: envia contexto minimizado
+    L-->>O: resposta estruturada
+    O->>D: grava tool calls, resposta e fontes
+    A-->>F: resposta + fontes + ações sugeridas
+    F-->>U: mostra resposta auditável
+```
+
+## Fluxo de Ação com Confirmação
+```mermaid
+sequenceDiagram
+    participant U as Utilizador
+    participant F as Frontend
+    participant A as AI API
+    participant P as PolicyGuard
+    participant T as ToolRunner
+    participant D as DB
+
+    U->>F: pede "gere o relatório"
+    F->>A: POST /chat
+    A->>T: prepare_report_export
+    T->>D: valida dados e prepara payload
+    T-->>A: AiSuggestedAction pending_confirmation
+    A-->>F: mostra impacto e confirmação
+    U->>F: confirma
+    F->>A: POST /actions/{id}/confirm
+    A->>P: revalida tenant, RBAC e ação
+    P-->>A: permitido
+    A->>T: executa ação confirmada
+    T->>D: cria job/exportação/notificação
+    A-->>F: ação concluída + fonte
+```
+
+## Ferramentas Iniciais
+### Command Center
+`get_command_center_alerts`
+- Fonte: `GET /api/v1/monitoring/telemetry/command_center/`
+- Uso: explicar alertas, módulos abaixo do SLO, rotas 5xx e outbox.
+- Permissões: administradores e perfis operacionais autorizados.
+
+`get_module_health`
+- Fonte: telemetria por módulo.
+- Uso: responder "qual módulo está pior?", "o que está abaixo da meta?".
+
+`get_error_summary`
+- Fonte: `SystemError` e `UserActivity`.
+- Uso: sumarizar erros por rota, status, utilizador e período.
+
+### Clínico
+`search_patients`
+- Procura paciente por nome, código, documento ou telefone quando autorizado.
+- Retorna lista curta, nunca histórico completo.
+
+`get_patient_operational_summary`
+- Retorna resumo clínico operacional com consultas, requisições, resultados e faturas relacionadas.
+- Exige permissão clínica.
+
+`search_lab_requests`
+- Filtra por estado, prioridade, período, paciente e crítico.
+
+`get_lab_request_collection_guidance`
+- Explica exames solicitados, amostra, frasco/tubo e volume mínimo quando os dados existirem.
+
+### Enfermagem
+`get_nursing_pending_work`
+- Lista colheitas, procedimentos e tarefas pendentes.
+
+`prepare_nursing_task_assignment`
+- Prepara tarefa para equipa ou profissional.
+- Não executa sem confirmação.
+
+### Financeiro
+`search_invoices`
+- Consulta faturas por estado, paciente, período e valor.
+
+`search_payments`
+- Consulta pagamentos e reconciliações.
+
+`prepare_billing_report`
+- Prepara relatório financeiro.
+- Confirmação obrigatória para exportar.
+
+### Farmácia
+`search_pharmacy_stock`
+- Consulta produtos, lotes, disponibilidade e validade.
+
+`get_material_request_status`
+- Mostra requisições de material e estado de atendimento.
+
+### Educação
+`get_education_summary`
+- Resume estudantes, matrículas, turmas, avaliações e alertas escolares quando autorizados.
+
+### Navegação
+`prepare_filtered_navigation`
+- Gera uma rota interna com filtros.
+- Exemplo de resultado:
+```json
+{
+  "href": "/laboratory/requests?critical=critical&status=awaiting_validation",
+  "label_pt": "Abrir requisições críticas",
+  "label_en": "Open critical requests"
+}
+```
+
+## Política de Dados
+### Dados que podem ser enviados ao LLM
+- Contagens agregadas.
+- Estados operacionais.
+- Resumos redigidos.
+- IDs internos quando necessários para citar fonte.
+- Textos de erro resumidos.
+- Metadados não sensíveis.
+
+### Dados que exigem minimização
+- Nome completo de paciente.
+- Documento de identificação.
+- Telefone.
+- Email.
+- Endereço.
+- IP.
+- Dados de pagamento.
+- Notas clínicas livres.
+- Resultado laboratorial textual completo.
+
+### Dados bloqueados por defeito
+- Segredos.
+- Tokens.
+- Passwords.
+- Chaves de API.
+- Dados de outro tenant.
+- Payload bruto de request.
+- Traceback completo enviado ao provedor externo.
+
+## Política de Resposta
+A IA deve responder com esta estrutura quando usar dados internos:
+
+1. Resposta direta.
+2. Evidência interna usada.
+3. Limitações.
+4. Próximo passo sugerido, quando aplicável.
 
 Exemplo:
-1. Recepção cria requisição laboratorial.
-2. Evento `clinical.lab_request.created` é emitido.
-3. Enfermagem recebe tarefa de colheita.
-4. Laboratório recebe fila de execução.
-5. Command Center rastreia o ciclo.
-6. IA explica estado, bloqueio e próximo passo.
+```text
+Há 3 rotas com falhas 5xx nas últimas 24 horas. A mais crítica é /api/v1/clinical/resultitem/, com 2 falhas. Também há backlog na outbox.
 
-## Idioma
-- O backend deve receber `Accept-Language`.
-- Sessões guardam `language`.
-- Respostas devem sair em PT-PT quando o utilizador estiver em português.
-- O utilizador pode pedir tradução da própria resposta.
-- Nomes técnicos de rotas, endpoints, tabelas e campos não devem ser traduzidos quando a tradução quebrar rastreabilidade.
+Fontes: Command Center, SystemError, UserActivity.
+Limitação: não encontrei logs de infraestrutura fora da aplicação.
+Próximo passo: abrir Command Center filtrado para 24 horas.
+```
 
-## UX Inicial
-### Entrada principal
-- Menu lateral: "Assistente IA".
-- Rodapé: atalho compacto quando o utilizador estiver autenticado.
+## Prompt de Sistema Versionado
+Local sugerido:
+- `apps/ai_assistant/prompts/system.pt.md`
+- `apps/ai_assistant/prompts/system.en.md`
 
-### Layout
-- Coluna principal com chat.
-- Painel lateral com:
-  - contexto ativo;
-  - fontes usadas;
-  - ações sugeridas;
-  - alertas relacionados.
+Conteúdo mínimo:
+```text
+És a IA Operacional do Substrato.
+Respeita tenant, RBAC, auditoria e idioma do utilizador.
+Não diagnostiques, não prescrevas e não confirmes pagamentos.
+Não executes ações de escrita sem confirmação explícita.
+Quando usares dados internos, cita as fontes.
+Quando não houver evidência suficiente, diz isso claramente.
+Não exponhas dados sensíveis desnecessários.
+```
 
-### Estados obrigatórios
-- Carregando resposta.
-- Ferramenta em execução.
-- Sem permissão.
-- Ação pendente de confirmação.
-- Ação concluída.
-- Ação cancelada.
-- Erro auditado.
+## Contrato da API
+### `POST /api/v1/ai/assistant/chat/`
+Request:
+```json
+{
+  "session_id": 123,
+  "message": "Quais módulos estão abaixo do SLO?",
+  "active_module": "monitoring",
+  "context": {
+    "current_path": "/monitoring/command-center",
+    "filters": {
+      "days": 7
+    }
+  }
+}
+```
 
-## Roadmap de Implementação
-### Sprint IA-1: Fundação segura
-- Criar app `ai_assistant`.
-- Criar modelos de sessão, mensagem, tool call, ação sugerida e policy event.
-- Criar endpoint `chat`.
-- Implementar `AiPolicyGuard`.
-- Implementar primeira ferramenta: `get_command_center_alerts`.
-- Criar frontend `/ai` com chat básico.
+Response:
+```json
+{
+  "session_id": 123,
+  "message_id": 456,
+  "answer": "Há 2 módulos abaixo do SLO...",
+  "language": "pt",
+  "sources": [
+    {
+      "type": "endpoint",
+      "label": "Command Center",
+      "href": "/monitoring/command-center?days=7"
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool_name": "get_command_center_alerts",
+      "status": "success",
+      "duration_ms": 184
+    }
+  ],
+  "suggested_actions": [
+    {
+      "id": 99,
+      "action_type": "open_filtered_navigation",
+      "requires_confirmation": false,
+      "href": "/monitoring/command-center?days=7"
+    }
+  ]
+}
+```
 
-### Sprint IA-2: Ferramentas de leitura operacional
-- Pacientes, requisições, faturas, pagamentos, farmácia e educação.
-- Respostas com fontes internas.
-- Navegação inteligente para páginas filtradas.
-- Logs de auditoria detalhados.
+### `POST /api/v1/ai/assistant/actions/{id}/confirm/`
+Request:
+```json
+{
+  "confirmation_text": "Confirmo a geração do relatório semanal."
+}
+```
 
-### Sprint IA-3: Ações com confirmação
-- Exportar relatório.
-- Criar notificação interna.
-- Criar tarefa operacional.
-- Confirmar/cancelar ação sugerida.
+Response:
+```json
+{
+  "action_id": 99,
+  "status": "confirmed",
+  "result_summary": "Relatório em geração.",
+  "result_href": "/monitoring/export_job/abc123/"
+}
+```
 
-### Sprint IA-4: Governança avançada
-- Painel admin para sessões e auditoria.
-- Métricas de uso da IA.
-- Avaliação de respostas.
-- Testes de segurança e regressão de permissões.
+## RBAC
+Ferramentas devem mapear grupos para capacidades.
 
-## Critérios de Aceite da Primeira Versão
-1. Utilizador autenticado consegue abrir `/ai`.
-2. IA responde no idioma ativo.
-3. IA consegue explicar alertas do Command Center.
-4. IA não mostra dados fora do tenant.
-5. IA bloqueia ferramenta sem permissão.
-6. Toda chamada gera auditoria.
-7. Nenhuma ação de escrita executa sem confirmação.
-8. Testes cobrem RBAC, tenant, auditoria e bloqueio de ação sensível.
+Exemplo inicial:
 
-## Riscos
-### Vazamento de dados entre tenants
-Mitigação: todas as ferramentas recebem tenant obrigatório e usam querysets tenant-scoped.
+| Grupo | Capacidades |
+|---|---|
+| Administrador | Command Center, auditoria, módulos, relatórios globais |
+| Médico | pacientes autorizados, consultas, requisições, resultados |
+| Recepção | pacientes, check-in, consultas, faturas operacionais |
+| Enfermagem | colheitas, procedimentos, tarefas de enfermagem |
+| Laboratório | requisições laboratoriais, amostras, resultados |
+| Farmácia | stock, lotes, requisições de material |
+| Contabilidade | faturas, pagamentos, reconciliações, relatórios financeiros |
+| Professor | estudantes e dados escolares autorizados |
+| Director da escola | relatórios escolares e indicadores agregados |
+| Encarregado de educação | dados do estudante vinculado |
+| Estudante | dados próprios autorizados |
 
-### Alucinação operacional
-Mitigação: resposta deve citar fontes internas; quando não houver dados, dizer que não há evidência suficiente.
+Regra: se uma capacidade não puder ser provada por grupo/permissão, ela deve ficar indisponível.
 
-### Ação indevida
-Mitigação: modo leitura por padrão e confirmação obrigatória para escrita.
+## Auditoria
+Cada interação deve criar trilha suficiente para responder:
 
-### Exposição de dados sensíveis ao provedor
-Mitigação: minimização, redacção e preferência por resumos.
+1. Quem perguntou?
+2. Em que tenant?
+3. Em que idioma?
+4. Que ferramentas foram usadas?
+5. Quais dados foram consultados?
+6. Que dados foram enviados ao provedor?
+7. Que resposta foi devolvida?
+8. Que ação foi preparada?
+9. Quem confirmou?
+10. O que foi executado?
 
-### Sobrecarga de custos
-Mitigação: limites por utilizador, cache de resumos e métricas de token por tenant.
+## Observabilidade da Própria IA
+Métricas obrigatórias:
+- `ai_chat_requests_total`
+- `ai_tool_calls_total`
+- `ai_policy_blocks_total`
+- `ai_actions_prepared_total`
+- `ai_actions_confirmed_total`
+- `ai_response_latency_ms`
+- `ai_tool_latency_ms`
+- `ai_token_input_total`
+- `ai_token_output_total`
+- `ai_errors_total`
 
-## Decisão Inicial Recomendada
-A primeira implementação deve ser um copiloto em modo leitura ligado ao Command Center.
+Alertas:
+- aumento de bloqueios de política;
+- falhas repetidas de ferramenta;
+- latência acima do alvo;
+- uso anormal por tenant;
+- tentativa de acesso a dados sem permissão.
 
-Motivo: aproveita dados operacionais já existentes, reduz risco, entrega valor rápido aos administradores e cria a base de auditoria antes de tocar em dados clínicos ou financeiros.
+## Testes Obrigatórios
+### Backend
+- `test_ai_chat_requires_authentication`
+- `test_ai_chat_is_tenant_scoped`
+- `test_ai_tool_registry_respects_rbac`
+- `test_ai_command_center_tool_returns_sources`
+- `test_ai_blocks_cross_tenant_patient_access`
+- `test_ai_prepares_action_without_executing`
+- `test_ai_confirm_action_revalidates_permissions`
+- `test_ai_audit_log_is_created`
+- `test_ai_redacts_sensitive_fields`
+
+### Frontend
+- renderiza `/ai`;
+- envia mensagem;
+- mostra estado de carregamento;
+- mostra fontes;
+- mostra ferramenta usada;
+- mostra bloqueio de permissão;
+- mostra confirmação para ação sensível;
+- respeita idioma PT/EN.
+
+### Segurança
+- utilizador sem grupo não vê ferramentas administrativas;
+- utilizador de tenant A não consegue obter dados de tenant B;
+- ferramenta de escrita não executa via `/chat`;
+- payload sensível é redigido antes de ir ao gateway LLM.
+
+## Fases de Implementação
+### Fase 0: Preparação
+- Criar ADR final e prompts versionados.
+- Validar nomes de grupos existentes.
+- Definir provedor LLM por variável de ambiente.
+- Definir política de retenção de sessões.
+
+### Fase 1: IA em modo leitura para Command Center
+Entregáveis:
+- `apps/ai_assistant`
+- modelos e migrations;
+- endpoint `chat`;
+- `AiPolicyGuard`;
+- `AiAuditLogger`;
+- ferramenta `get_command_center_alerts`;
+- página `/ai`;
+- testes de tenant/RBAC/auditoria.
+
+Critério de aceite:
+- administrador pergunta "quais alertas ativos?" e recebe resposta com fontes internas.
+
+### Fase 2: Leitura clínica e operacional
+Entregáveis:
+- ferramentas de pacientes, requisições, resultados e enfermagem;
+- respostas com minimização de dados;
+- links internos filtrados.
+
+Critério de aceite:
+- utilizador autorizado consegue resumir requisições críticas sem ver dados fora do escopo.
+
+### Fase 3: Relatórios e navegação
+Entregáveis:
+- preparação de exportações PDF/CSV/Word;
+- navegação inteligente para páginas filtradas;
+- confirmação humana para exportar.
+
+Critério de aceite:
+- utilizador pede "relatório financeiro dos últimos 30 dias", IA prepara ação e só executa após confirmação.
+
+### Fase 4: Ações operacionais controladas
+Entregáveis:
+- preparar notificações internas;
+- preparar tarefas de enfermagem/laboratório/farmácia;
+- confirmar execução;
+- rastrear ação no Command Center.
+
+Critério de aceite:
+- IA cria tarefa operacional apenas após confirmação e deixa trilha completa.
+
+## Estrutura de Ficheiros Recomendada
+```text
+apps/ai_assistant/
+  __init__.py
+  apps.py
+  models.py
+  admin.py
+  services/
+    orchestrator.py
+    policy.py
+    registry.py
+    runner.py
+    context.py
+    audit.py
+    llm_gateway.py
+    redaction.py
+  tools/
+    base.py
+    command_center.py
+    clinical.py
+    billing.py
+    pharmacy.py
+    education.py
+    navigation.py
+  prompts/
+    system.pt.md
+    system.en.md
+api/v1/ai/
+  urls.py
+  views.py
+  serializers.py
+  viewsets.py
+frontend-next/app/ai/page.tsx
+frontend-next/components/ai/
+frontend-next/lib/ai/
+tests/test_ai_assistant_api.py
+```
+
+## Variáveis de Ambiente
+```text
+AI_ASSISTANT_ENABLED=false
+AI_PROVIDER=disabled
+AI_MODEL=
+AI_TIMEOUT_SECONDS=30
+AI_MAX_INPUT_TOKENS=12000
+AI_MAX_OUTPUT_TOKENS=1200
+AI_STORE_RAW_MESSAGES=false
+AI_REDACTION_ENABLED=true
+AI_ACTION_CONFIRMATION_REQUIRED=true
+AI_RATE_LIMIT_PER_USER_PER_HOUR=60
+```
+
+## Política de Retenção
+Recomendação inicial:
+- sessões: 180 dias;
+- mensagens redigidas: 180 dias;
+- payload bruto: não armazenar por defeito;
+- tool calls: 365 dias;
+- policy events: 365 dias;
+- ações confirmadas: conforme regra de auditoria operacional do tenant.
+
+## Critérios de Pronto Para Produção
+1. `AI_ASSISTANT_ENABLED` controlado por ambiente.
+2. Todos os endpoints exigem autenticação.
+3. Todos os querysets são tenant-scoped.
+4. Todas as ferramentas têm teste de RBAC.
+5. Dados sensíveis são redigidos.
+6. Ações de escrita exigem confirmação.
+7. Auditoria completa está disponível no admin.
+8. Logs não contêm segredos nem payload sensível bruto.
+9. Frontend mostra fontes e ferramentas.
+10. Documentação de operação está atualizada.
+
+## Primeiro Incremento Recomendado
+O melhor primeiro incremento é pequeno e útil:
+
+1. Criar app `ai_assistant`.
+2. Criar modelos e admin.
+3. Implementar `/api/v1/ai/assistant/chat/`.
+4. Implementar `get_command_center_alerts`.
+5. Criar `/ai` com chat simples.
+6. Responder apenas perguntas sobre Command Center.
+7. Gravar auditoria completa.
+8. Bloquear todas as ações de escrita.
+
+Esta entrega já gera valor real para administradores e cria a infraestrutura segura para expandir depois para módulos clínicos, financeiros e escolares.
+
+## Exemplo de Perguntas Suportadas na Primeira Versão
+- "Quais alertas ativos existem agora?"
+- "Que módulos estão abaixo do SLO?"
+- "Quais rotas tiveram mais erros 5xx?"
+- "Há backlog na outbox?"
+- "Resume o estado operacional dos últimos 7 dias."
+- "O que devo investigar primeiro?"
+
+## Exemplo de Resposta Esperada
+```text
+Foram encontrados 3 alertas ativos nos últimos 7 dias.
+
+O ponto mais crítico é o módulo Clínico, com taxa de sucesso abaixo da meta de SLO e falhas 5xx em /api/v1/clinical/resultitem/. A outbox também tem eventos pendentes, o que pode atrasar integrações operacionais.
+
+Fontes internas:
+- Command Center: /monitoring/command-center?days=7
+- SystemError: erros 5xx por rota
+- UserActivity: requests HTTP por módulo
+
+Limitação:
+Não consultei logs de infraestrutura fora da aplicação.
+
+Próximo passo sugerido:
+Abrir o Command Center filtrado para 7 dias e priorizar a rota /api/v1/clinical/resultitem/.
+```
+
+## Decisão Final
+A IA do Substrato deve nascer como **camada de inteligência operacional auditável**, não como automação livre.
+
+O primeiro valor deve vir de explicar o que o sistema já sabe: alertas, filas, erros, módulos afetados, relatórios e navegação. Depois, com auditoria e política consolidadas, a IA pode evoluir para preparar ações e finalmente executar ações confirmadas.
