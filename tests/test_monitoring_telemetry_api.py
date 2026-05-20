@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
+from apps.audit_activities.models.user_activity import UserActivity
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 
@@ -88,7 +89,7 @@ def test_telemetry_summary_requires_admin_permissions(api_client):
 @pytest.mark.django_db
 def test_telemetry_summary_aggregates_errors_and_outbox(api_client):
     tenant = _tenant()
-    _authenticate(api_client, tenant, username="admin_monitor", is_staff=True)
+    admin_user = _authenticate(api_client, tenant, username="admin_monitor", is_staff=True)
 
     SystemError.objects.create(
         tenant=tenant,
@@ -109,6 +110,24 @@ def test_telemetry_summary_aggregates_errors_and_outbox(api_client):
         exception_class="OperationalError",
         message="DB unavailable",
         metadata={},
+    )
+    UserActivity.objects.create(
+        tenant=tenant,
+        user=admin_user,
+        method="GET",
+        path="/api/v1/clinical/patient/",
+        full_path="/api/v1/clinical/patient/?page=1",
+        status_code=404,
+        message="Not found",
+    )
+    UserActivity.objects.create(
+        tenant=tenant,
+        user=admin_user,
+        method="POST",
+        path="/api/v1/clinical/resultitem/",
+        full_path="/api/v1/clinical/resultitem/",
+        status_code=500,
+        message="Internal Server Error",
     )
 
     TransactionalOutboxEvent.objects.create(
@@ -133,6 +152,10 @@ def test_telemetry_summary_aggregates_errors_and_outbox(api_client):
     assert data["totals"]["frontend_errors"] == 1
     assert data["totals"]["backend_errors"] == 1
     assert data["totals"]["server_5xx"] == 2
+    assert data["activity_totals"]["errors_total"] == 2
+    assert data["activity_totals"]["client_4xx"] == 1
+    assert data["activity_totals"]["server_5xx"] == 1
+    assert data["activity_totals"]["unique_paths"] == 2
     assert data["outbox"]["total"] == 2
     assert data["outbox"]["pending"] == 1
     assert data["outbox"]["delivered"] == 1

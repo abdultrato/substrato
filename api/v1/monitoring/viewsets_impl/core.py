@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet  # Apenas leitura
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.audit_activities.models.user_activity import UserActivity
 from apps.monitoring.models.outbox_event import TransactionalOutboxEvent
 from apps.monitoring.models.system_error import SystemError
 from events.runtime_bridge import get_runtime, runtime_enabled
@@ -162,6 +163,19 @@ class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
         backend_errors = max(0, total_errors - frontend_errors)
         client_4xx = errors_qs.filter(status_code__gte=400, status_code__lt=500).count()
         server_5xx = errors_qs.filter(status_code__gte=500, status_code__lt=600).count()
+        unique_paths = errors_qs.exclude(path="").values("path").distinct().count()
+
+        activity_errors_qs = UserActivity.objects.filter(
+            tenant=tenant,
+            deleted=False,
+            created_at__gte=range_start,
+            created_at__lte=now,
+            status_code__gte=400,
+        )
+        activity_error_total = activity_errors_qs.count()
+        activity_client_4xx = activity_errors_qs.filter(status_code__lt=500).count()
+        activity_server_5xx = activity_errors_qs.filter(status_code__gte=500, status_code__lt=600).count()
+        activity_unique_paths = activity_errors_qs.exclude(path="").values("path").distinct().count()
 
         by_status = list(
             errors_qs.values("status_code")
@@ -287,12 +301,18 @@ class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
                     "backend_errors": backend_errors,
                     "client_4xx": client_4xx,
                     "server_5xx": server_5xx,
-                    "unique_paths": errors_qs.exclude(path="").values("path").distinct().count(),
+                    "unique_paths": unique_paths,
                     "unique_exception_classes": errors_qs.exclude(exception_class="")
                     .values("exception_class")
                     .distinct()
                     .count(),
                     "unique_users": errors_qs.exclude(user__isnull=True).values("user").distinct().count(),
+                },
+                "activity_totals": {
+                    "errors_total": activity_error_total,
+                    "client_4xx": activity_client_4xx,
+                    "server_5xx": activity_server_5xx,
+                    "unique_paths": activity_unique_paths,
                 },
                 "by_status": by_status,
                 "by_exception": by_exception,
