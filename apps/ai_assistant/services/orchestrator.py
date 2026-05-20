@@ -295,6 +295,31 @@ class AiOrchestrator:
                 confirmation_summary=confirmation_summary,
             )
             action_payloads.append(self._action_payload(action))
+
+        task_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "prepare_operational_task"), None)
+        if task_result and task_result.get("prepared_action"):
+            prepared = task_result.get("prepared_action") or {}
+            payload = dict(prepared.get("payload") or {})
+            confirmation_summary = (
+                f"Criar tarefa operacional para {payload.get('assigned_group') or 'equipa responsável'}."
+                if language == "pt"
+                else f"Create operational task for {payload.get('assigned_group') or 'responsible team'}."
+            )
+            action = self.audit.create_suggested_action(
+                tenant=tenant,
+                session=session,
+                user=user,
+                action_type=str(prepared.get("action_type") or "create_operational_task"),
+                payload={
+                    **payload,
+                    "label_pt": prepared.get("label_pt") or "Criar tarefa operacional",
+                    "label_en": prepared.get("label_en") or "Create operational task",
+                    "allowed_groups": list(prepared.get("allowed_groups") or payload.get("allowed_groups") or []),
+                },
+                requires_confirmation=bool(prepared.get("requires_confirmation", True)),
+                confirmation_summary=confirmation_summary,
+            )
+            action_payloads.append(self._action_payload(action))
         return action_payloads
 
     @staticmethod

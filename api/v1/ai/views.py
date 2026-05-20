@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.ai_assistant.models import AiSession, AiSuggestedAction
+from apps.ai_assistant.models import AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
@@ -16,6 +16,7 @@ from apps.ai_assistant.services.registry import AiToolRegistry
 from .serializers import (
     AiActionConfirmSerializer,
     AiChatRequestSerializer,
+    AiOperationalTaskSerializer,
     AiSessionDetailSerializer,
     AiSessionSerializer,
     AiSuggestedActionSerializer,
@@ -100,6 +101,44 @@ class AiAssistantToolsView(APIView):
         registry = AiToolRegistry()
         policy = AiPolicyGuard()
         return Response({"tools": registry.list_definitions(user=request.user, policy_guard=policy, language=language)})
+
+
+class AiAssistantTasksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant = request_tenant(request)
+        if tenant is None:
+            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+        policy = AiPolicyGuard()
+        queryset = AiOperationalTask.objects.filter(tenant=tenant, deleted=False).select_related("created_by")
+        if not policy.is_admin_like(request.user):
+            groups = policy.user_group_names(request.user)
+            queryset = queryset.filter(Q(assigned_group__in=groups) | Q(created_by=request.user))
+        queryset = queryset.order_by("-created_at", "-id")[:100]
+        return Response(AiOperationalTaskSerializer(queryset, many=True).data)
+
+
+class AiAssistantTaskDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, task_id: int):
+        tenant = request_tenant(request)
+        task = (
+            AiOperationalTask.objects.filter(tenant=tenant, id=task_id, deleted=False)
+            .select_related("created_by")
+            .first()
+        )
+        if task is None:
+            raise NotFound("Tarefa operacional da IA não encontrada.")
+
+        policy = AiPolicyGuard()
+        if not policy.is_admin_like(request.user):
+            groups = policy.user_group_names(request.user)
+            if task.assigned_group not in groups and task.created_by_id != request.user.id:
+                raise NotFound("Tarefa operacional da IA não encontrada.")
+        return Response(AiOperationalTaskSerializer(task).data)
 
 
 class AiAssistantActionConfirmView(APIView):

@@ -87,6 +87,13 @@ class AiPolicyGuard:
 
         if getattr(action, "requires_confirmation", True) and not self.is_admin_like(user):
             payload = action.payload or {}
+            if getattr(action, "action_type", "") == "create_operational_task":
+                assigned_group = str(payload.get("assigned_group") or "").strip()
+                if assigned_group and assigned_group not in self.user_group_names(user):
+                    raise AiPolicyError(
+                        "action_task_group_denied",
+                        "A confirmação desta tarefa exige pertencer ao grupo responsável indicado.",
+                    )
             allowed_groups = payload.get("allowed_groups") if isinstance(payload, dict) else None
             allowed = {normalize_group(name) for name in allowed_groups or [] if name}
             if not allowed or not (allowed & self.normalized_user_groups(user)):

@@ -643,6 +643,45 @@ tests/
 - O backend revalida política, gera o ficheiro e devolve `result_href` para download.
 - A sessão mantém mensagens, tool calls, fontes e acção executada auditáveis.
 
+## Próximo Nível de Implementação: Ações Operacionais Controladas
+Este incremento avança para a Fase 4: a IA passa a preparar tarefas internas para equipas de negócio, mas continua proibida de executar efeitos operacionais durante o `/chat`. A criação efectiva da tarefa só ocorre após confirmação explícita, nova validação de tenant/RBAC e registo auditável.
+
+### Estrutura a Criar
+```text
+apps/ai_assistant/
+  models.py
+    AiOperationalTask
+  services/
+    task_builder.py
+  tools/
+    tasks.py
+  migrations/
+    0002_ai_operational_task.py
+api/v1/ai/
+  serializers.py
+  views.py
+  urls.py
+frontend-next/components/ai/
+  AiTaskPanel.tsx
+tests/
+  test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. A ferramenta `prepare_operational_task` identifica intenção operacional como "criar tarefa", "notificar equipa", "encaminhar", "atribuir", "investigar" ou "resolver".
+2. O `/chat` cria apenas `AiSuggestedAction` do tipo `create_operational_task`, sem gravar tarefa final.
+3. A confirmação cria `AiOperationalTask` tenant-scoped, vinculada à sessão e à acção que a originou.
+4. A tarefa guarda módulo, grupo responsável, prioridade, título, descrição, estado e metadados de origem.
+5. O frontend mostra a tarefa criada como resultado da confirmação, com estado e ligação interna.
+6. O backend expõe listagem e detalhe de tarefas da IA para auditoria operacional.
+
+### Critérios de Aceite do Nível
+- Utilizador autorizado pede "crie uma tarefa para a enfermagem investigar requisições laboratoriais pendentes".
+- A IA prepara `create_operational_task` e mostra botão de confirmação.
+- Ao confirmar, o backend cria `AiOperationalTask` em estado `open`.
+- A resposta da confirmação devolve `result_href` e `operational_task`.
+- Utilizador sem permissão de negócio não consegue confirmar tarefa de outro grupo/tenant.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/
@@ -662,6 +701,7 @@ apps/ai_assistant/
     report_builder.py
     redaction.py
     response_schema.py
+    task_builder.py
   tools/
     base.py
     command_center.py
@@ -673,6 +713,7 @@ apps/ai_assistant/
     education.py
     navigation.py
     reporting.py
+    tasks.py
   prompts/
     system.pt.md
     system.en.md

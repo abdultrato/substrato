@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   Bot,
   BrainCircuit,
+  ClipboardCheck,
   ExternalLink,
   Lock,
   Send,
@@ -325,13 +326,22 @@ export default function AiOperationalPage() {
             "Auditable copilot for explaining alerts, critical routes, SLO and operational backlog."
           )}
           actions={
-            <Link
-              href="/monitoring/command-center"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
-            >
-              <ExternalLink size={15} />
-              {t("Abrir Command Center", "Open Command Center")}
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/ai/tasks"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+              >
+                <ClipboardCheck size={15} />
+                {t("Tarefas da IA", "AI Tasks")}
+              </Link>
+              <Link
+                href="/monitoring/command-center"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+              >
+                <ExternalLink size={15} />
+                {t("Abrir Command Center", "Open Command Center")}
+              </Link>
+            </div>
           }
         />
 

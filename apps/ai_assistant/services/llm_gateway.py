@@ -175,11 +175,19 @@ class LocalLlmGateway:
                 )
 
             if result.get("prepared_action"):
-                lines.append(
-                    "Prepared action: confirm the report generation button to create the export file."
-                    if language == "en"
-                    else "Acção preparada: confirme o botão de geração de relatório para criar o ficheiro exportável."
-                )
+                action_type = (result.get("prepared_action") or {}).get("action_type")
+                if action_type == "create_operational_task":
+                    lines.append(
+                        "Prepared action: confirm the button to create the operational task."
+                        if language == "en"
+                        else "Acção preparada: confirme o botão para criar a tarefa operacional."
+                    )
+                else:
+                    lines.append(
+                        "Prepared action: confirm the report generation button to create the export file."
+                        if language == "en"
+                        else "Acção preparada: confirme o botão de geração de relatório para criar o ficheiro exportável."
+                    )
 
             sections.append("\n".join(lines))
             for source in result.get("sources") or []:

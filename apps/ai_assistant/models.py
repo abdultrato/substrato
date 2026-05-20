@@ -236,6 +236,85 @@ class AiSuggestedAction(NoNameCoreModel):
         return f"{self.action_type} [{self.status}]"
 
 
+class AiOperationalTask(NoNameCoreModel):
+    """Tarefa operacional criada pela IA após confirmação humana."""
+
+    prefix = "AITASK"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Aberta"
+        IN_PROGRESS = "in_progress", "Em execução"
+        DONE = "done", "Concluída"
+        CANCELLED = "cancelled", "Cancelada"
+
+    class Priority(models.TextChoices):
+        LOW = "low", "Baixa"
+        NORMAL = "normal", "Normal"
+        HIGH = "high", "Alta"
+        CRITICAL = "critical", "Crítica"
+
+    session = models.ForeignKey(
+        AiSession,
+        verbose_name="Sessão",
+        on_delete=models.CASCADE,
+        related_name="operational_tasks",
+        db_index=True,
+    )
+    action = models.OneToOneField(
+        AiSuggestedAction,
+        verbose_name="Acção de origem",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="operational_task",
+    )
+    created_by = models.ForeignKey(
+        User,
+        verbose_name="Criada por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ai_operational_tasks",
+    )
+    assigned_group = models.CharField("Grupo responsável", max_length=120, db_index=True)
+    module_key = models.CharField("Módulo", max_length=80, blank=True, default="", db_index=True)
+    title = models.CharField("Título", max_length=180)
+    description = models.TextField("Descrição", blank=True, default="")
+    priority = models.CharField(
+        "Prioridade",
+        max_length=20,
+        choices=Priority.choices,
+        default=Priority.NORMAL,
+        db_index=True,
+    )
+    status = models.CharField(
+        "Estado",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+        db_index=True,
+    )
+    due_at = models.DateTimeField("Prazo", null=True, blank=True, db_index=True)
+    source_type = models.CharField("Tipo de origem", max_length=120, blank=True, default="")
+    source_reference = models.CharField("Referência de origem", max_length=180, blank=True, default="")
+    metadata = models.JSONField("Metadados", default=dict, blank=True)
+
+    class Meta:
+        db_table = "ai_assistant_operational_task"
+        verbose_name = "Tarefa Operacional da IA"
+        verbose_name_plural = "Tarefas Operacionais da IA"
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["tenant", "status", "created_at"]),
+            models.Index(fields=["tenant", "assigned_group", "status"]),
+            models.Index(fields=["tenant", "module_key", "status"]),
+            models.Index(fields=["session", "status", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.title} [{self.status}]"
+
+
 class AiPolicyEvent(NoNameCoreModel):
     """Evento de política, bloqueio ou decisão de segurança da IA."""
 

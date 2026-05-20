@@ -9,6 +9,7 @@ from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
 from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
+from apps.ai_assistant.tools.tasks import PrepareOperationalTaskTool
 
 
 class AiToolRegistry:
@@ -24,6 +25,7 @@ class AiToolRegistry:
             PharmacyStockSummaryTool.name: PharmacyStockSummaryTool(),
             EducationSummaryTool.name: EducationSummaryTool(),
             PrepareOperationalReportTool.name: PrepareOperationalReportTool(),
+            PrepareOperationalTaskTool.name: PrepareOperationalTaskTool(),
         }
 
     def all(self) -> list:
@@ -87,6 +89,26 @@ class AiToolRegistry:
 
         if any(term in normalized for term in ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
             selected.append(self._tools[PrepareOperationalReportTool.name])
+
+        if any(
+            term in normalized
+            for term in (
+                "cria tarefa",
+                "criar tarefa",
+                "tarefa",
+                "atribui",
+                "atribuir",
+                "encaminha",
+                "encaminhar",
+                "notifica",
+                "notificar",
+                "investigar",
+                "resolver",
+                "follow-up",
+                "follow up",
+            )
+        ):
+            selected.append(self._tools[PrepareOperationalTaskTool.name])
 
         unique = []
         seen = set()

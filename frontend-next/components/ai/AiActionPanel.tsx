@@ -5,6 +5,7 @@ import { CheckCircle2, Download, ExternalLink } from "lucide-react"
 
 import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
+import AiTaskPanel, { type AiOperationalTask } from "@/components/ai/AiTaskPanel"
 import { useLanguage } from "@/hooks/useLanguage"
 
 export type AiSuggestedAction = {
@@ -18,6 +19,7 @@ export type AiSuggestedAction = {
   label_en?: string
   confirmation_summary?: string
   result_summary?: string
+  operational_task?: AiOperationalTask | null
 }
 
 type Props = {
@@ -64,12 +66,22 @@ export default function AiActionPanel({ actions, confirmingId, results, onConfir
         const href = effective.result_href || effective.href || ""
         const label = (isPortuguese ? action.label_pt : action.label_en) || action.confirmation_summary || action.action_type
 
+        if (effective.operational_task) {
+          return (
+            <AiTaskPanel
+              key={action.id}
+              task={effective.operational_task}
+              href={href || `/ai/tasks?task=${effective.operational_task.id}`}
+            />
+          )
+        }
+
         if (href && (!action.requires_confirmation || result)) {
           return (
             <ActionLink
               key={action.id}
               href={href}
-              label={result ? t("Transferir relatório", "Download report") : label}
+              label={result && action.action_type === "prepare_ai_report_export" ? t("Transferir relatório", "Download report") : label}
             />
           )
         }

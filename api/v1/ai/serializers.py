@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.ai_assistant.models import AiMessage, AiSession, AiSuggestedAction
+from apps.ai_assistant.models import AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
 
 
 class AiChatRequestSerializer(serializers.Serializer):
@@ -63,8 +63,37 @@ class AiActionConfirmSerializer(serializers.Serializer):
     confirmation_text = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
 
 
+class AiOperationalTaskSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AiOperationalTask
+        fields = [
+            "id",
+            "custom_id",
+            "title",
+            "description",
+            "module_key",
+            "assigned_group",
+            "priority",
+            "status",
+            "due_at",
+            "source_type",
+            "source_reference",
+            "metadata",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_created_by_name(self, obj: AiOperationalTask) -> str:
+        user = getattr(obj, "created_by", None)
+        return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
+
+
 class AiSuggestedActionSerializer(serializers.ModelSerializer):
     href = serializers.SerializerMethodField()
+    operational_task = serializers.SerializerMethodField()
 
     class Meta:
         model = AiSuggestedAction
@@ -78,6 +107,7 @@ class AiSuggestedActionSerializer(serializers.ModelSerializer):
             "result_summary",
             "result_href",
             "href",
+            "operational_task",
             "created_at",
             "confirmed_at",
             "executed_at",
@@ -86,3 +116,10 @@ class AiSuggestedActionSerializer(serializers.ModelSerializer):
     def get_href(self, obj: AiSuggestedAction) -> str:
         payload = obj.payload or {}
         return str(payload.get("href") or obj.result_href or "")
+
+    def get_operational_task(self, obj: AiSuggestedAction) -> dict | None:
+        try:
+            task = obj.operational_task
+        except (AiOperationalTask.DoesNotExist, AttributeError):
+            return None
+        return AiOperationalTaskSerializer(task).data

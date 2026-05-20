@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
-from apps.ai_assistant.models import AiMessage, AiPolicyEvent, AiSession, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.models import AiMessage, AiOperationalTask, AiPolicyEvent, AiSession, AiSuggestedAction, AiToolCall
 from apps.ai_assistant.services.redaction import redact_value
 from apps.ai_assistant.services.registry import AiToolRegistry
 from apps.audit_activities.models.user_activity import UserActivity
@@ -293,6 +293,113 @@ def test_ai_confirm_report_action_creates_export_job(api_client):
     assert "Relatório financeiro operacional" in file_bytes.decode("utf-8")
 
 
+@pytest.mark.django_db
+def test_ai_operational_task_request_prepares_confirmable_action(api_client):
+    tenant = _tenant(identifier="tn-ai-task", domain="tn-ai-task.local")
+    admin = _user(tenant, "admin_ai_task", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie uma tarefa para a enfermagem investigar requisições laboratoriais pendentes",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "prepare_operational_task" for call in data["tool_calls"])
+    task_action = next(action for action in data["suggested_actions"] if action["action_type"] == "create_operational_task")
+    assert task_action["requires_confirmation"] is True
+
+    action = AiSuggestedAction.objects.get(id=task_action["id"])
+    assert action.status == AiSuggestedAction.Status.PENDING_CONFIRMATION
+    assert action.payload["assigned_group"] == GROUPS["ENFERMAGEM"]
+    assert action.payload["module_key"] == "nursing"
+
+
+@pytest.mark.django_db
+def test_ai_confirm_operational_task_creates_task_and_exposes_queue(api_client):
+    tenant = _tenant(identifier="tn-ai-task-confirm", domain="tn-ai-task-confirm.local")
+    admin = _user(tenant, "admin_ai_task_confirm", GROUPS["ADMIN"], is_staff=True)
+    session = AiSession.objects.create(tenant=tenant, user=admin, title="Tarefa", language="pt")
+    action = AiSuggestedAction.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=admin,
+        action_type="create_operational_task",
+        payload={
+            "assigned_group": GROUPS["ENFERMAGEM"],
+            "module_key": "nursing",
+            "priority": "high",
+            "title": "Investigar pendências de enfermagem",
+            "description": "Tarefa preparada pela IA.",
+            "source_type": "ai_chat",
+            "source_reference": "REQ-20260520-0001",
+            "allowed_groups": [GROUPS["ADMIN"], GROUPS["ENFERMAGEM"]],
+        },
+        payload_redacted={},
+        requires_confirmation=True,
+        confirmation_summary="Criar tarefa operacional para Enfermeiro.",
+    )
+
+    _authenticate(api_client, tenant, admin)
+    response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    task = AiOperationalTask.objects.get(action=action)
+    assert task.status == AiOperationalTask.Status.OPEN
+    assert task.assigned_group == GROUPS["ENFERMAGEM"]
+    assert data["operational_task"]["id"] == task.id
+    assert data["href"] == f"/ai/tasks?task={task.id}"
+
+    list_response = api_client.get("/api/v1/ai/assistant/tasks/", format="json")
+    assert list_response.status_code == 200, _response_data(list_response)
+    assert any(item["id"] == task.id for item in _response_data(list_response))
+
+
+@pytest.mark.django_db
+def test_ai_confirm_operational_task_revalidates_assigned_group(api_client):
+    tenant = _tenant(identifier="tn-ai-task-denied", domain="tn-ai-task-denied.local")
+    recepcao = _user(tenant, "recepcao_ai_task_denied", GROUPS["RECEPCAO"])
+    session = AiSession.objects.create(tenant=tenant, user=recepcao, title="Tarefa", language="pt")
+    action = AiSuggestedAction.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=recepcao,
+        action_type="create_operational_task",
+        payload={
+            "assigned_group": GROUPS["ENFERMAGEM"],
+            "module_key": "nursing",
+            "priority": "normal",
+            "title": "Investigar pendências de enfermagem",
+            "description": "Tarefa preparada pela IA.",
+            "allowed_groups": [GROUPS["RECEPCAO"], GROUPS["ENFERMAGEM"]],
+        },
+        payload_redacted={},
+        requires_confirmation=True,
+        confirmation_summary="Criar tarefa operacional para Enfermeiro.",
+    )
+
+    _authenticate(api_client, tenant, recepcao)
+    response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert response.status_code == 403, _response_data(response)
+    assert not AiOperationalTask.objects.filter(action=action).exists()
+
+
 def test_ai_redacts_sensitive_fields():
     redacted = redact_value(
         {
@@ -314,9 +421,11 @@ def test_ai_tool_registry_selects_domain_tools():
     clinical_names = {tool.name for tool in registry.select_tools(message="mostra frasco e amostra da REQ-20260520-0001", active_module="ai")}
     finance_names = {tool.name for tool in registry.select_tools(message="resumo financeiro de faturas e pagamentos", active_module="ai")}
     report_names = {tool.name for tool in registry.select_tools(message="relatório financeiro dos últimos 30 dias", active_module="ai")}
+    task_names = {tool.name for tool in registry.select_tools(message="criar tarefa para enfermagem investigar pendências", active_module="ai")}
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
 
     assert "get_lab_request_collection_guidance" in clinical_names
     assert "get_financial_operational_summary" in finance_names
     assert "prepare_operational_report" in report_names
+    assert "prepare_operational_task" in task_names
     assert "get_education_summary" in education_names
