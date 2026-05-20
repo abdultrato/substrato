@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from django.apps import apps as django_apps
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from django.utils import timezone
@@ -98,6 +99,8 @@ class CrudFieldSpec:
     field_type: str
     aliases: tuple[str, ...]
     choices: tuple[tuple[str, str], ...] = ()
+    related_app_label: str = ""
+    related_model_name: str = ""
 
     @property
     def terms(self) -> tuple[str, ...]:
@@ -136,6 +139,7 @@ class AiCrudConversationManager:
 
         field_specs = self._field_specs(descriptor=descriptor, tenant=tenant, user=user, operation=operation)
         extracted_payload = self._extract_payload(message=message, field_specs=field_specs, descriptor=descriptor)
+        extracted_payload = self._resolve_related_values(payload=extracted_payload, field_specs=field_specs, tenant=tenant)
         object_ref = self._extract_object_ref(message) or str((draft or {}).get("object_ref") or "")
 
         previous_payload = {}
@@ -292,6 +296,7 @@ class AiCrudConversationManager:
             label = self._field_label(model=model, field_name=name, fallback=str(getattr(field, "label", "") or name))
             choices = tuple((str(key), str(value)) for key, value in (getattr(field, "choices", {}) or {}).items())
             required = bool(getattr(field, "required", False)) and getattr(field, "default", empty) is empty
+            related_model = getattr(getattr(field, "queryset", None), "model", None)
             specs.append(
                 CrudFieldSpec(
                     name=name,
@@ -300,6 +305,8 @@ class AiCrudConversationManager:
                     field_type=field.__class__.__name__,
                     aliases=tuple(by_canonical.get(name, ())),
                     choices=choices,
+                    related_app_label=getattr(getattr(related_model, "_meta", None), "app_label", "") if related_model else "",
+                    related_model_name=getattr(related_model, "__name__", "") if related_model else "",
                 )
             )
         return specs
@@ -364,13 +371,25 @@ class AiCrudConversationManager:
                 rf"(?<!\w)(?:{field_pattern})(?!\w)\s*(?:[:=\-]|é|e|is)?\s+(.+?)(?=(?:[,;\n]|\s+(?:{all_pattern})(?!\w)\s*(?:[:=\-]|é|e|is)?\s+)|$)",
                 flags=re.IGNORECASE,
             )
-            match = pattern.search(message or "")
-            if not match:
+            matches = list(pattern.finditer(message or ""))
+            if not matches:
                 continue
-            raw_value = self._clean_value(match.group(1))
+            raw_value = self._best_field_match(field=field, matches=matches)
             if raw_value:
                 payload[field.name] = self._coerce_value(field, raw_value)
         return payload
+
+    def _best_field_match(self, *, field: CrudFieldSpec, matches: list[re.Match]) -> str:
+        values = [self._clean_value(match.group(1)) for match in matches]
+        values = [value for value in values if value]
+        if not values:
+            return ""
+        field_type = field.field_type.lower()
+        if any(kind in field_type for kind in ("decimal", "float", "integer")):
+            numeric = [value for value in values if re.search(r"-?\d+(?:[,.]\d+)?", value)]
+            if numeric:
+                return numeric[-1]
+        return values[-1]
 
     def _extract_common_payload(self, *, message: str, field_specs: list[CrudFieldSpec], payload: dict[str, Any]) -> None:
         by_name = {field.name: field for field in field_specs}
@@ -472,7 +491,9 @@ class AiCrudConversationManager:
                 return True
             if normalized in {"nao", "não", "n", "no", "false", "falso", "0"}:
                 return False
-        if "integer" in field_type or "primarykey" in field_type:
+        if "primarykey" in field_type:
+            return int(raw) if re.match(r"^\d+$", raw) else raw
+        if "integer" in field_type:
             match = re.search(r"-?\d+", raw)
             return int(match.group(0)) if match else raw
         if "decimal" in field_type or "float" in field_type:
@@ -485,6 +506,67 @@ class AiCrudConversationManager:
             day, month, year = raw.split("/")
             return f"{year}-{int(month):02d}-{int(day):02d}"
         return raw
+
+    def _resolve_related_values(
+        self,
+        *,
+        payload: dict[str, Any],
+        field_specs: list[CrudFieldSpec],
+        tenant,
+    ) -> dict[str, Any]:
+        if not payload:
+            return payload
+
+        by_name = {field.name: field for field in field_specs}
+        resolved = dict(payload)
+        for field_name, value in list(payload.items()):
+            field = by_name.get(field_name)
+            if not field or "primarykey" not in field.field_type.lower():
+                continue
+            if isinstance(value, int):
+                continue
+            raw = str(value or "").strip()
+            if not raw:
+                continue
+            if raw.isdigit():
+                resolved[field_name] = int(raw)
+                continue
+            related_pk = self._lookup_related_pk(field=field, raw=raw, tenant=tenant)
+            if related_pk is not None:
+                resolved[field_name] = related_pk
+        return resolved
+
+    def _lookup_related_pk(self, *, field: CrudFieldSpec, raw: str, tenant):
+        if not field.related_app_label or not field.related_model_name:
+            return None
+        try:
+            model = django_apps.get_model(field.related_app_label, field.related_model_name)
+        except Exception:
+            return None
+
+        queryset = model._default_manager.all()
+        if tenant is not None and self._model_has_field(model, "tenant"):
+            queryset = queryset.filter(tenant=tenant)
+        if self._model_has_field(model, "deleted"):
+            queryset = queryset.filter(deleted=False)
+
+        query = Q()
+        for lookup_field in ("custom_id", "code", "codigo", "number", "name"):
+            if not self._model_has_field(model, lookup_field):
+                continue
+            lookup = "iexact" if lookup_field != "name" else "icontains"
+            query |= Q(**{f"{lookup_field}__{lookup}": raw})
+        if not query:
+            return None
+        obj = queryset.filter(query).order_by("-id").first()
+        return getattr(obj, "pk", None) if obj is not None else None
+
+    def _model_has_field(self, model, field_name: str) -> bool:
+        try:
+            model._meta.get_field(field_name)
+            return True
+        except FieldDoesNotExist:
+            return False
 
     def _clean_value(self, value: str) -> str:
         value = (value or "").strip()
@@ -686,6 +768,7 @@ class AiCrudConversationManager:
             "type": field.field_type,
             "aliases": list(field.aliases),
             "choices": [{"value": key, "label": label} for key, label in field.choices[:30]],
+            "related_model": f"{field.related_app_label}.{field.related_model_name}" if field.related_app_label else "",
         }
 
     def _action_labels(self, *, operation: str, descriptor: ResourceDescriptor) -> dict[str, str]:

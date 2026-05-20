@@ -64,6 +64,10 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
     "pharmacy-product": ("Produtos de farmácia", "Pharmacy products"),
     "pharmacy-lot": ("Lotes de farmácia", "Pharmacy lots"),
     "pharmacy-requisicaomaterial": ("Requisições de material", "Material requests"),
+    "accounting-account": ("Contas contabilísticas", "Accounting accounts"),
+    "accounting-entry": ("Lançamentos contabilísticos", "Accounting entries"),
+    "accounting-movement": ("Movimentos contabilísticos", "Accounting movements"),
+    "accounting-financialreconciliation": ("Conciliações financeiras", "Financial reconciliations"),
     "nursing-procedure": ("Procedimentos de enfermagem", "Nursing procedures"),
     "nursing-internamentoenfermaria": ("Internamentos", "Admissions"),
     "nursing-registroenfermagem": ("Registos de enfermagem", "Nursing records"),
@@ -91,6 +95,10 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
     "pharmacy-product": ("produto", "produtos", "medicamento", "medicamentos", "product", "products"),
     "pharmacy-lot": ("lote", "lotes", "stock", "estoque", "validade", "lot", "lots"),
     "pharmacy-requisicaomaterial": ("material", "materiais", "almoxarifado", "requisição de material", "material request"),
+    "accounting-account": ("conta", "contas", "conta contabil", "conta contábil", "conta contabilistica", "plano de contas", "account", "accounts"),
+    "accounting-entry": ("lancamento", "lançamento", "lancamentos", "lançamentos", "lancamento contabil", "lançamento contábil", "entrada contabil", "entry", "entries"),
+    "accounting-movement": ("movimento", "movimentos", "movimento contabil", "movimento contábil", "debito", "débito", "credito", "crédito", "movement", "movements"),
+    "accounting-financialreconciliation": ("conciliacao", "conciliação", "conciliacao financeira", "conciliação financeira", "reconciliacao", "reconciliation", "financial reconciliation"),
     "nursing-procedure": ("procedimento", "procedimentos", "enfermagem", "nursing"),
     "nursing-internamentoenfermaria": ("internamento", "internamentos", "cama", "camas", "admission", "ward"),
     "education-student": ("estudante", "estudantes", "aluno", "alunos", "student", "students"),
@@ -258,7 +266,7 @@ def match_resource_descriptors(message: str, *, limit: int = 8) -> list[Resource
     for descriptor in get_resource_descriptors():
         score = 0
         for keyword in descriptor.keywords:
-            if not keyword or keyword not in normalized:
+            if not keyword or not _keyword_matches(keyword=keyword, normalized=normalized):
                 continue
             score += 10 if " " in keyword else 4
         if score:
@@ -268,6 +276,11 @@ def match_resource_descriptors(message: str, *, limit: int = 8) -> list[Resource
     best_score = scored[0][0] if scored else 0
     threshold = max(4, best_score - 6)
     return [descriptor for score, descriptor in scored if score >= threshold][:limit]
+
+
+def _keyword_matches(*, keyword: str, normalized: str) -> bool:
+    # Avoid false positives such as "conta" matching "contacto".
+    return bool(re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", normalized))
 
 
 def user_can_method_resource(*, user, basename: str, method: str) -> bool:

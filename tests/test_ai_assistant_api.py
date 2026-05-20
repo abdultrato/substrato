@@ -13,6 +13,9 @@ from apps.ai_assistant.models import (
 )
 from apps.ai_assistant.services.redaction import redact_value
 from apps.ai_assistant.services.registry import AiToolRegistry
+from apps.accounting.models.account import Account
+from apps.accounting.models.legacy_entry import LegacyEntry
+from apps.accounting.models.legacy_movement import LegacyMovement
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.clinical.models import Patient
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
@@ -402,6 +405,154 @@ def test_ai_conversational_crud_denies_write_without_resource_permission(api_cli
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Patient.objects.filter(tenant=tenant, name="Paciente Bloqueado").exists()
+
+
+@pytest.mark.django_db
+def test_ai_accounting_crud_creates_account_for_accounting_group(api_client):
+    tenant = _tenant(identifier="tn-ai-accounting-crud", domain="tn-ai-accounting-crud.local")
+    user = _user(tenant, "contabilidade_ai_crud", GROUPS["CONTABILIDADE"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie conta contabil nome Caixa Operacional tipo ativo",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "accounting-account"
+    assert action.payload["data"]["name"] == "Caixa Operacional"
+    assert action.payload["data"]["type"] == "ATI"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    account = Account.objects.get(tenant=tenant, name="Caixa Operacional")
+    assert account.type == "ATI"
+
+
+@pytest.mark.django_db
+def test_ai_accounting_crud_updates_account_for_accounting_group(api_client):
+    tenant = _tenant(identifier="tn-ai-accounting-update", domain="tn-ai-accounting-update.local")
+    user = _user(tenant, "contabilidade_ai_update", GROUPS["CONTABILIDADE"])
+    account = Account.objects.create(tenant=tenant, name="Conta Antiga", type="DES")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere conta contabil id {account.id} nome Banco Principal tipo passivo",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "accounting-account"
+    assert action.payload["data"]["type"] == "PAS"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    account.refresh_from_db()
+    assert account.name == "Banco Principal"
+    assert account.type == "PAS"
+
+
+@pytest.mark.django_db
+def test_ai_accounting_crud_creates_movement_resolving_related_codes(api_client):
+    tenant = _tenant(identifier="tn-ai-accounting-movement", domain="tn-ai-accounting-movement.local")
+    user = _user(tenant, "contabilidade_ai_movement", GROUPS["CONTABILIDADE"])
+    account = Account.objects.create(tenant=tenant, name="Caixa Movimento", type="ATI")
+    entry = LegacyEntry.objects.create(tenant=tenant, name="Lancamento Movimento", external_reference="DOC-IA")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie movimento contabil nome Debito Caixa "
+                f"lançamento {entry.custom_id} conta {account.custom_id} débito 150"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "accounting-movement"
+    assert action.payload["data"]["entry"] == entry.id
+    assert action.payload["data"]["account"] == account.id
+    assert action.payload["data"]["debit"] == "150"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    movement = LegacyMovement.objects.get(tenant=tenant, name="Debito Caixa")
+    assert movement.entry_id == entry.id
+    assert movement.account_id == account.id
+    assert str(movement.debit) == "150.00"
+
+
+@pytest.mark.django_db
+def test_ai_accounting_crud_deletes_ledger_entry_after_confirmation(api_client):
+    tenant = _tenant(identifier="tn-ai-accounting-delete", domain="tn-ai-accounting-delete.local")
+    user = _user(tenant, "contabilidade_ai_delete", GROUPS["CONTABILIDADE"])
+    entry = LegacyEntry.objects.create(tenant=tenant, name="Lancamento Removivel")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova lançamento contabil id {entry.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "accounting-entry"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = LegacyEntry.all_objects.get(id=entry.id)
+    assert removed.deleted is True
 
 
 @pytest.mark.django_db

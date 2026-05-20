@@ -67,6 +67,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-examination": SAFE_METHODS,
         "education-content": SAFE_METHODS,
     }
+    accounting_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -316,10 +317,15 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         },
         g["CONTABILIDADE"]: {
             # Contabilidade (CRUD) + auditoria read-only de recepcao/financeiro
-            "contabilidade-account": SAFE_METHODS | WRITE_METHODS,
-            "contabilidade-entry": SAFE_METHODS | WRITE_METHODS,
-            "contabilidade-movimento": SAFE_METHODS | WRITE_METHODS,
-            "contabilidade-conciliacaofinanceira": SAFE_METHODS | WRITE_METHODS,
+            "contabilidade-account": accounting_crud,
+            "contabilidade-entry": accounting_crud,
+            "contabilidade-movimento": accounting_crud,
+            "contabilidade-conciliacaofinanceira": accounting_crud,
+            # --- API v1 routes (English prefixes) ---
+            "accounting-account": accounting_crud,
+            "accounting-entry": accounting_crud,
+            "accounting-movement": accounting_crud,
+            "accounting-financialreconciliation": accounting_crud,
             # Pacientes (leitura para contexto das faturas)
             "clinico-patient": SAFE_METHODS,
             # SGE (somente leitura)
