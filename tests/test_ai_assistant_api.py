@@ -556,6 +556,156 @@ def test_ai_accounting_crud_deletes_ledger_entry_after_confirmation(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_audit_activity_crud_creates_activity_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-audit-crud", domain="tn-ai-audit-crud.local")
+    admin = _user(tenant, "admin_ai_audit_crud", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie atividade de auditoria método POST rota /api/v1/audit/teste/ "
+                "status 201 duração 45 mensagem Registo manual"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "audit-atividade"
+    assert action.payload["data"]["method"] == "POST"
+    assert action.payload["data"]["path"] == "/api/v1/audit/teste/"
+    assert action.payload["data"]["status_code"] == 201
+    assert action.payload["data"]["duration_ms"] == 45
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    activity = UserActivity.objects.get(tenant=tenant, path="/api/v1/audit/teste/")
+    assert activity.method == "POST"
+    assert activity.status_code == 201
+    assert activity.duration_ms == 45
+    assert activity.message == "Registo manual"
+
+
+@pytest.mark.django_db
+def test_ai_audit_activity_crud_updates_activity_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-audit-update", domain="tn-ai-audit-update.local")
+    admin = _user(tenant, "admin_ai_audit_update", GROUPS["ADMIN"], is_staff=True)
+    activity = UserActivity.objects.create(
+        tenant=tenant,
+        user=admin,
+        method="GET",
+        path="/api/v1/audit/original/",
+        status_code=200,
+        message="Original",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere atividade de auditoria id {activity.id} status 500 mensagem Erro actualizado",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "audit-atividade"
+    assert action.payload["object_ref"] == str(activity.id)
+    assert action.payload["data"]["status_code"] == 500
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    activity.refresh_from_db()
+    assert activity.status_code == 500
+    assert activity.message == "Erro actualizado"
+
+
+@pytest.mark.django_db
+def test_ai_audit_activity_crud_deletes_activity_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-audit-delete", domain="tn-ai-audit-delete.local")
+    admin = _user(tenant, "admin_ai_audit_delete", GROUPS["ADMIN"], is_staff=True)
+    activity = UserActivity.objects.create(
+        tenant=tenant,
+        user=admin,
+        method="GET",
+        path="/api/v1/audit/remover/",
+        status_code=200,
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova atividade de auditoria id {activity.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "audit-atividade"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = UserActivity.all_objects.get(id=activity.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_audit_activity_crud_denies_non_admin_write(api_client):
+    tenant = _tenant(identifier="tn-ai-audit-denied", domain="tn-ai-audit-denied.local")
+    user = _user(tenant, "recepcao_ai_audit_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie atividade de auditoria método GET rota /api/v1/bloqueado/",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not UserActivity.objects.filter(tenant=tenant, path="/api/v1/bloqueado/").exists()
+
+
+@pytest.mark.django_db
 def test_ai_investigations_endpoint_is_user_scoped(api_client):
     tenant = _tenant(identifier="tn-ai-investigations", domain="tn-ai-investigations.local")
     owner = _user(tenant, "owner_ai_investigation", GROUPS["RECEPCAO"])

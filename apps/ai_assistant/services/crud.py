@@ -551,7 +551,7 @@ class AiCrudConversationManager:
             queryset = queryset.filter(deleted=False)
 
         query = Q()
-        for lookup_field in ("custom_id", "code", "codigo", "number", "name"):
+        for lookup_field in ("custom_id", "code", "codigo", "number", "name", "username", "email"):
             if not self._model_has_field(model, lookup_field):
                 continue
             lookup = "iexact" if lookup_field != "name" else "icontains"

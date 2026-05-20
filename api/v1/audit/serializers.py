@@ -46,9 +46,56 @@ class UserAuditSerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
             return []
 
 
-class UserActivitySerializer(serializers.ModelSerializer):
+class UserActivitySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField(method_name="get_user_name")
     ip = serializers.CharField(read_only=True, allow_blank=True, allow_null=True)
+    legacy_input_aliases = {
+        "utilizador": "user",
+        "usuario": "user",
+        "método": "method",
+        "metodo": "method",
+        "rota": "path",
+        "caminho": "path",
+        "url": "full_path",
+        "url_completa": "full_path",
+        "status": "status_code",
+        "estado_http": "status_code",
+        "codigo_http": "status_code",
+        "código_http": "status_code",
+        "duracao": "duration_ms",
+        "duração": "duration_ms",
+        "duracao_ms": "duration_ms",
+        "duração_ms": "duration_ms",
+        "agente": "user_agent",
+        "useragent": "user_agent",
+        "view": "view_basename",
+        "modulo": "view_basename",
+        "módulo": "view_basename",
+        "acao": "view_action",
+        "ação": "view_action",
+        "objeto": "object_id",
+        "objecto": "object_id",
+        "mensagem": "message",
+        "metadados": "metadata",
+    }
+    legacy_output_aliases = {
+        "utilizador": "user",
+        "utilizador_nome": "user_name",
+        "método": "method",
+        "metodo": "method",
+        "rota": "path",
+        "url_completa": "full_path",
+        "status": "status_code",
+        "duracao_ms": "duration_ms",
+        "duração_ms": "duration_ms",
+        "agente": "user_agent",
+        "view": "view_basename",
+        "acao": "view_action",
+        "ação": "view_action",
+        "objeto": "object_id",
+        "mensagem": "message",
+        "metadados": "metadata",
+    }
 
     class Meta:
         model = UserActivity
@@ -69,6 +116,12 @@ class UserActivitySerializer(serializers.ModelSerializer):
             "object_id",
             "message",
             "metadata",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "user_name",
+            "ip",
         ]
 
     def get_user_name(self, obj: UserActivity) -> str:

@@ -83,7 +83,22 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
 }
 
 RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
-    "audit-atividade": ("atividade", "actividade", "historico", "histórico", "logs", "auditoria", "admin activity"),
+    "audit-atividade": (
+        "atividade",
+        "actividade",
+        "atividade de auditoria",
+        "actividade de auditoria",
+        "atividade do utilizador",
+        "actividade do utilizador",
+        "historico",
+        "histórico",
+        "logs",
+        "log",
+        "auditoria",
+        "audit activity",
+        "user activity",
+        "admin activity",
+    ),
     "clinical-patient": ("paciente", "pacientes", "patient", "patients", "utente", "utentes"),
     "clinical-labrequest": ("requisicao", "requisição", "requisicoes", "requisições", "request", "requests", "pedido", "pedidos"),
     "clinical-resultitem": ("resultado", "resultados", "laboratorio", "laboratório", "result", "results"),

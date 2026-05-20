@@ -2,7 +2,7 @@
 
 from django.db.models import Count, Max, Q
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.audit_activities.models.user_activity import UserActivity
@@ -39,7 +39,7 @@ class UserAuditViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
         )
 
 
-class UserActivityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
+class UserActivityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = UserActivity.objects.select_related("user").all()
     serializer_class = UserActivitySerializer
     filterset_class = UserActivityFilter
