@@ -1,0 +1,264 @@
+from __future__ import annotations
+
+import re
+from time import perf_counter
+from typing import Any
+
+from django.conf import settings
+from django.db import transaction
+
+from apps.ai_assistant.models import AiMessage, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.tools.base import AiToolContext
+
+from .audit import AiAuditLogger
+from .llm_gateway import LocalLlmGateway
+from .policy import AiPolicyError, AiPolicyGuard
+from .registry import AiToolRegistry
+
+
+class AiOrchestrator:
+    """Orquestra chat, política, ferramentas, resposta e auditoria."""
+
+    def __init__(self) -> None:
+        self.audit = AiAuditLogger()
+        self.policy = AiPolicyGuard()
+        self.registry = AiToolRegistry()
+        self.gateway = LocalLlmGateway()
+
+    def chat(
+        self,
+        *,
+        user,
+        tenant,
+        message: str,
+        session_id: int | None = None,
+        language: str = "pt",
+        active_module: str = "",
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if not getattr(settings, "AI_ASSISTANT_ENABLED", True):
+            raise AiPolicyError("ai_assistant_disabled", "A IA Operacional está desactivada neste ambiente.")
+
+        context = context or {}
+        language = "en" if language == "en" else "pt"
+        active_module = (active_module or context.get("active_module") or "").strip()[:80]
+
+        self.policy.ensure_chat_allowed(user=user, tenant=tenant)
+
+        with transaction.atomic():
+            session = self.audit.get_or_create_session(
+                tenant=tenant,
+                user=user,
+                session_id=session_id,
+                language=language,
+                active_module=active_module,
+                title_seed=message,
+            )
+            user_message = self.audit.create_message(
+                tenant=tenant,
+                session=session,
+                role=AiMessage.Role.USER,
+                content=message,
+                user=user,
+                metadata={"active_module": active_module, "context": context},
+            )
+
+            arguments = self._build_tool_arguments(message=message, context=context)
+            selected_tools = self.registry.select_tools(message=message, active_module=active_module)
+            tool_results: list[dict[str, Any]] = []
+            blocked_tools: list[dict[str, Any]] = []
+            tool_call_payload: list[dict[str, Any]] = []
+
+            for tool in selected_tools:
+                try:
+                    self.policy.ensure_tool_allowed(tool=tool, user=user)
+                except AiPolicyError as exc:
+                    self.audit.record_policy_event(
+                        tenant=tenant,
+                        session=session,
+                        user=user,
+                        policy_key=exc.policy_key,
+                        reason=exc.reason,
+                        blocked=True,
+                        metadata={"tool_name": tool.name},
+                    )
+                    call = self.audit.record_tool_call(
+                        tenant=tenant,
+                        session=session,
+                        message=user_message,
+                        tool_name=tool.name,
+                        mode=tool.mode,
+                        arguments=arguments,
+                        status=AiToolCall.Status.BLOCKED,
+                        error_message=exc.reason,
+                    )
+                    blocked_tools.append({"tool_name": tool.name, "reason": exc.reason})
+                    tool_call_payload.append(self._tool_call_payload(call))
+                    continue
+
+                started = perf_counter()
+                try:
+                    result = tool.run(
+                        AiToolContext(
+                            tenant=tenant,
+                            user=user,
+                            arguments=arguments,
+                            language=language,
+                            active_module=active_module,
+                        )
+                    )
+                    duration_ms = int((perf_counter() - started) * 1000)
+                    call = self.audit.record_tool_call(
+                        tenant=tenant,
+                        session=session,
+                        message=user_message,
+                        tool_name=tool.name,
+                        mode=tool.mode,
+                        arguments=arguments,
+                        result=result,
+                        status=AiToolCall.Status.SUCCESS,
+                        duration_ms=duration_ms,
+                    )
+                    tool_results.append({"tool_name": tool.name, "result": result, "duration_ms": duration_ms})
+                    tool_call_payload.append(self._tool_call_payload(call))
+                except Exception as exc:
+                    duration_ms = int((perf_counter() - started) * 1000)
+                    call = self.audit.record_tool_call(
+                        tenant=tenant,
+                        session=session,
+                        message=user_message,
+                        tool_name=tool.name,
+                        mode=tool.mode,
+                        arguments=arguments,
+                        status=AiToolCall.Status.ERROR,
+                        duration_ms=duration_ms,
+                        error_message=str(exc),
+                    )
+                    tool_call_payload.append(self._tool_call_payload(call))
+
+            answer = self.gateway.build_answer(
+                question=message,
+                language=language,
+                tool_results=tool_results,
+                blocked_tools=blocked_tools,
+            )
+
+            sources = self._collect_sources(tool_results)
+            suggested_actions = self._create_suggested_actions(
+                tenant=tenant,
+                session=session,
+                user=user,
+                language=language,
+                tool_results=tool_results,
+            )
+            assistant_message = self.audit.create_message(
+                tenant=tenant,
+                session=session,
+                role=AiMessage.Role.ASSISTANT,
+                content=answer,
+                metadata={
+                    "sources": sources,
+                    "tool_calls": tool_call_payload,
+                    "suggested_actions": suggested_actions,
+                    "provider": self.gateway.provider,
+                },
+            )
+
+            session.last_message_at = assistant_message.created_at
+            session.save(update_fields=["last_message_at", "updated_at"])
+
+            return {
+                "session_id": session.id,
+                "message_id": assistant_message.id,
+                "answer": answer,
+                "language": language,
+                "sources": sources,
+                "tool_calls": tool_call_payload,
+                "suggested_actions": suggested_actions,
+                "provider": self.gateway.provider,
+            }
+
+    def _build_tool_arguments(self, *, message: str, context: dict[str, Any]) -> dict[str, Any]:
+        filters = context.get("filters") if isinstance(context.get("filters"), dict) else {}
+        days = filters.get("days") or context.get("days")
+        request_code = filters.get("request_code") or filters.get("request") or context.get("request_code") or ""
+        if not days:
+            match = re.search(r"(\d{1,3})\s*(dias|days|d)\b", message or "", flags=re.IGNORECASE)
+            if match:
+                days = match.group(1)
+        if not days and re.search(r"24\s*(h|horas|hours)", message or "", flags=re.IGNORECASE):
+            days = 1
+        if not request_code:
+            match = re.search(r"\bREQ-[A-Za-z0-9-]+", message or "", flags=re.IGNORECASE)
+            if match:
+                request_code = match.group(0).upper()
+        return {"days": days or 7, "top": filters.get("top") or 8, "request_code": request_code, "message": message}
+
+    def _collect_sources(self, tool_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        sources: list[dict[str, Any]] = []
+        seen = set()
+        for item in tool_results:
+            result = item.get("result") or {}
+            for source in result.get("sources") or []:
+                key = (source.get("type"), source.get("label"), source.get("href"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                sources.append(source)
+        return sources
+
+    def _create_suggested_actions(
+        self,
+        *,
+        tenant,
+        session,
+        user,
+        language: str,
+        tool_results: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        action_payloads = []
+        command_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
+        if command_result:
+            days = (command_result.get("range") or {}).get("days") or 7
+            href = f"/monitoring/command-center?days={days}"
+            summary = (
+                f"Open Command Center filtered to {days} day(s)."
+                if language == "en"
+                else f"Abrir o Command Center filtrado para {days} dia(s)."
+            )
+            action = self.audit.create_suggested_action(
+                tenant=tenant,
+                session=session,
+                user=user,
+                action_type="open_filtered_navigation",
+                payload={"href": href, "label_pt": "Abrir Command Center", "label_en": "Open Command Center"},
+                requires_confirmation=False,
+                confirmation_summary=summary,
+                result_href=href,
+            )
+            action_payloads.append(self._action_payload(action))
+        return action_payloads
+
+    @staticmethod
+    def _tool_call_payload(call: AiToolCall) -> dict[str, Any]:
+        return {
+            "id": call.id,
+            "tool_name": call.tool_name,
+            "status": call.status,
+            "duration_ms": call.duration_ms,
+            "mode": call.mode,
+        }
+
+    @staticmethod
+    def _action_payload(action: AiSuggestedAction) -> dict[str, Any]:
+        payload = action.payload or {}
+        return {
+            "id": action.id,
+            "action_type": action.action_type,
+            "requires_confirmation": action.requires_confirmation,
+            "status": action.status,
+            "href": payload.get("href") or action.result_href,
+            "label_pt": payload.get("label_pt") or action.confirmation_summary,
+            "label_en": payload.get("label_en") or action.confirmation_summary,
+            "confirmation_summary": action.confirmation_summary,
+        }

@@ -1,0 +1,167 @@
+from __future__ import annotations
+
+from django.db.models import Count
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.ai_assistant.models import AiSession, AiSuggestedAction
+from apps.ai_assistant.services.orchestrator import AiOrchestrator
+from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
+from apps.ai_assistant.services.registry import AiToolRegistry
+
+from .serializers import (
+    AiActionConfirmSerializer,
+    AiChatRequestSerializer,
+    AiSessionDetailSerializer,
+    AiSessionSerializer,
+    AiSuggestedActionSerializer,
+)
+
+
+def request_tenant(request):
+    tenant = getattr(request, "tenant", None)
+    if tenant is not None:
+        return tenant
+    user = getattr(request, "user", None)
+    return getattr(user, "tenant", None)
+
+
+def map_policy_error(exc: AiPolicyError) -> PermissionDenied:
+    return PermissionDenied({"policy_key": exc.policy_key, "detail": exc.reason, "blocked": exc.blocked})
+
+
+class AiAssistantChatView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AiChatRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        tenant = request_tenant(request)
+
+        orchestrator = AiOrchestrator()
+        try:
+            payload = orchestrator.chat(
+                user=request.user,
+                tenant=tenant,
+                message=data["message"],
+                session_id=data.get("session_id"),
+                language=data.get("language") or "pt",
+                active_module=data.get("active_module") or "",
+                context=data.get("context") or {},
+            )
+        except AiPolicyError as exc:
+            raise map_policy_error(exc) from exc
+
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+class AiAssistantSessionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant = request_tenant(request)
+        if tenant is None:
+            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+        queryset = (
+            AiSession.objects.filter(tenant=tenant, user=request.user, deleted=False)
+            .annotate(message_count=Count("messages"))
+            .order_by("-last_message_at", "-updated_at", "-id")[:50]
+        )
+        return Response(AiSessionSerializer(queryset, many=True).data)
+
+
+class AiAssistantSessionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, session_id: int):
+        tenant = request_tenant(request)
+        session = (
+            AiSession.objects.filter(tenant=tenant, user=request.user, id=session_id, deleted=False)
+            .prefetch_related("messages")
+            .annotate(message_count=Count("messages"))
+            .first()
+        )
+        if session is None:
+            raise NotFound("Sessão da IA não encontrada.")
+        return Response(AiSessionDetailSerializer(session).data)
+
+
+class AiAssistantToolsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        language = "en" if request.query_params.get("language") == "en" else "pt"
+        registry = AiToolRegistry()
+        policy = AiPolicyGuard()
+        return Response({"tools": registry.list_definitions(user=request.user, policy_guard=policy, language=language)})
+
+
+class AiAssistantActionConfirmView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, action_id: int):
+        serializer = AiActionConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tenant = request_tenant(request)
+        action = AiSuggestedAction.objects.filter(tenant=tenant, id=action_id, deleted=False).first()
+        if action is None:
+            raise NotFound("Acção da IA não encontrada.")
+
+        policy = AiPolicyGuard()
+        try:
+            policy.ensure_action_allowed(action=action, user=request.user, tenant=tenant)
+        except AiPolicyError as exc:
+            raise map_policy_error(exc) from exc
+
+        # Fase 1 só permite navegação preparada. Acções de escrita ficam bloqueadas
+        # até existirem ferramentas write_confirmed específicas.
+        if action.action_type != "open_filtered_navigation":
+            action.status = AiSuggestedAction.Status.FAILED
+            action.result_summary = "Tipo de acção ainda não tem executor confirmado."
+            action.save(update_fields=["status", "result_summary", "updated_at"])
+            raise ValidationError({"action_type": "Executor ainda não implementado para esta acção."})
+
+        now = timezone.now()
+        action.status = AiSuggestedAction.Status.CONFIRMED
+        action.confirmed_by = request.user
+        action.confirmed_at = now
+        action.executed_at = now
+        action.result_summary = "Navegação preparada."
+        action.save(
+            update_fields=[
+                "status",
+                "confirmed_by",
+                "confirmed_at",
+                "executed_at",
+                "result_summary",
+                "updated_at",
+            ]
+        )
+        return Response(AiSuggestedActionSerializer(action).data)
+
+
+class AiAssistantActionCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, action_id: int):
+        tenant = request_tenant(request)
+        action = AiSuggestedAction.objects.filter(tenant=tenant, id=action_id, deleted=False).first()
+        if action is None:
+            raise NotFound("Acção da IA não encontrada.")
+
+        policy = AiPolicyGuard()
+        try:
+            policy.ensure_action_allowed(action=action, user=request.user, tenant=tenant)
+        except AiPolicyError as exc:
+            raise map_policy_error(exc) from exc
+
+        action.status = AiSuggestedAction.Status.CANCELLED
+        action.result_summary = "Cancelada pelo utilizador."
+        action.save(update_fields=["status", "result_summary", "updated_at"])
+        return Response(AiSuggestedActionSerializer(action).data)

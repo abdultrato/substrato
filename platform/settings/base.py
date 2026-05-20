@@ -95,6 +95,40 @@ TRANSACTIONAL_OUTBOX_RETRY_AFTER_SECONDS = int(get_env("TRANSACTIONAL_OUTBOX_RET
 TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS = int(get_env("TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS", "10"))
 
 # =========================================================
+# IA OPERACIONAL
+# =========================================================
+AI_ASSISTANT_ENABLED = get_env("AI_ASSISTANT_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+AI_PROVIDER = get_env("AI_PROVIDER", "local")
+AI_MODEL = get_env("AI_MODEL", "")
+AI_TIMEOUT_SECONDS = int(get_env("AI_TIMEOUT_SECONDS", "30"))
+AI_MAX_INPUT_TOKENS = int(get_env("AI_MAX_INPUT_TOKENS", "12000"))
+AI_MAX_OUTPUT_TOKENS = int(get_env("AI_MAX_OUTPUT_TOKENS", "1200"))
+AI_STORE_RAW_MESSAGES = get_env("AI_STORE_RAW_MESSAGES", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+AI_REDACTION_ENABLED = get_env("AI_REDACTION_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+AI_ACTION_CONFIRMATION_REQUIRED = get_env("AI_ACTION_CONFIRMATION_REQUIRED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+AI_RATE_LIMIT_PER_USER_PER_HOUR = int(get_env("AI_RATE_LIMIT_PER_USER_PER_HOUR", "60"))
+
+# =========================================================
 # PROMETHEUS (django-prometheus)
 # =========================================================
 #
@@ -152,6 +186,7 @@ LOCAL_APPS = [
     "apps.surgery.apps.SurgeryConfig",
     "apps.human_resources.apps.HumanResourcesConfig",
     "apps.monitoring.apps.MonitoringConfig",
+    "apps.ai_assistant.apps.AiAssistantConfig",
     "apps.education.apps.EducationConfig",
 ]
 
