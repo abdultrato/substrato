@@ -62,6 +62,22 @@ function friendlyResource(base: any, action: any): string {
   return labelAction ? `${labelBase} · ${labelAction}` : labelBase
 }
 
+function normalizeActivityRow(raw: any): AtividadeRow {
+  return {
+    id: Number(raw?.id ?? 0),
+    created_at: raw?.created_at ?? raw?.criado_em ?? raw?.createdAt ?? null,
+    method: raw?.method ?? raw?.metodo ?? null,
+    full_path: raw?.full_path ?? raw?.path_completo ?? raw?.fullPath ?? null,
+    path: raw?.path ?? raw?.caminho ?? null,
+    status_code: raw?.status_code ?? raw?.codigo_status ?? raw?.statusCode ?? null,
+    duration_ms: raw?.duration_ms ?? raw?.duracao_ms ?? null,
+    view_basename: raw?.view_basename ?? raw?.viewBaseName ?? null,
+    view_action: raw?.view_action ?? raw?.viewAction ?? null,
+    message: raw?.message ?? raw?.mensagem ?? null,
+    metadata: raw?.metadata ?? raw?.metadados ?? null,
+  }
+}
+
 export default function AuditoriaUsuarioDetalhePage() {
   const params = useParams() as any
   const userId = String(params?.id || "")
@@ -80,14 +96,14 @@ export default function AuditoriaUsuarioDetalhePage() {
 
         const [u, acts] = await Promise.all([
           apiFetch<any>(`/audit/users/${encodeURIComponent(userId)}/`),
-          apiFetch<any>(`/audit/atividade/?usuario=${encodeURIComponent(userId)}`),
+          apiFetch<any>(`/audit/atividade/?user=${encodeURIComponent(userId)}`),
         ])
 
         const items = acts && (acts as any).results ? (acts as any).results : acts
 
         if (!mounted) return
         setUtilizador(u || null)
-        setAtividades(Array.isArray(items) ? items : [])
+        setAtividades(Array.isArray(items) ? items.map(normalizeActivityRow) : [])
       } catch (e: any) {
         if (!mounted) return
         setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar histórico."))
@@ -103,20 +119,20 @@ export default function AuditoriaUsuarioDetalhePage() {
 
   const columns = useMemo(
     () => [
-      { header: "Quando", render: (r: AtividadeRow) => fmtDate(r.criado_em) },
-      { header: "Ação", render: (r: AtividadeRow) => friendlyMethod(r.metodo) },
+      { header: "Quando", render: (r: AtividadeRow) => fmtDate(r.created_at) },
+      { header: "Ação", render: (r: AtividadeRow) => friendlyMethod(r.method) },
       {
         header: "Página",
         render: (r: AtividadeRow) => (
-          <div className="max-w-[520px] truncate" title={r.path_completo || r.caminho || ""}>
-            {r.path_completo || r.caminho || "-"}
+          <div className="max-w-[520px] truncate" title={r.full_path || r.path || ""}>
+            {r.full_path || r.path || "-"}
           </div>
         ),
       },
       { header: "Resultado", render: (r: AtividadeRow) => friendlyStatus(r.status_code) },
       {
         header: "Tempo",
-        render: (r: AtividadeRow) => (r.duracao_ms != null ? `${r.duracao_ms} ms` : "—"),
+        render: (r: AtividadeRow) => (r.duration_ms != null ? `${r.duration_ms} ms` : "—"),
         className: "text-right",
       },
       {
