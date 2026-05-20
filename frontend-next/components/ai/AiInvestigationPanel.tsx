@@ -31,8 +31,13 @@ export type AiInvestigation = {
   findings?: AiInvestigationFinding[]
   next_steps?: AiInvestigationStep[]
   recommended_questions?: string[]
+  sources?: Array<{ type?: string; label?: string; href?: string }>
+  tool_names?: string[]
+  scope?: Record<string, any>
   result_summary?: string
+  created_by_name?: string
   created_at?: string
+  updated_at?: string
 }
 
 type Props = {

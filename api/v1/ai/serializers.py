@@ -89,6 +89,10 @@ class AiInvestigationSerializer(serializers.ModelSerializer):
         return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
 
 
+class AiInvestigationUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=AiInvestigation.Status.choices, required=True)
+
+
 class AiActionConfirmSerializer(serializers.Serializer):
     confirmation_text = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
 

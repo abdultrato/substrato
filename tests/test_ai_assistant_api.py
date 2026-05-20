@@ -255,8 +255,10 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
         findings=[{"title": "Pacientes", "detail": "0"}],
         next_steps=[{"label": "Abrir pacientes", "href": "/patients"}],
         recommended_questions=["Mostre uma listagem segura."],
+        tool_names=["explore_database"],
+        result_summary="Investigação estruturada sobre pacientes.",
     )
-    AiInvestigation.objects.create(
+    hidden = AiInvestigation.objects.create(
         tenant=tenant,
         session=session,
         created_by=other,
@@ -275,6 +277,26 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
     detail_response = api_client.get(f"/api/v1/ai/assistant/investigations/{owned.id}/", format="json")
     assert detail_response.status_code == 200, _response_data(detail_response)
     assert _response_data(detail_response)["id"] == owned.id
+
+    hidden_response = api_client.get(f"/api/v1/ai/assistant/investigations/{hidden.id}/", format="json")
+    assert hidden_response.status_code == 404
+
+    filtered_response = api_client.get(
+        "/api/v1/ai/assistant/investigations/?q=pacientes&status=ready&intent=data_exploration&tool=explore_database",
+        format="json",
+    )
+    assert filtered_response.status_code == 200, _response_data(filtered_response)
+    assert [row["id"] for row in _response_data(filtered_response)] == [owned.id]
+
+    patch_response = api_client.patch(
+        f"/api/v1/ai/assistant/investigations/{owned.id}/",
+        {"status": "archived"},
+        format="json",
+    )
+    assert patch_response.status_code == 200, _response_data(patch_response)
+    owned.refresh_from_db()
+    assert owned.status == AiInvestigation.Status.ARCHIVED
+    assert _response_data(patch_response)["status"] == "archived"
 
 
 @pytest.mark.django_db

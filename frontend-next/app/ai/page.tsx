@@ -7,6 +7,7 @@ import {
   BrainCircuit,
   ClipboardCheck,
   ExternalLink,
+  Lightbulb,
   Lock,
   Send,
   ShieldCheck,
@@ -144,7 +145,11 @@ function AiContextAside({
         </div>
         <div className="space-y-2">
           {investigations.length ? investigations.slice(0, 6).map((investigation) => (
-            <div key={investigation.id || investigation.custom_id} className="rounded-xl bg-card/80 p-2">
+            <Link
+              key={investigation.id || investigation.custom_id}
+              href={`/ai/investigations/${investigation.id}`}
+              className="block rounded-xl bg-card/80 p-2 transition hover:bg-muted"
+            >
               <div className="line-clamp-1 text-xs font-semibold text-foreground">
                 {investigation.title || t("Investigação da IA", "AI investigation")}
               </div>
@@ -154,7 +159,7 @@ function AiContextAside({
                   {investigation.confidence_score ?? 0}%
                 </Badge>
               </div>
-            </div>
+            </Link>
           )) : (
             <p className="text-xs text-muted-foreground">
               {t("As investigações estruturadas aparecerão aqui.", "Structured investigations will appear here.")}
@@ -214,6 +219,12 @@ export default function AiOperationalPage() {
     ],
     [t]
   )
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const question = new URLSearchParams(window.location.search).get("question")
+    if (question) setComposer(question)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -379,6 +390,13 @@ export default function AiOperationalPage() {
           )}
           actions={
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/ai/investigations"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+              >
+                <Lightbulb size={15} />
+                {t("Investigações", "Investigations")}
+              </Link>
               <Link
                 href="/ai/tasks"
                 className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"

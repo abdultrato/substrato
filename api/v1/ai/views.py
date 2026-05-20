@@ -17,6 +17,7 @@ from .serializers import (
     AiActionConfirmSerializer,
     AiChatRequestSerializer,
     AiInvestigationSerializer,
+    AiInvestigationUpdateSerializer,
     AiOperationalTaskSerializer,
     AiSessionDetailSerializer,
     AiSessionSerializer,
@@ -34,6 +35,18 @@ def request_tenant(request):
 
 def map_policy_error(exc: AiPolicyError) -> PermissionDenied:
     return PermissionDenied({"policy_key": exc.policy_key, "detail": exc.reason, "blocked": exc.blocked})
+
+
+def ai_investigation_queryset(request):
+    tenant = request_tenant(request)
+    if tenant is None:
+        raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+    policy = AiPolicyGuard()
+    queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False).select_related("created_by", "session")
+    if not policy.is_admin_like(request.user):
+        queryset = queryset.filter(created_by=request.user)
+    return queryset
 
 
 class AiAssistantChatView(APIView):
@@ -108,34 +121,58 @@ class AiAssistantInvestigationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        tenant = request_tenant(request)
-        if tenant is None:
-            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+        queryset = ai_investigation_queryset(request)
+        status_value = str(request.query_params.get("status") or "").strip()
+        intent = str(request.query_params.get("intent") or "").strip()
+        tool_name = str(request.query_params.get("tool") or "").strip()
+        query = str(request.query_params.get("q") or "").strip()
+        session_id = str(request.query_params.get("session_id") or "").strip()
 
-        policy = AiPolicyGuard()
-        queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False).select_related("created_by")
-        if not policy.is_admin_like(request.user):
-            queryset = queryset.filter(created_by=request.user)
-        queryset = queryset.order_by("-created_at", "-id")[:100]
-        return Response(AiInvestigationSerializer(queryset, many=True).data)
+        if status_value:
+            queryset = queryset.filter(status=status_value)
+        if intent:
+            queryset = queryset.filter(intent=intent)
+        if session_id.isdigit():
+            queryset = queryset.filter(session_id=int(session_id))
+        if query:
+            queryset = queryset.filter(
+                Q(title__icontains=query)
+                | Q(question__icontains=query)
+                | Q(intent__icontains=query)
+                | Q(result_summary__icontains=query)
+            )
+
+        try:
+            limit = min(max(int(request.query_params.get("limit") or 100), 1), 250)
+        except (TypeError, ValueError):
+            limit = 100
+
+        fetch_limit = limit * 3 if tool_name else limit
+        rows = list(queryset.order_by("-created_at", "-id")[:fetch_limit])
+        if tool_name:
+            rows = [item for item in rows if tool_name in (item.tool_names or [])][:limit]
+        return Response(AiInvestigationSerializer(rows, many=True).data)
 
 
 class AiAssistantInvestigationDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, investigation_id: int):
-        tenant = request_tenant(request)
-        investigation = (
-            AiInvestigation.objects.filter(tenant=tenant, id=investigation_id, deleted=False)
-            .select_related("created_by")
-            .first()
-        )
+        investigation = ai_investigation_queryset(request).filter(id=investigation_id).first()
+        if investigation is None:
+            raise NotFound("Investigação da IA não encontrada.")
+        return Response(AiInvestigationSerializer(investigation).data)
+
+    def patch(self, request, investigation_id: int):
+        investigation = ai_investigation_queryset(request).filter(id=investigation_id).first()
         if investigation is None:
             raise NotFound("Investigação da IA não encontrada.")
 
-        policy = AiPolicyGuard()
-        if not policy.is_admin_like(request.user) and investigation.created_by_id != request.user.id:
-            raise NotFound("Investigação da IA não encontrada.")
+        serializer = AiInvestigationUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        investigation.status = serializer.validated_data["status"]
+        investigation.updated_by = request.user
+        investigation.save(update_fields=["status", "updated_by", "updated_at"])
         return Response(AiInvestigationSerializer(investigation).data)
 
 

@@ -722,6 +722,41 @@ tests/
 - A conversa gera uma investigação de dados com achados e próximos passos.
 - Se o utilizador pedir recurso sem permissão, a IA responde que não pode fazê-lo e a investigação fica bloqueada.
 
+## Próximo Nível Implementado: Workspace de Investigações
+Este incremento transforma as investigações persistidas num espaço de trabalho navegável. O utilizador deixa de depender apenas do histórico da conversa e passa a poder pesquisar, filtrar, abrir detalhes, rever fontes e alterar o estado operacional da investigação.
+
+### Estrutura Criada
+```text
+api/v1/ai/
+  serializers.py
+    AiInvestigationUpdateSerializer
+  views.py
+    filtros de listagem
+    PATCH de estado
+frontend-next/app/ai/
+  page.tsx
+  investigations/
+    page.tsx
+    [id]/page.tsx
+tests/
+  test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. `GET /api/v1/ai/assistant/investigations/` aceita filtros por texto, estado, intenção, sessão, ferramenta e limite.
+2. `GET /api/v1/ai/assistant/investigations/{id}/` mantém o escopo por tenant e utilizador.
+3. `PATCH /api/v1/ai/assistant/investigations/{id}/` altera apenas o estado, mantendo RBAC e ownership.
+4. A página `/ai/investigations` mostra métricas, filtros e histórico estruturado.
+5. A página `/ai/investigations/{id}` mostra achados, próximos passos, fontes, ferramentas, escopo e acções de estado.
+6. A página principal `/ai` liga para o workspace e as investigações recentes passam a ser navegáveis.
+
+### Critérios de Aceite do Nível
+- Utilizador vê apenas investigações do próprio tenant e escopo autorizado.
+- Utilizador pesquisa investigações por pergunta, título, resumo, estado e intenção.
+- Utilizador abre uma investigação e revê evidência, fontes internas e ferramentas usadas.
+- Utilizador arquiva ou reabre a investigação sem afectar dados de outro utilizador.
+- Perguntas recomendadas podem voltar para `/ai` como ponto de partida para nova conversa.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/
