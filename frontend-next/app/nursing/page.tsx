@@ -9,7 +9,6 @@ import {
   HeartPulse,
   PackageSearch,
   BedDouble,
-  Stethoscope,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -20,9 +19,11 @@ import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { useLanguage } from "@/hooks/useLanguage"
 
 export default function EnfermagemPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [loading, setLoading] = useState(true)
@@ -47,7 +48,11 @@ export default function EnfermagemPage() {
         setProcedimentos(extractTotalCount(procs))
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de enfermagem."))
+        setErro(
+          isNotFoundLikeError(e)
+            ? null
+            : (e?.message || t("Falha ao carregar o workspace de enfermagem.", "Failed to load the nursing workspace.")),
+        )
       } finally {
         if (mounted) setLoading(false)
       }
@@ -62,15 +67,15 @@ export default function EnfermagemPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-6">
         <PageHeader
-          title="Enfermagem"
-          subtitle="Execução: colheitas, procedimentos e registos."
+          title={t("Enfermagem", "Nursing")}
+          subtitle={t("Execução: colheitas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
           actions={
             podeVerAdmin ? (
               <Link
                 href="/admin/nursing/"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
-                Abrir na Administração
+                {t("Abrir na Administração", "Open in Administration")}
               </Link>
             ) : null
           }
@@ -83,56 +88,77 @@ export default function EnfermagemPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Requisições pendentes" value={loading ? "..." : requisicoesPendentes} />
-          <MetricCard label="Procedimentos" value={loading ? "..." : procedimentos} />
-          <MetricCard label="Colheitas" value={loading ? "..." : "—"} />
-          <MetricCard label="Sinais vitais" value={loading ? "..." : "—"} hint="Entrada via módulo Enfermagem" />
+          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : requisicoesPendentes} />
+          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedimentos} />
+          <MetricCard label={t("Colheitas", "Sample collections")} value={loading ? "..." : "—"} />
+          <MetricCard
+            label={t("Sinais vitais", "Vital signs")}
+            value={loading ? "..." : "—"}
+            hint={t("Entrada via módulo Enfermagem", "Entries via the Nursing module")}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ActionTile
-            title="Requisições"
-            description="Visualize as requisições pendentes e o que precisa ser executado."
+            title={t("Requisições", "Requests")}
+            description={t("Visualize as requisições pendentes e o que precisa ser executado.", "View pending requests and what still needs execution.")}
             href="/nursing/requests"
             icon={ClipboardList}
           />
           <ActionTile
-            title="Itens de requisição"
-            description="Lista de itens vinculados às requisições (exames)."
+            title={t("Itens de requisição", "Request items")}
+            description={t("Lista de itens vinculados às requisições (exames).", "List of items linked to requests (tests).")}
             href="/nursing/request-items"
             icon={Droplets}
           />
           <ActionTile
-            title="Procedimentos"
-            description="Registos e execução de procedimentos de enfermagem."
+            title={t("Procedimentos", "Procedures")}
+            description={t("Registos e execução de procedimentos de enfermagem.", "Nursing procedure records and execution.")}
             href="/nursing/procedures"
             icon={HeartPulse}
           />
           <ActionTile
-            title="Enfermaria"
-            description="Dashboard de camas e internamentos."
+            title={t("Enfermaria", "Ward")}
+            description={t("Dashboard de camas e internamentos.", "Dashboard for beds and admissions.")}
             href="/nursing/ward"
             icon={BedDouble}
           />
           <ActionTile
-            title="Criar requisição de materiais"
-            description="Abrir o formulário para solicitar materiais ao almoxarifado/farmácia."
+            title={t("Criar requisição de materiais", "Create material request")}
+            description={t(
+              "Abrir o formulário para solicitar materiais ao almoxarifado/farmácia.",
+              "Open the form to request supplies from warehouse/pharmacy.",
+            )}
             href="/pharmacy/material-requests/new"
             icon={PackageSearch}
           />
         </div>
 
         <Card
-          title="Visão do módulo"
-          subtitle="Resumo do escopo disponível para o módulo de enfermagem."
+          title={t("Visão do módulo", "Module overview")}
+          subtitle={t("Resumo do escopo disponível para o módulo de enfermagem.", "Summary of the available scope for the nursing module.")}
         >
           <div className="text-sm text-slate-700">
-            Disponível:
+            {t("Disponível:", "Available:")}
             <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-              <li>Requisições laboratoriais em <strong>Requisições</strong> e <strong>Itens de requisição</strong>.</li>
-              <li>Execução de procedimentos e registos no módulo <strong>Enfermagem</strong>.</li>
-              <li>Consulta de produtos/lots em <strong>Farmácia</strong>.</li>
-              <li>Solicitações médicas em <strong>Medicina</strong>.</li>
+              <li>
+                {t("Requisições laboratoriais em ", "Laboratory requests in ")}
+                <strong>{t("Requisições", "Requests")}</strong>
+                {t(" e ", " and ")}
+                <strong>{t("Itens de requisição", "Request items")}</strong>.
+              </li>
+              <li>
+                {t("Execução de procedimentos e registos no módulo ", "Procedure execution and records in the ")}
+                <strong>{t("Enfermagem", "Nursing")}</strong>.
+              </li>
+              <li>
+                {t("Consulta de produtos/lotes em ", "Product and lot lookup in ")}
+                <strong>{t("Farmácia", "Pharmacy")}</strong>.
+              </li>
+              <li>
+                {t("Solicitações médicas em ", "Medical orders in ")}
+                <strong>{t("Medicina", "Medicine")}</strong>.
+              </li>
             </ul>
           </div>
         </Card>

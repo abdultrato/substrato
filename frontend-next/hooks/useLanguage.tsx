@@ -64,7 +64,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return {
       language,
       isPortuguese,
-      switchButtonLabel: isPortuguese ? "Mudar para Inglês" : "chenge to portuguese",
+      switchButtonLabel: isPortuguese ? "Mudar para Inglês" : "Change to Portuguese",
       setLanguage,
       toggleLanguage,
       t: (pt: string, en: string) => (isPortuguese ? pt : en),
