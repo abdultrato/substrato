@@ -160,6 +160,12 @@ def _pharmacy_sector_movements_pdf(payload: dict) -> tuple[bytes, str, str]:
     return file_bytes, filename, "application/pdf"
 
 
+def _patients_csv(payload: dict) -> tuple[bytes, str, str]:
+    from services.exports.patients import generate_patients_csv
+
+    return generate_patients_csv(payload)
+
+
 EXPORT_RUNNERS: dict[str, Callable[[dict], tuple[bytes, str, str]]] = {
     "activity_report_pdf": _activity_report_pdf,
     "analytics_pdf": _analytics_pdf,
@@ -178,6 +184,7 @@ EXPORT_RUNNERS: dict[str, Callable[[dict], tuple[bytes, str, str]]] = {
     "pharmacy_least_requested_products_pdf": _pharmacy_least_requested_products_pdf,
     "pharmacy_product_sector_demand_pdf": _pharmacy_product_sector_demand_pdf,
     "pharmacy_sector_movements_pdf": _pharmacy_sector_movements_pdf,
+    "patients_csv": _patients_csv,
 }
 
 

@@ -130,7 +130,7 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
 
     @action(detail=False, methods=["get"], url_path="estoque/pdf", url_name="estoque-pdf")
     def stock_pdf(self, request):
-        """Gera PDF do estoque existente (snapshot atual de lotes com saldo)."""
+        """Gera PDF do estoque existente (assíncrono)."""
         include_expired = _truthy(request.query_params.get("include_expired"))
         date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
         date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
@@ -183,21 +183,35 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
             "summary": summary,
             "rows": rows,
         }
-        queued = queue_export_if_requested(
-            request,
+
+        tenant = getattr(request, "tenant", None)
+        user = getattr(request, "user", None)
+
+        job_state = create_export_job(
             export_key="pharmacy_stock_pdf",
             payload=payload,
+            tenant_id=tenant.id if tenant else None,
+            user_id=user.id if user else None,
             content_disposition="inline",
         )
-        if queued is not None:
-            return queued
 
-        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_stock_pdf
+        run_export_job.delay(job_state["id"])
 
-        pdf_bytes, filename = generate_pharmacy_stock_pdf(payload, request=request)
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{filename}"'
-        return response
+        return Response(
+            {
+                "job_id": job_state["id"],
+                "status": "queued",
+                "export_key": "pharmacy_stock_pdf",
+                "created_at": job_state["created_at"],
+                "status_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/"
+                ),
+                "download_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/download/"
+                ),
+            },
+            status=202,
+        )
 
 
 class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

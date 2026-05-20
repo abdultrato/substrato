@@ -23,6 +23,8 @@ from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
 from infrastructure.cache import CacheService
+from services.reports.async_exports import create_export_job
+from tasks.export_jobs import run_export_job
 from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
@@ -539,20 +541,41 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
+        """Gera PDF de fatura (assíncrono)."""
         invoice = self.get_object()
-        queued = queue_export_if_requested(
-            request,
+        tenant = getattr(request, "tenant", None)
+        user = getattr(request, "user", None)
+
+        payload = {
+            "invoice_id": invoice.id,
+            "tenant_id": tenant.id if tenant else None,
+        }
+
+        job_state = create_export_job(
             export_key="invoice_pdf",
-            payload={"invoice_id": invoice.id},
+            payload=payload,
+            tenant_id=tenant.id if tenant else None,
+            user_id=user.id if user else None,
             content_disposition="inline",
         )
-        if queued is not None:
-            return queued
 
-        pdf_bytes, filename = generate_invoice_pdf(invoice, request=request)
-        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-        resp["Content-Disposition"] = f'inline; filename="{filename}"'
-        return resp
+        run_export_job.delay(job_state["id"])
+
+        return Response(
+            {
+                "job_id": job_state["id"],
+                "status": "queued",
+                "export_key": "invoice_pdf",
+                "created_at": job_state["created_at"],
+                "status_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/"
+                ),
+                "download_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/download/"
+                ),
+            },
+            status=202,
+        )
 
     @action(detail=False, methods=["get"], url_path="historico_faturamento", url_name="historico-faturamento")
     def billing_history(self, request):

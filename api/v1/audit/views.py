@@ -10,10 +10,13 @@ from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.utils.async_exports import queue_export_if_requested
 from apps.audit_activities.models.user_activity import UserActivity
+from services.reports.async_exports import create_export_job
+from tasks.export_jobs import run_export_job
 from tasks.generate_pdf.activity_reports_pdf_generator import generate_activity_report_pdf
 
 
@@ -326,23 +329,34 @@ class ActivityReportPdfView(APIView):
         }
 
     def get(self, request):
+        """Gera PDF de atividades (assíncrono)."""
         payload = self._build_payload(request)
-        queued = queue_export_if_requested(
-            request,
+        tenant = getattr(request, "tenant", None)
+        user = getattr(request, "user", None)
+
+        # Sempre assíncrono (sem fallback síncrono)
+        job_state = create_export_job(
             export_key="activity_report_pdf",
             payload=payload,
+            tenant_id=tenant.id if tenant else None,
+            user_id=user.id if user else None,
             content_disposition="inline",
         )
-        if queued is not None:
-            return queued
 
-        pdf_bytes, filename = generate_activity_report_pdf(payload, request=request)
+        run_export_job.delay(job_state["id"])
 
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{filename}"'
-        response["X-Report-Scope"] = str(payload.get("scope") or "")
-        response["X-Activity-Count"] = str((payload.get("summary") or {}).get("total_activities", 0))
-        page_path = ((payload.get("page") or {}).get("path") or "").strip()
-        if page_path:
-            response["X-Page-Path"] = page_path
-        return response
+        return Response(
+            {
+                "job_id": job_state["id"],
+                "status": "queued",
+                "export_key": "activity_report_pdf",
+                "created_at": job_state["created_at"],
+                "status_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/"
+                ),
+                "download_url": request.build_absolute_uri(
+                    f"/api/v1/monitoring/export_job/{job_state['id']}/download/"
+                ),
+            },
+            status=202,
+        )
