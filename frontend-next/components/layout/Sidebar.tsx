@@ -99,7 +99,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/notifications", label: "Notificações", labelEn: "Notifications", icon: Bell, desc: "Centro de avisos", descEn: "Alerts center", groups: [GROUPS.ADMIN] },
     { href: "/audit", label: "Auditoria", labelEn: "Audit", icon: Activity, desc: "Trilha de eventos", descEn: "Events trail", groups: [GROUPS.ADMIN] },
     { href: "/monitoring", label: "Monitoramento", labelEn: "Monitoring", icon: Bug, desc: "Saúde do sistema", descEn: "System health", groups: [GROUPS.ADMIN] },
-    { href: "/ai", label: "IA Operacional", labelEn: "Operational AI", icon: Bot, desc: "Copiloto auditável do Command Center", descEn: "Auditable Command Center copilot", groups: [GROUPS.ADMIN] },
+    { href: "/ai", label: "IA Operacional", labelEn: "Operational AI", icon: Bot, desc: "Copiloto seguro por perfil", descEn: "Profile-safe copilot", groups: ALL_GROUPS },
     { href: "/resources", label: "Recursos API", labelEn: "API resources", icon: Layers, desc: "Endpoints disponíveis", descEn: "Available endpoints", groups: [GROUPS.ADMIN] },
     { href: "/admin", label: "Administração", labelEn: "Administration", icon: Shield, desc: "Painel administrativo", descEn: "Administrative panel", groups: [GROUPS.ADMIN] },
 ]

@@ -6,6 +6,7 @@ from apps.ai_assistant.models import AiMessage, AiOperationalTask, AiPolicyEvent
 from apps.ai_assistant.services.redaction import redact_value
 from apps.ai_assistant.services.registry import AiToolRegistry
 from apps.audit_activities.models.user_activity import UserActivity
+from apps.clinical.models import Patient
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 from services.reports.async_exports import get_export_job_result, get_export_job_state
@@ -148,6 +149,76 @@ def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     assert "não tem permissão" in data["answer"].lower()
     assert any(call["status"] == "blocked" for call in data["tool_calls"])
     assert AiPolicyEvent.objects.filter(tenant=tenant, user=user, policy_key="tool_rbac_denied", blocked=True).exists()
+
+
+@pytest.mark.django_db
+def test_ai_personal_context_identifies_authenticated_user(api_client):
+    tenant = _tenant(identifier="tn-ai-personal", domain="tn-ai-personal.local")
+    user = _user(tenant, "recepcao_contexto", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Quem sou eu neste sistema e que dados posso investigar?", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "recepcao_contexto" in data["answer"]
+    assert GROUPS["RECEPCAO"] in data["answer"]
+    assert any(call["tool_name"] == "get_user_context" and call["status"] == "success" for call in data["tool_calls"])
+
+
+@pytest.mark.django_db
+def test_ai_data_explorer_counts_allowed_patient_resource(api_client):
+    tenant = _tenant(identifier="tn-ai-data", domain="tn-ai-data.local")
+    user = _user(tenant, "recepcao_data", GROUPS["RECEPCAO"])
+    Patient.objects.create(tenant=tenant, name="Paciente A")
+    Patient.objects.create(tenant=tenant, name="Paciente B")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Quantos pacientes existem na base de dados?", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "Pacientes" in data["answer"]
+    assert "2" in data["answer"]
+    assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
+
+
+@pytest.mark.django_db
+def test_ai_data_explorer_denies_resource_without_rbac(api_client):
+    tenant = _tenant(identifier="tn-ai-data-denied", domain="tn-ai-data-denied.local")
+    user = _user(tenant, "recepcao_sem_monitoring", GROUPS["RECEPCAO"])
+    SystemError.objects.create(
+        tenant=tenant,
+        user=user,
+        method="GET",
+        path="/api/v1/admin-only/",
+        full_path="/api/v1/admin-only/",
+        status_code=500,
+        exception_class="PermissionError",
+        message="blocked",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Mostre erros do sistema registados", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    answer = data["answer"].lower()
+    assert "não posso" in answer
+    assert "não tem acesso" in answer
+    assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
 
 
 @pytest.mark.django_db
@@ -418,12 +489,16 @@ def test_ai_redacts_sensitive_fields():
 def test_ai_tool_registry_selects_domain_tools():
     registry = AiToolRegistry()
 
+    personal_names = {tool.name for tool in registry.select_tools(message="quem sou eu neste sistema", active_module="ai")}
+    data_names = {tool.name for tool in registry.select_tools(message="quantos pacientes existem", active_module="ai")}
     clinical_names = {tool.name for tool in registry.select_tools(message="mostra frasco e amostra da REQ-20260520-0001", active_module="ai")}
     finance_names = {tool.name for tool in registry.select_tools(message="resumo financeiro de faturas e pagamentos", active_module="ai")}
     report_names = {tool.name for tool in registry.select_tools(message="relatório financeiro dos últimos 30 dias", active_module="ai")}
     task_names = {tool.name for tool in registry.select_tools(message="criar tarefa para enfermagem investigar pendências", active_module="ai")}
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
 
+    assert "get_user_context" in personal_names
+    assert "explore_database" in data_names
     assert "get_lab_request_collection_guidance" in clinical_names
     assert "get_financial_operational_summary" in finance_names
     assert "prepare_operational_report" in report_names

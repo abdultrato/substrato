@@ -22,6 +22,24 @@ class LocalLlmGateway:
         blocked_tools: list[dict[str, Any]] | None = None,
     ) -> str:
         blocked_tools = blocked_tools or []
+        denied_result = next((item for item in tool_results if (item.get("result") or {}).get("access_denied")), None)
+        if denied_result:
+            return self._access_denied_answer(denied_result.get("result") or {}, language=language)
+
+        user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
+        data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
+        if user_context_result and len(tool_results) == 1:
+            return self._user_context_answer(user_context_result.get("result") or {}, language=language)
+        if data_explorer_result and len(tool_results) == 1:
+            return self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
+        if user_context_result and data_explorer_result and len(tool_results) == 2:
+            return "\n\n".join(
+                [
+                    self._user_context_answer(user_context_result.get("result") or {}, language=language, compact=True),
+                    self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
+                ]
+            )
+
         command_result = next((item for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
         if command_result and len(tool_results) == 1:
             return self._command_center_answer(command_result.get("result") or {}, language=language)
@@ -112,6 +130,155 @@ class LocalLlmGateway:
         module_text = self._module_summary(modules, language="pt")
         return "\n\n".join(part for part in [direct, module_text, evidence, limitations, next_step] if part)
 
+    def _user_context_answer(self, result: dict[str, Any], *, language: str, compact: bool = False) -> str:
+        summary = result.get("summary") or {}
+        user = summary.get("user") or {}
+        tenant = summary.get("tenant") or {}
+        modules = summary.get("accessible_modules") or []
+        login = user.get("login") or "—"
+        groups = user.get("groups") or []
+        tenant_name = tenant.get("name") or tenant.get("identifier") or "—"
+
+        module_labels = []
+        for item in modules[:8]:
+            module_labels.append(item.get("label_en") if language == "en" else item.get("label_pt"))
+        module_text = ", ".join(label for label in module_labels if label) or ("none" if language == "en" else "nenhum")
+
+        if language == "en":
+            direct = f"You are authenticated as {login} in tenant {tenant_name}."
+            if groups:
+                direct += f" Your group(s): {', '.join(groups)}."
+            if compact:
+                return direct
+            return "\n\n".join(
+                [
+                    direct,
+                    f"Areas you can investigate now: {module_text}.",
+                    summary.get("investigation_prompt_en")
+                    or "Tell me what you want to investigate inside the project.",
+                    "Internal evidence used: User, Tenant, Group and RBAC.",
+                    "Limitation: I only query resources allowed by your current RBAC profile.",
+                ]
+            )
+
+        direct = f"O utilizador autenticado é {login}, no tenant {tenant_name}."
+        if groups:
+            direct += f" Grupo(s): {', '.join(groups)}."
+        if compact:
+            return direct
+        return "\n\n".join(
+            [
+                direct,
+                f"Áreas que pode investigar agora: {module_text}.",
+                summary.get("investigation_prompt_pt")
+                or "Diga-me o que quer investigar dentro do projecto.",
+                "Evidência interna usada: User, Tenant, Group e RBAC.",
+                "Limitação: só consulto recursos autorizados pelo seu perfil RBAC actual.",
+            ]
+        )
+
+    def _access_denied_answer(self, result: dict[str, Any], *, language: str) -> str:
+        denied = result.get("denied_resources") or (result.get("summary") or {}).get("denied_resources") or []
+        if denied:
+            resources = ", ".join(
+                (item.get("label_en") if language == "en" else item.get("label_pt")) or item.get("basename") or "resource"
+                for item in denied[:4]
+            )
+        else:
+            resources = "requested resource" if language == "en" else "recurso solicitado"
+
+        if language == "en":
+            return "\n\n".join(
+                [
+                    "I cannot do that because the authenticated user does not have access to the requested data.",
+                    f"Blocked resource(s): {resources}.",
+                    "Internal evidence used: RBAC and the API resource catalog.",
+                    "Limitation: no operational data from the blocked resource was queried.",
+                    "Suggested next step: ask an administrator to review your groups or permissions.",
+                ]
+            )
+        return "\n\n".join(
+            [
+                "Não posso fazê-lo porque o utilizador autenticado não tem acesso aos dados solicitados.",
+                f"Recurso(s) bloqueado(s): {resources}.",
+                "Evidência interna usada: RBAC e catálogo de recursos da API.",
+                "Limitação: nenhum dado operacional do recurso bloqueado foi consultado.",
+                "Próximo passo sugerido: peça a um administrador para rever os seus grupos ou permissões.",
+            ]
+        )
+
+    def _data_explorer_answer(self, result: dict[str, Any], *, language: str) -> str:
+        summary = result.get("summary") or {}
+        catalog = result.get("catalog") or summary.get("catalog") or []
+        modules = result.get("accessible_modules") or summary.get("accessible_modules") or []
+        resource_results = result.get("resource_results") or summary.get("resource_results") or []
+
+        if catalog or modules:
+            module_lines = []
+            for item in modules[:10]:
+                label = item.get("label_en") if language == "en" else item.get("label_pt")
+                module_lines.append(f"- {label}: {item.get('resource_count', 0)}")
+            if language == "en":
+                direct = f"You can investigate {len(catalog)} resource(s) across {len(modules)} module(s)."
+                prompt = summary.get("investigation_prompt_en") or "Choose a module or ask for a specific count/list."
+                return "\n\n".join(
+                    [
+                        direct,
+                        "Available areas:\n" + "\n".join(module_lines[:10]) if module_lines else "Available areas: none.",
+                        prompt,
+                        "Internal evidence used: RBAC and the API resource catalog.",
+                        "Limitation: this catalog does not query raw records until you ask for a specific resource.",
+                    ]
+                )
+            direct = f"Pode investigar {len(catalog)} recurso(s) em {len(modules)} módulo(s)."
+            prompt = summary.get("investigation_prompt_pt") or "Escolha um módulo ou pergunte por uma contagem/listagem específica."
+            return "\n\n".join(
+                [
+                    direct,
+                    "Áreas disponíveis:\n" + "\n".join(module_lines[:10]) if module_lines else "Áreas disponíveis: nenhuma.",
+                    prompt,
+                    "Evidência interna usada: RBAC e catálogo de recursos da API.",
+                    "Limitação: este catálogo não consulta registos brutos até pedir um recurso específico.",
+                ]
+            )
+
+        lines = []
+        for item in resource_results[:5]:
+            label = item.get("label_en") if language == "en" else item.get("label_pt")
+            count = item.get("filtered_count", 0)
+            total = item.get("total_count", count)
+            if language == "en":
+                line = f"- {label}: {count} matching record(s), {total} total in your scope."
+            else:
+                line = f"- {label}: {count} registo(s) encontrados, {total} no total do seu escopo."
+            records = item.get("records") or []
+            if records:
+                safe_refs = []
+                for record in records[:3]:
+                    safe_refs.append(str(record.get("custom_id") or record.get("student_code") or record.get("teacher_code") or record.get("id")))
+                line += (" Safe sample: " if language == "en" else " Amostra segura: ") + ", ".join(safe_refs)
+            lines.append(line)
+
+        if language == "en":
+            return "\n\n".join(
+                [
+                    "I queried only the database resources allowed by your RBAC profile.",
+                    "\n".join(lines) if lines else "No matching records were found.",
+                    "Internal evidence used: API resource catalog, tenant scope and RBAC.",
+                    "Limitation: I returned counts and safe samples, not raw sensitive records.",
+                    "Suggested next step: ask for a specific code/reference if you want a narrower investigation.",
+                ]
+            )
+        return "\n\n".join(
+            [
+                "Consultei apenas os recursos da base de dados permitidos pelo seu perfil RBAC.",
+                "\n".join(lines) if lines else "Nenhum registo correspondente foi encontrado.",
+                "Evidência interna usada: catálogo de recursos da API, tenant e RBAC.",
+                "Limitação: devolvi contagens e amostras seguras, não registos sensíveis brutos.",
+                "Próximo passo sugerido: indique um código/referência específica se quiser uma investigação mais estreita.",
+            ]
+        )
+
     def _module_summary(self, modules: list[dict[str, Any]], *, language: str) -> str:
         affected = [item for item in modules if item.get("slo_state") in {"critical", "warning"}]
         if not affected:
@@ -188,6 +355,22 @@ class LocalLlmGateway:
                         if language == "en"
                         else "Acção preparada: confirme o botão de geração de relatório para criar o ficheiro exportável."
                     )
+
+            if summary.get("resource_results"):
+                lines.append("Data resources:" if language == "en" else "Recursos de dados:")
+                for resource in summary.get("resource_results", [])[:4]:
+                    label = resource.get("label_en") if language == "en" else resource.get("label_pt")
+                    if language == "en":
+                        lines.append(f"- {label}: {resource.get('filtered_count', 0)} record(s).")
+                    else:
+                        lines.append(f"- {label}: {resource.get('filtered_count', 0)} registo(s).")
+
+            if summary.get("catalog"):
+                lines.append(
+                    "The allowed data catalog is included in the payload."
+                    if language == "en"
+                    else "O catálogo de dados permitido está incluído no payload."
+                )
 
             sections.append("\n".join(lines))
             for source in result.get("sources") or []:

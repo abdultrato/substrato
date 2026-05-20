@@ -4,12 +4,14 @@ from typing import Any
 
 from apps.ai_assistant.tools.clinical import ClinicalOperationalSummaryTool, LabRequestCollectionGuidanceTool
 from apps.ai_assistant.tools.command_center import CommandCenterAlertsTool
+from apps.ai_assistant.tools.data_explorer import ExploreDatabaseTool
 from apps.ai_assistant.tools.education import EducationSummaryTool
 from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
 from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
 from apps.ai_assistant.tools.tasks import PrepareOperationalTaskTool
+from apps.ai_assistant.tools.user_context import GetUserContextTool
 
 
 class AiToolRegistry:
@@ -17,6 +19,8 @@ class AiToolRegistry:
 
     def __init__(self) -> None:
         self._tools = {
+            GetUserContextTool.name: GetUserContextTool(),
+            ExploreDatabaseTool.name: ExploreDatabaseTool(),
             CommandCenterAlertsTool.name: CommandCenterAlertsTool(),
             ClinicalOperationalSummaryTool.name: ClinicalOperationalSummaryTool(),
             LabRequestCollectionGuidanceTool.name: LabRequestCollectionGuidanceTool(),
@@ -53,6 +57,55 @@ class AiToolRegistry:
     def select_tools(self, *, message: str, active_module: str = "") -> list:
         normalized = f"{message or ''} {active_module or ''}".lower()
         selected = []
+        personal_terms = (
+            "quem sou",
+            "meu login",
+            "meus grupos",
+            "minha conta",
+            "meu perfil",
+            "quem está logado",
+            "quem esta logado",
+            "who am i",
+            "my account",
+            "my profile",
+            "what can i investigate",
+            "que dados posso investigar",
+            "o que posso investigar",
+        )
+        if any(term in normalized for term in personal_terms):
+            selected.append(self._tools[GetUserContextTool.name])
+
+        data_terms = (
+            "quantos",
+            "quantas",
+            "listar",
+            "lista",
+            "mostre",
+            "mostrar",
+            "procure",
+            "buscar",
+            "pesquisar",
+            "dados",
+            "base de dados",
+            "banco de dados",
+            "registos",
+            "registros",
+            "tabela",
+            "pacientes",
+            "faturas",
+            "facturas",
+            "pagamentos",
+            "estudantes",
+            "professores",
+            "farmácia",
+            "farmacia",
+            "erros do sistema",
+            "system errors",
+            "records",
+        )
+        if any(term in normalized for term in data_terms):
+            selected.append(self._tools[ExploreDatabaseTool.name])
+
         command_terms = (
             "alert",
             "command",
@@ -117,4 +170,6 @@ class AiToolRegistry:
                 continue
             seen.add(tool.name)
             unique.append(tool)
+        if not unique:
+            return [self._tools[GetUserContextTool.name]]
         return unique

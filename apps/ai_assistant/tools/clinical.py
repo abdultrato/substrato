@@ -55,7 +55,7 @@ class ClinicalOperationalSummaryTool(AiTool):
                 "title_pt": "Resumo clínico operacional",
                 "title_en": "Clinical operational summary",
                 "metrics": [
-                    {"label_pt": "Pacientes activos", "label_en": "Active patients", "value": Patient.objects.filter(tenant=tenant, deleted=False, active=True).count()},
+                    {"label_pt": "Pacientes registados", "label_en": "Registered patients", "value": Patient.objects.filter(tenant=tenant, deleted=False).count()},
                     {"label_pt": f"Requisições em {days} dia(s)", "label_en": f"Requests in {days} day(s)", "value": requests_qs.count()},
                     {"label_pt": "Aguardam validação", "label_en": "Awaiting validation", "value": requests_qs.filter(status=ResultState.AWAITING_VALIDATION).count()},
                     {"label_pt": "Com resultado crítico", "label_en": "With critical result", "value": requests_qs.filter(has_critical_result=True).count()},

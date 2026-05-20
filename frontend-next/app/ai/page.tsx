@@ -25,7 +25,6 @@ import PageHeader from "@/components/ui/PageHeader"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
-import { GROUPS } from "@/lib/rbac"
 
 type AiChatResponse = {
   session_id: number
@@ -175,10 +174,11 @@ export default function AiOperationalPage() {
 
   const quickQuestions = useMemo(
     () => [
+      t("Quem sou eu neste sistema?", "Who am I in this system?"),
+      t("Que dados posso investigar?", "What data can I investigate?"),
+      t("Quantos pacientes existem?", "How many patients exist?"),
+      t("Mostre erros do sistema.", "Show system errors."),
       t("Quais alertas activos existem agora?", "What active alerts exist now?"),
-      t("Quais rotas tiveram mais erros 5xx nos últimos 7 dias?", "Which routes had the most 5xx errors in the last 7 days?"),
-      t("Há backlog na outbox?", "Is there an outbox backlog?"),
-      t("Resume o estado operacional dos últimos 30 dias.", "Summarize the operational state for the last 30 days."),
     ],
     [t]
   )
@@ -317,13 +317,13 @@ export default function AiOperationalPage() {
   const aside = <AiContextAside tools={tools} sessions={sessions} loading={toolsLoading} />
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]} rightAside={aside} rightAsideWidth="22rem">
+    <AppLayout rightAside={aside} rightAsideWidth="22rem">
       <div className="space-y-5">
         <PageHeader
           title={t("IA Operacional", "Operational AI")}
           subtitle={t(
-            "Copiloto auditável para explicar alertas, rotas críticas, SLO e backlog operacional.",
-            "Auditable copilot for explaining alerts, critical routes, SLO and operational backlog."
+            "Copiloto auditável para contexto pessoal, investigação segura de dados e fluxos operacionais.",
+            "Auditable copilot for personal context, secure data investigation and operational workflows."
           )}
           actions={
             <div className="flex flex-wrap gap-2">
@@ -353,12 +353,12 @@ export default function AiOperationalPage() {
                 {t("Modo leitura com auditoria", "Read-only mode with audit")}
               </div>
               <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">
-                {t("Pergunte o que deve ser investigado primeiro.", "Ask what should be investigated first.")}
+                {t("Identifica-o pelo login e só consulta o que o seu perfil permite.", "It identifies you by login and only queries what your profile allows.")}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
                 {t(
-                  "Esta IA consulta apenas fontes internas autorizadas, regista a sessão e devolve evidência verificável. Ações de escrita ficam fora do chat nesta fase.",
-                  "This AI only queries authorized internal sources, records the session and returns verifiable evidence. Write actions stay outside chat in this phase."
+                  "Pergunte quem está autenticado, que dados pode investigar ou peça contagens/listagens específicas. Se o RBAC bloquear o recurso, a resposta será uma recusa explícita.",
+                  "Ask who is authenticated, what data can be investigated or request specific counts/lists. If RBAC blocks the resource, the answer is an explicit refusal."
                 )}
               </p>
             </div>
@@ -383,7 +383,7 @@ export default function AiOperationalPage() {
                   <Sparkles size={14} />
                   {t("Primeira ferramenta", "First tool")}
                 </div>
-                <div className="mt-1 text-sm font-semibold">Command Center</div>
+                <div className="mt-1 text-sm font-semibold">{t("Contexto + RBAC", "Context + RBAC")}</div>
               </div>
             </div>
           </div>
@@ -404,8 +404,8 @@ export default function AiOperationalPage() {
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t(
-                          "A primeira versão cobre alertas, rotas 5xx, SLO por módulo e outbox.",
-                          "The first version covers alerts, 5xx routes, module SLO and outbox."
+                          "A IA pergunta o que deve ser investigado, consulta dados autorizados e recusa recursos fora do seu perfil.",
+                          "The AI asks what should be investigated, queries authorized data and refuses resources outside your profile."
                         )}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -474,8 +474,8 @@ export default function AiOperationalPage() {
                 onChange={(event) => setComposer(event.target.value)}
                 rows={3}
                 placeholder={t(
-                  "Ex.: Quais alertas activos existem agora?",
-                  "Example: What active alerts exist now?"
+                  "Ex.: Quem sou eu e que dados posso investigar?",
+                  "Example: Who am I and what data can I investigate?"
                 )}
                 onKeyDown={(event) => {
                   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
