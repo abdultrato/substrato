@@ -7,6 +7,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Paciente, PacienteCreateDTO } from "@/lib/types";
 import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import useDebounce from "@/hooks/useDebounce";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
@@ -51,11 +52,22 @@ export default function PacientesPage () {
     const [editingId, setEditingId] = useState<number | null>( null );
     const [page, setPage] = useState( 1 );
     const [pageSize, setPageSize] = useState( 50 );
+    const [search, setSearch] = useState( "" );
     const [error, setError] = useState<string | null>( null );
+    const debouncedSearch = useDebounce( search, 300 );
+
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, pageSize]);
 
     const { data, isFetching, isError, error: queryError, refetch } = useQuery<PacienteList>( {
-        queryKey: ["pacientes", page, pageSize],
-        queryFn: () => apiFetchList<Paciente>( "/patients/", { page, pageSize } ),
+        queryKey: ["pacientes", page, pageSize, debouncedSearch],
+        queryFn: () => {
+            const params = new URLSearchParams();
+            if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+            const url = `/patients/${params.toString() ? `?${params.toString()}` : ""}`;
+            return apiFetchList<Paciente>( url, { page, pageSize } );
+        },
         placeholderData: keepPreviousData,
         staleTime: 20_000,
     } );
@@ -412,6 +424,15 @@ export default function PacientesPage () {
                 )}
 
                 {/* TABELA */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                    <label style={{ fontSize: 13, color: "#555" }}>Pesquisar</label>
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Entrada, nome, contacto, documento"
+                    />
+                </div>
+
                 <div className="table-container">
                     <table>
                         <thead>

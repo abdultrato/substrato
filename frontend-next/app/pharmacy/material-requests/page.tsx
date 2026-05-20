@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card"
 import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import useDebounce from "@/hooks/useDebounce"
 import { ApiListMeta, apiFetchList } from "@/lib/api"
 import {
   canCreateMaterialRequisition,
@@ -97,6 +98,12 @@ export default function RequisicoesMateriaisPage() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ListResponse | null>(null)
   const [onlyPending, setOnlyPending] = useState(true)
+  const [search, setSearch] = useState("")
+  const debouncedSearch = useDebounce(search, 300)
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, pageSize])
 
   useEffect(() => {
     let mounted = true
@@ -104,7 +111,10 @@ export default function RequisicoesMateriaisPage() {
       try {
         setLoading(true)
         setError(null)
-        const res = await apiFetchList<MaterialRequisition>("/pharmacy/requisicaomaterial/", {
+        const params = new URLSearchParams()
+        if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim())
+        const url = `/pharmacy/requisicaomaterial/${params.toString() ? `?${params.toString()}` : ""}`
+        const res = await apiFetchList<MaterialRequisition>(url, {
           page,
           pageSize,
         })
@@ -121,7 +131,7 @@ export default function RequisicoesMateriaisPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [debouncedSearch, page, pageSize])
 
   const items = useMemo(() => {
     const itemsRaw = data?.items ?? []
@@ -161,6 +171,16 @@ export default function RequisicoesMateriaisPage() {
 
         <Card title="Filtros" subtitle="Ajuste o que pretende ver.">
           <div className="flex flex-wrap items-center gap-3 text-sm">
+            <label className="inline-flex items-center gap-2">
+              <span>Pesquisar</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Código, solicitante, setor, estado"
+                className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1"
+              />
+            </label>
+
             {isPharmacy ? (
               <label className="inline-flex items-center gap-2">
                 <input

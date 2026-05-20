@@ -368,6 +368,7 @@ export default function LaboratorioRequisicoesPage() {
               columns={columns as any}
               data={rows}
               emptyMessage={t("Nenhuma requisição encontrada.", "No requests found.")}
+              searchable={false}
             />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--gray-600)]">
               <span>

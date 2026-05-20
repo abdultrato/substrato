@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ApiListMeta, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import useDebounce from "@/hooks/useDebounce";
 import { Requisicao } from "@/lib/types";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
@@ -16,14 +17,22 @@ export default function RequisicoesPage() {
     useAuthGuard();
 
     const [tipo, setTipo] = useState<string>("");
+    const [search, setSearch] = useState<string>("");
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(50);
+    const debouncedSearch = useDebounce(search, 300);
+
+    useEffect(() => {
+        setPage(1);
+    }, [tipo, debouncedSearch, pageSize]);
+
     const { data, isFetching, isError, error } = useQuery<RequisicaoListResponse>({
-        queryKey: ["requisicoes", { tipo, page, pageSize }],
+        queryKey: ["requisicoes", { tipo, page, pageSize, debouncedSearch }],
         queryFn: async () => {
-            const url = tipo
-                ? `/clinical/labrequest/?tipo=${encodeURIComponent(tipo)}`
-                : "/clinical/labrequest/";
+            const params = new URLSearchParams();
+            if (tipo) params.set("tipo", tipo);
+            if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+            const url = `/clinical/labrequest/${params.toString() ? `?${params.toString()}` : ""}`;
             return apiFetchList<Requisicao>(url, { page, pageSize });
         },
         placeholderData: keepPreviousData,
@@ -61,6 +70,15 @@ export default function RequisicoesPage() {
                 </div>
 
                 <div style={{ display: "flex", gap: 10, margin: "10px 0" }}>
+                    <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span>Pesquisar</span>
+                        <input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Código, paciente, estado"
+                        />
+                    </label>
+
                     <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <span>Setor</span>
                         <select

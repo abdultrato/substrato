@@ -2,14 +2,17 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { Search, RotateCcw } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
-import { apiFetch } from "@/lib/api"
+import useDebounce from "@/hooks/useDebounce"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -107,14 +110,35 @@ export default function ResourceListPage({
   const { user } = useAuth()
   const { t, tr } = useLanguage()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
   const [data, setData] = useState<Row[]>([])
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
   const [bloodStorages, setBloodStorages] = useState<Record<number, string>>({})
+  const debouncedSearch = useDebounce(search, 300)
 
   const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
   const needsBloodStorageLookup =
     bloodbankResource === "manutencaoarmazenamento" || bloodbankResource === "unidade" || bloodbankResource === "movimentoestoque"
+
+  const requestUrl = useMemo(() => {
+    const parsed = new URL(endpoint, "http://local")
+    if (debouncedSearch.trim()) {
+      parsed.searchParams.set("search", debouncedSearch.trim())
+    } else {
+      parsed.searchParams.delete("search")
+    }
+    return `${parsed.pathname}${parsed.search}`
+  }, [debouncedSearch, endpoint])
+
+  useEffect(() => {
+    setPage(1)
+  }, [requestUrl, pageSize])
 
   useEffect(() => {
     let mounted = true
@@ -122,9 +146,17 @@ export default function ResourceListPage({
       try {
         setLoadingData(true)
         setError(null)
-        const res = await apiFetch<any>(endpoint)
-        const items = res && (res as any).results ? (res as any).results : res
-        if (mounted) setData(Array.isArray(items) ? items : [])
+        const res = await apiFetchList<Row>(requestUrl, { page, pageSize })
+        if (!mounted) return
+        const items = Array.isArray(res?.items) ? res.items : []
+        const total = res?.meta?.total ?? items.length
+        const computedTotalPages =
+          res?.meta?.totalPages ??
+          (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+        setData(items)
+        setTotalItems(total || 0)
+        setTotalPages(computedTotalPages)
+        if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (mounted) setError(e?.message || t("Falha ao carregar dados.", "Failed to load data."))
       } finally {
@@ -135,7 +167,7 @@ export default function ResourceListPage({
     return () => {
       mounted = false
     }
-  }, [endpoint, t])
+  }, [page, pageSize, requestUrl, t])
 
   useEffect(() => {
     let mounted = true
@@ -163,6 +195,20 @@ export default function ResourceListPage({
       mounted = false
     }
   }, [needsBloodStorageLookup])
+
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>()
+    for (const row of data) {
+      const statusValue = String(row?.estado || row?.status || row?.status_comercial || "").trim()
+      if (statusValue) set.add(statusValue)
+    }
+    return [...set]
+  }, [data])
+
+  const filteredData = useMemo(() => {
+    if (!statusFilter) return data
+    return data.filter((row) => String(row?.estado || row?.status || row?.status_comercial || "") === statusFilter)
+  }, [data, statusFilter])
 
   const columns = useMemo(
     () => [
@@ -235,14 +281,93 @@ export default function ResourceListPage({
           </div>
         )}
 
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <label className="space-y-1 xl:col-span-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                {t("Pesquisar", "Search")}
+              </span>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("Código, nome, estado ou descrição", "Code, name, status or description")}
+                  className="w-full rounded-lg border border-[var(--border)] bg-white py-2 pl-8 pr-3 text-sm text-[var(--text)] shadow-sm"
+                />
+              </div>
+            </label>
+
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                {t("Estado (na página)", "Status (on page)")}
+              </span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
+              >
+                <option value="">{t("Todos", "All")}</option>
+                {statusOptions.map((statusValue) => (
+                  <option key={statusValue} value={statusValue}>
+                    {tr(statusValue)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                {t("Por página", "Per page")}
+              </span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--gray-600)]">
+            <span>
+              {t("Total:", "Total:")} {totalItems} · {t("Na página:", "On page:")} {filteredData.length}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("")
+                setStatusFilter("")
+                setPageSize(50)
+                setPage(1)
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1 font-semibold text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+            >
+              <RotateCcw size={12} />
+              {t("Limpar filtros", "Clear filters")}
+            </button>
+          </div>
+        </div>
+
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
         ) : (
-          <DataTable<Row>
-            columns={columns as any}
-            data={data}
-            emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
-          />
+          <>
+            <DataTable<Row>
+              columns={columns as any}
+              data={filteredData}
+              emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
+              searchable={false}
+            />
+            <div className="mt-2 text-xs text-[var(--gray-600)]">
+              {t("Página", "Page")} {page} {t("de", "of")} {totalPages}
+            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </>
         )}
       </div>
     </AppLayout>

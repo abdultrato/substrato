@@ -4,6 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useEffect, useState } from "react";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
+import useDebounce from "@/hooks/useDebounce";
 import Link from "next/link";
 import { Exame } from "@/lib/types";
 import AppLayout from "@/components/layout/AppLayout";
@@ -20,18 +21,28 @@ export default function ExamesPage () {
     const [pageSize, setPageSize] = useState( 50 );
     const [totalItems, setTotalItems] = useState( 0 );
     const [totalPages, setTotalPages] = useState( 1 );
+    const [search, setSearch] = useState( "" );
+    const debouncedSearch = useDebounce( search, 300 );
+
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, pageSize]);
 
     useEffect( () => {
         carregar();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, pageSize] );
+    }, [page, pageSize, debouncedSearch] );
 
     async function carregar () {
         try {
             setLoading( true );
             setError( null );
 
-            const { items, meta } = await apiFetchList<Exame>( "/exams/", {
+            const params = new URLSearchParams();
+            if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+            const url = `/exams/${params.toString() ? `?${params.toString()}` : ""}`;
+
+            const { items, meta } = await apiFetchList<Exame>( url, {
                 page,
                 pageSize,
             } );
@@ -71,6 +82,15 @@ export default function ExamesPage () {
                 {error && <p style={{ color: "#d32f2f" }}>{error}</p>}
 
                 <div style={{ display: "flex", gap: 10, margin: "10px 0", flexWrap: "wrap" }}>
+                    <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span>Pesquisar</span>
+                        <input
+                            placeholder="Código, nome, método, setor"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </label>
+
                     <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <span>Por página</span>
                         <select
