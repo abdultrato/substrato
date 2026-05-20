@@ -5,6 +5,7 @@ import { queryClient } from "@/lib/queryClient"
 import ToastContainer from "@/components/ui/ToastContainer"
 import RequestActivityIndicator from "@/components/ui/RequestActivityIndicator"
 import NavigationWarmup from "@/components/navigation/NavigationWarmup"
+import NavigationClickFeedback from "@/components/navigation/NavigationClickFeedback"
 import FrontendErrorTelemetry from "@/components/monitoring/FrontendErrorTelemetry"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { LanguageProvider } from "@/hooks/useLanguage"
@@ -16,6 +17,7 @@ export default function Providers ( { children }: { children: React.ReactNode } 
             <QueryClientProvider client={queryClient}>
                 <AutoTranslateTree>
                     <NavigationWarmup />
+                    <NavigationClickFeedback />
                     <FrontendErrorTelemetry />
                     {children}
                     <RequestActivityIndicator />

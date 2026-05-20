@@ -344,6 +344,57 @@
     }
   }
 
+  .nav-click-pending {
+    pointer-events: none;
+  }
+
+  .nav-click-pending-indicator {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-radius: inherit;
+    background: hsl(var(--card-hsl) / 0.62);
+    backdrop-filter: blur(1px);
+  }
+
+  .nav-click-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--border-hsl));
+    background: hsl(var(--card-hsl));
+    color: hsl(var(--foreground-hsl));
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.36rem 0.6rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-click-pending-spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    animation: navPendingSpin 0.7s linear infinite;
+  }
+
+  .nav-click-pending-label {
+    white-space: nowrap;
+  }
+
+  @keyframes navPendingSpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* --------------------------------
      Tables
   --------------------------------- */
