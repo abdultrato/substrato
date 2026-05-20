@@ -315,6 +315,68 @@ class AiOperationalTask(NoNameCoreModel):
         return f"{self.title} [{self.status}]"
 
 
+class AiInvestigation(NoNameCoreModel):
+    """Investigação estruturada produzida pela IA a partir de uma pergunta."""
+
+    prefix = "AIINV"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Aberta"
+        READY = "ready", "Pronta"
+        BLOCKED = "blocked", "Bloqueada"
+        ARCHIVED = "archived", "Arquivada"
+
+    session = models.ForeignKey(
+        AiSession,
+        verbose_name="Sessão",
+        on_delete=models.CASCADE,
+        related_name="investigations",
+        db_index=True,
+    )
+    created_by = models.ForeignKey(
+        User,
+        verbose_name="Criada por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ai_investigations",
+        db_index=True,
+    )
+    title = models.CharField("Título", max_length=180)
+    question = models.TextField("Pergunta", blank=True, default="")
+    intent = models.CharField("Intenção", max_length=80, blank=True, default="", db_index=True)
+    status = models.CharField(
+        "Estado",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.READY,
+        db_index=True,
+    )
+    confidence_score = models.PositiveSmallIntegerField("Confiança (%)", default=60)
+    scope = models.JSONField("Escopo", default=dict, blank=True)
+    findings = models.JSONField("Achados", default=list, blank=True)
+    next_steps = models.JSONField("Próximos passos", default=list, blank=True)
+    recommended_questions = models.JSONField("Perguntas recomendadas", default=list, blank=True)
+    sources = models.JSONField("Fontes", default=list, blank=True)
+    tool_names = models.JSONField("Ferramentas", default=list, blank=True)
+    result_summary = models.TextField("Resumo", blank=True, default="")
+
+    class Meta:
+        db_table = "ai_assistant_investigation"
+        verbose_name = "Investigação da IA"
+        verbose_name_plural = "Investigações da IA"
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["tenant", "session", "created_at"]),
+            models.Index(fields=["tenant", "created_by", "created_at"]),
+            models.Index(fields=["tenant", "status", "created_at"]),
+            models.Index(fields=["tenant", "intent", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.title} [{self.status}]"
+
+
 class AiPolicyEvent(NoNameCoreModel):
     """Evento de política, bloqueio ou decisão de segurança da IA."""
 

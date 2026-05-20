@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.ai_assistant.models import AiOperationalTask, AiSession, AiSuggestedAction
+from apps.ai_assistant.models import AiInvestigation, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
@@ -16,6 +16,7 @@ from apps.ai_assistant.services.registry import AiToolRegistry
 from .serializers import (
     AiActionConfirmSerializer,
     AiChatRequestSerializer,
+    AiInvestigationSerializer,
     AiOperationalTaskSerializer,
     AiSessionDetailSerializer,
     AiSessionSerializer,
@@ -101,6 +102,41 @@ class AiAssistantToolsView(APIView):
         registry = AiToolRegistry()
         policy = AiPolicyGuard()
         return Response({"tools": registry.list_definitions(user=request.user, policy_guard=policy, language=language)})
+
+
+class AiAssistantInvestigationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant = request_tenant(request)
+        if tenant is None:
+            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+        policy = AiPolicyGuard()
+        queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False).select_related("created_by")
+        if not policy.is_admin_like(request.user):
+            queryset = queryset.filter(created_by=request.user)
+        queryset = queryset.order_by("-created_at", "-id")[:100]
+        return Response(AiInvestigationSerializer(queryset, many=True).data)
+
+
+class AiAssistantInvestigationDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, investigation_id: int):
+        tenant = request_tenant(request)
+        investigation = (
+            AiInvestigation.objects.filter(tenant=tenant, id=investigation_id, deleted=False)
+            .select_related("created_by")
+            .first()
+        )
+        if investigation is None:
+            raise NotFound("Investigação da IA não encontrada.")
+
+        policy = AiPolicyGuard()
+        if not policy.is_admin_like(request.user) and investigation.created_by_id != request.user.id:
+            raise NotFound("Investigação da IA não encontrada.")
+        return Response(AiInvestigationSerializer(investigation).data)
 
 
 class AiAssistantTasksView(APIView):

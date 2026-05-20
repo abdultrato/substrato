@@ -682,6 +682,46 @@ tests/
 - A resposta da confirmação devolve `result_href` e `operational_task`.
 - Utilizador sem permissão de negócio não consegue confirmar tarefa de outro grupo/tenant.
 
+## Próximo Nível Implementado: Investigações Guiadas
+Este incremento transforma cada pergunta operacional relevante numa investigação estruturada, persistente e reutilizável. A IA deixa de entregar apenas texto e passa a guardar achados, próximos passos, perguntas recomendadas, fontes internas e ferramentas usadas, sempre no escopo do tenant e das permissões do utilizador autenticado.
+
+### Estrutura Criada
+```text
+apps/ai_assistant/
+  models.py
+    AiInvestigation
+  services/
+    investigation.py
+    orchestrator.py
+    response_schema.py
+  migrations/
+    0003_aiinvestigation.py
+api/v1/ai/
+  serializers.py
+  views.py
+  urls.py
+frontend-next/app/ai/page.tsx
+frontend-next/components/ai/
+  AiInvestigationPanel.tsx
+tests/
+  test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. Perguntas puramente pessoais podem responder só com contexto do utilizador; perguntas que também peçam dados investigáveis geram `AiInvestigation`.
+2. Cada investigação guarda pergunta redigida, intenção inferida, estado, confiança, escopo, achados, próximos passos, fontes e ferramentas.
+3. Recursos bloqueados por RBAC geram investigação com estado `blocked`, sem expor dados não autorizados.
+4. O `/chat` devolve `investigation` e `schema.investigation` para a UI rica.
+5. O frontend mostra achados, próximos passos e perguntas recomendadas em `AiInvestigationPanel`.
+6. O backend expõe `GET /api/v1/ai/assistant/investigations/` e detalhe por ID, com escopo por tenant e utilizador.
+
+### Critérios de Aceite do Nível
+- Utilizador pergunta "Quem sou eu e que dados posso investigar?".
+- A IA identifica o login, grupos e perfil do utilizador.
+- A IA mostra apenas recursos autorizados pelo RBAC.
+- A conversa gera uma investigação de dados com achados e próximos passos.
+- Se o utilizador pedir recurso sem permissão, a IA responde que não pode fazê-lo e a investigação fica bloqueada.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/

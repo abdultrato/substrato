@@ -2,7 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
-from apps.ai_assistant.models import AiMessage, AiOperationalTask, AiPolicyEvent, AiSession, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.models import (
+    AiInvestigation,
+    AiMessage,
+    AiOperationalTask,
+    AiPolicyEvent,
+    AiSession,
+    AiSuggestedAction,
+    AiToolCall,
+)
 from apps.ai_assistant.services.redaction import redact_value
 from apps.ai_assistant.services.registry import AiToolRegistry
 from apps.audit_activities.models.user_activity import UserActivity
@@ -122,6 +130,8 @@ def test_ai_command_center_chat_returns_sources_and_audit(api_client):
     assert any(source["label"] == "Command Center" for source in data["sources"])
     assert any(call["tool_name"] == "get_command_center_alerts" and call["status"] == "success" for call in data["tool_calls"])
     assert any(action["action_type"] == "open_filtered_navigation" for action in data["suggested_actions"])
+    assert data["investigation"]["intent"] == "operational_health"
+    assert data["schema"]["investigation"]["id"] == data["investigation"]["id"]
 
     session = AiSession.objects.get(id=data["session_id"])
     assert session.tenant_id == tenant.id
@@ -130,6 +140,7 @@ def test_ai_command_center_chat_returns_sources_and_audit(api_client):
     assert AiMessage.objects.filter(session=session, role=AiMessage.Role.ASSISTANT).count() == 1
     assert AiToolCall.objects.filter(session=session, tool_name="get_command_center_alerts", status=AiToolCall.Status.SUCCESS).exists()
     assert AiSuggestedAction.objects.filter(session=session, action_type="open_filtered_navigation").exists()
+    assert AiInvestigation.objects.filter(session=session, intent="operational_health").exists()
 
 
 @pytest.mark.django_db
@@ -148,6 +159,7 @@ def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     data = _response_data(response)
     assert "não tem permissão" in data["answer"].lower()
     assert any(call["status"] == "blocked" for call in data["tool_calls"])
+    assert data["investigation"]["status"] == "blocked"
     assert AiPolicyEvent.objects.filter(tenant=tenant, user=user, policy_key="tool_rbac_denied", blocked=True).exists()
 
 
@@ -168,6 +180,9 @@ def test_ai_personal_context_identifies_authenticated_user(api_client):
     assert "recepcao_contexto" in data["answer"]
     assert GROUPS["RECEPCAO"] in data["answer"]
     assert any(call["tool_name"] == "get_user_context" and call["status"] == "success" for call in data["tool_calls"])
+    assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
+    assert data["investigation"]["intent"] == "data_exploration"
+    assert data["investigation"]["findings"]
 
 
 @pytest.mark.django_db
@@ -189,6 +204,8 @@ def test_ai_data_explorer_counts_allowed_patient_resource(api_client):
     assert "Pacientes" in data["answer"]
     assert "2" in data["answer"]
     assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
+    assert data["investigation"]["intent"] == "data_exploration"
+    assert data["investigation"]["findings"]
 
 
 @pytest.mark.django_db
@@ -219,6 +236,45 @@ def test_ai_data_explorer_denies_resource_without_rbac(api_client):
     assert "não posso" in answer
     assert "não tem acesso" in answer
     assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
+    assert data["investigation"]["status"] == "blocked"
+
+
+@pytest.mark.django_db
+def test_ai_investigations_endpoint_is_user_scoped(api_client):
+    tenant = _tenant(identifier="tn-ai-investigations", domain="tn-ai-investigations.local")
+    owner = _user(tenant, "owner_ai_investigation", GROUPS["RECEPCAO"])
+    other = _user(tenant, "other_ai_investigation", GROUPS["RECEPCAO"])
+    session = AiSession.objects.create(tenant=tenant, user=owner, title="Investigação", language="pt")
+    owned = AiInvestigation.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=owner,
+        title="Investigação de dados",
+        question="Quantos pacientes existem?",
+        intent="data_exploration",
+        findings=[{"title": "Pacientes", "detail": "0"}],
+        next_steps=[{"label": "Abrir pacientes", "href": "/patients"}],
+        recommended_questions=["Mostre uma listagem segura."],
+    )
+    AiInvestigation.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=other,
+        title="Outra investigação",
+        question="Outro",
+        intent="data_exploration",
+    )
+
+    _authenticate(api_client, tenant, owner)
+    response = api_client.get("/api/v1/ai/assistant/investigations/", format="json")
+
+    assert response.status_code == 200, _response_data(response)
+    rows = _response_data(response)
+    assert [row["id"] for row in rows] == [owned.id]
+
+    detail_response = api_client.get(f"/api/v1/ai/assistant/investigations/{owned.id}/", format="json")
+    assert detail_response.status_code == 200, _response_data(detail_response)
+    assert _response_data(detail_response)["id"] == owned.id
 
 
 @pytest.mark.django_db

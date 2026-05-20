@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.ai_assistant.models import AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
+from apps.ai_assistant.models import AiInvestigation, AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
 
 
 class AiChatRequestSerializer(serializers.Serializer):
@@ -57,6 +57,36 @@ class AiSessionDetailSerializer(AiSessionSerializer):
 
     class Meta(AiSessionSerializer.Meta):
         fields = AiSessionSerializer.Meta.fields + ["messages"]
+
+
+class AiInvestigationSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AiInvestigation
+        fields = [
+            "id",
+            "custom_id",
+            "title",
+            "question",
+            "intent",
+            "status",
+            "confidence_score",
+            "scope",
+            "findings",
+            "next_steps",
+            "recommended_questions",
+            "sources",
+            "tool_names",
+            "result_summary",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_created_by_name(self, obj: AiInvestigation) -> str:
+        user = getattr(obj, "created_by", None)
+        return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
 
 
 class AiActionConfirmSerializer(serializers.Serializer):

@@ -11,6 +11,7 @@ from apps.ai_assistant.models import AiMessage, AiSuggestedAction, AiToolCall
 from apps.ai_assistant.tools.base import AiToolContext
 
 from .audit import AiAuditLogger
+from .investigation import AiInvestigationBuilder
 from .llm_gateway import LocalLlmGateway
 from .policy import AiPolicyError, AiPolicyGuard
 from .registry import AiToolRegistry
@@ -25,6 +26,7 @@ class AiOrchestrator:
         self.policy = AiPolicyGuard()
         self.registry = AiToolRegistry()
         self.gateway = LocalLlmGateway()
+        self.investigations = AiInvestigationBuilder()
 
     def chat(
         self,
@@ -153,10 +155,23 @@ class AiOrchestrator:
                 tool_results=tool_results,
                 arguments=arguments,
             )
+            investigation_payload = self._create_investigation(
+                tenant=tenant,
+                session=session,
+                user=user,
+                question=message,
+                language=language,
+                active_module=active_module,
+                tool_results=tool_results,
+                blocked_tools=blocked_tools,
+                sources=sources,
+                suggested_actions=suggested_actions,
+            )
             response_schema = build_response_schema(
                 tool_results=tool_results,
                 sources=sources,
                 suggested_actions=suggested_actions,
+                investigation=investigation_payload,
                 language=language,
             )
             assistant_message = self.audit.create_message(
@@ -168,6 +183,7 @@ class AiOrchestrator:
                     "sources": sources,
                     "tool_calls": tool_call_payload,
                     "suggested_actions": suggested_actions,
+                    "investigation": investigation_payload,
                     "schema": response_schema,
                     "provider": self.gateway.provider,
                 },
@@ -184,6 +200,7 @@ class AiOrchestrator:
                 "sources": sources,
                 "tool_calls": tool_call_payload,
                 "suggested_actions": suggested_actions,
+                "investigation": investigation_payload,
                 "schema": response_schema,
                 "provider": self.gateway.provider,
             }
@@ -217,6 +234,39 @@ class AiOrchestrator:
                 seen.add(key)
                 sources.append(source)
         return sources
+
+    def _create_investigation(
+        self,
+        *,
+        tenant,
+        session,
+        user,
+        question: str,
+        language: str,
+        active_module: str,
+        tool_results: list[dict[str, Any]],
+        blocked_tools: list[dict[str, Any]],
+        sources: list[dict[str, Any]],
+        suggested_actions: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        build = self.investigations.build(
+            question=question,
+            language=language,
+            active_module=active_module,
+            tool_results=tool_results,
+            blocked_tools=blocked_tools,
+            sources=sources,
+            suggested_actions=suggested_actions,
+        )
+        if not build.payload or not build.should_persist:
+            return None
+        investigation = self.investigations.persist(
+            tenant=tenant,
+            session=session,
+            user=user,
+            payload=build.payload,
+        )
+        return self.investigations.serialize(investigation, language=language)
 
     def _create_suggested_actions(
         self,

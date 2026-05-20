@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import AiMessage, AiOperationalTask, AiPolicyEvent, AiSession, AiSuggestedAction, AiToolCall
+from .models import (
+    AiInvestigation,
+    AiMessage,
+    AiOperationalTask,
+    AiPolicyEvent,
+    AiSession,
+    AiSuggestedAction,
+    AiToolCall,
+)
 
 
 class AiBaseAdmin(admin.ModelAdmin):
@@ -60,6 +68,21 @@ class AiOperationalTaskAdmin(AiBaseAdmin):
     )
     list_filter = ("module_key", "assigned_group", "priority", "status", "deleted")
     search_fields = ("custom_id", "title", "description", "source_reference", "session__custom_id")
+
+
+@admin.register(AiInvestigation)
+class AiInvestigationAdmin(AiBaseAdmin):
+    list_display = (
+        "created_at",
+        "custom_id",
+        "title",
+        "intent",
+        "status",
+        "confidence_score",
+        "created_by",
+    )
+    list_filter = ("intent", "status", "deleted")
+    search_fields = ("custom_id", "title", "question", "result_summary", "session__custom_id", "created_by__username")
 
 
 @admin.register(AiPolicyEvent)

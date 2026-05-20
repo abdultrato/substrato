@@ -9,6 +9,7 @@ def build_response_schema(
     sources: list[dict[str, Any]],
     suggested_actions: list[dict[str, Any]],
     language: str,
+    investigation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Normaliza a resposta para UI rica sem depender do texto livre do modelo."""
 
@@ -48,4 +49,21 @@ def build_response_schema(
             }
             for action in suggested_actions
         ],
+        "investigation": _investigation_schema(investigation=investigation, language=language),
+    }
+
+
+def _investigation_schema(*, investigation: dict[str, Any] | None, language: str) -> dict[str, Any] | None:
+    if not investigation:
+        return None
+    return {
+        "id": investigation.get("id"),
+        "custom_id": investigation.get("custom_id") or "",
+        "title": investigation.get("title") or ("Investigation" if language == "en" else "Investigação"),
+        "intent": investigation.get("intent") or "",
+        "status": investigation.get("status") or "",
+        "confidence_score": investigation.get("confidence_score") or 0,
+        "findings": (investigation.get("findings") or [])[:8],
+        "next_steps": (investigation.get("next_steps") or [])[:6],
+        "recommended_questions": (investigation.get("recommended_questions") or [])[:5],
     }

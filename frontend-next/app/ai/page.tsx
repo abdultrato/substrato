@@ -17,6 +17,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout"
 import AiActionPanel, { type AiSuggestedAction } from "@/components/ai/AiActionPanel"
 import AiEvidencePanel, { type AiSource } from "@/components/ai/AiEvidencePanel"
+import AiInvestigationPanel, { type AiInvestigation } from "@/components/ai/AiInvestigationPanel"
 import AiToolTrace, { type AiToolCall } from "@/components/ai/AiToolTrace"
 import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
@@ -35,6 +36,7 @@ type AiChatResponse = {
   sources?: AiSource[]
   tool_calls?: AiToolCall[]
   suggested_actions?: AiSuggestedAction[]
+  investigation?: AiInvestigation | null
 }
 
 type AiToolDefinition = {
@@ -61,6 +63,7 @@ type ConversationMessage = {
   sources?: AiSource[]
   toolCalls?: AiToolCall[]
   suggestedActions?: AiSuggestedAction[]
+  investigation?: AiInvestigation | null
 }
 
 function formatToolName(value: string) {
@@ -84,10 +87,12 @@ function formatDate(value?: string) {
 function AiContextAside({
   tools,
   sessions,
+  investigations,
   loading,
 }: {
   tools: AiToolDefinition[]
   sessions: AiSessionSummary[]
+  investigations: AiInvestigation[]
   loading: boolean
 }) {
   const { t, isPortuguese } = useLanguage()
@@ -135,6 +140,31 @@ function AiContextAside({
 
       <div className="rounded-2xl border border-border bg-background/70 p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("Investigações recentes", "Recent investigations")}
+        </div>
+        <div className="space-y-2">
+          {investigations.length ? investigations.slice(0, 6).map((investigation) => (
+            <div key={investigation.id || investigation.custom_id} className="rounded-xl bg-card/80 p-2">
+              <div className="line-clamp-1 text-xs font-semibold text-foreground">
+                {investigation.title || t("Investigação da IA", "AI investigation")}
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="truncate">{investigation.intent || "—"}</span>
+                <Badge variant={investigation.status === "blocked" ? "warning" : "success"}>
+                  {investigation.confidence_score ?? 0}%
+                </Badge>
+              </div>
+            </div>
+          )) : (
+            <p className="text-xs text-muted-foreground">
+              {t("As investigações estruturadas aparecerão aqui.", "Structured investigations will appear here.")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background/70 p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {t("Sessões recentes", "Recent sessions")}
         </div>
         <div className="space-y-2">
@@ -168,6 +198,7 @@ export default function AiOperationalPage() {
   const [toolsLoading, setToolsLoading] = useState(true)
   const [tools, setTools] = useState<AiToolDefinition[]>([])
   const [sessions, setSessions] = useState<AiSessionSummary[]>([])
+  const [investigations, setInvestigations] = useState<AiInvestigation[]>([])
   const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
   const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -178,6 +209,7 @@ export default function AiOperationalPage() {
       t("Que dados posso investigar?", "What data can I investigate?"),
       t("Quantos pacientes existem?", "How many patients exist?"),
       t("Mostre erros do sistema.", "Show system errors."),
+      t("Investigue o que devo priorizar hoje.", "Investigate what I should prioritize today."),
       t("Quais alertas activos existem agora?", "What active alerts exist now?"),
     ],
     [t]
@@ -187,14 +219,16 @@ export default function AiOperationalPage() {
     let mounted = true
     async function loadContext() {
       setToolsLoading(true)
-      const [toolsResult, sessionsResult] = await Promise.allSettled([
+      const [toolsResult, sessionsResult, investigationsResult] = await Promise.allSettled([
         apiFetch<{ tools: AiToolDefinition[] }>(`/ai/assistant/tools/?language=${language}`, { clientCache: false }),
         apiFetch<AiSessionSummary[]>("/ai/assistant/sessions/", { clientCache: false }),
+        apiFetch<AiInvestigation[]>("/ai/assistant/investigations/", { clientCache: false }),
       ])
 
       if (!mounted) return
       if (toolsResult.status === "fulfilled") setTools(toolsResult.value?.tools || [])
       if (sessionsResult.status === "fulfilled") setSessions(sessionsResult.value || [])
+      if (investigationsResult.status === "fulfilled") setInvestigations(investigationsResult.value || [])
       setToolsLoading(false)
     }
 
@@ -249,8 +283,15 @@ export default function AiOperationalPage() {
           sources: response.sources || [],
           toolCalls: response.tool_calls || [],
           suggestedActions: response.suggested_actions || [],
+          investigation: response.investigation || null,
         },
       ])
+      if (response.investigation) {
+        setInvestigations((current) => [
+          response.investigation as AiInvestigation,
+          ...current.filter((item) => item.id !== response.investigation?.id),
+        ].slice(0, 20))
+      }
       setSessions((current) => {
         const withoutCurrent = current.filter((item) => item.id !== response.session_id)
         return [
@@ -314,7 +355,18 @@ export default function AiOperationalPage() {
     }
   }
 
-  const aside = <AiContextAside tools={tools} sessions={sessions} loading={toolsLoading} />
+  function handleAskRecommended(question: string) {
+    setComposer(question)
+  }
+
+  const aside = (
+    <AiContextAside
+      tools={tools}
+      sessions={sessions}
+      investigations={investigations}
+      loading={toolsLoading}
+    />
+  )
 
   return (
     <AppLayout rightAside={aside} rightAsideWidth="22rem">
@@ -444,6 +496,10 @@ export default function AiOperationalPage() {
                     </div>
                     <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
 
+                    <AiInvestigationPanel
+                      investigation={message.investigation || null}
+                      onAsk={handleAskRecommended}
+                    />
                     <AiToolTrace calls={message.toolCalls || []} />
                     <AiEvidencePanel sources={message.sources || []} />
                     <AiActionPanel
