@@ -14,6 +14,9 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import AiActionPanel, { type AiSuggestedAction } from "@/components/ai/AiActionPanel"
+import AiEvidencePanel, { type AiSource } from "@/components/ai/AiEvidencePanel"
+import AiToolTrace, { type AiToolCall } from "@/components/ai/AiToolTrace"
 import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
 import Card from "@/components/ui/Card"
@@ -22,31 +25,6 @@ import TextAreaInput from "@/components/ui/TextAreaInput"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
-
-type AiSource = {
-  type?: string
-  label?: string
-  href?: string
-}
-
-type AiToolCall = {
-  id?: number
-  tool_name: string
-  status: string
-  duration_ms?: number | null
-  mode?: string
-}
-
-type AiSuggestedAction = {
-  id: number
-  action_type: string
-  requires_confirmation: boolean
-  status: string
-  href?: string
-  label_pt?: string
-  label_en?: string
-  confirmation_summary?: string
-}
 
 type AiChatResponse = {
   session_id: number
@@ -182,7 +160,7 @@ function AiContextAside({
 }
 
 export default function AiOperationalPage() {
-  const { t, language, isPortuguese } = useLanguage()
+  const { t, language } = useLanguage()
   const [sessionId, setSessionId] = useState<number | null>(null)
   const [composer, setComposer] = useState("")
   const [messages, setMessages] = useState<ConversationMessage[]>([])
@@ -190,6 +168,8 @@ export default function AiOperationalPage() {
   const [toolsLoading, setToolsLoading] = useState(true)
   const [tools, setTools] = useState<AiToolDefinition[]>([])
   const [sessions, setSessions] = useState<AiSessionSummary[]>([])
+  const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
+  const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   const quickQuestions = useMemo(
@@ -296,6 +276,40 @@ export default function AiOperationalPage() {
       ])
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleConfirmAction(action: AiSuggestedAction) {
+    if (confirmingActionId) return
+    setConfirmingActionId(action.id)
+    try {
+      const result = await apiFetch<AiSuggestedAction>(`/ai/assistant/actions/${action.id}/confirm/`, {
+        method: "POST",
+        clientCache: false,
+        timeoutMs: 45_000,
+        body: JSON.stringify({ confirmation_text: action.confirmation_summary || action.action_type }),
+      })
+      setActionResults((current) => ({ ...current, [action.id]: result }))
+      setMessages((current) =>
+        current.map((message) => ({
+          ...message,
+          suggestedActions: message.suggestedActions?.map((item) =>
+            item.id === action.id ? { ...item, ...result } : item
+          ),
+        }))
+      )
+    } catch (error: any) {
+      const detail = error?.message || t("Falha ao confirmar a acção da IA.", "Failed to confirm the AI action.")
+      setMessages((current) => [
+        ...current,
+        {
+          id: `error-action-${Date.now()}`,
+          role: "error",
+          content: detail,
+        },
+      ])
+    } finally {
+      setConfirmingActionId(null)
     }
   }
 
@@ -420,68 +434,14 @@ export default function AiOperationalPage() {
                     </div>
                     <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
 
-                    {message.toolCalls?.length ? (
-                      <div className="mt-3 rounded-xl border border-border bg-card/80 p-2">
-                        <div className="mb-1 text-xs font-semibold text-muted-foreground">
-                          {t("Trace de ferramentas", "Tool trace")}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {message.toolCalls.map((call) => (
-                            <span key={`${call.tool_name}-${call.id}`} className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-xs">
-                              {formatToolName(call.tool_name)}
-                              <Badge variant={call.status === "success" ? "success" : call.status === "blocked" ? "warning" : "danger"}>
-                                {call.status}
-                              </Badge>
-                              {call.duration_ms !== null && call.duration_ms !== undefined ? (
-                                <span className="text-muted-foreground">{call.duration_ms}ms</span>
-                              ) : null}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {message.sources?.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {message.sources.map((source) => (
-                          <Link
-                            key={`${source.label}-${source.href}`}
-                            href={source.href || "#"}
-                            prefetch={false}
-                            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted"
-                          >
-                            <ExternalLink size={13} />
-                            {source.label || source.type || "source"}
-                          </Link>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    {message.suggestedActions?.length ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {message.suggestedActions.map((action) => {
-                          const label = isPortuguese ? action.label_pt : action.label_en
-                          if (action.href) {
-                            return (
-                              <Link
-                                key={action.id}
-                                href={action.href}
-                                prefetch={false}
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary-hover"
-                              >
-                                <ExternalLink size={14} />
-                                {label || action.confirmation_summary || t("Abrir", "Open")}
-                              </Link>
-                            )
-                          }
-                          return (
-                            <Badge key={action.id} variant="warning">
-                              {label || action.action_type}
-                            </Badge>
-                          )
-                        })}
-                      </div>
-                    ) : null}
+                    <AiToolTrace calls={message.toolCalls || []} />
+                    <AiEvidencePanel sources={message.sources || []} />
+                    <AiActionPanel
+                      actions={message.suggestedActions || []}
+                      confirmingId={confirmingActionId}
+                      results={actionResults}
+                      onConfirm={handleConfirmAction}
+                    />
                   </div>
                 )
               })}

@@ -14,6 +14,7 @@ from .audit import AiAuditLogger
 from .llm_gateway import LocalLlmGateway
 from .policy import AiPolicyError, AiPolicyGuard
 from .registry import AiToolRegistry
+from .response_schema import build_response_schema
 
 
 class AiOrchestrator:
@@ -150,6 +151,13 @@ class AiOrchestrator:
                 user=user,
                 language=language,
                 tool_results=tool_results,
+                arguments=arguments,
+            )
+            response_schema = build_response_schema(
+                tool_results=tool_results,
+                sources=sources,
+                suggested_actions=suggested_actions,
+                language=language,
             )
             assistant_message = self.audit.create_message(
                 tenant=tenant,
@@ -160,6 +168,7 @@ class AiOrchestrator:
                     "sources": sources,
                     "tool_calls": tool_call_payload,
                     "suggested_actions": suggested_actions,
+                    "schema": response_schema,
                     "provider": self.gateway.provider,
                 },
             )
@@ -175,6 +184,7 @@ class AiOrchestrator:
                 "sources": sources,
                 "tool_calls": tool_call_payload,
                 "suggested_actions": suggested_actions,
+                "schema": response_schema,
                 "provider": self.gateway.provider,
             }
 
@@ -192,7 +202,8 @@ class AiOrchestrator:
             match = re.search(r"\bREQ-[A-Za-z0-9-]+", message or "", flags=re.IGNORECASE)
             if match:
                 request_code = match.group(0).upper()
-        return {"days": days or 7, "top": filters.get("top") or 8, "request_code": request_code, "message": message}
+        default_days = 30 if re.search(r"\b(relatorio|relatório|report|export|exportar)\b", message or "", flags=re.IGNORECASE) else 7
+        return {"days": days or default_days, "top": filters.get("top") or 8, "request_code": request_code, "message": message}
 
     def _collect_sources(self, tool_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         sources: list[dict[str, Any]] = []
@@ -215,6 +226,7 @@ class AiOrchestrator:
         user,
         language: str,
         tool_results: list[dict[str, Any]],
+        arguments: dict[str, Any],
     ) -> list[dict[str, Any]]:
         action_payloads = []
         command_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
@@ -237,7 +249,97 @@ class AiOrchestrator:
                 result_href=href,
             )
             action_payloads.append(self._action_payload(action))
+
+        report_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "prepare_operational_report"), None)
+        if report_result and report_result.get("prepared_action"):
+            prepared = report_result.get("prepared_action") or {}
+            report_kind = str(prepared.get("report_kind") or "operational")
+            days = arguments.get("days") or ((report_result.get("summary") or {}).get("report_intent") or {}).get("days") or 30
+            title_pt, title_en = self._report_titles(report_kind=report_kind, days=days)
+            payload = {
+                "report_kind": report_kind,
+                "format": "markdown",
+                "language": language,
+                "title_pt": title_pt,
+                "title_en": title_en,
+                "filters": {
+                    "days": days,
+                    "request_code": arguments.get("request_code") or "",
+                    "active_module": session.active_module or "",
+                },
+                "executive_summary": (
+                    f"Relatório preparado pela IA com {len(tool_results)} ferramenta(s) interna(s)."
+                    if language == "pt"
+                    else f"Report prepared by AI with {len(tool_results)} internal tool(s)."
+                ),
+                "tool_summaries": self._report_tool_summaries(tool_results),
+                "sources": self._collect_sources(tool_results),
+                "allowed_groups": list(prepared.get("allowed_groups") or []),
+            }
+            confirmation_summary = (
+                f"Gerar relatório operacional em Markdown para {days} dia(s)."
+                if language == "pt"
+                else f"Generate operational Markdown report for {days} day(s)."
+            )
+            action = self.audit.create_suggested_action(
+                tenant=tenant,
+                session=session,
+                user=user,
+                action_type=str(prepared.get("action_type") or "prepare_ai_report_export"),
+                payload={
+                    **payload,
+                    "label_pt": prepared.get("label_pt") or "Gerar relatório",
+                    "label_en": prepared.get("label_en") or "Generate report",
+                },
+                requires_confirmation=bool(prepared.get("requires_confirmation", True)),
+                confirmation_summary=confirmation_summary,
+            )
+            action_payloads.append(self._action_payload(action))
         return action_payloads
+
+    @staticmethod
+    def _report_titles(*, report_kind: str, days: Any) -> tuple[str, str]:
+        titles = {
+            "finance": ("Relatório financeiro operacional", "Financial operational report"),
+            "clinical": ("Relatório clínico operacional", "Clinical operational report"),
+            "nursing": ("Relatório de enfermagem operacional", "Nursing operational report"),
+            "pharmacy": ("Relatório de farmácia operacional", "Pharmacy operational report"),
+            "education": ("Relatório escolar operacional", "Education operational report"),
+            "command_center": ("Relatório do Command Center", "Command Center report"),
+        }
+        title_pt, title_en = titles.get(report_kind, ("Relatório operacional da IA", "AI operational report"))
+        return f"{title_pt} - {days} dia(s)", f"{title_en} - {days} day(s)"
+
+    @staticmethod
+    def _report_tool_summaries(tool_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        summaries: list[dict[str, Any]] = []
+        for item in tool_results:
+            if item.get("tool_name") == "prepare_operational_report":
+                continue
+            result = item.get("result") or {}
+            summary = result.get("summary") or {}
+            if not summary:
+                continue
+            summaries.append(
+                {
+                    "tool_name": item.get("tool_name"),
+                    "title_pt": summary.get("title_pt") or item.get("tool_name"),
+                    "title_en": summary.get("title_en") or item.get("tool_name"),
+                    "metrics": summary.get("metrics") or [],
+                    "collection_guidance": summary.get("collection_guidance") or [],
+                }
+            )
+        if summaries:
+            return summaries
+        return [
+            {
+                "tool_name": "prepare_operational_report",
+                "title_pt": "Relatório operacional preparado",
+                "title_en": "Operational report prepared",
+                "metrics": [{"label_pt": "Estado", "label_en": "Status", "value": "preparado"}],
+                "collection_guidance": [],
+            }
+        ]
 
     @staticmethod
     def _tool_call_payload(call: AiToolCall) -> dict[str, Any]:
@@ -258,6 +360,7 @@ class AiOrchestrator:
             "requires_confirmation": action.requires_confirmation,
             "status": action.status,
             "href": payload.get("href") or action.result_href,
+            "result_href": action.result_href,
             "label_pt": payload.get("label_pt") or action.confirmation_summary,
             "label_en": payload.get("label_en") or action.confirmation_summary,
             "confirmation_summary": action.confirmation_summary,

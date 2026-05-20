@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from django.db.models import Count
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -9,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.ai_assistant.models import AiSession, AiSuggestedAction
+from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
 from apps.ai_assistant.services.registry import AiToolRegistry
@@ -119,30 +119,10 @@ class AiAssistantActionConfirmView(APIView):
         except AiPolicyError as exc:
             raise map_policy_error(exc) from exc
 
-        # Fase 1 só permite navegação preparada. Acções de escrita ficam bloqueadas
-        # até existirem ferramentas write_confirmed específicas.
-        if action.action_type != "open_filtered_navigation":
-            action.status = AiSuggestedAction.Status.FAILED
-            action.result_summary = "Tipo de acção ainda não tem executor confirmado."
-            action.save(update_fields=["status", "result_summary", "updated_at"])
-            raise ValidationError({"action_type": "Executor ainda não implementado para esta acção."})
-
-        now = timezone.now()
-        action.status = AiSuggestedAction.Status.CONFIRMED
-        action.confirmed_by = request.user
-        action.confirmed_at = now
-        action.executed_at = now
-        action.result_summary = "Navegação preparada."
-        action.save(
-            update_fields=[
-                "status",
-                "confirmed_by",
-                "confirmed_at",
-                "executed_at",
-                "result_summary",
-                "updated_at",
-            ]
-        )
+        try:
+            action = AiActionExecutor().execute(action=action, user=request.user, tenant=tenant)
+        except AiActionExecutionError as exc:
+            raise ValidationError({"action_type": str(exc)}) from exc
         return Response(AiSuggestedActionSerializer(action).data)
 
 

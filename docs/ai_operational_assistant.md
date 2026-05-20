@@ -609,6 +609,40 @@ Entregáveis:
 Critério de aceite:
 - IA cria tarefa operacional apenas após confirmação e deixa trilha completa.
 
+## Próximo Nível de Implementação: Workspace Operacional Estruturado
+Este incremento transforma a IA de uma conversa com leitura auditável para um **workspace operacional com acções confirmáveis**. A resposta continua segura e tenant-scoped, mas passa a produzir cartões estruturados, evidência reutilizável, acções pendentes e exportações geradas pelo backend.
+
+### Estrutura a Criar
+```text
+apps/ai_assistant/
+  services/
+    action_executor.py
+    report_builder.py
+    response_schema.py
+  tools/
+    reporting.py
+frontend-next/components/ai/
+  AiActionPanel.tsx
+  AiEvidencePanel.tsx
+  AiToolTrace.tsx
+tests/
+  test_ai_assistant_api.py
+```
+
+### Contratos do Incremento
+1. A ferramenta `prepare_operational_report` prepara um relatório, mas não cria ficheiro durante o `/chat`.
+2. A acção `prepare_ai_report_export` fica em `pending_confirmation` e exige nova validação de tenant, sessão e RBAC.
+3. O endpoint `POST /api/v1/ai/assistant/actions/{id}/confirm/` executa a acção confirmada e cria um `ExportJob` acessível pelo módulo de monitorização.
+4. O relatório inicial é gerado em Markdown auditável, com título, período, filtros, métricas, fontes internas e limitação operacional.
+5. O frontend mostra a acção como botão explícito de confirmação, devolve estado de execução e expõe a ligação de download quando o ficheiro fica pronto.
+
+### Critérios de Aceite do Próximo Nível
+- Administrador pede "relatório financeiro dos últimos 30 dias".
+- A IA consulta o resumo financeiro, prepara `prepare_ai_report_export` e mostra a acção pendente.
+- O utilizador confirma no frontend.
+- O backend revalida política, gera o ficheiro e devolve `result_href` para download.
+- A sessão mantém mensagens, tool calls, fontes e acção executada auditáveis.
+
 ## Estrutura de Ficheiros Recomendada
 ```text
 apps/ai_assistant/
@@ -623,16 +657,22 @@ apps/ai_assistant/
     runner.py
     context.py
     audit.py
+    action_executor.py
     llm_gateway.py
+    report_builder.py
     redaction.py
+    response_schema.py
   tools/
     base.py
     command_center.py
     clinical.py
     billing.py
+    finance.py
+    nursing.py
     pharmacy.py
     education.py
     navigation.py
+    reporting.py
   prompts/
     system.pt.md
     system.en.md

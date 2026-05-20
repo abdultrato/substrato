@@ -8,6 +8,7 @@ from apps.ai_assistant.services.registry import AiToolRegistry
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
+from services.reports.async_exports import get_export_job_result, get_export_job_state
 from security.permissions.rbac import GROUPS
 
 
@@ -204,6 +205,94 @@ def test_ai_confirm_action_revalidates_permissions(api_client):
     assert action.status == AiSuggestedAction.Status.PENDING_CONFIRMATION
 
 
+@pytest.mark.django_db
+def test_ai_report_request_prepares_confirmable_export_action(api_client):
+    tenant = _tenant(identifier="tn-ai-report", domain="tn-ai-report.local")
+    admin = _user(tenant, "admin_ai_report", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Gere um relatório financeiro dos últimos 30 dias",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    actions = data["suggested_actions"]
+    assert any(action["action_type"] == "prepare_ai_report_export" for action in actions)
+    report_action = next(action for action in actions if action["action_type"] == "prepare_ai_report_export")
+    assert report_action["requires_confirmation"] is True
+    assert report_action["href"] in ("", None)
+    assert any(call["tool_name"] == "prepare_operational_report" for call in data["tool_calls"])
+
+    action = AiSuggestedAction.objects.get(id=report_action["id"])
+    assert action.status == AiSuggestedAction.Status.PENDING_CONFIRMATION
+    assert action.payload["report_kind"] == "finance"
+    assert action.payload["filters"]["days"] == "30"
+
+
+@pytest.mark.django_db
+def test_ai_confirm_report_action_creates_export_job(api_client):
+    tenant = _tenant(identifier="tn-ai-report-confirm", domain="tn-ai-report-confirm.local")
+    admin = _user(tenant, "admin_ai_report_confirm", GROUPS["ADMIN"], is_staff=True)
+    session = AiSession.objects.create(tenant=tenant, user=admin, title="Relatório", language="pt")
+    action = AiSuggestedAction.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=admin,
+        action_type="prepare_ai_report_export",
+        payload={
+            "report_kind": "finance",
+            "language": "pt",
+            "title_pt": "Relatório financeiro operacional - 30 dia(s)",
+            "title_en": "Financial operational report - 30 day(s)",
+            "filters": {"days": 30},
+            "tool_summaries": [
+                {
+                    "tool_name": "get_financial_operational_summary",
+                    "title_pt": "Resumo financeiro operacional",
+                    "title_en": "Financial operational summary",
+                    "metrics": [{"label_pt": "Faturas emitidas", "label_en": "Issued invoices", "value": 0}],
+                }
+            ],
+            "sources": [{"type": "model", "label": "Invoice", "href": "/invoices"}],
+            "allowed_groups": [GROUPS["ADMIN"]],
+        },
+        payload_redacted={},
+        requires_confirmation=True,
+        confirmation_summary="Gerar relatório operacional em Markdown para 30 dia(s).",
+    )
+
+    _authenticate(api_client, tenant, admin)
+    response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action.refresh_from_db()
+    assert action.status == AiSuggestedAction.Status.CONFIRMED
+    assert data["href"].startswith("/api/v1/monitoring/export_job/")
+    assert action.payload["export_job_id"]
+
+    state = get_export_job_state(action.payload["export_job_id"])
+    assert state is not None
+    assert state["status"] == "ready"
+    result = get_export_job_result(action.payload["export_job_id"])
+    assert result is not None
+    file_bytes, filename, content_type = result
+    assert filename.endswith(".md")
+    assert content_type.startswith("text/markdown")
+    assert "Relatório financeiro operacional" in file_bytes.decode("utf-8")
+
+
 def test_ai_redacts_sensitive_fields():
     redacted = redact_value(
         {
@@ -224,8 +313,10 @@ def test_ai_tool_registry_selects_domain_tools():
 
     clinical_names = {tool.name for tool in registry.select_tools(message="mostra frasco e amostra da REQ-20260520-0001", active_module="ai")}
     finance_names = {tool.name for tool in registry.select_tools(message="resumo financeiro de faturas e pagamentos", active_module="ai")}
+    report_names = {tool.name for tool in registry.select_tools(message="relatório financeiro dos últimos 30 dias", active_module="ai")}
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
 
     assert "get_lab_request_collection_guidance" in clinical_names
     assert "get_financial_operational_summary" in finance_names
+    assert "prepare_operational_report" in report_names
     assert "get_education_summary" in education_names

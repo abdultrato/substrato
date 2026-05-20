@@ -8,6 +8,7 @@ from apps.ai_assistant.tools.education import EducationSummaryTool
 from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
+from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
 
 
 class AiToolRegistry:
@@ -22,6 +23,7 @@ class AiToolRegistry:
             FinancialOperationalSummaryTool.name: FinancialOperationalSummaryTool(),
             PharmacyStockSummaryTool.name: PharmacyStockSummaryTool(),
             EducationSummaryTool.name: EducationSummaryTool(),
+            PrepareOperationalReportTool.name: PrepareOperationalReportTool(),
         }
 
     def all(self) -> list:
@@ -82,6 +84,9 @@ class AiToolRegistry:
 
         if any(term in normalized for term in ("educacao", "educação", "education", "estudante", "student", "matricula", "matrícula", "turma", "professor")):
             selected.append(self._tools[EducationSummaryTool.name])
+
+        if any(term in normalized for term in ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
+            selected.append(self._tools[PrepareOperationalReportTool.name])
 
         unique = []
         seen = set()

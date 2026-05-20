@@ -86,7 +86,14 @@ class AiPolicyGuard:
             raise AiPolicyError("action_owner_mismatch", "A acção pertence a outro utilizador.")
 
         if getattr(action, "requires_confirmation", True) and not self.is_admin_like(user):
-            raise AiPolicyError("action_confirmation_rbac_denied", "A confirmação desta acção exige acesso administrativo.")
+            payload = action.payload or {}
+            allowed_groups = payload.get("allowed_groups") if isinstance(payload, dict) else None
+            allowed = {normalize_group(name) for name in allowed_groups or [] if name}
+            if not allowed or not (allowed & self.normalized_user_groups(user)):
+                raise AiPolicyError(
+                    "action_confirmation_rbac_denied",
+                    "A confirmação desta acção exige acesso administrativo ou perfil de negócio autorizado.",
+                )
 
     def filter_allowed_tools(self, *, tools: Iterable, user) -> list:
         return [tool for tool in tools if self.can_use_tool(tool=tool, user=user)]
