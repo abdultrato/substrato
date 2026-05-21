@@ -76,6 +76,8 @@ from apps.human_resources.models.profession import Profession
 from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
+from apps.identity.models.password_reset_token import PasswordResetToken
+from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
@@ -1636,6 +1638,140 @@ def test_ai_external_entities_crud_allows_occupational_medicine_and_denies_labor
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Company.objects.filter(tenant=tenant, nuit="000000001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_identity_crud_creates_user_profile_and_reset_token(api_client):
+    tenant = _tenant(identifier="tn-ai-identity-crud", domain="tn-ai-identity-crud.local")
+    admin = _user(tenant, "admin_ai_identity_crud", GROUPS["ADMIN"], is_staff=True)
+    reception_group, _ = Group.objects.get_or_create(name=GROUPS["RECEPCAO"])
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Profissional Identidade",
+        document_number="BI-ID-001",
+        email="prof.identity@example.com",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    _data, user_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie utilizador "
+            '{"username": "identity_ai_created", "name": "Conta Identidade", '
+            '"first_name": "Conta", "last_name": "Identidade", '
+            '"email": "identity.created@example.com", "phone": "+258 84 321 1000", '
+            '"password": "SafePass123!", "groups": ["Recepcionista"], "is_active": true}'
+        ),
+    )
+    assert user_action.payload["basename"] == "identity-user"
+    assert user_action.payload["data"]["username"] == "identity_ai_created"
+    assert user_action.payload["data"]["groups"] == [reception_group.id]
+    _confirm_ai_action(api_client, user_action)
+
+    user_model = get_user_model()
+    created_user = user_model.objects.get(tenant=tenant, username="identity_ai_created")
+    assert created_user.email == "identity.created@example.com"
+    assert created_user.check_password("SafePass123!")
+    assert created_user.groups.filter(name=GROUPS["RECEPCAO"]).exists()
+
+    _data, profile_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie perfil profissional "
+            '{"user": "identity.created@example.com", "employee": "BI-ID-001", '
+            '"role": "Recepção clínica", "professional_registration": "REG-ID-001", '
+            '"department": "Recepção", "active": true}'
+        ),
+    )
+    assert profile_action.payload["basename"] == "identity-perfilprofissional"
+    assert profile_action.payload["data"]["user"] == created_user.id
+    assert profile_action.payload["data"]["employee"] == employee.id
+    _confirm_ai_action(api_client, profile_action)
+    assert ProfessionalProfile.objects.filter(
+        user=created_user,
+        employee=employee,
+        professional_registration="REG-ID-001",
+        active=True,
+    ).exists()
+
+    _data, token_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie token de redefinição {"user": "identity.created@example.com", "used": false}',
+    )
+    assert token_action.payload["basename"] == "identity-passwordresettoken"
+    assert token_action.payload["data"]["user"] == created_user.id
+    _confirm_ai_action(api_client, token_action)
+    token = PasswordResetToken.objects.get(user=created_user)
+    assert token.token
+    assert token.used is False
+
+
+@pytest.mark.django_db
+def test_ai_identity_crud_updates_and_deactivates_user_with_rbac_denial(api_client):
+    tenant = _tenant(identifier="tn-ai-identity-update", domain="tn-ai-identity-update.local")
+    admin = _user(tenant, "admin_ai_identity_update", GROUPS["ADMIN"], is_staff=True)
+    recepcao = _user(tenant, "recepcao_ai_identity_denied", GROUPS["RECEPCAO"])
+    user_model = get_user_model()
+    target = user_model.objects.create_user(
+        username="identity_ai_target",
+        name="Utilizador Antigo",
+        email="identity.target@example.com",
+        password="OldPass123!",
+        tenant=tenant,
+        is_active=True,
+    )
+    _authenticate(api_client, tenant, admin)
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Altere utilizador email identity.target@example.com "
+            "nome Utilizador Actualizado telefone +258 84 999 0000 ativo não"
+        ),
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "identity-user"
+    assert update_action.payload["object_ref"] == "identity.target@example.com"
+    assert update_action.payload["data"]["name"] == "Utilizador Actualizado"
+    assert update_action.payload["data"]["phone"] == "+258 84 999 0000"
+    assert update_action.payload["data"]["is_active"] is False
+    _confirm_ai_action(api_client, update_action)
+
+    target.refresh_from_db()
+    assert target.name == "Utilizador Actualizado"
+    assert target.phone == "+258 84 999 0000"
+    assert target.is_active is False
+
+    target.is_active = True
+    target.save(update_fields=["is_active"])
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova utilizador username {target.username}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "identity-user"
+    assert delete_action.payload["object_ref"] == target.username
+    _confirm_ai_action(api_client, delete_action)
+
+    target.refresh_from_db()
+    assert target.is_active is False
+
+    _authenticate(api_client, tenant, recepcao)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie utilizador username bloqueado_identity nome Bloqueado email bloqueado.identity@example.com",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not user_model.objects.filter(username="bloqueado_identity").exists()
 
 
 @pytest.mark.django_db

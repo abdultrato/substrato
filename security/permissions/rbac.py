@@ -102,6 +102,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         for basename in equipment_integration_read
     }
     external_entities_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    identity_read = {
+        "identidade-user": SAFE_METHODS,
+        "identity-user": SAFE_METHODS,
+        "identity-perfilprofissional": SAFE_METHODS,
+    }
     human_resources_crud = {
         "recursos_humanos-role": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "recursos_humanos-profissao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
@@ -452,8 +457,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # SGE (somente leitura)
             **equipment_read,
             **equipment_integration_read,
-            # Precisa listar usuários para vincular a funcionários.
-            "identidade-user": SAFE_METHODS,
+            # Precisa listar utilizadores/perfis para vincular funcionários.
+            **identity_read,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
