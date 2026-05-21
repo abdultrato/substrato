@@ -6,9 +6,16 @@ from typing import Any
 
 from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
 
 from apps.ai_assistant.models import AiMessage, AiSuggestedAction, AiToolCall
 from apps.ai_assistant.services.crud import CRUD_DRAFT_KEY
+from apps.ai_assistant.services.intent_router import (
+    CLARIFICATION_METADATA_KEY,
+    CONVERSATION_FOCUS_KEY,
+    AiIntentRouter,
+    IntentDecision,
+)
 from apps.ai_assistant.tools.base import AiToolContext
 from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 
@@ -29,6 +36,7 @@ class AiOrchestrator:
         self.registry = AiToolRegistry()
         self.gateway = LocalLlmGateway()
         self.investigations = AiInvestigationBuilder()
+        self.intent_router = AiIntentRouter()
 
     def chat(
         self,
@@ -67,6 +75,20 @@ class AiOrchestrator:
                 user=user,
                 metadata={"active_module": active_module, "context": context},
             )
+
+            intent_decision = self.intent_router.analyze(
+                message=message,
+                active_module=active_module,
+                session_metadata=session.metadata or {},
+            )
+            if intent_decision.needs_clarification:
+                return self._return_clarification(
+                    tenant=tenant,
+                    session=session,
+                    user=user,
+                    language=language,
+                    intent_decision=intent_decision,
+                )
 
             arguments = self._build_tool_arguments(message=message, context=context, session_id=session.id)
             selected_tools = self.registry.select_tools(message=message, active_module=active_module)
@@ -189,11 +211,18 @@ class AiOrchestrator:
                     "investigation": investigation_payload,
                     "schema": response_schema,
                     "provider": self.gateway.provider,
+                    "intent_decision": intent_decision.as_payload(language=language),
                 },
             )
 
+            self._store_conversation_focus(
+                session=session,
+                intent_decision=intent_decision,
+                tool_results=tool_results,
+                investigation=investigation_payload,
+            )
             session.last_message_at = assistant_message.created_at
-            session.save(update_fields=["last_message_at", "updated_at"])
+            session.save(update_fields=["metadata", "last_message_at", "updated_at"])
 
             return {
                 "session_id": session.id,
@@ -206,7 +235,68 @@ class AiOrchestrator:
                 "investigation": investigation_payload,
                 "schema": response_schema,
                 "provider": self.gateway.provider,
+                "conversation": {
+                    "status": "answered",
+                    "intent": intent_decision.intent,
+                    "confidence_score": intent_decision.confidence_score,
+                },
             }
+
+    def _return_clarification(
+        self,
+        *,
+        tenant,
+        session,
+        user,
+        language: str,
+        intent_decision: IntentDecision,
+    ) -> dict[str, Any]:
+        answer = intent_decision.answer(language=language)
+        conversation_payload = intent_decision.as_payload(language=language)
+        response_schema = build_response_schema(
+            tool_results=[],
+            sources=[],
+            suggested_actions=[],
+            investigation=None,
+            language=language,
+        )
+        assistant_message = self.audit.create_message(
+            tenant=tenant,
+            session=session,
+            role=AiMessage.Role.ASSISTANT,
+            content=answer,
+            user=user,
+            metadata={
+                "sources": [],
+                "tool_calls": [],
+                "suggested_actions": [],
+                "investigation": None,
+                "schema": response_schema,
+                "provider": self.gateway.provider,
+                "intent_decision": conversation_payload,
+            },
+        )
+        metadata = dict(session.metadata or {})
+        metadata[CLARIFICATION_METADATA_KEY] = {
+            **conversation_payload,
+            "updated_at": timezone.now().isoformat(),
+        }
+        session.metadata = metadata
+        session.last_message_at = assistant_message.created_at
+        session.save(update_fields=["metadata", "last_message_at", "updated_at"])
+        return {
+            "session_id": session.id,
+            "message_id": assistant_message.id,
+            "answer": answer,
+            "language": language,
+            "sources": [],
+            "tool_calls": [],
+            "suggested_actions": [],
+            "investigation": None,
+            "schema": response_schema,
+            "provider": self.gateway.provider,
+            "conversation": conversation_payload,
+        }
 
     def _build_tool_arguments(self, *, message: str, context: dict[str, Any], session_id: int | None = None) -> dict[str, Any]:
         filters = context.get("filters") if isinstance(context.get("filters"), dict) else {}
@@ -252,6 +342,52 @@ class AiOrchestrator:
                 seen.add(key)
                 sources.append(source)
         return sources
+
+    def _store_conversation_focus(
+        self,
+        *,
+        session,
+        intent_decision: IntentDecision,
+        tool_results: list[dict[str, Any]],
+        investigation: dict[str, Any] | None,
+    ) -> None:
+        # Ferramentas como CRUD conversacional podem gravar rascunhos em
+        # AiSession.metadata durante a execução. Recarregar evita sobrescrever
+        # esses metadados com a cópia antiga mantida pelo orquestrador.
+        session.refresh_from_db(fields=["metadata"])
+        metadata = dict(session.metadata or {})
+        metadata.pop(CLARIFICATION_METADATA_KEY, None)
+        resources: list[dict[str, Any]] = []
+        seen = set()
+        for item in tool_results:
+            result = item.get("result") or {}
+            for key in ("resource_results", "denied_resources", "catalog"):
+                values = result.get(key) or (result.get("summary") or {}).get(key) or []
+                if not isinstance(values, list):
+                    continue
+                for value in values:
+                    if not isinstance(value, dict):
+                        continue
+                    basename = value.get("basename")
+                    if not basename or basename in seen:
+                        continue
+                    seen.add(basename)
+                    resources.append(
+                        {
+                            "basename": basename,
+                            "label_pt": value.get("label_pt") or "",
+                            "label_en": value.get("label_en") or "",
+                            "href": value.get("href") or "",
+                        }
+                    )
+        metadata[CONVERSATION_FOCUS_KEY] = {
+            "intent": (investigation or {}).get("intent") or intent_decision.intent,
+            "confidence_score": intent_decision.confidence_score,
+            "tool_names": [str(item.get("tool_name") or "") for item in tool_results if item.get("tool_name")],
+            "resources": resources[:8],
+            "updated_at": timezone.now().isoformat(),
+        }
+        session.metadata = metadata
 
     def _create_investigation(
         self,

@@ -323,6 +323,73 @@ def test_ai_command_center_chat_returns_sources_and_audit(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_chat_asks_clarification_before_running_tools_for_vague_message(api_client):
+    tenant = _tenant(identifier="tn-ai-clarify", domain="tn-ai-clarify.local")
+    user = _user(tenant, "recepcao_ai_clarify", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Preciso ver isso",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert data["conversation"]["status"] == "needs_clarification"
+    assert "preciso fechar melhor o objectivo" in data["answer"].lower()
+    assert data["tool_calls"] == []
+    assert data["suggested_actions"] == []
+
+    session = AiSession.objects.get(id=data["session_id"])
+    assert session.metadata["intent_clarification"]["status"] == "needs_clarification"
+    assert not AiToolCall.objects.filter(session=session).exists()
+
+
+@pytest.mark.django_db
+def test_ai_chat_resolves_clarification_followup_into_data_investigation(api_client):
+    tenant = _tenant(identifier="tn-ai-clarify-followup", domain="tn-ai-clarify-followup.local")
+    user = _user(tenant, "recepcao_ai_clarify_followup", GROUPS["RECEPCAO"])
+    Patient.objects.create(tenant=tenant, name="Paciente Clarificação 1")
+    Patient.objects.create(tenant=tenant, name="Paciente Clarificação 2")
+    _authenticate(api_client, tenant, user)
+
+    first_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Preciso ver isso", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+    assert first_response.status_code == 200, _response_data(first_response)
+    first_data = _response_data(first_response)
+
+    second_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "session_id": first_data["session_id"],
+            "message": "quero investigar pacientes",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert second_response.status_code == 200, _response_data(second_response)
+    data = _response_data(second_response)
+    assert data["conversation"]["status"] == "answered"
+    assert any(call["tool_name"] == "explore_database" and call["status"] == "success" for call in data["tool_calls"])
+    assert not any(call["tool_name"] == "prepare_operational_task" for call in data["tool_calls"])
+    assert "Pacientes" in data["answer"]
+
+    session = AiSession.objects.get(id=first_data["session_id"])
+    assert "intent_clarification" not in session.metadata
+    assert session.metadata["conversation_focus"]["resources"][0]["basename"] == "clinical-patient"
+
+
+@pytest.mark.django_db
 def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     tenant = _tenant(identifier="tn-ai-rbac", domain="tn-ai-rbac.local")
     user = _user(tenant, "recepcao_ai", GROUPS["RECEPCAO"])
@@ -5219,6 +5286,7 @@ def test_ai_tool_registry_selects_domain_tools():
     report_names = {tool.name for tool in registry.select_tools(message="relatório financeiro dos últimos 30 dias", active_module="ai")}
     task_names = {tool.name for tool in registry.select_tools(message="criar tarefa para enfermagem investigar pendências", active_module="ai")}
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
+    investigation_names = {tool.name for tool in registry.select_tools(message="quero investigar pacientes", active_module="ai")}
 
     assert "get_user_context" in personal_names
     assert "explore_database" in data_names
@@ -5227,3 +5295,5 @@ def test_ai_tool_registry_selects_domain_tools():
     assert "prepare_operational_report" in report_names
     assert "prepare_operational_task" in task_names
     assert "get_education_summary" in education_names
+    assert "explore_database" in investigation_names
+    assert "prepare_operational_task" not in investigation_names

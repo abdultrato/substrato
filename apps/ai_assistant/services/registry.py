@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from apps.ai_assistant.tools.clinical import ClinicalOperationalSummaryTool, LabRequestCollectionGuidanceTool
@@ -57,7 +58,8 @@ class AiToolRegistry:
         return definitions
 
     def select_tools(self, *, message: str, active_module: str = "") -> list:
-        normalized = f"{message or ''} {active_module or ''}".lower()
+        active_module_key = (active_module or "").strip().lower()
+        normalized = f"{message or ''} {active_module_key}".lower()
         selected = []
         personal_terms = (
             "quem sou",
@@ -74,7 +76,7 @@ class AiToolRegistry:
             "que dados posso investigar",
             "o que posso investigar",
         )
-        if any(term in normalized for term in personal_terms):
+        if _contains_any(normalized, personal_terms):
             selected.append(self._tools[GetUserContextTool.name])
 
         data_terms = (
@@ -84,9 +86,15 @@ class AiToolRegistry:
             "lista",
             "mostre",
             "mostrar",
+            "ver",
+            "consultar",
             "procure",
             "buscar",
             "pesquisar",
+            "investigar",
+            "investigue",
+            "analisar",
+            "analise",
             "dados",
             "base de dados",
             "banco de dados",
@@ -105,7 +113,7 @@ class AiToolRegistry:
             "system errors",
             "records",
         )
-        if any(term in normalized for term in data_terms):
+        if _contains_any(normalized, data_terms):
             selected.append(self._tools[ExploreDatabaseTool.name])
 
         command_terms = (
@@ -122,32 +130,32 @@ class AiToolRegistry:
             "saúde",
             "estado operacional",
         )
-        if active_module in {"monitoring", "command_center"} or any(term in normalized for term in command_terms):
+        if active_module_key in {"monitoring", "command_center"} or _contains_any(normalized, command_terms):
             selected.append(self._tools[CommandCenterAlertsTool.name])
 
-        if any(term in normalized for term in ("frasco", "tubo", "amostra", "colheita", "coleta", "collection", "sample")):
+        if _contains_any(normalized, ("frasco", "tubo", "amostra", "colheita", "coleta", "collection", "sample")):
             selected.append(self._tools[LabRequestCollectionGuidanceTool.name])
-        elif any(term in normalized for term in ("clinico", "clínico", "paciente", "requisicao", "requisição", "resultado", "laboratorio", "laboratório")):
+        elif _contains_any(normalized, ("clinico", "clínico", "paciente", "requisicao", "requisição", "resultado", "laboratorio", "laboratório")):
             selected.append(self._tools[ClinicalOperationalSummaryTool.name])
 
-        if any(term in normalized for term in ("enfermagem", "enfermeiro", "procedimento", "internamento", "nursing")):
+        if _contains_any(normalized, ("enfermagem", "enfermeiro", "procedimento", "internamento", "nursing")):
             selected.append(self._tools[NursingPendingWorkTool.name])
 
-        if any(term in normalized for term in ("fatura", "factura", "invoice", "pagamento", "payment", "financeiro", "contabilidade")):
+        if _contains_any(normalized, ("fatura", "factura", "invoice", "pagamento", "payment", "financeiro", "contabilidade")):
             selected.append(self._tools[FinancialOperationalSummaryTool.name])
 
-        if any(term in normalized for term in ("farmacia", "farmácia", "stock", "estoque", "lote", "medicamento", "pharmacy")):
+        if _contains_any(normalized, ("farmacia", "farmácia", "stock", "estoque", "lote", "medicamento", "pharmacy")):
             selected.append(self._tools[PharmacyStockSummaryTool.name])
 
-        if any(term in normalized for term in ("educacao", "educação", "education", "estudante", "student", "matricula", "matrícula", "turma", "professor")):
+        if _contains_any(normalized, ("educacao", "educação", "education", "estudante", "student", "matricula", "matrícula", "turma", "professor")):
             selected.append(self._tools[EducationSummaryTool.name])
 
-        if any(term in normalized for term in ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
+        if _contains_any(normalized, ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
             selected.append(self._tools[PrepareOperationalReportTool.name])
 
-        if "tarefa" not in normalized and "task" not in normalized and any(
-            term in normalized
-            for term in (
+        if "tarefa" not in normalized and "task" not in normalized and _contains_any(
+            normalized,
+            (
                 "criar",
                 "crie",
                 "inserir",
@@ -184,13 +192,13 @@ class AiToolRegistry:
                 "update",
                 "delete",
                 "remove",
-            )
+            ),
         ):
             selected.append(self._tools[PrepareCrudOperationTool.name])
 
-        if any(
-            term in normalized
-            for term in (
+        if _contains_any(
+            normalized,
+            (
                 "cria tarefa",
                 "criar tarefa",
                 "tarefa",
@@ -200,11 +208,13 @@ class AiToolRegistry:
                 "encaminhar",
                 "notifica",
                 "notificar",
-                "investigar",
-                "resolver",
+                "investigar pendência",
+                "investigar pendencias",
+                "resolver pendência",
+                "resolver pendencias",
                 "follow-up",
                 "follow up",
-            )
+            ),
         ):
             selected.append(self._tools[PrepareOperationalTaskTool.name])
 
@@ -218,3 +228,17 @@ class AiToolRegistry:
         if not unique:
             return [self._tools[GetUserContextTool.name]]
         return unique
+
+
+def _contains_any(normalized: str, terms: tuple[str, ...]) -> bool:
+    for raw_term in terms:
+        term = (raw_term or "").strip().lower()
+        if not term:
+            continue
+        if len(term) <= 3:
+            if re.search(rf"(?<!\w){re.escape(term)}(?!\w)", normalized):
+                return True
+            continue
+        if term in normalized:
+            return True
+    return False
