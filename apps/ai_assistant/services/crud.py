@@ -18,6 +18,7 @@ from apps.ai_assistant.models import AiSession, AiSuggestedAction
 from apps.ai_assistant.services.policy import AiPolicyGuard
 from apps.ai_assistant.tools.resource_catalog import (
     ResourceDescriptor,
+    RESOURCE_ALIASES,
     descriptor_by_basename,
     get_resource_descriptors,
     match_resource_descriptors,
@@ -115,6 +116,9 @@ RELATED_LOOKUP_FIELDS = (
     "nib",
     "document_number",
     "phone",
+    "external_code",
+    "request_id",
+    "authorization_code",
     "serial_number",
     "message_id",
     "key_prefix",
@@ -140,6 +144,14 @@ CHOICE_VALUE_ALIASES = {
     "arquivado": ("ARCHIVED", "ARQUIVADO"),
     "arquivada": ("ARCHIVED", "ARQUIVADA"),
     "pendente": ("PENDING", "pendente", "PENDENTE"),
+    "aprovado": ("APROVADA", "APPROVED", "approved"),
+    "aprovada": ("APROVADA", "APPROVED", "approved"),
+    "approved": ("APROVADA", "APPROVED", "approved"),
+    "negado": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
+    "negada": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
+    "denied": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
+    "rejected": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
+    "pending": ("PENDENTE", "PENDING", "pending"),
     "presente": ("PRESENT",),
     "ausente": ("ABSENT",),
     "falta": ("ABSENT",),
@@ -151,8 +163,14 @@ CHOICE_VALUE_ALIASES = {
     "transferida": ("TRANSFERRED",),
     "concluido": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
     "concluida": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
-    "cancelado": ("CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
-    "cancelada": ("CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "cancelado": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "cancelada": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "acompanhamento": ("ACOMP", "FOLLOW_UP"),
+    "em acompanhamento": ("ACOMP", "FOLLOW_UP"),
+    "follow up": ("ACOMP", "FOLLOW_UP"),
+    "follow-up": ("ACOMP", "FOLLOW_UP"),
+    "parto": ("PARTO", "DELIVERY"),
+    "delivery": ("PARTO", "DELIVERY"),
     "aula": ("LESSON",),
     "licao": ("LESSON",),
     "lição": ("LESSON",),
@@ -246,8 +264,8 @@ CHOICE_VALUE_ALIASES = {
     "gravíssima": ("GRAVISSIMA",),
     "aberto": ("ABERTO",),
     "aberta": ("ABERTO",),
-    "encerrado": ("ENCERRADO",),
-    "encerrada": ("ENCERRADO",),
+    "encerrado": ("ENCERR", "ENCERRADO"),
+    "encerrada": ("ENCERR", "ENCERRADO"),
     "segunda feira": ("0",),
     "segunda-feira": ("0",),
     "terca feira": ("1",),
@@ -473,11 +491,16 @@ class AiCrudConversationManager:
 
         candidates: list[tuple[int, ResourceDescriptor]] = []
         for descriptor in get_resource_descriptors():
+            resource_specific_keywords = {
+                self._normalize(term) for term in RESOURCE_ALIASES.get(descriptor.basename, ())
+            }
             for keyword in descriptor.keywords:
                 if len(keyword) < 3:
                     continue
                 if re.match(rf"{re.escape(keyword)}(?!\w)", target):
                     score = len(keyword) + (20 if " " in keyword else 0)
+                    if keyword in resource_specific_keywords:
+                        score += 50
                     candidates.append((score, descriptor))
                     break
 
@@ -875,14 +898,40 @@ class AiCrudConversationManager:
 
         query = Q()
         for lookup_field in RELATED_LOOKUP_FIELDS:
-            if not self._model_has_field(model, lookup_field):
-                continue
-            lookup = "iexact" if lookup_field != "name" else "icontains"
-            query |= Q(**{f"{lookup_field}__{lookup}": raw})
+            lookup_query = self._lookup_query_for_model_field(model=model, field_name=lookup_field, raw=raw)
+            if lookup_query is not None:
+                query |= lookup_query
         if not query:
             return None
         obj = queryset.filter(query).order_by("-id").first()
         return getattr(obj, "pk", None) if obj is not None else None
+
+    def _lookup_query_for_model_field(self, *, model, field_name: str, raw: str) -> Q | None:
+        raw = str(raw or "").strip()
+        if not raw:
+            return None
+        try:
+            model_field = model._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            return None
+
+        if getattr(model_field, "many_to_many", False) or getattr(model_field, "one_to_many", False):
+            return None
+
+        internal_type = str(getattr(model_field, "get_internal_type", lambda: "")()).lower()
+        if getattr(model_field, "is_relation", False):
+            if raw.isdigit():
+                return Q(**{f"{field_name}__exact": int(raw)})
+            return None
+
+        if any(token in internal_type for token in ("char", "text", "email", "slug")):
+            lookup = "icontains" if field_name == "name" else "iexact"
+            return Q(**{f"{field_name}__{lookup}": raw})
+
+        if raw.isdigit() and any(token in internal_type for token in ("integer", "autofield", "biginteger")):
+            return Q(**{f"{field_name}__exact": int(raw)})
+
+        return None
 
     def _related_pk_exists(self, *, field: CrudFieldSpec, pk: int, tenant) -> bool:
         if not field.related_app_label or not field.related_model_name:
@@ -914,7 +963,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|codigo|código|code|custom_id|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
+            r"\b(?:id|pk|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|request_id|authorization_code|codigo_autorizacao|código_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):
@@ -1325,17 +1374,42 @@ class AiCrudActionRunner:
         query = Q()
         model = queryset.model
         for field_name in RELATED_LOOKUP_FIELDS:
-            try:
-                model._meta.get_field(field_name)
-            except FieldDoesNotExist:
-                continue
-            query |= Q(**{f"{field_name}__iexact": object_ref})
+            lookup_query = self._lookup_query_for_model_field(model=model, field_name=field_name, raw=object_ref)
+            if lookup_query is not None:
+                query |= lookup_query
         if not query:
             raise ValidationError("Este recurso não expõe um campo de código pesquisável.")
         obj = queryset.filter(query).order_by("-id").first()
         if obj is None:
             raise ValidationError("Registo não encontrado no escopo do utilizador.")
         return obj.pk
+
+    def _lookup_query_for_model_field(self, *, model, field_name: str, raw: str) -> Q | None:
+        raw = str(raw or "").strip()
+        if not raw:
+            return None
+        try:
+            model_field = model._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            return None
+
+        if getattr(model_field, "many_to_many", False) or getattr(model_field, "one_to_many", False):
+            return None
+
+        internal_type = str(getattr(model_field, "get_internal_type", lambda: "")()).lower()
+        if getattr(model_field, "is_relation", False):
+            if raw.isdigit():
+                return Q(**{f"{field_name}__exact": int(raw)})
+            return None
+
+        if any(token in internal_type for token in ("char", "text", "email", "slug")):
+            lookup = "icontains" if field_name == "name" else "iexact"
+            return Q(**{f"{field_name}__{lookup}": raw})
+
+        if raw.isdigit() and any(token in internal_type for token in ("integer", "autofield", "biginteger")):
+            return Q(**{f"{field_name}__exact": int(raw)})
+
+        return None
 
     def _result_object(self, response_data: Any) -> dict[str, Any]:
         if not isinstance(response_data, dict):

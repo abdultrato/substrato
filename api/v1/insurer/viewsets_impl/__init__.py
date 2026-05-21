@@ -3,14 +3,13 @@ from .core import (
     CoveragePlanViewSet,
     InsurerViewSet,
     ProcedureAuthorizationViewSet,
+    TenantCoveragePlanViewSet,
 )
 
 __all__ = [
     "VIEWSET_MAP",
     "CoveragePlanViewSet",
-    "CoveragePlanViewSet",
-    "InsurerViewSet",
     "InsurerViewSet",
     "ProcedureAuthorizationViewSet",
-    "ProcedureAuthorizationViewSet",
+    "TenantCoveragePlanViewSet",
 ]

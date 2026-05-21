@@ -5,6 +5,7 @@ from .viewsets_impl import (
     CoveragePlanViewSet,
     InsurerViewSet,
     ProcedureAuthorizationViewSet,
+    TenantCoveragePlanViewSet,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "CoveragePlanViewSet",
     "InsurerViewSet",
     "ProcedureAuthorizationViewSet",
+    "TenantCoveragePlanViewSet",
 ]

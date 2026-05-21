@@ -79,7 +79,12 @@ from apps.human_resources.models.work_schedule import WorkSchedule
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.incidents.models.incident import Incident
+from apps.insurer.models.coverage_plan import CoveragePlan
+from apps.insurer.models.insurer import Insurer
+from apps.insurer.models.procedure_authorization import ProcedureAuthorization
+from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
 from apps.inspections.models.daily_inspection import DailyInspection
+from apps.maternity.models.pregnancy import Pregnancy
 from apps.maintenance.models.maintenance import Maintenance
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
@@ -2952,6 +2957,216 @@ def test_ai_bloodbank_crud_blocks_manual_storage_create(api_client):
     assert "não posso preparar" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not BloodStorage.objects.filter(tenant=tenant, name="Banco Novo").exists()
+
+
+@pytest.mark.django_db
+def test_ai_insurer_crud_creates_all_insurer_resources_for_accounting_group(api_client):
+    tenant = _tenant(identifier="tn-ai-insurer-crud", domain="tn-ai-insurer-crud.local")
+    user = _user(tenant, "contabilidade_ai_insurer_crud", GROUPS["CONTABILIDADE"])
+    _authenticate(api_client, tenant, user)
+
+    _data, insurer_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie seguradora {"name":"Seguro Global","external_code":"SEG-001","email":"seguradora@example.com","phone":"841234567","description":"Seguradora nacional","active":true}',
+    )
+
+    assert insurer_action.payload["basename"] == "insurer-insurer"
+    assert insurer_action.payload["data"]["name"] == "Seguro Global"
+    assert insurer_action.payload["data"]["external_code"] == "SEG-001"
+
+    _confirm_ai_action(api_client, insurer_action)
+    insurer = Insurer.objects.get(tenant=tenant, external_code="SEG-001")
+    assert insurer.email == "seguradora@example.com"
+
+    _data, plan_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie plano de cobertura {"insurer":"SEG-001","name":"Plano Ouro IA","coverage_percentage":"80.00","requires_authorization":true,"active":true}',
+    )
+
+    assert plan_action.payload["basename"] == "insurer-planocobertura"
+    assert plan_action.payload["data"]["insurer"] == insurer.id
+    assert plan_action.payload["data"]["coverage_percentage"] == "80.00"
+
+    _confirm_ai_action(api_client, plan_action)
+    plan = CoveragePlan.objects.get(tenant=tenant, insurer=insurer)
+    assert plan.requires_authorization is True
+
+    _data, tenant_plan_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie plano por tenant {"global_plan":"Plano Ouro IA","name":"Plano Ouro IA Local","override_percentage":"85.00","active":true}',
+    )
+
+    assert tenant_plan_action.payload["basename"] == "insurer-tenantplanocobertura"
+    assert tenant_plan_action.payload["data"]["global_plan"] == plan.id
+    assert tenant_plan_action.payload["data"]["override_percentage"] == "85.00"
+
+    _confirm_ai_action(api_client, tenant_plan_action)
+    tenant_plan = TenantCoveragePlan.objects.get(tenant=tenant, global_plan=plan)
+    assert tenant_plan.override_percentage == Decimal("85.00")
+
+    _data, authorization_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie autorização de procedimento {"request_id":"REQ-INS-AI-001","plan":"Plano Ouro IA","status":"approved","authorization_code":"AUTH-INS-001","name":"Autorização IA"}',
+    )
+
+    assert authorization_action.payload["basename"] == "insurer-autorizacaoprocedimento"
+    assert authorization_action.payload["data"]["plan"] == plan.id
+    assert authorization_action.payload["data"]["status"] == ProcedureAuthorization.Status.APROVADA
+
+    _confirm_ai_action(api_client, authorization_action)
+    authorization = ProcedureAuthorization.objects.get(tenant=tenant, authorization_code="AUTH-INS-001")
+    assert authorization.request_id == "REQ-INS-AI-001"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova plano por tenant id {tenant_plan.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "insurer-tenantplanocobertura"
+    _confirm_ai_action(api_client, delete_action)
+    assert TenantCoveragePlan.all_objects.get(id=tenant_plan.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_insurer_crud_updates_insurer_by_external_code_and_denies_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-insurer-update", domain="tn-ai-insurer-update.local")
+    accounting_user = _user(tenant, "contabilidade_ai_insurer_update", GROUPS["CONTABILIDADE"])
+    reception_user = _user(tenant, "recepcao_ai_insurer_denied", GROUPS["RECEPCAO"])
+    insurer = Insurer.objects.create(
+        tenant=tenant,
+        name="Seguro Alterável",
+        external_code="SEG-UPD-001",
+        phone="840000000",
+        active=True,
+    )
+
+    _authenticate(api_client, tenant, accounting_user)
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere seguradora external_code SEG-UPD-001 {"phone":"849999999","active":false,"description":"Actualizada"}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "insurer-insurer"
+    assert update_action.payload["object_ref"] == "SEG-UPD-001"
+    assert update_action.payload["data"]["phone"] == "849999999"
+    assert update_action.payload["data"]["active"] is False
+
+    _confirm_ai_action(api_client, update_action)
+    insurer.refresh_from_db()
+    assert insurer.phone == "849999999"
+    assert insurer.active is False
+    assert insurer.description == "Actualizada"
+
+    _authenticate(api_client, tenant, reception_user)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie seguradora {"name":"Bloqueada","external_code":"SEG-BLQ-001"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Insurer.objects.filter(tenant=tenant, external_code="SEG-BLQ-001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_maternity_crud_creates_updates_and_deletes_pregnancy_for_medicine(api_client):
+    tenant = _tenant(identifier="tn-ai-maternity-crud", domain="tn-ai-maternity-crud.local")
+    user = _user(tenant, "medicina_ai_maternity_crud", GROUPS["MEDICINA"])
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Gestante IA",
+        document_number="BI-MAT-001",
+        pregnant=True,
+    )
+    doctor = Employee.objects.create(
+        tenant=tenant,
+        name="Dra Maternidade",
+        document_number="CRM-MAT-001",
+        email="dra.maternidade@example.com",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie gestação {"paciente":"Gestante IA","medico_responsavel":"Dra Maternidade","dum":"2026-01-10","dpp":"2026-10-17","bercario":"Ala A","cama":"M-01","partos_totais":2,"partos_normais":1,"cesarianas":1,"estado":"acompanhamento","observacoes":"Pré-natal iniciado"}',
+    )
+
+    assert create_action.payload["basename"] == "maternity-gestacao"
+    assert create_action.payload["data"]["patient"] == patient.id
+    assert create_action.payload["data"]["responsible_doctor"] == doctor.id
+    assert create_action.payload["data"]["status"] == Pregnancy.Status.FOLLOW_UP
+    assert create_action.payload["data"]["maternity_bed"] == "M-01"
+
+    _confirm_ai_action(api_client, create_action)
+    pregnancy = Pregnancy.objects.get(tenant=tenant, patient=patient)
+    assert pregnancy.responsible_doctor == doctor
+    assert pregnancy.expected_delivery_date.isoformat() == "2026-10-17"
+    assert pregnancy.total_deliveries == 2
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere gestação id {pregnancy.id} {{"estado":"parto","observacoes":"Parto realizado","cama":"M-02"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "maternity-gestacao"
+    assert update_action.payload["object_ref"] == str(pregnancy.id)
+    assert update_action.payload["data"]["status"] == Pregnancy.Status.DELIVERY
+    assert update_action.payload["data"]["maternity_bed"] == "M-02"
+
+    _confirm_ai_action(api_client, update_action)
+    pregnancy.refresh_from_db()
+    assert pregnancy.status == Pregnancy.Status.DELIVERY
+    assert pregnancy.notes == "Parto realizado"
+    assert pregnancy.maternity_bed == "M-02"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova gestação id {pregnancy.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "maternity-gestacao"
+    _confirm_ai_action(api_client, delete_action)
+    assert Pregnancy.all_objects.get(id=pregnancy.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_maternity_crud_denies_pregnancy_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-maternity-denied", domain="tn-ai-maternity-denied.local")
+    user = _user(tenant, "recepcao_ai_maternity_denied", GROUPS["RECEPCAO"])
+    Patient.objects.create(
+        tenant=tenant,
+        name="Gestante Bloqueada",
+        document_number="BI-MAT-BLOCK",
+        pregnant=True,
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie gestação {"paciente":"Gestante Bloqueada","estado":"acompanhamento"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Pregnancy.objects.filter(tenant=tenant, patient__name="Gestante Bloqueada").exists()
 
 
 @pytest.mark.django_db

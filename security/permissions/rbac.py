@@ -112,6 +112,28 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         for basename in equipment_integration_read
     }
     external_entities_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    insurer_read = {
+        "insurer-insurer": SAFE_METHODS,
+        "insurer-planocobertura": SAFE_METHODS,
+        "insurer-tenantplanocobertura": SAFE_METHODS,
+        "insurer-autorizacaoprocedimento": SAFE_METHODS,
+    }
+    insurer_authorization_write = {
+        **insurer_read,
+        "insurer-autorizacaoprocedimento": SAFE_METHODS | WRITE_METHODS,
+    }
+    insurer_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in insurer_read
+    }
+    maternity_read = {
+        "maternidade-gestacao": SAFE_METHODS,
+        "maternity-gestacao": SAFE_METHODS,
+    }
+    maternity_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in maternity_read
+    }
     identity_read = {
         "identidade-user": SAFE_METHODS,
         "identity-user": SAFE_METHODS,
@@ -187,11 +209,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinical-medicalexamfield": SAFE_METHODS,
             "clinical-medicalresultfile": SAFE_METHODS,
             "clinical-sample": SAFE_METHODS,
+            **maternity_read,
             "billing-invoice": SAFE_METHODS | WRITE_METHODS,
             "billing-invoiceitem": SAFE_METHODS | WRITE_METHODS,
             "billing-invoicehistory": SAFE_METHODS,
             "payments-recibo": SAFE_METHODS,
             "payments-payment": SAFE_METHODS | frozenset({"POST"}),
+            **insurer_authorization_write,
             "external_entities-empresa": external_entities_crud,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
@@ -287,13 +311,14 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "bloodbank-transfusao": bloodbank_operational,
             "bloodbank-movimentoestoque": bloodbank_read,
             "bloodbank-manutencaoarmazenamento": bloodbank_read,
+            **insurer_authorization_write,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
             "prontuario-record": SAFE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS,
-            "maternidade-gestacao": SAFE_METHODS,
+            **maternity_read,
             "surgery-surgery": SAFE_METHODS,
         },
         g["MEDICINA"]: {
@@ -328,7 +353,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Prontuário / Maternidade / Cirurgia (MVP)
             "prontuario-record": SAFE_METHODS | WRITE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
-            "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
+            **maternity_crud,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
             # Banco de sangue (consulta clínica e solicitação de transfusão)
             "bloodbank-doacao": bloodbank_read,
@@ -364,6 +389,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Empresas/entidades externas
             "entidades-empresa": external_entities_crud,
             "external_entities-empresa": external_entities_crud,
+            **insurer_authorization_write,
             # Pode abrir catálogo de procedures para requisitar/consultar
             "enfermagem-procedimentocatalogo": SAFE_METHODS,
             "enfermagem-procedure": SAFE_METHODS | frozenset({"POST"}),
@@ -377,7 +403,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Prontuário / Maternidade / Cirurgia (MVP)
             "prontuario-record": SAFE_METHODS | WRITE_METHODS,
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
-            "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
+            **maternity_crud,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
@@ -436,6 +462,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "accounting-entry": accounting_crud,
             "accounting-movement": accounting_crud,
             "accounting-financialreconciliation": accounting_crud,
+            **insurer_crud,
             # Pacientes (leitura para contexto das faturas)
             "clinico-patient": SAFE_METHODS,
             # SGE (somente leitura)

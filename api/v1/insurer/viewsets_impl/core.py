@@ -5,9 +5,15 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 from apps.insurer.models.procedure_authorization import ProcedureAuthorization
+from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
 
-from ..filters import CoveragePlanFilter, InsurerFilter, ProcedureAuthorizationFilter
-from ..serializers import CoveragePlanSerializer, InsurerSerializer, ProcedureAuthorizationSerializer
+from ..filters import CoveragePlanFilter, InsurerFilter, ProcedureAuthorizationFilter, TenantCoveragePlanFilter
+from ..serializers import (
+    CoveragePlanSerializer,
+    InsurerSerializer,
+    ProcedureAuthorizationSerializer,
+    TenantCoveragePlanSerializer,
+)
 
 
 class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -39,11 +45,11 @@ class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQu
 
 
 class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = CoveragePlan.objects.all()
+    queryset = CoveragePlan.objects.select_related("insurer")
     serializer_class = CoveragePlanSerializer
     filterset_class = CoveragePlanFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["custom_id", "name", "description"]
+    search_fields = ["custom_id", "name", "description", "insurer__name", "insurer__external_code"]
     ordering_fields = [
         "tenant",
         "custom_id",
@@ -60,6 +66,38 @@ class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
         "insurer",
         "coverage_percentage",
         "requires_authorization",
+    ]
+    ordering = ["-created_at"]
+
+
+class TenantCoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = TenantCoveragePlan.objects.select_related("global_plan", "global_plan__insurer")
+    serializer_class = TenantCoveragePlanSerializer
+    filterset_class = TenantCoveragePlanFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "custom_id",
+        "name",
+        "description",
+        "global_plan__name",
+        "global_plan__insurer__name",
+        "global_plan__insurer__external_code",
+    ]
+    ordering_fields = [
+        "tenant",
+        "custom_id",
+        "description",
+        "name",
+        "order",
+        "active",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "global_plan",
+        "override_percentage",
     ]
     ordering = ["-created_at"]
 
@@ -94,6 +132,7 @@ class InsurerViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 VIEWSET_MAP = {
     "autorizacaoprocedimento": ProcedureAuthorizationViewSet,
     "planocobertura": CoveragePlanViewSet,
+    "tenantplanocobertura": TenantCoveragePlanViewSet,
     "insurer": InsurerViewSet,
 }
 
@@ -102,5 +141,6 @@ __all__ = [
     "CoveragePlanViewSet",
     "InsurerViewSet",
     "ProcedureAuthorizationViewSet",
+    "TenantCoveragePlanViewSet",
 ]
 
