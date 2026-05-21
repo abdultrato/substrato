@@ -692,6 +692,79 @@ def test_ai_personal_context_identifies_authenticated_user(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_project_identity_answers_from_github_metadata(api_client, monkeypatch):
+    from apps.ai_assistant.tools.project_identity import ProjectIdentityTool
+
+    tenant = _tenant(identifier="tn-ai-project-identity", domain="tn-ai-project-identity.local")
+    user = _user(tenant, "admin_ai_project_identity", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, user)
+
+    monkeypatch.setattr(
+        ProjectIdentityTool,
+        "_load_metadata",
+        lambda self: {
+            "repository": {
+                "full_name": "abdulltrato/substrato",
+                "owner_login": "abdulltrato",
+                "html_url": "https://github.com/abdulltrato/substrato",
+                "created_at": "2026-02-25T01:45:35Z",
+                "default_branch": "main",
+                "data_source": "github_api",
+            },
+            "creator": {
+                "name": "Abdul Daniel Trato",
+                "email": "abdultrato@gmail.com",
+                "login": "abdulltrato",
+                "profile_url": "https://github.com/abdulltrato",
+            },
+            "first_commit": {
+                "sha": "df5657b19ec9abef16936a30ded1c871234462ad",
+                "short_sha": "df5657b19ec",
+                "message": "Initial commit",
+                "date": "2026-02-25T01:45:27Z",
+                "author_name": "Abdul Daniel Trato",
+                "author_email": "abdultrato@gmail.com",
+                "author_login": "abdulltrato",
+                "html_url": "https://github.com/abdulltrato/substrato/commit/df5657b19ec9abef16936a30ded1c871234462ad",
+                "data_source": "github_api",
+            },
+            "latest_commit": {
+                "sha": "cb8f7e76dfd81394c20021605aa22d5970ca0831",
+                "short_sha": "cb8f7e76dfd",
+                "message": "Expand AI analytics guidance",
+                "date": "2026-05-21T13:37:41+02:00",
+                "author_name": "Abdul Daniel Trato",
+            },
+            "evidence": {
+                "primary": "GitHub API",
+                "limitation_pt": "Se o trabalho tiver começado fora do GitHub antes do primeiro commit público, essa data não aparece nestes dados.",
+                "limitation_en": "If work started outside GitHub before the first public commit, that date is not visible in these data.",
+            },
+        },
+    )
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Quem criou o sistema e quando começou a ser desenvolvido?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "get_project_identity" and call["status"] == "success" for call in data["tool_calls"])
+    assert "Abdul Daniel Trato" in data["answer"]
+    assert "2026-02-25T01:45:27Z" in data["answer"]
+    assert "GitHub API" in data["answer"]
+    assert data["schema"]["project_identity"]["repository"]["full_name"] == "abdulltrato/substrato"
+    assert data["investigation"]["intent"] == "project_identity"
+    assert any(source["type"] == "github" for source in data["sources"])
+
+
+@pytest.mark.django_db
 def test_ai_data_explorer_counts_allowed_patient_resource(api_client):
     tenant = _tenant(identifier="tn-ai-data", domain="tn-ai-data.local")
     user = _user(tenant, "recepcao_data", GROUPS["RECEPCAO"])

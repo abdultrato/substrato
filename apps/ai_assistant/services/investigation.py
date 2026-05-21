@@ -131,6 +131,8 @@ class AiInvestigationBuilder:
         if blocked_tools or any((item.get("result") or {}).get("access_denied") for item in tool_results):
             return "access_review"
         names = {item.get("tool_name") for item in tool_results}
+        if "get_project_identity" in names:
+            return "project_identity"
         if "run_sql_analytics" in names:
             return "sql_analytics"
         if "explore_database" in names:
@@ -301,6 +303,11 @@ class AiInvestigationBuilder:
             )
 
         questions_pt = {
+            "project_identity": [
+                "Mostre o link do repositório GitHub.",
+                "Qual foi o primeiro commit do projecto?",
+                "Qual é o último commit publicado?",
+            ],
             "data_exploration": [
                 "Mostre uma listagem segura deste recurso.",
                 "Que registos foram criados nos últimos 7 dias?",
@@ -322,6 +329,11 @@ class AiInvestigationBuilder:
             ],
         }
         questions_en = {
+            "project_identity": [
+                "Show the GitHub repository link.",
+                "What was the first project commit?",
+                "What is the latest published commit?",
+            ],
             "data_exploration": [
                 "Show a safe list for this resource.",
                 "Which records were created in the last 7 days?",
@@ -369,6 +381,7 @@ class AiInvestigationBuilder:
             "education_review": ("Investigação escolar", "Education investigation"),
             "report_preparation": ("Preparação de relatório", "Report preparation"),
             "task_preparation": ("Preparação de tarefa", "Task preparation"),
+            "project_identity": ("Identidade do projecto", "Project identity"),
         }
         title_pt, title_en = titles.get(intent, ("Investigação operacional", "Operational investigation"))
         return title_en if language == "en" else title_pt

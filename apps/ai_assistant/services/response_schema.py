@@ -51,7 +51,22 @@ def build_response_schema(
             for action in suggested_actions
         ],
         "analytics": _analytics_schema(tool_results=tool_results, language=language),
+        "project_identity": _project_identity_schema(tool_results=tool_results),
         "investigation": _investigation_schema(investigation=investigation, language=language),
+    }
+
+
+def _project_identity_schema(*, tool_results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    identity_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "get_project_identity"), None)
+    if not identity_result:
+        return None
+    metadata = identity_result.get("project_identity") or (identity_result.get("summary") or {}).get("project_identity") or {}
+    return {
+        "repository": metadata.get("repository") or {},
+        "creator": metadata.get("creator") or {},
+        "first_commit": metadata.get("first_commit") or {},
+        "latest_commit": metadata.get("latest_commit") or {},
+        "evidence": metadata.get("evidence") or {},
     }
 
 

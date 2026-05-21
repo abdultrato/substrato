@@ -26,6 +26,10 @@ class LocalLlmGateway:
         if denied_result:
             return self._access_denied_answer(denied_result.get("result") or {}, language=language)
 
+        project_identity_result = next((item for item in tool_results if item.get("tool_name") == "get_project_identity"), None)
+        if project_identity_result:
+            return self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
+
         sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
         if sql_analytics_result:
             return self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
@@ -137,6 +141,45 @@ class LocalLlmGateway:
         next_step = f"Próximo passo sugerido: abrir o Command Center filtrado para {days} dia(s) e investigar primeiro a rota ou módulo crítico."
         module_text = self._module_summary(modules, language="pt")
         return "\n\n".join(part for part in [direct, module_text, evidence, limitations, next_step] if part)
+
+    def _project_identity_answer(self, result: dict[str, Any], *, language: str) -> str:
+        metadata = result.get("project_identity") or (result.get("summary") or {}).get("project_identity") or {}
+        repository = metadata.get("repository") or {}
+        creator = metadata.get("creator") or {}
+        first_commit = metadata.get("first_commit") or {}
+        latest_commit = metadata.get("latest_commit") or {}
+        evidence = metadata.get("evidence") or {}
+
+        repo_name = repository.get("full_name") or repository.get("html_url") or "—"
+        owner = repository.get("owner_login") or "—"
+        creator_name = creator.get("name") or first_commit.get("author_name") or owner
+        creator_login = creator.get("login") or owner
+        first_date = first_commit.get("date") or repository.get("created_at") or "—"
+        repo_created_at = repository.get("created_at") or "—"
+        first_sha = first_commit.get("short_sha") or str(first_commit.get("sha") or "")[:12] or "—"
+        first_message = first_commit.get("message") or "—"
+        latest_sha = latest_commit.get("short_sha") or str(latest_commit.get("sha") or "")[:12] or "—"
+        latest_date = latest_commit.get("date") or "—"
+        source_label = evidence.get("primary") or repository.get("data_source") or "GitHub"
+
+        if language == "en":
+            parts = [
+                f"Using {source_label} as reference, the system repository is {repo_name}, owned on GitHub by {owner}.",
+                f"Creator / initial author by GitHub evidence: {creator_name}" + (f" (@{creator_login})." if creator_login and creator_login != "—" else "."),
+                f"Development start visible on GitHub: {first_date}, in the first available commit {first_sha} ({first_message}).",
+                f"Repository creation on GitHub: {repo_created_at}. Latest local commit in this checkout: {latest_sha} at {latest_date}.",
+                "Limitation: " + str(evidence.get("limitation_en") or "GitHub can only prove repository and commit history visible there."),
+            ]
+            return "\n\n".join(parts)
+
+        parts = [
+            f"Usando {source_label} como referência, o repositório do sistema é {repo_name}, pertencente no GitHub a {owner}.",
+            f"Criador / autor inicial pela evidência do GitHub: {creator_name}" + (f" (@{creator_login})." if creator_login and creator_login != "—" else "."),
+            f"Início do desenvolvimento visível no GitHub: {first_date}, no primeiro commit disponível {first_sha} ({first_message}).",
+            f"Criação do repositório no GitHub: {repo_created_at}. Último commit local neste checkout: {latest_sha} em {latest_date}.",
+            "Limitação: " + str(evidence.get("limitation_pt") or "O GitHub só prova o histórico visível no repositório e nos commits."),
+        ]
+        return "\n\n".join(parts)
 
     def _user_context_answer(self, result: dict[str, Any], *, language: str, compact: bool = False) -> str:
         summary = result.get("summary") or {}

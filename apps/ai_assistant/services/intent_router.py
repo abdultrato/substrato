@@ -87,6 +87,29 @@ PERSONAL_TERMS = (
     "my profile",
     "what can i investigate",
 )
+PROJECT_IDENTITY_TERMS = (
+    "quem criou",
+    "quem desenvolveu",
+    "criador",
+    "criado por",
+    "autor",
+    "dono",
+    "proprietario",
+    "proprietário",
+    "quando comecou",
+    "quando começou",
+    "quando iniciou",
+    "inicio do desenvolvimento",
+    "início do desenvolvimento",
+    "github",
+    "repositorio",
+    "repositório",
+    "who created",
+    "who built",
+    "owner",
+    "creator",
+    "started development",
+)
 CRUD_TERMS = (
     "criar",
     "crie",
@@ -234,6 +257,9 @@ class AiIntentRouter:
 
         signals = self._signals(normalized=normalized, active_module=active_module, focus=focus, pending=pending)
 
+        if signals["project_identity"]:
+            return self._ready("project_identity", 94, signals)
+
         if signals["personal"]:
             return self._ready("user_context", 92, signals)
 
@@ -323,6 +349,7 @@ class AiIntentRouter:
             "greeting_only": self._is_greeting_only(normalized),
             "vague_reference": any(term in normalized for term in (normalize_text(item) for item in VAGUE_REFERENCES)),
             "broad_request": self._has_any(normalized, ("ajuda", "help", "investigar", "analisar", "verificar", "mostra-me", "mostre me")),
+            "project_identity": self._has_project_identity(normalized),
             "personal": self._has_any(normalized, PERSONAL_TERMS),
             "crud": self._has_any(normalized, CRUD_TERMS),
             "data": self._has_any(normalized, DATA_TERMS),
@@ -372,6 +399,16 @@ class AiIntentRouter:
     @staticmethod
     def _has_any(normalized: str, terms: tuple[str, ...]) -> bool:
         return any(re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized) for term in terms)
+
+    @staticmethod
+    def _has_project_identity(normalized: str) -> bool:
+        scope_terms = ("sistema", "projecto", "projeto", "substrato", "software", "app", "plataforma", "system", "project")
+        if not any(re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized) for term in scope_terms):
+            return False
+        return any(
+            re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized)
+            for term in PROJECT_IDENTITY_TERMS
+        )
 
     @staticmethod
     def _is_greeting_only(normalized: str) -> bool:
