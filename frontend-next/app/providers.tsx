@@ -1,5 +1,6 @@
 "use client" // Necessário para usar hooks do React Query no client.
 
+import { Suspense } from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/lib/queryClient"
 import ToastContainer from "@/components/ui/ToastContainer"
@@ -17,7 +18,9 @@ export default function Providers ( { children }: { children: React.ReactNode } 
             <QueryClientProvider client={queryClient}>
                 <AutoTranslateTree>
                     <NavigationWarmup />
-                    <NavigationClickFeedback />
+                    <Suspense fallback={null}>
+                        <NavigationClickFeedback />
+                    </Suspense>
                     <FrontendErrorTelemetry />
                     {children}
                     <RequestActivityIndicator />
