@@ -292,6 +292,21 @@ CHOICE_VALUE_ALIASES = {
     "normal": ("NOR", "NORMAL", "normal"),
     "baixa": ("BAI", "LOW", "low"),
     "baixo": ("BAI", "LOW", "low"),
+    "pequena": ("PEQUENA", "SMALL"),
+    "pequeno": ("PEQUENA", "SMALL"),
+    "small": ("PEQUENA", "SMALL"),
+    "minor": ("PEQUENA", "SMALL"),
+    "grande": ("GRANDE", "LARGE"),
+    "maior": ("GRANDE", "LARGE"),
+    "large": ("GRANDE", "LARGE"),
+    "major": ("GRANDE", "LARGE"),
+    "agendada": ("AGENDADA", "SCHEDULED"),
+    "agendado": ("AGENDADA", "SCHEDULED"),
+    "scheduled": ("AGENDADA", "SCHEDULED"),
+    "em andamento": ("EM_ANDAMENTO", "IN_PROGRESS"),
+    "em curso": ("EM_ANDAMENTO", "IN_PROGRESS"),
+    "a decorrer": ("EM_ANDAMENTO", "IN_PROGRESS"),
+    "in progress": ("EM_ANDAMENTO", "IN_PROGRESS"),
     "manual": ("MANUAL",),
     "requisicao laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
     "requisição laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
@@ -721,9 +736,25 @@ class AiCrudConversationManager:
             if not matches:
                 continue
             raw_value = self._best_field_match(field=field, matches=matches)
+            if field.name == "name" and self._looks_like_operation_target(raw_value):
+                continue
             if raw_value:
                 payload[field.name] = self._coerce_value(field, raw_value)
         return payload
+
+    def _looks_like_operation_target(self, value: str) -> bool:
+        cleaned = self._clean_value(value)
+        if not cleaned:
+            return False
+        if "{" in cleaned or "}" in cleaned:
+            return True
+        return bool(
+            re.match(
+                r"(?i)^(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|"
+                r"codigo_externo|código_externo|referencia|referência|documento|document_number)\b",
+                cleaned,
+            )
+        )
 
     def _best_field_match(self, *, field: CrudFieldSpec, matches: list[re.Match]) -> str:
         values = [self._clean_repeated_field_prefix(field=field, value=match.group(1)) for match in matches]
@@ -960,8 +991,32 @@ class AiCrudConversationManager:
                 resolved_items.append(int(raw))
                 continue
             related_pk = self._lookup_related_pk(field=field, raw=raw, tenant=tenant)
-            resolved_items.append(related_pk if related_pk is not None else raw)
+            if related_pk is not None:
+                resolved_items.append(related_pk)
+                continue
+            choice_pk = self._choice_related_pk(field=field, raw=raw)
+            if (
+                choice_pk is not None
+                and str(choice_pk).isdigit()
+                and self._related_pk_exists(field=field, pk=int(choice_pk), tenant=tenant)
+            ):
+                resolved_items.append(choice_pk)
+                continue
+            resolved_items.append(raw)
         return resolved_items
+
+    def _choice_related_pk(self, *, field: CrudFieldSpec, raw: str):
+        normalized = self._normalize(raw)
+        if not normalized or not field.choices:
+            return None
+        for key, label in field.choices:
+            normalized_key = self._normalize(key)
+            normalized_label = self._normalize(label)
+            if normalized in {normalized_key, normalized_label}:
+                return int(key) if str(key).isdigit() else key
+            if len(normalized) >= 3 and normalized in normalized_label:
+                return int(key) if str(key).isdigit() else key
+        return None
 
     def _split_related_values(self, raw: str) -> list[str]:
         cleaned = self._clean_value(raw)
@@ -993,7 +1048,31 @@ class AiCrudConversationManager:
         if not query:
             return None
         obj = queryset.filter(query).order_by("-id").first()
-        return getattr(obj, "pk", None) if obj is not None else None
+        if obj is not None:
+            return getattr(obj, "pk", None)
+        return self._lookup_related_pk_by_normalized_scan(queryset=queryset, raw=raw)
+
+    def _lookup_related_pk_by_normalized_scan(self, *, queryset, raw: str):
+        normalized_raw = self._normalize(raw)
+        if len(normalized_raw) < 3:
+            return None
+        model = queryset.model
+        searchable_fields = [
+            field_name
+            for field_name in RELATED_LOOKUP_FIELDS
+            if self._lookup_query_for_model_field(model=model, field_name=field_name, raw=raw) is not None
+        ]
+        if not searchable_fields:
+            return None
+
+        for obj in queryset.order_by("-id")[:250]:
+            for field_name in searchable_fields:
+                candidate = self._normalize(str(getattr(obj, field_name, "") or ""))
+                if not candidate:
+                    continue
+                if normalized_raw == candidate or normalized_raw in candidate:
+                    return getattr(obj, "pk", None)
+        return None
 
     def _lookup_query_for_model_field(self, *, model, field_name: str, raw: str) -> Q | None:
         raw = str(raw or "").strip()

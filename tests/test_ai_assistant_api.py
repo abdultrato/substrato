@@ -116,6 +116,8 @@ from apps.pharmacy.models.material_requisition_item import MaterialRequisitionIt
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
+from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
+from apps.surgery.models.surgical_procedure import SurgicalProcedure
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -3974,6 +3976,156 @@ def test_ai_maternity_crud_denies_pregnancy_create_for_reception(api_client):
     assert "não tem acesso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Pregnancy.objects.filter(tenant=tenant, patient__name="Gestante Bloqueada").exists()
+
+
+@pytest.mark.django_db
+def test_ai_surgery_crud_creates_catalog_procedure_and_surgery_for_medicine(api_client):
+    tenant = _tenant(identifier="tn-ai-surgery-crud", domain="tn-ai-surgery-crud.local")
+    user = _user(tenant, "medicina_ai_surgery_crud", GROUPS["MEDICINA"])
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Paciente Cirurgia IA",
+        document_number="BI-SURG-001",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, procedure_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie procedimento cirúrgico {"nome":"Apendicectomia IA","descricao":"Catálogo cirúrgico IA","preco_base":"2500.00","iva":"0.00","aplica_iva":false}',
+    )
+
+    assert procedure_action.payload["basename"] == "surgery-procedimentocirurgico"
+    assert procedure_action.payload["data"]["name"] == "Apendicectomia IA"
+    assert procedure_action.payload["data"]["base_price"] == "2500.00"
+    assert procedure_action.payload["data"]["applies_vat_by_default"] is False
+    _confirm_ai_action(api_client, procedure_action)
+    procedure = SurgicalProcedure.objects.get(tenant=tenant, name__icontains="Apendicectomia")
+
+    _data, procedure_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere procedimento cirúrgico código {procedure.custom_id} {{"descricao":"Catálogo actualizado","preco_base":"2750.00"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert procedure_update_action.payload["basename"] == "surgery-procedimentocirurgico"
+    assert procedure_update_action.payload["data"]["description"] == "Catálogo actualizado"
+    assert procedure_update_action.payload["data"]["base_price"] == "2750.00"
+    _confirm_ai_action(api_client, procedure_update_action)
+    procedure.refresh_from_db()
+    assert procedure.description == "Catálogo actualizado"
+    assert procedure.base_price == Decimal("2750.00")
+
+    _data, surgery_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie cirurgia {"paciente":"Paciente Cirurgia IA","cirurgiao":"medicina_ai_surgery_crud",'
+            '"procedimentos":["Apendicectomia IA"],"porte":"grande","estado":"agendada",'
+            '"preco_estimado":"3200.00","iva":"0.00","data_cirurgia":"2026-07-15T09:30:00Z",'
+            '"descricao":"Preparar sala cirúrgica"}'
+        ),
+    )
+
+    assert surgery_action.payload["basename"] == "surgery-surgery"
+    assert surgery_action.payload["data"]["patient"] == patient.id
+    assert surgery_action.payload["data"]["surgeon"] == user.id
+    assert surgery_action.payload["data"]["procedures"] == [procedure.id]
+    assert surgery_action.payload["data"]["surgery_size"] == Surgery.Size.LARGE
+    assert surgery_action.payload["data"]["status"] == Surgery.Status.SCHEDULED
+    assert surgery_action.payload["data"]["estimated_price"] == "3200.00"
+    _confirm_ai_action(api_client, surgery_action)
+    surgery = Surgery.objects.get(tenant=tenant, patient=patient)
+    assert surgery.surgeon == user
+    assert surgery.procedure == procedure.name
+    assert surgery.procedures.filter(id=procedure.id).exists()
+    assert surgery.surgery_size == Surgery.Size.LARGE
+
+    _data, surgery_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere cirurgia código {surgery.custom_id} {{"estado":"em andamento","preco_estimado":"3500.00","descricao":"Sala preparada"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert surgery_update_action.payload["basename"] == "surgery-surgery"
+    assert surgery_update_action.payload["object_ref"] == surgery.custom_id
+    assert surgery_update_action.payload["data"]["status"] == Surgery.Status.IN_PROGRESS
+    assert surgery_update_action.payload["data"]["estimated_price"] == "3500.00"
+    _confirm_ai_action(api_client, surgery_update_action)
+    surgery.refresh_from_db()
+    assert surgery.status == Surgery.Status.IN_PROGRESS
+    assert surgery.estimated_price == Decimal("3500.00")
+    assert surgery.description == "Sala preparada"
+
+    _data, surgery_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova cirurgia id {surgery.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert surgery_delete_action.payload["basename"] == "surgery-surgery"
+    _confirm_ai_action(api_client, surgery_delete_action)
+    assert Surgery.all_objects.get(id=surgery.id).deleted is True
+
+    _data, procedure_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova procedimento cirúrgico id {procedure.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert procedure_delete_action.payload["basename"] == "surgery-procedimentocirurgico"
+    _confirm_ai_action(api_client, procedure_delete_action)
+    assert SurgicalProcedure.all_objects.get(id=procedure.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_surgery_crud_creates_small_and_large_segmented_resources(api_client):
+    tenant = _tenant(identifier="tn-ai-surgery-segmented", domain="tn-ai-surgery-segmented.local")
+    user = _user(tenant, "medicina_ai_surgery_segmented", GROUPS["MEDICINA"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Cirurgia Segmentada", document_number="BI-SURG-002")
+    _authenticate(api_client, tenant, user)
+
+    _data, small_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie pequena cirurgia {"paciente":"Paciente Cirurgia Segmentada","cirurgiao":"medicina_ai_surgery_segmented","procedimento":"Biópsia IA","estado":"agendada","preco_estimado":"800.00"}',
+    )
+
+    assert small_action.payload["basename"] == "surgery-pequenacirurgia"
+    _confirm_ai_action(api_client, small_action)
+    small = SmallSurgery.objects.get(tenant=tenant, procedure="Biópsia IA")
+    assert small.surgery_size == Surgery.Size.SMALL
+
+    _data, large_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie grande cirurgia {"paciente":"Paciente Cirurgia Segmentada","cirurgiao":"medicina_ai_surgery_segmented","procedimento":"Laparotomia IA","estado":"agendada","preco_estimado":"4500.00"}',
+    )
+
+    assert large_action.payload["basename"] == "surgery-grandecirurgia"
+    _confirm_ai_action(api_client, large_action)
+    large = LargeSurgery.objects.get(tenant=tenant, procedure="Laparotomia IA")
+    assert large.surgery_size == Surgery.Size.LARGE
+
+
+@pytest.mark.django_db
+def test_ai_surgery_crud_denies_surgery_create_for_nursing(api_client):
+    tenant = _tenant(identifier="tn-ai-surgery-denied", domain="tn-ai-surgery-denied.local")
+    user = _user(tenant, "enfermagem_ai_surgery_denied", GROUPS["ENFERMAGEM"])
+    Patient.objects.create(tenant=tenant, name="Paciente Cirurgia Bloqueada", document_number="BI-SURG-BLOCK")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie cirurgia {"paciente":"Paciente Cirurgia Bloqueada","procedimento":"Bloqueado IA"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not Surgery.objects.filter(tenant=tenant, patient__name="Paciente Cirurgia Bloqueada").exists()
 
 
 @pytest.mark.django_db

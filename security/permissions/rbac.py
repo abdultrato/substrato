@@ -162,6 +162,20 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in maternity_read
     }
+    surgery_read = {
+        "cirurgia-surgery": SAFE_METHODS,
+        "cirurgia-pequenacirurgia": SAFE_METHODS,
+        "cirurgia-grandecirurgia": SAFE_METHODS,
+        "cirurgia-procedimentocirurgico": SAFE_METHODS,
+        "surgery-surgery": SAFE_METHODS,
+        "surgery-pequenacirurgia": SAFE_METHODS,
+        "surgery-grandecirurgia": SAFE_METHODS,
+        "surgery-procedimentocirurgico": SAFE_METHODS,
+    }
+    surgery_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in surgery_read
+    }
     medical_records_read = {
         "prontuario-record": SAFE_METHODS,
         "prontuario-prescricaoitem": SAFE_METHODS,
@@ -379,7 +393,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
             **medical_records_read,
             **maternity_read,
-            "surgery-surgery": SAFE_METHODS,
+            **surgery_read,
         },
         g["MEDICINA"]: {
             # Jornada clinica (anamnese/diagnosis não expostos na API v1)
@@ -413,7 +427,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Prontuário / Maternidade / Cirurgia (MVP)
             **medical_records_crud,
             **maternity_crud,
-            "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
+            **surgery_crud,
             # Banco de sangue (consulta clínica e solicitação de transfusão)
             "bloodbank-doacao": bloodbank_read,
             "bloodbank-unidade": bloodbank_read,
@@ -462,7 +476,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Prontuário / Maternidade / Cirurgia (MVP)
             **medical_records_crud,
             **maternity_crud,
-            "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
+            **surgery_crud,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
