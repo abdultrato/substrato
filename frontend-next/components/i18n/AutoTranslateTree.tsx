@@ -6,6 +6,14 @@ import { useLanguage } from "@/hooks/useLanguage"
 const STRING_PROPS = [
   "placeholder",
   "title",
+  "subtitle",
+  "description",
+  "label",
+  "emptyMessage",
+  "hint",
+  "searchPlaceholder",
+  "submitLabel",
+  "valueLabel",
   "alt",
   "aria-label",
 ] as const
@@ -43,7 +51,6 @@ function translateNode(node: ReactNode, tr: (value: string) => string): ReactNod
 }
 
 export default function AutoTranslateTree({ children }: { children: ReactNode }) {
-  const { isPortuguese, tr } = useLanguage()
-  if (isPortuguese) return <>{children}</>
+  const { tr } = useLanguage()
   return <>{translateNode(children, tr)}</>
 }

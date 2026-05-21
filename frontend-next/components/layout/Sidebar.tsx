@@ -67,9 +67,9 @@ const PRIORITY_PREFETCH_LIMIT = 5
  * Definição dos menus com RBAC
  */
 const NAV_ITEMS: NavItem[] = [
-    { href: "/workspaces", label: "Workspaces", labelEn: "Workspaces", icon: Layers, desc: "Escolha entre Healthcare e Education", descEn: "Choose between Healthcare and Education", groups: [GROUPS.ADMIN] },
-    { href: "/", label: "Dashboard", labelEn: "Dashboard", icon: ClipboardList, desc: "Visão geral e indicadores", descEn: "Overview and indicators", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
-    { href: "/healthcare", label: "Healthcare", labelEn: "Healthcare", icon: Stethoscope, desc: "Hub clínico unificado", descEn: "Unified clinical hub", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
+    { href: "/workspaces", label: "Áreas de trabalho", labelEn: "Workspaces", icon: Layers, desc: "Escolha entre Saúde e Educação", descEn: "Choose between Healthcare and Education", groups: [GROUPS.ADMIN] },
+    { href: "/", label: "Painel", labelEn: "Dashboard", icon: ClipboardList, desc: "Visão geral e indicadores", descEn: "Overview and indicators", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
+    { href: "/healthcare", label: "Saúde", labelEn: "Healthcare", icon: Stethoscope, desc: "Hub clínico unificado", descEn: "Unified clinical hub", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/reception", label: "Recepção", labelEn: "Reception", icon: BriefcaseIcon, desc: "Triagem e atendimento", descEn: "Triage and attendance", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO] },
     { href: "/patients", label: "Pacientes", labelEn: "Patients", icon: Users, desc: "Cadastro e histórico", descEn: "Registration and history", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/consultations", label: "Consultas", labelEn: "Consultations", icon: CalendarClock, desc: "Agenda clínica", descEn: "Clinical schedule", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.CONTABILIDADE] },

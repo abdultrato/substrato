@@ -22,8 +22,10 @@ const themeInitScript = `
 (function () {
   try {
     var languageKey = "substrato_language";
+    var explicitLanguageKey = "substrato_language_explicit";
     var storedLanguage = localStorage.getItem(languageKey);
-    var normalizedLanguage = storedLanguage && storedLanguage.toLowerCase().indexOf("en") === 0 ? "en" : "pt";
+    var explicitLanguage = localStorage.getItem(explicitLanguageKey) === "1";
+    var normalizedLanguage = explicitLanguage && storedLanguage && storedLanguage.toLowerCase().indexOf("en") === 0 ? "en" : "pt";
     document.documentElement.lang = normalizedLanguage;
 
     var key = "substrato_theme";

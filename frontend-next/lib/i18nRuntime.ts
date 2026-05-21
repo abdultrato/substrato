@@ -103,6 +103,127 @@ const EXACT_PT_TO_EN: Record<string, string> = {
   "Atualize os dados do procedimento selecionado.": "Update the selected procedure data.",
 }
 
+const EXACT_EN_TO_PT: Record<string, string> = {
+  "Internal Server Error": "Erro interno do servidor",
+  "Internal server error.": "Erro interno do servidor.",
+  "An unexpected error occurred.": "Ocorreu um erro inesperado.",
+  "Resource not found": "Recurso não encontrado",
+  "Module not found": "Módulo não encontrado",
+  "Back": "Voltar",
+  "Back to modules": "Voltar para módulos",
+  "New": "Novo",
+  "Edit": "Editar",
+  "Save": "Guardar",
+  "Saving...": "A guardar...",
+  "Delete": "Apagar",
+  "Deleting...": "A apagar...",
+  "Cancel": "Cancelar",
+  "Complete": "Concluir",
+  "Loading...": "A carregar...",
+  "Generating...": "A gerar...",
+  "Select": "Seleccione",
+  "Select...": "Seleccione...",
+  "No record found.": "Nenhum registo encontrado.",
+  "No consultation found.": "Nenhuma consulta encontrada.",
+  "No request found.": "Nenhuma requisição encontrada.",
+  "No notification found.": "Nenhuma notificação encontrada.",
+  "No item found.": "Nenhum item encontrado.",
+  "No result found.": "Nenhum resultado encontrado.",
+  "No reconciliation found.": "Nenhuma reconciliação encontrada.",
+  "No entry found.": "Nenhum lançamento encontrado.",
+  "No movement found.": "Nenhum movimento encontrado.",
+  "No surgery found.": "Nenhuma cirurgia encontrada.",
+  "No procedure found.": "Nenhum procedimento encontrado.",
+  "No patient found.": "Nenhum paciente encontrado.",
+  "No pregnancy found.": "Nenhuma gestação encontrada.",
+  "No attendance found.": "Nenhum atendimento encontrado.",
+  "No check-in found.": "Nenhum check-in encontrado.",
+  "Open in administration": "Abrir na administração",
+  "Open in Administration": "Abrir na administração",
+  "Administration": "Administração",
+  "Admin": "Administração",
+  "Actions": "Acções",
+  "Action": "Acção",
+  "Code": "Código",
+  "Name": "Nome",
+  "Status": "Estado",
+  "Created at": "Criado em",
+  "Patient": "Paciente",
+  "Patients": "Pacientes",
+  "Doctor": "Médico",
+  "Doctors": "Médicos",
+  "Consultation": "Consulta",
+  "Consultations": "Consultas",
+  "Request": "Requisição",
+  "Requests": "Requisições",
+  "Requests (Laboratory)": "Requisições (Laboratório)",
+  "Request Items": "Itens de requisição",
+  "Result": "Resultado",
+  "Results": "Resultados",
+  "Invoice": "Factura",
+  "Invoices": "Facturas",
+  "Receipt": "Recibo",
+  "Receipts": "Recibos",
+  "Payment": "Pagamento",
+  "Payments": "Pagamentos",
+  "Accounting": "Contabilidade",
+  "Reception": "Recepção",
+  "Nursing": "Enfermagem",
+  "Laboratory": "Laboratório",
+  "Medical records": "Prontuário",
+  "Maternity": "Maternidade",
+  "Surgery": "Cirurgia",
+  "Pharmacy": "Farmácia",
+  "Blood bank": "Banco de Sangue",
+  "Notifications": "Notificações",
+  "Monitoring": "Monitorização",
+  "Education": "Educação",
+  "Student Area": "Área do Estudante",
+  "Students": "Estudantes",
+  "Teachers": "Professores",
+  "Courses": "Cursos",
+  "Classrooms": "Turmas",
+  "Enrollments": "Matrículas",
+  "Attendance": "Presenças",
+  "Grades": "Notas",
+  "Learning content": "Conteúdos de aprendizagem",
+  "Statistics": "Estatísticas",
+  "Settings": "Definições",
+  "Profile": "Perfil",
+  "Dashboard": "Painel",
+  "Workspaces": "Áreas de trabalho",
+  "Healthcare": "Saúde",
+  "Substrato Healthcare": "Substrato Saúde",
+  "Platform": "Plataforma",
+  "Version": "Versão",
+  "Theme": "Tema",
+  "Light": "Claro",
+  "Dark": "Escuro",
+  "Light mode": "Modo claro",
+  "Dark mode": "Modo escuro",
+  "User": "Utilizador",
+  "Sign out": "Terminar sessão",
+  "Change to Portuguese": "Mudar para Português",
+  "chenge to portuguese": "Mudar para Português",
+  "Common design pattern": "Padrão de desenho comum",
+  "Registration and clinical history.": "Registo e histórico clínico.",
+  "Clinical schedule and follow-up.": "Agenda clínica e seguimento.",
+  "Laboratory and operational requests.": "Pedidos laboratoriais e operacionais.",
+  "Result registration and validation.": "Registo e validação de resultados.",
+  "Search": "Pesquisar",
+  "Search in listing...": "Pesquisar na listagem...",
+  "Results:": "Resultados:",
+  "Clear": "Limpar",
+  "No results for this search.": "Nenhum resultado para esta pesquisa.",
+  "Page": "Página",
+  "of": "de",
+  "All": "Todos",
+  "Per page": "Por página",
+  "Total:": "Total:",
+  "On page:": "Na página:",
+  "Clear filters": "Limpar filtros",
+}
+
 const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/^Falha ao carregar (.+)\.$/iu, "Failed to load $1."],
   [/^Falha ao gerar (.+)\.$/iu, "Failed to generate $1."],
@@ -115,6 +236,21 @@ const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/^Selecione (.+)\.$/iu, "Select $1."],
   [/^Nenhum (.+) encontrado\.$/iu, "No $1 found."],
   [/^Nenhuma (.+) encontrada\.$/iu, "No $1 found."],
+]
+
+const PHRASE_REPLACEMENTS_EN_TO_PT: Array<[RegExp, string]> = [
+  [/^Failed to load (.+)\.$/iu, "Falha ao carregar $1."],
+  [/^Failed to generate (.+)\.$/iu, "Falha ao gerar $1."],
+  [/^Failed to save( .+)?\.$/iu, "Falha ao guardar$1."],
+  [/^Failed to create (.+)\.$/iu, "Falha ao criar $1."],
+  [/^Failed to update (.+)\.$/iu, "Falha ao actualizar $1."],
+  [/^Failed to delete( .+)?\.$/iu, "Falha ao apagar$1."],
+  [/^No permission to (.+)\.$/iu, "Sem permissão para $1."],
+  [/^Select (.+)\.$/iu, "Seleccione $1."],
+  [/^No (.+) found\.$/iu, "Nenhum $1 encontrado."],
+  [/^Create (.+)$/iu, "Criar $1"],
+  [/^Edit (.+)$/iu, "Editar $1"],
+  [/^New (.+)$/iu, "Novo $1"],
 ]
 
 const TOKEN_REPLACEMENTS: Array<[RegExp, string]> = [
@@ -258,6 +394,171 @@ const TOKEN_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bCriado em\b/gu, "Created at"],
 ]
 
+const TOKEN_REPLACEMENTS_EN_TO_PT: Array<[RegExp, string]> = [
+  [/\bMedical records\b/gu, "Prontuário"],
+  [/\bmedical records\b/gu, "prontuário"],
+  [/\bHuman resources\b/gu, "Recursos Humanos"],
+  [/\bhuman resources\b/gu, "recursos humanos"],
+  [/\bResources Humanos\b/gu, "Recursos Humanos"],
+  [/\bBlood bank\b/gu, "Banco de Sangue"],
+  [/\bblood bank\b/gu, "banco de sangue"],
+  [/\bStudent Area\b/gu, "Área do Estudante"],
+  [/\bOperational AI\b/gu, "IA Operacional"],
+  [/\bAPI resources\b/gu, "Recursos API"],
+  [/\bMaterial req\.\b/gu, "Req. Materiais"],
+  [/\bOccupational med\.\b/gu, "Med. Ocupacional"],
+  [/\bHealthcare\b/gu, "Saúde"],
+  [/\bhealthcare\b/gu, "saúde"],
+  [/\bWorkspace\b/gu, "Área de trabalho"],
+  [/\bWorkspaces\b/gu, "Áreas de trabalho"],
+  [/\bworkspace\b/gu, "área de trabalho"],
+  [/\bworkspaces\b/gu, "áreas de trabalho"],
+  [/\bDashboard\b/gu, "Painel"],
+  [/\bdashboard\b/gu, "painel"],
+  [/\bResource\b/gu, "Recurso"],
+  [/\bResources\b/gu, "Recursos"],
+  [/\bresource\b/gu, "recurso"],
+  [/\bresources\b/gu, "recursos"],
+  [/\bModule\b/gu, "Módulo"],
+  [/\bModules\b/gu, "Módulos"],
+  [/\bmodule\b/gu, "módulo"],
+  [/\bmodules\b/gu, "módulos"],
+  [/\bPatient\b/gu, "Paciente"],
+  [/\bPatients\b/gu, "Pacientes"],
+  [/\bpatient\b/gu, "paciente"],
+  [/\bpatients\b/gu, "pacientes"],
+  [/\bConsultation\b/gu, "Consulta"],
+  [/\bConsultations\b/gu, "Consultas"],
+  [/\bconsultation\b/gu, "consulta"],
+  [/\bconsultations\b/gu, "consultas"],
+  [/\bRequest\b/gu, "Requisição"],
+  [/\bRequests\b/gu, "Requisições"],
+  [/\brequest\b/gu, "requisição"],
+  [/\brequests\b/gu, "requisições"],
+  [/\bResult\b/gu, "Resultado"],
+  [/\bResults\b/gu, "Resultados"],
+  [/\bresult\b/gu, "resultado"],
+  [/\bresults\b/gu, "resultados"],
+  [/\bInvoice\b/gu, "Factura"],
+  [/\bInvoices\b/gu, "Facturas"],
+  [/\binvoice\b/gu, "factura"],
+  [/\binvoices\b/gu, "facturas"],
+  [/\bReceipt\b/gu, "Recibo"],
+  [/\bReceipts\b/gu, "Recibos"],
+  [/\breceipt\b/gu, "recibo"],
+  [/\breceipts\b/gu, "recibos"],
+  [/\bPayment\b/gu, "Pagamento"],
+  [/\bPayments\b/gu, "Pagamentos"],
+  [/\bpayment\b/gu, "pagamento"],
+  [/\bpayments\b/gu, "pagamentos"],
+  [/\bAccounting\b/gu, "Contabilidade"],
+  [/\baccounting\b/gu, "contabilidade"],
+  [/\bReception\b/gu, "Recepção"],
+  [/\breception\b/gu, "recepção"],
+  [/\bNursing\b/gu, "Enfermagem"],
+  [/\bnursing\b/gu, "enfermagem"],
+  [/\bPharmacy\b/gu, "Farmácia"],
+  [/\bpharmacy\b/gu, "farmácia"],
+  [/\bLaboratory\b/gu, "Laboratório"],
+  [/\blaboratory\b/gu, "laboratório"],
+  [/\bDoctor\b/gu, "Médico"],
+  [/\bDoctors\b/gu, "Médicos"],
+  [/\bdoctor\b/gu, "médico"],
+  [/\bdoctors\b/gu, "médicos"],
+  [/\bSpecialty\b/gu, "Especialidade"],
+  [/\bSpecialties\b/gu, "Especialidades"],
+  [/\bspecialty\b/gu, "especialidade"],
+  [/\bspecialties\b/gu, "especialidades"],
+  [/\bMaternity\b/gu, "Maternidade"],
+  [/\bmaternity\b/gu, "maternidade"],
+  [/\bSurgery\b/gu, "Cirurgia"],
+  [/\bsurgery\b/gu, "cirurgia"],
+  [/\bEducation\b/gu, "Educação"],
+  [/\beducation\b/gu, "educação"],
+  [/\bStudent\b/gu, "Estudante"],
+  [/\bStudents\b/gu, "Estudantes"],
+  [/\bstudent\b/gu, "estudante"],
+  [/\bstudents\b/gu, "estudantes"],
+  [/\bTeacher\b/gu, "Professor"],
+  [/\bTeachers\b/gu, "Professores"],
+  [/\bteacher\b/gu, "professor"],
+  [/\bteachers\b/gu, "professores"],
+  [/\bCourse\b/gu, "Curso"],
+  [/\bCourses\b/gu, "Cursos"],
+  [/\bcourse\b/gu, "curso"],
+  [/\bcourses\b/gu, "cursos"],
+  [/\bClassroom\b/gu, "Turma"],
+  [/\bClassrooms\b/gu, "Turmas"],
+  [/\bclassroom\b/gu, "turma"],
+  [/\bclassrooms\b/gu, "turmas"],
+  [/\bEnrollment\b/gu, "Matrícula"],
+  [/\bEnrollments\b/gu, "Matrículas"],
+  [/\benrollment\b/gu, "matrícula"],
+  [/\benrollments\b/gu, "matrículas"],
+  [/\bNotification\b/gu, "Notificação"],
+  [/\bNotifications\b/gu, "Notificações"],
+  [/\bnotification\b/gu, "notificação"],
+  [/\bnotifications\b/gu, "notificações"],
+  [/\bMonitoring\b/gu, "Monitorização"],
+  [/\bmonitoring\b/gu, "monitorização"],
+  [/\bStatistics\b/gu, "Estatísticas"],
+  [/\bstatistics\b/gu, "estatísticas"],
+  [/\bSettings\b/gu, "Definições"],
+  [/\bsettings\b/gu, "definições"],
+  [/\bProfile\b/gu, "Perfil"],
+  [/\bprofile\b/gu, "perfil"],
+  [/\bBack\b/gu, "Voltar"],
+  [/\bback\b/gu, "voltar"],
+  [/\bNew\b/gu, "Novo"],
+  [/\bnew\b/gu, "novo"],
+  [/\bEdit\b/gu, "Editar"],
+  [/\bedit\b/gu, "editar"],
+  [/\bSave\b/gu, "Guardar"],
+  [/\bsave\b/gu, "guardar"],
+  [/\bCreate\b/gu, "Criar"],
+  [/\bcreate\b/gu, "criar"],
+  [/\bUpdate\b/gu, "Actualizar"],
+  [/\bupdate\b/gu, "actualizar"],
+  [/\bData\b/gu, "Dados"],
+  [/\bdata\b/gu, "dados"],
+  [/\bSelected\b/gu, "Seleccionado"],
+  [/\bselected\b/gu, "seleccionado"],
+  [/\bSector\b/gu, "Sector"],
+  [/\bsector\b/gu, "sector"],
+  [/\bAll\b/gu, "Todos"],
+  [/\ball\b/gu, "todos"],
+  [/\bTotal\b/gu, "Total"],
+  [/\btotal\b/gu, "total"],
+  [/\bPage\b/gu, "Página"],
+  [/\bpage\b/gu, "página"],
+  [/\bLoading\.\.\./gu, "A carregar..."],
+  [/\bloading\.\.\./gu, "a carregar..."],
+  [/\bSaving\.\.\./gu, "A guardar..."],
+  [/\bsaving\.\.\./gu, "a guardar..."],
+  [/\bGenerating\.\.\./gu, "A gerar..."],
+  [/\bgenerating\.\.\./gu, "a gerar..."],
+  [/\bDelete\b/gu, "Apagar"],
+  [/\bdelete\b/gu, "apagar"],
+  [/\bCancel\b/gu, "Cancelar"],
+  [/\bcancel\b/gu, "cancelar"],
+  [/\bComplete\b/gu, "Concluir"],
+  [/\bcomplete\b/gu, "concluir"],
+  [/\bSelect\b/gu, "Seleccione"],
+  [/\bselect\b/gu, "seleccione"],
+  [/\bFound\b/gu, "Encontrado"],
+  [/\bfound\b/gu, "encontrado"],
+  [/\bError\b/gu, "Erro"],
+  [/\berror\b/gu, "erro"],
+  [/\bFailure\b/gu, "Falha"],
+  [/\bfailure\b/gu, "falha"],
+  [/\bActions\b/gu, "Acções"],
+  [/\bAction\b/gu, "Acção"],
+  [/\bCode\b/gu, "Código"],
+  [/\bName\b/gu, "Nome"],
+  [/\bStatus\b/gu, "Estado"],
+  [/\bCreated at\b/gu, "Criado em"],
+]
+
 function withOriginalWhitespace(original: string, translatedTrimmed: string): string {
   const trimmed = original.trim()
   if (!trimmed) return original
@@ -266,32 +567,43 @@ function withOriginalWhitespace(original: string, translatedTrimmed: string): st
   return `${original.slice(0, start)}${translatedTrimmed}${original.slice(end)}`
 }
 
-function applyTokenTranslations(text: string): string {
+function applyTokenTranslations(text: string, replacements: Array<[RegExp, string]>): string {
   let out = text
-  for (const [pattern, replacement] of TOKEN_REPLACEMENTS) {
+  for (const [pattern, replacement] of replacements) {
     out = out.replace(pattern, replacement)
   }
   return out
 }
 
+function shouldSkipRuntimeTranslation(trimmed: string): boolean {
+  if (!trimmed) return true
+  if (/^\/[A-Za-z0-9/_-]+\/?$/.test(trimmed)) return true
+  if (/^[A-Z0-9._:/-]{2,}$/.test(trimmed)) return true
+  if (/^[\d\s.,:;()/+%|-]+$/.test(trimmed)) return true
+  if (/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(trimmed)) return true
+  return false
+}
+
 export function translateRuntimeText(text: string, language: AppLanguage): string {
-  if (language !== "en") return text
   if (typeof text !== "string") return text
 
   const trimmed = text.trim()
-  if (!trimmed) return text
-  if (/^\/[A-Za-z0-9/_-]+\/?$/.test(trimmed)) return text
+  if (shouldSkipRuntimeTranslation(trimmed)) return text
 
-  if (Object.prototype.hasOwnProperty.call(EXACT_PT_TO_EN, trimmed)) {
-    return withOriginalWhitespace(text, EXACT_PT_TO_EN[trimmed] || trimmed)
+  const exact = language === "en" ? EXACT_PT_TO_EN : EXACT_EN_TO_PT
+  const phrases = language === "en" ? PHRASE_REPLACEMENTS : PHRASE_REPLACEMENTS_EN_TO_PT
+  const tokens = language === "en" ? TOKEN_REPLACEMENTS : TOKEN_REPLACEMENTS_EN_TO_PT
+
+  if (Object.prototype.hasOwnProperty.call(exact, trimmed)) {
+    return withOriginalWhitespace(text, exact[trimmed] || trimmed)
   }
 
   let translated = trimmed
-  for (const [pattern, replacement] of PHRASE_REPLACEMENTS) {
+  for (const [pattern, replacement] of phrases) {
     translated = translated.replace(pattern, replacement)
   }
 
-  translated = applyTokenTranslations(translated)
+  translated = applyTokenTranslations(translated, tokens)
 
   return withOriginalWhitespace(text, translated)
 }

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { useLanguage } from "@/hooks/useLanguage"
 
 export default function ActionTile({
   title,
@@ -11,6 +12,8 @@ export default function ActionTile({
   href: string
   icon: any
 }) {
+  const { tr } = useLanguage()
+
   return (
     <Link
       href={href}
@@ -25,10 +28,10 @@ export default function ActionTile({
 
         <div>
           <div className="font-display text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-            {title}
+            {tr(title)}
           </div>
           <div className="mt-1 text-xs leading-5 text-muted-foreground">
-            {description}
+            {tr(description)}
           </div>
         </div>
       </div>

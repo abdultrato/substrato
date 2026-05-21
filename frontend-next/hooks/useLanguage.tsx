@@ -50,7 +50,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = useCallback(async (nextLanguage: AppLanguage) => {
     setLanguageState(nextLanguage)
-    persistLanguageClient(nextLanguage)
+    persistLanguageClient(nextLanguage, { explicit: true })
     await syncLanguageWithBackend(nextLanguage)
   }, [])
 

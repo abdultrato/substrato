@@ -1,6 +1,7 @@
 export type AppLanguage = "pt" | "en"
 
 export const LANGUAGE_STORAGE_KEY = "substrato_language"
+export const LANGUAGE_EXPLICIT_STORAGE_KEY = "substrato_language_explicit"
 export const LANGUAGE_COOKIE_NAME = "django_language"
 export const DEFAULT_LANGUAGE: AppLanguage = "pt"
 
@@ -22,6 +23,17 @@ export function normalizeLanguage(input?: string | null): AppLanguage {
 export function getStoredLanguage(): AppLanguage {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE
 
+  let explicitSelection = false
+  try {
+    explicitSelection = window.localStorage.getItem(LANGUAGE_EXPLICIT_STORAGE_KEY) === "1"
+  } catch {
+    explicitSelection = false
+  }
+
+  // Product rule: Portuguese is the default. A stored/cookie language only
+  // counts after the user has explicitly used the language switch.
+  if (!explicitSelection) return DEFAULT_LANGUAGE
+
   try {
     const local = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
     if (local) return normalizeLanguage(local)
@@ -32,14 +44,10 @@ export function getStoredLanguage(): AppLanguage {
   const cookieValue = readCookie(LANGUAGE_COOKIE_NAME)
   if (cookieValue) return normalizeLanguage(cookieValue)
 
-  const browserLang =
-    (Array.isArray(window.navigator.languages) && window.navigator.languages[0]) ||
-    window.navigator.language ||
-    DEFAULT_LANGUAGE
-  return normalizeLanguage(browserLang)
+  return DEFAULT_LANGUAGE
 }
 
-export function persistLanguageClient(language: AppLanguage): void {
+export function persistLanguageClient(language: AppLanguage, options: { explicit?: boolean } = {}): void {
   if (typeof document !== "undefined") {
     document.documentElement.lang = language
     document.cookie = `${LANGUAGE_COOKIE_NAME}=${encodeURIComponent(language)}; path=/; max-age=${ONE_YEAR_IN_SECONDS}; samesite=lax`
@@ -47,6 +55,9 @@ export function persistLanguageClient(language: AppLanguage): void {
   if (typeof window !== "undefined") {
     try {
       window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+      if (options.explicit) {
+        window.localStorage.setItem(LANGUAGE_EXPLICIT_STORAGE_KEY, "1")
+      }
     } catch {
       // ignore
     }
