@@ -97,6 +97,12 @@ RESOURCE_METHOD_BLOCKLIST = {
     "bloodbank-armazenamento": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
     "bloodbank-unidade": frozenset({"POST", "DELETE"}),
     "bloodbank-movimentoestoque": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    # Clinical request items and results are generated/advanced by domain
+    # workflows. Direct CRUD would bypass result creation and validation states.
+    "clinical-labrequestitem": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    "clinical-resultitem": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    # File uploads need multipart/user-selected binary content, not chat payloads.
+    "clinical-medicalresultfile": frozenset({"POST"}),
 }
 RELATED_LOOKUP_FIELDS = (
     "custom_id",
@@ -374,7 +380,11 @@ class AiCrudConversationManager:
             label = self._field_label(model=model, field_name=name, fallback=str(getattr(field, "label", "") or name))
             choices = tuple((str(key), str(value)) for key, value in (getattr(field, "choices", {}) or {}).items())
             required = bool(getattr(field, "required", False)) and getattr(field, "default", empty) is empty
-            related_model = getattr(getattr(field, "queryset", None), "model", None)
+            related_queryset = getattr(field, "queryset", None)
+            child_relation = getattr(field, "child_relation", None)
+            if related_queryset is None and child_relation is not None:
+                related_queryset = getattr(child_relation, "queryset", None)
+            related_model = getattr(related_queryset, "model", None)
             specs.append(
                 CrudFieldSpec(
                     name=name,
@@ -571,6 +581,8 @@ class AiCrudConversationManager:
         return mapping
 
     def _coerce_value(self, field: CrudFieldSpec, value: Any) -> Any:
+        if self._is_many_related_field(field) and isinstance(value, list):
+            return value
         if value is None or isinstance(value, (bool, int, float)):
             return value
         raw = self._clean_value(str(value))
@@ -581,6 +593,9 @@ class AiCrudConversationManager:
                 normalized_label = self._normalize(label)
                 if normalized in {normalized_key, normalized_label}:
                     return key
+            for key, label in field.choices:
+                normalized_key = self._normalize(key)
+                normalized_label = self._normalize(label)
                 if (
                     len(normalized) >= 3
                     and (
@@ -597,6 +612,8 @@ class AiCrudConversationManager:
                 return True
             if normalized in {"nao", "não", "n", "no", "false", "falso", "0"}:
                 return False
+        if self._is_many_related_field(field):
+            return raw
         if "primarykey" in field_type:
             return int(raw) if re.match(r"^\d+$", raw) else raw
         if "integer" in field_type:
@@ -627,7 +644,10 @@ class AiCrudConversationManager:
         resolved = dict(payload)
         for field_name, value in list(payload.items()):
             field = by_name.get(field_name)
-            if not field or "primarykey" not in field.field_type.lower():
+            if not field or not (self._is_primary_key_field(field) or self._is_many_related_field(field)):
+                continue
+            if self._is_many_related_field(field):
+                resolved[field_name] = self._resolve_many_related_value(field=field, value=value, tenant=tenant)
                 continue
             if isinstance(value, int):
                 continue
@@ -641,6 +661,38 @@ class AiCrudConversationManager:
             if related_pk is not None:
                 resolved[field_name] = related_pk
         return resolved
+
+    def _is_primary_key_field(self, field: CrudFieldSpec) -> bool:
+        return "primarykey" in field.field_type.lower()
+
+    def _is_many_related_field(self, field: CrudFieldSpec) -> bool:
+        field_type = field.field_type.lower()
+        return "manyrelated" in field_type or "many" in field_type and bool(field.related_model_name)
+
+    def _resolve_many_related_value(self, *, field: CrudFieldSpec, value: Any, tenant) -> list[Any]:
+        raw_items = value if isinstance(value, list) else self._split_related_values(str(value or ""))
+        resolved_items: list[Any] = []
+        for item in raw_items:
+            if isinstance(item, int):
+                resolved_items.append(item)
+                continue
+            raw = str(item or "").strip()
+            if not raw:
+                continue
+            if raw.isdigit():
+                resolved_items.append(int(raw))
+                continue
+            related_pk = self._lookup_related_pk(field=field, raw=raw, tenant=tenant)
+            resolved_items.append(related_pk if related_pk is not None else raw)
+        return resolved_items
+
+    def _split_related_values(self, raw: str) -> list[str]:
+        cleaned = self._clean_value(raw)
+        if not cleaned:
+            return []
+        # Natural-language lists in PT/EN, while keeping single names intact.
+        parts = re.split(r"\s*(?:,|;|\s+e\s+|\s+and\s+)\s*", cleaned, flags=re.IGNORECASE)
+        return [self._clean_value(part) for part in parts if self._clean_value(part)]
 
     def _lookup_related_pk(self, *, field: CrudFieldSpec, raw: str, tenant):
         if not field.related_app_label or not field.related_model_name:

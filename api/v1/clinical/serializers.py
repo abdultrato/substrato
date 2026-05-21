@@ -97,13 +97,34 @@ class PatientSerializer(serializers.ModelSerializer):
         "id_custom": "custom_id",
         "nome": "name",
         "data_nascimento": "birth_date",
+        "nascimento": "birth_date",
         "genero": "gender",
+        "género": "gender",
+        "sexo": "gender",
         "raca_origem": "race_origin",
+        "raça_origem": "race_origin",
         "tipo_documento": "document_type",
+        "documento_tipo": "document_type",
         "numero_id": "document_number",
+        "numero_documento": "document_number",
+        "número_documento": "document_number",
+        "documento": "document_number",
         "contacto": "contact",
+        "contato": "contact",
+        "telefone": "contact",
+        "phone": "contact",
         "morada": "address",
+        "endereco": "address",
+        "endereço": "address",
         "empresa_origem": "origin_company",
+        "proveniencia": "provenance",
+        "proveniência": "provenance",
+        "gestante": "pregnant",
+        "gravida": "pregnant",
+        "grávida": "pregnant",
+        "idade_gestacional": "gestational_age_weeks",
+        "semanas_gestacao": "gestational_age_weeks",
+        "semanas_gestação": "gestational_age_weeks",
         "endereco_rua": "address_street",
         "endereco_numero": "address_number",
         "endereco_bairro": "address_neighborhood",
@@ -326,9 +347,32 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         "id_custom": "custom_id",
         "nome": "name",
         "trl_horas": "turnaround_hours",
+        "tempo_resposta": "turnaround_hours",
+        "tempo_de_resposta": "turnaround_hours",
+        "horas_resposta": "turnaround_hours",
         "preco": "price",
+        "preço": "price",
         "metodo": "method",
+        "método": "method",
         "setor": "sector",
+        "sector": "sector",
+        "amostra": "sample_type",
+        "tipo_amostra": "sample_type",
+        "tipo_de_amostra": "sample_type",
+        "amostra_principal": "sample_type",
+        "amostras": "sample_options",
+        "opcoes_amostra": "sample_options",
+        "opções_amostra": "sample_options",
+        "amostras_aceites": "sample_options",
+        "amostras_aceitas": "sample_options",
+        "opcoes_de_amostra": "sample_options",
+        "opções_de_amostra": "sample_options",
+        "iva": "vat_percentage",
+        "percentagem_iva": "vat_percentage",
+        "percentual_iva": "vat_percentage",
+        "aplica_iva": "applies_vat_by_default",
+        "aplica_iva_padrao": "applies_vat_by_default",
+        "aplica_iva_padrão": "applies_vat_by_default",
         "ativo": "active",
         "criado_em": "created_at",
         "atualizado_em": "updated_at",
@@ -338,8 +382,19 @@ class LabExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         "nome": "name",
         "trl_horas": "turnaround_hours",
         "preco": "price",
+        "preço": "price",
         "metodo": "method",
+        "método": "method",
         "setor": "sector",
+        "sector": "sector",
+        "amostra": "sample_type",
+        "tipo_amostra": "sample_type",
+        "amostras": "sample_options",
+        "opcoes_amostra": "sample_options",
+        "opções_amostra": "sample_options",
+        "iva": "vat_percentage",
+        "percentagem_iva": "vat_percentage",
+        "aplica_iva": "applies_vat_by_default",
         "ativo": "active",
         "criado_em": "created_at",
         "atualizado_em": "updated_at",
@@ -485,10 +540,49 @@ class SampleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
+        "tipo_frasco": "bottle_type",
+        "tipo de frasco": "bottle_type",
+        "tipo_frasco_tubo": "bottle_type",
+        "frasco": "bottle_type",
+        "tubo": "bottle_type",
+        "cor_tampa": "cap_color",
+        "cor da tampa": "cap_color",
+        "volume_minimo": "minimum_volume_ml",
+        "volume_mínimo": "minimum_volume_ml",
+        "volume mínimo": "minimum_volume_ml",
+        "volume": "minimum_volume_ml",
+        "jejum": "fasting_required",
+        "exige_jejum": "fasting_required",
+        "requer_jejum": "fasting_required",
+        "horas_jejum": "fasting_hours",
+        "horas de jejum": "fasting_hours",
+        "temperatura": "storage_temperature",
+        "temperatura_conservacao": "storage_temperature",
+        "temperatura_conservação": "storage_temperature",
+        "estabilidade_horas": "stability_hours",
+        "horas_estabilidade": "stability_hours",
+        "anticoagulante": "anticoagulant",
+        "instrucoes_colheita": "collection_instructions",
+        "instruções_colheita": "collection_instructions",
+        "instrucoes_coleta": "collection_instructions",
+        "instruções_coleta": "collection_instructions",
     }
     legacy_output_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
+        "tipo_frasco": "bottle_type",
+        "frasco": "bottle_type",
+        "tubo": "bottle_type",
+        "cor_tampa": "cap_color",
+        "volume_minimo": "minimum_volume_ml",
+        "volume_mínimo": "minimum_volume_ml",
+        "jejum": "fasting_required",
+        "horas_jejum": "fasting_hours",
+        "temperatura": "storage_temperature",
+        "estabilidade_horas": "stability_hours",
+        "anticoagulante": "anticoagulant",
+        "instrucoes_colheita": "collection_instructions",
+        "instruções_colheita": "collection_instructions",
     }
 
     class Meta:
@@ -506,9 +600,21 @@ class MedicalExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         "id_custom": "custom_id",
         "nome": "name",
         "trl_horas": "turnaround_hours",
+        "tempo_resposta": "turnaround_hours",
+        "tempo_de_resposta": "turnaround_hours",
+        "horas_resposta": "turnaround_hours",
         "preco": "price",
+        "preço": "price",
         "metodo": "method",
+        "método": "method",
         "setor": "sector",
+        "sector": "sector",
+        "iva": "vat_percentage",
+        "percentagem_iva": "vat_percentage",
+        "percentual_iva": "vat_percentage",
+        "aplica_iva": "applies_vat_by_default",
+        "aplica_iva_padrao": "applies_vat_by_default",
+        "aplica_iva_padrão": "applies_vat_by_default",
         "ativo": "active",
         "criado_em": "created_at",
         "atualizado_em": "updated_at",
@@ -518,8 +624,14 @@ class MedicalExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         "nome": "name",
         "trl_horas": "turnaround_hours",
         "preco": "price",
+        "preço": "price",
         "metodo": "method",
+        "método": "method",
         "setor": "sector",
+        "sector": "sector",
+        "iva": "vat_percentage",
+        "percentagem_iva": "vat_percentage",
+        "aplica_iva": "applies_vat_by_default",
         "ativo": "active",
         "criado_em": "created_at",
         "atualizado_em": "updated_at",
@@ -541,15 +653,57 @@ class MedicalExamSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
-class LabExamFieldSerializer(serializers.ModelSerializer):
+class LabExamFieldSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para campos de exam.
     Define parâmetros específicos de cada exam.
     """
 
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "exame": "exam",
+        "tipo": "type",
+        "unidade": "unit",
+        "referencia_minima": "reference_min",
+        "referência_mínima": "reference_min",
+        "referencia_maxima": "reference_max",
+        "referência_máxima": "reference_max",
+        "critico_minimo": "critical_min",
+        "crítico_mínimo": "critical_min",
+        "critico_maximo": "critical_max",
+        "crítico_máximo": "critical_max",
+        "delta_maximo": "max_delta",
+        "delta_máximo": "max_delta",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "exame": "exam",
+        "tipo": "type",
+        "unidade": "unit",
+        "referencia_minima": "reference_min",
+        "referência_mínima": "reference_min",
+        "referencia_maxima": "reference_max",
+        "referência_máxima": "reference_max",
+        "critico_minimo": "critical_min",
+        "crítico_mínimo": "critical_min",
+        "critico_maximo": "critical_max",
+        "crítico_máximo": "critical_max",
+        "delta_maximo": "max_delta",
+        "delta_máximo": "max_delta",
+    }
+
     class Meta:
         model = LabExamField
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
         extra_kwargs = {
             "name": {
                 "required": True,
@@ -562,8 +716,31 @@ class LabExamFieldSerializer(serializers.ModelSerializer):
         }
 
 
-class MedicalExamFieldSerializer(serializers.ModelSerializer):
+class MedicalExamFieldSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """Serializer para parâmetros de exam médico."""
+
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "exame": "exam",
+        "exame_medico": "exam",
+        "exame_médico": "exam",
+        "tipo": "type",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "nome": "name",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "exame": "exam",
+        "exame_medico": "exam",
+        "exame_médico": "exam",
+        "tipo": "type",
+    }
 
     def validate(self, attrs):
         exam = attrs.get("exam") or getattr(self.instance, "exam", None)
@@ -581,6 +758,7 @@ class MedicalExamFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalExamField
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -625,14 +803,37 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "paciente": "patient",
+        "utente": "patient",
+        "paciente_codigo": "patient",
+        "paciente_código": "patient",
         "tipo": "type",
+        "sector": "type",
+        "setor": "type",
         "estado": "status",
+        "situacao": "status",
+        "situação": "status",
         "status_clinico": "clinical_status",
+        "estado_clinico": "clinical_status",
+        "estado_clínico": "clinical_status",
+        "prioridade": "clinical_status",
+        "urgencia": "clinical_status",
+        "urgência": "clinical_status",
         "empresa_solicitante": "requesting_company",
+        "empresa_requisitante": "requesting_company",
         "empresa_executora_externa": "external_executing_company",
+        "empresa_externa": "external_executing_company",
         "analista": "analyst",
+        "responsavel_analise": "analyst",
+        "responsável_análise": "analyst",
+        "exame": "exams",
         "exames": "exams",
+        "exames_laboratoriais": "exams",
+        "exame_laboratorial": "exams",
+        "laboratoriais": "exams",
+        "exame_medico": "medical_exams",
+        "exame_médico": "medical_exams",
         "exames_medicos": "medical_exams",
+        "exames_médicos": "medical_exams",
         "exams_medicos": "medical_exams",
         "itens": "items",
     }
@@ -640,14 +841,21 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "id_custom": "custom_id",
         "paciente_nome": "patient_name",
         "paciente_codigo": "patient_code",
+        "paciente_código": "patient_code",
         "empresa_solicitante_nome": "requesting_company_name",
         "empresa_executora_externa_nome": "external_executing_company_name",
         "tipo": "type",
         "estado": "status",
         "status_clinico": "clinical_status",
+        "estado_clinico": "clinical_status",
+        "estado_clínico": "clinical_status",
+        "prioridade": "clinical_status",
         "possui_resultado_critico": "has_critical_result",
+        "possui_resultado_crítico": "has_critical_result",
         "exames": "exams",
+        "exames_laboratoriais": "exams",
         "exames_medicos": "medical_exams",
+        "exames_médicos": "medical_exams",
         "exams_medicos": "medical_exams",
         "itens": "items",
         "guia_coleta": "collection_guidance",
@@ -851,15 +1059,43 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         return instance
 
 
-class LabRequestItemSerializer(serializers.ModelSerializer):
+class LabRequestItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para itens de uma requisição de análise.
     Vincula exams específicos a uma requisição.
     """
 
+    legacy_input_aliases = {
+        "id_custom": "custom_id",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "requisicao": "request",
+        "requisição": "request",
+        "pedido": "request",
+        "exame": "exam",
+        "exame_laboratorial": "exam",
+        "exame_medico": "medical_exam",
+        "exame_médico": "medical_exam",
+    }
+    legacy_output_aliases = {
+        "id_custom": "custom_id",
+        "posicao": "position",
+        "posição": "position",
+        "ordem": "position",
+        "requisicao": "request",
+        "requisição": "request",
+        "pedido": "request",
+        "exame": "exam",
+        "exame_laboratorial": "exam",
+        "exame_medico": "medical_exam",
+        "exame_médico": "medical_exam",
+    }
+
     class Meta:
         model = LabRequestItem
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
         extra_kwargs = {
             "request": {
                 "required": True,
@@ -879,29 +1115,44 @@ class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "posicao": "position",
         "resultado": "result",
         "exame_campo": "exam_field",
+        "campo_exame": "exam_field",
+        "campo": "exam_field",
+        "valor": "result_value",
         "resultado_valor": "result_value",
         "status_clinico": "clinical_status",
+        "estado_clinico": "clinical_status",
+        "estado_clínico": "clinical_status",
         "alerta_critico": "critical_alert",
+        "alerta_crítico": "critical_alert",
         "estado": "status",
         "validado_por": "validated_by",
         "data_validacao": "validation_date",
+        "data_validação": "validation_date",
     }
     legacy_output_aliases = {
         "id_custom": "custom_id",
         "posicao": "position",
         "resultado": "result",
         "exame_campo": "exam_field",
+        "campo_exame": "exam_field",
+        "campo": "exam_field",
+        "valor": "result_value",
         "resultado_valor": "result_value",
         "status_clinico": "clinical_status",
+        "estado_clinico": "clinical_status",
+        "estado_clínico": "clinical_status",
         "alerta_critico": "critical_alert",
+        "alerta_crítico": "critical_alert",
         "estado": "status",
         "validado_por": "validated_by",
         "data_validacao": "validation_date",
+        "data_validação": "validation_date",
     }
 
     class Meta:
         model = ResultItem
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
         extra_kwargs = {
             "result_value": {
                 "required": False,
@@ -1012,10 +1263,21 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     file = serializers.FileField(required=True)
     legacy_input_aliases = {
         "arquivo": "file",
+        "ficheiro": "file",
+        "ficheiro_resultado": "file",
+        "arquivo_resultado": "file",
         "tipo": "type",
         "descricao": "description",
+        "descrição": "description",
+        "laudo": "description",
+        "relatorio": "description",
+        "relatório": "description",
         "requisicao_item": "request_item",
+        "requisição_item": "request_item",
+        "item_requisicao": "request_item",
+        "item_requisição": "request_item",
         "exame_medico": "medical_exam",
+        "exame_médico": "medical_exam",
         "resultado": "result",
         "id_custom": "custom_id",
         "criado_em": "created_at",
@@ -1023,10 +1285,14 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     }
     legacy_output_aliases = {
         "arquivo": "file",
+        "ficheiro": "file",
         "tipo": "type",
         "descricao": "description",
+        "descrição": "description",
         "requisicao_item": "request_item",
+        "requisição_item": "request_item",
         "exame_medico": "medical_exam",
+        "exame_médico": "medical_exam",
         "resultado": "result",
         "id_custom": "custom_id",
         "criado_em": "created_at",
@@ -1060,6 +1326,7 @@ class MedicalResultFileSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     class Meta:
         model = MedicalResultFile
         fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 SERIALIZER_MAP = {

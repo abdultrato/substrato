@@ -31,6 +31,12 @@ from apps.bloodbank.models.blood_bank import (
     BloodUnit,
 )
 from apps.clinical.models import Patient
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.lab_exam_field import LabExamField
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.result_item import ResultItem
+from apps.clinical.models.sample import Sample
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 from services.reports.async_exports import get_export_job_result, get_export_job_state
@@ -418,6 +424,252 @@ def test_ai_conversational_crud_denies_write_without_resource_permission(api_cli
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Patient.objects.filter(tenant=tenant, name="Paciente Bloqueado").exists()
+
+
+@pytest.mark.django_db
+def test_ai_clinical_crud_creates_sample_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-clinical-sample", domain="tn-ai-clinical-sample.local")
+    admin = _user(tenant, "admin_ai_clinical_sample", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie amostra nome Expectoracao GeneXpert tipo frasco FRASCO_ESTERIL "
+                "volume minimo 2 jejum nao horas jejum 0 temperatura 2-8C anticoagulante nenhum"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "clinical-sample"
+    assert action.payload["data"]["name"] == "Expectoracao GeneXpert"
+    assert action.payload["data"]["bottle_type"] == "FRASCO_ESTERIL"
+    assert action.payload["data"]["minimum_volume_ml"] == "2"
+    assert action.payload["data"]["fasting_required"] is False
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    sample = Sample.objects.get(tenant=tenant, name__iexact="Expectoracao GeneXpert")
+    assert sample.bottle_type == "FRASCO_ESTERIL"
+    assert str(sample.minimum_volume_ml) == "2.00"
+
+
+@pytest.mark.django_db
+def test_ai_clinical_crud_creates_lab_exam_with_sample_options(api_client):
+    tenant = _tenant(identifier="tn-ai-clinical-exam", domain="tn-ai-clinical-exam.local")
+    admin = _user(tenant, "admin_ai_clinical_exam", GROUPS["ADMIN"], is_staff=True)
+    sputum = Sample.objects.create(
+        tenant=tenant,
+        name="Expectoracao",
+        bottle_type="FRASCO_ESTERIL",
+        minimum_volume_ml="2.00",
+    )
+    stool = Sample.objects.create(
+        tenant=tenant,
+        name="Fezes",
+        bottle_type="FRASCO_FEZES",
+        minimum_volume_ml="5.00",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie exame laboratorial nome GeneXpert MTB metodo PCRTempoReal "
+                f"setor BiologiaMolecular amostra {sputum.custom_id} amostras {sputum.custom_id} e {stool.custom_id} preco 1200"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "clinical-exam"
+    assert action.payload["data"]["sample_type"] == sputum.id
+    assert action.payload["data"]["sample_options"] == [sputum.id, stool.id]
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    exam = LabExam.objects.get(tenant=tenant, name__iexact="GeneXpert MTB")
+    assert exam.sample_type_id == sputum.id
+    assert set(exam.sample_options.values_list("id", flat=True)) == {sputum.id, stool.id}
+
+
+@pytest.mark.django_db
+def test_ai_clinical_crud_creates_exam_field_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-clinical-field", domain="tn-ai-clinical-field.local")
+    admin = _user(tenant, "admin_ai_clinical_field", GROUPS["ADMIN"], is_staff=True)
+    sample = Sample.objects.create(tenant=tenant, name="Soro", bottle_type="TUBO_SECO")
+    exam = LabExam.objects.create(
+        tenant=tenant,
+        name="Glicemia",
+        method="Enzimatico",
+        sector="Bioquimica",
+        sample_type=sample,
+        price="250.00",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie campo de exame laboratorial exame {exam.custom_id} nome Glicose "
+                "tipo NUMERICO unidade mg/dl referencia minima 70 referencia maxima 110"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "clinical-examfield"
+    assert action.payload["data"]["exam"] == exam.id
+    assert action.payload["data"]["type"] == "NUMERICO"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    field = LabExamField.objects.get(tenant=tenant, exam=exam, name="Glicose")
+    assert field.reference_min == 70
+    assert field.reference_max == 110
+
+
+@pytest.mark.django_db
+def test_ai_clinical_crud_creates_lab_request_and_domain_items_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-clinical-request", domain="tn-ai-clinical-request.local")
+    user = _user(tenant, "recepcao_ai_clinical_request", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente GeneXpert")
+    sample = Sample.objects.create(tenant=tenant, name="Expectoracao", bottle_type="FRASCO_ESTERIL")
+    exam = LabExam.objects.create(
+        tenant=tenant,
+        name="GeneXpert MTB",
+        method="PCRTempoReal",
+        sector="BiologiaMolecular",
+        sample_type=sample,
+        price="1200.00",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie requisição clínica paciente {patient.custom_id} exames {exam.custom_id} "
+                "tipo LAB prioridade URGENTE"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "clinical-labrequest"
+    assert action.payload["data"]["patient"] == patient.id
+    assert action.payload["data"]["exams"] == [exam.id]
+    assert action.payload["data"]["clinical_status"] == "URGENTE"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    request = LabRequest.objects.get(tenant=tenant, patient=patient)
+    assert request.items.filter(exam=exam).exists()
+    assert request.samples.filter(id=sample.id).exists()
+
+
+@pytest.mark.django_db
+def test_ai_clinical_crud_blocks_manual_request_item_and_result_changes(api_client):
+    tenant = _tenant(identifier="tn-ai-clinical-blocked", domain="tn-ai-clinical-blocked.local")
+    admin = _user(tenant, "admin_ai_clinical_blocked", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Bloqueio Clínico")
+    sample = Sample.objects.create(tenant=tenant, name="Soro Bloqueio", bottle_type="TUBO_SECO")
+    exam = LabExam.objects.create(
+        tenant=tenant,
+        name="Bioquimica Bloqueio",
+        method="Enzimatico",
+        sector="Bioquimica",
+        sample_type=sample,
+        price="300.00",
+    )
+    field = LabExamField.objects.create(
+        tenant=tenant,
+        exam=exam,
+        name="Marcador",
+        type="NUMERICO",
+        unit="mg/dl",
+    )
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request.add_exam(exam)
+    result_item = ResultItem.objects.get(result__request=request, exam_field=field)
+    _authenticate(api_client, tenant, admin)
+
+    item_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Crie item de requisição requisição {request.custom_id} exame {exam.custom_id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+    result_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere resultado laboratorial id {result_item.id} valor 12",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert item_response.status_code == 200, _response_data(item_response)
+    assert result_response.status_code == 200, _response_data(result_response)
+    item_data = _response_data(item_response)
+    result_data = _response_data(result_response)
+    assert "não posso preparar" in item_data["answer"].lower()
+    assert "não posso preparar" in result_data["answer"].lower()
+    assert not item_data["suggested_actions"]
+    assert not result_data["suggested_actions"]
+    assert LabRequestItem.objects.filter(tenant=tenant, request=request).count() == 1
 
 
 @pytest.mark.django_db
