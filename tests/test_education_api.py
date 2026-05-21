@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
-from apps.education.models import Classroom, Course, Enrollment, GradeRecord, Skill, StudentProfile, TeacherProfile
+from apps.education.models import Classroom, Course, Enrollment, GradeRecord, LearningContent, Skill, StudentProfile, TeacherProfile
 from apps.tenants.models.tenant import Tenant
 
 
@@ -140,6 +140,24 @@ def _seed_scope(tenant: Tenant):
         score=14,
         max_score=20,
     )
+    lesson_1 = LearningContent.objects.create(
+        tenant=tenant,
+        course=course_1,
+        author=teacher_1,
+        title="Álgebra linear",
+        content_type=LearningContent.ContentType.LESSON,
+        body="Matriz e determinantes.",
+        published=True,
+    )
+    lesson_2 = LearningContent.objects.create(
+        tenant=tenant,
+        course=course_2,
+        author=teacher_2,
+        title="Química orgânica",
+        content_type=LearningContent.ContentType.LESSON,
+        body="Ligações covalentes.",
+        published=True,
+    )
 
     skill_1 = Skill.objects.create(
         tenant=tenant,
@@ -177,6 +195,8 @@ def _seed_scope(tenant: Tenant):
         "enrollment_2": enrollment_2,
         "grade_1": grade_1,
         "grade_2": grade_2,
+        "lesson_1": lesson_1,
+        "lesson_2": lesson_2,
         "skill_1": skill_1,
         "skill_2": skill_2,
     }
@@ -199,6 +219,14 @@ def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     response = api_client.get("/api/v1/education/grade/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/assessment/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/lesson/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["lesson_1"].id}
 
     response = api_client.get("/api/v1/education/skill/")
     assert response.status_code == 200, _response_data(response)
@@ -230,6 +258,14 @@ def test_teacher_group_only_sees_owned_scope(api_client):
     response = api_client.get("/api/v1/education/grade/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/assessment/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/lesson/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["lesson_1"].id}
 
     response = api_client.get("/api/v1/education/skill/")
     assert response.status_code == 200, _response_data(response)
@@ -331,3 +367,51 @@ def test_skill_create_forces_request_tenant_and_accepts_aliases(api_client):
     assert created.course_id == course.id
     assert created.code == "SKL-PHY-01"
     assert created.name == "Resolução De Problemas"
+
+
+@pytest.mark.django_db
+def test_assessment_and_lesson_alias_endpoints_accept_alias_payloads(api_client):
+    tenant = _tenant("tn-edu-alias-contracts", "edu-alias-contracts.local")
+    director_user = _user(tenant=tenant, username="director_alias_contracts", role_group="Diretor da Escola")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=director_user)
+
+    response_assessment = api_client.post(
+        "/api/v1/education/assessment/",
+        {
+            "matricula": scope["enrollment_1"].id,
+            "professor": scope["teacher_1"].id,
+            "assessment": "Projeto Final",
+            "assessment_score": "18.50",
+            "assessment_max_score": "20.00",
+            "assessment_weight": "1.25",
+        },
+        format="json",
+    )
+    assert response_assessment.status_code == 201, _response_data(response_assessment)
+
+    created_assessment = GradeRecord.objects.get(id=_response_data(response_assessment)["id"])
+    assert created_assessment.component == "Projeto Final"
+    assert str(created_assessment.score) == "18.50"
+    assert str(created_assessment.max_score) == "20.00"
+    assert str(created_assessment.weight) == "1.25"
+
+    response_lesson = api_client.post(
+        "/api/v1/education/lesson/",
+        {
+            "lesson_title": "Trigonometria prática",
+            "lesson_type": LearningContent.ContentType.LESSON,
+            "lesson_body": "Razões trigonométricas no triângulo retângulo.",
+            "lesson_course": scope["course_1"].id,
+            "lesson_author": scope["teacher_1"].id,
+            "lesson_published": True,
+        },
+        format="json",
+    )
+    assert response_lesson.status_code == 201, _response_data(response_lesson)
+
+    created_lesson = LearningContent.objects.get(id=_response_data(response_lesson)["id"])
+    assert created_lesson.title == "Trigonometria prática"
+    assert created_lesson.content_type == LearningContent.ContentType.LESSON
+    assert created_lesson.course_id == scope["course_1"].id
+    assert created_lesson.author_id == scope["teacher_1"].id

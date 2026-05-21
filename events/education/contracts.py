@@ -17,6 +17,15 @@ class EnrollmentCompleted:
 
 
 @dataclass(frozen=True)
+class AttendanceRecorded:
+    attendance_id: int
+    tenant_id: int
+    enrollment_id: int
+    attendance_date: str
+    status: str
+
+
+@dataclass(frozen=True)
 class GradePublished:
     grade_id: int
     tenant_id: int

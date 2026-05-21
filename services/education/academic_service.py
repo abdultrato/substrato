@@ -3,8 +3,9 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from apps.education.models import Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
+from apps.education.models import AttendanceRecord, Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
 from events.education.publishers import (
+    publish_attendance_recorded,
     publish_enrollment_completed,
     publish_exam_scheduled,
     publish_grade_published,
@@ -43,6 +44,20 @@ class AcademicService:
             classroom_id=enrollment.classroom_id,
         )
         return enrollment
+
+    @staticmethod
+    @transaction.atomic
+    def record_attendance(*, attendance: AttendanceRecord) -> AttendanceRecord:
+        attendance.full_clean()
+        attendance.save()
+        publish_attendance_recorded(
+            tenant_id=attendance.tenant_id,
+            attendance_id=attendance.id,
+            enrollment_id=attendance.enrollment_id,
+            attendance_date=attendance.attendance_date.isoformat(),
+            status=attendance.status,
+        )
+        return attendance
 
     @staticmethod
     @transaction.atomic

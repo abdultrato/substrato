@@ -29,6 +29,28 @@ def publish_enrollment_completed(*, tenant_id: int, enrollment_id: int, student_
     )
 
 
+def publish_attendance_recorded(
+    *,
+    tenant_id: int,
+    attendance_id: int,
+    enrollment_id: int,
+    attendance_date: str,
+    status: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="AttendanceRecorded",
+            payload={
+                "tenant_id": tenant_id,
+                "attendance_id": attendance_id,
+                "enrollment_id": enrollment_id,
+                "attendance_date": attendance_date,
+                "status": status,
+            },
+        )
+    )
+
+
 def publish_grade_published(*, tenant_id: int, grade_id: int, enrollment_id: int, component: str) -> None:
     event_bus.publish_after_commit(
         BaseEvent(

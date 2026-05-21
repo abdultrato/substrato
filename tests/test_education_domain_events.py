@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
-from apps.education.models import Classroom, Course, Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
+from apps.education.models import AttendanceRecord, Classroom, Course, Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
 from apps.tenants.models.tenant import Tenant
 from events.bus import event_bus
 from security.permissions.rbac import GROUPS
@@ -145,6 +145,36 @@ def test_enrollment_create_active_emits_enrollment_completed_event(api_client, m
     assert enrollment_events[0].payload["enrollment_id"] == enrollment_id
     assert enrollment_events[0].payload["student_id"] == extra_student.id
     assert enrollment_events[0].payload["classroom_id"] == scope["classroom"].id
+
+
+@pytest.mark.django_db
+def test_attendance_create_emits_attendance_recorded_event(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-attendance", "edu-evt-attendance.local")
+    director = _user(tenant=tenant, username="director_evt_attendance", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response = api_client.post(
+        "/api/v1/education/attendance/",
+        {
+            "enrollment": scope["enrollment"].id,
+            "attendance_date": "2026-06-11",
+            "status": AttendanceRecord.Status.PRESENT,
+            "notes": "Presença confirmada",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    attendance_id = _response_data(response)["id"]
+    attendance_events = [event for event in captured if event.nome == "AttendanceRecorded"]
+    assert len(attendance_events) == 1
+    assert attendance_events[0].payload["tenant_id"] == tenant.id
+    assert attendance_events[0].payload["attendance_id"] == attendance_id
+    assert attendance_events[0].payload["enrollment_id"] == scope["enrollment"].id
+    assert attendance_events[0].payload["attendance_date"] == "2026-06-11"
+    assert attendance_events[0].payload["status"] == AttendanceRecord.Status.PRESENT
 
 
 @pytest.mark.django_db

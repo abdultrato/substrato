@@ -194,6 +194,7 @@ def _ensure_groups_permissions() -> None:
             ("education", "graderecord", ["view", "add", "change"]),
             ("education", "examination", ["view", "add", "change"]),
             ("education", "learningcontent", ["view", "add", "change"]),
+            ("education", "skill", ["view", "add", "change"]),
         ]:
             _grant_group_model_perms(role_group, app_label=app_label, model=model, actions=actions)
 
@@ -213,6 +214,7 @@ def _ensure_groups_permissions() -> None:
             ("education", "graderecord", ["view"]),
             ("education", "examination", ["view"]),
             ("education", "learningcontent", ["view"]),
+            ("education", "skill", ["view"]),
         ]:
             _grant_group_model_perms(role_group, app_label=app_label, model=model, actions=actions)
 

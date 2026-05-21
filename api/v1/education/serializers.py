@@ -163,6 +163,12 @@ GRADE_ALIASES = {
     "publicado_em": "published_at",
     "data_publicacao": "published_at",
     "data_publicação": "published_at",
+    "assessment": "component",
+    "assessment_component": "component",
+    "assessment_score": "score",
+    "assessment_max_score": "max_score",
+    "assessment_weight": "weight",
+    "assessment_published_at": "published_at",
 }
 
 EXAMINATION_ALIASES = {
@@ -200,6 +206,14 @@ CONTENT_ALIASES = {
     "curso": "course",
     "autor": "author",
     "professor": "author",
+    "lesson_title": "title",
+    "lesson_type": "content_type",
+    "lesson_body": "body",
+    "lesson_file_url": "file_url",
+    "lesson_external_url": "external_url",
+    "lesson_published": "published",
+    "lesson_course": "course",
+    "lesson_author": "author",
 }
 
 SKILL_ALIASES = {

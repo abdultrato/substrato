@@ -202,6 +202,29 @@ class AttendanceRecordViewSet(TenantScopedEducationViewSet):
                 return qs.filter(enrollment__classroom__homeroom_teacher__user=user)
         return qs
 
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.record_attendance(attendance=serializer.instance)
+
+    def perform_update(self, serializer):
+        attendance = serializer.instance
+        previous_state = (
+            attendance.enrollment_id,
+            attendance.attendance_date,
+            attendance.status,
+            (attendance.notes or "").strip(),
+        )
+        super().perform_update(serializer)
+        attendance = serializer.instance
+        current_state = (
+            attendance.enrollment_id,
+            attendance.attendance_date,
+            attendance.status,
+            (attendance.notes or "").strip(),
+        )
+        if current_state != previous_state:
+            AcademicService.record_attendance(attendance=attendance)
+
 
 class GradeRecordViewSet(TenantScopedEducationViewSet):
     queryset = GradeRecord.objects.select_related("enrollment", "enrollment__student", "teacher", "teacher__user").all()
@@ -330,8 +353,10 @@ VIEWSET_MAP = {
     "enrollment": EnrollmentViewSet,
     "attendance": AttendanceRecordViewSet,
     "grade": GradeRecordViewSet,
+    "assessment": GradeRecordViewSet,
     "examination": ExaminationViewSet,
     "content": LearningContentViewSet,
+    "lesson": LearningContentViewSet,
     "skill": SkillViewSet,
 }
 

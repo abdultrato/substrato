@@ -81,7 +81,9 @@ FILTER_MAP = {
     "enrollment": EnrollmentFilter,
     "attendance": AttendanceRecordFilter,
     "grade": GradeRecordFilter,
+    "assessment": GradeRecordFilter,
     "examination": ExaminationFilter,
     "content": LearningContentFilter,
+    "lesson": LearningContentFilter,
     "skill": SkillFilter,
 }
