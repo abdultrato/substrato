@@ -465,6 +465,85 @@ def test_ai_sql_analytics_reports_pharmacy_stock_as_of_date(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_sql_analytics_counts_generic_education_resource(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-education", domain="tn-ai-sql-education.local")
+    director = _user(tenant, "director_ai_sql_education", GROUPS["DIRETOR_ESCOLA"])
+    student_user_a = _user(tenant, "student_sql_education_a", GROUPS["ESTUDANTE"])
+    student_user_b = _user(tenant, "student_sql_education_b", GROUPS["ESTUDANTE"])
+    student_user_outside = _user(tenant, "student_sql_education_outside", GROUPS["ESTUDANTE"])
+    student_a = StudentProfile.objects.create(tenant=tenant, user=student_user_a, student_code="EST-SQL-001")
+    student_b = StudentProfile.objects.create(tenant=tenant, user=student_user_b, student_code="EST-SQL-002")
+    student_outside = StudentProfile.objects.create(tenant=tenant, user=student_user_outside, student_code="EST-SQL-003")
+    StudentProfile.objects.filter(id=student_a.id).update(created_at=datetime(2026, 5, 2, 9, 0, tzinfo=timezone.get_current_timezone()))
+    StudentProfile.objects.filter(id=student_b.id).update(created_at=datetime(2026, 5, 3, 10, 0, tzinfo=timezone.get_current_timezone()))
+    StudentProfile.objects.filter(id=student_outside.id).update(created_at=datetime(2026, 6, 3, 10, 0, tzinfo=timezone.get_current_timezone()))
+    _authenticate(api_client, tenant, director)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Quantos estudantes foram criados de 2026-05-01 a 2026-05-31?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "2 registo" in data["answer"]
+    assert "Estudantes" in data["answer"]
+    assert data["investigation"]["intent"] == "sql_analytics"
+
+
+@pytest.mark.django_db
+def test_ai_sql_analytics_counts_generic_equipment_resource(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-equipment", domain="tn-ai-sql-equipment.local")
+    admin = _user(tenant, "admin_ai_sql_equipment", GROUPS["ADMIN"], is_staff=True)
+    equipment_a = Equipment.objects.create(tenant=tenant, name="Centrífuga SQL A", serial_number="EQ-SQL-001")
+    equipment_b = Equipment.objects.create(tenant=tenant, name="Centrífuga SQL B", serial_number="EQ-SQL-002")
+    equipment_outside = Equipment.objects.create(tenant=tenant, name="Centrífuga SQL C", serial_number="EQ-SQL-003")
+    Equipment.objects.filter(id=equipment_a.id).update(created_at=datetime(2026, 5, 4, 9, 0, tzinfo=timezone.get_current_timezone()))
+    Equipment.objects.filter(id=equipment_b.id).update(created_at=datetime(2026, 5, 5, 10, 0, tzinfo=timezone.get_current_timezone()))
+    Equipment.objects.filter(id=equipment_outside.id).update(created_at=datetime(2026, 6, 5, 10, 0, tzinfo=timezone.get_current_timezone()))
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Quantos equipamentos foram criados entre 2026-05-01 e 2026-05-31?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "2 registo" in data["answer"]
+    assert "Equipamentos" in data["answer"]
+    assert data["investigation"]["intent"] == "sql_analytics"
+
+    search_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Mostre equipamento código EQ-SQL-001",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert search_response.status_code == 200, _response_data(search_response)
+    search_data = _response_data(search_response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in search_data["tool_calls"])
+    assert "1 registo" in search_data["answer"]
+    assert "EQ-SQL-001" in search_data["answer"]
+
+
+@pytest.mark.django_db
 def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     tenant = _tenant(identifier="tn-ai-rbac", domain="tn-ai-rbac.local")
     user = _user(tenant, "recepcao_ai", GROUPS["RECEPCAO"])
@@ -5363,6 +5442,10 @@ def test_ai_tool_registry_selects_domain_tools():
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
     investigation_names = {tool.name for tool in registry.select_tools(message="quero investigar pacientes", active_module="ai")}
     sql_names = {tool.name for tool in registry.select_tools(message="qual era o estoque de medicação K no dia 2026-05-11", active_module="ai")}
+    generic_sql_names = {
+        tool.name
+        for tool in registry.select_tools(message="quantos estudantes foram criados de 2026-05-01 a 2026-05-31", active_module="ai")
+    }
 
     assert "get_user_context" in personal_names
     assert "explore_database" in data_names
@@ -5374,3 +5457,4 @@ def test_ai_tool_registry_selects_domain_tools():
     assert "explore_database" in investigation_names
     assert "prepare_operational_task" not in investigation_names
     assert "run_sql_analytics" in sql_names
+    assert "run_sql_analytics" in generic_sql_names

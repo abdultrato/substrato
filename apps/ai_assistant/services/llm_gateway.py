@@ -364,6 +364,67 @@ class LocalLlmGateway:
                 ]
             )
 
+        if query_kind == "generic_resource_query":
+            resource = analytics.get("resource") or summary.get("resource") or {}
+            label = resource.get("label_en") if language == "en" else resource.get("label_pt")
+            label = label or resource.get("basename") or ("resource" if language == "en" else "recurso")
+            total_count = int(analytics.get("total_count") or 0)
+            date_range = analytics.get("range") or summary.get("range") or {}
+            start_date = date_range.get("start_date")
+            end_date = date_range.get("end_date")
+            date_field = analytics.get("date_field") or summary.get("date_field") or ""
+            date_filter_applied = bool(analytics.get("date_filter_applied") or summary.get("date_filter_applied"))
+            groups = analytics.get("groups") or summary.get("groups") or []
+            sample_rows = analytics.get("sample_rows") or summary.get("sample_rows") or []
+            search_query = analytics.get("search_query") or summary.get("search_query") or ""
+
+            if language == "en":
+                direct = f"I queried {label} with parameterized SQL and found {total_count} matching record(s)."
+                if start_date and end_date:
+                    if date_filter_applied:
+                        direct += f" The range filter used {date_field or 'the available date field'} between {start_date} and {end_date}."
+                    else:
+                        direct += f" I could not apply the requested date range because this resource has no compatible date field."
+                if search_query:
+                    direct += f" Text filter: '{search_query}'."
+
+                group_text = self._sql_group_lines(groups=groups, language="en")
+                sample_text = self._sql_sample_line(sample_rows=sample_rows, language="en")
+                return "\n\n".join(
+                    part
+                    for part in [
+                        direct,
+                        group_text,
+                        sample_text,
+                        f"Internal evidence used: API resource catalog, RBAC and SQL template over {resource.get('model') or label}.",
+                        "Limitation: I returned counts, grouped summaries and safe samples, not unrestricted raw records.",
+                    ]
+                    if part
+                )
+
+            direct = f"Consultei {label} com SQL parametrizado e encontrei {total_count} registo(s) correspondente(s)."
+            if start_date and end_date:
+                if date_filter_applied:
+                    direct += f" O filtro temporal usou {date_field or 'o campo temporal disponível'} entre {start_date} e {end_date}."
+                else:
+                    direct += " Não apliquei o intervalo pedido porque este recurso não tem campo temporal compatível."
+            if search_query:
+                direct += f" Filtro textual: '{search_query}'."
+
+            group_text = self._sql_group_lines(groups=groups, language="pt")
+            sample_text = self._sql_sample_line(sample_rows=sample_rows, language="pt")
+            return "\n\n".join(
+                part
+                for part in [
+                    direct,
+                    group_text,
+                    sample_text,
+                    f"Evidência interna usada: catálogo de recursos da API, RBAC e template SQL sobre {resource.get('model') or label}.",
+                    "Limitação: devolvi contagens, agrupamentos e amostras seguras, não registos brutos irrestritos.",
+                ]
+                if part
+            )
+
         prompt = summary.get("prompt_en") if language == "en" else summary.get("prompt_pt")
         if prompt:
             return prompt
@@ -468,6 +529,55 @@ class LocalLlmGateway:
         if language == "en":
             return "I did not find a complete CRUD operation to prepare."
         return "Não encontrei uma operação de CRUD completa para preparar."
+
+    def _sql_group_lines(self, *, groups: list[dict[str, Any]], language: str) -> str:
+        if not groups:
+            return ""
+        first_group = groups[0]
+        rows = first_group.get("rows") or []
+        if not rows:
+            return ""
+        title = (
+            f"Main breakdown by {first_group.get('label') or first_group.get('field')}:"
+            if language == "en"
+            else f"Principal distribuição por {first_group.get('label') or first_group.get('field')}:"
+        )
+        lines = []
+        for row in rows[:5]:
+            value = row.get("value")
+            value = "—" if value in ("", None) else value
+            count = int(row.get("count") or 0)
+            if language == "en":
+                lines.append(f"- {value}: {count} record(s)")
+            else:
+                lines.append(f"- {value}: {count} registo(s)")
+        return "\n".join([title, *lines])
+
+    def _sql_sample_line(self, *, sample_rows: list[dict[str, Any]], language: str) -> str:
+        if not sample_rows:
+            return ""
+        refs = []
+        priority_keys = (
+            "custom_id",
+            "student_code",
+            "teacher_code",
+            "code",
+            "number",
+            "external_reference",
+            "serial_number",
+            "name",
+            "title",
+            "id",
+        )
+        for row in sample_rows[:5]:
+            ref = next((row.get(key) for key in priority_keys if row.get(key) not in ("", None)), None)
+            if ref is not None:
+                refs.append(str(ref))
+        if not refs:
+            return ""
+        if language == "en":
+            return "Safe sample references: " + ", ".join(refs) + "."
+        return "Referências seguras de amostra: " + ", ".join(refs) + "."
 
     def _crud_operation_label(self, *, operation: str, language: str) -> str:
         labels = {
