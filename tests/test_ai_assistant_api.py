@@ -105,6 +105,7 @@ from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
@@ -778,6 +779,86 @@ def test_ai_conversational_crud_deletes_patient_after_confirmation(api_client):
     assert confirm_response.status_code == 200, _response_data(confirm_response)
     removed = Patient.all_objects.get(id=patient.id)
     assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_reception_crud_creates_updates_and_deletes_checkin(api_client):
+    tenant = _tenant(identifier="tn-ai-reception-checkin", domain="tn-ai-reception-checkin.local")
+    user = _user(tenant, "recepcao_ai_reception_checkin", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Checkin IA", document_number="BI-REC-001")
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie check-in de recepção {"paciente":"Paciente Checkin IA",'
+            '"prioridade":"urgente","motivo":"Triagem inicial","observacoes":"Dor moderada"}'
+        ),
+    )
+
+    assert create_action.payload["basename"] == "reception-checkin"
+    assert create_action.payload["data"]["patient"] == patient.id
+    assert create_action.payload["data"]["priority"] == ReceptionCheckin.Priority.URGENT
+    assert create_action.payload["data"]["reason"] == "Triagem inicial"
+    assert create_action.payload["data"]["notes"] == "Dor moderada"
+
+    _confirm_ai_action(api_client, create_action)
+    checkin = ReceptionCheckin.objects.get(tenant=tenant, patient=patient)
+    assert checkin.status == ReceptionCheckin.Status.WAITING
+    assert checkin.created_by == user
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere check-in de recepção id {checkin.id} {{"prioridade":"preferencial","observacoes":"Reavaliado na fila"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "reception-checkin"
+    assert update_action.payload["data"]["priority"] == ReceptionCheckin.Priority.PREFERRED
+    assert update_action.payload["data"]["notes"] == "Reavaliado na fila"
+
+    _confirm_ai_action(api_client, update_action)
+    checkin.refresh_from_db()
+    assert checkin.priority == ReceptionCheckin.Priority.PREFERRED
+    assert checkin.notes == "Reavaliado na fila"
+    assert checkin.updated_by == user
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova check-in de recepção id {checkin.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "reception-checkin"
+    _confirm_ai_action(api_client, delete_action)
+    assert ReceptionCheckin.all_objects.get(id=checkin.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_reception_crud_denies_checkin_create_without_permission(api_client):
+    tenant = _tenant(identifier="tn-ai-reception-denied", domain="tn-ai-reception-denied.local")
+    user = _user(tenant, "contabilidade_ai_reception_denied", GROUPS["CONTABILIDADE"])
+    Patient.objects.create(tenant=tenant, name="Paciente Recepcao Bloqueado", document_number="BI-REC-BLOCK")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                'Crie check-in de recepção {"paciente":"Paciente Recepcao Bloqueado",'
+                '"prioridade":"normal","motivo":"Sem permissão"}'
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not ReceptionCheckin.objects.filter(tenant=tenant, patient__name__icontains="Bloqueado").exists()
 
 
 @pytest.mark.django_db

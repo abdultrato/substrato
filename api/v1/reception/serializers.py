@@ -26,7 +26,71 @@ CORE_READ_ONLY_FIELDS = (
 )
 
 
-class ReceptionCheckinSerializer(serializers.ModelSerializer):
+CHECKIN_LEGACY_ALIASES = {
+    "id_custom": "custom_id",
+    "codigo": "custom_id",
+    "código": "custom_id",
+    "paciente": "patient",
+    "utente": "patient",
+    "patient": "patient",
+    "nome_paciente": "patient_name",
+    "codigo_paciente": "patient_code",
+    "código_paciente": "patient_code",
+    "requisicao": "request",
+    "requisição": "request",
+    "pedido": "request",
+    "pedido_laboratorial": "request",
+    "request": "request",
+    "codigo_requisicao": "request_code",
+    "código_requisição": "request_code",
+    "fatura": "invoice",
+    "factura": "invoice",
+    "invoice": "invoice",
+    "codigo_fatura": "invoice_code",
+    "codigo_factura": "invoice_code",
+    "código_fatura": "invoice_code",
+    "código_factura": "invoice_code",
+    "atendente": "attendant",
+    "recepcionista": "attendant",
+    "attendant": "attendant",
+    "nome_atendente": "attendant_name",
+    "prioridade": "priority",
+    "priority": "priority",
+    "estado": "status",
+    "status": "status",
+    "estado_legivel": "status_display",
+    "estado_legível": "status_display",
+    "prioridade_legivel": "priority_display",
+    "prioridade_legível": "priority_display",
+    "motivo": "reason",
+    "razao": "reason",
+    "razão": "reason",
+    "reason": "reason",
+    "observacao": "notes",
+    "observação": "notes",
+    "observacoes": "notes",
+    "observações": "notes",
+    "notas": "notes",
+    "notes": "notes",
+    "chegada": "arrived_at",
+    "chegou_em": "arrived_at",
+    "data_chegada": "arrived_at",
+    "arrived_at": "arrived_at",
+    "chamado_em": "called_at",
+    "chamada_em": "called_at",
+    "inicio_atendimento": "called_at",
+    "início_atendimento": "called_at",
+    "called_at": "called_at",
+    "concluido_em": "completed_at",
+    "concluído_em": "completed_at",
+    "completed_at": "completed_at",
+}
+
+
+class ReceptionCheckinSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = CHECKIN_LEGACY_ALIASES
+    legacy_output_aliases = CHECKIN_LEGACY_ALIASES
+
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
     request_code = serializers.CharField(source="request.custom_id", read_only=True)

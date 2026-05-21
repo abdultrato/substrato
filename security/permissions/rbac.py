@@ -78,6 +78,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "pagamentos-reconciliacao": accounting_crud,
         "pagamentos-transaction": accounting_crud,
     }
+    reception_checkin_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
     pharmacy_crud_methods = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
     pharmacy_crud = {
         "farmacia-product": pharmacy_crud_methods,
@@ -225,8 +226,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["RECEPCAO"]: {
             # Recepcao (workspace + fila/atendimento)
             "recepcao-workspace": SAFE_METHODS,
-            "recepcao-checkin": SAFE_METHODS | WRITE_METHODS,
+            "reception-workspace": SAFE_METHODS,
+            "recepcao-checkin": reception_checkin_crud,
+            "reception-checkin": reception_checkin_crud,
             "recepcao-atendimento": SAFE_METHODS | frozenset({"POST"}),
+            "reception-atendimento": SAFE_METHODS | frozenset({"POST"}),
             # SGE (somente leitura)
             **equipment_read,
             **equipment_integration_read,
@@ -520,8 +524,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pagamentos-reconciliacao": SAFE_METHODS,
             **payments_crud,
             "recepcao-checkin": SAFE_METHODS,
+            "reception-checkin": SAFE_METHODS,
             "recepcao-atendimento": SAFE_METHODS,
+            "reception-atendimento": SAFE_METHODS,
             "recepcao-workspace": SAFE_METHODS,
+            "reception-workspace": SAFE_METHODS,
             # Consultas (leitura)
             "consultations-consultation": SAFE_METHODS,
             "consultations-doctors": SAFE_METHODS,
