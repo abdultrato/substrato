@@ -18,6 +18,9 @@
     --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui,
       -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, Arial,
       sans-serif;
+    --ui-text-size: 0.9em;
+    --ui-text-size-relaxed: 1em;
+    --ui-title-size: 1.5em;
 
     --background-hsl: 255 100% 98%;
     --foreground-hsl: 257 100% 16%;
@@ -108,6 +111,8 @@
 
   body {
     font-family: var(--font-sans);
+    font-size: var(--ui-text-size);
+    line-height: 1.45;
     background-color: hsl(var(--background-hsl));
     color: hsl(var(--foreground-hsl));
     isolation: isolate;
@@ -121,6 +126,31 @@
   h1, h2, h3, h4, h5, h6, .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.018em;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .page-title,
+  .login-title {
+    font-size: var(--ui-title-size) !important;
+    line-height: 1.2 !important;
+  }
+
+  p,
+  li,
+  label,
+  small,
+  button,
+  input,
+  select,
+  textarea,
+  td,
+  th {
+    font-size: var(--ui-text-size-relaxed);
   }
 
   /* Calm gradients: crossfade between light/dark for smooth theme transitions */
@@ -248,7 +278,9 @@
 
   .page-box h1,
   .page-box .page-title {
-    @apply font-display text-lg md:text-xl font-semibold tracking-tight text-foreground;
+    @apply font-display font-semibold tracking-tight text-foreground;
+    font-size: var(--ui-title-size);
+    line-height: 1.2;
     text-align: center;
     margin-bottom: 12px;
     position: relative;
@@ -266,7 +298,9 @@
   }
 
   .page-box h2 {
-    @apply font-display text-base font-semibold tracking-tight text-foreground;
+    @apply font-display font-semibold tracking-tight text-foreground;
+    font-size: var(--ui-title-size);
+    line-height: 1.2;
     margin-bottom: 10px;
   }
 
@@ -524,7 +558,9 @@
   }
 
   .login-title {
-    @apply font-display text-2xl font-semibold tracking-tight text-foreground;
+    @apply font-display font-semibold tracking-tight text-foreground;
+    font-size: var(--ui-title-size);
+    line-height: 1.2;
   }
 
   .login-subtitle {
@@ -685,6 +721,28 @@
 }
 
 @layer utilities {
+  .text-xs,
+  .text-sm {
+    font-size: 0.9em !important;
+    line-height: 1.35 !important;
+  }
+
+  .text-base {
+    font-size: 1em !important;
+    line-height: 1.45 !important;
+  }
+
+  .text-lg,
+  .text-xl,
+  .text-2xl,
+  .text-3xl,
+  .text-4xl,
+  .text-5xl,
+  .text-6xl {
+    font-size: 1.5em !important;
+    line-height: 1.2 !important;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     .theme-transition,
     .theme-transition * {
