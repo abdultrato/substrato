@@ -121,6 +121,9 @@ RELATED_LOOKUP_FIELDS = (
     "request_id",
     "procedure_code",
     "authorization_code",
+    "identifier",
+    "domain",
+    "key",
     "serial_number",
     "message_id",
     "key_prefix",
@@ -143,6 +146,10 @@ CHOICE_VALUE_ALIASES = {
     "inativa": ("INACTIVE", "INATIVO", "inactive"),
     "suspenso": ("SUSPENDED", "SUSPENSO"),
     "suspensa": ("SUSPENDED", "SUSPENSA"),
+    "trial": ("TRIAL",),
+    "teste": ("TRIAL",),
+    "avaliacao": ("TRIAL",),
+    "avaliação": ("TRIAL",),
     "rascunho": ("DRAFT", "RASCUNHO"),
     "arquivado": ("ARCHIVED", "ARQUIVADO"),
     "arquivada": ("ARCHIVED", "ARQUIVADA"),
@@ -308,6 +315,14 @@ CHOICE_VALUE_ALIASES = {
     "a decorrer": ("EM_ANDAMENTO", "IN_PROGRESS"),
     "in progress": ("EM_ANDAMENTO", "IN_PROGRESS"),
     "manual": ("MANUAL",),
+    "gratuito": ("FREE",),
+    "gratis": ("FREE",),
+    "grátis": ("FREE",),
+    "free": ("FREE",),
+    "basico": ("BASIC",),
+    "básico": ("BASIC",),
+    "basic": ("BASIC",),
+    "pro": ("PRO",),
     "requisicao laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
     "requisição laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
     "pedido laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
@@ -736,6 +751,8 @@ class AiCrudConversationManager:
             if not matches:
                 continue
             raw_value = self._best_field_match(field=field, matches=matches)
+            if "{" in raw_value or "}" in raw_value:
+                continue
             if field.name == "name" and self._looks_like_operation_target(raw_value):
                 continue
             if raw_value:
@@ -751,7 +768,8 @@ class AiCrudConversationManager:
         return bool(
             re.match(
                 r"(?i)^(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|"
-                r"codigo_externo|código_externo|referencia|referência|documento|document_number)\b",
+                r"codigo_externo|código_externo|referencia|referência|identifier|identificador|domain|"
+                r"dominio|domínio|key|chave|flag|documento|document_number)\b",
                 cleaned,
             )
         )
@@ -1131,7 +1149,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|authorization_number|codigo_autorizacao|código_autorização|numero_autorizacao|número_autorização|lot_number|numero_lote|número_lote|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
+            r"\b(?:custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|authorization_number|codigo_autorizacao|código_autorização|numero_autorizacao|número_autorização|lot_number|numero_lote|número_lote|identifier|identificador|domain|dominio|domínio|key|chave|numero|número|number|codigo|código|code|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone|id|pk)(?!\w)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):

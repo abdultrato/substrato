@@ -118,7 +118,11 @@ from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
+from apps.tenants.models.configuration import TenantConfiguration
+from apps.tenants.models.feature_flags import TenantFeatureFlag
+from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant import Tenant
+from apps.tenants.models.tenant_usage import TenantUsage
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.sector import Sector
@@ -4126,6 +4130,211 @@ def test_ai_surgery_crud_denies_surgery_create_for_nursing(api_client):
     assert "não tem acesso" in data["answer"].lower()
     assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
     assert not Surgery.objects.filter(tenant=tenant, patient__name="Paciente Cirurgia Bloqueada").exists()
+
+
+@pytest.mark.django_db
+def test_ai_tenants_crud_creates_updates_and_deletes_tenant_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-tenants-admin", domain="tn-ai-tenants-admin.local")
+    admin = _user(tenant, "admin_ai_tenants_crud", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie inquilino {"nome":"Hospital IA Tenant","identificador":"hospital-ia-tenant",'
+            '"dominio":"hospital-ia.local","estado_comercial":"ativo","ativo":true,"trial_ate":"2026-12-31"}'
+        ),
+    )
+
+    assert create_action.payload["basename"] == "tenants-tenant"
+    assert create_action.payload["data"]["name"] == "Hospital IA Tenant"
+    assert create_action.payload["data"]["identifier"] == "hospital-ia-tenant"
+    assert create_action.payload["data"]["commercial_status"] == Tenant.CommercialStatus.ACTIVE
+    _confirm_ai_action(api_client, create_action)
+    managed_tenant = Tenant.objects.get(identifier="hospital-ia-tenant")
+    assert managed_tenant.domain == "hospital-ia.local"
+    assert managed_tenant.active is True
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere inquilino identificador hospital-ia-tenant {"estado_comercial":"suspenso","ativo":false}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "tenants-tenant"
+    assert update_action.payload["object_ref"] == "hospital-ia-tenant"
+    assert update_action.payload["data"]["commercial_status"] == Tenant.CommercialStatus.SUSPENDED
+    assert update_action.payload["data"]["active"] is False
+    _confirm_ai_action(api_client, update_action)
+    managed_tenant.refresh_from_db()
+    assert managed_tenant.commercial_status == Tenant.CommercialStatus.SUSPENDED
+    assert managed_tenant.active is False
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        "Remova inquilino identificador hospital-ia-tenant",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "tenants-tenant"
+    _confirm_ai_action(api_client, delete_action)
+    assert Tenant.all_objects.get(id=managed_tenant.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_tenants_crud_manages_settings_flags_usage_and_plans_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-tenants-resources", domain="tn-ai-tenants-resources.local")
+    admin = _user(tenant, "admin_ai_tenant_resources", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    _data, config_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie configuração do inquilino {"fuso_horario":"Africa/Maputo","moeda":"MZN","idioma":"pt",'
+            '"permite_multiunidade":true,"limite_utilizadores":25,"sobretaxa_feriado_consulta":"10.00"}'
+        ),
+    )
+
+    assert config_action.payload["basename"] == "tenants-configuracaoinquilino"
+    assert config_action.payload["data"]["time_zone"] == "Africa/Maputo"
+    assert config_action.payload["data"]["allows_multi_unit"] is True
+    assert config_action.payload["data"]["user_limit"] == 25
+    _confirm_ai_action(api_client, config_action)
+    config = TenantConfiguration.objects.get(tenant=tenant)
+    assert config.holiday_consultation_percentage_surcharge == Decimal("10.00")
+
+    _data, config_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere configuração do inquilino id {config.id} {{"limite_utilizadores":30,"idioma":"en"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert config_update_action.payload["basename"] == "tenants-configuracaoinquilino"
+    assert config_update_action.payload["data"]["user_limit"] == 30
+    _confirm_ai_action(api_client, config_update_action)
+    config.refresh_from_db()
+    assert config.user_limit == 30
+    assert config.language == "en"
+
+    _data, flag_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie feature flag tenant {"chave":"ai-tenants-crud","ativo":true}',
+    )
+
+    assert flag_action.payload["basename"] == "tenants-featureflagtenant"
+    assert flag_action.payload["data"]["key"] == "ai-tenants-crud"
+    _confirm_ai_action(api_client, flag_action)
+    flag = TenantFeatureFlag.objects.get(tenant=tenant, key="ai-tenants-crud")
+    assert flag.active is True
+
+    _data, flag_update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere feature flag chave ai-tenants-crud {"ativo":false}',
+        action_type="ai_crud_update",
+    )
+
+    assert flag_update_action.payload["basename"] == "tenants-featureflagtenant"
+    assert flag_update_action.payload["object_ref"] == "ai-tenants-crud"
+    assert flag_update_action.payload["data"]["active"] is False
+    _confirm_ai_action(api_client, flag_update_action)
+    flag.refresh_from_db()
+    assert flag.active is False
+
+    _data, usage_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie uso do tenant {"utilizadores_activos":7,"requisicoes_mes_actual":320}',
+    )
+
+    assert usage_action.payload["basename"] == "tenants-usotenant"
+    assert usage_action.payload["data"]["active_users"] == 7
+    assert usage_action.payload["data"]["current_month_requests"] == 320
+    _confirm_ai_action(api_client, usage_action)
+    usage = TenantUsage.objects.get(tenant=tenant)
+    assert usage.active_users == 7
+
+    _data, usage_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere uso do tenant id {usage.id} {{"utilizadores_activos":9,"requisicoes_mes_actual":400}}',
+        action_type="ai_crud_update",
+    )
+
+    assert usage_update_action.payload["basename"] == "tenants-usotenant"
+    assert usage_update_action.payload["data"]["active_users"] == 9
+    _confirm_ai_action(api_client, usage_update_action)
+    usage.refresh_from_db()
+    assert usage.active_users == 9
+    assert usage.current_month_requests == 400
+
+    _data, plan_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie plano de assinatura {"nome":"Plano IA Tenants","descricao":"Plano de teste IA","tipo":"pro",'
+            '"limite_utilizadores":100,"limite_requisicoes_mensais":5000,"preco_mensal":"1200.00",'
+            '"preco_excedente_requisicao":"2.50","suporte_prioritario":true,"permite_multiunidade":true}'
+        ),
+    )
+
+    assert plan_action.payload["basename"] == "tenants-planoassinatura"
+    assert plan_action.payload["data"]["type"] == SubscriptionPlan.PlanType.PRO
+    assert plan_action.payload["data"]["monthly_price"] == "1200.00"
+    _confirm_ai_action(api_client, plan_action)
+    plan = SubscriptionPlan.objects.get(name__icontains="Plano IA Tenants")
+    assert plan.priority_support is True
+    assert plan.allows_multi_unit is True
+
+    _data, plan_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere plano de assinatura código {plan.custom_id} {{"preco_mensal":"1500.00","limite_utilizadores":120}}',
+        action_type="ai_crud_update",
+    )
+
+    assert plan_update_action.payload["basename"] == "tenants-planoassinatura"
+    assert plan_update_action.payload["data"]["monthly_price"] == "1500.00"
+    _confirm_ai_action(api_client, plan_update_action)
+    plan.refresh_from_db()
+    assert plan.monthly_price == Decimal("1500.00")
+    assert plan.user_limit == 120
+
+    for resource_name, obj in (
+        ("feature flag", flag),
+        ("uso do tenant", usage),
+        ("configuração do inquilino", config),
+        ("plano de assinatura", plan),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {resource_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert TenantFeatureFlag.all_objects.get(id=flag.id).deleted is True
+    assert TenantUsage.all_objects.get(id=usage.id).deleted is True
+    assert TenantConfiguration.all_objects.get(id=config.id).deleted is True
+    assert SubscriptionPlan.objects.get(id=plan.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_tenants_crud_denies_tenant_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-tenants-denied", domain="tn-ai-tenants-denied.local")
+    user = _user(tenant, "recepcao_ai_tenants_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie inquilino {"nome":"Tenant Bloqueado IA","identificador":"tenant-bloqueado-ia"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not Tenant.objects.filter(identifier="tenant-bloqueado-ia").exists()
 
 
 @pytest.mark.django_db
