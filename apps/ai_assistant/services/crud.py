@@ -19,6 +19,7 @@ from apps.ai_assistant.services.policy import AiPolicyGuard
 from apps.ai_assistant.tools.resource_catalog import (
     ResourceDescriptor,
     descriptor_by_basename,
+    get_resource_descriptors,
     match_resource_descriptors,
     scoped_queryset_for_resource,
     user_can_method_resource,
@@ -104,7 +105,8 @@ class CrudFieldSpec:
 
     @property
     def terms(self) -> tuple[str, ...]:
-        values = {self.name, self.name.replace("_", " "), self.label, *self.aliases}
+        alias_terms = {alias.replace("_", " ") for alias in self.aliases}
+        values = {self.name, self.name.replace("_", " "), self.label, *self.aliases, *alias_terms}
         return tuple(sorted({value.strip() for value in values if value and value.strip()}, key=len, reverse=True))
 
 
@@ -253,11 +255,54 @@ class AiCrudConversationManager:
         return ""
 
     def _resolve_descriptor(self, *, message: str, draft: dict[str, Any] | None) -> ResourceDescriptor | None:
+        direct_descriptor = self._descriptor_from_operation_target(message)
+        if direct_descriptor is not None:
+            return direct_descriptor
+
         matches = match_resource_descriptors(message, limit=4)
         if matches:
             return matches[0]
         basename = str((draft or {}).get("resource_basename") or "")
         return descriptor_by_basename(basename)
+
+    def _descriptor_from_operation_target(self, message: str) -> ResourceDescriptor | None:
+        normalized = self._normalize(message or "")
+        if not normalized:
+            return None
+
+        operation_terms = sorted(
+            {self._normalize(term) for term in (*CREATE_TERMS, *UPDATE_TERMS, *DELETE_TERMS)},
+            key=len,
+            reverse=True,
+        )
+        terms_pattern = "|".join(re.escape(term) for term in operation_terms if term)
+        match = re.search(rf"(?<!\w)(?:{terms_pattern})(?!\w)\s+(?P<target>.+)$", normalized)
+        if not match:
+            return None
+
+        target = match.group("target").strip()
+        target = re.sub(
+            r"^(?:(?:um|uma|o|a|os|as|novo|nova|novos|novas|registo|registro)\s+)+",
+            "",
+            target,
+        )
+        if not target:
+            return None
+
+        candidates: list[tuple[int, ResourceDescriptor]] = []
+        for descriptor in get_resource_descriptors():
+            for keyword in descriptor.keywords:
+                if len(keyword) < 3:
+                    continue
+                if re.match(rf"{re.escape(keyword)}(?!\w)", target):
+                    score = len(keyword) + (20 if " " in keyword else 0)
+                    candidates.append((score, descriptor))
+                    break
+
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: (-item[0], item[1].label_pt, item[1].basename))
+        return candidates[0][1]
 
     def _method_for_operation(self, operation: str) -> str:
         return {"create": "POST", "update": "PATCH", "delete": "DELETE"}[operation]
@@ -380,7 +425,7 @@ class AiCrudConversationManager:
         return payload
 
     def _best_field_match(self, *, field: CrudFieldSpec, matches: list[re.Match]) -> str:
-        values = [self._clean_value(match.group(1)) for match in matches]
+        values = [self._clean_repeated_field_prefix(field=field, value=match.group(1)) for match in matches]
         values = [value for value in values if value]
         if not values:
             return ""
@@ -390,6 +435,23 @@ class AiCrudConversationManager:
             if numeric:
                 return numeric[-1]
         return values[-1]
+
+    def _clean_repeated_field_prefix(self, *, field: CrudFieldSpec, value: str) -> str:
+        cleaned = self._clean_value(value)
+        # Example: "histórico de factura factura FAT-..." can make the first
+        # "factura" be treated as the field label. Remove repeated field labels
+        # from the captured value before resolving related objects.
+        for _ in range(3):
+            changed = False
+            for term in field.terms:
+                pattern = rf"(?i)^\s*{re.escape(term)}(?:\s+|[:=\-]\s*)"
+                if re.match(pattern, cleaned):
+                    cleaned = self._clean_value(re.sub(pattern, "", cleaned, count=1))
+                    changed = True
+                    break
+            if not changed:
+                break
+        return cleaned
 
     def _extract_common_payload(self, *, message: str, field_specs: list[CrudFieldSpec], payload: dict[str, Any]) -> None:
         by_name = {field.name: field for field in field_specs}
@@ -482,7 +544,18 @@ class AiCrudConversationManager:
         normalized = self._normalize(raw)
         if field.choices:
             for key, label in field.choices:
-                if normalized in {self._normalize(key), self._normalize(label)}:
+                normalized_key = self._normalize(key)
+                normalized_label = self._normalize(label)
+                if normalized in {normalized_key, normalized_label}:
+                    return key
+                if (
+                    len(normalized) >= 3
+                    and (
+                        normalized_key.startswith(normalized)
+                        or normalized_label.startswith(normalized)
+                        or normalized in normalized_label.split()
+                    )
+                ):
                     return key
 
         field_type = field.field_type.lower()

@@ -17,6 +17,9 @@ from apps.accounting.models.account import Account
 from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
 from apps.audit_activities.models.user_activity import UserActivity
+from apps.billing.models.invoice import Invoice
+from apps.billing.models.invoice_history import InvoiceHistory
+from apps.billing.models.invoice_items import InvoiceItem
 from apps.clinical.models import Patient
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
@@ -703,6 +706,251 @@ def test_ai_audit_activity_crud_denies_non_admin_write(api_client):
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not UserActivity.objects.filter(tenant=tenant, path="/api/v1/bloqueado/").exists()
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_creates_invoice_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-crud", domain="tn-ai-billing-crud.local")
+    user = _user(tenant, "recepcao_ai_billing", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Factura IA")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Crie factura paciente {patient.custom_id} origem clínico estado rascunho valor seguro 25",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "billing-invoice"
+    assert action.payload["data"]["patient"] == patient.id
+    assert action.payload["data"]["origin"] == Invoice.Origin.CLINICAL
+    assert action.payload["data"]["status"] == Invoice.Status.DRAFT
+    assert action.payload["data"]["insurance_amount"] == "25"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    invoice = Invoice.objects.get(tenant=tenant, patient=patient)
+    assert invoice.origin == Invoice.Origin.CLINICAL
+    assert invoice.status == Invoice.Status.DRAFT
+    assert str(invoice.insurance_amount) == "25.00"
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_updates_invoice_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-update", domain="tn-ai-billing-update.local")
+    user = _user(tenant, "recepcao_ai_billing_update", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Factura Alterar")
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.CLINICAL)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere factura id {invoice.id} valor seguro 40 origem mista",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "billing-invoice"
+    assert action.payload["data"]["insurance_amount"] == "40"
+    assert action.payload["data"]["origin"] == Invoice.Origin.MIXED
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    invoice.refresh_from_db()
+    assert invoice.origin == Invoice.Origin.MIXED
+    assert str(invoice.insurance_amount) == "40.00"
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_creates_invoice_item_resolving_invoice_code(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-item", domain="tn-ai-billing-item.local")
+    user = _user(tenant, "recepcao_ai_billing_item", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Item Factura")
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.MIXED)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie item facturado na factura {invoice.custom_id} descrição Taxa administrativa "
+                "tipo ajuste manual quantidade 2 preço unitário 50 iva 0"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "billing-invoiceitem"
+    assert action.payload["data"]["invoice"] == invoice.id
+    assert action.payload["data"]["item_type"] == InvoiceItem.TipoItem.AJUSTE
+    assert action.payload["data"]["quantity"] == "2"
+    assert action.payload["data"]["unit_price"] == "50"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    item = InvoiceItem.objects.get(tenant=tenant, invoice=invoice, description="Taxa administrativa")
+    assert item.item_type == InvoiceItem.TipoItem.AJUSTE
+    assert str(item.quantity) == "2.00"
+    assert str(item.unit_price) == "50.00"
+    invoice.refresh_from_db()
+    assert str(invoice.total) == "100.00"
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_deletes_invoice_item_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-delete", domain="tn-ai-billing-delete.local")
+    admin = _user(tenant, "admin_ai_billing_delete", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Item Remover")
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.MIXED)
+    item = InvoiceItem.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.AJUSTE,
+        description="Taxa removível",
+        quantity="1.00",
+        unit_price="20.00",
+        vat_percentage="0.00",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova linha de factura id {item.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "billing-invoiceitem"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = InvoiceItem.all_objects.get(id=item.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_creates_invoice_history_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-history", domain="tn-ai-billing-history.local")
+    admin = _user(tenant, "admin_ai_billing_history", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Histórico Factura")
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.MIXED)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie histórico de factura factura {invoice.custom_id} nome Ajuste manual "
+                "evento AJUSTE descrição Correcção operacional"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "billing-invoicehistory"
+    assert action.payload["data"]["invoice"] == invoice.id
+    assert action.payload["data"]["name"] == "Ajuste manual"
+    assert action.payload["data"]["event_type"] == "AJUSTE"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    history = InvoiceHistory.objects.get(tenant=tenant, invoice=invoice, event_type="AJUSTE")
+    assert history.name == "Ajuste Manual"
+    assert history.description == "Correcção operacional"
+
+
+@pytest.mark.django_db
+def test_ai_billing_crud_denies_invoice_item_delete_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-billing-denied", domain="tn-ai-billing-denied.local")
+    user = _user(tenant, "recepcao_ai_billing_denied", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Item Bloqueado")
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.MIXED)
+    item = InvoiceItem.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.AJUSTE,
+        description="Taxa bloqueada",
+        quantity="1.00",
+        unit_price="20.00",
+        vat_percentage="0.00",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova linha de factura id {item.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    item.refresh_from_db()
+    assert item.deleted is False
 
 
 @pytest.mark.django_db
