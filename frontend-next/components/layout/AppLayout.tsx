@@ -66,12 +66,9 @@ export default function AppLayout ( {
         !!requiredGroups?.length &&
         !userHasAnyGroup(user, requiredGroups)
     const defaultWorkspaceHref = getDefaultWorkspaceHref(user)
-
-    useEffect(() => {
-        if (!mustRedirectByScope) return
-        if (pathname === scopeHome) return
-        router.replace(scopeHome)
-    }, [mustRedirectByScope, pathname, router, scopeHome])
+    const isScopeRestricted = mustRedirectByScope && pathname !== scopeHome
+    const hasAccessRestriction = isScopeRestricted || isUnauthorized
+    const restrictionRedirectTarget = isScopeRestricted ? scopeHome : defaultWorkspaceHref
 
     useEffect(() => {
         if (typeof window === "undefined") return
@@ -136,7 +133,7 @@ export default function AppLayout ( {
     }, [])
 
     useEffect(() => {
-        if (!isUnauthorized) {
+        if (!hasAccessRestriction) {
             setAccessResolutionReady(true)
             setShowRestrictionNotice(false)
             return
@@ -151,18 +148,18 @@ export default function AppLayout ( {
             intentRaw: rawIntent,
         })
 
-        const normalizedHome = normalizeNavigationPath(defaultWorkspaceHref)
-        if (!manualPathAttempt && currentPath !== normalizedHome) {
+        const normalizedTarget = normalizeNavigationPath(restrictionRedirectTarget)
+        if (!manualPathAttempt && currentPath !== normalizedTarget) {
             window.sessionStorage.removeItem(INTERNAL_NAVIGATION_INTENT_KEY)
             setShowRestrictionNotice(false)
-            router.replace(defaultWorkspaceHref)
+            router.replace(restrictionRedirectTarget)
             setAccessResolutionReady(true)
             return
         }
 
         setShowRestrictionNotice(true)
         setAccessResolutionReady(true)
-    }, [currentPath, defaultWorkspaceHref, isUnauthorized, router])
+    }, [currentPath, hasAccessRestriction, restrictionRedirectTarget, router])
 
     useEffect( () => {
         if ( typeof window === "undefined" ) return
@@ -212,18 +209,10 @@ export default function AppLayout ( {
         )
     }
 
-    if (mustRedirectByScope) {
-        return (
-            <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-                {t("Redirecionando para o workspace selecionado...", "Redirecting to the selected workspace...")}
-            </div>
-        )
-    }
-
     // Auth guard will redirect, but avoid rendering protected shells while it's happening.
     if ( !user ) return null
 
-    if (isUnauthorized && !accessResolutionReady) {
+    if (hasAccessRestriction && !accessResolutionReady) {
         return (
             <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
                 {t("A validar acesso...", "Validating access...")}
@@ -231,7 +220,7 @@ export default function AppLayout ( {
         )
     }
 
-    if (isUnauthorized && !showRestrictionNotice) {
+    if (hasAccessRestriction && !showRestrictionNotice) {
         return (
             <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
                 {t("Redirecionando...", "Redirecting...")}
@@ -239,7 +228,7 @@ export default function AppLayout ( {
         )
     }
 
-    if (isUnauthorized && showRestrictionNotice) {
+    if (hasAccessRestriction && showRestrictionNotice) {
         return (
             <div className="flex min-h-screen flex-col md:flex-row">
                 <Sidebar
@@ -255,7 +244,26 @@ export default function AppLayout ( {
                     <main className="flex-1 overflow-x-auto px-2 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-14">
                         <div className="page-transition">
                             <AutoTranslateTree>
-                                <AccessDenied requiredGroups={requiredGroups} user={user} />
+                                <AccessDenied
+                                    requiredGroups={isUnauthorized ? requiredGroups : undefined}
+                                    user={user}
+                                    title={
+                                        isUnauthorized
+                                            ? t("Acesso restrito", "Access restricted")
+                                            : t("Área fora do escopo", "Out-of-scope area")
+                                    }
+                                    subtitle={
+                                        isUnauthorized
+                                            ? t(
+                                                "A sua conta não tem permissão para abrir esta página.",
+                                                "Your account is not allowed to open this page.",
+                                            )
+                                            : t(
+                                                "Este caminho está fora da área de trabalho selecionada.",
+                                                "This path is outside the selected workspace.",
+                                            )
+                                    }
+                                />
                             </AutoTranslateTree>
                         </div>
                     </main>
