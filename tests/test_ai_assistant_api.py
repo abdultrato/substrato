@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -53,11 +54,25 @@ from apps.education.models import (
     TeacherProfile,
 )
 from apps.equipment.models.equipment import Equipment
+from apps.equipment_integrations.models import (
+    IntegrationAnalyteMapping,
+    IntegrationCredential,
+    IntegrationDocument,
+    IntegrationEquipment,
+    IntegrationMessage,
+    IntegrationOrder,
+    IntegrationOrderItem,
+    IntegrationRouting,
+)
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.result_type import ResultType
+from core.constants.laboratory.sector import Sector
+from core.constants.laboratory.units import DefaultUnit
 from services.reports.async_exports import get_export_job_result, get_export_job_state
 from security.permissions.rbac import GROUPS
 
@@ -100,7 +115,9 @@ def _prepare_ai_crud_action(api_client, message: str, action_type: str = "ai_cru
     )
     assert response.status_code == 200, _response_data(response)
     data = _response_data(response)
-    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == action_type)
+    matching_actions = [action for action in data["suggested_actions"] if action["action_type"] == action_type]
+    assert matching_actions, data
+    action_payload = matching_actions[0]
     return data, AiSuggestedAction.objects.get(id=action_payload["id"])
 
 
@@ -1291,6 +1308,230 @@ def test_ai_equipment_crud_denies_write_for_reception(api_client):
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Equipment.objects.filter(tenant=tenant, serial_number="EQ-BLQ-001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_equipment_integrations_crud_creates_equipment_and_credential(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-integrations-create", domain="tn-ai-equipment-integrations-create.local")
+    user = _user(tenant, "laboratorio_ai_equipment_integrations_create", GROUPS["LABORATORIO"])
+    _authenticate(api_client, tenant, user)
+
+    _data, equipment_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie equipamento integrado nome GeneXpert AI serial INT-IA-001 modalidade hemograma "
+            "protocolo HTTP_JSON fabricante Cepheid modelo GX ativo sim"
+        ),
+    )
+
+    assert equipment_action.payload["basename"] == "equipment_integrations-equipment"
+    assert equipment_action.payload["data"]["name"] == "GeneXpert AI"
+    assert equipment_action.payload["data"]["serial_number"] == "INT-IA-001"
+    assert equipment_action.payload["data"]["modality"] == IntegrationEquipment.Modalidade.HEMOGRAMA
+    assert equipment_action.payload["data"]["protocol"] == IntegrationEquipment.Protocolo.HTTP_JSON
+    _confirm_ai_action(api_client, equipment_action)
+
+    equipment = IntegrationEquipment.objects.get(tenant=tenant, serial_number="INT-IA-001")
+    assert equipment.manufacturer == "Cepheid"
+    assert equipment.active is True
+
+    _data, credential_action = _prepare_ai_crud_action(
+        api_client,
+        "Crie credencial de integração equipamento INT-IA-001 rótulo Chave principal",
+    )
+
+    assert credential_action.payload["basename"] == "equipment_integrations-credential"
+    assert credential_action.payload["data"]["equipment"] == equipment.id
+    assert credential_action.payload["data"]["label"] == "Chave principal"
+    _confirm_ai_action(api_client, credential_action)
+
+    credential = IntegrationCredential.objects.get(tenant=tenant, equipment=equipment, label="Chave principal")
+    assert credential.key_prefix.startswith("int_")
+    assert credential.key_last4
+    assert credential.has_scope(IntegrationCredential.Scope.WORKLIST_READ)
+    assert credential.has_scope(IntegrationCredential.Scope.RESULT_WRITE)
+
+
+@pytest.mark.django_db
+def test_ai_equipment_integrations_crud_creates_operational_resources(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-integrations-flow", domain="tn-ai-equipment-integrations-flow.local")
+    user = _user(tenant, "laboratorio_ai_equipment_integrations_flow", GROUPS["LABORATORIO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Integração")
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue total IA",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
+    exam = LabExam.objects.create(
+        tenant=tenant,
+        name="Hemograma IA",
+        price=Decimal("30.00"),
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
+        sample_type=sample,
+    )
+    exam_field = LabExamField.objects.create(
+        tenant=tenant,
+        exam=exam,
+        name="Hemoglobina IA",
+        type=ResultType.NUMERICO,
+        unit=DefaultUnit.G_DL,
+    )
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request_item = LabRequestItem.objects.create(tenant=tenant, request=request, exam=exam)
+    equipment = IntegrationEquipment.objects.create(
+        tenant=tenant,
+        name="Analyzer Flow",
+        serial_number="INT-FLOW-001",
+        modality=IntegrationEquipment.Modalidade.HEMOGRAMA,
+        protocol=IntegrationEquipment.Protocolo.HTTP_JSON,
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, routing_action = _prepare_ai_crud_action(
+        api_client,
+        "Crie roteamento de integração equipamento INT-FLOW-001 tipo exame LAB setor HEMATOLOGIA ativo sim",
+    )
+    assert routing_action.payload["basename"] == "equipment_integrations-routing"
+    assert routing_action.payload["data"]["equipment"] == equipment.id
+    assert routing_action.payload["data"]["exam_type"] == IntegrationRouting.ExamType.LABORATORIO
+    assert routing_action.payload["data"]["sector"] == Sector.HEMATOLOGIA
+    _confirm_ai_action(api_client, routing_action)
+    assert IntegrationRouting.objects.filter(tenant=tenant, equipment=equipment, sector=Sector.HEMATOLOGIA).exists()
+
+    _data, mapping_action = _prepare_ai_crud_action(
+        api_client,
+        "Crie mapeamento de analito equipamento INT-FLOW-001 código HB campo de exame Hemoglobina IA unidade g/dL ativo sim",
+    )
+    assert mapping_action.payload["basename"] == "equipment_integrations-analyte_mapping"
+    assert mapping_action.payload["data"]["equipment"] == equipment.id
+    assert mapping_action.payload["data"]["exam_field"] == exam_field.id
+    _confirm_ai_action(api_client, mapping_action)
+    assert IntegrationAnalyteMapping.objects.filter(tenant=tenant, equipment=equipment, code="HB").exists()
+
+    _data, order_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie ordem de integração "
+            f'{{"equipment": "INT-FLOW-001", "request": "{request.custom_id}", '
+            f'"status": "PEND", "observation": "Ordem via IA"}}'
+        ),
+    )
+    assert order_action.payload["basename"] == "equipment_integrations-order"
+    assert order_action.payload["data"]["equipment"] == equipment.id
+    assert order_action.payload["data"]["request"] == request.id
+    _confirm_ai_action(api_client, order_action)
+    order = IntegrationOrder.objects.get(tenant=tenant, equipment=equipment, request=request)
+    assert order.observation == "Ordem via IA"
+
+    _data, item_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie item de ordem de integração "
+            f'{{"order": "{order.custom_id}", "request_item": {request_item.id}, "status": "PEND"}}'
+        ),
+    )
+    assert item_action.payload["basename"] == "equipment_integrations-order_item"
+    assert item_action.payload["data"]["order"] == order.id
+    assert item_action.payload["data"]["request_item"] == request_item.id
+    _confirm_ai_action(api_client, item_action)
+    order_item = IntegrationOrderItem.objects.get(tenant=tenant, order=order, request_item=request_item)
+    assert order_item.status == IntegrationOrderItem.Status.PENDING
+
+    _data, message_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie mensagem de integração equipamento INT-FLOW-001 ordem {order.custom_id} "
+            "direção entrada protocolo HTTP_JSON message_id MSG-AI-001 "
+            "tipo conteúdo application/json estado recebida"
+        ),
+    )
+    assert message_action.payload["basename"] == "equipment_integrations-message"
+    assert message_action.payload["data"]["equipment"] == equipment.id
+    assert message_action.payload["data"]["order"] == order.id
+    assert message_action.payload["data"]["direction"] == IntegrationMessage.Direction.INBOUND
+    assert message_action.payload["data"]["status"] == IntegrationMessage.Status.RECEIVED
+    _confirm_ai_action(api_client, message_action)
+    message = IntegrationMessage.objects.get(tenant=tenant, equipment=equipment, message_id="MSG-AI-001")
+    assert message.content_type == "application/json"
+
+    _data, document_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie documento de integração "
+            '{"message": "MSG-AI-001", "filename": "resultado-ai.pdf", '
+            '"content_type": "application/pdf", "sha256": "abc123"}'
+        ),
+    )
+    assert document_action.payload["basename"] == "equipment_integrations-document"
+    assert document_action.payload["data"]["message"] == message.id
+    assert document_action.payload["data"]["filename"] == "resultado-ai.pdf"
+    _confirm_ai_action(api_client, document_action)
+    assert IntegrationDocument.objects.filter(tenant=tenant, message=message, filename="resultado-ai.pdf").exists()
+
+
+@pytest.mark.django_db
+def test_ai_equipment_integrations_crud_updates_deletes_and_denies_write(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-integrations-update", domain="tn-ai-equipment-integrations-update.local")
+    user = _user(tenant, "laboratorio_ai_equipment_integrations_update", GROUPS["LABORATORIO"])
+    denied_user = _user(tenant, "recepcao_ai_equipment_integrations_denied", GROUPS["RECEPCAO"])
+    equipment = IntegrationEquipment.objects.create(
+        tenant=tenant,
+        name="Analyzer Legacy",
+        serial_number="INT-UPD-001",
+        protocol=IntegrationEquipment.Protocolo.HTTP_JSON,
+        active=True,
+    )
+    message = IntegrationMessage.objects.create(
+        tenant=tenant,
+        equipment=equipment,
+        message_id="MSG-DEL-001",
+        protocol=IntegrationEquipment.Protocolo.HTTP_JSON,
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        "Altere equipamento integrado código INT-UPD-001 nome Analyzer HL7 protocolo HL7_MLLP ativo não",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "equipment_integrations-equipment"
+    assert update_action.payload["object_ref"] == "INT-UPD-001"
+    assert update_action.payload["data"]["name"] == "Analyzer HL7"
+    assert update_action.payload["data"]["protocol"] == IntegrationEquipment.Protocolo.HL7_MLLP
+    assert update_action.payload["data"]["active"] is False
+    _confirm_ai_action(api_client, update_action)
+    equipment.refresh_from_db()
+    assert equipment.name == "Analyzer Hl7"
+    assert equipment.protocol == IntegrationEquipment.Protocolo.HL7_MLLP
+    assert equipment.active is False
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova mensagem de integração id {message.id}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "equipment_integrations-message"
+    _confirm_ai_action(api_client, delete_action)
+    removed = IntegrationMessage.all_objects.get(id=message.id)
+    assert removed.deleted is True
+
+    _authenticate(api_client, tenant, denied_user)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie equipamento integrado nome Bloqueado serial INT-BLQ-001",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not IntegrationEquipment.objects.filter(tenant=tenant, serial_number="INT-BLQ-001").exists()
 
 
 @pytest.mark.django_db

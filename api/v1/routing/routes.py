@@ -6,6 +6,7 @@ from api.v1.clinical.viewsets import VIEWSET_MAP as CLINICAL_VIEWSET_MAP
 from api.v1.consultations.viewsets import VIEWSET_MAP as CONSULTATIONS_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
 from api.v1.education.viewsets import VIEWSET_MAP as EDUCATION_VIEWSET_MAP
+from api.v1.equipment_integrations.viewsets import VIEWSET_MAP as EQUIPMENT_INTEGRATIONS_VIEWSET_MAP
 from api.v1.equipment.viewsets import VIEWSET_MAP as EQUIPMENT_VIEWSET_MAP
 from api.v1.external_entities.viewsets import VIEWSET_MAP as EXTERNAL_ENTITIES_VIEWSET_MAP
 from api.v1.human_resources.viewsets import VIEWSET_MAP as HUMAN_RESOURCES_VIEWSET_MAP
@@ -31,6 +32,7 @@ VIEWSET_GROUPS = {
     "accounting": ACCOUNTING_VIEWSET_MAP,
     "nursing": NURSING_VIEWSET_MAP,
     "equipment": EQUIPMENT_VIEWSET_MAP,
+    "equipment_integrations": EQUIPMENT_INTEGRATIONS_VIEWSET_MAP,
     "external_entities": EXTERNAL_ENTITIES_VIEWSET_MAP,
     "pharmacy": PHARMACY_VIEWSET_MAP,
     "billing": BILLING_VIEWSET_MAP,

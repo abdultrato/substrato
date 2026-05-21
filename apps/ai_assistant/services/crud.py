@@ -112,6 +112,10 @@ RELATED_LOOKUP_FIELDS = (
     "codigo",
     "number",
     "serial_number",
+    "message_id",
+    "key_prefix",
+    "label",
+    "filename",
     "unit_number",
     "bag_identifier",
     "student_code",
@@ -152,6 +156,31 @@ CHOICE_VALUE_ALIASES = {
     "video": ("VIDEO",),
     "vídeo": ("VIDEO",),
     "link": ("LINK",),
+    "http json": ("HTTP_JSON",),
+    "hl7": ("HL7_MLLP",),
+    "hl7 mllp": ("HL7_MLLP",),
+    "astm": ("ASTM_TCP",),
+    "astm tcp": ("ASTM_TCP",),
+    "file drop": ("FILE_DROP",),
+    "pasta": ("FILE_DROP",),
+    "exame laboratorial": ("LAB",),
+    "laboratorial": ("LAB",),
+    "laboratorio": ("LAB",),
+    "laboratório": ("LAB",),
+    "exame medico": ("MED",),
+    "exame médico": ("MED",),
+    "medico": ("MED",),
+    "médico": ("MED",),
+    "entrada": ("IN",),
+    "inbound": ("IN",),
+    "saida": ("OUT",),
+    "saída": ("OUT",),
+    "outbound": ("OUT",),
+    "recebido": ("RECV",),
+    "recebida": ("RECV",),
+    "processado": ("PROC",),
+    "processada": ("PROC",),
+    "erro": ("ERRO",),
 }
 
 
@@ -452,10 +481,11 @@ class AiCrudConversationManager:
         descriptor: ResourceDescriptor,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {}
-        payload.update(self._extract_json_payload(message=message, field_specs=field_specs))
         payload.update(self._extract_key_value_payload(message=message, field_specs=field_specs))
         self._extract_common_payload(message=message, field_specs=field_specs, payload=payload)
         self._extract_residual_name(message=message, field_specs=field_specs, descriptor=descriptor, payload=payload)
+        # Explicit JSON is less ambiguous than natural-language extraction.
+        payload.update(self._extract_json_payload(message=message, field_specs=field_specs))
         return {key: value for key, value in payload.items() if value not in ("", None)}
 
     def _extract_json_payload(self, *, message: str, field_specs: list[CrudFieldSpec]) -> dict[str, Any]:

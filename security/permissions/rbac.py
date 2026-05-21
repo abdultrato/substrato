@@ -87,6 +87,20 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in equipment_read
     }
+    equipment_integration_read = {
+        "equipment_integrations-equipment": SAFE_METHODS,
+        "equipment_integrations-credential": SAFE_METHODS,
+        "equipment_integrations-routing": SAFE_METHODS,
+        "equipment_integrations-order": SAFE_METHODS,
+        "equipment_integrations-order_item": SAFE_METHODS,
+        "equipment_integrations-message": SAFE_METHODS,
+        "equipment_integrations-document": SAFE_METHODS,
+        "equipment_integrations-analyte_mapping": SAFE_METHODS,
+    }
+    equipment_integration_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in equipment_integration_read
+    }
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -98,6 +112,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recepcao-atendimento": SAFE_METHODS | frozenset({"POST"}),
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Clinico
             "clinico-patient": SAFE_METHODS | WRITE_METHODS,
             "clinico-requisicaoanalise": SAFE_METHODS | WRITE_METHODS,
@@ -169,6 +184,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
             # SGE (CRUD total)
             **equipment_crud,
+            **equipment_integration_crud,
         },
         g["ENFERMAGEM"]: {
             # Apoio operacional + execucao de procedures
@@ -177,6 +193,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-requisicaoitem": SAFE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Para mapear exam id -> name na UI atual
             "clinico-exam": SAFE_METHODS,
             "clinico-examemedico": SAFE_METHODS,
@@ -257,6 +274,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinical-sample": SAFE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Exames medicos (catálogo e requisições médicas)
             "clinico-examemedico": SAFE_METHODS,
             "clinico-examemedicocampo": SAFE_METHODS,
@@ -302,6 +320,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinical-sample": SAFE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Empresas/entidades externas
             "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
             # Pode abrir catálogo de procedures para requisitar/consultar
@@ -348,6 +367,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pharmacy-requisicaomaterialitem": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # (Opcional) consultar patient para vinculos operacionais
             "clinico-patient": SAFE_METHODS,
             "clinical-patient": SAFE_METHODS,
@@ -355,6 +375,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["MANUTENCAO"]: {
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
@@ -374,6 +395,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-patient": SAFE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             "faturamento-invoice": SAFE_METHODS,
             "faturamento-faturaitem": SAFE_METHODS,
             "faturamento-historicofatura": SAFE_METHODS,
@@ -411,6 +433,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recursos_humanos-folhapagamento": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
+            **equipment_integration_read,
             # Precisa listar usuários para vincular a funcionários.
             "identidade-user": SAFE_METHODS,
             # Logística interna → requisições à farmácia
