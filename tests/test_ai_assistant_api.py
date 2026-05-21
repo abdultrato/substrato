@@ -41,6 +41,17 @@ from apps.clinical.models.sample import Sample
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
 from apps.consultations.models.medical_consultation import MedicalConsultation
+from apps.education.models import (
+    AttendanceRecord,
+    Classroom,
+    Course,
+    Enrollment,
+    Examination,
+    GradeRecord,
+    LearningContent,
+    StudentProfile,
+    TeacherProfile,
+)
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 from services.reports.async_exports import get_export_job_result, get_export_job_state
@@ -75,6 +86,29 @@ def _user(tenant: Tenant, username: str, group_name: str | None = None, *, is_st
 def _authenticate(api_client, tenant: Tenant, user):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=user)
+
+
+def _prepare_ai_crud_action(api_client, message: str, action_type: str = "ai_crud_create"):
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": message, "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == action_type)
+    return data, AiSuggestedAction.objects.get(id=action_payload["id"])
+
+
+def _confirm_ai_action(api_client, action: AiSuggestedAction):
+    response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+    assert response.status_code == 200, _response_data(response)
+    action.refresh_from_db()
+    return _response_data(response)
 
 
 def _seed_command_center_data(tenant: Tenant, user):
@@ -879,6 +913,208 @@ def test_ai_consultations_crud_denies_specialty_write_for_reception(api_client):
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not ConsultationSpecialty.objects.filter(tenant=tenant, name__iexact="Restrita").exists()
+
+
+@pytest.mark.django_db
+def test_ai_education_crud_creates_course_for_school_director(api_client):
+    tenant = _tenant(identifier="tn-ai-education-course", domain="tn-ai-education-course.local")
+    director = _user(tenant, "director_ai_education_course", GROUPS["DIRETOR_ESCOLA"])
+    _authenticate(api_client, tenant, director)
+
+    _data, action = _prepare_ai_crud_action(
+        api_client,
+        "Crie curso nome Matemática Aplicada código MAT-IA carga horária 80 estado ativo descrição Curso anual",
+    )
+
+    assert action.payload["basename"] == "education-course"
+    assert action.payload["data"]["name"] == "Matemática Aplicada"
+    assert action.payload["data"]["code"] == "MAT-IA"
+    assert action.payload["data"]["workload_hours"] == 80
+    assert action.payload["data"]["status"] == Course.Status.ACTIVE
+
+    _confirm_ai_action(api_client, action)
+    course = Course.objects.get(tenant=tenant, code="MAT-IA")
+    assert course.name == "Matemática Aplicada"
+    assert course.workload_hours == 80
+    assert course.status == Course.Status.ACTIVE
+
+
+@pytest.mark.django_db
+def test_ai_education_crud_creates_student_and_teacher_profiles(api_client):
+    tenant = _tenant(identifier="tn-ai-education-profiles", domain="tn-ai-education-profiles.local")
+    director = _user(tenant, "director_ai_education_profiles", GROUPS["DIRETOR_ESCOLA"])
+    student_user = _user(tenant, "student_ai_profile", GROUPS["ESTUDANTE"])
+    teacher_user = _user(tenant, "teacher_ai_profile", GROUPS["PROFESSOR"])
+    _authenticate(api_client, tenant, director)
+
+    _data, student_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie estudante utilizador {student_user.username} código EST-IA-001 "
+            "data nascimento 2010-05-10 encarregado Maria Cuinica estado ativo observações Bolsista"
+        ),
+    )
+    _data, teacher_action = _prepare_ai_crud_action(
+        api_client,
+        f"Crie professor utilizador {teacher_user.username} código PROF-IA-001 especialidade Matemática estado ativo",
+    )
+
+    assert student_action.payload["basename"] == "education-student"
+    assert student_action.payload["data"]["user"] == student_user.id
+    assert student_action.payload["data"]["student_code"] == "EST-IA-001"
+    assert teacher_action.payload["basename"] == "education-teacher"
+    assert teacher_action.payload["data"]["user"] == teacher_user.id
+    assert teacher_action.payload["data"]["teacher_code"] == "PROF-IA-001"
+
+    _confirm_ai_action(api_client, student_action)
+    _confirm_ai_action(api_client, teacher_action)
+    assert StudentProfile.objects.filter(tenant=tenant, user=student_user, student_code="EST-IA-001").exists()
+    assert TeacherProfile.objects.filter(tenant=tenant, user=teacher_user, teacher_code="PROF-IA-001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_education_crud_creates_classroom_enrollment_and_attendance(api_client):
+    tenant = _tenant(identifier="tn-ai-education-flow", domain="tn-ai-education-flow.local")
+    director = _user(tenant, "director_ai_education_flow", GROUPS["DIRETOR_ESCOLA"])
+    student_user = _user(tenant, "student_ai_flow", GROUPS["ESTUDANTE"])
+    teacher_user = _user(tenant, "teacher_ai_flow", GROUPS["PROFESSOR"])
+    course = Course.objects.create(tenant=tenant, name="Ciências Naturais", code="CIE-IA", workload_hours=90)
+    student = StudentProfile.objects.create(tenant=tenant, user=student_user, student_code="EST-FLOW-001")
+    teacher = TeacherProfile.objects.create(tenant=tenant, user=teacher_user, teacher_code="PROF-FLOW-001")
+    _authenticate(api_client, tenant, director)
+
+    _data, classroom_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie turma nome 8A curso {course.code} professor titular {teacher.teacher_code} "
+            "ano letivo 2026 capacidade 35"
+        ),
+    )
+    assert classroom_action.payload["basename"] == "education-classroom"
+    assert classroom_action.payload["data"]["course"] == course.id
+    assert classroom_action.payload["data"]["homeroom_teacher"] == teacher.id
+    _confirm_ai_action(api_client, classroom_action)
+    classroom = Classroom.objects.get(tenant=tenant, name="8A")
+
+    _data, enrollment_action = _prepare_ai_crud_action(
+        api_client,
+        f"Crie matrícula estudante {student.student_code} turma {classroom.custom_id} estado ativo matriculado em 2026-02-01",
+    )
+    assert enrollment_action.payload["basename"] == "education-enrollment"
+    assert enrollment_action.payload["data"]["student"] == student.id
+    assert enrollment_action.payload["data"]["classroom"] == classroom.id
+    assert enrollment_action.payload["data"]["status"] == Enrollment.Status.ACTIVE
+    _confirm_ai_action(api_client, enrollment_action)
+    enrollment = Enrollment.objects.get(tenant=tenant, student=student, classroom=classroom)
+
+    _data, attendance_action = _prepare_ai_crud_action(
+        api_client,
+        f"Crie presença matrícula {enrollment.custom_id} data 2026-02-02 estado presente observações Aula inaugural",
+    )
+    assert attendance_action.payload["basename"] == "education-attendance"
+    assert attendance_action.payload["data"]["enrollment"] == enrollment.id
+    assert attendance_action.payload["data"]["status"] == AttendanceRecord.Status.PRESENT
+    _confirm_ai_action(api_client, attendance_action)
+    attendance = AttendanceRecord.objects.get(tenant=tenant, enrollment=enrollment, attendance_date="2026-02-02")
+    assert attendance.notes == "Aula inaugural"
+
+
+@pytest.mark.django_db
+def test_ai_education_crud_creates_grade_examination_and_content(api_client):
+    tenant = _tenant(identifier="tn-ai-education-academic", domain="tn-ai-education-academic.local")
+    director = _user(tenant, "director_ai_education_academic", GROUPS["DIRETOR_ESCOLA"])
+    student_user = _user(tenant, "student_ai_academic", GROUPS["ESTUDANTE"])
+    teacher_user = _user(tenant, "teacher_ai_academic", GROUPS["PROFESSOR"])
+    course = Course.objects.create(tenant=tenant, name="História", code="HIS-IA", workload_hours=60)
+    student = StudentProfile.objects.create(tenant=tenant, user=student_user, student_code="EST-ACA-001")
+    teacher = TeacherProfile.objects.create(tenant=tenant, user=teacher_user, teacher_code="PROF-ACA-001")
+    classroom = Classroom.objects.create(tenant=tenant, name="9B", course=course, homeroom_teacher=teacher, academic_year="2026")
+    enrollment = Enrollment.objects.create(tenant=tenant, student=student, classroom=classroom, status=Enrollment.Status.ACTIVE)
+    _authenticate(api_client, tenant, director)
+
+    _data, grade_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie avaliação matrícula {enrollment.custom_id} professor {teacher.teacher_code} "
+            "componente Teste 1 nota 17 nota máxima 20 peso 1"
+        ),
+    )
+    assert grade_action.payload["basename"] == "education-grade"
+    assert grade_action.payload["data"]["enrollment"] == enrollment.id
+    assert grade_action.payload["data"]["teacher"] == teacher.id
+    assert grade_action.payload["data"]["score"] == "17"
+    _confirm_ai_action(api_client, grade_action)
+    grade = GradeRecord.objects.get(tenant=tenant, enrollment=enrollment, component="Teste 1")
+    assert str(grade.score) == "17.00"
+
+    _data, exam_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie exame escolar título Exame Trimestral curso {course.code} turma {classroom.custom_id} "
+            "agendado para 2026-03-20T08:00:00+02:00 nota máxima 20"
+        ),
+    )
+    assert exam_action.payload["basename"] == "education-examination"
+    assert exam_action.payload["data"]["course"] == course.id
+    assert exam_action.payload["data"]["classroom"] == classroom.id
+    _confirm_ai_action(api_client, exam_action)
+    assert Examination.objects.filter(tenant=tenant, course=course, title="Exame Trimestral").exists()
+
+    _data, content_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie conteúdo título Revolução Industrial curso {course.code} professor {teacher.teacher_code} "
+            "tipo aula texto Material introdutório publicado sim"
+        ),
+    )
+    assert content_action.payload["basename"] == "education-content"
+    assert content_action.payload["data"]["course"] == course.id
+    assert content_action.payload["data"]["author"] == teacher.id
+    assert content_action.payload["data"]["content_type"] == LearningContent.ContentType.LESSON
+    assert content_action.payload["data"]["published"] is True
+    _confirm_ai_action(api_client, content_action)
+    content = LearningContent.objects.get(tenant=tenant, course=course, title="Revolução Industrial")
+    assert content.published is True
+
+
+@pytest.mark.django_db
+def test_ai_education_crud_updates_course_and_denies_student_write(api_client):
+    tenant = _tenant(identifier="tn-ai-education-update-denied", domain="tn-ai-education-update-denied.local")
+    director = _user(tenant, "director_ai_education_update", GROUPS["DIRETOR_ESCOLA"])
+    student_user = _user(tenant, "student_ai_education_denied", GROUPS["ESTUDANTE"])
+    course = Course.objects.create(tenant=tenant, name="Geografia", code="GEO-IA", workload_hours=40)
+    _authenticate(api_client, tenant, director)
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        "Altere curso código GEO-IA nome Geografia Aplicada carga horária 55 estado arquivado",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "education-course"
+    assert update_action.payload["object_ref"] == "GEO-IA"
+    assert update_action.payload["data"]["status"] == Course.Status.ARCHIVED
+    _confirm_ai_action(api_client, update_action)
+    course.refresh_from_db()
+    assert course.name == "Geografia Aplicada"
+    assert course.workload_hours == 55
+    assert course.status == Course.Status.ARCHIVED
+
+    _authenticate(api_client, tenant, student_user)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie curso nome Curso Bloqueado código BLQ-IA",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Course.objects.filter(tenant=tenant, code="BLQ-IA").exists()
 
 
 @pytest.mark.django_db

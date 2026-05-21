@@ -115,10 +115,43 @@ RELATED_LOOKUP_FIELDS = (
     "bag_identifier",
     "student_code",
     "teacher_code",
+    "title",
     "name",
     "username",
     "email",
 )
+CHOICE_VALUE_ALIASES = {
+    "ativo": ("ACTIVE", "ATIVO", "active"),
+    "ativa": ("ACTIVE", "ATIVO", "active"),
+    "inativo": ("INACTIVE", "INATIVO", "inactive"),
+    "inativa": ("INACTIVE", "INATIVO", "inactive"),
+    "suspenso": ("SUSPENDED", "SUSPENSO"),
+    "suspensa": ("SUSPENDED", "SUSPENSA"),
+    "rascunho": ("DRAFT", "RASCUNHO"),
+    "arquivado": ("ARCHIVED", "ARQUIVADO"),
+    "arquivada": ("ARCHIVED", "ARQUIVADA"),
+    "pendente": ("PENDING", "pendente", "PENDENTE"),
+    "presente": ("PRESENT",),
+    "ausente": ("ABSENT",),
+    "falta": ("ABSENT",),
+    "atrasado": ("LATE",),
+    "atrasada": ("LATE",),
+    "justificado": ("EXCUSED",),
+    "justificada": ("EXCUSED",),
+    "transferido": ("TRANSFERRED",),
+    "transferida": ("TRANSFERRED",),
+    "concluido": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
+    "concluida": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
+    "cancelado": ("CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "cancelada": ("CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "aula": ("LESSON",),
+    "licao": ("LESSON",),
+    "lição": ("LESSON",),
+    "documento": ("DOCUMENT",),
+    "video": ("VIDEO",),
+    "vídeo": ("VIDEO",),
+    "link": ("LINK",),
+}
 
 
 @dataclass(slots=True)
@@ -478,7 +511,12 @@ class AiCrudConversationManager:
         if any(kind in field_type for kind in ("decimal", "float", "integer")):
             numeric = [value for value in values if re.search(r"-?\d+(?:[,.]\d+)?", value)]
             if numeric:
-                return numeric[-1]
+                exact_numeric = [
+                    value
+                    for value in numeric
+                    if not re.match(r"(?i)^\s*(?:maxima|máxima|maximo|máximo|minima|mínima|minimo|mínimo)\b", value)
+                ]
+                return (exact_numeric or numeric)[-1]
         return values[-1]
 
     def _clean_repeated_field_prefix(self, *, field: CrudFieldSpec, value: str) -> str:
@@ -590,11 +628,16 @@ class AiCrudConversationManager:
         raw = self._clean_value(str(value))
         normalized = self._normalize(raw)
         if field.choices:
+            choice_keys = {self._normalize(key): key for key, _label in field.choices}
             for key, label in field.choices:
                 normalized_key = self._normalize(key)
                 normalized_label = self._normalize(label)
                 if normalized in {normalized_key, normalized_label}:
                     return key
+            for candidate in CHOICE_VALUE_ALIASES.get(normalized, ()):
+                normalized_candidate = self._normalize(candidate)
+                if normalized_candidate in choice_keys:
+                    return choice_keys[normalized_candidate]
             for key, label in field.choices:
                 normalized_key = self._normalize(key)
                 normalized_label = self._normalize(label)
