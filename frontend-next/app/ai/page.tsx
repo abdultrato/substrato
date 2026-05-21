@@ -5,14 +5,19 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   Bot,
   BrainCircuit,
+  CalendarDays,
   ClipboardCheck,
   ExternalLink,
+  FileText,
   Lightbulb,
   Lock,
+  PackageSearch,
+  Search,
   Send,
   ShieldCheck,
   Sparkles,
   TerminalSquare,
+  UserPlus,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -38,6 +43,15 @@ type AiChatResponse = {
   tool_calls?: AiToolCall[]
   suggested_actions?: AiSuggestedAction[]
   investigation?: AiInvestigation | null
+  conversation?: AiConversationState
+}
+
+type AiConversationState = {
+  status: "answered" | "needs_clarification" | string
+  intent?: string
+  confidence_score?: number
+  question?: string
+  options?: string[]
 }
 
 type AiToolDefinition = {
@@ -65,6 +79,7 @@ type ConversationMessage = {
   toolCalls?: AiToolCall[]
   suggestedActions?: AiSuggestedAction[]
   investigation?: AiInvestigation | null
+  conversation?: AiConversationState
 }
 
 function formatToolName(value: string) {
@@ -207,19 +222,79 @@ export default function AiOperationalPage() {
   const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
   const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const composerRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const quickQuestions = useMemo(
+  const promptGroups = useMemo(
     () => [
-      t("Quem sou eu neste sistema?", "Who am I in this system?"),
-      t("Que dados posso investigar?", "What data can I investigate?"),
-      t("Quantos pacientes existem?", "How many patients exist?"),
-      t("Crie um paciente chamado Paciente Teste.", "Create a patient called Test Patient."),
-      t("Mostre erros do sistema.", "Show system errors."),
-      t("Investigue o que devo priorizar hoje.", "Investigate what I should prioritize today."),
-      t("Quais alertas activos existem agora?", "What active alerts exist now?"),
+      {
+        title: t("Contar e comparar", "Count and compare"),
+        description: t("Use datas naturais ou intervalos.", "Use natural dates or ranges."),
+        icon: CalendarDays,
+        prompts: [
+          t("Quantos pacientes deram entrada hoje?", "How many patients were admitted today?"),
+          t("Quantos estudantes foram criados este mês?", "How many students were created this month?"),
+          t("Quantos equipamentos foram criados nos últimos 7 dias?", "How many equipment records were created in the last 7 days?"),
+        ],
+      },
+      {
+        title: t("Pesquisar registos", "Search records"),
+        description: t("Código, nome, referência ou parte do texto.", "Code, name, reference or partial text."),
+        icon: Search,
+        prompts: [
+          t("Mostre equipamento código EQ-SQL-001", "Show equipment code EQ-SQL-001"),
+          t("Liste pacientes com nome Paciente", "List patients named Patient"),
+          t("Mostre erros do sistema dos últimos 7 dias", "Show system errors from the last 7 days"),
+        ],
+      },
+      {
+        title: t("Stock histórico", "Historical stock"),
+        description: t("A IA reconstrói o saldo até à data.", "The AI reconstructs balance up to the date."),
+        icon: PackageSearch,
+        prompts: [
+          t("Qual era o stock de medicação Paracetamol ontem?", "What was the Paracetamol medication stock yesterday?"),
+          t("Qual era o estoque de medicação K no dia 2026-05-11?", "What was the medication K stock on 2026-05-11?"),
+        ],
+      },
+      {
+        title: t("Criar por conversa", "Create by conversation"),
+        description: t("A escrita fica pendente até confirmação.", "Writes stay pending until confirmation."),
+        icon: UserPlus,
+        prompts: [
+          t("Crie um paciente chamado Paciente Teste.", "Create a patient called Test Patient."),
+          t("Crie equipamento nome Centrífuga X número de série EQ-001.", "Create equipment named Centrifuge X serial number EQ-001."),
+        ],
+      },
+      {
+        title: t("Relatórios e prioridades", "Reports and priorities"),
+        description: t("Para Command Center e visão executiva.", "For Command Center and executive view."),
+        icon: FileText,
+        prompts: [
+          t("Gere relatório operacional dos últimos 30 dias.", "Generate an operational report for the last 30 days."),
+          t("Quais alertas activos existem agora?", "What active alerts exist now?"),
+          t("Quem sou eu neste sistema?", "Who am I in this system?"),
+        ],
+      },
     ],
     [t]
   )
+
+  const draftHint = useMemo(() => {
+    const normalized = composer.trim().toLowerCase()
+    if (!normalized) return null
+    if (/(crie|criar|inserir|adicione|alterar|remover|create|update|delete)/.test(normalized)) {
+      return t("Fluxo detectado: alteração com confirmação obrigatória.", "Detected flow: change with mandatory confirmation.")
+    }
+    if (/(relat[oó]rio|report|pdf|csv|export)/.test(normalized)) {
+      return t("Fluxo detectado: relatório operacional.", "Detected flow: operational report.")
+    }
+    if (/(stock|estoque|saldo)/.test(normalized)) {
+      return t("Fluxo detectado: stock histórico ou actual.", "Detected flow: historical or current stock.")
+    }
+    if (/(quantos|quantas|listar|mostre|buscar|pesquisar|show|list|search)/.test(normalized)) {
+      return t("Fluxo detectado: pesquisa segura de dados.", "Detected flow: secure data search.")
+    }
+    return t("Inclua módulo, período, código ou acção para melhorar a precisão.", "Include module, period, code or action to improve precision.")
+  }, [composer, t])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -296,6 +371,7 @@ export default function AiOperationalPage() {
           toolCalls: response.tool_calls || [],
           suggestedActions: response.suggested_actions || [],
           investigation: response.investigation || null,
+          conversation: response.conversation,
         },
       ])
       if (response.investigation) {
@@ -368,7 +444,12 @@ export default function AiOperationalPage() {
   }
 
   function handleAskRecommended(question: string) {
+    applyPrompt(question)
+  }
+
+  function applyPrompt(question: string) {
     setComposer(question)
+    window.requestAnimationFrame(() => composerRef.current?.focus())
   }
 
   const aside = (
@@ -461,6 +542,35 @@ export default function AiOperationalPage() {
         </div>
 
         <Card title={t("Conversa operacional", "Operational conversation")}>
+          <div className="mb-4 grid gap-3 lg:grid-cols-5">
+            {promptGroups.map((group) => {
+              const Icon = group.icon
+              return (
+                <div key={group.title} className="rounded-2xl border border-border bg-background/70 p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <span className="rounded-xl bg-primary/10 p-1.5 text-primary">
+                      <Icon size={16} />
+                    </span>
+                    {group.title}
+                  </div>
+                  <p className="mt-1 min-h-[2rem] text-xs leading-relaxed text-muted-foreground">{group.description}</p>
+                  <div className="mt-3 space-y-1.5">
+                    {group.prompts.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => applyPrompt(prompt)}
+                        className="block w-full rounded-xl border border-border bg-card px-2.5 py-2 text-left text-xs font-medium text-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-muted"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           <div className="flex min-h-[30rem] flex-col">
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">
               {!messages.length ? (
@@ -480,11 +590,11 @@ export default function AiOperationalPage() {
                         )}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {quickQuestions.map((question) => (
+                        {promptGroups.flatMap((group) => group.prompts).slice(0, 7).map((question) => (
                           <button
                             key={question}
                             type="button"
-                            onClick={() => setComposer(question)}
+                            onClick={() => applyPrompt(question)}
                             className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"
                           >
                             {question}
@@ -515,6 +625,27 @@ export default function AiOperationalPage() {
                     </div>
                     <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
 
+                    {message.conversation?.status === "needs_clarification" && message.conversation.options?.length ? (
+                      <div className="mt-3 rounded-2xl border border-border bg-muted/30 p-3">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <Lightbulb size={14} />
+                          {t("Responder com uma opção", "Reply with an option")}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {message.conversation.options.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => applyPrompt(option)}
+                              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-background"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
                     <AiInvestigationPanel
                       investigation={message.investigation || null}
                       onAsk={handleAskRecommended}
@@ -544,7 +675,14 @@ export default function AiOperationalPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="mt-4 border-t border-border pt-3">
+              {draftHint ? (
+                <div className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                  <Badge variant="info">{t("Leitura da IA", "AI read")}</Badge>
+                  <span>{draftHint}</span>
+                </div>
+              ) : null}
               <TextAreaInput
+                ref={composerRef}
                 value={composer}
                 onChange={(event) => setComposer(event.target.value)}
                 rows={3}

@@ -33,8 +33,8 @@ class IntentDecision:
                 [
                     "Before querying data or preparing an action, I need to narrow down your objective.",
                     question,
-                    "Options:\n" + "\n".join(f"- {item}" for item in options),
-                    "This prevents me from running the wrong operational tool or exposing irrelevant data.",
+                    "Choose one option or write a more specific question:\n" + "\n".join(f"- {item}" for item in options),
+                    "Tip: include the module, date/range, code or action you expect.",
                 ]
             )
 
@@ -44,8 +44,8 @@ class IntentDecision:
             [
                 "Antes de consultar dados ou preparar uma acção, preciso fechar melhor o objectivo.",
                 question,
-                "Opções:\n" + "\n".join(f"- {item}" for item in options),
-                "Isto evita executar a ferramenta operacional errada ou devolver dados irrelevantes.",
+                "Escolha uma opção ou escreva uma pergunta mais específica:\n" + "\n".join(f"- {item}" for item in options),
+                "Dica: inclua o módulo, data/período, código ou acção esperada.",
             ]
         )
 
@@ -62,16 +62,16 @@ class IntentDecision:
 
 
 DEFAULT_OPTIONS_PT = (
-    "Investigar dados de um módulo, por exemplo pacientes, faturas, pagamentos ou estudantes.",
-    "Criar, alterar ou remover um registo por conversa.",
-    "Gerar um relatório operacional.",
-    "Criar uma tarefa para uma equipa responsável.",
+    "Quantos pacientes deram entrada hoje?",
+    "Qual era o stock de medicação Paracetamol ontem?",
+    "Crie um paciente chamado Paciente Teste.",
+    "Gere relatório operacional dos últimos 30 dias.",
 )
 DEFAULT_OPTIONS_EN = (
-    "Investigate data from a module, for example patients, invoices, payments or students.",
-    "Create, update or delete a record through conversation.",
-    "Generate an operational report.",
-    "Create a task for a responsible team.",
+    "How many patients were admitted today?",
+    "What was the Paracetamol medication stock yesterday?",
+    "Create a patient called Test Patient.",
+    "Generate an operational report for the last 30 days.",
 )
 
 PERSONAL_TERMS = (

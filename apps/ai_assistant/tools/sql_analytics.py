@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from django.apps import apps as django_apps
@@ -557,21 +557,24 @@ class SqlAnalyticsTool(AiTool):
             parsed = _parse_date(raw)
             if parsed and parsed not in values:
                 values.append(parsed)
+        for parsed in _extract_natural_dates(message):
+            if parsed and parsed not in values:
+                values.append(parsed)
         return values[:2]
 
     def _extract_product_query(self, message: str) -> str:
         specific = re.search(
-            rf"\b(?:medicacao|medicação|medicamento|produto|farmaco|fármaco)\s+(?P<product>.+?)(?=\s+(?:no dia|na data|em)\s+{DATE_PATTERN}|$)",
+            rf"\b(?:medicacao|medicação|medicamento|produto|farmaco|fármaco)\s+(?P<product>.+?)(?=\s+(?:no dia|na data|em)\s+{DATE_PATTERN}|\s+(?:hoje|ontem|anteontem|yesterday|today|este mês|este mes|this month|mês passado|mes passado|last month|últimos|ultimos|last)\b|$)",
             message or "",
             flags=re.IGNORECASE,
         )
         if specific:
-            value = re.sub(DATE_PATTERN, " ", specific.group("product"), flags=re.IGNORECASE)
+            value = _remove_date_expressions(specific.group("product"))
             value = re.sub(r"\s+", " ", value).strip(" ?!.;:,")
             if value:
                 return value
 
-        cleaned = re.sub(DATE_PATTERN, " ", message or "", flags=re.IGNORECASE)
+        cleaned = _remove_date_expressions(message or "")
         cleaned = re.sub(
             r"\b(?:diga-me|diga me|me|no dia|na data|em|era|qual|quanto|quantos|tinha|havia|stock|estoque|saldo|de|do|da|o|a|os|as)\b",
             " ",
@@ -592,7 +595,7 @@ class SqlAnalyticsTool(AiTool):
             flags=re.IGNORECASE,
         )
         if explicit:
-            value = re.sub(DATE_PATTERN, " ", explicit.group("value"), flags=re.IGNORECASE)
+            value = _remove_date_expressions(explicit.group("value"))
             value = _strip_resource_terms(value=value, descriptor=descriptor)
             return value
 
@@ -600,7 +603,7 @@ class SqlAnalyticsTool(AiTool):
         if not any(term in normalized_intent for term in ("listar", "lista", "mostre", "mostrar", "buscar", "pesquisar", "procure", "search", "list")):
             return ""
 
-        cleaned = re.sub(DATE_PATTERN, " ", message or "", flags=re.IGNORECASE)
+        cleaned = _remove_date_expressions(message or "")
         cleaned = _strip_resource_terms(value=cleaned, descriptor=descriptor)
         return cleaned
 
@@ -658,7 +661,7 @@ class SqlAnalyticsTool(AiTool):
 
 def should_select_sql_analytics(message: str, active_module: str = "") -> bool:
     normalized = normalize_text(f"{message or ''} {active_module or ''}")
-    has_date = bool(re.search(DATE_PATTERN, message or "", flags=re.IGNORECASE))
+    has_date = _has_date_signal(message)
     patient_entry = "paciente" in normalized and any(
         term in normalized for term in ("entrada", "entraram", "deram entrada", "checkin", "check in", "check-in", "admitidos")
     )
@@ -671,6 +674,65 @@ def should_select_sql_analytics(message: str, active_module: str = "") -> bool:
         return False
     descriptor = _best_specific_descriptor(message)
     return bool(descriptor and _has_generic_analytic_intent(normalized=normalized, dates=[] if not has_date else [timezone.localdate()]))
+
+
+def _has_date_signal(message: str) -> bool:
+    if re.search(DATE_PATTERN, message or "", flags=re.IGNORECASE):
+        return True
+    return bool(_extract_natural_dates(message))
+
+
+def _extract_natural_dates(message: str) -> list[date]:
+    normalized = normalize_text(message or "")
+    today = timezone.localdate()
+
+    rolling = re.search(r"\b(?:ultimos|ultimas|últimos|últimas|last)\s+(?P<days>\d{1,3})\s+(?:dias|days|d)\b", message or "", flags=re.IGNORECASE)
+    if rolling:
+        days = max(1, min(int(rolling.group("days")), 365))
+        return [today - timedelta(days=days - 1), today]
+
+    if any(term in normalized for term in ("este mes", "this month", "mes corrente", "mês corrente")):
+        return [today.replace(day=1), today]
+
+    if any(term in normalized for term in ("mes passado", "mês passado", "last month")):
+        first_this_month = today.replace(day=1)
+        last_previous_month = first_this_month - timedelta(days=1)
+        first_previous_month = last_previous_month.replace(day=1)
+        return [first_previous_month, last_previous_month]
+
+    if any(term in normalized for term in ("esta semana", "this week", "semana corrente")):
+        return [today - timedelta(days=today.weekday()), today]
+
+    if any(term in normalized for term in ("semana passada", "last week")):
+        start_this_week = today - timedelta(days=today.weekday())
+        end_previous_week = start_this_week - timedelta(days=1)
+        start_previous_week = end_previous_week - timedelta(days=6)
+        return [start_previous_week, end_previous_week]
+
+    if any(term in normalized for term in ("anteontem", "antes de ontem")):
+        value = today - timedelta(days=2)
+        return [value, value]
+
+    if any(term in normalized for term in ("ontem", "yesterday")):
+        value = today - timedelta(days=1)
+        return [value, value]
+
+    if any(term in normalized for term in ("hoje", "today")):
+        return [today, today]
+
+    return []
+
+
+def _remove_date_expressions(value: str) -> str:
+    cleaned = re.sub(DATE_PATTERN, " ", value or "", flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"\b(?:hoje|ontem|anteontem|antes de ontem|today|yesterday|este mês|este mes|mês corrente|mes corrente|this month|mês passado|mes passado|last month|esta semana|semana corrente|this week|semana passada|last week|últimos|ultimos|últimas|ultimas|last|dias|days|dia|day)\b",
+        " ",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(r"\b\d{1,3}\s*(?:dias|days|d)\b", " ", cleaned, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", cleaned).strip()
 
 
 def _has_generic_analytic_intent(*, normalized: str, dates: list[date]) -> bool:

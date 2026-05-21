@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -342,6 +342,7 @@ def test_ai_chat_asks_clarification_before_running_tools_for_vague_message(api_c
     data = _response_data(response)
     assert data["conversation"]["status"] == "needs_clarification"
     assert "preciso fechar melhor o objectivo" in data["answer"].lower()
+    assert "Quantos pacientes deram entrada hoje?" in data["conversation"]["options"]
     assert data["tool_calls"] == []
     assert data["suggested_actions"] == []
 
@@ -462,6 +463,68 @@ def test_ai_sql_analytics_reports_pharmacy_stock_as_of_date(api_client):
     assert "43 unidade" in data["answer"]
     assert "Medicação K" in data["answer"]
     assert data["investigation"]["intent"] == "sql_analytics"
+
+
+@pytest.mark.django_db
+def test_ai_sql_analytics_understands_natural_patient_date(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-today", domain="tn-ai-sql-today.local")
+    user = _user(tenant, "recepcao_ai_sql_today", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Hoje IA")
+    checkin = ReceptionCheckin.objects.create(tenant=tenant, patient=patient, status=ReceptionCheckin.Status.WAITING)
+    ReceptionCheckin.objects.filter(id=checkin.id).update(arrived_at=timezone.now())
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Quantos pacientes deram entrada hoje?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "1 entrada" in data["answer"]
+
+
+@pytest.mark.django_db
+def test_ai_sql_analytics_understands_natural_stock_date(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-stock-natural", domain="tn-ai-sql-stock-natural.local")
+    user = _user(tenant, "farmacia_ai_sql_stock_natural", GROUPS["FARMACIA"])
+    yesterday = timezone.localdate() - timedelta(days=1)
+    product = Product.objects.create(tenant=tenant, name="Paracetamol", type=Product.ProductType.MEDICAMENTO)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number="PAR-ONTEM-001",
+        expiration_date=date(2027, 1, 1),
+        initial_quantity=20,
+    )
+    initial_movement = InventoryMovement.objects.get(tenant=tenant, lot=lot, type=MovementType.ENTRADA)
+    yesterday_dt = datetime(yesterday.year, yesterday.month, yesterday.day, 12, 0, tzinfo=timezone.get_current_timezone())
+    Product.objects.filter(id=product.id).update(created_at=yesterday_dt)
+    Lot.objects.filter(id=lot.id).update(created_at=yesterday_dt)
+    InventoryMovement.objects.filter(id=initial_movement.id).update(created_at=yesterday_dt)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Qual era o stock de medicação Paracetamol ontem?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "20 unidade" in data["answer"]
+    assert "Paracetamol" in data["answer"]
 
 
 @pytest.mark.django_db
