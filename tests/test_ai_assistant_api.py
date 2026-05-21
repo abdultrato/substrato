@@ -101,6 +101,10 @@ from apps.nursing.models import (
     WardAdmission,
     WardBed,
 )
+from apps.payments.models.payment import Payment
+from apps.payments.models.receipt import Receipt
+from apps.payments.models.reconciliation import Reconciliation
+from apps.payments.models.transaction import Transaction
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
@@ -167,6 +171,24 @@ def _confirm_ai_action(api_client, action: AiSuggestedAction):
     assert response.status_code == 200, _response_data(response)
     action.refresh_from_db()
     return _response_data(response)
+
+
+def _issued_invoice_with_manual_item(tenant: Tenant, patient: Patient, *, total="100.00") -> Invoice:
+    invoice = Invoice.objects.create(tenant=tenant, patient=patient, origin=Invoice.Origin.MIXED)
+    InvoiceItem.objects.create(
+        tenant=tenant,
+        invoice=invoice,
+        item_type=InvoiceItem.TipoItem.AJUSTE,
+        description="Valor operacional IA",
+        quantity=Decimal("1.00"),
+        unit_price=Decimal(str(total)),
+        vat_percentage=Decimal("0.00"),
+        applies_vat=False,
+    )
+    invoice.refresh_from_db()
+    invoice.status = Invoice.Status.ISSUED
+    invoice.save(update_fields=["status"])
+    return invoice
 
 
 def _seed_command_center_data(tenant: Tenant, user):
@@ -2916,6 +2938,201 @@ def test_ai_billing_crud_denies_invoice_item_delete_for_reception(api_client):
     assert not data["suggested_actions"]
     item.refresh_from_db()
     assert item.deleted is False
+
+
+@pytest.mark.django_db
+def test_ai_payments_crud_creates_updates_and_deletes_payment_for_accounting_group(api_client):
+    tenant = _tenant(identifier="tn-ai-payments-payment", domain="tn-ai-payments-payment.local")
+    user = _user(tenant, "contabilidade_ai_payments_payment", GROUPS["CONTABILIDADE"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Pagamento IA")
+    invoice = _issued_invoice_with_manual_item(tenant, patient, total="100.00")
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f'Crie pagamento {{"nome":"Pagamento IA","factura":"{invoice.custom_id}",'
+            '"valor":"100.00","metodo":"dinheiro","estado":"pendente","referencia_externa":"PAY-AI-001"}'
+        ),
+    )
+
+    assert create_action.payload["basename"] == "payments-payment"
+    assert create_action.payload["data"]["invoice"] == invoice.id
+    assert create_action.payload["data"]["value"] == "100.00"
+    assert create_action.payload["data"]["method"] == Payment.Method.CASH
+    assert create_action.payload["data"]["status"] == Payment.Status.PENDING
+
+    _confirm_ai_action(api_client, create_action)
+    payment = Payment.objects.get(tenant=tenant, external_reference="PAY-AI-001")
+    assert payment.invoice == invoice
+    assert payment.status == Payment.Status.PENDING
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere pagamento referencia_externa PAY-AI-001 {"estado":"confirmado"}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "payments-payment"
+    assert update_action.payload["object_ref"] == "PAY-AI-001"
+    assert update_action.payload["data"]["status"] == Payment.Status.CONFIRMED
+    _confirm_ai_action(api_client, update_action)
+    payment.refresh_from_db()
+    invoice.refresh_from_db()
+    assert payment.status == Payment.Status.CONFIRMED
+    assert payment.paid_at is not None
+    assert invoice.status in {Invoice.Status.ISSUED, Invoice.Status.PAID}
+
+    removable = Payment.objects.create(
+        tenant=tenant,
+        name="Pagamento Remover IA",
+        invoice=invoice,
+        value=Decimal("1.00"),
+        method=Payment.Method.CASH,
+        external_reference="PAY-DEL-001",
+    )
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        "Remova pagamento referencia_externa PAY-DEL-001",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "payments-payment"
+    _confirm_ai_action(api_client, delete_action)
+    assert Payment.all_objects.get(id=removable.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_payments_crud_creates_receipt_transaction_and_reconciliation(api_client):
+    tenant = _tenant(identifier="tn-ai-payments-flow", domain="tn-ai-payments-flow.local")
+    user = _user(tenant, "contabilidade_ai_payments_flow", GROUPS["CONTABILIDADE"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Fluxo Pagamentos IA")
+    invoice = _issued_invoice_with_manual_item(tenant, patient, total="75.00")
+    payment = Payment.objects.create(
+        tenant=tenant,
+        name="Pagamento Recibo IA",
+        invoice=invoice,
+        value=Decimal("75.00"),
+        method=Payment.Method.MOBILE_MONEY,
+        external_reference="PAY-REC-001",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, receipt_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f'Crie recibo {{"factura":"{invoice.custom_id}","pagamento":"PAY-REC-001",'
+            '"numero":"REC-AI-001","valor":"75.00"}'
+        ),
+    )
+
+    assert receipt_action.payload["basename"] == "payments-receipt"
+    assert receipt_action.payload["data"]["invoice"] == invoice.id
+    assert receipt_action.payload["data"]["payment"] == payment.id
+    assert receipt_action.payload["data"]["number"] == "REC-AI-001"
+    _confirm_ai_action(api_client, receipt_action)
+    receipt = Receipt.objects.get(number="REC-AI-001")
+    assert receipt.value == Decimal("75.00")
+
+    _data, receipt_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere recibo id {receipt.id} {{"valor":"70.00"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert receipt_update_action.payload["basename"] == "payments-receipt"
+    assert receipt_update_action.payload["data"]["value"] == "70.00"
+    _confirm_ai_action(api_client, receipt_update_action)
+    receipt.refresh_from_db()
+    assert receipt.value == Decimal("70.00")
+
+    _data, transaction_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie transação {"referencia_externa":"TX-AI-001","gateway":"mpesa","estado":"PENDING","resposta_gateway":"aguarda confirmação"}',
+    )
+
+    assert transaction_action.payload["basename"] == "payments-transaction"
+    assert transaction_action.payload["data"]["external_reference"] == "TX-AI-001"
+    assert transaction_action.payload["data"]["gateway"] == "mpesa"
+    assert transaction_action.payload["data"]["status"] == "PENDING"
+    _confirm_ai_action(api_client, transaction_action)
+    gateway_transaction = Transaction.objects.get(external_reference="TX-AI-001")
+
+    _data, reconciliation_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie reconciliação de pagamento {"transacao":"TX-AI-001","confirmado":false}',
+    )
+
+    assert reconciliation_action.payload["basename"] == "payments-reconciliation"
+    assert reconciliation_action.payload["data"]["transaction"] == gateway_transaction.id
+    assert reconciliation_action.payload["data"]["confirmed"] is False
+    _confirm_ai_action(api_client, reconciliation_action)
+    reconciliation = Reconciliation.objects.get(transaction=gateway_transaction)
+
+    _data, transaction_update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere transação referencia_externa TX-AI-001 {"estado":"PAID","resposta_gateway":"confirmado pelo gateway"}',
+        action_type="ai_crud_update",
+    )
+
+    assert transaction_update_action.payload["basename"] == "payments-transaction"
+    assert transaction_update_action.payload["data"]["status"] == "PAID"
+    _confirm_ai_action(api_client, transaction_update_action)
+    gateway_transaction.refresh_from_db()
+    assert gateway_transaction.status == "PAID"
+    assert gateway_transaction.gateway_response == "confirmado pelo gateway"
+
+    _data, reconciliation_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere reconciliação de pagamento id {reconciliation.id} {{"confirmado":true}}',
+        action_type="ai_crud_update",
+    )
+
+    assert reconciliation_update_action.payload["basename"] == "payments-reconciliation"
+    assert reconciliation_update_action.payload["data"]["confirmed"] is True
+    _confirm_ai_action(api_client, reconciliation_update_action)
+    reconciliation.refresh_from_db()
+    assert reconciliation.confirmed is True
+
+    for model_name, obj in (
+        ("reconciliação de pagamento", reconciliation),
+        ("transação", gateway_transaction),
+        ("recibo", receipt),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert not Reconciliation.objects.filter(id=reconciliation.id).exists()
+    assert not Transaction.objects.filter(id=gateway_transaction.id).exists()
+    assert not Receipt.objects.filter(id=receipt.id).exists()
+
+
+@pytest.mark.django_db
+def test_ai_payments_crud_denies_transaction_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-payments-denied", domain="tn-ai-payments-denied.local")
+    user = _user(tenant, "recepcao_ai_payments_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie transação {"referencia_externa":"TX-BLOCK-001","gateway":"mpesa","estado":"PENDING"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not Transaction.objects.filter(external_reference="TX-BLOCK-001").exists()
 
 
 @pytest.mark.django_db

@@ -315,6 +315,39 @@ CHOICE_VALUE_ALIASES = {
     "nao concluida": ("NCO", "NOT_COMPLETED"),
     "não concluída": ("NCO", "NOT_COMPLETED"),
     "parcial": ("PAR", "PARTIAL"),
+    "dinheiro": ("DIN", "CASH"),
+    "cash": ("DIN", "CASH"),
+    "cartao": ("CAR", "CARD"),
+    "cartão": ("CAR", "CARD"),
+    "card": ("CAR", "CARD"),
+    "transferencia": ("TRF", "TRANSFER"),
+    "transferência": ("TRF", "TRANSFER"),
+    "transfer": ("TRF", "TRANSFER"),
+    "mobile money": ("MOB", "MOBILE_MONEY"),
+    "mpesa": ("MOB", "MOBILE_MONEY"),
+    "m-pesa": ("MOB", "MOBILE_MONEY"),
+    "emola": ("MOB", "MOBILE_MONEY"),
+    "e-mola": ("MOB", "MOBILE_MONEY"),
+    "pos": ("POS",),
+    "cheque": ("CHQ", "CHECK"),
+    "check": ("CHQ", "CHECK"),
+    "seguro de saude": ("SEG", "HEALTH_INSURANCE"),
+    "seguro de saúde": ("SEG", "HEALTH_INSURANCE"),
+    "health insurance": ("SEG", "HEALTH_INSURANCE"),
+    "outro": ("OUT", "OUTRO", "OTHER"),
+    "outra": ("OUT", "OUTRO", "OTHER"),
+    "confirmado": ("CON", "CONFIRMED", "APROVADA", "APPROVED"),
+    "confirmada": ("CON", "CONFIRMED", "APROVADA", "APPROVED"),
+    "confirmed": ("CON", "CONFIRMED"),
+    "falhou": ("FAL", "FAILED"),
+    "falhado": ("FAL", "FAILED"),
+    "falhada": ("FAL", "FAILED"),
+    "failed": ("FAL", "FAILED"),
+    "estornado": ("EST", "REFUNDED"),
+    "estornada": ("EST", "REFUNDED"),
+    "refunded": ("EST", "REFUNDED"),
+    "cancelado": ("CAN", "CANC", "CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "cancelada": ("CAN", "CANC", "CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
 }
 
 
@@ -528,6 +561,7 @@ class AiCrudConversationManager:
             resource_specific_keywords = {
                 self._normalize(term) for term in RESOURCE_ALIASES.get(descriptor.basename, ())
             }
+            best_score = 0
             for keyword in descriptor.keywords:
                 if len(keyword) < 3:
                     continue
@@ -535,8 +569,9 @@ class AiCrudConversationManager:
                     score = len(keyword) + (20 if " " in keyword else 0)
                     if keyword in resource_specific_keywords:
                         score += 50
-                    candidates.append((score, descriptor))
-                    break
+                    best_score = max(best_score, score)
+            if best_score:
+                candidates.append((best_score, descriptor))
 
         if not candidates:
             return None
@@ -997,7 +1032,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|codigo_autorizacao|código_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
+            r"\b(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|authorization_number|codigo_autorizacao|código_autorização|numero_autorizacao|número_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):

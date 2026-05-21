@@ -126,7 +126,9 @@ class TransactionFilter(SafeFilterSet):
 
 FILTER_MAP = {
     "payment": PaymentFilter,
+    "receipt": ReceiptFilter,
     "recibo": ReceiptFilter,
+    "reconciliation": ReconciliationFilter,
     "reconciliacao": ReconciliationFilter,
     "transaction": TransactionFilter,
 }

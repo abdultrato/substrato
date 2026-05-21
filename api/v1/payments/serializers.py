@@ -9,7 +9,7 @@ from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
 
-CORE_READ_ONLY_FIELDS = [
+CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",
     "tenant",
@@ -21,47 +21,106 @@ CORE_READ_ONLY_FIELDS = [
     "deleted_at",
     "deleted_by",
     "version",
-]
+)
+
+BASE_ALIASES = {
+    "id_custom": "custom_id",
+    "nome": "name",
+    "descricao": "description",
+    "descrição": "description",
+    "ativo": "active",
+    "ativa": "active",
+    "ordem": "order",
+}
 
 PAYMENT_LEGACY_ALIASES = {
+    **BASE_ALIASES,
     "criado_em": "created_at",
     "dados_seguro": "insurance_date",
     "estado": "status",
+    "status": "status",
     "fatura": "invoice",
-    "id_custom": "custom_id",
+    "factura": "invoice",
+    "invoice": "invoice",
     "metodo": "method",
-    "nome": "name",
+    "método": "method",
+    "forma_pagamento": "method",
+    "forma_de_pagamento": "method",
+    "method": "method",
     "numero_autorizacao": "authorization_number",
+    "número_autorização": "authorization_number",
+    "autorizacao": "authorization_number",
+    "autorização": "authorization_number",
+    "authorization_number": "authorization_number",
     "pago_em": "paid_at",
+    "paid_at": "paid_at",
     "plano_cobertura": "coverage_plan",
+    "plano_de_cobertura": "coverage_plan",
+    "coverage_plan": "coverage_plan",
     "seguradora": "insurer",
+    "seguro": "insurer",
+    "insurer": "insurer",
     "troco": "change_amount",
+    "change_amount": "change_amount",
     "valor": "value",
+    "value": "value",
+    "referencia_externa": "external_reference",
+    "referência_externa": "external_reference",
+    "referencia": "external_reference",
+    "referência": "external_reference",
+    "external_reference": "external_reference",
 }
 
 RECEIPT_LEGACY_ALIASES = {
+    "id": "id",
     "codigo_fatura": "invoice_code",
+    "codigo_factura": "invoice_code",
+    "código_fatura": "invoice_code",
+    "código_factura": "invoice_code",
     "criado_em": "created_at",
     "estado_pagamento": "payment_status",
     "fatura": "invoice",
+    "factura": "invoice",
+    "invoice": "invoice",
     "metodo_pagamento": "payment_method",
+    "método_pagamento": "payment_method",
     "nome_paciente": "patient_name",
     "numero": "number",
+    "número": "number",
+    "number": "number",
     "pagamento": "payment",
+    "payment": "payment",
     "valor": "value",
+    "value": "value",
 }
 
 RECONCILIATION_LEGACY_ALIASES = {
     "confirmado": "confirmed",
+    "confirmada": "confirmed",
+    "confirmed": "confirmed",
     "criado_em": "created_at",
     "data_confirmacao": "confirmation_date",
+    "data_confirmação": "confirmation_date",
+    "confirmation_date": "confirmation_date",
     "transacao": "transaction",
+    "transação": "transaction",
+    "transaction": "transaction",
 }
 
 TRANSACTION_LEGACY_ALIASES = {
     "criado_em": "created_at",
     "referencia_externa": "external_reference",
+    "referência_externa": "external_reference",
+    "referencia": "external_reference",
+    "referência": "external_reference",
+    "external_reference": "external_reference",
+    "gateway": "gateway",
+    "provedor": "gateway",
+    "estado": "status",
+    "status": "status",
     "resposta_gateway": "gateway_response",
+    "resposta_do_gateway": "gateway_response",
+    "gateway_response": "gateway_response",
 }
 
 
@@ -73,21 +132,33 @@ class PaymentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
         attrs = super().validate(attrs)
 
         instancia = self.instance or Payment()
-        for campo, value in attrs.items():
-            setattr(instancia, campo, value)
-
-        if not instancia.tenant_id:
-            req = self.context.get("request") if hasattr(self, "context") else None
-            tenant = getattr(req, "tenant", None)
-            if tenant is not None:
-                instancia.tenant = tenant
-
+        original_values = {}
         try:
+            if self.instance is not None:
+                original_values = {campo: getattr(instancia, campo) for campo in attrs}
+
+            for campo, value in attrs.items():
+                setattr(instancia, campo, value)
+
+            if not instancia.tenant_id:
+                req = self.context.get("request") if hasattr(self, "context") else None
+                tenant = getattr(req, "tenant", None)
+                if tenant is not None:
+                    if self.instance is not None:
+                        original_values.setdefault("tenant", getattr(instancia, "tenant", None))
+                    instancia.tenant = tenant
+
             instancia.clean()
         except DjangoValidationError as exc:
             if hasattr(exc, "message_dict"):
                 raise serializers.ValidationError(exc.message_dict) from exc
             raise serializers.ValidationError(exc.messages) from exc
+        finally:
+            # Validate against a projected state without changing the live
+            # instance before update(), otherwise status transitions are bypassed.
+            if self.instance is not None:
+                for campo, value in original_values.items():
+                    setattr(instancia, campo, value)
 
         return attrs
 
@@ -154,6 +225,7 @@ class ReceiptSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = Receipt
         fields = "__all__"
+        read_only_fields = ("created_at", "invoice_code", "patient_name", "payment_method", "payment_status")
 
 
 class ReconciliationSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -163,6 +235,7 @@ class ReconciliationSerializer(LegacyAliasSerializerMixin, serializers.ModelSeri
     class Meta:
         model = Reconciliation
         fields = "__all__"
+        read_only_fields = ("created_at",)
 
 
 class TransactionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -172,6 +245,7 @@ class TransactionSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     class Meta:
         model = Transaction
         fields = "__all__"
+        read_only_fields = ("created_at",)
 
 
 SERIALIZER_MAP = {

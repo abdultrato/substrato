@@ -68,6 +68,16 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-content": SAFE_METHODS,
     }
     accounting_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    payments_crud = {
+        "payments-payment": accounting_crud,
+        "payments-receipt": accounting_crud,
+        "payments-reconciliation": accounting_crud,
+        "payments-transaction": accounting_crud,
+        "pagamentos-payment": accounting_crud,
+        "pagamentos-recibo": accounting_crud,
+        "pagamentos-reconciliacao": accounting_crud,
+        "pagamentos-transaction": accounting_crud,
+    }
     bloodbank_operational = SAFE_METHODS | WRITE_METHODS
     bloodbank_read = SAFE_METHODS
     equipment_read = {
@@ -243,6 +253,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "billing-invoicehistory": SAFE_METHODS,
             "payments-recibo": SAFE_METHODS,
             "payments-payment": SAFE_METHODS | frozenset({"POST"}),
+            "payments-receipt": SAFE_METHODS,
             **insurer_authorization_write,
             "external_entities-empresa": external_entities_crud,
             # Logística interna → requisições à farmácia
@@ -502,6 +513,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pagamentos-payment": SAFE_METHODS | WRITE_METHODS,
             "pagamentos-transaction": SAFE_METHODS,
             "pagamentos-reconciliacao": SAFE_METHODS,
+            **payments_crud,
             "recepcao-checkin": SAFE_METHODS,
             "recepcao-atendimento": SAFE_METHODS,
             "recepcao-workspace": SAFE_METHODS,
