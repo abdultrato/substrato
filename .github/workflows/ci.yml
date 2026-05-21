@@ -67,7 +67,7 @@ jobs:
 
       - name: Lint (Ruff)
         run: |
-          ruff check . --output-format=github --exclude apps/education/legacy_schoolar
+          ruff check . --output-format=github
 
       - name: Run backend tests with coverage
         env:

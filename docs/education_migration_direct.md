@@ -8,8 +8,7 @@
 4. Added unified frontend routes:
    - `/education`
    - `/education/student`
-5. Created temporary legacy isolation target:
-   - `apps/education/legacy_schoolar/`
+5. Legacy module `apps/education/legacy_schoolar/` decommissioned and removed.
 
 ## Critical precautions
 
@@ -25,8 +24,8 @@
    - Do not introduce separate auth/middleware/logging in legacy code paths.
    - Reuse `platform`, `security`, `infrastructure`, and `shared/storage`.
 
-4. Keep legacy as transitional only:
-   - Legacy code is read-only reference.
+4. Keep education runtime clean:
+   - Do not reintroduce legacy code paths.
    - New features must be implemented in `apps/education` and `frontend-next`.
 
 5. Preserve observability:
@@ -38,4 +37,4 @@
 1. Move schoolar domain workflows from legacy into `apps/education` services.
 2. Remove duplicate auth/users/middleware from legacy path.
 3. Rewrite frontend workflows in `frontend-next/app/education/*`.
-4. Decommission `legacy_schoolar` incrementally after parity checks.
+4. Keep migration parity checks active with `education_migration_audit`.
