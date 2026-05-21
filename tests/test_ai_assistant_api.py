@@ -89,6 +89,9 @@ from apps.maintenance.models.maintenance import Maintenance
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
+from apps.notifications.models.delivery_log import DeliveryLog
+from apps.notifications.models.notification import Notification
+from apps.notifications.models.notification_template import NotificationTemplate
 from apps.pharmacy.models.product import Product
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
@@ -415,6 +418,154 @@ def test_ai_monitoring_crud_denies_system_error_create_for_reception(api_client)
     assert "não tem acesso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not SystemError.objects.filter(tenant=tenant, path="/api/v1/admin-only/").exists()
+
+
+@pytest.mark.django_db
+def test_ai_notifications_crud_creates_updates_and_deletes_resources_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-notifications-crud", domain="tn-ai-notifications-crud.local")
+    admin = _user(tenant, "admin_ai_notifications_crud", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Paciente Notificação IA",
+        document_number="BI-NOTIF-001",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    _data, template_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie template de notificação {"nome":"Aviso IA","conteudo":"Mensagem automática de notificação"}',
+    )
+
+    assert template_action.payload["basename"] == "notifications-template"
+    assert template_action.payload["data"]["name"] == "Aviso IA"
+    assert template_action.payload["data"]["content"] == "Mensagem automática de notificação"
+
+    _confirm_ai_action(api_client, template_action)
+    template = NotificationTemplate.objects.get(name="Aviso IA")
+
+    _data, template_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere template de notificação id {template.id} {{"conteudo":"Mensagem automática actualizada"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert template_update_action.payload["basename"] == "notifications-template"
+    assert template_update_action.payload["data"]["content"] == "Mensagem automática actualizada"
+    _confirm_ai_action(api_client, template_update_action)
+    template.refresh_from_db()
+    assert template.content == "Mensagem automática actualizada"
+
+    _data, notification_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie notificação {"paciente":"Paciente Notificação IA","destinatario":"utente@example.com","canal":"email","assunto":"Resultado disponível","tipo_evento":"resultado","referencia_externa":"NOTIF-AI-001","mensagem":"O seu resultado está disponível.","enviada":false}',
+    )
+
+    assert notification_action.payload["basename"] == "notifications-notification"
+    assert notification_action.payload["data"]["patient"] == patient.id
+    assert notification_action.payload["data"]["recipient"] == "utente@example.com"
+    assert notification_action.payload["data"]["channel"] == Notification.Channel.EMAIL
+    assert notification_action.payload["data"]["event_type"] == Notification.EventType.RESULTADO_DISPONIVEL
+    assert notification_action.payload["data"]["sent"] is False
+
+    _confirm_ai_action(api_client, notification_action)
+    notification = Notification.objects.get(external_reference="NOTIF-AI-001")
+    assert notification.patient == patient
+    assert notification.sent is False
+
+    _data, notification_update_action = _prepare_ai_crud_action(
+        api_client,
+        'Altere notificação external_reference NOTIF-AI-001 {"enviada":true,"assunto":"Resultado confirmado"}',
+        action_type="ai_crud_update",
+    )
+
+    assert notification_update_action.payload["basename"] == "notifications-notification"
+    assert notification_update_action.payload["object_ref"] == "NOTIF-AI-001"
+    assert notification_update_action.payload["data"]["sent"] is True
+    assert notification_update_action.payload["data"]["subject"] == "Resultado confirmado"
+
+    _confirm_ai_action(api_client, notification_update_action)
+    notification.refresh_from_db()
+    assert notification.sent is True
+    assert notification.subject == "Resultado confirmado"
+
+    _data, log_action = _prepare_ai_crud_action(
+        api_client,
+        f'Crie log de envio {{"notificacao":{notification.id},"estado":"accepted","resposta":"Gateway aceitou"}}',
+    )
+
+    assert log_action.payload["basename"] == "notifications-logenvio"
+    assert log_action.payload["data"]["notification"] == notification.id
+    assert log_action.payload["data"]["status"] == "accepted"
+
+    _confirm_ai_action(api_client, log_action)
+    delivery_log = DeliveryLog.objects.get(notification=notification)
+    assert delivery_log.response == "Gateway aceitou"
+
+    _data, log_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere log de envio id {delivery_log.id} {{"estado":"delivered","resposta":"Entregue ao provedor"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert log_update_action.payload["basename"] == "notifications-logenvio"
+    assert log_update_action.payload["data"]["status"] == "delivered"
+    _confirm_ai_action(api_client, log_update_action)
+    delivery_log.refresh_from_db()
+    assert delivery_log.status == "delivered"
+    assert delivery_log.response == "Entregue ao provedor"
+
+    _data, log_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova log de envio id {delivery_log.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert log_delete_action.payload["basename"] == "notifications-logenvio"
+    _confirm_ai_action(api_client, log_delete_action)
+    assert not DeliveryLog.objects.filter(id=delivery_log.id).exists()
+
+    _data, notification_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova notificação id {notification.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert notification_delete_action.payload["basename"] == "notifications-notification"
+    _confirm_ai_action(api_client, notification_delete_action)
+    assert not Notification.objects.filter(id=notification.id).exists()
+
+    _data, template_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova template de notificação id {template.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert template_delete_action.payload["basename"] == "notifications-template"
+    _confirm_ai_action(api_client, template_delete_action)
+    assert not NotificationTemplate.objects.filter(id=template.id).exists()
+
+
+@pytest.mark.django_db
+def test_ai_notifications_crud_denies_notification_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-notifications-denied", domain="tn-ai-notifications-denied.local")
+    user = _user(tenant, "recepcao_ai_notifications_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie notificação {"destinatario":"bloqueado@example.com","canal":"email","mensagem":"Bloqueada"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not Notification.objects.filter(recipient="bloqueado@example.com").exists()
 
 
 @pytest.mark.django_db

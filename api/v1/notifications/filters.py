@@ -1,23 +1,43 @@
-import django_filters
-
+from api.core.filters import SafeFilterSet
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
+from apps.notifications.models.notification_template import NotificationTemplate
 
 
-class DeliveryLogFilter(django_filters.FilterSet):
+class DeliveryLogFilter(SafeFilterSet):
     class Meta:
         model = DeliveryLog
-        fields = ["notification", "status", "response", "created_at"]  # Filtros permitidos
+        fields = ["id", "notification", "status", "response", "created_at"]
 
 
-class NotificationFilter(django_filters.FilterSet):
+class NotificationFilter(SafeFilterSet):
     class Meta:
         model = Notification
-        fields = ["recipient", "channel", "message", "sent", "created_at"]  # Filtros permitidos
+        fields = [
+            "id",
+            "patient",
+            "recipient",
+            "channel",
+            "subject",
+            "event_type",
+            "external_reference",
+            "message",
+            "sent",
+            "send_error",
+            "sent_at",
+            "created_at",
+        ]
+
+
+class NotificationTemplateFilter(SafeFilterSet):
+    class Meta:
+        model = NotificationTemplate
+        fields = ["id", "name", "content", "created_at"]
 
 
 FILTER_MAP = {
     "logenvio": DeliveryLogFilter,
     "notification": NotificationFilter,
+    "template": NotificationTemplateFilter,
 }
 

@@ -117,6 +117,7 @@ RELATED_LOOKUP_FIELDS = (
     "document_number",
     "phone",
     "external_code",
+    "external_reference",
     "request_id",
     "authorization_code",
     "serial_number",
@@ -963,7 +964,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|request_id|authorization_code|codigo_autorizacao|código_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
+            r"\b(?:id|pk|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|authorization_code|codigo_autorizacao|código_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):
