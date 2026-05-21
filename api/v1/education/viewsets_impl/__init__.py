@@ -7,6 +7,7 @@ from .core import (
     ExaminationViewSet,
     GradeRecordViewSet,
     LearningContentViewSet,
+    SkillViewSet,
     StudentProfileViewSet,
     TeacherProfileViewSet,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "ExaminationViewSet",
     "GradeRecordViewSet",
     "LearningContentViewSet",
+    "SkillViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
 ]

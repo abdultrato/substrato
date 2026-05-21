@@ -7,6 +7,7 @@ from apps.education.models import (
     Examination,
     GradeRecord,
     LearningContent,
+    Skill,
     StudentProfile,
     TeacherProfile,
 )
@@ -66,6 +67,12 @@ class LearningContentFilter(SafeFilterSet):
         fields = ["course", "author", "content_type", "published", "created_at"]
 
 
+class SkillFilter(SafeFilterSet):
+    class Meta:
+        model = Skill
+        fields = ["course", "code", "category", "level", "status", "created_at"]
+
+
 FILTER_MAP = {
     "student": StudentProfileFilter,
     "teacher": TeacherProfileFilter,
@@ -76,4 +83,5 @@ FILTER_MAP = {
     "grade": GradeRecordFilter,
     "examination": ExaminationFilter,
     "content": LearningContentFilter,
+    "skill": SkillFilter,
 }

@@ -9,6 +9,7 @@ from apps.education.models import (
     Examination,
     GradeRecord,
     LearningContent,
+    Skill,
     StudentProfile,
     TeacherProfile,
 )
@@ -201,6 +202,25 @@ CONTENT_ALIASES = {
     "professor": "author",
 }
 
+SKILL_ALIASES = {
+    "id_custom": "custom_id",
+    "codigo": "code",
+    "código": "code",
+    "codigo_skill": "code",
+    "código_skill": "code",
+    "nome_skill": "name",
+    "habilidade": "name",
+    "descricao": "description",
+    "descrição": "description",
+    "curso": "course",
+    "categoria": "category",
+    "nivel": "level",
+    "nível": "level",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+}
+
 
 class StudentProfileSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = STUDENT_ALIASES
@@ -288,5 +308,15 @@ class LearningContentSerializer(LegacyAliasSerializerMixin, serializers.ModelSer
 
     class Meta:
         model = LearningContent
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class SkillSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = SKILL_ALIASES
+    legacy_output_aliases = SKILL_ALIASES
+
+    class Meta:
+        model = Skill
         fields = "__all__"
         read_only_fields = _READ_ONLY_FIELDS

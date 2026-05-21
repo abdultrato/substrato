@@ -9,6 +9,7 @@ from .viewsets_impl import (
     ExaminationViewSet,
     GradeRecordViewSet,
     LearningContentViewSet,
+    SkillViewSet,
     StudentProfileViewSet,
     TeacherProfileViewSet,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "ExaminationViewSet",
     "GradeRecordViewSet",
     "LearningContentViewSet",
+    "SkillViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
 ]

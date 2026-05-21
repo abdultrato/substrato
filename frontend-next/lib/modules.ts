@@ -159,6 +159,7 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "grade", label: "Notas", endpoint: "/education/grade/", adminListHref: "/admin/education/graderecord/" },
       { key: "examination", label: "Exames", endpoint: "/education/examination/", adminListHref: "/admin/education/examination/" },
       { key: "content", label: "Conteúdos de Aprendizagem", endpoint: "/education/content/", adminListHref: "/admin/education/learningcontent/" },
+      { key: "skill", label: "Skills", endpoint: "/education/skill/", adminListHref: "/admin/education/skill/" },
     ],
   },
   {
@@ -316,6 +317,7 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/education/grade/": "/admin/education/graderecord/",
   "/education/examination/": "/admin/education/examination/",
   "/education/content/": "/admin/education/learningcontent/",
+  "/education/skill/": "/admin/education/skill/",
   // Tenants
   "/inquilinos/inquilino/": "/admin/tenants/tenant/",
   "/inquilinos/configuracaoinquilino/": "/admin/tenants/tenantconfiguration/",

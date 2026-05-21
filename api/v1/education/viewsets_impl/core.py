@@ -12,6 +12,7 @@ from apps.education.models import (
     Examination,
     GradeRecord,
     LearningContent,
+    Skill,
     StudentProfile,
     TeacherProfile,
 )
@@ -25,6 +26,7 @@ from ..filters import (
     ExaminationFilter,
     GradeRecordFilter,
     LearningContentFilter,
+    SkillFilter,
     StudentProfileFilter,
     TeacherProfileFilter,
 )
@@ -36,6 +38,7 @@ from ..serializers import (
     ExaminationSerializer,
     GradeRecordSerializer,
     LearningContentSerializer,
+    SkillSerializer,
     StudentProfileSerializer,
     TeacherProfileSerializer,
 )
@@ -300,6 +303,25 @@ class LearningContentViewSet(TenantScopedEducationViewSet):
             AcademicService.publish_learning_content(content=content)
 
 
+class SkillViewSet(TenantScopedEducationViewSet):
+    queryset = Skill.objects.select_related("course").all()
+    serializer_class = SkillSerializer
+    filterset_class = SkillFilter
+    search_fields = ["custom_id", "code", "name", "course__name", "category", "level"]
+    ordering_fields = ["code", "name", "category", "level", "status", "created_at"]
+    ordering = ["name", "created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_teacher_user(user):
+                return qs.filter(course__classrooms__homeroom_teacher__user=user).distinct()
+            if _is_student_user(user):
+                return qs.filter(course__classrooms__enrollments__student__user=user).distinct()
+        return qs
+
+
 VIEWSET_MAP = {
     "student": StudentProfileViewSet,
     "teacher": TeacherProfileViewSet,
@@ -310,6 +332,7 @@ VIEWSET_MAP = {
     "grade": GradeRecordViewSet,
     "examination": ExaminationViewSet,
     "content": LearningContentViewSet,
+    "skill": SkillViewSet,
 }
 
 __all__ = [
@@ -321,6 +344,7 @@ __all__ = [
     "ExaminationViewSet",
     "GradeRecordViewSet",
     "LearningContentViewSet",
+    "SkillViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
 ]

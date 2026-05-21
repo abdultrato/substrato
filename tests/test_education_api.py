@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
 
-from apps.education.models import Classroom, Course, Enrollment, GradeRecord, StudentProfile, TeacherProfile
+from apps.education.models import Classroom, Course, Enrollment, GradeRecord, Skill, StudentProfile, TeacherProfile
 from apps.tenants.models.tenant import Tenant
 
 
@@ -141,6 +141,25 @@ def _seed_scope(tenant: Tenant):
         max_score=20,
     )
 
+    skill_1 = Skill.objects.create(
+        tenant=tenant,
+        course=course_1,
+        code="SKL-001",
+        name="Raciocínio lógico",
+        category=Skill.Category.COGNITIVE,
+        level=Skill.Level.FOUNDATION,
+        status=Skill.Status.ACTIVE,
+    )
+    skill_2 = Skill.objects.create(
+        tenant=tenant,
+        course=course_2,
+        code="SKL-002",
+        name="Leitura científica",
+        category=Skill.Category.TECHNICAL,
+        level=Skill.Level.INTERMEDIATE,
+        status=Skill.Status.ACTIVE,
+    )
+
     return {
         "teacher_user_1": teacher_user_1,
         "teacher_user_2": teacher_user_2,
@@ -158,6 +177,8 @@ def _seed_scope(tenant: Tenant):
         "enrollment_2": enrollment_2,
         "grade_1": grade_1,
         "grade_2": grade_2,
+        "skill_1": skill_1,
+        "skill_2": skill_2,
     }
 
 
@@ -178,6 +199,10 @@ def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     response = api_client.get("/api/v1/education/grade/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/skill/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["skill_1"].id}
 
 
 @pytest.mark.django_db
@@ -205,6 +230,10 @@ def test_teacher_group_only_sees_owned_scope(api_client):
     response = api_client.get("/api/v1/education/grade/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["grade_1"].id}
+
+    response = api_client.get("/api/v1/education/skill/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["skill_1"].id}
 
 
 @pytest.mark.django_db
@@ -266,3 +295,39 @@ def test_tenant_host_mismatch_is_denied_for_education_routes(api_client):
 
     response = api_client.get("/api/v1/education/course/")
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_skill_create_forces_request_tenant_and_accepts_aliases(api_client):
+    tenant_main = _tenant("tn-edu-skill-main", "edu-skill-main.local")
+    tenant_other = _tenant("tn-edu-skill-other", "edu-skill-other.local")
+    director_user = _user(tenant=tenant_main, username="director_skill_main", role_group="Diretor da Escola")
+    course = Course.objects.create(
+        tenant=tenant_main,
+        name="Física Aplicada",
+        code="CRS-PHY",
+        status=Course.Status.ACTIVE,
+    )
+    _authenticate(api_client, tenant=tenant_main, user=director_user)
+
+    response = api_client.post(
+        "/api/v1/education/skill/",
+        {
+            "tenant": tenant_other.id,
+            "curso": course.id,
+            "codigo": "SKL-PHY-01",
+            "nome_skill": "Resolução de problemas",
+            "categoria": Skill.Category.COGNITIVE,
+            "nivel": Skill.Level.INTERMEDIATE,
+            "estado": Skill.Status.ACTIVE,
+            "descricao": "Aplicar análise vetorial em exercícios.",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    created = Skill.objects.get(id=_response_data(response)["id"])
+    assert created.tenant_id == tenant_main.id
+    assert created.course_id == course.id
+    assert created.code == "SKL-PHY-01"
+    assert created.name == "Resolução De Problemas"

@@ -56,6 +56,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-grade": SAFE_METHODS | WRITE_METHODS,
         "education-examination": SAFE_METHODS | WRITE_METHODS,
         "education-content": SAFE_METHODS | WRITE_METHODS,
+        "education-skill": SAFE_METHODS | WRITE_METHODS,
     }
     education_read = {
         "education-student": SAFE_METHODS,
@@ -66,6 +67,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-grade": SAFE_METHODS,
         "education-examination": SAFE_METHODS,
         "education-content": SAFE_METHODS,
+        "education-skill": SAFE_METHODS,
     }
     accounting_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
     payments_crud = {

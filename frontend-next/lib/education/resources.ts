@@ -80,6 +80,13 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     descriptionPt: "Publicação de conteúdos.",
     descriptionEn: "Learning content publishing.",
   },
+  {
+    key: "skill",
+    labelPt: "Skills",
+    labelEn: "Skills",
+    descriptionPt: "Catálogo de skills por curso.",
+    descriptionEn: "Course skills catalog.",
+  },
 ]
 
 export function getEducationGroup(modules: ModuleGroup[]) {
@@ -93,4 +100,3 @@ export function getEducationResource(modules: ModuleGroup[], resourceKey: string
 export function getEducationDescriptor(resourceKey: string) {
   return EDUCATION_RESOURCE_DESCRIPTORS.find((item) => item.key === resourceKey) || null
 }
-

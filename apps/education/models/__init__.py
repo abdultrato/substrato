@@ -5,6 +5,7 @@ from apps.education.models.course import Course
 from apps.education.models.enrollment import Enrollment
 from apps.education.models.examination import Examination
 from apps.education.models.grade import GradeRecord
+from apps.education.models.skill import Skill
 from apps.education.models.student import StudentProfile
 from apps.education.models.teacher import TeacherProfile
 
@@ -16,6 +17,7 @@ __all__ = [
     "Examination",
     "GradeRecord",
     "LearningContent",
+    "Skill",
     "StudentProfile",
     "TeacherProfile",
 ]

@@ -8,6 +8,7 @@ from apps.education.models import (
     Examination,
     GradeRecord,
     LearningContent,
+    Skill,
     StudentProfile,
     TeacherProfile,
 )
@@ -74,3 +75,10 @@ class LearningContentAdmin(admin.ModelAdmin):
     list_display = ("custom_id", "title", "course", "content_type", "published", "tenant")
     list_filter = ("content_type", "published", "tenant")
     search_fields = ("custom_id", "title", "course__name")
+
+
+@admin.register(Skill)
+class SkillAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "code", "name", "course", "category", "level", "status", "tenant")
+    list_filter = ("category", "level", "status", "tenant")
+    search_fields = ("custom_id", "code", "name", "course__name")

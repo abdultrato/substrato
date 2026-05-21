@@ -6,6 +6,7 @@ from apps.education.models import (
     Examination,
     GradeRecord,
     LearningContent,
+    Skill,
     StudentProfile,
     TeacherProfile,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "Examination",
     "GradeRecord",
     "LearningContent",
+    "Skill",
     "StudentProfile",
     "TeacherProfile",
 ]

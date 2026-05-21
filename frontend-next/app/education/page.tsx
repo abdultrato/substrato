@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Pencil,
   School,
+  Target,
   UserCheck,
   Users,
 } from "lucide-react"
@@ -81,6 +82,7 @@ export default function EducationPage() {
       grade: Pencil,
       examination: FileCheck2,
       content: FileStack,
+      skill: Target,
     }),
     []
   )
