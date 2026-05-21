@@ -119,8 +119,8 @@ export default function EducationPage() {
               "Education domain rules live in apps/education and services/education."
             ),
             t(
-              "Legado Schoolar-S está isolado em apps/education/legacy_schoolar para extração gradual.",
-              "Schoolar-S legacy is isolated in apps/education/legacy_schoolar for gradual extraction."
+              "Fluxos críticos de Education já executam no domínio novo sem dependência operacional do legado.",
+              "Critical Education flows now run on the new domain without operational legacy dependency."
             ),
           ]}
         />

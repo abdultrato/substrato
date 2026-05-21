@@ -15,6 +15,7 @@ from apps.education.models import (
     StudentProfile,
     TeacherProfile,
 )
+from services.education import AcademicService
 
 from ..filters import (
     AttendanceRecordFilter,
@@ -84,6 +85,10 @@ class StudentProfileViewSet(TenantScopedEducationViewSet):
         if user and not getattr(user, "is_superuser", False) and _is_student_user(user):
             return qs.filter(user=user)
         return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.register_student(student=serializer.instance)
 
 
 class TeacherProfileViewSet(TenantScopedEducationViewSet):
@@ -158,6 +163,21 @@ class EnrollmentViewSet(TenantScopedEducationViewSet):
                 return qs.filter(classroom__homeroom_teacher__user=user)
         return qs
 
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        enrollment = serializer.instance
+        if enrollment.status == Enrollment.Status.ACTIVE:
+            AcademicService.activate_enrollment(enrollment=enrollment)
+
+    def perform_update(self, serializer):
+        enrollment = serializer.instance
+        was_active = enrollment.status == Enrollment.Status.ACTIVE
+        super().perform_update(serializer)
+        enrollment = serializer.instance
+        is_active = enrollment.status == Enrollment.Status.ACTIVE
+        if not was_active and is_active:
+            AcademicService.activate_enrollment(enrollment=enrollment)
+
 
 class AttendanceRecordViewSet(TenantScopedEducationViewSet):
     queryset = AttendanceRecord.objects.select_related(
@@ -198,6 +218,21 @@ class GradeRecordViewSet(TenantScopedEducationViewSet):
                 return qs.filter(teacher__user=user)
         return qs
 
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        grade = serializer.instance
+        if grade.published_at is not None:
+            AcademicService.publish_grade(grade=grade)
+
+    def perform_update(self, serializer):
+        grade = serializer.instance
+        was_published = grade.published_at is not None
+        super().perform_update(serializer)
+        grade = serializer.instance
+        is_published = grade.published_at is not None
+        if not was_published and is_published:
+            AcademicService.publish_grade(grade=grade)
+
 
 class ExaminationViewSet(TenantScopedEducationViewSet):
     queryset = Examination.objects.select_related("course", "classroom").all()
@@ -217,6 +252,19 @@ class ExaminationViewSet(TenantScopedEducationViewSet):
                 return qs.filter(classroom__enrollments__student__user=user).distinct()
         return qs
 
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.schedule_examination(exam=serializer.instance)
+
+    def perform_update(self, serializer):
+        exam = serializer.instance
+        previous_schedule = (exam.scheduled_for, exam.course_id, exam.classroom_id)
+        super().perform_update(serializer)
+        exam = serializer.instance
+        current_schedule = (exam.scheduled_for, exam.course_id, exam.classroom_id)
+        if current_schedule != previous_schedule:
+            AcademicService.schedule_examination(exam=exam)
+
 
 class LearningContentViewSet(TenantScopedEducationViewSet):
     queryset = LearningContent.objects.select_related("course", "author", "author__user").all()
@@ -235,6 +283,21 @@ class LearningContentViewSet(TenantScopedEducationViewSet):
             if _is_student_user(user):
                 return qs.filter(course__classrooms__enrollments__student__user=user).distinct()
         return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        content = serializer.instance
+        if content.published:
+            AcademicService.publish_learning_content(content=content)
+
+    def perform_update(self, serializer):
+        content = serializer.instance
+        was_published = bool(content.published)
+        super().perform_update(serializer)
+        content = serializer.instance
+        is_published = bool(content.published)
+        if not was_published and is_published:
+            AcademicService.publish_learning_content(content=content)
 
 
 VIEWSET_MAP = {

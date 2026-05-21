@@ -3,9 +3,10 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from apps.education.models import Enrollment, GradeRecord, LearningContent, StudentProfile
+from apps.education.models import Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
 from events.education.publishers import (
     publish_enrollment_completed,
+    publish_exam_scheduled,
     publish_grade_published,
     publish_lesson_uploaded,
     publish_student_created,
@@ -46,7 +47,8 @@ class AcademicService:
     @staticmethod
     @transaction.atomic
     def publish_grade(*, grade: GradeRecord) -> GradeRecord:
-        grade.published_at = timezone.now()
+        if grade.published_at is None:
+            grade.published_at = timezone.now()
         grade.full_clean()
         grade.save()
         publish_grade_published(
@@ -56,6 +58,18 @@ class AcademicService:
             component=grade.component,
         )
         return grade
+
+    @staticmethod
+    @transaction.atomic
+    def schedule_examination(*, exam: Examination) -> Examination:
+        exam.full_clean()
+        exam.save()
+        publish_exam_scheduled(
+            tenant_id=exam.tenant_id,
+            exam_id=exam.id,
+            course_id=exam.course_id,
+        )
+        return exam
 
     @staticmethod
     @transaction.atomic
