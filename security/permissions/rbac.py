@@ -144,6 +144,24 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in medical_records_read
     }
+    nursing_crud_methods = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    nursing_crud = {
+        "nursing-evolucaoenfermagem": nursing_crud_methods,
+        "nursing-procedimentocatalogo": nursing_crud_methods,
+        "nursing-procedimentocatalogomaterial": nursing_crud_methods,
+        "nursing-procedure": nursing_crud_methods,
+        "nursing-procedimentoitem": nursing_crud_methods,
+        "nursing-procedimentoitemvalor": nursing_crud_methods,
+        "nursing-procedimentomaterial": nursing_crud_methods,
+        "nursing-procedimentomaterialvalor": nursing_crud_methods,
+        "nursing-prescricaoenfermagem": nursing_crud_methods,
+        "nursing-registroenfermagem": nursing_crud_methods,
+        "nursing-sinalvitalenfermagem": nursing_crud_methods,
+        "nursing-ward": nursing_crud_methods,
+        "nursing-camaenfermaria": nursing_crud_methods,
+        "nursing-internamentoenfermaria": nursing_crud_methods,
+        "nursing-enfermariadashboard": SAFE_METHODS,
+    }
     identity_read = {
         "identidade-user": SAFE_METHODS,
         "identity-user": SAFE_METHODS,
@@ -314,6 +332,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "nursing-wardbed": SAFE_METHODS | WRITE_METHODS,
             "nursing-hospitalization": SAFE_METHODS | WRITE_METHODS,
             "nursing-warddashboard": SAFE_METHODS,
+            **nursing_crud,
             # Banco de sangue (requisição/execução de transfusões e aviação)
             "bloodbank-doacao": bloodbank_read,
             "bloodbank-unidade": bloodbank_operational,

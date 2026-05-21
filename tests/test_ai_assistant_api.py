@@ -89,6 +89,18 @@ from apps.maintenance.models.maintenance import Maintenance
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
+from apps.nursing.models import (
+    NursingEvolution,
+    NursingPrescription,
+    NursingRecord,
+    NursingVitalSign,
+    Procedure,
+    ProcedureCatalog,
+    ProcedureItem,
+    Ward,
+    WardAdmission,
+    WardBed,
+)
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
@@ -3542,6 +3554,269 @@ def test_ai_medical_records_crud_denies_record_create_for_reception(api_client):
     assert "não tem acesso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not MedicalRecordEntry.objects.filter(tenant=tenant, patient__name="Paciente Cardex Bloqueado").exists()
+
+
+@pytest.mark.django_db
+def test_ai_nursing_crud_creates_updates_and_deletes_clinical_records_for_nurse(api_client):
+    tenant = _tenant(identifier="tn-ai-nursing-records", domain="tn-ai-nursing-records.local")
+    user = _user(tenant, "enfermagem_ai_nursing_records", GROUPS["ENFERMAGEM"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Enfermagem IA", document_number="BI-NUR-001")
+    _authenticate(api_client, tenant, user)
+
+    _data, record_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie registo de enfermagem {"nome":"Entrada IA","paciente":"Paciente Enfermagem IA","prioridade":"urgente","tipo":"manual","observacao":"Paciente em observação"}',
+    )
+
+    assert record_action.payload["basename"] == "nursing-registroenfermagem"
+    assert record_action.payload["data"]["patient"] == patient.id
+    assert record_action.payload["data"]["priority"] == NursingRecord.Prioridade.URGENTE
+    assert record_action.payload["data"]["record_kind"] == NursingRecord.RecordKind.MANUAL
+
+    _confirm_ai_action(api_client, record_action)
+    record = NursingRecord.objects.get(tenant=tenant, patient=patient, name="Entrada Ia")
+    assert record.observation == "Paciente em observação"
+
+    _data, vital_action = _prepare_ai_crud_action(
+        api_client,
+        f'Crie sinal vital {{"nome":"Sinais IA","registo":{record.id},"paciente":"Paciente Enfermagem IA","temperatura":"37.5","pressao_arterial":"120/80","fc":88,"fr":18,"spo2":98}}',
+    )
+
+    assert vital_action.payload["basename"] == "nursing-sinalvitalenfermagem"
+    assert vital_action.payload["data"]["record"] == record.id
+    assert vital_action.payload["data"]["patient"] == patient.id
+    assert vital_action.payload["data"]["heart_rate"] == 88
+
+    _confirm_ai_action(api_client, vital_action)
+    vital = NursingVitalSign.objects.get(tenant=tenant, record=record, name="Sinais Ia")
+    assert vital.temperature_c == Decimal("37.5")
+    assert vital.oxygen_saturation == 98
+
+    _data, update_vital_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere sinal vital id {vital.id} {{"temperatura":"37.2","spo2":99}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_vital_action.payload["basename"] == "nursing-sinalvitalenfermagem"
+    assert update_vital_action.payload["object_ref"] == str(vital.id)
+    assert update_vital_action.payload["data"]["oxygen_saturation"] == 99
+
+    _confirm_ai_action(api_client, update_vital_action)
+    vital.refresh_from_db()
+    assert vital.temperature_c == Decimal("37.2")
+    assert vital.oxygen_saturation == 99
+
+    _data, prescription_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie prescrição de enfermagem {"nome":"Cuidados IA","paciente":"Paciente Enfermagem IA","prescricao":"Hidratação oral","ativo":true}',
+    )
+    _data, evolution_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie evolução de enfermagem {"nome":"Evolução IA","paciente":"Paciente Enfermagem IA","evolucao":"Paciente estável"}',
+    )
+
+    assert prescription_action.payload["basename"] == "nursing-prescricaoenfermagem"
+    assert prescription_action.payload["data"]["patient"] == patient.id
+    assert prescription_action.payload["data"]["description"] == "Hidratação oral"
+    assert evolution_action.payload["basename"] == "nursing-evolucaoenfermagem"
+    assert evolution_action.payload["data"]["observation"] == "Paciente estável"
+
+    _confirm_ai_action(api_client, prescription_action)
+    _confirm_ai_action(api_client, evolution_action)
+    prescription = NursingPrescription.objects.get(tenant=tenant, patient=patient, name="Cuidados Ia")
+    evolution = NursingEvolution.objects.get(tenant=tenant, patient=patient, name="Evolução Ia")
+
+    for model_name, obj in (
+        ("sinal vital", vital),
+        ("prescrição de enfermagem", prescription),
+        ("evolução de enfermagem", evolution),
+        ("registo de enfermagem", record),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert NursingVitalSign.all_objects.get(id=vital.id).deleted is True
+    assert NursingPrescription.all_objects.get(id=prescription.id).deleted is True
+    assert NursingEvolution.all_objects.get(id=evolution.id).deleted is True
+    assert NursingRecord.all_objects.get(id=record.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_nursing_crud_creates_ward_bed_and_admission_for_nurse(api_client):
+    tenant = _tenant(identifier="tn-ai-nursing-ward", domain="tn-ai-nursing-ward.local")
+    user = _user(tenant, "enfermagem_ai_nursing_ward", GROUPS["ENFERMAGEM"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Enfermaria IA", document_number="BI-WARD-001")
+    _authenticate(api_client, tenant, user)
+
+    _data, ward_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie enfermaria {"nome":"Ala IA","descricao":"Internamento clínico","ativo":true}',
+    )
+
+    assert ward_action.payload["basename"] == "nursing-ward"
+    assert ward_action.payload["data"]["name"] == "Ala IA"
+    _confirm_ai_action(api_client, ward_action)
+    ward = Ward.objects.get(tenant=tenant, name="Ala Ia")
+
+    _data, bed_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie cama de enfermaria {"enfermaria":"Ala IA","numero":"A-01","ativo":true}',
+    )
+
+    assert bed_action.payload["basename"] == "nursing-camaenfermaria"
+    assert bed_action.payload["data"]["ward"] == ward.id
+    assert bed_action.payload["data"]["number"] == "A-01"
+    _confirm_ai_action(api_client, bed_action)
+    bed = WardBed.objects.get(tenant=tenant, ward=ward, number="A-01")
+
+    _data, admission_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie internamento {"cama":"A-01","paciente":"Paciente Enfermaria IA","horas_observacao":24,"proxima_medicacao":"Soro às 18h","ativo":true,"observacoes":"Observação inicial"}',
+    )
+
+    assert admission_action.payload["basename"] == "nursing-internamentoenfermaria"
+    assert admission_action.payload["data"]["bed"] == bed.id
+    assert admission_action.payload["data"]["patient"] == patient.id
+    assert admission_action.payload["data"]["estimated_observation_hours"] == 24
+
+    _confirm_ai_action(api_client, admission_action)
+    admission = WardAdmission.objects.get(tenant=tenant, bed=bed, patient=patient)
+    assert admission.next_medication_description == "Soro às 18h"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere internamento id {admission.id} {{"ativo":false,"observacoes":"Alta administrativa pela IA"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "nursing-internamentoenfermaria"
+    assert update_action.payload["data"]["active"] is False
+    assert update_action.payload["data"]["notes"] == "Alta administrativa pela IA"
+    _confirm_ai_action(api_client, update_action)
+    admission.refresh_from_db()
+    assert admission.active is False
+    assert admission.notes == "Alta administrativa pela IA"
+
+    for model_name, obj in (
+        ("internamento", admission),
+        ("cama de enfermaria", bed),
+        ("enfermaria", ward),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert WardAdmission.all_objects.get(id=admission.id).deleted is True
+    assert WardBed.all_objects.get(id=bed.id).deleted is True
+    assert Ward.all_objects.get(id=ward.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_nursing_crud_prepares_catalog_procedure_and_items_for_nurse(api_client):
+    tenant = _tenant(identifier="tn-ai-nursing-procedure", domain="tn-ai-nursing-procedure.local")
+    user = _user(tenant, "enfermagem_ai_nursing_procedure", GROUPS["ENFERMAGEM"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Procedimento IA", document_number="BI-PROC-001")
+    _authenticate(api_client, tenant, user)
+
+    _data, catalog_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie catálogo de procedimento {"nome":"Curativo IA","codigo_procedimento":"CUR-IA","descricao":"Curativo simples","preco_padrao":"150.00","duracao_estimada":20,"ativo":true}',
+    )
+
+    assert catalog_action.payload["basename"] == "nursing-procedimentocatalogo"
+    assert catalog_action.payload["data"]["procedure_code"] == "CUR-IA"
+    assert catalog_action.payload["data"]["default_price"] == "150.00"
+    _confirm_ai_action(api_client, catalog_action)
+    catalog = ProcedureCatalog.objects.get(tenant=tenant, procedure_code="CUR-IA")
+
+    _data, procedure_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie procedimento de enfermagem {"paciente":"Paciente Procedimento IA","estado":"marcado","estado_faturacao":"pendente","observacoes":"Procedimento solicitado","procedimentos_catalogo":["CUR-IA"]}',
+    )
+
+    assert procedure_action.payload["basename"] == "nursing-procedure"
+    assert procedure_action.payload["data"]["patient"] == patient.id
+    assert procedure_action.payload["data"]["workflow_status"] == Procedure.WorkflowStatus.REQUESTED
+    assert procedure_action.payload["data"]["billing_status"] == Procedure.BillingStatus.PENDING
+    assert procedure_action.payload["data"]["selected_catalogs"] == [catalog.id]
+    _confirm_ai_action(api_client, procedure_action)
+    procedure = Procedure.objects.get(tenant=tenant, patient=patient, notes="Procedimento solicitado")
+    assert list(procedure.selected_catalogs.values_list("id", flat=True)) == [catalog.id]
+
+    _data, item_action = _prepare_ai_crud_action(
+        api_client,
+        f'Crie item de procedimento {{"procedimento":{procedure.id},"catalogo":"CUR-IA","quantidade":2,"realizado":true,"estado_execucao":"pendente","observacao":"Aplicar técnica asséptica"}}',
+    )
+
+    assert item_action.payload["basename"] == "nursing-procedimentoitem"
+    assert item_action.payload["data"]["procedure"] == procedure.id
+    assert item_action.payload["data"]["catalog"] == catalog.id
+    assert item_action.payload["data"]["execution_status"] == ProcedureItem.ExecutionStatus.PENDING
+    _confirm_ai_action(api_client, item_action)
+    item = ProcedureItem.objects.get(tenant=tenant, procedure=procedure, catalog=catalog)
+    assert item.quantity == 2
+    assert item.description == "Curativo Ia"
+
+    _data, update_item_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere item de procedimento id {item.id} {{"estado_execucao":"executado","observacao":"Executado sem intercorrências"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_item_action.payload["basename"] == "nursing-procedimentoitem"
+    assert update_item_action.payload["data"]["execution_status"] == ProcedureItem.ExecutionStatus.EXECUTED
+    _confirm_ai_action(api_client, update_item_action)
+    item.refresh_from_db()
+    assert item.execution_status == ProcedureItem.ExecutionStatus.EXECUTED
+    assert item.observation == "Executado sem intercorrências"
+
+    for model_name, obj in (
+        ("item de procedimento", item),
+        ("procedimento de enfermagem", procedure),
+        ("catálogo de procedimento", catalog),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert ProcedureItem.all_objects.get(id=item.id).deleted is True
+    assert Procedure.all_objects.get(id=procedure.id).deleted is True
+    assert ProcedureCatalog.all_objects.get(id=catalog.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_nursing_crud_denies_record_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-nursing-denied", domain="tn-ai-nursing-denied.local")
+    user = _user(tenant, "recepcao_ai_nursing_denied", GROUPS["RECEPCAO"])
+    Patient.objects.create(tenant=tenant, name="Paciente Nursing Bloqueado", document_number="BI-NUR-BLOCK")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie registo de enfermagem {"nome":"Bloqueado IA","paciente":"Paciente Nursing Bloqueado","observacao":"Sem acesso"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not NursingRecord.objects.filter(tenant=tenant, name__iexact="Bloqueado IA").exists()
 
 
 @pytest.mark.django_db
