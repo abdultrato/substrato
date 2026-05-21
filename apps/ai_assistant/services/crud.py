@@ -111,6 +111,8 @@ RELATED_LOOKUP_FIELDS = (
     "code",
     "codigo",
     "number",
+    "nuit",
+    "nib",
     "serial_number",
     "message_id",
     "key_prefix",
@@ -810,7 +812,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|codigo|código|code|custom_id)\s*[:=#\-]?\s*([A-Za-z0-9_.-]+)",
+            r"\b(?:id|pk|codigo|código|code|custom_id|nuit|nib|tax_id|email)\s*[:=#\-]?\s*([A-Za-z0-9_.@-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):
@@ -1213,10 +1215,11 @@ class AiCrudActionRunner:
         object_ref = (object_ref or "").strip()
         if not object_ref:
             raise ValidationError("ID/código do registo é obrigatório.")
-        if object_ref.isdigit():
-            return int(object_ref)
 
         queryset = scoped_queryset_for_resource(descriptor=descriptor, tenant=tenant, user=user)
+        if object_ref.isdigit() and queryset.filter(pk=int(object_ref)).exists():
+            return int(object_ref)
+
         query = Q()
         model = queryset.model
         for field_name in RELATED_LOOKUP_FIELDS:

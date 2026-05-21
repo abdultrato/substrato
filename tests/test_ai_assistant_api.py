@@ -64,6 +64,7 @@ from apps.equipment_integrations.models import (
     IntegrationOrderItem,
     IntegrationRouting,
 )
+from apps.external_entities.models.company import Company
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
@@ -1532,6 +1533,98 @@ def test_ai_equipment_integrations_crud_updates_deletes_and_denies_write(api_cli
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not IntegrationEquipment.objects.filter(tenant=tenant, serial_number="INT-BLQ-001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_external_entities_crud_creates_updates_and_deletes_company(api_client):
+    tenant = _tenant(identifier="tn-ai-external-entities-crud", domain="tn-ai-external-entities-crud.local")
+    user = _user(tenant, "recepcao_ai_external_entities_crud", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie empresa nome Empresa Alfa Saúde NUIT 123456789 sede Avenida Eduardo Mondlane "
+            "contactos Marta Silva email alfa@example.com telefone principal +258 84 111 2222 "
+            "conta bancária 000123456 observações Contrato ocupacional ativo sim"
+        ),
+    )
+
+    assert create_action.payload["basename"] == "external_entities-empresa"
+    assert create_action.payload["data"]["name"] == "Alfa Saúde"
+    assert create_action.payload["data"]["nuit"] == "123456789"
+    assert create_action.payload["data"]["headquarters_address"] == "Avenida Eduardo Mondlane"
+    assert create_action.payload["data"]["contacts"] == "Marta Silva"
+    assert create_action.payload["data"]["phone1"] == "+258 84 111 2222"
+    assert create_action.payload["data"]["active"] is True
+    _confirm_ai_action(api_client, create_action)
+
+    company = Company.objects.get(tenant=tenant, nuit="123456789")
+    assert company.name == "Alfa Saúde"
+    assert company.email == "alfa@example.com"
+    assert company.nib == "000123456"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        "Altere empresa NUIT 123456789 nome Empresa Alfa Renovada telefone principal +258 84 999 0000 ativo não",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "external_entities-empresa"
+    assert update_action.payload["object_ref"] == "123456789"
+    assert update_action.payload["data"]["name"] == "Alfa Renovada"
+    assert update_action.payload["data"]["phone1"] == "+258 84 999 0000"
+    assert update_action.payload["data"]["active"] is False
+    _confirm_ai_action(api_client, update_action)
+
+    company.refresh_from_db()
+    assert company.name == "Alfa Renovada"
+    assert company.phone1 == "+258 84 999 0000"
+    assert company.active is False
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        "Remova empresa NUIT 123456789",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "external_entities-empresa"
+    _confirm_ai_action(api_client, delete_action)
+    removed = Company.all_objects.get(id=company.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_external_entities_crud_allows_occupational_medicine_and_denies_laboratory(api_client):
+    tenant = _tenant(identifier="tn-ai-external-entities-access", domain="tn-ai-external-entities-access.local")
+    occupational = _user(tenant, "medicina_ocupacional_ai_external_entities", GROUPS["MEDICINA_OCUPACIONAL"])
+    laboratory = _user(tenant, "laboratorio_ai_external_entities_denied", GROUPS["LABORATORIO"])
+
+    _authenticate(api_client, tenant, occupational)
+    _data, action = _prepare_ai_crud_action(
+        api_client,
+        "Crie entidade externa nome Clínica Parceira NUIT 987654321 contacto João ativo sim",
+    )
+    assert action.payload["basename"] == "external_entities-empresa"
+    assert action.payload["data"]["name"] == "Clínica Parceira"
+    assert action.payload["data"]["contacts"] == "João"
+    _confirm_ai_action(api_client, action)
+    assert Company.objects.filter(tenant=tenant, nuit="987654321", name="Clínica Parceira").exists()
+
+    _authenticate(api_client, tenant, laboratory)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie empresa nome Empresa Bloqueada NUIT 000000001",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Company.objects.filter(tenant=tenant, nuit="000000001").exists()
 
 
 @pytest.mark.django_db

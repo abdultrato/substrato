@@ -101,6 +101,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in equipment_integration_read
     }
+    external_entities_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -136,7 +137,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
             # Entidades externas (empresas para medicina ocupacional / terceirizações)
-            "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
+            "entidades-empresa": external_entities_crud,
             # --- API v1 routes (English prefixes) ---
             "clinical-patient": SAFE_METHODS | WRITE_METHODS,
             "clinical-labrequest": SAFE_METHODS | WRITE_METHODS,
@@ -152,7 +153,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "billing-invoicehistory": SAFE_METHODS,
             "payments-recibo": SAFE_METHODS,
             "payments-payment": SAFE_METHODS | frozenset({"POST"}),
-            "external_entities-empresa": SAFE_METHODS | WRITE_METHODS,
+            "external_entities-empresa": external_entities_crud,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
@@ -322,7 +323,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             **equipment_read,
             **equipment_integration_read,
             # Empresas/entidades externas
-            "entidades-empresa": SAFE_METHODS | WRITE_METHODS,
+            "entidades-empresa": external_entities_crud,
+            "external_entities-empresa": external_entities_crud,
             # Pode abrir catálogo de procedures para requisitar/consultar
             "enfermagem-procedimentocatalogo": SAFE_METHODS,
             "enfermagem-procedure": SAFE_METHODS | frozenset({"POST"}),
