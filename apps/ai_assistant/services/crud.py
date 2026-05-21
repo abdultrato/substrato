@@ -191,6 +191,20 @@ CHOICE_VALUE_ALIASES = {
     "breakdown": ("AVARIA",),
     "failure": ("AVARIA",),
     "falha": ("AVARIA",),
+    "funcionando": ("FUNCIONANDO",),
+    "a funcionar": ("FUNCIONANDO",),
+    "operacional": ("FUNCIONANDO",),
+    "working": ("FUNCIONANDO",),
+    "functioning": ("FUNCIONANDO",),
+    "operational": ("FUNCIONANDO",),
+    "avariado equipamento": ("AVARIADO",),
+    "avariada equipamento": ("AVARIADO",),
+    "broken": ("AVARIADO",),
+    "down": ("AVARIADO",),
+    "desligado": ("DESLIGADO",),
+    "desligada": ("DESLIGADO",),
+    "offline": ("DESLIGADO",),
+    "off": ("DESLIGADO",),
     "incidente": ("INCIDENTE",),
     "incident": ("INCIDENTE",),
     "outro": ("OUTRO",),
@@ -809,6 +823,8 @@ class AiCrudConversationManager:
             related_pk = self._lookup_related_pk(field=field, raw=raw, tenant=tenant)
             if related_pk is not None:
                 resolved[field_name] = related_pk
+            else:
+                resolved.pop(field_name, None)
         return resolved
 
     def _is_primary_key_field(self, field: CrudFieldSpec) -> bool:

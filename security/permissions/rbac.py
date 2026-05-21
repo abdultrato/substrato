@@ -88,6 +88,11 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "equipment-incident": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "equipment-ocorrencia": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
     }
+    inspection_crud = {
+        "equipamentos-inspecaodiaria": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "equipment-daily_inspection": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "equipment-inspecaodiaria": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+    }
     equipment_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in equipment_read
@@ -411,6 +416,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["MANUTENCAO"]: {
             # SGE (somente leitura)
             **equipment_read,
+            # Inspecções diárias são executadas pela manutenção no fluxo operacional.
+            **inspection_crud,
             # Incidentes/ocorrências são o fluxo operacional próprio da manutenção.
             **incident_crud,
             **equipment_integration_read,

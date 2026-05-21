@@ -1302,6 +1302,86 @@ def test_ai_equipment_crud_deletes_incident_for_laboratory_group(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_inspections_crud_creates_updates_and_deletes_for_maintenance_group(api_client):
+    tenant = _tenant(identifier="tn-ai-inspections-crud", domain="tn-ai-inspections-crud.local")
+    user = _user(tenant, "manutencao_ai_inspections_crud", GROUPS["MANUTENCAO"])
+    equipment = Equipment.objects.create(
+        tenant=tenant,
+        name="Centrífuga de Segurança",
+        serial_number="EQ-INSP-AI-001",
+        manufacturer="Eppendorf",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Create inspections equipment {equipment.serial_number} date 2026-05-09 "
+            "operation status working cleaning yes assessment Safety check passed notes No anomaly"
+        ),
+    )
+    assert create_action.payload["basename"] == "equipment-daily_inspection"
+    assert create_action.payload["data"]["equipment"] == equipment.id
+    assert create_action.payload["data"]["operation_status"] == DailyInspection.Funcionamento.FUNCIONANDO
+    assert create_action.payload["data"]["cleaning_performed"] is True
+    assert create_action.payload["data"]["assessment"] == "Safety check passed"
+    _confirm_ai_action(api_client, create_action)
+    inspection = DailyInspection.objects.get(tenant=tenant, equipment=equipment, date="2026-05-09")
+    assert inspection.notes == "No anomaly"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f"Update inspections id {inspection.id} operation status offline cleaning no notes Equipment powered down",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "equipment-daily_inspection"
+    assert update_action.payload["object_ref"] == str(inspection.id)
+    assert update_action.payload["data"]["operation_status"] == DailyInspection.Funcionamento.DESLIGADO
+    assert update_action.payload["data"]["cleaning_performed"] is False
+    assert update_action.payload["data"]["notes"] == "Equipment powered down"
+    _confirm_ai_action(api_client, update_action)
+
+    inspection.refresh_from_db()
+    assert inspection.operation_status == DailyInspection.Funcionamento.DESLIGADO
+    assert inspection.cleaning_performed is False
+    assert inspection.notes == "Equipment powered down"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Delete inspections id {inspection.id}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "equipment-daily_inspection"
+    _confirm_ai_action(api_client, delete_action)
+    removed = DailyInspection.all_objects.get(id=inspection.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_inspections_crud_denies_write_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-inspections-denied", domain="tn-ai-inspections-denied.local")
+    user = _user(tenant, "recepcao_ai_inspections_denied", GROUPS["RECEPCAO"])
+    equipment = Equipment.objects.create(tenant=tenant, name="Equipamento Inspeção Bloqueada", serial_number="EQ-INSP-BLQ-001")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Create inspections equipment {equipment.serial_number} operation status working assessment Bloqueado",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not DailyInspection.objects.filter(tenant=tenant, equipment=equipment, assessment="Bloqueado").exists()
+
+
+@pytest.mark.django_db
 def test_ai_incidents_crud_creates_updates_and_deletes_for_maintenance_group(api_client):
     tenant = _tenant(identifier="tn-ai-incidents-crud", domain="tn-ai-incidents-crud.local")
     user = _user(tenant, "manutencao_ai_incidents_crud", GROUPS["MANUTENCAO"])
