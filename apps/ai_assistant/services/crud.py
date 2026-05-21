@@ -111,6 +111,7 @@ RELATED_LOOKUP_FIELDS = (
     "code",
     "codigo",
     "number",
+    "serial_number",
     "unit_number",
     "bag_identifier",
     "student_code",

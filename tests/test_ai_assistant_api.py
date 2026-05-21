@@ -52,6 +52,10 @@ from apps.education.models import (
     StudentProfile,
     TeacherProfile,
 )
+from apps.equipment.models.equipment import Equipment
+from apps.incidents.models.incident import Incident
+from apps.inspections.models.daily_inspection import DailyInspection
+from apps.maintenance.models.maintenance import Maintenance
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 from services.reports.async_exports import get_export_job_result, get_export_job_state
@@ -1115,6 +1119,178 @@ def test_ai_education_crud_updates_course_and_denies_student_write(api_client):
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Course.objects.filter(tenant=tenant, code="BLQ-IA").exists()
+
+
+@pytest.mark.django_db
+def test_ai_equipment_crud_creates_equipment_for_laboratory_group(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-create", domain="tn-ai-equipment-create.local")
+    user = _user(tenant, "laboratorio_ai_equipment_create", GROUPS["LABORATORIO"])
+    _authenticate(api_client, tenant, user)
+
+    _data, action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie equipamento nome Centrifuga X serial EQ-IA-001 estado aquisição novo "
+            "estado operacional funcionando fabricante Biobase modelo BKC local Laboratório "
+            "responsável Ana ativo sim"
+        ),
+    )
+
+    assert action.payload["basename"] == "equipment-equipment"
+    assert action.payload["data"]["name"] == "Centrifuga X"
+    assert action.payload["data"]["serial_number"] == "EQ-IA-001"
+    assert action.payload["data"]["acquisition_status"] == Equipment.AcquisitionStatus.NEW
+    assert action.payload["data"]["initial_operational_status"] == Equipment.OperationalStatus.WORKING
+    assert action.payload["data"]["active"] is True
+
+    _confirm_ai_action(api_client, action)
+    equipment = Equipment.objects.get(tenant=tenant, serial_number="EQ-IA-001")
+    assert equipment.name == "Centrifuga X"
+    assert equipment.manufacturer == "Biobase"
+    assert equipment.location == "Laboratório"
+
+
+@pytest.mark.django_db
+def test_ai_equipment_crud_creates_inspection_maintenance_and_incident(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-flow", domain="tn-ai-equipment-flow.local")
+    user = _user(tenant, "laboratorio_ai_equipment_flow", GROUPS["LABORATORIO"])
+    equipment = Equipment.objects.create(
+        tenant=tenant,
+        name="Analisador Hematológico",
+        serial_number="EQ-FLOW-001",
+        manufacturer="Mindray",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, inspection_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie inspeção diária equipamento {equipment.serial_number} data 2026-05-01 "
+            "funcionamento avariado limpeza sim avaliação Ruido anormal observações Retirar de uso"
+        ),
+    )
+    assert inspection_action.payload["basename"] == "equipment-daily_inspection"
+    assert inspection_action.payload["data"]["equipment"] == equipment.id
+    assert inspection_action.payload["data"]["operation_status"] == DailyInspection.Funcionamento.AVARIADO
+    assert inspection_action.payload["data"]["cleaning_performed"] is True
+    _confirm_ai_action(api_client, inspection_action)
+    inspection = DailyInspection.objects.get(tenant=tenant, equipment=equipment, date="2026-05-01")
+    assert inspection.assessment == "Ruido anormal"
+
+    _data, maintenance_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie manutenção equipamento {equipment.serial_number} tipo mensal "
+            "agendada para 2026-05-03 realizada em 2026-05-04 descrição Substituição preventiva técnico João"
+        ),
+    )
+    assert maintenance_action.payload["basename"] == "equipment-maintenance"
+    assert maintenance_action.payload["data"]["equipment"] == equipment.id
+    assert maintenance_action.payload["data"]["type"] == Maintenance.Type.MONTHLY
+    _confirm_ai_action(api_client, maintenance_action)
+    maintenance = Maintenance.objects.get(tenant=tenant, equipment=equipment, scheduled_date="2026-05-03")
+    assert maintenance.performed_date.isoformat() == "2026-05-04"
+    assert maintenance.technician == "João"
+
+    _data, incident_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie ocorrência equipamento {equipment.serial_number} data 2026-05-02T09:00:00+02:00 "
+            "tipo avaria descrição Motor aquece contacto suporte 841112222 resolvido não"
+        ),
+    )
+    assert incident_action.payload["basename"] == "equipment-incident"
+    assert incident_action.payload["data"]["equipment"] == equipment.id
+    assert incident_action.payload["data"]["type"] == Incident.Type.BREAKDOWN
+    assert incident_action.payload["data"]["resolved"] is False
+    _confirm_ai_action(api_client, incident_action)
+    incident = Incident.objects.get(tenant=tenant, equipment=equipment, support_contact="841112222")
+    assert incident.description == "Motor aquece"
+
+
+@pytest.mark.django_db
+def test_ai_equipment_crud_updates_equipment_by_serial_number(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-update", domain="tn-ai-equipment-update.local")
+    user = _user(tenant, "laboratorio_ai_equipment_update", GROUPS["LABORATORIO"])
+    equipment = Equipment.objects.create(
+        tenant=tenant,
+        name="Microscópio",
+        serial_number="EQ-UPD-001",
+        initial_operational_status=Equipment.OperationalStatus.WORKING,
+        active=True,
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Altere equipamento código EQ-UPD-001 localização Sala B responsável Marta "
+            "estado operacional desligado ativo não"
+        ),
+        action_type="ai_crud_update",
+    )
+
+    assert action.payload["basename"] == "equipment-equipment"
+    assert action.payload["object_ref"] == "EQ-UPD-001"
+    assert action.payload["data"]["location"] == "Sala B"
+    assert action.payload["data"]["responsible"] == "Marta"
+    assert action.payload["data"]["initial_operational_status"] == Equipment.OperationalStatus.OFFLINE
+    assert action.payload["data"]["active"] is False
+
+    _confirm_ai_action(api_client, action)
+    equipment.refresh_from_db()
+    assert equipment.location == "Sala B"
+    assert equipment.responsible == "Marta"
+    assert equipment.initial_operational_status == Equipment.OperationalStatus.OFFLINE
+    assert equipment.active is False
+
+
+@pytest.mark.django_db
+def test_ai_equipment_crud_deletes_incident_for_laboratory_group(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-delete", domain="tn-ai-equipment-delete.local")
+    user = _user(tenant, "laboratorio_ai_equipment_delete", GROUPS["LABORATORIO"])
+    equipment = Equipment.objects.create(tenant=tenant, name="Autoclave", serial_number="EQ-DEL-001")
+    incident = Incident.objects.create(
+        tenant=tenant,
+        equipment=equipment,
+        type=Incident.Type.INCIDENT,
+        description="Teste removível",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova ocorrência de equipamento id {incident.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert action.payload["basename"] == "equipment-incident"
+    _confirm_ai_action(api_client, action)
+    removed = Incident.all_objects.get(id=incident.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_equipment_crud_denies_write_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-equipment-denied", domain="tn-ai-equipment-denied.local")
+    user = _user(tenant, "recepcao_ai_equipment_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie equipamento nome Bloqueado serial EQ-BLQ-001",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Equipment.objects.filter(tenant=tenant, serial_number="EQ-BLQ-001").exists()
 
 
 @pytest.mark.django_db
