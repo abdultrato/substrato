@@ -113,6 +113,8 @@ RELATED_LOOKUP_FIELDS = (
     "number",
     "nuit",
     "nib",
+    "document_number",
+    "phone",
     "serial_number",
     "message_id",
     "key_prefix",
@@ -183,6 +185,59 @@ CHOICE_VALUE_ALIASES = {
     "processado": ("PROC",),
     "processada": ("PROC",),
     "erro": ("ERRO",),
+    "solicitada": ("SOLIC",),
+    "solicitado": ("SOLIC",),
+    "aprovada": ("APROV",),
+    "aprovado": ("APROV",),
+    "gozada": ("GOZADA",),
+    "gozado": ("GOZADA",),
+    "cancelada": ("CANCEL",),
+    "demissao": ("DEMISSAO",),
+    "demissão": ("DEMISSAO",),
+    "rescisao": ("RESCISAO",),
+    "rescisão": ("RESCISAO",),
+    "fim contrato": ("FIM_CONTRATO",),
+    "fim de contrato": ("FIM_CONTRATO",),
+    "ordinaria": ("ORDINARIA",),
+    "ordinária": ("ORDINARIA",),
+    "extraordinaria": ("EXTRAORDINARIA",),
+    "extraordinária": ("EXTRAORDINARIA",),
+    "conjuge": ("CONJUGE",),
+    "cônjuge": ("CONJUGE",),
+    "filho": ("FILHO",),
+    "filha": ("FILHO",),
+    "pai": ("PAI",),
+    "mae": ("PAI",),
+    "mãe": ("PAI",),
+    "irmao": ("IRMAO",),
+    "irmão": ("IRMAO",),
+    "irma": ("IRMAO",),
+    "irmã": ("IRMAO",),
+    "leve": ("LEVE",),
+    "moderada": ("MODERADA",),
+    "moderado": ("MODERADA",),
+    "grave": ("GRAVE",),
+    "gravissima": ("GRAVISSIMA",),
+    "gravíssima": ("GRAVISSIMA",),
+    "aberto": ("ABERTO",),
+    "aberta": ("ABERTO",),
+    "encerrado": ("ENCERRADO",),
+    "encerrada": ("ENCERRADO",),
+    "segunda feira": ("0",),
+    "segunda-feira": ("0",),
+    "terca feira": ("1",),
+    "terça feira": ("1",),
+    "terca-feira": ("1",),
+    "terça-feira": ("1",),
+    "quarta feira": ("2",),
+    "quarta-feira": ("2",),
+    "quinta feira": ("3",),
+    "quinta-feira": ("3",),
+    "sexta feira": ("4",),
+    "sexta-feira": ("4",),
+    "sabado": ("5",),
+    "sábado": ("5",),
+    "domingo": ("6",),
 }
 
 
@@ -728,6 +783,11 @@ class AiCrudConversationManager:
                 resolved[field_name] = self._resolve_many_related_value(field=field, value=value, tenant=tenant)
                 continue
             if isinstance(value, int):
+                if self._related_pk_exists(field=field, pk=value, tenant=tenant):
+                    continue
+                related_pk = self._lookup_related_pk(field=field, raw=str(value), tenant=tenant)
+                if related_pk is not None:
+                    resolved[field_name] = related_pk
                 continue
             raw = str(value or "").strip()
             if not raw:
@@ -797,6 +857,21 @@ class AiCrudConversationManager:
         obj = queryset.filter(query).order_by("-id").first()
         return getattr(obj, "pk", None) if obj is not None else None
 
+    def _related_pk_exists(self, *, field: CrudFieldSpec, pk: int, tenant) -> bool:
+        if not field.related_app_label or not field.related_model_name:
+            return True
+        try:
+            model = django_apps.get_model(field.related_app_label, field.related_model_name)
+        except Exception:
+            return True
+
+        queryset = model._default_manager.all()
+        if tenant is not None and self._model_has_field(model, "tenant"):
+            queryset = queryset.filter(tenant=tenant)
+        if self._model_has_field(model, "deleted"):
+            queryset = queryset.filter(deleted=False)
+        return queryset.filter(pk=pk).exists()
+
     def _model_has_field(self, model, field_name: str) -> bool:
         try:
             model._meta.get_field(field_name)
@@ -812,7 +887,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|codigo|código|code|custom_id|nuit|nib|tax_id|email)\s*[:=#\-]?\s*([A-Za-z0-9_.@-]+)",
+            r"\b(?:id|pk|codigo|código|code|custom_id|nuit|nib|tax_id|email|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):

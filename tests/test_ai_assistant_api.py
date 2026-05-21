@@ -65,6 +65,17 @@ from apps.equipment_integrations.models import (
     IntegrationRouting,
 )
 from apps.external_entities.models.company import Company
+from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.disciplinary_process import DisciplinaryProcess
+from apps.human_resources.models.employee import Employee
+from apps.human_resources.models.family_dependent import FamilyDependent
+from apps.human_resources.models.job_title import JobTitle
+from apps.human_resources.models.overtime import Overtime
+from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.profession import Profession
+from apps.human_resources.models.termination import Termination
+from apps.human_resources.models.vacation import Vacation
+from apps.human_resources.models.work_schedule import WorkSchedule
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maintenance.models.maintenance import Maintenance
@@ -1625,6 +1636,203 @@ def test_ai_external_entities_crud_allows_occupational_medicine_and_denies_labor
     assert "não posso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Company.objects.filter(tenant=tenant, nuit="000000001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_human_resources_crud_creates_core_employee_and_payroll_resources(api_client):
+    tenant = _tenant(identifier="tn-ai-human-resources-flow", domain="tn-ai-human-resources-flow.local")
+    user = _user(tenant, "rh_ai_human_resources_flow", GROUPS["RECURSOS_HUMANOS"])
+    _authenticate(api_client, tenant, user)
+
+    _data, role_action = _prepare_ai_crud_action(
+        api_client,
+        "Crie cargo nome Técnico de RH descrição Gestão de pessoas médico não",
+    )
+    assert role_action.payload["basename"] == "human_resources-role"
+    assert role_action.payload["data"]["name"] == "Técnico de RH"
+    assert role_action.payload["data"]["is_doctor"] is False
+    _confirm_ai_action(api_client, role_action)
+    role = JobTitle.objects.get(tenant=tenant, name="Técnico De Rh")
+
+    _data, profession_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie profissão nome Analista RH salário base 50000 valor hora ordinária 250 "
+            "valor hora extraordinária 375 progressão meses 12 mudança carreira meses 24 "
+            "aumento agregado 500 ativo sim"
+        ),
+    )
+    assert profession_action.payload["basename"] == "human_resources-profissao"
+    assert profession_action.payload["data"]["name"] == "Analista RH"
+    assert profession_action.payload["data"]["base_salary"] == "50000"
+    _confirm_ai_action(api_client, profession_action)
+    profession = Profession.objects.get(tenant=tenant, name="Analista Rh")
+
+    _data, employee_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie funcionário "
+            '{"name": "Maria RH", "role": "Técnico De Rh", "profession": "Analista Rh", '
+            '"nuit": "111222333", "document_number": "BI123RH", "email": "maria.rh@example.com", '
+            '"phone": "+258 84 100 2000", "admission_date": "2024-01-15", '
+            '"nominal_salary": "50000.00", "salary_increase": "2500.00", '
+            '"base_month_hours": 176, "status": "ATIVO"}'
+        ),
+    )
+    assert employee_action.payload["basename"] == "human_resources-employee"
+    assert employee_action.payload["data"]["role"] == role.id
+    assert employee_action.payload["data"]["profession"] == profession.id
+    assert employee_action.payload["data"]["nuit"] == "111222333"
+    _confirm_ai_action(api_client, employee_action)
+    employee = Employee.objects.get(tenant=tenant, nuit="111222333")
+    assert employee.name == "Maria Rh"
+    assert employee.nominal_salary == Decimal("50000.00")
+
+    _data, dependent_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            "Crie agregado familiar "
+            '{"employee": "111222333", "name": "Ana RH", "relationship": "FILHO", '
+            '"birth_date": "2015-02-01", "phone": "+258 84 200 3000", "lives_with_employee": true}'
+        ),
+    )
+    assert dependent_action.payload["basename"] == "human_resources-agregadofamiliar"
+    assert dependent_action.payload["data"]["employee"] == employee.id
+    _confirm_ai_action(api_client, dependent_action)
+    assert FamilyDependent.objects.filter(tenant=tenant, employee=employee, relationship=FamilyDependent.Parentesco.FILHO).exists()
+
+    _data, schedule_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie horário {"employee": "111222333", "weekday": 1, "start_time": "08:00", "end_time": "16:00", "active": true}',
+    )
+    assert schedule_action.payload["basename"] == "human_resources-horario"
+    assert schedule_action.payload["data"]["employee"] == employee.id
+    _confirm_ai_action(api_client, schedule_action)
+    assert WorkSchedule.objects.filter(tenant=tenant, employee=employee, weekday=1).exists()
+
+    _data, absence_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie falta {"employee": "111222333", "date": "2026-05-03", "reason": "Consulta familiar", "justified": true}',
+    )
+    assert absence_action.payload["basename"] == "human_resources-falta"
+    _confirm_ai_action(api_client, absence_action)
+    absence = Absence.objects.get(tenant=tenant, employee=employee, date="2026-05-03")
+    assert absence.justified is True
+
+    _data, vacation_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie férias {"employee": "111222333", "start_date": "2026-06-01", '
+            '"end_date": "2026-06-10", "status": "APROV", "notes": "Plano aprovado"}'
+        ),
+    )
+    assert vacation_action.payload["basename"] == "human_resources-ferias"
+    _confirm_ai_action(api_client, vacation_action)
+    assert Vacation.objects.filter(tenant=tenant, employee=employee, status=Vacation.Status.APPROVED).exists()
+
+    _data, overtime_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie hora extra {"employee": "111222333", "date": "2026-05-05", '
+            '"kind": "EXTRAORDINARIA", "hours": "4.00", "multiplier": "1.50", "notes": "Fecho mensal"}'
+        ),
+    )
+    assert overtime_action.payload["basename"] == "human_resources-horaextra"
+    _confirm_ai_action(api_client, overtime_action)
+    assert Overtime.objects.filter(tenant=tenant, employee=employee, hours=Decimal("4.00")).exists()
+
+    _data, disciplinary_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            'Crie processo disciplinar {"employee": "111222333", "incident_date": "2026-05-06", '
+            '"incident_type": "Atraso crítico", "severity": "GRAVE", "description": "Atraso repetido", '
+            '"action_taken": "Advertência", "status": "ABERTO"}'
+        ),
+    )
+    assert disciplinary_action.payload["basename"] == "human_resources-processodisciplinar"
+    _confirm_ai_action(api_client, disciplinary_action)
+    assert DisciplinaryProcess.objects.filter(tenant=tenant, employee=employee, severity=DisciplinaryProcess.Severity.SERIOUS).exists()
+
+    _data, termination_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie dispensa {"employee": "111222333", "date": "2026-12-31", "type": "RESCISAO", "reason": "Fim de contrato anual"}',
+    )
+    assert termination_action.payload["basename"] == "human_resources-dispensa"
+    _confirm_ai_action(api_client, termination_action)
+    assert Termination.objects.filter(tenant=tenant, employee=employee, type=Termination.Type.TERMINATION).exists()
+
+    _data, payroll_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie folha de pagamento {"employee": "111222333", "year": 2026, "month": 5, "other_discounts_value": "100.00"}',
+    )
+    assert payroll_action.payload["basename"] == "human_resources-folhapagamento"
+    assert payroll_action.payload["data"]["employee"] == employee.id
+    _confirm_ai_action(api_client, payroll_action)
+    payroll = Payroll.objects.get(tenant=tenant, employee=employee, year=2026, month=5)
+    assert payroll.nominal_salary == Decimal("50000.00")
+    assert payroll.total_salary > Decimal("0.00")
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova falta id {absence.id}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "human_resources-falta"
+    _confirm_ai_action(api_client, delete_action)
+    assert Absence.all_objects.get(id=absence.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_human_resources_crud_updates_employee_by_nuit_and_denies_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-human-resources-update", domain="tn-ai-human-resources-update.local")
+    rh_user = _user(tenant, "rh_ai_human_resources_update", GROUPS["RECURSOS_HUMANOS"])
+    recepcao = _user(tenant, "recepcao_ai_human_resources_denied", GROUPS["RECEPCAO"])
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Funcionario Atualizar",
+        nuit="222333444",
+        document_number="BI-RH-222",
+        phone="+258 84 000 0000",
+        nominal_salary=Decimal("20000.00"),
+        status=Employee.Status.ACTIVE,
+    )
+    _authenticate(api_client, tenant, rh_user)
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        "Altere funcionário NUIT 222333444 telefone +258 84 555 6666 salário nominal 23000 aumento salarial 1500 estado inativo",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "human_resources-employee"
+    assert update_action.payload["object_ref"] == "222333444"
+    assert update_action.payload["data"]["phone"] == "+258 84 555 6666"
+    assert update_action.payload["data"]["nominal_salary"] == "23000"
+    assert update_action.payload["data"]["salary_increase"] == "1500"
+    assert update_action.payload["data"]["status"] == Employee.Status.INACTIVE
+    _confirm_ai_action(api_client, update_action)
+
+    employee.refresh_from_db()
+    assert employee.phone == "+258 84 555 6666"
+    assert employee.nominal_salary == Decimal("23000.00")
+    assert employee.salary_increase == Decimal("1500.00")
+    assert employee.status == Employee.Status.INACTIVE
+
+    _authenticate(api_client, tenant, recepcao)
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie funcionário nome Bloqueado RH NUIT 999000111",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Employee.objects.filter(tenant=tenant, nuit="999000111").exists()
 
 
 @pytest.mark.django_db

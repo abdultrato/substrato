@@ -102,6 +102,30 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         for basename in equipment_integration_read
     }
     external_entities_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    human_resources_crud = {
+        "recursos_humanos-role": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-profissao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-employee": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-processodisciplinar": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-agregadofamiliar": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-horario": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-falta": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-ferias": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-dispensa": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-horaextra": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "recursos_humanos-folhapagamento": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-role": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-profissao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-employee": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-processodisciplinar": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-agregadofamiliar": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-horario": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-falta": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-ferias": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-dispensa": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-horaextra": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "human_resources-folhapagamento": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+    }
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -424,15 +448,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         },
         g["RECURSOS_HUMANOS"]: {
             # RH (CRUD interno)
-            "recursos_humanos-role": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-employee": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-agregadofamiliar": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-horario": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-falta": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-ferias": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-dispensa": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-horaextra": SAFE_METHODS | WRITE_METHODS,
-            "recursos_humanos-folhapagamento": SAFE_METHODS | WRITE_METHODS,
+            **human_resources_crud,
             # SGE (somente leitura)
             **equipment_read,
             **equipment_integration_read,
