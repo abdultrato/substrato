@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
+  BarChart3,
   Bot,
   BrainCircuit,
   CalendarDays,
@@ -16,7 +17,9 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  Table2,
   TerminalSquare,
+  TrendingUp,
   UserPlus,
 } from "lucide-react"
 
@@ -44,6 +47,69 @@ type AiChatResponse = {
   suggested_actions?: AiSuggestedAction[]
   investigation?: AiInvestigation | null
   conversation?: AiConversationState
+  schema?: AiResponseSchema
+}
+
+type AiMetric = {
+  label?: string
+  label_pt?: string
+  label_en?: string
+  value?: string | number | boolean | null
+}
+
+type AiAnalyticsGroup = {
+  field?: string
+  label?: string
+  rows?: Array<{ value?: string | number | null; count?: number }>
+}
+
+type AiAnalyticsSchema = {
+  query_kind?: string
+  title?: string
+  resource_label?: string
+  range?: { start_date?: string; end_date?: string } | null
+  period_bucket?: string
+  total_count?: number
+  comparison?: {
+    previous_start_date?: string
+    previous_end_date?: string
+    previous_count?: number
+    current_count?: number
+    absolute_delta?: number
+    percent_delta?: number | null
+  } | null
+  groups?: AiAnalyticsGroup[]
+  period_rows?: Array<{ period?: string; day?: string; count?: number }>
+  numeric_summaries?: Array<{
+    field?: string
+    label?: string
+    total?: string | number | null
+    average?: string | number | null
+    minimum?: string | number | null
+    maximum?: string | number | null
+  }>
+  sample_rows?: Array<Record<string, string | number | boolean | null>>
+  insights?: Array<{
+    label?: string
+    label_pt?: string
+    label_en?: string
+    severity?: "info" | "success" | "warning" | "danger"
+  }>
+  next_questions?: Array<{
+    label?: string
+    label_pt?: string
+    label_en?: string
+  }>
+}
+
+type AiResponseSchema = {
+  cards?: Array<{
+    tool_name?: string
+    title?: string
+    metrics?: AiMetric[]
+    duration_ms?: number
+  }>
+  analytics?: AiAnalyticsSchema | null
 }
 
 type AiConversationState = {
@@ -80,6 +146,7 @@ type ConversationMessage = {
   suggestedActions?: AiSuggestedAction[]
   investigation?: AiInvestigation | null
   conversation?: AiConversationState
+  schema?: AiResponseSchema
 }
 
 function formatToolName(value: string) {
@@ -98,6 +165,202 @@ function formatDate(value?: string) {
   } catch {
     return value
   }
+}
+
+function formatValue(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—"
+  if (typeof value === "number") {
+    return Number.isInteger(value) ? String(value) : value.toFixed(2)
+  }
+  if (typeof value === "boolean") return value ? "Sim" : "Não"
+  return String(value)
+}
+
+function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema; onAsk?: (question: string) => void }) {
+  const { t, language } = useLanguage()
+  const cards = schema?.cards || []
+  const analytics = schema?.analytics || null
+  if (!cards.length && !analytics) return null
+
+  const comparison = analytics?.comparison || null
+  const primaryGroup = analytics?.groups?.[0]
+  const periodRows = analytics?.period_rows || []
+  const numericRows = analytics?.numeric_summaries || []
+  const sampleRows = analytics?.sample_rows || []
+  const insights = analytics?.insights || []
+  const nextQuestions = analytics?.next_questions || []
+
+  return (
+    <div className="mt-3 space-y-3">
+      {cards.length ? (
+        <div className="grid gap-2 md:grid-cols-2">
+          {cards.slice(0, 4).map((card, index) => (
+            <div key={`${card.tool_name || "card"}-${index}`} className="rounded-2xl border border-border bg-muted/25 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <BarChart3 size={15} />
+                  <span className="line-clamp-1">{card.title || card.tool_name}</span>
+                </div>
+                {typeof card.duration_ms === "number" ? (
+                  <Badge variant="info">{card.duration_ms} ms</Badge>
+                ) : null}
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {(card.metrics || []).slice(0, 6).map((metric, metricIndex) => (
+                  <div key={`${card.tool_name || "metric"}-${metricIndex}`} className="rounded-xl bg-card p-2">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {language === "en" ? metric.label_en || metric.label : metric.label_pt || metric.label}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-foreground">{formatValue(metric.value)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {analytics ? (
+        <div className="rounded-2xl border border-border bg-background p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <TrendingUp size={15} />
+                {analytics.title || t("Análise estruturada", "Structured analysis")}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {analytics.resource_label || "—"}
+                {analytics.range?.start_date && analytics.range?.end_date
+                  ? ` · ${analytics.range.start_date} → ${analytics.range.end_date}`
+                  : ""}
+              </div>
+            </div>
+            {analytics.period_bucket ? <Badge variant="info">{analytics.period_bucket}</Badge> : null}
+          </div>
+
+          {insights.length ? (
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {insights.slice(0, 4).map((insight, index) => {
+                const text = language === "en" ? insight.label_en || insight.label : insight.label_pt || insight.label
+                const variant = insight.severity === "success" ? "success" : insight.severity === "warning" ? "warning" : "info"
+                return (
+                  <div key={`${text || "insight"}-${index}`} className="rounded-xl border border-border bg-muted/25 p-3 text-sm">
+                    <Badge variant={variant}>{t("Leitura", "Reading")}</Badge>
+                    <div className="mt-2 text-foreground">{text}</div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : null}
+
+          {comparison ? (
+            <div className="mt-3 rounded-xl border border-border bg-muted/25 p-3 text-sm">
+              <div className="font-semibold text-foreground">{t("Comparação automática", "Automatic comparison")}</div>
+              <div className="mt-1 text-muted-foreground">
+                {t("Período anterior", "Previous period")}: {comparison.previous_start_date || "—"} → {comparison.previous_end_date || "—"}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge variant="default">{t("Atual", "Current")}: {formatValue(comparison.current_count)}</Badge>
+                <Badge variant="default">{t("Anterior", "Previous")}: {formatValue(comparison.previous_count)}</Badge>
+                <Badge variant={(comparison.absolute_delta || 0) >= 0 ? "success" : "warning"}>
+                  {t("Variação", "Change")}: {comparison.absolute_delta && comparison.absolute_delta > 0 ? "+" : ""}{formatValue(comparison.absolute_delta)}
+                  {comparison.percent_delta !== null && comparison.percent_delta !== undefined ? ` · ${comparison.percent_delta > 0 ? "+" : ""}${comparison.percent_delta}%` : ""}
+                </Badge>
+              </div>
+            </div>
+          ) : null}
+
+          {numericRows.length ? (
+            <div className="mt-3 overflow-hidden rounded-xl border border-border">
+              <div className="flex items-center gap-2 border-b border-border bg-muted/25 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Table2 size={14} />
+                {t("Indicadores numéricos", "Numeric indicators")}
+              </div>
+              <div className="divide-y divide-border">
+                {numericRows.slice(0, 5).map((row) => (
+                  <div key={row.field || row.label} className="grid grid-cols-2 gap-2 px-3 py-2 text-xs md:grid-cols-5">
+                    <div className="font-semibold text-foreground">{row.label || row.field}</div>
+                    <div>{t("Total", "Total")}: {formatValue(row.total)}</div>
+                    <div>{t("Média", "Average")}: {formatValue(row.average)}</div>
+                    <div>{t("Mín.", "Min")}: {formatValue(row.minimum)}</div>
+                    <div>{t("Máx.", "Max")}: {formatValue(row.maximum)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {primaryGroup?.rows?.length ? (
+            <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Distribuição principal", "Main breakdown")}: {primaryGroup.label || primaryGroup.field}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {primaryGroup.rows.slice(0, 8).map((row) => (
+                  <Badge key={`${row.value}-${row.count}`} variant="default">
+                    {formatValue(row.value)} · {formatValue(row.count)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {periodRows.length ? (
+            <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Tendência", "Trend")}
+              </div>
+              <div className="mt-2 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                {periodRows.slice(0, 9).map((row, index) => (
+                  <div key={`${row.period || row.day}-${index}`} className="flex items-center justify-between rounded-lg bg-card px-2 py-1 text-xs">
+                    <span>{row.period || row.day || "—"}</span>
+                    <span className="font-semibold">{formatValue(row.count)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {sampleRows.length ? (
+            <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Amostras seguras", "Safe samples")}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {sampleRows.map((row, index) => {
+                  const value = row.custom_id || row.student_code || row.teacher_code || row.code || row.number || row.serial_number || row.name || row.title || row.id
+                  return <Badge key={`${value}-${index}`} variant="info">{formatValue(value)}</Badge>
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {nextQuestions.length ? (
+            <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Continuar investigação", "Continue investigation")}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {nextQuestions.map((question, index) => {
+                  const text = language === "en" ? question.label_en || question.label : question.label_pt || question.label
+                  return (
+                    <button
+                      key={`${text || "question"}-${index}`}
+                      type="button"
+                      onClick={() => text && onAsk?.(text)}
+                      className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                    >
+                      {text}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function AiContextAside({
@@ -372,6 +635,7 @@ export default function AiOperationalPage() {
           suggestedActions: response.suggested_actions || [],
           investigation: response.investigation || null,
           conversation: response.conversation,
+          schema: response.schema,
         },
       ])
       if (response.investigation) {
@@ -645,6 +909,8 @@ export default function AiOperationalPage() {
                         </div>
                       </div>
                     ) : null}
+
+                    <AiStructuredResultPanel schema={message.schema} onAsk={handleAskRecommended} />
 
                     <AiInvestigationPanel
                       investigation={message.investigation || null}

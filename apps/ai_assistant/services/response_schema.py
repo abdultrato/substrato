@@ -50,7 +50,34 @@ def build_response_schema(
             }
             for action in suggested_actions
         ],
+        "analytics": _analytics_schema(tool_results=tool_results, language=language),
         "investigation": _investigation_schema(investigation=investigation, language=language),
+    }
+
+
+def _analytics_schema(*, tool_results: list[dict[str, Any]], language: str) -> dict[str, Any] | None:
+    sql_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
+    if not sql_result:
+        return None
+    analytics = sql_result.get("analytics") or {}
+    summary = sql_result.get("summary") or {}
+    query_kind = analytics.get("query_kind") or summary.get("query_kind") or ""
+    resource = analytics.get("resource") or summary.get("resource") or {}
+    resource_label = resource.get("label_en") if language == "en" else resource.get("label_pt")
+    return {
+        "query_kind": query_kind,
+        "title": summary.get("title_en") if language == "en" else summary.get("title_pt"),
+        "resource_label": resource_label or resource.get("basename") or "",
+        "range": analytics.get("range") or summary.get("range"),
+        "period_bucket": analytics.get("period_bucket") or summary.get("period_bucket") or "",
+        "total_count": analytics.get("total_count"),
+        "comparison": analytics.get("comparison") or summary.get("comparison"),
+        "groups": (analytics.get("groups") or summary.get("groups") or [])[:4],
+        "period_rows": (analytics.get("period_rows") or analytics.get("daily_rows") or summary.get("period_rows") or summary.get("daily_rows") or [])[:90],
+        "numeric_summaries": (analytics.get("numeric_summaries") or summary.get("numeric_summaries") or [])[:5],
+        "sample_rows": (analytics.get("sample_rows") or summary.get("sample_rows") or [])[:5],
+        "insights": (analytics.get("insights") or summary.get("insights") or [])[:6],
+        "next_questions": (analytics.get("next_questions") or summary.get("next_questions") or [])[:4],
     }
 
 

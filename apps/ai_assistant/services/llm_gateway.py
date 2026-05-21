@@ -377,6 +377,9 @@ class LocalLlmGateway:
             groups = analytics.get("groups") or summary.get("groups") or []
             sample_rows = analytics.get("sample_rows") or summary.get("sample_rows") or []
             search_query = analytics.get("search_query") or summary.get("search_query") or ""
+            numeric_summaries = analytics.get("numeric_summaries") or summary.get("numeric_summaries") or []
+            comparison = analytics.get("comparison") or summary.get("comparison") or {}
+            insights = analytics.get("insights") or summary.get("insights") or []
 
             if language == "en":
                 direct = f"I queried {label} with parameterized SQL and found {total_count} matching record(s)."
@@ -389,11 +392,17 @@ class LocalLlmGateway:
                     direct += f" Text filter: '{search_query}'."
 
                 group_text = self._sql_group_lines(groups=groups, language="en")
+                numeric_text = self._sql_numeric_lines(numeric_summaries=numeric_summaries, language="en")
+                comparison_text = self._sql_comparison_line(comparison=comparison, language="en")
+                insight_text = self._sql_insight_lines(insights=insights, language="en")
                 sample_text = self._sql_sample_line(sample_rows=sample_rows, language="en")
                 return "\n\n".join(
                     part
                     for part in [
                         direct,
+                        comparison_text,
+                        insight_text,
+                        numeric_text,
                         group_text,
                         sample_text,
                         f"Internal evidence used: API resource catalog, RBAC and SQL template over {resource.get('model') or label}.",
@@ -412,11 +421,17 @@ class LocalLlmGateway:
                 direct += f" Filtro textual: '{search_query}'."
 
             group_text = self._sql_group_lines(groups=groups, language="pt")
+            numeric_text = self._sql_numeric_lines(numeric_summaries=numeric_summaries, language="pt")
+            comparison_text = self._sql_comparison_line(comparison=comparison, language="pt")
+            insight_text = self._sql_insight_lines(insights=insights, language="pt")
             sample_text = self._sql_sample_line(sample_rows=sample_rows, language="pt")
             return "\n\n".join(
                 part
                 for part in [
                     direct,
+                    comparison_text,
+                    insight_text,
+                    numeric_text,
                     group_text,
                     sample_text,
                     f"Evidência interna usada: catálogo de recursos da API, RBAC e template SQL sobre {resource.get('model') or label}.",
@@ -530,6 +545,55 @@ class LocalLlmGateway:
             return "I did not find a complete CRUD operation to prepare."
         return "Não encontrei uma operação de CRUD completa para preparar."
 
+    def _sql_numeric_lines(self, *, numeric_summaries: list[dict[str, Any]], language: str) -> str:
+        if not numeric_summaries:
+            return ""
+        title = "Numeric indicators:" if language == "en" else "Indicadores numéricos:"
+        lines = []
+        for item in numeric_summaries[:4]:
+            label = item.get("label") or item.get("field") or ("value" if language == "en" else "valor")
+            total = self._format_number(item.get("total"))
+            average = self._format_number(item.get("average"))
+            minimum = self._format_number(item.get("minimum"))
+            maximum = self._format_number(item.get("maximum"))
+            if language == "en":
+                lines.append(f"- {label}: total {total}, average {average}, min {minimum}, max {maximum}")
+            else:
+                lines.append(f"- {label}: total {total}, média {average}, mín. {minimum}, máx. {maximum}")
+        return "\n".join([title, *lines])
+
+    def _sql_insight_lines(self, *, insights: list[dict[str, Any]], language: str) -> str:
+        if not insights:
+            return ""
+        title = "Automatic reading:" if language == "en" else "Leitura automática:"
+        lines = []
+        for item in insights[:4]:
+            label = item.get("label_en") if language == "en" else item.get("label_pt")
+            label = label or item.get("label") or ""
+            if label:
+                lines.append(f"- {label}")
+        if not lines:
+            return ""
+        return "\n".join([title, *lines])
+
+    def _sql_comparison_line(self, *, comparison: dict[str, Any], language: str) -> str:
+        if not comparison:
+            return ""
+        current = int(comparison.get("current_count") or 0)
+        previous = int(comparison.get("previous_count") or 0)
+        delta = int(comparison.get("absolute_delta") or 0)
+        percent = comparison.get("percent_delta")
+        previous_range = f"{comparison.get('previous_start_date') or '—'} a {comparison.get('previous_end_date') or '—'}"
+        if language == "en":
+            text = f"Compared with the previous equivalent period ({previous_range}), the count changed from {previous} to {current} ({delta:+d})."
+            if percent is not None:
+                text += f" Variation: {percent:+.2f}%."
+            return text
+        text = f"Comparando com o período anterior equivalente ({previous_range}), a contagem passou de {previous} para {current} ({delta:+d})."
+        if percent is not None:
+            text += f" Variação: {percent:+.2f}%."
+        return text
+
     def _sql_group_lines(self, *, groups: list[dict[str, Any]], language: str) -> str:
         if not groups:
             return ""
@@ -578,6 +642,17 @@ class LocalLlmGateway:
         if language == "en":
             return "Safe sample references: " + ", ".join(refs) + "."
         return "Referências seguras de amostra: " + ", ".join(refs) + "."
+
+    def _format_number(self, value: Any) -> str:
+        if value in (None, ""):
+            return "0"
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        if number.is_integer():
+            return str(int(number))
+        return f"{number:.2f}"
 
     def _crud_operation_label(self, *, operation: str, language: str) -> str:
         labels = {

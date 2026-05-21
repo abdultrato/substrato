@@ -607,6 +607,49 @@ def test_ai_sql_analytics_counts_generic_equipment_resource(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_sql_analytics_builds_financial_insights_and_schema(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-finance", domain="tn-ai-sql-finance.local")
+    admin = _user(tenant, "admin_ai_sql_finance", GROUPS["ADMIN"], is_staff=True)
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Financeiro IA")
+    invoice_a = _issued_invoice_with_manual_item(tenant, patient, total="100.00")
+    invoice_b = _issued_invoice_with_manual_item(tenant, patient, total="50.00")
+    previous_invoice = _issued_invoice_with_manual_item(tenant, patient, total="25.00")
+
+    today = timezone.localdate()
+    current_dt = datetime(today.year, today.month, min(today.day, 5), 10, 0, tzinfo=timezone.get_current_timezone())
+    previous_day = today.replace(day=1) - timedelta(days=1)
+    previous_dt = datetime(previous_day.year, previous_day.month, previous_day.day, 10, 0, tzinfo=timezone.get_current_timezone())
+    Invoice.objects.filter(id__in=[invoice_a.id, invoice_b.id]).update(created_at=current_dt)
+    Invoice.objects.filter(id=previous_invoice.id).update(created_at=previous_dt)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Quanto faturou este mês por estado?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "Leitura automática" in data["answer"]
+    assert "Indicadores numéricos" in data["answer"]
+
+    analytics = data["schema"]["analytics"]
+    assert analytics["resource_label"] == "Faturas"
+    assert analytics["comparison"]["current_count"] == 2
+    assert analytics["comparison"]["previous_count"] == 1
+    assert analytics["insights"]
+    assert analytics["next_questions"]
+    total_summary = next(item for item in analytics["numeric_summaries"] if item["field"] == "total")
+    assert Decimal(str(total_summary["total"])) == Decimal("150")
+
+
+@pytest.mark.django_db
 def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     tenant = _tenant(identifier="tn-ai-rbac", domain="tn-ai-rbac.local")
     user = _user(tenant, "recepcao_ai", GROUPS["RECEPCAO"])

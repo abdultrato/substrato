@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any
 
 from django.apps import apps as django_apps
@@ -70,7 +71,29 @@ class SqlAnalyticsTool(AiTool):
 
         stock_terms = any(term in normalized for term in ("estoque", "stock", "saldo"))
         pharmacy_terms = any(term in normalized for term in ("medicacao", "medicação", "medicamento", "produto", "farmaco", "fármaco", "farmacia", "farmácia"))
-        historical_terms = any(term in normalized for term in ("no dia", "na data", "em ", "era", "tinha", "havia", "historico", "histórico"))
+        historical_terms = any(
+            term in normalized
+            for term in (
+                "no dia",
+                "na data",
+                "em ",
+                "era",
+                "tinha",
+                "havia",
+                "historico",
+                "histórico",
+                "hoje",
+                "ontem",
+                "anteontem",
+                "este mes",
+                "mes passado",
+                "ultimos",
+                "últimos",
+                "last",
+                "today",
+                "yesterday",
+            )
+        )
         if stock_terms and pharmacy_terms and historical_terms and dates:
             return ParsedAnalyticQuery(
                 kind="pharmacy_stock_as_of",
@@ -409,7 +432,9 @@ class SqlAnalyticsTool(AiTool):
         model = django_apps.get_model(descriptor.app_label, descriptor.model_name)
         normalized = normalize_text(message)
         table_sql = _quote_name(model._meta.db_table)
-        where_sql, params = _base_scope_where(model=model, tenant=context.tenant)
+        base_where_sql, base_params = _base_scope_where(model=model, tenant=context.tenant)
+        where_sql = list(base_where_sql)
+        params = list(base_params)
         effective_start = parsed.start_date
         effective_end = parsed.end_date or parsed.start_date
         date_field = _select_date_field(model=model, normalized=normalized)
@@ -424,10 +449,14 @@ class SqlAnalyticsTool(AiTool):
 
         search_query = (parsed.search_query or "").strip()
         search_fields = _searchable_fields(model)
+        search_clause = ""
+        search_params: list[Any] = []
         if search_query and search_fields:
             search_clauses = [f"LOWER(COALESCE({_quote_name(field.column)}, '')) LIKE LOWER(%s)" for field in search_fields]
-            where_sql.append("(" + " OR ".join(search_clauses) + ")")
-            params.extend([f"%{search_query}%"] * len(search_fields))
+            search_clause = "(" + " OR ".join(search_clauses) + ")"
+            search_params = [f"%{search_query}%"] * len(search_fields)
+            where_sql.append(search_clause)
+            params.extend(search_params)
 
         where_clause = f"WHERE {' AND '.join(where_sql)}" if where_sql else ""
         total_rows = self._fetchall(
@@ -437,7 +466,7 @@ class SqlAnalyticsTool(AiTool):
         total_count = int((total_rows[0] if total_rows else {}).get("total_count") or 0)
 
         group_results = []
-        for field in _select_group_fields(model)[:3]:
+        for field in _select_group_fields(model, normalized=normalized)[:4]:
             column_sql = _quote_name(field.column)
             rows = self._fetchall(
                 (
@@ -456,18 +485,70 @@ class SqlAnalyticsTool(AiTool):
                     }
                 )
 
-        daily_rows: list[dict[str, Any]] = []
+        period_rows: list[dict[str, Any]] = []
+        bucket = _select_date_bucket(normalized=normalized, start=effective_start, end=effective_end)
         if date_field is not None:
             date_column_sql = _quote_name(date_field.column)
-            daily_rows = self._fetchall(
+            bucket_sql = _date_bucket_sql(date_column_sql=date_column_sql, bucket=bucket)
+            period_rows = self._fetchall(
                 (
-                    f"SELECT DATE({date_column_sql}) AS day, COUNT(*) AS count "
+                    f"SELECT {bucket_sql} AS period, COUNT(*) AS count "
                     f"FROM {table_sql} {where_clause} "
-                    f"GROUP BY DATE({date_column_sql}) ORDER BY day ASC LIMIT 60"
+                    f"GROUP BY {bucket_sql} ORDER BY period ASC LIMIT 90"
                 ),
                 list(params),
             )
-            daily_rows = [_serialize_row(row) for row in daily_rows]
+            period_rows = [_serialize_row(row) for row in period_rows]
+
+        numeric_summaries = []
+        for field in _select_numeric_fields(model=model, normalized=normalized)[:5]:
+            column_sql = _quote_name(field.column)
+            rows = self._fetchall(
+                (
+                    f"SELECT "
+                    f"COALESCE(SUM({column_sql}), 0) AS total, "
+                    f"AVG({column_sql}) AS average, "
+                    f"MIN({column_sql}) AS minimum, "
+                    f"MAX({column_sql}) AS maximum "
+                    f"FROM {table_sql} {where_clause}"
+                ),
+                list(params),
+            )
+            row = rows[0] if rows else {}
+            numeric_summaries.append(
+                {
+                    "field": field.name,
+                    "label": str(getattr(field, "verbose_name", field.name) or field.name),
+                    "total": _serialize_value(row.get("total")),
+                    "average": _serialize_value(row.get("average")),
+                    "minimum": _serialize_value(row.get("minimum")),
+                    "maximum": _serialize_value(row.get("maximum")),
+                }
+            )
+
+        comparison = None
+        if date_filter_applied and effective_start and effective_end and date_field is not None:
+            previous_start, previous_end = _previous_period(start=effective_start, end=effective_end)
+            prev_start_value, prev_end_value = _bounds_for_field(field=date_field, start=previous_start, end=previous_end)
+            previous_where = [*base_where_sql, f"{_quote_name(date_field.column)} BETWEEN %s AND %s"]
+            previous_params = [*base_params, prev_start_value, prev_end_value]
+            if search_clause:
+                previous_where.append(search_clause)
+                previous_params.extend(search_params)
+            previous_clause = f"WHERE {' AND '.join(previous_where)}" if previous_where else ""
+            previous_rows = self._fetchall(
+                f"SELECT COUNT(*) AS total_count FROM {table_sql} {previous_clause}",
+                previous_params,
+            )
+            previous_count = int((previous_rows[0] if previous_rows else {}).get("total_count") or 0)
+            comparison = {
+                "previous_start_date": previous_start.isoformat(),
+                "previous_end_date": previous_end.isoformat(),
+                "previous_count": previous_count,
+                "current_count": total_count,
+                "absolute_delta": total_count - previous_count,
+                "percent_delta": _percent_delta(current=total_count, previous=previous_count),
+            }
 
         sample_fields = _select_sample_fields(model)
         sample_select = ", ".join(f"{_quote_name(field.column)} AS {_quote_name(field.name)}" for field in sample_fields)
@@ -478,6 +559,21 @@ class SqlAnalyticsTool(AiTool):
             list(params),
         )
         safe_sample_rows = [_serialize_row(row) for row in sample_rows]
+        insights = _build_generic_insights(
+            descriptor=descriptor,
+            total_count=total_count,
+            groups=group_results,
+            period_rows=period_rows,
+            numeric_summaries=numeric_summaries,
+            comparison=comparison,
+        )
+        next_questions = _build_generic_next_questions(
+            descriptor=descriptor,
+            has_date_range=bool(effective_start and effective_end),
+            has_search_query=bool(search_query),
+            groups=group_results,
+            numeric_summaries=numeric_summaries,
+        )
 
         date_range = (
             {"start_date": effective_start.isoformat(), "end_date": effective_end.isoformat()}
@@ -487,6 +583,7 @@ class SqlAnalyticsTool(AiTool):
         metrics = [
             {"label_pt": "Registos encontrados", "label_en": "Matched records", "value": total_count},
             {"label_pt": "Agrupamentos calculados", "label_en": "Calculated groupings", "value": len(group_results)},
+            {"label_pt": "Indicadores numéricos", "label_en": "Numeric indicators", "value": len(numeric_summaries)},
             {"label_pt": "Amostras seguras", "label_en": "Safe samples", "value": len(safe_sample_rows)},
         ]
         if date_range:
@@ -499,6 +596,17 @@ class SqlAnalyticsTool(AiTool):
             )
         if search_query:
             metrics.append({"label_pt": "Texto pesquisado", "label_en": "Searched text", "value": search_query})
+        if comparison:
+            metrics.append({"label_pt": "Variação vs período anterior", "label_en": "Change vs previous period", "value": comparison["absolute_delta"]})
+        if numeric_summaries:
+            first_numeric = numeric_summaries[0]
+            metrics.append(
+                {
+                    "label_pt": f"Total de {first_numeric['label']}",
+                    "label_en": f"Total {first_numeric['label']}",
+                    "value": first_numeric.get("total"),
+                }
+            )
 
         resource_payload = {
             "basename": descriptor.basename,
@@ -517,9 +625,22 @@ class SqlAnalyticsTool(AiTool):
             "search_query": search_query,
             "total_count": total_count,
             "groups": group_results,
-            "daily_rows": daily_rows,
+            "daily_rows": period_rows,
+            "period_rows": period_rows,
+            "period_bucket": bucket,
+            "numeric_summaries": numeric_summaries,
+            "comparison": comparison,
             "sample_rows": safe_sample_rows,
-            "sql_templates": ["generic_resource_total", "generic_resource_groups", "generic_resource_daily", "generic_resource_sample"],
+            "insights": insights,
+            "next_questions": next_questions,
+            "sql_templates": [
+                "generic_resource_total",
+                "generic_resource_groups",
+                "generic_resource_periods",
+                "generic_resource_numeric",
+                "generic_resource_comparison",
+                "generic_resource_sample",
+            ],
         }
 
         return {
@@ -534,8 +655,14 @@ class SqlAnalyticsTool(AiTool):
                 "date_filter_applied": date_filter_applied,
                 "search_query": search_query,
                 "groups": group_results,
-                "daily_rows": daily_rows,
+                "daily_rows": period_rows,
+                "period_rows": period_rows,
+                "period_bucket": bucket,
+                "numeric_summaries": numeric_summaries,
+                "comparison": comparison,
                 "sample_rows": safe_sample_rows,
+                "insights": insights,
+                "next_questions": next_questions,
             },
             "analytics": analytics_payload,
             "sources": [
@@ -686,10 +813,57 @@ def _extract_natural_dates(message: str) -> list[date]:
     normalized = normalize_text(message or "")
     today = timezone.localdate()
 
+    rolling_hours = re.search(r"\b(?:ultimas|últimas|last)\s+(?P<hours>\d{1,3})\s+(?:horas|hours|h)\b", message or "", flags=re.IGNORECASE)
+    if rolling_hours:
+        hours = max(1, min(int(rolling_hours.group("hours")), 24 * 31))
+        days = max(1, (hours + 23) // 24)
+        return [today - timedelta(days=days - 1), today]
+
+    rolling_weeks = re.search(r"\b(?:ultimas|últimas|ultimos|últimos|last)\s+(?P<weeks>\d{1,2})\s+(?:semanas|weeks|w)\b", message or "", flags=re.IGNORECASE)
+    if rolling_weeks:
+        weeks = max(1, min(int(rolling_weeks.group("weeks")), 52))
+        return [today - timedelta(days=(weeks * 7) - 1), today]
+
+    rolling_months = re.search(r"\b(?:ultimos|últimos|ultimas|últimas|last)\s+(?P<months>\d{1,2})\s+(?:meses|months|m)\b", message or "", flags=re.IGNORECASE)
+    if rolling_months:
+        months = max(1, min(int(rolling_months.group("months")), 36))
+        return [_add_months(today.replace(day=1), -(months - 1)), today]
+
+    rolling_years = re.search(r"\b(?:ultimos|últimos|ultimas|últimas|last)\s+(?P<years>\d{1,2})\s+(?:anos|years|y)\b", message or "", flags=re.IGNORECASE)
+    if rolling_years:
+        years = max(1, min(int(rolling_years.group("years")), 10))
+        return [date(today.year - years + 1, 1, 1), today]
+
     rolling = re.search(r"\b(?:ultimos|ultimas|últimos|últimas|last)\s+(?P<days>\d{1,3})\s+(?:dias|days|d)\b", message or "", flags=re.IGNORECASE)
     if rolling:
         days = max(1, min(int(rolling.group("days")), 365))
         return [today - timedelta(days=days - 1), today]
+
+    if any(term in normalized for term in ("este ano", "ano corrente", "this year", "current year")):
+        return [date(today.year, 1, 1), today]
+
+    if any(term in normalized for term in ("ano passado", "last year")):
+        return [date(today.year - 1, 1, 1), date(today.year - 1, 12, 31)]
+
+    if any(term in normalized for term in ("este trimestre", "trimestre corrente", "this quarter")):
+        quarter_start_month = ((today.month - 1) // 3) * 3 + 1
+        return [date(today.year, quarter_start_month, 1), today]
+
+    if any(term in normalized for term in ("trimestre passado", "last quarter")):
+        quarter_start_month = ((today.month - 1) // 3) * 3 + 1
+        current_quarter_start = date(today.year, quarter_start_month, 1)
+        previous_quarter_end = current_quarter_start - timedelta(days=1)
+        previous_quarter_start_month = ((previous_quarter_end.month - 1) // 3) * 3 + 1
+        return [date(previous_quarter_end.year, previous_quarter_start_month, 1), previous_quarter_end]
+
+    if any(term in normalized for term in ("este semestre", "semestre corrente", "this semester", "this half")):
+        semester_start_month = 1 if today.month <= 6 else 7
+        return [date(today.year, semester_start_month, 1), today]
+
+    if any(term in normalized for term in ("semestre passado", "last semester", "last half")):
+        if today.month <= 6:
+            return [date(today.year - 1, 7, 1), date(today.year - 1, 12, 31)]
+        return [date(today.year, 1, 1), date(today.year, 6, 30)]
 
     if any(term in normalized for term in ("este mes", "this month", "mes corrente", "mês corrente")):
         return [today.replace(day=1), today]
@@ -733,6 +907,13 @@ def _remove_date_expressions(value: str) -> str:
     )
     cleaned = re.sub(r"\b\d{1,3}\s*(?:dias|days|d)\b", " ", cleaned, flags=re.IGNORECASE)
     return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _add_months(value: date, months: int) -> date:
+    month_index = (value.year * 12 + value.month - 1) + months
+    year = month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, 1)
 
 
 def _has_generic_analytic_intent(*, normalized: str, dates: list[date]) -> bool:
@@ -826,6 +1007,21 @@ def _best_specific_descriptor(message: str) -> ResourceDescriptor | None:
     for descriptor in match_resource_descriptors(message, limit=6):
         if _descriptor_has_specific_match(descriptor=descriptor, normalized=normalized):
             return descriptor
+    return _descriptor_from_business_terms(normalized)
+
+
+def _descriptor_from_business_terms(normalized: str) -> ResourceDescriptor | None:
+    mappings = (
+        (("faturou", "facturou", "receita", "receitas", "valor faturado", "valor facturado", "cobranca", "cobrança"), "billing-invoice"),
+        (("pagou", "pago", "pagamentos recebidos", "valor pago", "recebimentos"), "payments-payment"),
+        (("vendas de farmacia", "vendas da farmacia", "venda de farmacia", "venda da farmacia"), "pharmacy-sale"),
+        (("salario", "salário", "folha salarial", "folha de pagamento"), "human_resources-folhapagamento"),
+        (("erros", "falhas", "5xx", "4xx", "excecoes", "exceções"), "monitoring-error"),
+        (("checkins", "check-ins", "entradas de pacientes", "admissoes", "admissões"), "reception-checkin"),
+    )
+    for terms, basename in mappings:
+        if any(term in normalized for term in terms):
+            return descriptor_by_basename(basename)
     return None
 
 
@@ -935,7 +1131,19 @@ def _searchable_fields(model: type[models.Model]) -> list[models.Field]:
     return fields[:10]
 
 
-def _select_group_fields(model: type[models.Model]) -> list[models.Field]:
+def _select_group_fields(model: type[models.Model], normalized: str = "") -> list[models.Field]:
+    requested: list[str] = []
+    if any(term in normalized for term in ("por estado", "estado", "status")):
+        requested.extend(["status", "state", "workflow_status", "billing_status", "clinical_status"])
+    if any(term in normalized for term in ("por tipo", "tipo", "categoria")):
+        requested.extend(["type", "content_type"])
+    if any(term in normalized for term in ("por prioridade", "prioridade")):
+        requested.append("priority")
+    if any(term in normalized for term in ("por origem", "origem")):
+        requested.append("origin")
+    if any(term in normalized for term in ("por metodo", "por método", "metodo", "método")):
+        requested.append("method")
+
     priorities = (
         "status",
         "state",
@@ -951,13 +1159,277 @@ def _select_group_fields(model: type[models.Model]) -> list[models.Field]:
         "published",
     )
     selected: list[models.Field] = []
-    for field_name in priorities:
+    for field_name in [*requested, *priorities]:
         field = _field_by_name(model, field_name)
         if field is None:
             continue
         if isinstance(field, (models.CharField, models.BooleanField, models.IntegerField)):
+            if field not in selected:
+                selected.append(field)
+    return selected
+
+
+def _select_numeric_fields(*, model: type[models.Model], normalized: str) -> list[models.Field]:
+    blocked_names = {"id", "tenant", "tenant_id", "version", "created_by", "updated_by", "deleted_by"}
+    requested: list[str] = []
+    if any(term in normalized for term in ("faturou", "facturou", "receita", "valor", "total", "cobranca", "cobrança")):
+        requested.extend(["total", "value", "amount", "paid_amount", "subtotal", "unit_price", "sale_price", "price"])
+    if any(term in normalized for term in ("quantidade", "volume", "stock", "estoque", "saldo", "lote")):
+        requested.extend(["quantity", "initial_quantity", "minimum_volume_ml", "available_quantity"])
+    if any(term in normalized for term in ("salario", "salário", "liquido", "líquido", "base")):
+        requested.extend(["net_salary", "gross_salary", "base_salary", "salary_base", "salary_liquido"])
+    if any(term in normalized for term in ("media", "média", "average", "minimo", "mínimo", "maximo", "máximo")):
+        requested.extend(["total", "value", "score", "duration_ms", "quantity"])
+
+    priority_names = [
+        *requested,
+        "total",
+        "value",
+        "amount",
+        "paid_amount",
+        "subtotal",
+        "quantity",
+        "initial_quantity",
+        "unit_price",
+        "sale_price",
+        "price",
+        "score",
+        "max_score",
+        "duration_ms",
+        "minimum_volume_ml",
+        "base_salary",
+        "net_salary",
+        "gross_salary",
+    ]
+    selected: list[models.Field] = []
+    for field_name in priority_names:
+        field = _field_by_name(model, field_name)
+        if field and _is_safe_numeric_field(field=field, blocked_names=blocked_names) and field not in selected:
+            selected.append(field)
+
+    for field in model._meta.concrete_fields:
+        if _is_safe_numeric_field(field=field, blocked_names=blocked_names) and field not in selected:
             selected.append(field)
     return selected
+
+
+def _is_safe_numeric_field(*, field: models.Field, blocked_names: set[str]) -> bool:
+    if field.name in blocked_names or getattr(field, "primary_key", False):
+        return False
+    if getattr(field, "is_relation", False) or field.name.endswith("_id") or field.column.endswith("_id"):
+        return False
+    if isinstance(field, (models.BooleanField, models.AutoField, models.BigAutoField)):
+        return False
+    return isinstance(
+        field,
+        (
+            models.DecimalField,
+            models.FloatField,
+            models.IntegerField,
+            models.PositiveIntegerField,
+            models.PositiveSmallIntegerField,
+            models.SmallIntegerField,
+            models.BigIntegerField,
+        ),
+    )
+
+
+def _select_date_bucket(*, normalized: str, start: date | None, end: date | None) -> str:
+    if any(term in normalized for term in ("por ano", "ano a ano", "yearly", "por anos")):
+        return "year"
+    if any(term in normalized for term in ("por mes", "por mês", "mensal", "month", "monthly")):
+        return "month"
+    if any(term in normalized for term in ("por semana", "semanal", "week", "weekly")):
+        return "week"
+    if start and end and (end - start).days > 370:
+        return "year"
+    if start and end and (end - start).days > 75:
+        return "month"
+    if start and end and (end - start).days > 21:
+        return "week"
+    return "day"
+
+
+def _date_bucket_sql(*, date_column_sql: str, bucket: str) -> str:
+    vendor = connection.vendor
+    if vendor == "postgresql":
+        if bucket == "year":
+            return f"TO_CHAR(DATE_TRUNC('year', {date_column_sql}), 'YYYY')"
+        if bucket == "month":
+            return f"TO_CHAR(DATE_TRUNC('month', {date_column_sql}), 'YYYY-MM')"
+        if bucket == "week":
+            return f"TO_CHAR(DATE_TRUNC('week', {date_column_sql}), 'YYYY-MM-DD')"
+        return f"DATE({date_column_sql})"
+    if bucket == "year":
+        return f"strftime('%Y', {date_column_sql})"
+    if bucket == "month":
+        return f"strftime('%Y-%m', {date_column_sql})"
+    if bucket == "week":
+        return f"strftime('%Y-W%W', {date_column_sql})"
+    return f"DATE({date_column_sql})"
+
+
+def _previous_period(*, start: date, end: date) -> tuple[date, date]:
+    span = max((end - start).days, 0)
+    previous_end = start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=span)
+    return previous_start, previous_end
+
+
+def _percent_delta(*, current: int, previous: int) -> float | None:
+    if previous == 0:
+        return None
+    return round(((current - previous) / previous) * 100, 2)
+
+
+def _build_generic_insights(
+    *,
+    descriptor: ResourceDescriptor,
+    total_count: int,
+    groups: list[dict[str, Any]],
+    period_rows: list[dict[str, Any]],
+    numeric_summaries: list[dict[str, Any]],
+    comparison: dict[str, Any] | None,
+) -> list[dict[str, str]]:
+    insights: list[dict[str, str]] = []
+    if total_count == 0:
+        insights.append(
+            {
+                "label_pt": f"Não encontrei registos de {descriptor.label_pt.lower()} com estes filtros.",
+                "label_en": f"I found no {descriptor.label_en.lower()} records with these filters.",
+                "severity": "warning",
+            }
+        )
+    elif total_count <= 5:
+        insights.append(
+            {
+                "label_pt": f"Volume baixo: {total_count} registo(s), adequado para revisão manual imediata.",
+                "label_en": f"Low volume: {total_count} record(s), suitable for immediate manual review.",
+                "severity": "info",
+            }
+        )
+    else:
+        insights.append(
+            {
+                "label_pt": f"Volume relevante: {total_count} registo(s), vale a pena explorar por agrupamento e período.",
+                "label_en": f"Relevant volume: {total_count} record(s), worth exploring by grouping and period.",
+                "severity": "info",
+            }
+        )
+
+    for group in groups[:1]:
+        top = (group.get("rows") or [None])[0]
+        if not top:
+            continue
+        value = _display_value(top.get("value"))
+        count = int(top.get("count") or 0)
+        if count:
+            insights.append(
+                {
+                    "label_pt": f"Maior concentração em {group.get('label') or group.get('field')}: {value} ({count}).",
+                    "label_en": f"Highest concentration in {group.get('label') or group.get('field')}: {value} ({count}).",
+                    "severity": "info",
+                }
+            )
+
+    if period_rows:
+        peak = max(period_rows, key=lambda row: int(row.get("count") or 0))
+        peak_count = int(peak.get("count") or 0)
+        if peak_count:
+            insights.append(
+                {
+                    "label_pt": f"Pico temporal em {peak.get('period') or peak.get('day')}: {peak_count} registo(s).",
+                    "label_en": f"Time peak on {peak.get('period') or peak.get('day')}: {peak_count} record(s).",
+                    "severity": "info",
+                }
+            )
+
+    if comparison:
+        delta = int(comparison.get("absolute_delta") or 0)
+        severity = "success" if delta > 0 else "warning" if delta < 0 else "info"
+        if delta:
+            direction_pt = "aumentou" if delta > 0 else "reduziu"
+            direction_en = "increased" if delta > 0 else "decreased"
+            insights.append(
+                {
+                    "label_pt": f"Face ao período anterior equivalente, a actividade {direction_pt} {abs(delta)} registo(s).",
+                    "label_en": f"Compared with the previous equivalent period, activity {direction_en} by {abs(delta)} record(s).",
+                    "severity": severity,
+                }
+            )
+
+    for numeric in numeric_summaries[:1]:
+        total = _display_value(numeric.get("total"))
+        average = _display_value(numeric.get("average"))
+        insights.append(
+            {
+                "label_pt": f"{numeric.get('label') or numeric.get('field')}: total {total}, média {average}.",
+                "label_en": f"{numeric.get('label') or numeric.get('field')}: total {total}, average {average}.",
+                "severity": "info",
+            }
+        )
+
+    return insights[:6]
+
+
+def _build_generic_next_questions(
+    *,
+    descriptor: ResourceDescriptor,
+    has_date_range: bool,
+    has_search_query: bool,
+    groups: list[dict[str, Any]],
+    numeric_summaries: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    base_pt = descriptor.label_pt.lower()
+    base_en = descriptor.label_en.lower()
+    questions: list[dict[str, str]] = []
+    if not has_date_range:
+        questions.append(
+            {
+                "label_pt": f"Analisar {base_pt} deste mês",
+                "label_en": f"Analyse {base_en} this month",
+            }
+        )
+    if groups:
+        field_label = groups[0].get("label") or groups[0].get("field") or "estado"
+        questions.append(
+            {
+                "label_pt": f"Dividir {base_pt} por {field_label}",
+                "label_en": f"Break down {base_en} by {field_label}",
+            }
+        )
+    if numeric_summaries:
+        metric_label = numeric_summaries[0].get("label") or numeric_summaries[0].get("field") or "valor"
+        questions.append(
+            {
+                "label_pt": f"Mostrar totais e médias de {metric_label}",
+                "label_en": f"Show totals and averages for {metric_label}",
+            }
+        )
+    if not has_search_query:
+        questions.append(
+            {
+                "label_pt": f"Pesquisar {base_pt} por nome, código ou referência",
+                "label_en": f"Search {base_en} by name, code or reference",
+            }
+        )
+    questions.append(
+        {
+            "label_pt": f"Comparar {base_pt} com o período anterior",
+            "label_en": f"Compare {base_en} with the previous period",
+        }
+    )
+    return questions[:4]
+
+
+def _display_value(value: Any) -> str:
+    if value in (None, ""):
+        return "—"
+    if isinstance(value, Decimal):
+        value = float(value)
+    if isinstance(value, float):
+        return str(int(value)) if value.is_integer() else f"{value:.2f}"
+    return str(value)
 
 
 def _select_sample_fields(model: type[models.Model]) -> list[models.Field]:
@@ -1011,6 +1483,8 @@ def _serialize_row(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _serialize_value(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return str(value)
     if hasattr(value, "isoformat"):
         return value.isoformat()
     return value
