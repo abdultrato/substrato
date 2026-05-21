@@ -1302,6 +1302,84 @@ def test_ai_equipment_crud_deletes_incident_for_laboratory_group(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_incidents_crud_creates_updates_and_deletes_for_maintenance_group(api_client):
+    tenant = _tenant(identifier="tn-ai-incidents-crud", domain="tn-ai-incidents-crud.local")
+    user = _user(tenant, "manutencao_ai_incidents_crud", GROUPS["MANUTENCAO"])
+    equipment = Equipment.objects.create(
+        tenant=tenant,
+        name="Analisador de Bioquímica",
+        serial_number="EQ-INC-AI-001",
+        manufacturer="Mindray",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Create incidents equipment {equipment.serial_number} date 2026-05-08T10:30:00+02:00 "
+            "type breakdown description Rotor failure support contact 841234567 resolved no"
+        ),
+    )
+    assert create_action.payload["basename"] == "equipment-incident"
+    assert create_action.payload["data"]["equipment"] == equipment.id
+    assert create_action.payload["data"]["type"] == Incident.Type.BREAKDOWN
+    assert create_action.payload["data"]["description"] == "Rotor failure"
+    assert create_action.payload["data"]["support_contact"] == "841234567"
+    assert create_action.payload["data"]["resolved"] is False
+    _confirm_ai_action(api_client, create_action)
+    incident = Incident.objects.get(tenant=tenant, equipment=equipment, support_contact="841234567")
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f"Update incidents id {incident.id} resolved yes support contact 849999999",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "equipment-incident"
+    assert update_action.payload["object_ref"] == str(incident.id)
+    assert update_action.payload["data"]["resolved"] is True
+    assert update_action.payload["data"]["support_contact"] == "849999999"
+    _confirm_ai_action(api_client, update_action)
+
+    incident.refresh_from_db()
+    assert incident.resolved is True
+    assert incident.support_contact == "849999999"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Delete incidents id {incident.id}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "equipment-incident"
+    _confirm_ai_action(api_client, delete_action)
+    removed = Incident.all_objects.get(id=incident.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_incidents_crud_denies_write_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-incidents-denied", domain="tn-ai-incidents-denied.local")
+    user = _user(tenant, "recepcao_ai_incidents_denied", GROUPS["RECEPCAO"])
+    equipment = Equipment.objects.create(tenant=tenant, name="Equipamento Bloqueado", serial_number="EQ-INC-BLQ-001")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Create incidents equipment {equipment.serial_number} type incident description Bloqueado",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not Incident.objects.filter(tenant=tenant, equipment=equipment, description="Bloqueado").exists()
+
+
+@pytest.mark.django_db
 def test_ai_equipment_crud_denies_write_for_reception(api_client):
     tenant = _tenant(identifier="tn-ai-equipment-denied", domain="tn-ai-equipment-denied.local")
     user = _user(tenant, "recepcao_ai_equipment_denied", GROUPS["RECEPCAO"])
