@@ -103,6 +103,8 @@ RESOURCE_METHOD_BLOCKLIST = {
     "clinical-resultitem": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
     # File uploads need multipart/user-selected binary content, not chat payloads.
     "clinical-medicalresultfile": frozenset({"POST"}),
+    # Consultations exposes doctors as a filtered read-only view over HR employees.
+    "consultations-doctors": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
 }
 RELATED_LOOKUP_FIELDS = (
     "custom_id",

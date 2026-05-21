@@ -101,6 +101,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pagamentos-payment": SAFE_METHODS | frozenset({"POST"}),
             # Consultas
             "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-doctors": SAFE_METHODS,
+            "consultations-holiday": SAFE_METHODS,
             "consultations-medicos": SAFE_METHODS,
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
@@ -255,6 +257,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinico-examemedicocampo": SAFE_METHODS,
             # Consultas
             "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-doctors": SAFE_METHODS,
+            "consultations-holiday": SAFE_METHODS,
             "consultations-medicos": SAFE_METHODS,
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
@@ -303,6 +307,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "enfermagem-procedure": SAFE_METHODS | frozenset({"POST"}),
             # Consultas
             "consultations-consultation": SAFE_METHODS | WRITE_METHODS,
+            "consultations-doctors": SAFE_METHODS,
+            "consultations-holiday": SAFE_METHODS,
             "consultations-medicos": SAFE_METHODS,
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
@@ -388,6 +394,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "recepcao-workspace": SAFE_METHODS,
             # Consultas (leitura)
             "consultations-consultation": SAFE_METHODS,
+            "consultations-doctors": SAFE_METHODS,
+            "consultations-holiday": SAFE_METHODS,
             "consultations-medicos": SAFE_METHODS,
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,

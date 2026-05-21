@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils import timezone
 import pytest
 
 from apps.ai_assistant.models import (
@@ -37,6 +38,9 @@ from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.sample import Sample
+from apps.consultations.models.consultation_specialty import ConsultationSpecialty
+from apps.consultations.models.holiday import Holiday
+from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
 from services.reports.async_exports import get_export_job_result, get_export_job_state
@@ -670,6 +674,211 @@ def test_ai_clinical_crud_blocks_manual_request_item_and_result_changes(api_clie
     assert not item_data["suggested_actions"]
     assert not result_data["suggested_actions"]
     assert LabRequestItem.objects.filter(tenant=tenant, request=request).count() == 1
+
+
+@pytest.mark.django_db
+def test_ai_consultations_crud_creates_specialty_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-consultations-specialty", domain="tn-ai-consultations-specialty.local")
+    admin = _user(tenant, "admin_ai_consultations_specialty", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie especialidade de consulta nome Dermatologia descrição Consulta de pele "
+                "preço base 700 iva 16 ativo sim"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "consultations-specialty"
+    assert action.payload["data"]["name"] == "Dermatologia"
+    assert action.payload["data"]["base_price"] == "700"
+    assert action.payload["data"]["vat_percentage"] == "16"
+    assert action.payload["data"]["active"] is True
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    specialty = ConsultationSpecialty.objects.get(tenant=tenant, name__iexact="Dermatologia")
+    assert str(specialty.base_price) == "700.00"
+    assert str(specialty.vat_percentage) == "16.00"
+
+
+@pytest.mark.django_db
+def test_ai_consultations_crud_creates_consultation_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-consultations-create", domain="tn-ai-consultations-create.local")
+    user = _user(tenant, "recepcao_ai_consultations_create", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Consulta IA")
+    specialty = ConsultationSpecialty.objects.create(
+        tenant=tenant,
+        name="Clínica Geral",
+        base_price="500.00",
+        vat_percentage="16.00",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie consulta médica paciente {patient.custom_id} especialidade {specialty.custom_id} "
+                "agendada para 2026-06-15T10:00:00+02:00 descrição Primeira avaliação"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "consultations-consultation"
+    assert action.payload["data"]["patient"] == patient.id
+    assert action.payload["data"]["specialty"] == specialty.id
+    assert action.payload["data"]["scheduled_for"] == "2026-06-15T10:00:00+02:00"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    consultation = MedicalConsultation.objects.get(tenant=tenant, patient=patient)
+    assert consultation.specialty_id == specialty.id
+    assert consultation.type == specialty.name
+    assert str(consultation.price) == "500.00"
+    assert consultation.status == MedicalConsultation.Status.SCHEDULED
+
+
+@pytest.mark.django_db
+def test_ai_consultations_crud_updates_consultation_by_code(api_client):
+    tenant = _tenant(identifier="tn-ai-consultations-update", domain="tn-ai-consultations-update.local")
+    user = _user(tenant, "recepcao_ai_consultations_update", GROUPS["RECEPCAO"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Consulta Alterar")
+    specialty = ConsultationSpecialty.objects.create(
+        tenant=tenant,
+        name="Medicina Interna",
+        base_price="600.00",
+        vat_percentage="16.00",
+    )
+    consultation = MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        specialty=specialty,
+        scheduled_for=timezone.make_aware(datetime(2026, 6, 15, 10, 0, 0)),
+        description="Original",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Altere consulta código {consultation.custom_id} descrição Seguimento ajustado feriado manual sim",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "consultations-consultation"
+    assert action.payload["object_ref"] == consultation.custom_id
+    assert action.payload["data"]["description"] == "Seguimento ajustado"
+    assert action.payload["data"]["manual_holiday"] is True
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    consultation.refresh_from_db()
+    assert consultation.description == "Seguimento ajustado"
+    assert consultation.manual_holiday is True
+    assert consultation.schedule_type == MedicalConsultation.ScheduleType.MANUAL_HOLIDAY
+    assert str(consultation.price) == "1200.00"
+
+
+@pytest.mark.django_db
+def test_ai_consultations_crud_deletes_holiday_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-consultations-holiday", domain="tn-ai-consultations-holiday.local")
+    admin = _user(tenant, "admin_ai_consultations_holiday", GROUPS["ADMIN"], is_staff=True)
+    holiday = Holiday.objects.create(
+        tenant=tenant,
+        date="2026-12-25",
+        description="Natal institucional",
+        active=True,
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova feriado de consulta id {holiday.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "consultations-holiday"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = Holiday.all_objects.get(id=holiday.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_consultations_crud_denies_specialty_write_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-consultations-denied", domain="tn-ai-consultations-denied.local")
+    user = _user(tenant, "recepcao_ai_consultations_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie especialidade de consulta nome Restrita preço base 100",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not ConsultationSpecialty.objects.filter(tenant=tenant, name__iexact="Restrita").exists()
 
 
 @pytest.mark.django_db
