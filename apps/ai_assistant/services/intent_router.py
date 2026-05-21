@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from apps.ai_assistant.tools.knowledge_base import should_select_knowledge_base
 from apps.ai_assistant.tools.resource_catalog import match_resource_descriptors, normalize_text
 
 
@@ -259,6 +260,8 @@ class AiIntentRouter:
 
         if signals["project_identity"]:
             return self._ready("project_identity", 94, signals)
+        if signals["knowledge_base"]:
+            return self._ready("knowledge_base", 88, signals)
 
         if signals["personal"]:
             return self._ready("user_context", 92, signals)
@@ -350,6 +353,7 @@ class AiIntentRouter:
             "vague_reference": any(term in normalized for term in (normalize_text(item) for item in VAGUE_REFERENCES)),
             "broad_request": self._has_any(normalized, ("ajuda", "help", "investigar", "analisar", "verificar", "mostra-me", "mostre me")),
             "project_identity": self._has_project_identity(normalized),
+            "knowledge_base": should_select_knowledge_base(message=normalized, active_module=active_module),
             "personal": self._has_any(normalized, PERSONAL_TERMS),
             "crud": self._has_any(normalized, CRUD_TERMS),
             "data": self._has_any(normalized, DATA_TERMS),

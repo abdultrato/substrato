@@ -765,6 +765,64 @@ def test_ai_project_identity_answers_from_github_metadata(api_client, monkeypatc
 
 
 @pytest.mark.django_db
+def test_ai_predicted_questions_answer_known_system_usage(api_client):
+    tenant = _tenant(identifier="tn-ai-knowledge", domain="tn-ai-knowledge.local")
+    user = _user(tenant, "admin_ai_knowledge", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "O que a IA consegue fazer?", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "answer_predicted_question" and call["status"] == "success" for call in data["tool_calls"])
+    assert "A IA Operacional identifica" in data["answer"]
+    assert data["schema"]["knowledge_base"]["status"] == "answered"
+    assert data["schema"]["knowledge_base"]["follow_ups"]
+    assert data["investigation"]["intent"] == "knowledge_base"
+
+
+@pytest.mark.django_db
+def test_ai_predicted_questions_suggests_typo_and_answers_selected_suggestion(api_client):
+    tenant = _tenant(identifier="tn-ai-knowledge-typo", domain="tn-ai-knowledge-typo.local")
+    user = _user(tenant, "admin_ai_knowledge_typo", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, user)
+
+    typo_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "comu crio paciete", "language": "pt", "active_module": "ai"},
+        format="json",
+    )
+
+    assert typo_response.status_code == 200, _response_data(typo_response)
+    typo_data = _response_data(typo_response)
+    assert any(call["tool_name"] == "answer_predicted_question" and call["status"] == "success" for call in typo_data["tool_calls"])
+    assert "Quis dizer" in typo_data["answer"]
+    suggestions = typo_data["schema"]["knowledge_base"]["suggestions"]
+    assert suggestions
+    assert suggestions[0]["question"] == "Como criar um paciente pela IA?"
+
+    selected_response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "session_id": typo_data["session_id"],
+            "message": suggestions[0]["question"],
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert selected_response.status_code == 200, _response_data(selected_response)
+    selected_data = _response_data(selected_response)
+    assert selected_data["schema"]["knowledge_base"]["status"] == "answered"
+    assert "Crie um paciente chamado" in selected_data["answer"]
+
+
+@pytest.mark.django_db
 def test_ai_data_explorer_counts_allowed_patient_resource(api_client):
     tenant = _tenant(identifier="tn-ai-data", domain="tn-ai-data.local")
     user = _user(tenant, "recepcao_data", GROUPS["RECEPCAO"])

@@ -52,7 +52,25 @@ def build_response_schema(
         ],
         "analytics": _analytics_schema(tool_results=tool_results, language=language),
         "project_identity": _project_identity_schema(tool_results=tool_results),
+        "knowledge_base": _knowledge_base_schema(tool_results=tool_results),
         "investigation": _investigation_schema(investigation=investigation, language=language),
+    }
+
+
+def _knowledge_base_schema(*, tool_results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    knowledge_result = next((item.get("result") for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
+    if not knowledge_result:
+        return None
+    knowledge = knowledge_result.get("knowledge_base") or (knowledge_result.get("summary") or {}).get("knowledge_base") or {}
+    return {
+        "status": knowledge.get("status") or "",
+        "question": knowledge.get("question") or "",
+        "answer": knowledge.get("answer") or "",
+        "category": knowledge.get("category") or "",
+        "score": knowledge.get("score") or 0,
+        "prompt": knowledge.get("prompt") or "",
+        "suggestions": (knowledge.get("suggestions") or [])[:5],
+        "follow_ups": (knowledge.get("follow_ups") or [])[:5],
     }
 
 

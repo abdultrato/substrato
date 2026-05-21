@@ -102,6 +102,22 @@ type AiAnalyticsSchema = {
   }>
 }
 
+type AiKnowledgeBaseSchema = {
+  status?: "answered" | "needs_confirmation" | string
+  question?: string
+  answer?: string
+  category?: string
+  score?: number
+  prompt?: string
+  suggestions?: Array<{
+    entry_id?: string
+    question?: string
+    category?: string
+    score?: number
+  }>
+  follow_ups?: string[]
+}
+
 type AiResponseSchema = {
   cards?: Array<{
     tool_name?: string
@@ -110,6 +126,7 @@ type AiResponseSchema = {
     duration_ms?: number
   }>
   analytics?: AiAnalyticsSchema | null
+  knowledge_base?: AiKnowledgeBaseSchema | null
 }
 
 type AiConversationState = {
@@ -363,6 +380,77 @@ function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema;
   )
 }
 
+function AiKnowledgeBasePanel({ schema, onAsk }: { schema?: AiResponseSchema; onAsk?: (question: string) => void }) {
+  const { t } = useLanguage()
+  const knowledge = schema?.knowledge_base
+  if (!knowledge) return null
+
+  const suggestions = knowledge.suggestions || []
+  const followUps = knowledge.follow_ups || []
+  const isSuggestion = knowledge.status === "needs_confirmation"
+
+  return (
+    <div className="mt-3 rounded-2xl border border-border bg-muted/20 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Lightbulb size={15} />
+          {isSuggestion ? t("Sugestão de pergunta", "Question suggestion") : t("Resposta prevista", "Predicted answer")}
+        </div>
+        {knowledge.category ? <Badge variant="info">{knowledge.category}</Badge> : null}
+      </div>
+
+      {isSuggestion ? (
+        <>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {knowledge.prompt || t("Quis dizer uma destas perguntas?", "Did you mean one of these questions?")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {suggestions.map((suggestion) => (
+              <button
+                key={`${suggestion.entry_id || suggestion.question}-${suggestion.score}`}
+                type="button"
+                onClick={() => {
+                  if (suggestion.question) onAsk?.(suggestion.question)
+                }}
+                className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary hover:text-primary-foreground"
+              >
+                {suggestion.question}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          {knowledge.question ? (
+            <div className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {knowledge.question}
+            </div>
+          ) : null}
+          {followUps.length ? (
+            <div className="mt-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("Perguntas seguintes", "Follow-up questions")}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {followUps.map((question) => (
+                  <button
+                    key={question}
+                    type="button"
+                    onClick={() => onAsk?.(question)}
+                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  )
+}
+
 function AiContextAside({
   tools,
   sessions,
@@ -528,6 +616,16 @@ export default function AiOperationalPage() {
         ],
       },
       {
+        title: t("Perguntas previstas", "Predicted questions"),
+        description: t("Ajuda, correcção de escrita e atalhos.", "Help, typo correction and shortcuts."),
+        icon: Lightbulb,
+        prompts: [
+          t("Que perguntas posso fazer?", "What can I ask?"),
+          t("A IA entende erros de ortografia?", "Does the AI understand typos?"),
+          t("Como funciona o CRUD por IA?", "How does AI CRUD work?"),
+        ],
+      },
+      {
         title: t("Relatórios e prioridades", "Reports and priorities"),
         description: t("Para Command Center e visão executiva.", "For Command Center and executive view."),
         icon: FileText,
@@ -592,9 +690,8 @@ export default function AiOperationalPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
   }, [messages, loading])
 
-  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault()
-    const text = composer.trim()
+  async function sendMessage(rawText: string) {
+    const text = rawText.trim()
     if (!text || loading) return
 
     const userMessage: ConversationMessage = {
@@ -673,6 +770,11 @@ export default function AiOperationalPage() {
     }
   }
 
+  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault()
+    await sendMessage(composer)
+  }
+
   async function handleConfirmAction(action: AiSuggestedAction) {
     if (confirmingActionId) return
     setConfirmingActionId(action.id)
@@ -708,12 +810,7 @@ export default function AiOperationalPage() {
   }
 
   function handleAskRecommended(question: string) {
-    applyPrompt(question)
-  }
-
-  function applyPrompt(question: string) {
-    setComposer(question)
-    window.requestAnimationFrame(() => composerRef.current?.focus())
+    void sendMessage(question)
   }
 
   const aside = (
@@ -806,7 +903,7 @@ export default function AiOperationalPage() {
         </div>
 
         <Card title={t("Conversa operacional", "Operational conversation")}>
-          <div className="mb-4 grid gap-3 lg:grid-cols-5">
+          <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             {promptGroups.map((group) => {
               const Icon = group.icon
               return (
@@ -823,7 +920,7 @@ export default function AiOperationalPage() {
                       <button
                         key={prompt}
                         type="button"
-                        onClick={() => applyPrompt(prompt)}
+                        onClick={() => void sendMessage(prompt)}
                         className="block w-full rounded-xl border border-border bg-card px-2.5 py-2 text-left text-xs font-medium text-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-muted"
                       >
                         {prompt}
@@ -858,7 +955,7 @@ export default function AiOperationalPage() {
                           <button
                             key={question}
                             type="button"
-                            onClick={() => applyPrompt(question)}
+                            onClick={() => void sendMessage(question)}
                             className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"
                           >
                             {question}
@@ -900,7 +997,7 @@ export default function AiOperationalPage() {
                             <button
                               key={option}
                               type="button"
-                              onClick={() => applyPrompt(option)}
+                              onClick={() => void sendMessage(option)}
                               className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-background"
                             >
                               {option}
@@ -911,6 +1008,7 @@ export default function AiOperationalPage() {
                     ) : null}
 
                     <AiStructuredResultPanel schema={message.schema} onAsk={handleAskRecommended} />
+                    <AiKnowledgeBasePanel schema={message.schema} onAsk={handleAskRecommended} />
 
                     <AiInvestigationPanel
                       investigation={message.investigation || null}

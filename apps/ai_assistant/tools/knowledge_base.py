@@ -1,0 +1,634 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from difflib import SequenceMatcher
+from functools import lru_cache
+from typing import Any
+
+from apps.ai_assistant.tools.resource_catalog import normalize_text
+
+from .base import AiTool, AiToolContext
+
+
+@dataclass(frozen=True, slots=True)
+class KnowledgeEntry:
+    id: str
+    category: str
+    questions_pt: tuple[str, ...]
+    answer_pt: str
+    questions_en: tuple[str, ...] = ()
+    answer_en: str = ""
+    follow_ups_pt: tuple[str, ...] = ()
+    follow_ups_en: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class RankedEntry:
+    entry: KnowledgeEntry
+    score: float
+    matched_question: str
+
+
+class KnowledgeBaseTool(AiTool):
+    name = "answer_predicted_question"
+    description_pt = "Responde perguntas previstas, sugere correcções de ortografia e orienta o utilizador sem tocar em dados operacionais."
+    description_en = "Answers predicted questions, suggests spelling corrections and guides the user without touching operational data."
+    required_groups: tuple[str, ...] = ()
+    mode = "read"
+
+    def run(self, context: AiToolContext) -> dict[str, Any]:
+        message = str(context.arguments.get("message") or "")
+        language = context.language
+        ranked = rank_knowledge_entries(message, limit=6)
+        best = ranked[0] if ranked else None
+
+        if best and best.score >= 0.84:
+            return _answer_payload(entry=best.entry, score=best.score, language=language, matched_question=best.matched_question)
+
+        if best and best.score >= 0.44:
+            suggestions = [_suggestion_payload(item.entry, language=language, score=item.score) for item in ranked[:5]]
+            return _suggestion_payload_result(
+                language=language,
+                suggestions=suggestions,
+                score=best.score,
+                message=message,
+            )
+
+        fallback = entry_by_id("help-question-examples") or knowledge_entries()[0]
+        return _answer_payload(entry=fallback, score=0.42, language=language, matched_question="")
+
+
+def should_select_knowledge_base(*, message: str, active_module: str = "") -> bool:
+    normalized = normalize_text(f"{message or ''} {active_module or ''}")
+    if not normalized:
+        return False
+
+    personal_terms = ("quem sou", "meu login", "meus grupos", "minha conta", "meu perfil", "who am i", "my account")
+    if any(term in normalized for term in personal_terms):
+        return False
+
+    direct_action_terms = (
+        "crie ",
+        "criar ",
+        "insira ",
+        "inserir ",
+        "adicione ",
+        "adicionar ",
+        "actualize ",
+        "atualize ",
+        "remova ",
+        "apague ",
+        "delete ",
+        "create ",
+        "update ",
+    )
+    if normalized.startswith(direct_action_terms) and not any(term in normalized for term in ("como", "help", "ajuda", "explica", "exemplo")):
+        return False
+
+    operational_query_prefixes = (
+        "quantos ",
+        "quantas ",
+        "quanto ",
+        "quanta ",
+        "qual era ",
+        "qual foi ",
+        "quais ",
+        "mostra ",
+        "mostre ",
+        "liste ",
+        "listar ",
+        "procure ",
+        "buscar ",
+        "pesquise ",
+        "quero investigar ",
+        "resumo ",
+        "relatorio ",
+        "relatório ",
+    )
+    operational_query_terms = (
+        "paciente",
+        "pacientes",
+        "estudante",
+        "estudantes",
+        "fatura",
+        "faturas",
+        "pagamento",
+        "pagamentos",
+        "estoque",
+        "stock",
+        "medicacao",
+        "medicação",
+        "requisicao",
+        "requisição",
+        "consulta",
+        "consultas",
+        "financeiro",
+        "financeira",
+        "matricula",
+        "matrícula",
+        "matriculas",
+        "matrículas",
+    )
+    if normalized.startswith(operational_query_prefixes) and any(term in normalized for term in operational_query_terms):
+        return False
+
+    support_terms = (
+        "ajuda",
+        "ajude",
+        "como",
+        "o que",
+        "oque",
+        "onde",
+        "quando",
+        "quem",
+        "porque",
+        "por que",
+        "posso",
+        "pode",
+        "funciona",
+        "significa",
+        "perguntas",
+        "exemplos",
+        "sugestao",
+        "sugestão",
+        "duvida",
+        "dúvida",
+        "help",
+        "how",
+        "what",
+        "where",
+        "when",
+        "why",
+        "can i",
+        "examples",
+    )
+    if any(term in normalized for term in support_terms):
+        return True
+
+    ranked = rank_knowledge_entries(message, limit=1)
+    return bool(ranked and ranked[0].score >= 0.44)
+
+
+def entry_by_id(entry_id: str) -> KnowledgeEntry | None:
+    return next((entry for entry in knowledge_entries() if entry.id == entry_id), None)
+
+
+def rank_knowledge_entries(message: str, *, limit: int = 5) -> list[RankedEntry]:
+    normalized = normalize_text(message)
+    if not normalized:
+        return []
+    ranked: list[RankedEntry] = []
+    for entry in knowledge_entries():
+        score, matched = _entry_score(entry=entry, normalized=normalized)
+        if score <= 0:
+            continue
+        ranked.append(RankedEntry(entry=entry, score=score, matched_question=matched))
+    ranked.sort(key=lambda item: item.score, reverse=True)
+    return ranked[:limit]
+
+
+@lru_cache(maxsize=1)
+def knowledge_entries() -> tuple[KnowledgeEntry, ...]:
+    entries: list[KnowledgeEntry] = [
+        KnowledgeEntry(
+            id="help-question-examples",
+            category="ajuda",
+            questions_pt=(
+                "Que perguntas posso fazer?",
+                "Ajuda-me a usar a IA",
+                "Mostre exemplos de perguntas",
+                "O que posso perguntar?",
+                "Como devo perguntar?",
+            ),
+            questions_en=("What can I ask?", "Show question examples", "Help me use the AI"),
+            answer_pt=(
+                "Pode perguntar por identidade do sistema, contexto do utilizador, permissões, módulos, estatísticas, relatórios, "
+                "stock histórico, erros, requisições, pacientes, faturação, pagamentos, educação e também pedir CRUD por conversa. "
+                "Inclua sempre que possível módulo, período, código, nome ou acção esperada."
+            ),
+            answer_en=(
+                "You can ask about system identity, user context, permissions, modules, statistics, reports, historical stock, errors, "
+                "requests, patients, billing, payments, education and conversational CRUD. Include module, period, code, name or expected action when possible."
+            ),
+            follow_ups_pt=(
+                "Quantos pacientes deram entrada hoje?",
+                "Qual era o stock de medicação Paracetamol ontem?",
+                "Como criar um paciente pela IA?",
+                "Quem criou o sistema?",
+            ),
+            follow_ups_en=(
+                "How many patients were admitted today?",
+                "What was the Paracetamol medication stock yesterday?",
+                "How do I create a patient with AI?",
+                "Who created the system?",
+            ),
+            tags=("ajuda", "exemplos", "perguntas"),
+        ),
+        KnowledgeEntry(
+            id="ai-capabilities",
+            category="ia",
+            questions_pt=("O que a IA consegue fazer?", "Para que serve a IA Operacional?", "Quais são as capacidades da IA?"),
+            questions_en=("What can the AI do?", "What is the Operational AI for?"),
+            answer_pt=(
+                "A IA Operacional identifica o utilizador autenticado, respeita RBAC e tenant, consulta dados autorizados, executa analytics SQL seguros, "
+                "prepara CRUD com confirmação, cria tarefas operacionais, prepara relatórios e sugere próximas perguntas quando a intenção está incompleta."
+            ),
+            answer_en=(
+                "The Operational AI identifies the authenticated user, respects RBAC and tenant scope, queries authorized data, runs safe SQL analytics, "
+                "prepares confirmable CRUD, creates operational tasks, prepares reports and suggests follow-up questions when intent is incomplete."
+            ),
+            follow_ups_pt=("Que dados posso investigar?", "Como criar registos pela IA?", "Como funcionam as permissões da IA?"),
+            follow_ups_en=("What data can I investigate?", "How do I create records with AI?", "How do AI permissions work?"),
+            tags=("ia", "capacidades", "operacional"),
+        ),
+        KnowledgeEntry(
+            id="ai-typing-correction",
+            category="ia",
+            questions_pt=("A IA entende erros de ortografia?", "E se eu escrever errado?", "A IA corrige perguntas mal escritas?"),
+            questions_en=("Does the AI understand typos?", "What if I mistype a question?"),
+            answer_pt=(
+                "Sim. Quando a pergunta parecer próxima de uma pergunta prevista, a IA pergunta 'Quis dizer...?' e mostra sugestões. "
+                "Ao clicar numa sugestão, a pergunta é enviada automaticamente e a resposta aparece no chat."
+            ),
+            answer_en=(
+                "Yes. When the question looks close to a predicted question, the AI asks 'Did you mean...?' and shows suggestions. "
+                "Clicking a suggestion sends the question automatically and the answer appears in chat."
+            ),
+            follow_ups_pt=("Que perguntas posso fazer?", "Mostre exemplos de perguntas", "Como devo perguntar?"),
+            follow_ups_en=("What can I ask?", "Show question examples", "How should I ask?"),
+            tags=("ortografia", "sugestoes", "correcao"),
+        ),
+        KnowledgeEntry(
+            id="permissions-rbac",
+            category="seguranca",
+            questions_pt=("Como funcionam as permissões da IA?", "A IA respeita permissões?", "A IA vê dados sem acesso?"),
+            questions_en=("How do AI permissions work?", "Does the AI respect permissions?"),
+            answer_pt=(
+                "A IA usa o mesmo utilizador autenticado, tenant e grupos RBAC da aplicação. Se o utilizador não tiver acesso ao recurso, "
+                "a IA bloqueia a consulta ou acção e responde que não pode fazê-lo por falta de permissão."
+            ),
+            answer_en=(
+                "The AI uses the same authenticated user, tenant and RBAC groups as the application. If the user lacks access to a resource, "
+                "the AI blocks the query or action and says it cannot do it because permission is missing."
+            ),
+            follow_ups_pt=("Quem sou eu neste sistema?", "Que dados posso investigar?", "O que acontece se eu não tiver acesso?"),
+            follow_ups_en=("Who am I in this system?", "What data can I investigate?", "What happens if I do not have access?"),
+            tags=("rbac", "permissoes", "seguranca"),
+        ),
+        KnowledgeEntry(
+            id="tenant-scope",
+            category="seguranca",
+            questions_pt=("A IA consulta dados de outro tenant?", "A IA mistura dados de tenants?", "Qual é o escopo do tenant?"),
+            questions_en=("Can the AI query another tenant?", "Does the AI mix tenant data?"),
+            answer_pt=(
+                "Não deve misturar tenants. As ferramentas internas aplicam escopo por tenant e utilizador autenticado. "
+                "A resposta deve sempre vir do tenant activo na sessão."
+            ),
+            answer_en=(
+                "It should not mix tenants. Internal tools apply tenant and authenticated-user scope. The answer should always come from the active tenant in the session."
+            ),
+            follow_ups_pt=("Quem sou eu neste sistema?", "Como funcionam as permissões da IA?"),
+            follow_ups_en=("Who am I in this system?", "How do AI permissions work?"),
+            tags=("tenant", "escopo", "seguranca"),
+        ),
+        KnowledgeEntry(
+            id="crud-confirmation",
+            category="crud",
+            questions_pt=("Como funciona o CRUD por IA?", "A IA pode criar registos?", "A IA pode alterar ou apagar dados?"),
+            questions_en=("How does AI CRUD work?", "Can the AI create records?", "Can the AI update or delete data?"),
+            answer_pt=(
+                "A IA prepara a operação em conversa, recolhe os campos em falta, valida serializer e RBAC, mas a escrita só acontece depois de confirmação explícita no botão gerado pela IA."
+            ),
+            answer_en=(
+                "The AI prepares the operation conversationally, collects missing fields, validates serializer and RBAC, but writes only happen after explicit confirmation on the AI-generated button."
+            ),
+            follow_ups_pt=("Como criar um paciente pela IA?", "Como alterar um registo pela IA?", "Como apagar um registo pela IA?"),
+            follow_ups_en=("How do I create a patient with AI?", "How do I update a record with AI?", "How do I delete a record with AI?"),
+            tags=("crud", "confirmacao", "escrita"),
+        ),
+        KnowledgeEntry(
+            id="create-patient",
+            category="crud",
+            questions_pt=("Como criar um paciente pela IA?", "Como registar paciente?", "Como cadastrar paciente com IA?"),
+            questions_en=("How do I create a patient with AI?", "How do I register a patient?"),
+            answer_pt=(
+                "Peça em linguagem natural, por exemplo: 'Crie um paciente chamado Maria Mussa, contacto +258 84 000 0000'. "
+                "Se faltar algum campo obrigatório, a IA pergunta. Depois prepara a acção e só grava quando confirmar."
+            ),
+            answer_en=(
+                "Ask in natural language, for example: 'Create a patient called Maria Mussa, phone +258 84 000 0000'. "
+                "If a required field is missing, the AI asks. Then it prepares the action and only saves after confirmation."
+            ),
+            follow_ups_pt=("Crie um paciente chamado Paciente Teste.", "Que campos são obrigatórios para paciente?"),
+            follow_ups_en=("Create a patient called Test Patient.", "Which fields are required for a patient?"),
+            tags=("paciente", "crud", "clinical"),
+        ),
+        KnowledgeEntry(
+            id="sql-analytics",
+            category="analytics",
+            questions_pt=("Como fazer estatísticas pela IA?", "Como pesquisar dados por período?", "A IA faz analytics SQL?"),
+            questions_en=("How do I run statistics with AI?", "Can the AI run SQL analytics?"),
+            answer_pt=(
+                "Use perguntas com recurso, período e agrupamento. Exemplos: 'Quanto faturou este mês por estado?', "
+                "'Quantos pacientes deram entrada hoje?', 'Mostre erros 5xx dos últimos 7 dias'. A IA devolve contagens, agrupamentos, tendência, comparação e amostras seguras."
+            ),
+            answer_en=(
+                "Use questions with resource, period and grouping. Examples: 'How much was billed this month by status?', "
+                "'How many patients were admitted today?', 'Show 5xx errors from the last 7 days'. The AI returns counts, groups, trend, comparison and safe samples."
+            ),
+            follow_ups_pt=("Quanto faturou este mês por estado?", "Quantos pacientes deram entrada hoje?", "Mostre erros do sistema dos últimos 7 dias"),
+            follow_ups_en=("How much was billed this month by status?", "How many patients were admitted today?", "Show system errors from the last 7 days"),
+            tags=("analytics", "sql", "estatisticas"),
+        ),
+        KnowledgeEntry(
+            id="stock-history",
+            category="farmacia",
+            questions_pt=("Como perguntar stock histórico?", "Como saber estoque numa data?", "Qual era o stock de um medicamento?"),
+            questions_en=("How do I ask historical stock?", "How do I know stock on a date?"),
+            answer_pt=(
+                "Indique o produto e a data. Exemplo: 'Qual era o stock de medicação Paracetamol ontem?' ou "
+                "'Qual era o estoque de medicação K no dia 2026-05-11?'. A IA reconstrói o saldo pelos movimentos de stock registados."
+            ),
+            answer_en=(
+                "Provide product and date. Example: 'What was the Paracetamol medication stock yesterday?' or "
+                "'What was medication K stock on 2026-05-11?'. The AI reconstructs balance from recorded stock movements."
+            ),
+            follow_ups_pt=("Qual era o stock de medicação Paracetamol ontem?", "Qual era o estoque de medicação K no dia 2026-05-11?"),
+            follow_ups_en=("What was the Paracetamol medication stock yesterday?", "What was medication K stock on 2026-05-11?"),
+            tags=("stock", "farmacia", "historico"),
+        ),
+        KnowledgeEntry(
+            id="reports",
+            category="relatorios",
+            questions_pt=("Como gerar relatório pela IA?", "A IA gera relatórios?", "Como exportar relatório operacional?"),
+            questions_en=("How do I generate a report with AI?", "Can the AI generate reports?"),
+            answer_pt=(
+                "Peça o tipo e período: 'Gere relatório operacional dos últimos 30 dias'. A IA prepara o relatório como acção confirmável, "
+                "com fontes e resumo das ferramentas internas usadas."
+            ),
+            answer_en=(
+                "Ask for type and period: 'Generate an operational report for the last 30 days'. The AI prepares the report as a confirmable action, "
+                "with sources and summary of internal tools used."
+            ),
+            follow_ups_pt=("Gere relatório operacional dos últimos 30 dias.", "Quais alertas activos existem agora?"),
+            follow_ups_en=("Generate an operational report for the last 30 days.", "What active alerts exist now?"),
+            tags=("relatorio", "exportar", "pdf"),
+        ),
+        KnowledgeEntry(
+            id="language-switch",
+            category="interface",
+            questions_pt=("Como mudar idioma?", "O sistema suporta inglês?", "Como voltar para português?"),
+            questions_en=("How do I change language?", "Does the system support English?"),
+            answer_pt=(
+                "Use o botão de idioma no rodapé. Em português, o botão muda para inglês; em inglês, muda de volta para português. "
+                "A escolha deve persistir nas páginas seguintes."
+            ),
+            answer_en=(
+                "Use the language button in the footer. In Portuguese, it switches to English; in English, it switches back to Portuguese. "
+                "The choice should persist across later pages."
+            ),
+            follow_ups_pt=("Porque ainda vejo texto em português quando estou em inglês?", "Como reportar uma tradução em falta?"),
+            follow_ups_en=("Why do I still see Portuguese text while in English?", "How do I report a missing translation?"),
+            tags=("idioma", "i18n", "interface"),
+        ),
+        KnowledgeEntry(
+            id="system-identity",
+            category="projecto",
+            questions_pt=("Quem criou o sistema?", "Quando começou o desenvolvimento do sistema?", "Qual é o repositório do sistema?"),
+            questions_en=("Who created the system?", "When did system development start?", "What is the system repository?"),
+            answer_pt=(
+                "Essa pergunta é respondida com dados do GitHub. Pergunte exactamente 'Quem criou o sistema?' para a IA consultar a ferramenta de identidade do projecto."
+            ),
+            answer_en=(
+                "This question is answered using GitHub data. Ask exactly 'Who created the system?' so the AI queries the project identity tool."
+            ),
+            follow_ups_pt=("Quem criou o sistema?", "Quando começou a ser desenvolvido o sistema?"),
+            follow_ups_en=("Who created the system?", "When did system development start?"),
+            tags=("github", "autor", "projecto"),
+        ),
+    ]
+
+    for module in _module_catalog():
+        entries.extend(_module_entries(module))
+    entries.extend(_workflow_entries())
+    return tuple(entries)
+
+
+def _module_catalog() -> tuple[dict[str, str], ...]:
+    return (
+        {"key": "clinical", "pt": "Clínico", "en": "Clinical", "scope": "pacientes, exames, requisições, amostras e resultados"},
+        {"key": "reception", "pt": "Recepção", "en": "Reception", "scope": "entradas, check-ins, triagem e fluxo de chegada"},
+        {"key": "nursing", "pt": "Enfermagem", "en": "Nursing", "scope": "colheitas, procedimentos, enfermaria e sinais vitais"},
+        {"key": "pharmacy", "pt": "Farmácia", "en": "Pharmacy", "scope": "produtos, lotes, stock, vendas e movimentos"},
+        {"key": "billing", "pt": "Faturamento", "en": "Billing", "scope": "faturas, itens, estados e valores"},
+        {"key": "payments", "pt": "Pagamentos", "en": "Payments", "scope": "pagamentos, métodos, confirmações e recebimentos"},
+        {"key": "accounting", "pt": "Contabilidade", "en": "Accounting", "scope": "contas, lançamentos e movimentos contabilísticos"},
+        {"key": "education", "pt": "Education", "en": "Education", "scope": "estudantes, professores, cursos, turmas, presenças e notas"},
+        {"key": "equipment", "pt": "Equipamentos", "en": "Equipment", "scope": "equipamentos, série, estado e manutenção operacional"},
+        {"key": "equipment_integrations", "pt": "Integrações de equipamentos", "en": "Equipment integrations", "scope": "credenciais, mensagens, ordens, documentos e mapeamentos"},
+        {"key": "external_entities", "pt": "Entidades externas", "en": "External entities", "scope": "empresas, fornecedores e entidades parceiras"},
+        {"key": "human_resources", "pt": "Recursos Humanos", "en": "Human resources", "scope": "funcionários, salários, férias, ausências e processos"},
+        {"key": "identity", "pt": "Identidade", "en": "Identity", "scope": "utilizadores, perfis profissionais e recuperação de palavra-passe"},
+        {"key": "incidents", "pt": "Incidentes", "en": "Incidents", "scope": "ocorrências, severidade, estado e seguimento"},
+        {"key": "inspections", "pt": "Inspecções", "en": "Inspections", "scope": "inspecções, conformidade, observações e estados"},
+        {"key": "insurer", "pt": "Seguradora", "en": "Insurer", "scope": "seguradoras, planos, apólices e cobertura"},
+        {"key": "maintenance", "pt": "Manutenção", "en": "Maintenance", "scope": "ordens, planos, intervenções e custos"},
+        {"key": "maternity", "pt": "Maternidade", "en": "Maternity", "scope": "gestantes, partos, seguimento e registos clínicos"},
+        {"key": "medical_records", "pt": "Prontuário", "en": "Medical records", "scope": "registos clínicos, prescrições, diagnósticos e evolução"},
+        {"key": "monitoring", "pt": "Monitoramento", "en": "Monitoring", "scope": "erros, actividade de utilizadores, rotas e saúde operacional"},
+        {"key": "notifications", "pt": "Notificações", "en": "Notifications", "scope": "mensagens, entregas, eventos e estados de envio"},
+        {"key": "bloodbank", "pt": "Banco de Sangue", "en": "Blood bank", "scope": "doações, unidades, armazenamento, stock e transfusões"},
+        {"key": "consultations", "pt": "Consultas", "en": "Consultations", "scope": "marcações, especialidades, preços e reagendamento"},
+        {"key": "surgery", "pt": "Cirurgia", "en": "Surgery", "scope": "cirurgias, equipas, agenda, estados e materiais"},
+        {"key": "tenants", "pt": "Inquilinos", "en": "Tenants", "scope": "tenants, domínios, configurações e recursos activos"},
+        {"key": "audit_activities", "pt": "Auditoria", "en": "Audit", "scope": "actividade de utilizadores, pedidos, páginas e resultados"},
+    )
+
+
+def _module_entries(module: dict[str, str]) -> list[KnowledgeEntry]:
+    pt = module["pt"]
+    en = module["en"]
+    scope = module["scope"]
+    key = module["key"]
+    lower_pt = pt.lower()
+    return [
+        KnowledgeEntry(
+            id=f"module-{key}-overview",
+            category="modulos",
+            questions_pt=(f"O que faz o módulo {pt}?", f"Para que serve {pt}?", f"Explique o módulo {pt}"),
+            questions_en=(f"What does the {en} module do?", f"Explain the {en} module"),
+            answer_pt=f"O módulo {pt} cobre {scope}. A IA pode explicar o fluxo, sugerir perguntas, consultar dados autorizados e preparar acções com confirmação quando existir permissão.",
+            answer_en=f"The {en} module covers {scope}. The AI can explain the flow, suggest questions, query authorized data and prepare confirmable actions when permission exists.",
+            follow_ups_pt=(f"Como pesquisar dados em {pt}?", f"Que estatísticas posso pedir em {pt}?", f"Como criar registos em {pt} pela IA?"),
+            follow_ups_en=(f"How do I search data in {en}?", f"What statistics can I ask in {en}?", f"How do I create records in {en} with AI?"),
+            tags=(key, lower_pt, "modulo"),
+        ),
+        KnowledgeEntry(
+            id=f"module-{key}-search",
+            category="pesquisa",
+            questions_pt=(f"Como pesquisar dados em {pt}?", f"Como procurar registos de {pt}?", f"Como listar {pt}?"),
+            questions_en=(f"How do I search data in {en}?", f"How do I list {en} records?"),
+            answer_pt=f"Pergunte com recurso, filtro e período. Exemplo: 'Mostre registos de {lower_pt} dos últimos 7 dias' ou 'Procure {lower_pt} por código ou nome'. A IA só devolve dados permitidos pelo seu perfil.",
+            answer_en=f"Ask with resource, filter and period. Example: 'Show {en} records from the last 7 days' or 'Search {en} by code or name'. The AI only returns data allowed by your profile.",
+            follow_ups_pt=(f"Mostre registos de {lower_pt} dos últimos 7 dias", f"Que filtros posso aplicar em {pt}?"),
+            follow_ups_en=(f"Show {en} records from the last 7 days", f"What filters can I apply in {en}?"),
+            tags=(key, "pesquisa", "listar"),
+        ),
+        KnowledgeEntry(
+            id=f"module-{key}-analytics",
+            category="analytics",
+            questions_pt=(f"Que estatísticas posso pedir em {pt}?", f"Como analisar {pt}?", f"Que indicadores existem em {pt}?"),
+            questions_en=(f"What statistics can I ask in {en}?", f"How do I analyse {en}?"),
+            answer_pt=f"Pode pedir totais, evolução temporal, comparação com período anterior, distribuição por estado/tipo/prioridade e amostras seguras de {lower_pt}, desde que tenha permissão.",
+            answer_en=f"You can ask totals, time trend, comparison with previous period, distribution by status/type/priority and safe samples for {en}, if you have permission.",
+            follow_ups_pt=(f"Quantos registos de {lower_pt} existem este mês?", f"Compare {lower_pt} com o período anterior", f"Distribua {lower_pt} por estado"),
+            follow_ups_en=(f"How many {en} records exist this month?", f"Compare {en} with the previous period", f"Break down {en} by status"),
+            tags=(key, "analytics", "estatisticas"),
+        ),
+        KnowledgeEntry(
+            id=f"module-{key}-crud",
+            category="crud",
+            questions_pt=(f"Como criar registos em {pt} pela IA?", f"A IA pode alterar dados de {pt}?", f"Como apagar dados de {pt}?"),
+            questions_en=(f"How do I create records in {en} with AI?", f"Can the AI update {en} data?"),
+            answer_pt=f"Peça a criação, alteração ou remoção em linguagem natural. A IA identifica o recurso de {lower_pt}, recolhe campos obrigatórios, valida permissões e só grava depois de confirmação explícita.",
+            answer_en=f"Ask for creation, update or deletion in natural language. The AI identifies the {en} resource, collects required fields, validates permissions and only writes after explicit confirmation.",
+            follow_ups_pt=(f"Crie um registo de {lower_pt}", f"Que campos são obrigatórios em {pt}?", "Como funciona o CRUD por IA?"),
+            follow_ups_en=(f"Create a {en} record", f"Which fields are required in {en}?", "How does AI CRUD work?"),
+            tags=(key, "crud", "criar"),
+        ),
+    ]
+
+
+def _workflow_entries() -> list[KnowledgeEntry]:
+    workflows = (
+        ("clinical-to-nursing", "Como a enfermagem recebe requisições laboratoriais?", "Quando uma requisição laboratorial é criada, o fluxo deve notificar enfermagem e mostrar exames, amostra, frasco/tubo e volume mínimo para orientar a colheita."),
+        ("consultation-reschedule", "Como reagendar consulta?", "A consulta pode ser reagendada pelo fluxo de consultas. O evento de reagendamento deve aparecer centralizado e acima da página para evitar dúvida do utilizador."),
+        ("admin-activity", "Como ver actividade de admin?", "Use Monitoramento/Auditoria para rever pedidos recentes, página, resultado, tempo, utilizador e recurso. Se faltar dado, a origem é o registo UserActivity."),
+        ("system-errors", "Como investigar erros do sistema?", "Pergunte por erros 4xx/5xx, rota, período ou módulo. A IA usa dados de monitoramento, actividade e erros do sistema quando o perfil tem acesso."),
+        ("command-center", "O que é o Command Center?", "É a visão operacional para alertas, erros, SLO, outbox, tarefas e prioridades entre módulos."),
+        ("footer-language", "Onde fica o botão de idioma?", "O botão de idioma deve ficar no rodapé, junto dos controlos globais, e persistir a escolha para as páginas seguintes."),
+        ("sidebar", "Como ocultar o menu lateral?", "Use o botão hambúrguer do frontend para ocultar ou mostrar os módulos laterais; o layout e rodapé devem ocupar o espaço disponível."),
+        ("education-healthcare", "Porque Education e Healthcare são separados?", "Após login, o sistema deve apresentar divisões principais para Education e Healthcare, evitando mistura de domínios para administradores."),
+        ("lab-samples", "Como saber qual tubo usar no exame?", "Pergunte pela requisição ou exame. A IA deve mostrar exame, tipo de amostra, frasco/tubo e volume mínimo quando esses dados estiverem configurados."),
+        ("audit-evidence", "O que são evidências da IA?", "Evidências são fontes internas usadas na resposta: ferramenta, modelo, rota, política RBAC, GitHub ou relatório gerado."),
+    )
+    return [
+        KnowledgeEntry(
+            id=f"workflow-{key}",
+            category="fluxos",
+            questions_pt=(question, question.replace("Como", "De que forma"), question.replace("?", "")),
+            answer_pt=answer,
+            follow_ups_pt=("Que perguntas posso fazer?", "Como funcionam as permissões da IA?", "Gere relatório operacional dos últimos 30 dias."),
+            tags=("fluxo", key),
+        )
+        for key, question, answer in workflows
+    ]
+
+
+def _answer_payload(*, entry: KnowledgeEntry, score: float, language: str, matched_question: str) -> dict[str, Any]:
+    question = _main_question(entry, language=language)
+    answer = entry.answer_en if language == "en" and entry.answer_en else entry.answer_pt
+    follow_ups = list(entry.follow_ups_en if language == "en" and entry.follow_ups_en else entry.follow_ups_pt)
+    return {
+        "summary": {
+            "title_pt": "Resposta prevista da IA",
+            "title_en": "Predicted AI answer",
+            "metrics": [
+                {"label_pt": "Perguntas previstas", "label_en": "Predicted questions", "value": len(knowledge_entries())},
+                {"label_pt": "Confiança", "label_en": "Confidence", "value": round(score * 100)},
+                {"label_pt": "Sugestões seguintes", "label_en": "Next suggestions", "value": len(follow_ups)},
+            ],
+            "knowledge_base": {
+                "status": "answered",
+                "question": question,
+                "answer": answer,
+                "category": entry.category,
+                "score": round(score, 4),
+                "matched_question": matched_question,
+                "follow_ups": follow_ups[:5],
+            },
+        },
+        "knowledge_base": {
+            "status": "answered",
+            "entry_id": entry.id,
+            "question": question,
+            "answer": answer,
+            "category": entry.category,
+            "score": round(score, 4),
+            "matched_question": matched_question,
+            "follow_ups": follow_ups[:5],
+        },
+        "sources": [{"type": "knowledge_base", "label": "AI predicted questions", "href": ""}],
+    }
+
+
+def _suggestion_payload_result(*, language: str, suggestions: list[dict[str, Any]], score: float, message: str) -> dict[str, Any]:
+    prompt = "Did you mean one of these questions?" if language == "en" else "Quis dizer uma destas perguntas?"
+    return {
+        "summary": {
+            "title_pt": "Sugestões por ortografia aproximada",
+            "title_en": "Approximate spelling suggestions",
+            "metrics": [
+                {"label_pt": "Sugestões", "label_en": "Suggestions", "value": len(suggestions)},
+                {"label_pt": "Confiança", "label_en": "Confidence", "value": round(score * 100)},
+            ],
+            "knowledge_base": {
+                "status": "needs_confirmation",
+                "prompt": prompt,
+                "original_message": message,
+                "suggestions": suggestions,
+            },
+        },
+        "knowledge_base": {
+            "status": "needs_confirmation",
+            "prompt": prompt,
+            "original_message": message,
+            "suggestions": suggestions,
+        },
+        "sources": [{"type": "knowledge_base", "label": "AI predicted questions", "href": ""}],
+    }
+
+
+def _suggestion_payload(entry: KnowledgeEntry, *, language: str, score: float) -> dict[str, Any]:
+    return {
+        "entry_id": entry.id,
+        "question": _main_question(entry, language=language),
+        "category": entry.category,
+        "score": round(score, 4),
+    }
+
+
+def _main_question(entry: KnowledgeEntry, *, language: str) -> str:
+    questions = entry.questions_en if language == "en" and entry.questions_en else entry.questions_pt
+    return questions[0] if questions else entry.id
+
+
+def _entry_score(*, entry: KnowledgeEntry, normalized: str) -> tuple[float, str]:
+    candidates = (*entry.questions_pt, *entry.questions_en, *entry.tags)
+    best_score = 0.0
+    best_question = ""
+    for raw in candidates:
+        candidate = normalize_text(raw)
+        if not candidate:
+            continue
+        if normalized == candidate:
+            return 1.0, raw
+        if len(candidate) >= 8 and candidate in normalized:
+            return 0.95, raw
+        score = _similarity(normalized, candidate)
+        if score > best_score:
+            best_score = score
+            best_question = raw
+    return best_score, best_question
+
+
+def _similarity(left: str, right: str) -> float:
+    if not left or not right:
+        return 0.0
+    sequence = SequenceMatcher(None, left, right).ratio()
+    left_tokens = set(left.split())
+    right_tokens = set(right.split())
+    token_overlap = len(left_tokens & right_tokens) / max(len(left_tokens | right_tokens), 1)
+    compact_sequence = SequenceMatcher(None, left.replace(" ", ""), right.replace(" ", "")).ratio()
+    return max(sequence * 0.58 + token_overlap * 0.32 + compact_sequence * 0.10, token_overlap)

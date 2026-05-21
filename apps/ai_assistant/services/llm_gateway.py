@@ -30,6 +30,10 @@ class LocalLlmGateway:
         if project_identity_result:
             return self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
 
+        knowledge_result = next((item for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
+        if knowledge_result:
+            return self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
+
         sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
         if sql_analytics_result:
             return self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
@@ -180,6 +184,49 @@ class LocalLlmGateway:
             "Limitação: " + str(evidence.get("limitation_pt") or "O GitHub só prova o histórico visível no repositório e nos commits."),
         ]
         return "\n\n".join(parts)
+
+    def _knowledge_base_answer(self, result: dict[str, Any], *, language: str) -> str:
+        knowledge = result.get("knowledge_base") or (result.get("summary") or {}).get("knowledge_base") or {}
+        status = knowledge.get("status") or ""
+        if status == "needs_confirmation":
+            suggestions = knowledge.get("suggestions") or []
+            prompt = knowledge.get("prompt") or ("Did you mean one of these questions?" if language == "en" else "Quis dizer uma destas perguntas?")
+            lines = [f"- {item.get('question')}" for item in suggestions[:5] if item.get("question")]
+            if language == "en":
+                return "\n\n".join(
+                    [
+                        prompt,
+                        "\n".join(lines) if lines else "I did not find a close enough predicted question.",
+                        "Click one suggestion to send it automatically and receive the answer.",
+                        "Internal evidence used: AI predicted-question catalog and approximate spelling matching.",
+                    ]
+                )
+            return "\n\n".join(
+                [
+                    prompt,
+                    "\n".join(lines) if lines else "Não encontrei uma pergunta prevista suficientemente próxima.",
+                    "Clique numa sugestão para a enviar automaticamente e receber a resposta.",
+                    "Evidência interna usada: catálogo de perguntas previstas da IA e correspondência aproximada de ortografia.",
+                ]
+            )
+
+        answer = knowledge.get("answer") or ""
+        follow_ups = knowledge.get("follow_ups") or []
+        if language == "en":
+            parts = [
+                answer or "I found a predicted answer for this question.",
+                "Suggested follow-up questions:\n" + "\n".join(f"- {item}" for item in follow_ups[:5]) if follow_ups else "",
+                "Internal evidence used: AI predicted-question catalog.",
+                "Limitation: this is guidance. Operational data still requires the appropriate tool and RBAC permissions.",
+            ]
+            return "\n\n".join(part for part in parts if part)
+        parts = [
+            answer or "Encontrei uma resposta prevista para esta pergunta.",
+            "Perguntas seguintes sugeridas:\n" + "\n".join(f"- {item}" for item in follow_ups[:5]) if follow_ups else "",
+            "Evidência interna usada: catálogo de perguntas previstas da IA.",
+            "Limitação: isto é orientação. Dados operacionais continuam a exigir a ferramenta adequada e permissões RBAC.",
+        ]
+        return "\n\n".join(part for part in parts if part)
 
     def _user_context_answer(self, result: dict[str, Any], *, language: str, compact: bool = False) -> str:
         summary = result.get("summary") or {}

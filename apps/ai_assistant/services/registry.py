@@ -9,6 +9,7 @@ from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 from apps.ai_assistant.tools.data_explorer import ExploreDatabaseTool
 from apps.ai_assistant.tools.education import EducationSummaryTool
 from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
+from apps.ai_assistant.tools.knowledge_base import KnowledgeBaseTool, should_select_knowledge_base
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
 from apps.ai_assistant.tools.project_identity import ProjectIdentityTool, should_select_project_identity
@@ -37,6 +38,7 @@ class AiToolRegistry:
             PrepareOperationalTaskTool.name: PrepareOperationalTaskTool(),
             SqlAnalyticsTool.name: SqlAnalyticsTool(),
             ProjectIdentityTool.name: ProjectIdentityTool(),
+            KnowledgeBaseTool.name: KnowledgeBaseTool(),
         }
 
     def all(self) -> list:
@@ -67,6 +69,8 @@ class AiToolRegistry:
         selected = []
         if should_select_project_identity(message=message, active_module=active_module_key):
             return [self._tools[ProjectIdentityTool.name]]
+        if should_select_knowledge_base(message=message, active_module=active_module_key):
+            return [self._tools[KnowledgeBaseTool.name]]
 
         if should_select_sql_analytics(message=message, active_module=active_module_key):
             selected.append(self._tools[SqlAnalyticsTool.name])

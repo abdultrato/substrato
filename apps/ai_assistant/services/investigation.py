@@ -133,6 +133,8 @@ class AiInvestigationBuilder:
         names = {item.get("tool_name") for item in tool_results}
         if "get_project_identity" in names:
             return "project_identity"
+        if "answer_predicted_question" in names:
+            return "knowledge_base"
         if "run_sql_analytics" in names:
             return "sql_analytics"
         if "explore_database" in names:
@@ -303,6 +305,11 @@ class AiInvestigationBuilder:
             )
 
         questions_pt = {
+            "knowledge_base": [
+                "Que perguntas posso fazer?",
+                "A IA entende erros de ortografia?",
+                "Como funciona o CRUD por IA?",
+            ],
             "project_identity": [
                 "Mostre o link do repositório GitHub.",
                 "Qual foi o primeiro commit do projecto?",
@@ -329,6 +336,11 @@ class AiInvestigationBuilder:
             ],
         }
         questions_en = {
+            "knowledge_base": [
+                "What can I ask?",
+                "Does the AI understand typos?",
+                "How does AI CRUD work?",
+            ],
             "project_identity": [
                 "Show the GitHub repository link.",
                 "What was the first project commit?",
@@ -382,6 +394,7 @@ class AiInvestigationBuilder:
             "report_preparation": ("Preparação de relatório", "Report preparation"),
             "task_preparation": ("Preparação de tarefa", "Task preparation"),
             "project_identity": ("Identidade do projecto", "Project identity"),
+            "knowledge_base": ("Perguntas previstas", "Predicted questions"),
         }
         title_pt, title_en = titles.get(intent, ("Investigação operacional", "Operational investigation"))
         return title_en if language == "en" else title_pt
