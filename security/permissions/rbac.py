@@ -68,6 +68,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-content": SAFE_METHODS,
     }
     accounting_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    bloodbank_operational = SAFE_METHODS | WRITE_METHODS
+    bloodbank_read = SAFE_METHODS
 
     # NOTE: basenames follow api/v1/roteamento/rotas.py: "{prefix}-{name_model}"
     # Ex.: /api/v1/clinico/exam/ -> basename "clinico-exam"
@@ -131,6 +133,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "clinical-labrequest": SAFE_METHODS,
             "clinical-labrequestitem": SAFE_METHODS,
             "clinical-resultitem": SAFE_METHODS | WRITE_METHODS,
+            # Banco de sangue (triagem, doações e manutenção operacional)
+            "bloodbank-doacao": bloodbank_operational,
+            "bloodbank-unidade": bloodbank_operational,
+            "bloodbank-armazenamento": bloodbank_read,
+            "bloodbank-transfusao": bloodbank_read,
+            "bloodbank-movimentoestoque": bloodbank_read,
+            "bloodbank-manutencaoarmazenamento": bloodbank_operational,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
@@ -193,6 +202,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "nursing-wardbed": SAFE_METHODS | WRITE_METHODS,
             "nursing-hospitalization": SAFE_METHODS | WRITE_METHODS,
             "nursing-warddashboard": SAFE_METHODS,
+            # Banco de sangue (requisição/execução de transfusões e aviação)
+            "bloodbank-doacao": bloodbank_read,
+            "bloodbank-unidade": bloodbank_operational,
+            "bloodbank-armazenamento": bloodbank_read,
+            "bloodbank-transfusao": bloodbank_operational,
+            "bloodbank-movimentoestoque": bloodbank_read,
+            "bloodbank-manutencaoarmazenamento": bloodbank_read,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
@@ -231,6 +247,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
             "maternidade-gestacao": SAFE_METHODS | WRITE_METHODS,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
+            # Banco de sangue (consulta clínica e solicitação de transfusão)
+            "bloodbank-doacao": bloodbank_read,
+            "bloodbank-unidade": bloodbank_read,
+            "bloodbank-armazenamento": bloodbank_read,
+            "bloodbank-transfusao": bloodbank_operational,
+            "bloodbank-movimentoestoque": bloodbank_read,
+            "bloodbank-manutencaoarmazenamento": bloodbank_read,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,

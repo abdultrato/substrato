@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
@@ -20,6 +22,14 @@ from apps.audit_activities.models.user_activity import UserActivity
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
+from apps.bloodbank.models.blood_bank import (
+    BloodDonation,
+    BloodStockMovement,
+    BloodStorage,
+    BloodStorageMaintenance,
+    BloodTransfusion,
+    BloodUnit,
+)
 from apps.clinical.models import Patient
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
 from apps.tenants.models.tenant import Tenant
@@ -951,6 +961,288 @@ def test_ai_billing_crud_denies_invoice_item_delete_for_reception(api_client):
     assert not data["suggested_actions"]
     item.refresh_from_db()
     assert item.deleted is False
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_creates_donation_for_laboratory_group(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-donation", domain="tn-ai-bloodbank-donation.local")
+    user = _user(tenant, "laboratorio_ai_bloodbank", GROUPS["LABORATORIO"])
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador IA",
+        birth_date=date(1980, 1, 1),
+        blood_type="O+",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie doação de sangue doador {donor.custom_id} bolsa BLD-IA-001 "
+                "tipo sanguíneo O+ estado concluida triagem pendente volume 450 peso 70 hemoglobina 13"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "bloodbank-doacao"
+    assert action.payload["data"]["donor"] == donor.id
+    assert action.payload["data"]["bag_identifier"] == "BLD-IA-001"
+    assert action.payload["data"]["blood_type"] == "O+"
+    assert action.payload["data"]["status"] == BloodDonation.DonationStatus.COMPLETED
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    donation = BloodDonation.objects.get(tenant=tenant, bag_identifier="BLD-IA-001")
+    assert donation.donor_id == donor.id
+    assert donation.status == BloodDonation.DonationStatus.COMPLETED
+    unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
+    assert unit.unit_number == "BLD-IA-001-01"
+    assert BloodStockMovement.objects.filter(
+        tenant=tenant,
+        unit=unit,
+        movement_type=BloodStockMovement.MovementType.INBOUND,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_updates_donation_by_bag_identifier(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-update", domain="tn-ai-bloodbank-update.local")
+    user = _user(tenant, "laboratorio_ai_bloodbank_update", GROUPS["LABORATORIO"])
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador Alterar",
+        birth_date=date(1985, 5, 10),
+        blood_type="A+",
+    )
+    donation = BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        bag_identifier="BLD-UPD-001",
+        blood_type="A+",
+        donor_weight_kg="68.00",
+        hemoglobin_g_dl="13.20",
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Altere doação de sangue código BLD-UPD-001 observações Seguimento actualizado",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "bloodbank-doacao"
+    assert action.payload["object_ref"] == "BLD-UPD-001"
+    assert action.payload["data"]["notes"] == "Seguimento actualizado"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    donation.refresh_from_db()
+    assert donation.notes == "Seguimento actualizado"
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_creates_transfusion_for_nursing_group(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-transfusion", domain="tn-ai-bloodbank-transfusion.local")
+    user = _user(tenant, "enfermagem_ai_bloodbank", GROUPS["ENFERMAGEM"])
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador Transfusão",
+        birth_date=date(1979, 8, 20),
+        blood_type="O+",
+    )
+    recipient = Patient.objects.create(
+        tenant=tenant,
+        name="Receptor Transfusão",
+        birth_date=date(1990, 3, 12),
+        blood_type="O+",
+    )
+    donation = BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        bag_identifier="BLD-TRF-001",
+        blood_type="O+",
+        status=BloodDonation.DonationStatus.COMPLETED,
+        donor_weight_kg="72.00",
+        hemoglobin_g_dl="14.00",
+    )
+    unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                f"Crie transfusão de sangue receptor {recipient.custom_id} unidade {unit.unit_number} "
+                "estado solicitada indicação Anemia severa"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "bloodbank-transfusao"
+    assert action.payload["data"]["recipient"] == recipient.id
+    assert action.payload["data"]["blood_unit"] == unit.id
+    assert action.payload["data"]["status"] == BloodTransfusion.TransfusionStatus.REQUESTED
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    transfusion = BloodTransfusion.objects.get(tenant=tenant, blood_unit=unit)
+    assert transfusion.recipient_id == recipient.id
+    assert transfusion.indication == "Anemia severa"
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_creates_storage_maintenance(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-maintenance", domain="tn-ai-bloodbank-maintenance.local")
+    user = _user(tenant, "laboratorio_ai_bloodbank_maintenance", GROUPS["LABORATORIO"])
+    storage = BloodStorage.objects.create(
+        tenant=tenant,
+        name="Banco Central IA",
+        location="Bloco A",
+        capacity_units=100,
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": (
+                "Crie manutenção de armazenamento armazenamento Banco Central IA tipo calibração "
+                "técnico João Matias estado agendada achados Termómetro pendente"
+            ),
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "bloodbank-manutencaoarmazenamento"
+    assert action.payload["data"]["storage"] == storage.id
+    assert action.payload["data"]["maintenance_type"] == BloodStorageMaintenance.MaintenanceType.CALIBRATION
+    assert action.payload["data"]["technician_name"] == "João Matias"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    maintenance = BloodStorageMaintenance.objects.get(tenant=tenant, storage=storage)
+    assert maintenance.maintenance_type == BloodStorageMaintenance.MaintenanceType.CALIBRATION
+    assert maintenance.technician_name == "João Matias"
+    assert maintenance.findings == "Termómetro pendente"
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_deletes_donation_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-delete", domain="tn-ai-bloodbank-delete.local")
+    admin = _user(tenant, "admin_ai_bloodbank_delete", GROUPS["ADMIN"], is_staff=True)
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador Removível",
+        birth_date=date(1988, 2, 2),
+        blood_type="B+",
+    )
+    donation = BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        bag_identifier="BLD-DEL-001",
+        blood_type="B+",
+        donor_weight_kg="70.00",
+        hemoglobin_g_dl="13.50",
+    )
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": f"Remova doação de sangue id {donation.id}",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
+    action = AiSuggestedAction.objects.get(id=action_payload["id"])
+    assert action.payload["basename"] == "bloodbank-doacao"
+
+    confirm_response = api_client.post(
+        f"/api/v1/ai/assistant/actions/{action.id}/confirm/",
+        {"confirmation_text": "Confirmo"},
+        format="json",
+    )
+
+    assert confirm_response.status_code == 200, _response_data(confirm_response)
+    removed = BloodDonation.all_objects.get(id=donation.id)
+    assert removed.deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_bloodbank_crud_blocks_manual_storage_create(api_client):
+    tenant = _tenant(identifier="tn-ai-bloodbank-storage-blocked", domain="tn-ai-bloodbank-storage-blocked.local")
+    admin = _user(tenant, "admin_ai_bloodbank_storage_blocked", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Crie armazenamento de sangue nome Banco Novo capacidade 100",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não posso preparar" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not BloodStorage.objects.filter(tenant=tenant, name="Banco Novo").exists()
 
 
 @pytest.mark.django_db

@@ -90,6 +90,27 @@ DELETE_TERMS = (
     "delete",
     "remove",
 )
+RESOURCE_METHOD_BLOCKLIST = {
+    # Estes recursos têm transições próprias no domínio. A IA pode consultar e,
+    # quando permitido, alterar campos seguros, mas não deve preparar operações
+    # que os próprios ViewSets rejeitam como manuais.
+    "bloodbank-armazenamento": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    "bloodbank-unidade": frozenset({"POST", "DELETE"}),
+    "bloodbank-movimentoestoque": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+}
+RELATED_LOOKUP_FIELDS = (
+    "custom_id",
+    "code",
+    "codigo",
+    "number",
+    "unit_number",
+    "bag_identifier",
+    "student_code",
+    "teacher_code",
+    "name",
+    "username",
+    "email",
+)
 
 
 @dataclass(slots=True)
@@ -138,6 +159,14 @@ class AiCrudConversationManager:
         if not user_can_method_resource(user=user, basename=descriptor.basename, method=method):
             self._clear_draft(session)
             return self._access_denied(descriptor=descriptor, method=method, language=language)
+        if not self._method_available_for_resource(descriptor=descriptor, method=method):
+            self._clear_draft(session)
+            return self._operation_unavailable(
+                descriptor=descriptor,
+                method=method,
+                operation=operation,
+                language=language,
+            )
 
         field_specs = self._field_specs(descriptor=descriptor, tenant=tenant, user=user, operation=operation)
         extracted_payload = self._extract_payload(message=message, field_specs=field_specs, descriptor=descriptor)
@@ -306,6 +335,10 @@ class AiCrudConversationManager:
 
     def _method_for_operation(self, operation: str) -> str:
         return {"create": "POST", "update": "PATCH", "delete": "DELETE"}[operation]
+
+    def _method_available_for_resource(self, *, descriptor: ResourceDescriptor, method: str) -> bool:
+        blocked = RESOURCE_METHOD_BLOCKLIST.get(descriptor.basename, frozenset())
+        return method.upper() not in blocked
 
     def _field_specs(self, *, descriptor: ResourceDescriptor, tenant, user, operation: str) -> list[CrudFieldSpec]:
         viewset_class = viewset_for_descriptor(descriptor)
@@ -624,7 +657,7 @@ class AiCrudConversationManager:
             queryset = queryset.filter(deleted=False)
 
         query = Q()
-        for lookup_field in ("custom_id", "code", "codigo", "number", "name", "username", "email"):
+        for lookup_field in RELATED_LOOKUP_FIELDS:
             if not self._model_has_field(model, lookup_field):
                 continue
             lookup = "iexact" if lookup_field != "name" else "icontains"
@@ -804,6 +837,44 @@ class AiCrudConversationManager:
             "sources": [{"type": "policy", "label": "RBAC", "href": ""}],
         }
 
+    def _operation_unavailable(
+        self,
+        *,
+        descriptor: ResourceDescriptor,
+        method: str,
+        operation: str,
+        language: str,
+    ) -> dict[str, Any]:
+        return {
+            "summary": {
+                "title_pt": "CRUD indisponível pelo fluxo de domínio",
+                "title_en": "CRUD unavailable by domain workflow",
+                "metrics": [
+                    {"label_pt": "Recurso", "label_en": "Resource", "value": descriptor.label(language)},
+                    {"label_pt": "Método", "label_en": "Method", "value": method},
+                ],
+            },
+            "crud": {
+                "status": "unavailable",
+                "operation": operation,
+                "resource": descriptor.as_catalog_item(language=language),
+                "method": method,
+                "prompt_pt": (
+                    "Este recurso não aceita esta operação manual. Use a transição operacional própria "
+                    "do módulo ou escolha outro recurso editável."
+                ),
+                "prompt_en": (
+                    "This resource does not accept this manual operation. Use the module-specific "
+                    "operational transition or choose another editable resource."
+                ),
+            },
+            "access_denied": False,
+            "sources": [
+                {"type": "endpoint", "label": descriptor.basename, "href": descriptor.href},
+                {"type": "policy", "label": "Domain workflow", "href": ""},
+            ],
+        }
+
     def _needs_resource(self, *, operation: str, language: str) -> dict[str, Any]:
         return {
             "summary": {
@@ -879,6 +950,8 @@ class AiCrudActionRunner:
         method = {"create": "POST", "update": "PATCH", "delete": "DELETE"}[operation]
         if not user_can_method_resource(user=user, basename=descriptor.basename, method=method):
             return self._fail(action, "O utilizador já não tem permissão para executar esta operação.")
+        if method in RESOURCE_METHOD_BLOCKLIST.get(descriptor.basename, frozenset()):
+            return self._fail(action, "Esta operação não está disponível para execução manual neste recurso.")
 
         if operation == "create":
             response_data, status_code = self._dispatch_create(descriptor=descriptor, tenant=tenant, user=user, data=payload.get("data") or {})
@@ -1018,7 +1091,7 @@ class AiCrudActionRunner:
         queryset = scoped_queryset_for_resource(descriptor=descriptor, tenant=tenant, user=user)
         query = Q()
         model = queryset.model
-        for field_name in ("custom_id", "code", "codigo", "number", "student_code", "teacher_code"):
+        for field_name in RELATED_LOOKUP_FIELDS:
             try:
                 model._meta.get_field(field_name)
             except FieldDoesNotExist:

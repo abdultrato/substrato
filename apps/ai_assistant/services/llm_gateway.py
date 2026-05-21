@@ -337,6 +337,26 @@ class LocalLlmGateway:
                 ]
             )
 
+        if status == "unavailable":
+            prompt = crud.get("prompt_en") if language == "en" else crud.get("prompt_pt")
+            if language == "en":
+                return "\n\n".join(
+                    [
+                        f"I cannot prepare this {operation_label} action for {label}.",
+                        prompt or "This resource does not accept this manual operation.",
+                        "Internal evidence used: API resource catalog, ViewSet workflow and RBAC.",
+                        "Limitation: no write action was created.",
+                    ]
+                )
+            return "\n\n".join(
+                [
+                    f"Não posso preparar esta acção de {operation_label} para {label}.",
+                    prompt or "Este recurso não aceita esta operação manual.",
+                    "Evidência interna usada: catálogo da API, fluxo do ViewSet e RBAC.",
+                    "Limitação: nenhuma acção de escrita foi criada.",
+                ]
+            )
+
         if status == "ready":
             payload = crud.get("payload") or {}
             if language == "en":
