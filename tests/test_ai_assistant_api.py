@@ -86,7 +86,10 @@ from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
 from apps.inspections.models.daily_inspection import DailyInspection
 from apps.maternity.models.pregnancy import Pregnancy
 from apps.maintenance.models.maintenance import Maintenance
+from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
+from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
+from apps.pharmacy.models.product import Product
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -3167,6 +3170,152 @@ def test_ai_maternity_crud_denies_pregnancy_create_for_reception(api_client):
     assert "não tem acesso" in data["answer"].lower()
     assert not data["suggested_actions"]
     assert not Pregnancy.objects.filter(tenant=tenant, patient__name="Gestante Bloqueada").exists()
+
+
+@pytest.mark.django_db
+def test_ai_medical_records_crud_creates_updates_and_deletes_record_for_medicine(api_client):
+    tenant = _tenant(identifier="tn-ai-medical-record-crud", domain="tn-ai-medical-record-crud.local")
+    user = _user(tenant, "medicina_ai_medical_record_crud", GROUPS["MEDICINA"])
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Paciente Cardex IA",
+        document_number="BI-PRT-001",
+    )
+    doctor = Employee.objects.create(
+        tenant=tenant,
+        name="Dr Cardex",
+        document_number="CRM-PRT-001",
+        email="dr.cardex@example.com",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie cardex {"paciente":"Paciente Cardex IA","medico":"Dr Cardex","estado":"rascunho","sintomas":"Febre e tosse","diagnostico":"Suspeita respiratória","prescricao":"Hidratação oral","relatorio_medico":"Avaliar em 48 horas"}',
+    )
+
+    assert create_action.payload["basename"] == "medical_records-record"
+    assert create_action.payload["data"]["patient"] == patient.id
+    assert create_action.payload["data"]["doctor"] == doctor.id
+    assert create_action.payload["data"]["status"] == MedicalRecordEntry.Status.DRAFT
+    assert create_action.payload["data"]["symptoms"] == "Febre e tosse"
+    assert create_action.payload["data"]["diagnosis"] == "Suspeita respiratória"
+
+    _confirm_ai_action(api_client, create_action)
+    record = MedicalRecordEntry.objects.get(tenant=tenant, patient=patient)
+    assert record.doctor == doctor
+    assert record.medical_report == "Avaliar em 48 horas"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere cardex id {record.id} {{"estado":"finalizado","diagnostico":"Bronquite aguda","relatorio":"Alta com orientação"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "medical_records-record"
+    assert update_action.payload["object_ref"] == str(record.id)
+    assert update_action.payload["data"]["status"] == MedicalRecordEntry.Status.FINALIZED
+    assert update_action.payload["data"]["medical_report"] == "Alta com orientação"
+
+    _confirm_ai_action(api_client, update_action)
+    record.refresh_from_db()
+    assert record.status == MedicalRecordEntry.Status.FINALIZED
+    assert record.diagnosis == "Bronquite aguda"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova cardex id {record.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "medical_records-record"
+    _confirm_ai_action(api_client, delete_action)
+    assert MedicalRecordEntry.all_objects.get(id=record.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_medical_records_crud_creates_updates_and_deletes_prescription_item(api_client):
+    tenant = _tenant(identifier="tn-ai-medical-record-prescription", domain="tn-ai-medical-record-prescription.local")
+    user = _user(tenant, "medicina_ai_prescription_item_crud", GROUPS["MEDICINA"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Prescrição IA", document_number="BI-PRT-002")
+    record = MedicalRecordEntry.objects.create(tenant=tenant, patient=patient, symptoms="Dor")
+    medication = Product.objects.create(
+        tenant=tenant,
+        name="Amoxicilina IA",
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal("100.00"),
+        vat_percentage=Decimal("0.00"),
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        f'Crie item de prescrição {{"cardex":{record.id},"medicamento":"Amoxicilina IA","dosagem":"500","unidade":"MG","numero_doses":6,"intervalo_horas":8,"observacoes":"Após refeições"}}',
+    )
+
+    assert create_action.payload["basename"] == "medical_records-prescricaoitem"
+    assert create_action.payload["data"]["record"] == record.id
+    assert create_action.payload["data"]["medication"] == medication.id
+    assert create_action.payload["data"]["dosage_value"] == "500"
+    assert create_action.payload["data"]["dosage_unit"] == PrescriptionItem.DosageUnit.MG
+    assert create_action.payload["data"]["interval_hours"] == 8
+
+    _confirm_ai_action(api_client, create_action)
+    item = PrescriptionItem.objects.get(tenant=tenant, record=record, medication=medication)
+    assert item.dosage_value == Decimal("500.00")
+    assert item.dose_count == 6
+    assert item.notes == "Após refeições"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere item de prescrição id {item.id} {{"numero_doses":3,"intervalo_horas":12,"observacoes":"Reavaliar ao fim do tratamento"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "medical_records-prescricaoitem"
+    assert update_action.payload["object_ref"] == str(item.id)
+    assert update_action.payload["data"]["dose_count"] == 3
+    assert update_action.payload["data"]["interval_hours"] == 12
+
+    _confirm_ai_action(api_client, update_action)
+    item.refresh_from_db()
+    assert item.dose_count == 3
+    assert item.interval_hours == 12
+    assert item.notes == "Reavaliar ao fim do tratamento"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova item de prescrição id {item.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "medical_records-prescricaoitem"
+    _confirm_ai_action(api_client, delete_action)
+    assert PrescriptionItem.all_objects.get(id=item.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_medical_records_crud_denies_record_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-medical-record-denied", domain="tn-ai-medical-record-denied.local")
+    user = _user(tenant, "recepcao_ai_medical_record_denied", GROUPS["RECEPCAO"])
+    Patient.objects.create(tenant=tenant, name="Paciente Cardex Bloqueado", document_number="BI-PRT-BLOCK")
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie cardex {"paciente":"Paciente Cardex Bloqueado","sintomas":"Dor"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not MedicalRecordEntry.objects.filter(tenant=tenant, patient__name="Paciente Cardex Bloqueado").exists()
 
 
 @pytest.mark.django_db

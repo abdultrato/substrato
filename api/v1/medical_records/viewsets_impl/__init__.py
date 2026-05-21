@@ -7,7 +7,5 @@ from .core import (
 __all__ = [
     "VIEWSET_MAP",
     "MedicalRecordEntryViewSet",
-    "MedicalRecordEntryViewSet",
-    "PrescriptionItemViewSet",
     "PrescriptionItemViewSet",
 ]

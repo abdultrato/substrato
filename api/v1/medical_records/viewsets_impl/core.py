@@ -17,21 +17,35 @@ class MedicalRecordEntryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     search_fields = [
         "custom_id",
         "patient__name",
+        "patient__document_number",
         "doctor__name",
+        "doctor__document_number",
         "diagnosis",
         "symptoms",
+        "prescription",
+        "medical_report",
     ]
-    ordering_fields = ["care_start_at", "care_end_at", "created_at", "status"]
+    ordering_fields = ["care_start_at", "care_end_at", "created_at", "updated_at", "status", "patient", "doctor"]
     ordering = ["-care_start_at", "-created_at"]
 
 
 class PrescriptionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = PrescriptionItem.objects.select_related("record", "medication").all()
+    queryset = PrescriptionItem.objects.select_related("record", "record__patient", "medication").all()
     serializer_class = PrescriptionItemSerializer
     filterset_class = PrescriptionItemFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["custom_id", "medication__name", "notes"]
-    ordering_fields = ["position", "created_at", "dosage_value", "dose_count"]
+    search_fields = ["custom_id", "record__custom_id", "record__patient__name", "medication__name", "notes"]
+    ordering_fields = [
+        "position",
+        "created_at",
+        "updated_at",
+        "dosage_value",
+        "dosage_unit",
+        "interval_hours",
+        "dose_count",
+        "record",
+        "medication",
+    ]
     ordering = ["record", "position", "id"]
 
 

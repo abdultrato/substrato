@@ -134,6 +134,16 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in maternity_read
     }
+    medical_records_read = {
+        "prontuario-record": SAFE_METHODS,
+        "prontuario-prescricaoitem": SAFE_METHODS,
+        "medical_records-record": SAFE_METHODS,
+        "medical_records-prescricaoitem": SAFE_METHODS,
+    }
+    medical_records_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in medical_records_read
+    }
     identity_read = {
         "identidade-user": SAFE_METHODS,
         "identity-user": SAFE_METHODS,
@@ -316,8 +326,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
             # Prontuário / Maternidade / Cirurgia (read-only no MVP)
-            "prontuario-record": SAFE_METHODS,
-            "prontuario-prescricaoitem": SAFE_METHODS,
+            **medical_records_read,
             **maternity_read,
             "surgery-surgery": SAFE_METHODS,
         },
@@ -351,8 +360,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (MVP)
-            "prontuario-record": SAFE_METHODS | WRITE_METHODS,
-            "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
+            **medical_records_crud,
             **maternity_crud,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
             # Banco de sangue (consulta clínica e solicitação de transfusão)
@@ -401,8 +409,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "consultations-specialty": SAFE_METHODS,
             "consultations-feriado": SAFE_METHODS,
             # Prontuário / Maternidade / Cirurgia (MVP)
-            "prontuario-record": SAFE_METHODS | WRITE_METHODS,
-            "prontuario-prescricaoitem": SAFE_METHODS | WRITE_METHODS,
+            **medical_records_crud,
             **maternity_crud,
             "surgery-surgery": SAFE_METHODS | WRITE_METHODS,
             # Logística interna → requisições à farmácia
