@@ -32,7 +32,7 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/billing/invoice/")
   })
 
-  it("reescreve aliases de entidades para external_entities/company", async () => {
+  it("reescreve aliases de entidades para external_entities/empresa", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {
         status: 200,
@@ -42,10 +42,10 @@ describe("API facade contract", () => {
 
     await apiFetch("/entities/")
 
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/external_entities/company/")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/external_entities/empresa/")
   })
 
-  it("reescreve alias companies para external_entities/company", async () => {
+  it("reescreve alias companies para external_entities/empresa", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {
         status: 200,
@@ -55,7 +55,7 @@ describe("API facade contract", () => {
 
     await apiFetch("/companies/")
 
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/external_entities/company/")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/external_entities/empresa/")
   })
 
   it("reescreve alias legado de recibos para o endpoint atual", async () => {

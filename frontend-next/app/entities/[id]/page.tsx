@@ -18,7 +18,7 @@ export default function VerEntidadePage() {
     useEffect(() => {
         async function carregar() {
             try {
-                const data = await apiFetch(`/entities/${id}/`);
+                const data = await apiFetch(`/external_entities/empresa/${id}/`);
                 setEntidade(data);
             } catch {
                 alert("Erro ao carregar entidade");

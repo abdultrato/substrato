@@ -56,7 +56,7 @@ export default function NovaRequisicaoExternaPage() {
 
     async function carregarEmpresas() {
         try {
-            const raw = await apiFetch("/entities/company/");
+            const raw = await apiFetch("/external_entities/empresa/");
             setEmpresas(toArray<Entidade>(raw));
         } catch {
             setEmpresas([]);

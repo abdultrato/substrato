@@ -53,7 +53,7 @@ export default function NovoPacientePage () {
     useEffect( () => {
         async function carregarEmpresas () {
             try {
-                const data: Entidade[] = await apiFetch( "/entities/" );
+                const data: Entidade[] = await apiFetch( "/external_entities/empresa/" );
                 setEmpresas( data || [] );
             } catch {
                 setEmpresas( [] );

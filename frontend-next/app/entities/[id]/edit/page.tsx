@@ -21,7 +21,7 @@ export default function EditarEntidadePage() {
     useEffect(() => {
         async function carregar() {
             try {
-                const data = await apiFetch(`/entities/${id}/`);
+                const data = await apiFetch(`/external_entities/empresa/${id}/`);
                 setForm(data);
             } catch {
                 alert("Erro ao carregar entidade");
@@ -50,7 +50,7 @@ export default function EditarEntidadePage() {
         setSaving(true);
 
         try {
-            await apiFetch(`/entities/${id}/`, {
+            await apiFetch(`/external_entities/empresa/${id}/`, {
                 method: "PUT",
                 body: JSON.stringify(form),
             });

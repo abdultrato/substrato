@@ -51,7 +51,7 @@ export default function NovaEntidadePage () {
         setError( null );
 
         try {
-            await apiFetch( "/entities/", {
+            await apiFetch( "/external_entities/empresa/", {
                 method: "POST",
                 body: JSON.stringify( form ),
             } );

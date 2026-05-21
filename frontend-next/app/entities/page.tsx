@@ -41,7 +41,7 @@ export default function EntidadesPage () {
             setError(null);
             const params = new URLSearchParams();
             if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
-            const url = `/entities/${params.toString() ? `?${params.toString()}` : ""}`;
+            const url = `/external_entities/empresa/${params.toString() ? `?${params.toString()}` : ""}`;
 
             const { items, meta } = await apiFetchList<EntidadeList>( url, {
                 page,
@@ -72,7 +72,7 @@ export default function EntidadesPage () {
         if ( !confirm( "Confirmar remoção da entidade?" ) ) return;
 
         try {
-            await apiFetch( `/entities/${id}/`, { method: "DELETE" } );
+            await apiFetch( `/external_entities/empresa/${id}/`, { method: "DELETE" } );
             carregar();
         } catch {
             alert( "Falha ao remover entidade." );

@@ -52,7 +52,7 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "entities",
     label: "Entidades",
     resources: [
-      { key: "empresa", label: "Empresas", endpoint: "/entities/company/", adminListHref: "/admin/entities/empresa/" },
+      { key: "empresa", label: "Empresas", endpoint: "/external_entities/empresa/", adminListHref: "/admin/externall-entities/company/" },
     ],
   },
   {
@@ -121,9 +121,9 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "insurer",
     label: "Seguradora",
     resources: [
-      { key: "seguradora", label: "Seguradoras", endpoint: "/seguradora/seguradora/", adminListHref: "/admin/seguradora/seguradora/" },
-      { key: "planocobertura", label: "Planos", endpoint: "/seguradora/planocobertura/", adminListHref: "/admin/seguradora/planocobertura/" },
-      { key: "autorizacaoprocedimento", label: "Autorizações", endpoint: "/seguradora/autorizacaoprocedimento/", adminListHref: "/admin/seguradora/autorizacaoprocedimento/" },
+      { key: "seguradora", label: "Seguradoras", endpoint: "/insurer/insurer/", adminListHref: "/admin/insurer/insurer/" },
+      { key: "planocobertura", label: "Planos", endpoint: "/insurer/planocobertura/", adminListHref: "/admin/insurer/coverageplan/" },
+      { key: "autorizacaoprocedimento", label: "Autorizações", endpoint: "/insurer/autorizacaoprocedimento/", adminListHref: "/admin/insurer/procedureauthorization/" },
     ],
   },
   {
@@ -166,11 +166,11 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "tenants",
     label: "Inquilinos",
     resources: [
-      { key: "inquilino", label: "Inquilinos", endpoint: "/inquilinos/inquilino/", adminListHref: "/admin/inquilinos/inquilino/" },
-      { key: "planoassinatura", label: "Planos", endpoint: "/inquilinos/planoassinatura/", adminListHref: "/admin/tenants/subscriptionplan/" },
-      { key: "configuracaoinquilino", label: "Configurações", endpoint: "/inquilinos/configuracaoinquilino/", adminListHref: "/admin/inquilinos/configuracaoinquilino/" },
-      { key: "usotenant", label: "Uso do Tenant", endpoint: "/inquilinos/usotenant/", adminListHref: "/admin/tenants/tenantusage/" },
-      { key: "featureflagtenant", label: "Feature Flags", endpoint: "/inquilinos/featureflagtenant/", adminListHref: "/admin/tenants/tenantfeatureflag/" },
+      { key: "inquilino", label: "Inquilinos", endpoint: "/tenants/tenant/", adminListHref: "/admin/tenants/tenant/" },
+      { key: "planoassinatura", label: "Planos", endpoint: "/tenants/planoassinatura/", adminListHref: "/admin/tenants/subscriptionplan/" },
+      { key: "configuracaoinquilino", label: "Configurações", endpoint: "/tenants/configuracaoinquilino/", adminListHref: "/admin/tenants/tenantconfiguration/" },
+      { key: "usotenant", label: "Uso do Tenant", endpoint: "/tenants/usotenant/", adminListHref: "/admin/tenants/tenantusage/" },
+      { key: "featureflagtenant", label: "Feature Flags", endpoint: "/tenants/featureflagtenant/", adminListHref: "/admin/tenants/tenantfeatureflag/" },
     ],
   },
   {
@@ -185,17 +185,17 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "identity",
     label: "Identidade",
     resources: [
-      { key: "usuario", label: "Usuários", endpoint: "/identidade/usuario/", adminListHref: "/admin/identidade/usuario/" },
-      { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identidade/profileprofissional/" },
-      { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identidade/passwordresettoken/" },
+      { key: "usuario", label: "Usuários", endpoint: "/identity/user/", adminListHref: "/admin/identity/user/" },
+      { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identity/perfilprofissional/" },
+      { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identity/passwordresettoken/" },
     ],
   },
   {
     key: "medical_records",
     label: "Prontuário",
     resources: [
-      { key: "registro", label: "Cardex", endpoint: "/medical-records/registro/", adminListHref: "/admin/medical-records/registroprontuario/" },
-      { key: "prescricaoitem", label: "Itens de Prescrição", endpoint: "/medical-records/prescricaoitem/", adminListHref: "/admin/medical-records/prescricaoitem/" },
+      { key: "registro", label: "Cardex", endpoint: "/medical_records/record/", adminListHref: "/admin/medical-records/medicalrecordentry/" },
+      { key: "prescricaoitem", label: "Itens de Prescrição", endpoint: "/medical_records/prescricaoitem/", adminListHref: "/admin/medical-records/prescriptionitem/" },
     ],
   },
   {
@@ -219,15 +219,15 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "human_resources",
     label: "Recursos Humanos",
     resources: [
-      { key: "cargo", label: "Cargos", endpoint: "/resources_humanos/cargo/", adminListHref: "/admin/resources_humanos/cargo/" },
-      { key: "funcionario", label: "Funcionários", endpoint: "/resources_humanos/funcionario/", adminListHref: "/admin/resources_humanos/funcionario/" },
-      { key: "agregadofamiliar", label: "Agregados Familiares", endpoint: "/resources_humanos/agregadofamiliar/", adminListHref: "/admin/resources_humanos/agregadofamiliar/" },
-      { key: "horario", label: "Horários", endpoint: "/resources_humanos/horario/", adminListHref: "/admin/resources_humanos/horariotrabalho/" },
-      { key: "falta", label: "Faltas", endpoint: "/resources_humanos/falta/", adminListHref: "/admin/resources_humanos/falta/" },
-      { key: "ferias", label: "Férias", endpoint: "/resources_humanos/ferias/", adminListHref: "/admin/resources_humanos/ferias/" },
-      { key: "dispensa", label: "Dispensas", endpoint: "/resources_humanos/dispensa/", adminListHref: "/admin/resources_humanos/dispensa/" },
-      { key: "horaextra", label: "Horas Extras", endpoint: "/resources_humanos/horaextra/", adminListHref: "/admin/resources_humanos/horaextra/" },
-      { key: "folhapagamento", label: "Folhas de Pagamento", endpoint: "/resources_humanos/folhapagamento/", adminListHref: "/admin/resources_humanos/folhapagamento/" },
+      { key: "cargo", label: "Cargos", endpoint: "/human_resources/role/", adminListHref: "/admin/human-resources/jobtitle/" },
+      { key: "funcionario", label: "Funcionários", endpoint: "/human_resources/employee/", adminListHref: "/admin/human-resources/employee/" },
+      { key: "agregadofamiliar", label: "Agregados Familiares", endpoint: "/human_resources/agregadofamiliar/", adminListHref: "/admin/human-resources/familydependent/" },
+      { key: "horario", label: "Horários", endpoint: "/human_resources/horario/", adminListHref: "/admin/human-resources/workschedule/" },
+      { key: "falta", label: "Faltas", endpoint: "/human_resources/falta/", adminListHref: "/admin/human-resources/absence/" },
+      { key: "ferias", label: "Férias", endpoint: "/human_resources/ferias/", adminListHref: "/admin/human-resources/vacation/" },
+      { key: "dispensa", label: "Dispensas", endpoint: "/human_resources/dispensa/", adminListHref: "/admin/human-resources/termination/" },
+      { key: "horaextra", label: "Horas Extras", endpoint: "/human_resources/horaextra/", adminListHref: "/admin/human-resources/overtime/" },
+      { key: "folhapagamento", label: "Folhas de Pagamento", endpoint: "/human_resources/folhapagamento/", adminListHref: "/admin/human-resources/payroll/" },
     ],
   },
   {
@@ -259,6 +259,7 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/equipment/incident/": "/admin/incidents/incident/",
   // External entities
   "/entities/company/": "/admin/externall-entities/company/",
+  "/external_entities/empresa/": "/admin/externall-entities/company/",
   "/externall_entities/empresa/": "/admin/externall-entities/company/",
   "/externall_entities/company/": "/admin/externall-entities/company/",
   // Billing
@@ -322,6 +323,9 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/inquilinos/inquilino/": "/admin/tenants/tenant/",
   "/inquilinos/configuracaoinquilino/": "/admin/tenants/tenantconfiguration/",
   "/tenants/tenant/": "/admin/tenants/tenant/",
+  "/tenants/planoassinatura/": "/admin/tenants/subscriptionplan/",
+  "/tenants/usotenant/": "/admin/tenants/tenantusage/",
+  "/tenants/featureflagtenant/": "/admin/tenants/tenantfeatureflag/",
   "/tenants/configuracaoinquilino/": "/admin/tenants/tenantconfiguration/",
   "/tenants/tenantconfiguration/": "/admin/tenants/tenantconfiguration/",
   // Notifications

@@ -64,7 +64,7 @@ export default function EditarPacientePage() {
             }
             const [data, emps] = await Promise.all([
                 apiFetch<Paciente>(`/patients/${pacienteId}/`),
-                apiFetch<Entidade[]>("/entities/"),
+                apiFetch<Entidade[]>("/external_entities/empresa/"),
             ]);
 
             setEmpresas(emps || []);
