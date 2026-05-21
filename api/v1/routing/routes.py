@@ -12,6 +12,7 @@ from api.v1.external_entities.viewsets import VIEWSET_MAP as EXTERNAL_ENTITIES_V
 from api.v1.human_resources.viewsets import VIEWSET_MAP as HUMAN_RESOURCES_VIEWSET_MAP
 from api.v1.identity.viewsets import VIEWSET_MAP as IDENTITY_VIEWSET_MAP
 from api.v1.insurer.viewsets import VIEWSET_MAP as INSURER_VIEWSET_MAP
+from api.v1.maintenance.viewsets import VIEWSET_MAP as MAINTENANCE_VIEWSET_MAP
 from api.v1.maternity.viewsets import VIEWSET_MAP as MATERNITY_VIEWSET_MAP
 from api.v1.medical_records.viewsets import VIEWSET_MAP as MEDICAL_RECORDS_VIEWSET_MAP
 from api.v1.monitoring.viewsets import VIEWSET_MAP as MONITORING_VIEWSET_MAP
@@ -43,6 +44,7 @@ VIEWSET_GROUPS = {
     "payments": PAYMENTS_VIEWSET_MAP,
     "reception": RECEPTION_VIEWSET_MAP,
     "insurer": INSURER_VIEWSET_MAP,
+    "maintenance": MAINTENANCE_VIEWSET_MAP,
     "medical_records": MEDICAL_RECORDS_VIEWSET_MAP,
     "maternity": MATERNITY_VIEWSET_MAP,
     "surgery": SURGERY_VIEWSET_MAP,

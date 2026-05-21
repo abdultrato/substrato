@@ -1602,7 +1602,7 @@ def test_ai_equipment_crud_creates_inspection_maintenance_and_incident(api_clien
             "agendada para 2026-05-03 realizada em 2026-05-04 descrição Substituição preventiva técnico João"
         ),
     )
-    assert maintenance_action.payload["basename"] == "equipment-maintenance"
+    assert maintenance_action.payload["basename"] == "maintenance-maintenance"
     assert maintenance_action.payload["data"]["equipment"] == equipment.id
     assert maintenance_action.payload["data"]["type"] == Maintenance.Type.MONTHLY
     _confirm_ai_action(api_client, maintenance_action)
@@ -1624,6 +1624,62 @@ def test_ai_equipment_crud_creates_inspection_maintenance_and_incident(api_clien
     _confirm_ai_action(api_client, incident_action)
     incident = Incident.objects.get(tenant=tenant, equipment=equipment, support_contact="841112222")
     assert incident.description == "Motor aquece"
+
+
+@pytest.mark.django_db
+def test_ai_maintenance_crud_creates_updates_and_deletes_for_maintenance_group(api_client):
+    tenant = _tenant(identifier="tn-ai-maintenance-crud", domain="tn-ai-maintenance-crud.local")
+    user = _user(tenant, "manutencao_ai_maintenance_crud", GROUPS["MANUTENCAO"])
+    equipment = Equipment.objects.create(
+        tenant=tenant,
+        name="Autoclave Central",
+        serial_number="EQ-MNT-AI-001",
+        manufacturer="Tuttnauer",
+    )
+    _authenticate(api_client, tenant, user)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f"Crie manutenção equipamento {equipment.serial_number} tipo semanal "
+            "agendada para 2026-05-10 realizada em 2026-05-11 descrição Verificação de segurança técnico Marta"
+        ),
+    )
+    assert create_action.payload["basename"] == "maintenance-maintenance"
+    assert create_action.payload["data"]["equipment"] == equipment.id
+    assert create_action.payload["data"]["type"] == Maintenance.Type.WEEKLY
+    assert create_action.payload["data"]["technician"] == "Marta"
+    _confirm_ai_action(api_client, create_action)
+    maintenance = Maintenance.objects.get(tenant=tenant, equipment=equipment, scheduled_date="2026-05-10")
+    assert maintenance.description == "Verificação de segurança"
+    assert maintenance.performed_date.isoformat() == "2026-05-11"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f"Atualize manutenção id {maintenance.id} técnico Luís descrição Calibração concluída realizada em 2026-05-12",
+        action_type="ai_crud_update",
+    )
+    assert update_action.payload["basename"] == "maintenance-maintenance"
+    assert update_action.payload["object_ref"] == str(maintenance.id)
+    assert update_action.payload["data"]["technician"] == "Luís"
+    assert update_action.payload["data"]["description"] == "Calibração concluída"
+    assert update_action.payload["data"]["performed_date"] == "2026-05-12"
+    _confirm_ai_action(api_client, update_action)
+
+    maintenance.refresh_from_db()
+    assert maintenance.technician == "Luís"
+    assert maintenance.description == "Calibração concluída"
+    assert maintenance.performed_date.isoformat() == "2026-05-12"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova manutenção id {maintenance.id}",
+        action_type="ai_crud_delete",
+    )
+    assert delete_action.payload["basename"] == "maintenance-maintenance"
+    _confirm_ai_action(api_client, delete_action)
+    removed = Maintenance.all_objects.get(id=maintenance.id)
+    assert removed.deleted is True
 
 
 @pytest.mark.django_db

@@ -110,6 +110,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "equipment-manutencao": SAFE_METHODS,
         "equipment-incident": SAFE_METHODS,
         "equipment-ocorrencia": SAFE_METHODS,
+        "maintenance-maintenance": SAFE_METHODS,
+        "maintenance-manutencao": SAFE_METHODS,
     }
     incident_crud = {
         "equipamentos-ocorrencia": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
@@ -124,6 +126,12 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
     equipment_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in equipment_read
+    }
+    maintenance_crud = {
+        "equipment-maintenance": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "equipment-manutencao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "maintenance-maintenance": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "maintenance-manutencao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
     }
     equipment_integration_read = {
         "equipment_integrations-equipment": SAFE_METHODS,
@@ -502,6 +510,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["MANUTENCAO"]: {
             # SGE (somente leitura)
             **equipment_read,
+            # Planeamento e execução de manutenções próprias do módulo.
+            **maintenance_crud,
             # Inspecções diárias são executadas pela manutenção no fluxo operacional.
             **inspection_crud,
             # Incidentes/ocorrências são o fluxo operacional próprio da manutenção.
