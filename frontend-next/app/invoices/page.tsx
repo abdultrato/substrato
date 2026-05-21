@@ -115,7 +115,7 @@ export default function FaturasPage() {
     try {
       setReportUsersLoading(true)
       setReportUsersError(null)
-      const res = await apiFetch<any>("/identidade/usuario/?page_size=500")
+      const res = await apiFetch<any>("/identity/user/?page_size=500")
       const items = res && res.results ? res.results : res
       const rows = Array.isArray(items) ? items : []
       const options: UserOption[] = rows.map((row: any) => {

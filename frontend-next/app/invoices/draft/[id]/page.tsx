@@ -290,8 +290,8 @@ export default function FaturaRascunhoPage() {
   const carregarSeguros = useCallback(async () => {
     try {
       const [segRes, planoRes] = await Promise.all([
-        apiFetch<any>("/seguradora/seguradora/"),
-        apiFetch<any>("/seguradora/planocobertura/"),
+        apiFetch<any>("/insurer/insurer/"),
+        apiFetch<any>("/insurer/planocobertura/"),
       ])
       setSeguradoras(listFrom(segRes))
       setPlanos(listFrom(planoRes))

@@ -12,8 +12,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
-import { findModuleResource } from "@/lib/modules"
-import { canonicalModuleGroupKey } from "@/lib/modules"
+import { canonicalModuleGroupKey, findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -32,6 +31,7 @@ export default function RecursoDetalhePage() {
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
+    const canonicalGroupKey = canonicalModuleGroupKey(groupKey)
     const [data, setData] = useState<any | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [loadingData, setLoadingData] = useState(true)
@@ -39,7 +39,7 @@ export default function RecursoDetalhePage() {
     const [actionId, setActionId] = useState<number | null>(null)
     const cirurgiaKeys = ["cirurgia", "pequenacirurgia", "grandecirurgia"]
     const isCirurgia =
-        canonicalModuleGroupKey(groupKey) === "cirurgia" &&
+        canonicalGroupKey === "surgery" &&
         cirurgiaKeys.includes(resourceKey.toLocaleLowerCase())
 
     const reloadResource = useCallback(async () => {
@@ -78,9 +78,9 @@ export default function RecursoDetalhePage() {
 
     const basePath = `/resources/${groupKey}/${resourceKey}`
     const isBloodUnit =
-        canonicalModuleGroupKey(groupKey) === "banco_sangue" &&
+        canonicalGroupKey === "bloodbank" &&
         resourceKey.toLocaleLowerCase() === "unidade"
-    const isBloodbank = canonicalModuleGroupKey(groupKey) === "banco_sangue"
+    const isBloodbank = canonicalGroupKey === "bloodbank"
 
     const criarFatura = useCallback(async () => {
         alert("Criar fatura apenas nos módulos Faturamento/Recepção.")

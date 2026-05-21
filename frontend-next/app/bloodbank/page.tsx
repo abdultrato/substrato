@@ -27,7 +27,7 @@ export default function BancoSanguePage() {
   const { modules } = useModulesCatalog()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
-  const group = findModuleGroup("banco_sangue", modules)
+  const group = findModuleGroup("bloodbank", modules)
 
   if (loading) return null
 

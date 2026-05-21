@@ -1,3 +1,5 @@
+import { canonicalModuleGroupKey } from "@/lib/modules"
+
 export type AutoFormStep = {
   titulo: string
   descricao?: string
@@ -443,35 +445,28 @@ export function getResourceFormConfig(
   resourceKey: string,
   endpoint: string
 ): ResourceFormConfig | null {
-  const g = String(groupKey || "").toLowerCase()
+  const g = canonicalModuleGroupKey(groupKey)
   const r = String(resourceKey || "").toLowerCase()
   const ep = normalizeEndpoint(endpoint)
 
-  if (g === "banco_sangue" && (r === "doacao" || ep === "/bloodbank/doacao/")) {
+  if (g !== "bloodbank") return null
+
+  if (r === "doacao" || ep === "/bloodbank/doacao/") {
     return bloodbankDoacaoConfig()
   }
-  if (
-    g === "banco_sangue" &&
-    (r === "armazenamento" || ep === "/bloodbank/armazenamento/")
-  ) {
+  if (r === "armazenamento" || ep === "/bloodbank/armazenamento/") {
     return bloodbankArmazenamentoConfig()
   }
-  if (g === "banco_sangue" && (r === "unidade" || ep === "/bloodbank/unidade/")) {
+  if (r === "unidade" || ep === "/bloodbank/unidade/") {
     return bloodbankUnidadeConfig()
   }
-  if (g === "banco_sangue" && (r === "transfusao" || ep === "/bloodbank/transfusao/")) {
+  if (r === "transfusao" || ep === "/bloodbank/transfusao/") {
     return bloodbankTransfusaoConfig()
   }
-  if (
-    g === "banco_sangue" &&
-    (r === "movimentoestoque" || ep === "/bloodbank/movimentoestoque/")
-  ) {
+  if (r === "movimentoestoque" || ep === "/bloodbank/movimentoestoque/") {
     return bloodbankMovimentoConfig()
   }
-  if (
-    g === "banco_sangue" &&
-    (r === "manutencaoarmazenamento" || ep === "/bloodbank/manutencaoarmazenamento/")
-  ) {
+  if (r === "manutencaoarmazenamento" || ep === "/bloodbank/manutencaoarmazenamento/") {
     return bloodbankManutencaoConfig()
   }
 
