@@ -108,6 +108,8 @@ type AiKnowledgeBaseSchema = {
   answer?: string
   category?: string
   score?: number
+  source?: string
+  database_id?: number | null
   prompt?: string
   suggestions?: Array<{
     entry_id?: string

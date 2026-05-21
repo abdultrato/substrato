@@ -68,6 +68,8 @@ def _knowledge_base_schema(*, tool_results: list[dict[str, Any]]) -> dict[str, A
         "answer": knowledge.get("answer") or "",
         "category": knowledge.get("category") or "",
         "score": knowledge.get("score") or 0,
+        "source": knowledge.get("source") or "",
+        "database_id": knowledge.get("database_id"),
         "prompt": knowledge.get("prompt") or "",
         "suggestions": (knowledge.get("suggestions") or [])[:5],
         "follow_ups": (knowledge.get("follow_ups") or [])[:5],

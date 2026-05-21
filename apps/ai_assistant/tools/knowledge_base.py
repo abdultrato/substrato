@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from functools import lru_cache
+import re
 from typing import Any
 
 from apps.ai_assistant.tools.resource_catalog import normalize_text
@@ -18,9 +19,16 @@ class KnowledgeEntry:
     answer_pt: str
     questions_en: tuple[str, ...] = ()
     answer_en: str = ""
+    aliases_pt: tuple[str, ...] = ()
+    aliases_en: tuple[str, ...] = ()
     follow_ups_pt: tuple[str, ...] = ()
     follow_ups_en: tuple[str, ...] = ()
+    semantic_terms: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
+    module_key: str = ""
+    priority: int = 50
+    source: str = "builtin"
+    database_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,13 +48,19 @@ class KnowledgeBaseTool(AiTool):
     def run(self, context: AiToolContext) -> dict[str, Any]:
         message = str(context.arguments.get("message") or "")
         language = context.language
-        ranked = rank_knowledge_entries(message, limit=6)
+        ranked = rank_knowledge_entries(message, limit=6, tenant=context.tenant, active_module=context.active_module)
         best = ranked[0] if ranked else None
 
         if best and best.score >= 0.84:
-            return _answer_payload(entry=best.entry, score=best.score, language=language, matched_question=best.matched_question)
+            return _answer_payload(
+                entry=best.entry,
+                score=best.score,
+                language=language,
+                matched_question=best.matched_question,
+                tenant=context.tenant,
+            )
 
-        if best and best.score >= 0.44:
+        if best and best.score >= 0.40:
             suggestions = [_suggestion_payload(item.entry, language=language, score=item.score) for item in ranked[:5]]
             return _suggestion_payload_result(
                 language=language,
@@ -55,11 +69,11 @@ class KnowledgeBaseTool(AiTool):
                 message=message,
             )
 
-        fallback = entry_by_id("help-question-examples") or knowledge_entries()[0]
-        return _answer_payload(entry=fallback, score=0.42, language=language, matched_question="")
+        fallback = entry_by_id("help-question-examples", tenant=context.tenant) or knowledge_entries(tenant=context.tenant)[0]
+        return _answer_payload(entry=fallback, score=0.42, language=language, matched_question="", tenant=context.tenant)
 
 
-def should_select_knowledge_base(*, message: str, active_module: str = "") -> bool:
+def should_select_knowledge_base(*, message: str, active_module: str = "", tenant=None) -> bool:
     normalized = normalize_text(f"{message or ''} {active_module or ''}")
     if not normalized:
         return False
@@ -166,30 +180,126 @@ def should_select_knowledge_base(*, message: str, active_module: str = "") -> bo
     if any(term in normalized for term in support_terms):
         return True
 
-    ranked = rank_knowledge_entries(message, limit=1)
-    return bool(ranked and ranked[0].score >= 0.44)
+    ranked = rank_knowledge_entries(message, limit=1, tenant=tenant, active_module=active_module)
+    return bool(ranked and ranked[0].score >= 0.40)
 
 
-def entry_by_id(entry_id: str) -> KnowledgeEntry | None:
-    return next((entry for entry in knowledge_entries() if entry.id == entry_id), None)
+def entry_by_id(entry_id: str, *, tenant=None) -> KnowledgeEntry | None:
+    return next((entry for entry in knowledge_entries(tenant=tenant) if entry.id == entry_id), None)
 
 
-def rank_knowledge_entries(message: str, *, limit: int = 5) -> list[RankedEntry]:
+def rank_knowledge_entries(message: str, *, limit: int = 5, tenant=None, active_module: str = "") -> list[RankedEntry]:
     normalized = normalize_text(message)
     if not normalized:
         return []
     ranked: list[RankedEntry] = []
-    for entry in knowledge_entries():
+    for entry in knowledge_entries(tenant=tenant):
         score, matched = _entry_score(entry=entry, normalized=normalized)
+        score = min(1.0, score + _module_boost(entry=entry, active_module=active_module))
         if score <= 0:
             continue
         ranked.append(RankedEntry(entry=entry, score=score, matched_question=matched))
-    ranked.sort(key=lambda item: item.score, reverse=True)
+    ranked.sort(key=lambda item: (item.score, item.entry.priority, item.entry.source == "database"), reverse=True)
     return ranked[:limit]
 
 
+def knowledge_entries(*, tenant=None) -> tuple[KnowledgeEntry, ...]:
+    builtin_entries = _builtin_knowledge_entries()
+    database_entries = _database_knowledge_entries(tenant=tenant)
+    if not database_entries:
+        return builtin_entries
+    overridden_ids = {entry.id for entry in database_entries}
+    return (*database_entries, *(entry for entry in builtin_entries if entry.id not in overridden_ids))
+
+
+def _database_knowledge_entries(*, tenant=None) -> tuple[KnowledgeEntry, ...]:
+    if tenant is None:
+        return ()
+    try:
+        from django.db import DatabaseError, OperationalError, ProgrammingError
+
+        from apps.ai_assistant.models import AiKnowledgeEntry
+
+        rows = (
+            AiKnowledgeEntry.objects.filter(
+                tenant=tenant,
+                status=AiKnowledgeEntry.Status.ACTIVE,
+            )
+            .order_by("-priority", "category", "title", "-id")
+            .only(
+                "id",
+                "slug",
+                "title",
+                "category",
+                "module_key",
+                "priority",
+                "source",
+                "questions_pt",
+                "questions_en",
+                "aliases_pt",
+                "aliases_en",
+                "answer_pt",
+                "answer_en",
+                "follow_ups_pt",
+                "follow_ups_en",
+                "semantic_terms",
+                "tags",
+            )
+        )
+        return tuple(_model_to_entry(row) for row in rows)
+    except (DatabaseError, OperationalError, ProgrammingError):
+        return ()
+
+
+def _model_to_entry(row) -> KnowledgeEntry:
+    category = str(row.category or row.module_key or "personalizada").strip()
+    module_key = str(row.module_key or "").strip()
+    tags = (
+        *_string_tuple(row.tags),
+        *_string_tuple(row.semantic_terms),
+        category,
+        module_key,
+        str(row.title or ""),
+    )
+    return KnowledgeEntry(
+        id=str(row.slug or f"database-{row.id}"),
+        category=category,
+        questions_pt=_string_tuple(row.questions_pt) or (str(row.title or row.slug),),
+        answer_pt=str(row.answer_pt or ""),
+        questions_en=_string_tuple(row.questions_en),
+        answer_en=str(row.answer_en or ""),
+        aliases_pt=_string_tuple(row.aliases_pt),
+        aliases_en=_string_tuple(row.aliases_en),
+        follow_ups_pt=_string_tuple(row.follow_ups_pt),
+        follow_ups_en=_string_tuple(row.follow_ups_en),
+        semantic_terms=_string_tuple(row.semantic_terms),
+        tags=tuple(item for item in tags if item),
+        module_key=module_key,
+        priority=int(row.priority or 50),
+        source="database",
+        database_id=int(row.id),
+    )
+
+
+def _string_tuple(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        items = re.split(r"[\n;]+", value)
+    elif isinstance(value, (list, tuple, set)):
+        items = value
+    else:
+        return ()
+    cleaned = []
+    for item in items:
+        text = str(item or "").strip()
+        if text:
+            cleaned.append(text)
+    return tuple(cleaned)
+
+
 @lru_cache(maxsize=1)
-def knowledge_entries() -> tuple[KnowledgeEntry, ...]:
+def _builtin_knowledge_entries() -> tuple[KnowledgeEntry, ...]:
     entries: list[KnowledgeEntry] = [
         KnowledgeEntry(
             id="help-question-examples",
@@ -320,6 +430,14 @@ def knowledge_entries() -> tuple[KnowledgeEntry, ...]:
                 "Ask in natural language, for example: 'Create a patient called Maria Mussa, phone +258 84 000 0000'. "
                 "If a required field is missing, the AI asks. Then it prepares the action and only saves after confirmation."
             ),
+            aliases_pt=(
+                "Como meto um doente novo?",
+                "Como inserir um utente novo?",
+                "Como dar entrada de um doente?",
+                "Como criar novo doente?",
+            ),
+            aliases_en=("How do I add a new patient?", "How do I enter a new patient?"),
+            semantic_terms=("paciente", "doente", "utente", "novo", "criar", "registar", "entrada clínica"),
             follow_ups_pt=("Crie um paciente chamado Paciente Teste.", "Que campos são obrigatórios para paciente?"),
             follow_ups_en=("Create a patient called Test Patient.", "Which fields are required for a patient?"),
             tags=("paciente", "crud", "clinical"),
@@ -526,16 +644,18 @@ def _workflow_entries() -> list[KnowledgeEntry]:
     ]
 
 
-def _answer_payload(*, entry: KnowledgeEntry, score: float, language: str, matched_question: str) -> dict[str, Any]:
+def _answer_payload(*, entry: KnowledgeEntry, score: float, language: str, matched_question: str, tenant=None) -> dict[str, Any]:
     question = _main_question(entry, language=language)
     answer = entry.answer_en if language == "en" and entry.answer_en else entry.answer_pt
     follow_ups = list(entry.follow_ups_en if language == "en" and entry.follow_ups_en else entry.follow_ups_pt)
+    total_entries = len(knowledge_entries(tenant=tenant))
+    source_label = "AI editable knowledge base" if entry.source == "database" else "AI predicted questions"
     return {
         "summary": {
             "title_pt": "Resposta prevista da IA",
             "title_en": "Predicted AI answer",
             "metrics": [
-                {"label_pt": "Perguntas previstas", "label_en": "Predicted questions", "value": len(knowledge_entries())},
+                {"label_pt": "Perguntas previstas", "label_en": "Predicted questions", "value": total_entries},
                 {"label_pt": "Confiança", "label_en": "Confidence", "value": round(score * 100)},
                 {"label_pt": "Sugestões seguintes", "label_en": "Next suggestions", "value": len(follow_ups)},
             ],
@@ -546,6 +666,8 @@ def _answer_payload(*, entry: KnowledgeEntry, score: float, language: str, match
                 "category": entry.category,
                 "score": round(score, 4),
                 "matched_question": matched_question,
+                "source": entry.source,
+                "database_id": entry.database_id,
                 "follow_ups": follow_ups[:5],
             },
         },
@@ -557,9 +679,11 @@ def _answer_payload(*, entry: KnowledgeEntry, score: float, language: str, match
             "category": entry.category,
             "score": round(score, 4),
             "matched_question": matched_question,
+            "source": entry.source,
+            "database_id": entry.database_id,
             "follow_ups": follow_ups[:5],
         },
-        "sources": [{"type": "knowledge_base", "label": "AI predicted questions", "href": ""}],
+        "sources": [{"type": "knowledge_base", "label": source_label, "href": ""}],
     }
 
 
@@ -596,6 +720,8 @@ def _suggestion_payload(entry: KnowledgeEntry, *, language: str, score: float) -
         "question": _main_question(entry, language=language),
         "category": entry.category,
         "score": round(score, 4),
+        "source": entry.source,
+        "database_id": entry.database_id,
     }
 
 
@@ -605,7 +731,14 @@ def _main_question(entry: KnowledgeEntry, *, language: str) -> str:
 
 
 def _entry_score(*, entry: KnowledgeEntry, normalized: str) -> tuple[float, str]:
-    candidates = (*entry.questions_pt, *entry.questions_en, *entry.tags)
+    candidates = (
+        *entry.questions_pt,
+        *entry.questions_en,
+        *entry.aliases_pt,
+        *entry.aliases_en,
+        *entry.semantic_terms,
+        *entry.tags,
+    )
     best_score = 0.0
     best_question = ""
     for raw in candidates:
@@ -626,9 +759,65 @@ def _entry_score(*, entry: KnowledgeEntry, normalized: str) -> tuple[float, str]
 def _similarity(left: str, right: str) -> float:
     if not left or not right:
         return 0.0
-    sequence = SequenceMatcher(None, left, right).ratio()
-    left_tokens = set(left.split())
-    right_tokens = set(right.split())
+    left_clean = _clean_for_similarity(left)
+    right_clean = _clean_for_similarity(right)
+    sequence = SequenceMatcher(None, left_clean, right_clean).ratio()
+    left_tokens = set(left_clean.split())
+    right_tokens = set(right_clean.split())
     token_overlap = len(left_tokens & right_tokens) / max(len(left_tokens | right_tokens), 1)
-    compact_sequence = SequenceMatcher(None, left.replace(" ", ""), right.replace(" ", "")).ratio()
-    return max(sequence * 0.58 + token_overlap * 0.32 + compact_sequence * 0.10, token_overlap)
+    compact_sequence = SequenceMatcher(None, left_clean.replace(" ", ""), right_clean.replace(" ", "")).ratio()
+    left_semantic = _semantic_tokens(left_clean)
+    right_semantic = _semantic_tokens(right_clean)
+    semantic_overlap = len(left_semantic & right_semantic) / max(len(left_semantic | right_semantic), 1)
+    return max(
+        sequence * 0.48 + token_overlap * 0.24 + compact_sequence * 0.10 + semantic_overlap * 0.18,
+        token_overlap,
+        semantic_overlap * 0.92,
+    )
+
+
+def _module_boost(*, entry: KnowledgeEntry, active_module: str) -> float:
+    active = normalize_text(active_module or "")
+    if not active:
+        return 0.0
+    module_key = normalize_text(entry.module_key or "")
+    if module_key and (active == module_key or module_key in active or active in module_key):
+        return 0.04
+    tags = {normalize_text(tag) for tag in entry.tags if tag}
+    return 0.02 if active in tags else 0.0
+
+
+def _clean_for_similarity(value: str) -> str:
+    normalized = normalize_text(value)
+    return re.sub(r"[^a-z0-9_ ]+", " ", normalized)
+
+
+def _semantic_tokens(value: str) -> set[str]:
+    tokens = set(value.split())
+    semantic = set(tokens)
+    for concept, terms in SEMANTIC_GROUPS.items():
+        if any(term in tokens or term in value for term in terms):
+            semantic.add(concept)
+    return semantic
+
+
+SEMANTIC_GROUPS: dict[str, tuple[str, ...]] = {
+    "help": ("ajuda", "ajude", "como", "exemplo", "pergunta", "duvida", "help", "how", "what"),
+    "patient": ("paciente", "doente", "utente", "patient", "cliente"),
+    "create": ("criar", "crie", "registar", "registrar", "cadastrar", "novo", "nova", "inserir", "adicionar", "create", "add"),
+    "update": ("alterar", "actualizar", "atualizar", "editar", "mudar", "update", "edit"),
+    "delete": ("apagar", "remover", "eliminar", "delete", "remove"),
+    "crud": ("crud", "criar", "alterar", "apagar", "registo", "registro"),
+    "analytics": ("estatistica", "estatisticas", "indicador", "indicadores", "analytics", "calculo", "contagem"),
+    "report": ("relatorio", "relatorios", "pdf", "exportar", "report", "export"),
+    "permission": ("permissao", "permissoes", "acesso", "rbac", "privilegio", "privilegios", "permission"),
+    "identity": ("autor", "criou", "criado", "github", "repositorio", "repository", "sistema", "projecto", "projeto"),
+    "stock": ("stock", "estoque", "lote", "lotes", "medicacao", "medicamento", "farmacia", "pharmacy"),
+    "billing": ("fatura", "faturas", "factura", "facturas", "billing", "faturamento"),
+    "payment": ("pagamento", "pagamentos", "payment", "payments", "recebimento"),
+    "education": ("estudante", "estudantes", "aluno", "alunos", "professor", "turma", "matricula", "matriculas", "education"),
+    "clinical": ("clinico", "clinica", "exame", "exames", "consulta", "requisicao", "amostra", "sample"),
+    "nursing": ("enfermagem", "enfermeiro", "colheita", "procedimento", "nursing"),
+    "error": ("erro", "erros", "falha", "falhas", "4xx", "5xx", "exception", "error"),
+    "language": ("idioma", "lingua", "portugues", "ingles", "translation", "language"),
+}

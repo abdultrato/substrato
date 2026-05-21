@@ -235,6 +235,7 @@ class AiIntentRouter:
         message: str,
         active_module: str = "",
         session_metadata: dict[str, Any] | None = None,
+        tenant=None,
     ) -> IntentDecision:
         raw = message or ""
         normalized = normalize_text(raw)
@@ -256,7 +257,7 @@ class AiIntentRouter:
         if isinstance(session_metadata.get("crud_draft"), dict):
             return self._ready("crud_followup", 88, {"crud_draft": True})
 
-        signals = self._signals(normalized=normalized, active_module=active_module, focus=focus, pending=pending)
+        signals = self._signals(normalized=normalized, active_module=active_module, focus=focus, pending=pending, tenant=tenant)
 
         if signals["project_identity"]:
             return self._ready("project_identity", 94, signals)
@@ -342,6 +343,7 @@ class AiIntentRouter:
         active_module: str,
         focus: Any,
         pending: Any,
+        tenant=None,
     ) -> dict[str, Any]:
         tokens = normalized.split()
         resource_matches = match_resource_descriptors(normalized, limit=5)
@@ -353,7 +355,7 @@ class AiIntentRouter:
             "vague_reference": any(term in normalized for term in (normalize_text(item) for item in VAGUE_REFERENCES)),
             "broad_request": self._has_any(normalized, ("ajuda", "help", "investigar", "analisar", "verificar", "mostra-me", "mostre me")),
             "project_identity": self._has_project_identity(normalized),
-            "knowledge_base": should_select_knowledge_base(message=normalized, active_module=active_module),
+            "knowledge_base": should_select_knowledge_base(message=normalized, active_module=active_module, tenant=tenant),
             "personal": self._has_any(normalized, PERSONAL_TERMS),
             "crud": self._has_any(normalized, CRUD_TERMS),
             "data": self._has_any(normalized, DATA_TERMS),

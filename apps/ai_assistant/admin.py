@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     AiInvestigation,
+    AiKnowledgeEntry,
     AiMessage,
     AiOperationalTask,
     AiPolicyEvent,
@@ -83,6 +84,59 @@ class AiInvestigationAdmin(AiBaseAdmin):
     )
     list_filter = ("intent", "status", "deleted")
     search_fields = ("custom_id", "title", "question", "result_summary", "session__custom_id", "created_by__username")
+
+
+@admin.register(AiKnowledgeEntry)
+class AiKnowledgeEntryAdmin(AiBaseAdmin):
+    list_display = (
+        "created_at",
+        "custom_id",
+        "title",
+        "category",
+        "module_key",
+        "status",
+        "source",
+        "priority",
+    )
+    list_filter = ("status", "source", "category", "module_key", "deleted")
+    search_fields = ("custom_id", "slug", "title", "answer_pt", "answer_en")
+    readonly_fields = (*AiBaseAdmin.readonly_fields,)
+    fieldsets = (
+        (
+            "Identificação",
+            {
+                "fields": (
+                    "custom_id",
+                    "tenant",
+                    "slug",
+                    "title",
+                    "category",
+                    "module_key",
+                    "status",
+                    "source",
+                    "priority",
+                )
+            },
+        ),
+        (
+            "Perguntas e resposta",
+            {
+                "fields": (
+                    "questions_pt",
+                    "questions_en",
+                    "aliases_pt",
+                    "aliases_en",
+                    "semantic_terms",
+                    "answer_pt",
+                    "answer_en",
+                    "follow_ups_pt",
+                    "follow_ups_en",
+                )
+            },
+        ),
+        ("Classificação", {"fields": ("tags", "metadata")}),
+        ("Auditoria", {"fields": ("created_at", "updated_at", "created_by", "updated_by")}),
+    )
 
 
 @admin.register(AiPolicyEvent)

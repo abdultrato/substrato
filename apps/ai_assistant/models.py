@@ -377,6 +377,71 @@ class AiInvestigation(NoNameCoreModel):
         return f"{self.title} [{self.status}]"
 
 
+class AiKnowledgeEntry(NoNameCoreModel):
+    """Entrada editável da base de conhecimento da IA."""
+
+    prefix = "AIKB"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Rascunho"
+        ACTIVE = "active", "Activa"
+        ARCHIVED = "archived", "Arquivada"
+
+    class Source(models.TextChoices):
+        CUSTOM = "custom", "Personalizada"
+        SYSTEM_OVERRIDE = "system_override", "Substitui entrada do sistema"
+        IMPORTED = "imported", "Importada"
+
+    slug = models.SlugField("Chave", max_length=140, db_index=True)
+    title = models.CharField("Título", max_length=180)
+    category = models.CharField("Categoria", max_length=80, blank=True, default="", db_index=True)
+    module_key = models.CharField("Módulo", max_length=80, blank=True, default="", db_index=True)
+    status = models.CharField(
+        "Estado",
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+        db_index=True,
+    )
+    source = models.CharField(
+        "Origem",
+        max_length=30,
+        choices=Source.choices,
+        default=Source.CUSTOM,
+        db_index=True,
+    )
+    priority = models.PositiveSmallIntegerField("Prioridade", default=50, db_index=True)
+    questions_pt = models.JSONField("Perguntas em português", default=list, blank=True)
+    questions_en = models.JSONField("Perguntas em inglês", default=list, blank=True)
+    aliases_pt = models.JSONField("Aliases em português", default=list, blank=True)
+    aliases_en = models.JSONField("Aliases em inglês", default=list, blank=True)
+    semantic_terms = models.JSONField("Termos semânticos", default=list, blank=True)
+    answer_pt = models.TextField("Resposta em português")
+    answer_en = models.TextField("Resposta em inglês", blank=True, default="")
+    follow_ups_pt = models.JSONField("Perguntas seguintes em português", default=list, blank=True)
+    follow_ups_en = models.JSONField("Perguntas seguintes em inglês", default=list, blank=True)
+    tags = models.JSONField("Etiquetas", default=list, blank=True)
+    metadata = models.JSONField("Metadados", default=dict, blank=True)
+
+    class Meta:
+        db_table = "ai_assistant_knowledge_entry"
+        verbose_name = "Entrada de Conhecimento da IA"
+        verbose_name_plural = "Entradas de Conhecimento da IA"
+        ordering = ["-priority", "category", "title", "-id"]
+        constraints = [
+            models.UniqueConstraint(fields=["tenant", "slug"], name="uniq_ai_knowledge_entry_tenant_slug"),
+        ]
+        indexes = [
+            models.Index(fields=["tenant", "status", "priority"]),
+            models.Index(fields=["tenant", "category", "status"]),
+            models.Index(fields=["tenant", "module_key", "status"]),
+            models.Index(fields=["tenant", "source", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.title} [{self.status}]"
+
+
 class AiPolicyEvent(NoNameCoreModel):
     """Evento de política, bloqueio ou decisão de segurança da IA."""
 

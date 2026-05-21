@@ -8,6 +8,7 @@ import pytest
 
 from apps.ai_assistant.models import (
     AiInvestigation,
+    AiKnowledgeEntry,
     AiMessage,
     AiOperationalTask,
     AiPolicyEvent,
@@ -820,6 +821,59 @@ def test_ai_predicted_questions_suggests_typo_and_answers_selected_suggestion(ap
     selected_data = _response_data(selected_response)
     assert selected_data["schema"]["knowledge_base"]["status"] == "answered"
     assert "Crie um paciente chamado" in selected_data["answer"]
+
+
+@pytest.mark.django_db
+def test_ai_knowledge_base_uses_editable_database_entry(api_client):
+    tenant = _tenant(identifier="tn-ai-knowledge-db", domain="tn-ai-knowledge-db.local")
+    user = _user(tenant, "admin_ai_knowledge_db", GROUPS["ADMIN"], is_staff=True)
+    AiKnowledgeEntry.objects.create(
+        tenant=tenant,
+        slug="protocolo-visita",
+        title="Protocolo de visita",
+        category="operacao",
+        module_key="reception",
+        priority=95,
+        questions_pt=["Qual é o protocolo de visita?"],
+        aliases_pt=["horario de visita", "como funciona a visita"],
+        semantic_terms=["visita", "acompanhante", "familia", "recepcao"],
+        answer_pt="O protocolo de visita deve ser confirmado na recepção antes da entrada do acompanhante.",
+        follow_ups_pt=["Como registar entrada pela recepção?"],
+    )
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "Qual é o protocolo de visita?", "language": "pt", "active_module": ""},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "answer_predicted_question" and call["status"] == "success" for call in data["tool_calls"])
+    assert "confirmado na recepção" in data["answer"]
+    assert data["schema"]["knowledge_base"]["source"] == "database"
+    assert data["schema"]["knowledge_base"]["database_id"]
+    assert any(source["label"] == "AI editable knowledge base" for source in data["sources"])
+
+
+@pytest.mark.django_db
+def test_ai_knowledge_base_semantic_search_understands_synonyms(api_client):
+    tenant = _tenant(identifier="tn-ai-knowledge-semantic", domain="tn-ai-knowledge-semantic.local")
+    user = _user(tenant, "admin_ai_knowledge_semantic", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {"message": "como meto um doente novo", "language": "pt", "active_module": "clinical"},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "answer_predicted_question" and call["status"] == "success" for call in data["tool_calls"])
+    assert data["schema"]["knowledge_base"]["status"] == "answered"
+    assert data["schema"]["knowledge_base"]["question"] == "Como criar um paciente pela IA?"
 
 
 @pytest.mark.django_db

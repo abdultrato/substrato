@@ -63,13 +63,13 @@ class AiToolRegistry:
             )
         return definitions
 
-    def select_tools(self, *, message: str, active_module: str = "") -> list:
+    def select_tools(self, *, message: str, active_module: str = "", tenant=None) -> list:
         active_module_key = (active_module or "").strip().lower()
         normalized = f"{message or ''} {active_module_key}".lower()
         selected = []
         if should_select_project_identity(message=message, active_module=active_module_key):
             return [self._tools[ProjectIdentityTool.name]]
-        if should_select_knowledge_base(message=message, active_module=active_module_key):
+        if should_select_knowledge_base(message=message, active_module=active_module_key, tenant=tenant):
             return [self._tools[KnowledgeBaseTool.name]]
 
         if should_select_sql_analytics(message=message, active_module=active_module_key):

@@ -80,6 +80,7 @@ class AiOrchestrator:
                 message=message,
                 active_module=active_module,
                 session_metadata=session.metadata or {},
+                tenant=tenant,
             )
             if intent_decision.needs_clarification:
                 return self._return_clarification(
@@ -91,7 +92,7 @@ class AiOrchestrator:
                 )
 
             arguments = self._build_tool_arguments(message=message, context=context, session_id=session.id)
-            selected_tools = self.registry.select_tools(message=message, active_module=active_module)
+            selected_tools = self.registry.select_tools(message=message, active_module=active_module, tenant=tenant)
             selected_tools = self._with_crud_draft_tool(selected_tools=selected_tools, session=session)
             tool_results: list[dict[str, Any]] = []
             blocked_tools: list[dict[str, Any]] = []
