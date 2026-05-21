@@ -108,7 +108,13 @@ from apps.payments.models.transaction import Transaction
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
+from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
+from apps.pharmacy.models.lot import Lot
+from apps.pharmacy.models.material_requisition import MaterialRequisition, MaterialRequisitionStatus, RequestingSector
+from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.sale import Sale
+from apps.pharmacy.models.sale_item import SaleItem
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
@@ -189,6 +195,32 @@ def _issued_invoice_with_manual_item(tenant: Tenant, patient: Patient, *, total=
     invoice.status = Invoice.Status.ISSUED
     invoice.save(update_fields=["status"])
     return invoice
+
+
+def _pharmacy_product_with_lot(
+    tenant: Tenant,
+    *,
+    name: str = "Paracetamol IA",
+    lot_number: str = "LOT-AI-001",
+    quantity: int = 20,
+    price: str = "10.00",
+) -> tuple[Product, Lot]:
+    product = Product.objects.create(
+        tenant=tenant,
+        name=name,
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal(price),
+        vat_percentage=Decimal("0.00"),
+    )
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number=lot_number,
+        expiration_date=date(2030, 1, 1),
+        initial_quantity=quantity,
+        sale_price=Decimal(price),
+    )
+    return product, lot
 
 
 def _seed_command_center_data(tenant: Tenant, user):
@@ -3133,6 +3165,242 @@ def test_ai_payments_crud_denies_transaction_create_for_reception(api_client):
     assert "não" in data["answer"].lower()
     assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
     assert not Transaction.objects.filter(external_reference="TX-BLOCK-001").exists()
+
+
+@pytest.mark.django_db
+def test_ai_pharmacy_crud_creates_updates_and_deletes_stock_resources(api_client):
+    tenant = _tenant(identifier="tn-ai-pharmacy-stock", domain="tn-ai-pharmacy-stock.local")
+    user = _user(tenant, "farmacia_ai_stock", GROUPS["FARMACIA"])
+    _authenticate(api_client, tenant, user)
+
+    _data, product_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie produto de farmácia {"nome":"Vitamina IA","tipo":"medicamento","preco_venda":"25.50","iva":"0.00","aplica_iva":false}',
+    )
+
+    assert product_action.payload["basename"] == "pharmacy-product"
+    assert product_action.payload["data"]["type"] == Product.ProductType.MEDICAMENTO
+    assert product_action.payload["data"]["sale_price"] == "25.50"
+    assert product_action.payload["data"]["applies_vat_by_default"] is False
+    _confirm_ai_action(api_client, product_action)
+    product = Product.objects.get(tenant=tenant, name__icontains="Vitamina")
+
+    _data, product_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere produto de farmácia código {product.custom_id} {{"preco_venda":"30.00","iva":"5.00"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert product_update_action.payload["basename"] == "pharmacy-product"
+    assert product_update_action.payload["data"]["sale_price"] == "30.00"
+    _confirm_ai_action(api_client, product_update_action)
+    product.refresh_from_db()
+    assert product.sale_price == Decimal("30.00")
+    assert product.vat_percentage == Decimal("5.00")
+
+    _data, lot_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f'Crie lote de farmácia {{"produto":"{product.custom_id}","numero_lote":"LOT-CRUD-001",'
+            '"validade":"2030-01-01","quantidade_inicial":12,"preco_venda":"30.00"}'
+        ),
+    )
+
+    assert lot_action.payload["basename"] == "pharmacy-lot"
+    assert lot_action.payload["data"]["product"] == product.id
+    assert lot_action.payload["data"]["lot_number"] == "LOT-CRUD-001"
+    _confirm_ai_action(api_client, lot_action)
+    lot = Lot.objects.get(tenant=tenant, lot_number="LOT-CRUD-001")
+    assert lot.balance() == 12
+    assert InventoryMovement.objects.filter(tenant=tenant, lot=lot, type=MovementType.ENTRADA).exists()
+
+    _data, movement_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie movimento de estoque da farmácia {"lote":"LOT-CRUD-001","tipo":"entrada","origem":"ajuste","quantidade":3}',
+    )
+
+    assert movement_action.payload["basename"] == "pharmacy-movimentoestoque"
+    assert movement_action.payload["data"]["lot"] == lot.id
+    assert movement_action.payload["data"]["type"] == MovementType.ENTRADA
+    assert movement_action.payload["data"]["origin"] == MovementOrigin.AJUSTE
+    _confirm_ai_action(api_client, movement_action)
+    movement = InventoryMovement.objects.filter(tenant=tenant, lot=lot, quantity=3).order_by("-id").first()
+    assert movement is not None
+
+    _data, movement_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere movimento de estoque da farmácia id {movement.id} {{"quantidade":4}}',
+        action_type="ai_crud_update",
+    )
+
+    assert movement_update_action.payload["basename"] == "pharmacy-movimentoestoque"
+    assert movement_update_action.payload["data"]["quantity"] == 4
+    _confirm_ai_action(api_client, movement_update_action)
+    movement.refresh_from_db()
+    assert movement.quantity == 4
+
+    for model_name, obj in (
+        ("movimento de estoque da farmácia", movement),
+        ("lote de farmácia", lot),
+        ("produto de farmácia", product),
+    ):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert InventoryMovement.all_objects.get(id=movement.id).deleted is True
+    assert Lot.all_objects.get(id=lot.id).deleted is True
+    assert Product.all_objects.get(id=product.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_pharmacy_crud_creates_sale_and_sale_item_with_fefo_stock(api_client):
+    tenant = _tenant(identifier="tn-ai-pharmacy-sale", domain="tn-ai-pharmacy-sale.local")
+    user = _user(tenant, "farmacia_ai_sale", GROUPS["FARMACIA"])
+    patient = Patient.objects.create(tenant=tenant, name="Paciente Venda Farmácia IA")
+    product, lot = _pharmacy_product_with_lot(tenant, name="Paracetamol IA", lot_number="LOT-SALE-001", quantity=20, price="10.00")
+    _authenticate(api_client, tenant, user)
+
+    _data, sale_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie venda de farmácia {"numero":"SALE-AI-001","paciente":"Paciente Venda Farmácia IA","total":"0.00"}',
+    )
+
+    assert sale_action.payload["basename"] == "pharmacy-sale"
+    assert sale_action.payload["data"]["patient"] == patient.id
+    _confirm_ai_action(api_client, sale_action)
+    sale = Sale.objects.get(tenant=tenant, number="SALE-AI-001")
+
+    _data, item_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie item de venda {"venda":"SALE-AI-001","produto":"Paracetamol IA","quantidade":2}',
+    )
+
+    assert item_action.payload["basename"] == "pharmacy-itemvenda"
+    assert item_action.payload["data"]["sale"] == sale.id
+    assert item_action.payload["data"]["product"] == product.id
+    _confirm_ai_action(api_client, item_action)
+    item = SaleItem.objects.get(tenant=tenant, sale=sale, product=product)
+    sale.refresh_from_db()
+    lot.refresh_from_db()
+    assert item.unit_price == Decimal("10.00")
+    assert sale.total == Decimal("20.00")
+    assert lot.balance() == 18
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere item de venda id {item.id} {{"quantidade":3}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "pharmacy-itemvenda"
+    assert update_action.payload["data"]["quantity"] == 3
+    _confirm_ai_action(api_client, update_action)
+    item.refresh_from_db()
+    sale.refresh_from_db()
+    lot.refresh_from_db()
+    assert item.quantity == 3
+    assert sale.total == Decimal("30.00")
+    assert lot.balance() == 17
+
+    for model_name, obj in (("item de venda", item), ("venda de farmácia", sale)):
+        _data, delete_action = _prepare_ai_crud_action(
+            api_client,
+            f"Remova {model_name} id {obj.id}",
+            action_type="ai_crud_delete",
+        )
+        _confirm_ai_action(api_client, delete_action)
+
+    assert SaleItem.all_objects.get(id=item.id).deleted is True
+    assert Sale.all_objects.get(id=sale.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_pharmacy_crud_creates_material_requisition_with_nested_items(api_client):
+    tenant = _tenant(identifier="tn-ai-pharmacy-requisition", domain="tn-ai-pharmacy-requisition.local")
+    nurse = _user(tenant, "enfermagem_ai_pharmacy_request", GROUPS["ENFERMAGEM"])
+    admin = _user(tenant, "admin_ai_pharmacy_request", GROUPS["ADMIN"], is_staff=True)
+    _product, lot = _pharmacy_product_with_lot(tenant, name="Luvas IA", lot_number="REQLOT-AI-001", quantity=15, price="5.00")
+    _other_product, other_lot = _pharmacy_product_with_lot(tenant, name="Seringa IA", lot_number="REQLOT-AI-002", quantity=15, price="2.00")
+    _authenticate(api_client, tenant, nurse)
+
+    _data, requisition_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie requisição de material {"itens":[{"lote":"REQLOT-AI-001","quantidade_solicitada":4,"observacoes":"Uso em enfermaria"}]}',
+    )
+
+    assert requisition_action.payload["basename"] == "pharmacy-requisicaomaterial"
+    assert requisition_action.payload["data"]["items_input"][0]["lote"] == "REQLOT-AI-001"
+    _confirm_ai_action(api_client, requisition_action)
+    requisition = MaterialRequisition.objects.get(tenant=tenant, sector=RequestingSector.ENFERMAGEM)
+    item = requisition.items.get(lot=lot)
+    assert requisition.status == MaterialRequisitionStatus.PENDING
+    assert item.requested_quantity == 4
+    assert item.notes == "Uso em enfermaria"
+
+    _authenticate(api_client, tenant, admin)
+    _data, item_action = _prepare_ai_crud_action(
+        api_client,
+        (
+            f'Crie item de requisição de material {{"requisicao":"{requisition.custom_id}",'
+            '"lote":"REQLOT-AI-002","quantidade_solicitada":2,"observacoes":"Complemento"}'
+        ),
+    )
+
+    assert item_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    assert item_action.payload["data"]["requisition"] == requisition.id
+    assert item_action.payload["data"]["lot"] == other_lot.id
+    _confirm_ai_action(api_client, item_action)
+    direct_item = MaterialRequisitionItem.objects.get(tenant=tenant, requisition=requisition, lot=other_lot)
+    assert direct_item.requested_quantity == 2
+
+    _data, item_update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere item de requisição de material id {direct_item.id} {{"observacoes":"Complemento actualizado"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert item_update_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    assert item_update_action.payload["data"]["notes"] == "Complemento actualizado"
+    _confirm_ai_action(api_client, item_update_action)
+    direct_item.refresh_from_db()
+    assert direct_item.notes == "Complemento actualizado"
+
+    _data, item_delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova item de requisição de material id {direct_item.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert item_delete_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    _confirm_ai_action(api_client, item_delete_action)
+    assert MaterialRequisitionItem.all_objects.get(id=direct_item.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_pharmacy_crud_denies_product_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-pharmacy-denied", domain="tn-ai-pharmacy-denied.local")
+    user = _user(tenant, "recepcao_ai_pharmacy_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie produto de farmácia {"nome":"Bloqueado IA","tipo":"medicamento","preco_venda":"1.00"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not [action for action in data["suggested_actions"] if action["action_type"].startswith("ai_crud_")]
+    assert not Product.objects.filter(tenant=tenant, name__icontains="Bloqueado").exists()
 
 
 @pytest.mark.django_db

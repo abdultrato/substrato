@@ -78,6 +78,23 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "pagamentos-reconciliacao": accounting_crud,
         "pagamentos-transaction": accounting_crud,
     }
+    pharmacy_crud_methods = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+    pharmacy_crud = {
+        "farmacia-product": pharmacy_crud_methods,
+        "farmacia-lot": pharmacy_crud_methods,
+        "farmacia-movimentoestoque": pharmacy_crud_methods,
+        "farmacia-sale": pharmacy_crud_methods,
+        "farmacia-itemvenda": pharmacy_crud_methods,
+        "farmacia-requisicaomaterial": pharmacy_crud_methods,
+        "farmacia-requisicaomaterialitem": pharmacy_crud_methods,
+        "pharmacy-product": pharmacy_crud_methods,
+        "pharmacy-lot": pharmacy_crud_methods,
+        "pharmacy-movimentoestoque": pharmacy_crud_methods,
+        "pharmacy-sale": pharmacy_crud_methods,
+        "pharmacy-itemvenda": pharmacy_crud_methods,
+        "pharmacy-requisicaomaterial": pharmacy_crud_methods,
+        "pharmacy-requisicaomaterialitem": pharmacy_crud_methods,
+    }
     bloodbank_operational = SAFE_METHODS | WRITE_METHODS
     bloodbank_read = SAFE_METHODS
     equipment_read = {
@@ -455,20 +472,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["STUDENT_EN"]: education_read,
         g["FARMACIA"]: {
             # Almoxarifado / estoque
-            "farmacia-product": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-lot": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-movimentoestoque": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-sale": SAFE_METHODS | WRITE_METHODS,
-            "farmacia-itemvenda": SAFE_METHODS | WRITE_METHODS,
-            # --- API v1 routes (English prefixes) ---
-            "pharmacy-product": SAFE_METHODS | WRITE_METHODS,
-            "pharmacy-lot": SAFE_METHODS | WRITE_METHODS,
-            "pharmacy-movimentoestoque": SAFE_METHODS | WRITE_METHODS,
-            "pharmacy-sale": SAFE_METHODS | WRITE_METHODS,
-            "pharmacy-itemvenda": SAFE_METHODS | WRITE_METHODS,
+            **pharmacy_crud,
             # Logística interna (receber/aviar/arquivar requisições)
-            "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
-            "pharmacy-requisicaomaterialitem": SAFE_METHODS | WRITE_METHODS,
             # SGE (somente leitura)
             **equipment_read,
             **equipment_integration_read,

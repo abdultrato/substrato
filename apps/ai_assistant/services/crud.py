@@ -128,6 +128,7 @@ RELATED_LOOKUP_FIELDS = (
     "filename",
     "unit_number",
     "bag_identifier",
+    "lot_number",
     "student_code",
     "teacher_code",
     "title",
@@ -828,6 +829,8 @@ class AiCrudConversationManager:
     def _coerce_value(self, field: CrudFieldSpec, value: Any) -> Any:
         if self._is_many_related_field(field) and isinstance(value, list):
             return value
+        if isinstance(value, (dict, list)):
+            return value
         if value is None or isinstance(value, (bool, int, float)):
             return value
         raw = self._clean_value(str(value))
@@ -1032,7 +1035,7 @@ class AiCrudConversationManager:
 
     def _extract_object_ref(self, message: str) -> str:
         for pattern in (
-            r"\b(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|authorization_number|codigo_autorizacao|código_autorização|numero_autorizacao|número_autorização|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
+            r"\b(?:id|pk|numero|número|number|codigo|código|code|custom_id|external_code|codigo_externo|código_externo|external_reference|referencia_externa|referência_externa|request_id|procedure_code|codigo_procedimento|código_procedimento|authorization_code|authorization_number|codigo_autorizacao|código_autorização|numero_autorizacao|número_autorização|lot_number|numero_lote|número_lote|nuit|nib|tax_id|email|username|nome_utilizador|nome_usuario|documento|document_number|telefone|phone)\s*[:=#\-]?\s*([A-Za-z0-9_.@+-]+)",
             r"#(\d+)\b",
             r"\b([A-Z]{2,12}-[A-Z0-9-]{4,})\b",
         ):
