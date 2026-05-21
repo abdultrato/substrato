@@ -26,6 +26,10 @@ class LocalLlmGateway:
         if denied_result:
             return self._access_denied_answer(denied_result.get("result") or {}, language=language)
 
+        sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
+        if sql_analytics_result:
+            return self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
+
         crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
         if crud_result:
             return self._crud_answer(crud_result.get("result") or {}, language=language)
@@ -282,6 +286,90 @@ class LocalLlmGateway:
                 "Próximo passo sugerido: indique um código/referência específica se quiser uma investigação mais estreita.",
             ]
         )
+
+    def _sql_analytics_answer(self, result: dict[str, Any], *, language: str) -> str:
+        summary = result.get("summary") or {}
+        analytics = result.get("analytics") or {}
+        query_kind = analytics.get("query_kind") or summary.get("query_kind") or ""
+
+        if query_kind == "patient_entries_between":
+            totals = analytics.get("totals") or {}
+            date_range = analytics.get("range") or summary.get("range") or {}
+            start_date = date_range.get("start_date") or "—"
+            end_date = date_range.get("end_date") or "—"
+            checkins = int(totals.get("checkin_count") or 0)
+            distinct_patients = int(totals.get("distinct_patient_count") or 0)
+            daily_rows = analytics.get("daily_rows") or []
+            peak_day = max(daily_rows, key=lambda row: int(row.get("checkin_count") or 0), default=None)
+            if language == "en":
+                direct = (
+                    f"Between {start_date} and {end_date}, I found {checkins} admission/check-in record(s), "
+                    f"covering {distinct_patients} distinct patient(s)."
+                )
+                if peak_day:
+                    direct += f" The busiest day was {peak_day.get('day')}, with {peak_day.get('checkin_count')} admission(s)."
+                return "\n\n".join(
+                    [
+                        direct,
+                        "Internal evidence used: parameterized SQL template over ReceptionCheckin, scoped by tenant and RBAC.",
+                        "Limitation: this counts reception check-ins/admissions, not every clinical event after admission.",
+                    ]
+                )
+            direct = (
+                f"Entre {start_date} e {end_date}, encontrei {checkins} entrada(s)/check-in(s), "
+                f"correspondentes a {distinct_patients} paciente(s) distinto(s)."
+            )
+            if peak_day:
+                direct += f" O dia com mais movimento foi {peak_day.get('day')}, com {peak_day.get('checkin_count')} entrada(s)."
+            return "\n\n".join(
+                [
+                    direct,
+                    "Evidência interna usada: template SQL parametrizado sobre ReceptionCheckin, com tenant e RBAC.",
+                    "Limitação: isto conta entradas/check-ins da recepção, não todos os eventos clínicos posteriores.",
+                ]
+            )
+
+        if query_kind == "pharmacy_stock_as_of":
+            as_of_date = analytics.get("as_of_date") or summary.get("as_of_date") or "—"
+            product_query = analytics.get("product_query") or summary.get("product_query") or "—"
+            product_rows = analytics.get("product_rows") or []
+            total_stock = sum(int(row.get("stock_as_of") or 0) for row in product_rows)
+            if language == "en":
+                direct = f"On {as_of_date}, the matched medication/product stock for '{product_query}' was {total_stock} unit(s)."
+                lines = [
+                    f"- {row.get('product_name') or '—'} ({row.get('product_code') or '—'}): "
+                    f"{int(row.get('stock_as_of') or 0)} in {int(row.get('lot_count') or 0)} lot(s)"
+                    for row in product_rows[:5]
+                ]
+                return "\n\n".join(
+                    [
+                        direct,
+                        "\n".join(lines) if lines else "No matching product was found.",
+                        "Internal evidence used: parameterized SQL templates over Product, Lot and InventoryMovement, scoped by tenant and RBAC.",
+                        "Limitation: historical stock is reconstructed from recorded movements up to the end of the requested day.",
+                    ]
+                )
+            direct = f"No dia {as_of_date}, o stock encontrado para '{product_query}' era {total_stock} unidade(s)."
+            lines = [
+                f"- {row.get('product_name') or '—'} ({row.get('product_code') or '—'}): "
+                f"{int(row.get('stock_as_of') or 0)} em {int(row.get('lot_count') or 0)} lote(s)"
+                for row in product_rows[:5]
+            ]
+            return "\n\n".join(
+                [
+                    direct,
+                    "\n".join(lines) if lines else "Nenhum produto correspondente foi encontrado.",
+                    "Evidência interna usada: templates SQL parametrizados sobre Product, Lot e InventoryMovement, com tenant e RBAC.",
+                    "Limitação: o stock histórico é reconstruído a partir dos movimentos registados até ao fim do dia solicitado.",
+                ]
+            )
+
+        prompt = summary.get("prompt_en") if language == "en" else summary.get("prompt_pt")
+        if prompt:
+            return prompt
+        if language == "en":
+            return "I could not map the question to a safe SQL analytics template."
+        return "Não consegui mapear a pergunta para um template SQL analítico seguro."
 
     def _crud_answer(self, result: dict[str, Any], *, language: str) -> str:
         crud = result.get("crud") or {}

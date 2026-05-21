@@ -131,6 +131,8 @@ class AiInvestigationBuilder:
         if blocked_tools or any((item.get("result") or {}).get("access_denied") for item in tool_results):
             return "access_review"
         names = {item.get("tool_name") for item in tool_results}
+        if "run_sql_analytics" in names:
+            return "sql_analytics"
         if "explore_database" in names:
             return "data_exploration"
         if "get_command_center_alerts" in names:
@@ -304,6 +306,11 @@ class AiInvestigationBuilder:
                 "Que registos foram criados nos últimos 7 dias?",
                 "Que filtros posso aplicar a este módulo?",
             ],
+            "sql_analytics": [
+                "Cruze esta pesquisa com outro intervalo de datas.",
+                "Mostre a decomposição diária ou por lote.",
+                "Gere um relatório desta análise.",
+            ],
             "operational_health": [
                 "Quais rotas devo priorizar primeiro?",
                 "Há padrão repetido nos erros 5xx?",
@@ -319,6 +326,11 @@ class AiInvestigationBuilder:
                 "Show a safe list for this resource.",
                 "Which records were created in the last 7 days?",
                 "Which filters can I apply to this module?",
+            ],
+            "sql_analytics": [
+                "Compare this query with another date range.",
+                "Show the daily or lot-level breakdown.",
+                "Generate a report from this analysis.",
             ],
             "operational_health": [
                 "Which routes should I prioritize first?",
@@ -348,6 +360,7 @@ class AiInvestigationBuilder:
         titles = {
             "access_review": ("Revisão de acesso", "Access review"),
             "data_exploration": ("Investigação de dados", "Data investigation"),
+            "sql_analytics": ("Pesquisa SQL analítica", "SQL analytics"),
             "operational_health": ("Investigação operacional", "Operational investigation"),
             "sample_collection": ("Investigação de colheita", "Collection investigation"),
             "nursing_flow": ("Investigação de enfermagem", "Nursing investigation"),

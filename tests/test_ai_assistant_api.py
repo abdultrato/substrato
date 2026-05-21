@@ -390,6 +390,81 @@ def test_ai_chat_resolves_clarification_followup_into_data_investigation(api_cli
 
 
 @pytest.mark.django_db
+def test_ai_sql_analytics_counts_patient_entries_between_dates(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-entries", domain="tn-ai-sql-entries.local")
+    user = _user(tenant, "recepcao_ai_sql_entries", GROUPS["RECEPCAO"])
+    patient_a = Patient.objects.create(tenant=tenant, name="Paciente Entrada A")
+    patient_b = Patient.objects.create(tenant=tenant, name="Paciente Entrada B")
+    checkin_a = ReceptionCheckin.objects.create(tenant=tenant, patient=patient_a, status=ReceptionCheckin.Status.COMPLETED)
+    checkin_b = ReceptionCheckin.objects.create(tenant=tenant, patient=patient_b, status=ReceptionCheckin.Status.WAITING)
+    checkin_outside = ReceptionCheckin.objects.create(tenant=tenant, patient=patient_a, status=ReceptionCheckin.Status.WAITING)
+    ReceptionCheckin.objects.filter(id=checkin_a.id).update(arrived_at=datetime(2026, 5, 2, 9, 0, tzinfo=timezone.get_current_timezone()))
+    ReceptionCheckin.objects.filter(id=checkin_b.id).update(arrived_at=datetime(2026, 5, 3, 10, 0, tzinfo=timezone.get_current_timezone()))
+    ReceptionCheckin.objects.filter(id=checkin_outside.id).update(arrived_at=datetime(2026, 5, 9, 10, 0, tzinfo=timezone.get_current_timezone()))
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Fale-me de quantos pacientes deram entrada a partir do dia 2026-05-01 a 2026-05-05",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "2 entrada" in data["answer"]
+    assert data["investigation"]["intent"] == "sql_analytics"
+
+
+@pytest.mark.django_db
+def test_ai_sql_analytics_reports_pharmacy_stock_as_of_date(api_client):
+    tenant = _tenant(identifier="tn-ai-sql-stock", domain="tn-ai-sql-stock.local")
+    user = _user(tenant, "farmacia_ai_sql_stock", GROUPS["FARMACIA"])
+    product = Product.objects.create(tenant=tenant, name="Medicação K", type=Product.ProductType.MEDICAMENTO)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=product,
+        lot_number="K-001",
+        expiration_date=date(2027, 1, 1),
+        initial_quantity=50,
+    )
+    initial_movement = InventoryMovement.objects.get(tenant=tenant, lot=lot, type=MovementType.ENTRADA)
+    salida = InventoryMovement.objects.create(
+        tenant=tenant,
+        lot=lot,
+        type=MovementType.SAIDA,
+        origin=MovementOrigin.AJUSTE,
+        quantity=7,
+    )
+    Product.objects.filter(id=product.id).update(created_at=datetime(2026, 5, 1, 8, 0, tzinfo=timezone.get_current_timezone()))
+    Lot.objects.filter(id=lot.id).update(created_at=datetime(2026, 5, 1, 8, 5, tzinfo=timezone.get_current_timezone()))
+    InventoryMovement.objects.filter(id=initial_movement.id).update(created_at=datetime(2026, 5, 1, 8, 10, tzinfo=timezone.get_current_timezone()))
+    InventoryMovement.objects.filter(id=salida.id).update(created_at=datetime(2026, 5, 10, 11, 0, tzinfo=timezone.get_current_timezone()))
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "Diga-me qual era o estoque de medicação K no dia 2026-05-11",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert any(call["tool_name"] == "run_sql_analytics" and call["status"] == "success" for call in data["tool_calls"])
+    assert "43 unidade" in data["answer"]
+    assert "Medicação K" in data["answer"]
+    assert data["investigation"]["intent"] == "sql_analytics"
+
+
+@pytest.mark.django_db
 def test_ai_tool_registry_respects_rbac_and_logs_policy(api_client):
     tenant = _tenant(identifier="tn-ai-rbac", domain="tn-ai-rbac.local")
     user = _user(tenant, "recepcao_ai", GROUPS["RECEPCAO"])
@@ -5287,6 +5362,7 @@ def test_ai_tool_registry_selects_domain_tools():
     task_names = {tool.name for tool in registry.select_tools(message="criar tarefa para enfermagem investigar pendências", active_module="ai")}
     education_names = {tool.name for tool in registry.select_tools(message="resumo de estudantes e matrículas", active_module="ai")}
     investigation_names = {tool.name for tool in registry.select_tools(message="quero investigar pacientes", active_module="ai")}
+    sql_names = {tool.name for tool in registry.select_tools(message="qual era o estoque de medicação K no dia 2026-05-11", active_module="ai")}
 
     assert "get_user_context" in personal_names
     assert "explore_database" in data_names
@@ -5297,3 +5373,4 @@ def test_ai_tool_registry_selects_domain_tools():
     assert "get_education_summary" in education_names
     assert "explore_database" in investigation_names
     assert "prepare_operational_task" not in investigation_names
+    assert "run_sql_analytics" in sql_names

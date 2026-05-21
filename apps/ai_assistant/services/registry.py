@@ -12,6 +12,7 @@ from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
 from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
+from apps.ai_assistant.tools.sql_analytics import SqlAnalyticsTool, should_select_sql_analytics
 from apps.ai_assistant.tools.tasks import PrepareOperationalTaskTool
 from apps.ai_assistant.tools.user_context import GetUserContextTool
 
@@ -33,6 +34,7 @@ class AiToolRegistry:
             PrepareCrudOperationTool.name: PrepareCrudOperationTool(),
             PrepareOperationalReportTool.name: PrepareOperationalReportTool(),
             PrepareOperationalTaskTool.name: PrepareOperationalTaskTool(),
+            SqlAnalyticsTool.name: SqlAnalyticsTool(),
         }
 
     def all(self) -> list:
@@ -61,6 +63,9 @@ class AiToolRegistry:
         active_module_key = (active_module or "").strip().lower()
         normalized = f"{message or ''} {active_module_key}".lower()
         selected = []
+        if should_select_sql_analytics(message=message, active_module=active_module_key):
+            selected.append(self._tools[SqlAnalyticsTool.name])
+
         personal_terms = (
             "quem sou",
             "meu login",
