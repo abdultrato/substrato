@@ -1,15 +1,18 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { GraduationCap, Stethoscope } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
 import { GROUPS } from "@/lib/rbac"
+import { writeStoredWorkspaceScope } from "@/lib/workspaceScope"
 
 export default function WorkspacesPage() {
   const { t } = useLanguage()
+  const router = useRouter()
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>
@@ -25,6 +28,11 @@ export default function WorkspacesPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <Link
             href="/healthcare"
+            onClick={(event) => {
+              event.preventDefault()
+              writeStoredWorkspaceScope("healthcare")
+              router.push("/healthcare")
+            }}
             className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
           >
             <div className="flex items-start gap-3">
@@ -47,6 +55,11 @@ export default function WorkspacesPage() {
 
           <Link
             href="/education"
+            onClick={(event) => {
+              event.preventDefault()
+              writeStoredWorkspaceScope("education")
+              router.push("/education")
+            }}
             className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
           >
             <div className="flex items-start gap-3">

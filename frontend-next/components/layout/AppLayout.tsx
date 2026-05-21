@@ -1,6 +1,7 @@
 "use client"
 
 import { ReactNode, useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import Sidebar from "./Sidebar"
@@ -10,6 +11,12 @@ import AccessDenied from "@/components/auth/AccessDenied"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { useLanguage } from "@/hooks/useLanguage"
 import { userHasAnyGroup } from "@/lib/rbac"
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
+import {
+    isOperationalScope,
+    isPathAllowedForScope,
+    workspaceHomeForScope,
+} from "@/lib/workspaceScope"
 
 interface Props {
     children: ReactNode
@@ -28,9 +35,22 @@ export default function AppLayout ( {
     const { loading } = useAuthGuard()
     const { user } = useAuth()
     const { t } = useLanguage()
+    const pathname = usePathname() || "/"
+    const router = useRouter()
+    const activeScope = useWorkspaceScope()
     const [navOpen, setNavOpen] = useState( false )
     const [desktopSidebarVisible, setDesktopSidebarVisible] = useState( true )
     const footerLeftOffset = desktopSidebarVisible ? sidebarDesktopWidth : "0px"
+    const mustRedirectByScope =
+        isOperationalScope(activeScope) &&
+        (pathname === "/" || !isPathAllowedForScope(pathname, activeScope))
+    const scopeHome = workspaceHomeForScope(activeScope)
+
+    useEffect(() => {
+        if (!mustRedirectByScope) return
+        if (pathname === scopeHome) return
+        router.replace(scopeHome)
+    }, [mustRedirectByScope, pathname, router, scopeHome])
 
     useEffect( () => {
         if ( typeof window === "undefined" ) return
@@ -76,6 +96,14 @@ export default function AppLayout ( {
         return (
             <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
                 {t("Carregando...", "Loading...")}
+            </div>
+        )
+    }
+
+    if (mustRedirectByScope) {
+        return (
+            <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+                {t("Redirecionando para o workspace selecionado...", "Redirecting to the selected workspace...")}
             </div>
         )
     }

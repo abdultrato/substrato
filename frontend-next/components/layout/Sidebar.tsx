@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo } from "react"
 import { SessionUser } from "@/lib/session"
 import { getDefaultWorkspaceHref, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import {
     Briefcase as BriefcaseIcon,
 
@@ -109,6 +110,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     const router = useRouter()
     const { isDark, toggle: toggleTheme } = useTheme()
     const { t } = useLanguage()
+    const activeScope = useWorkspaceScope()
     const homeHref = useMemo(() => getDefaultWorkspaceHref(user), [user])
 
     const hasAccess = useCallback((item: NavItem) => {
@@ -116,9 +118,17 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
         return userHasAnyGroup(user, item.groups)
     }, [user])
 
+    const itemMatchesWorkspaceScope = useCallback((item: NavItem) => {
+        if (activeScope === "neutral") return true
+        if (item.href === "/workspaces") return true
+        const isEducationItem =
+            item.href === "/education" || item.href.startsWith("/education/")
+        return activeScope === "education" ? isEducationItem : !isEducationItem
+    }, [activeScope])
+
     const visibleItems = useMemo(
-        () => NAV_ITEMS.filter(hasAccess),
-        [hasAccess]
+        () => NAV_ITEMS.filter((item) => hasAccess(item) && itemMatchesWorkspaceScope(item)),
+        [hasAccess, itemMatchesWorkspaceScope]
     )
 
     const prefetchRoute = useCallback((href: string) => {

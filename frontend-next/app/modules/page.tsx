@@ -7,12 +7,14 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ModulosPage() {
   const { loading } = useAuthGuard()
   const { t, tr } = useLanguage()
-  const { modules, isFetching, isError } = useModulesCatalog()
+  const workspaceScope = useWorkspaceScope()
+  const { modules, isFetching, isError } = useModulesCatalog(workspaceScope)
   if (loading) return null
 
   return (

@@ -9,6 +9,11 @@ import {
   mergeModules,
   type ModuleGroup,
 } from "@/lib/modules"
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
+import {
+  filterModulesByWorkspaceScope,
+  type WorkspaceScope,
+} from "@/lib/workspaceScope"
 
 async function fetchModulesCatalog(): Promise<ModuleGroup[]> {
   const apiRoot = await apiFetch<Record<string, unknown>>("/")
@@ -17,7 +22,10 @@ async function fetchModulesCatalog(): Promise<ModuleGroup[]> {
   return mergeModules(MODULES, discovered)
 }
 
-export function useModulesCatalog() {
+export function useModulesCatalog(scope?: WorkspaceScope) {
+  const inferredScope = useWorkspaceScope()
+  const effectiveScope = scope ?? inferredScope
+
   const query = useQuery<ModuleGroup[]>({
     queryKey: ["modules-catalog"],
     queryFn: fetchModulesCatalog,
@@ -25,8 +33,10 @@ export function useModulesCatalog() {
     retry: 1,
   })
 
+  const baseModules = query.data ?? MODULES
+
   return {
-    modules: query.data ?? MODULES,
+    modules: filterModulesByWorkspaceScope(baseModules, effectiveScope),
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
