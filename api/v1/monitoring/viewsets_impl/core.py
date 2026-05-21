@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated  # Protege o endpoint
 from rest_framework.response import Response
-from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet  # Apenas leitura
+from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.audit_activities.models.user_activity import UserActivity
@@ -28,13 +28,35 @@ from ..filters import SystemErrorFilter
 from ..serializers import SystemErrorSerializer
 
 
-class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
+class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SystemError.objects.select_related("user").all()
     serializer_class = SystemErrorSerializer
     filterset_class = SystemErrorFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["path", "exception_class", "message", "user__username"]
-    ordering_fields = ["created_at", "status_code", "exception_class"]
+    search_fields = [
+        "custom_id",
+        "path",
+        "full_path",
+        "exception_class",
+        "message",
+        "traceback",
+        "view_basename",
+        "view_action",
+        "object_id",
+        "user__username",
+        "user__email",
+    ]
+    ordering_fields = [
+        "created_at",
+        "updated_at",
+        "status_code",
+        "duration_ms",
+        "exception_class",
+        "path",
+        "method",
+        "view_basename",
+        "view_action",
+    ]
     ordering = ["-created_at", "-id"]
 
 

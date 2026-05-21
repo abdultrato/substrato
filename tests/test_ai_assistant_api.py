@@ -343,6 +343,81 @@ def test_ai_data_explorer_denies_resource_without_rbac(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_monitoring_crud_creates_updates_and_deletes_system_error_for_admin(api_client):
+    tenant = _tenant(identifier="tn-ai-monitoring-crud", domain="tn-ai-monitoring-crud.local")
+    admin = _user(tenant, "admin_ai_monitoring_crud", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+
+    _data, create_action = _prepare_ai_crud_action(
+        api_client,
+        'Crie erro do sistema {"utilizador":"admin_ai_monitoring_crud","metodo":"POST","rota":"/api/v1/clinical/resultitem/","url_completa":"/api/v1/clinical/resultitem/?debug=1","status_http":503,"duracao_ms":230,"tipo_erro":"OperationalError","mensagem":"database unavailable","view":"clinical-resultitem","acao":"create","objecto":"REQ-AI-001"}',
+    )
+
+    assert create_action.payload["basename"] == "monitoring-error"
+    assert create_action.payload["data"]["user"] == admin.id
+    assert create_action.payload["data"]["method"] == "POST"
+    assert create_action.payload["data"]["path"] == "/api/v1/clinical/resultitem/"
+    assert create_action.payload["data"]["status_code"] == 503
+    assert create_action.payload["data"]["exception_class"] == "OperationalError"
+
+    _confirm_ai_action(api_client, create_action)
+    system_error = SystemError.objects.get(tenant=tenant, object_id="REQ-AI-001")
+    assert system_error.user == admin
+    assert system_error.duration_ms == 230
+    assert system_error.view_basename == "clinical-resultitem"
+
+    _data, update_action = _prepare_ai_crud_action(
+        api_client,
+        f'Altere erro do sistema custom_id {system_error.custom_id} {{"status_http":500,"mensagem":"database recovered after retry","tipo_erro":"DatabaseError"}}',
+        action_type="ai_crud_update",
+    )
+
+    assert update_action.payload["basename"] == "monitoring-error"
+    assert update_action.payload["object_ref"] == system_error.custom_id
+    assert update_action.payload["data"]["status_code"] == 500
+    assert update_action.payload["data"]["exception_class"] == "DatabaseError"
+
+    _confirm_ai_action(api_client, update_action)
+    system_error.refresh_from_db()
+    assert system_error.status_code == 500
+    assert system_error.exception_class == "DatabaseError"
+    assert system_error.message == "database recovered after retry"
+
+    _data, delete_action = _prepare_ai_crud_action(
+        api_client,
+        f"Remova erro do sistema id {system_error.id}",
+        action_type="ai_crud_delete",
+    )
+
+    assert delete_action.payload["basename"] == "monitoring-error"
+    _confirm_ai_action(api_client, delete_action)
+    assert SystemError.all_objects.get(id=system_error.id).deleted is True
+
+
+@pytest.mark.django_db
+def test_ai_monitoring_crud_denies_system_error_create_for_reception(api_client):
+    tenant = _tenant(identifier="tn-ai-monitoring-denied", domain="tn-ai-monitoring-denied.local")
+    user = _user(tenant, "recepcao_ai_monitoring_denied", GROUPS["RECEPCAO"])
+    _authenticate(api_client, tenant, user)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": 'Crie erro do sistema {"metodo":"GET","rota":"/api/v1/admin-only/","status_http":500,"tipo_erro":"PermissionError","mensagem":"blocked"}',
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert "não tem acesso" in data["answer"].lower()
+    assert not data["suggested_actions"]
+    assert not SystemError.objects.filter(tenant=tenant, path="/api/v1/admin-only/").exists()
+
+
+@pytest.mark.django_db
 def test_ai_conversational_crud_collects_patient_data_then_creates_record(api_client):
     tenant = _tenant(identifier="tn-ai-crud", domain="tn-ai-crud.local")
     user = _user(tenant, "recepcao_ai_crud", GROUPS["RECEPCAO"])
