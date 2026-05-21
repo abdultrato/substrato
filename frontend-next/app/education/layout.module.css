@@ -1,0 +1,36 @@
+.scope {
+  font-size: 11px;
+}
+
+.scope :global(.rounded-2xl),
+.scope :global(.rounded-xl),
+.scope :global(.rounded-lg),
+.scope :global(.rounded-md),
+.scope :global(.rounded),
+.scope :global(.rounded-full) {
+  border-radius: 2px !important;
+}
+
+.scope :global(.text-2xl),
+.scope :global(.text-xl),
+.scope :global(.text-lg),
+.scope :global(.text-base),
+.scope :global(.text-sm),
+.scope :global(.text-xs) {
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+
+.scope :global(button),
+.scope :global(input),
+.scope :global(select),
+.scope :global(textarea) {
+  border-radius: 2px !important;
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+
+.scope :global(table) {
+  font-size: 11px !important;
+}
+

@@ -1,11 +1,23 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { BookOpen, CalendarCheck, GraduationCap, Users } from "lucide-react"
+import {
+  BookOpen,
+  CalendarCheck,
+  ClipboardCheck,
+  FileCheck2,
+  FileStack,
+  GraduationCap,
+  Pencil,
+  School,
+  UserCheck,
+  Users,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { apiFetch, extractTotalCount } from "@/lib/api"
+import { EDUCATION_REQUIRED_GROUPS, EDUCATION_RESOURCE_DESCRIPTORS } from "@/lib/education/resources"
 import { GROUPS } from "@/lib/rbac"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -58,9 +70,33 @@ export default function EducationPage() {
   }, [t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
+  const iconByResourceKey = useMemo(
+    () => ({
+      student: GraduationCap,
+      teacher: Users,
+      course: BookOpen,
+      classroom: School,
+      enrollment: ClipboardCheck,
+      attendance: UserCheck,
+      grade: Pencil,
+      examination: FileCheck2,
+      content: FileStack,
+    }),
+    []
+  )
+  const resourceActions = useMemo(
+    () =>
+      EDUCATION_RESOURCE_DESCRIPTORS.map((resource) => ({
+        title: t(resource.labelPt, resource.labelEn),
+        description: t(resource.descriptionPt, resource.descriptionEn),
+        href: `/education/resources/${resource.key}`,
+        icon: iconByResourceKey[resource.key as keyof typeof iconByResourceKey] || CalendarCheck,
+      })),
+    [iconByResourceKey, t]
+  )
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.PROFESSOR]}>
+    <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
       <div className="space-y-6">
         {error ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -75,39 +111,14 @@ export default function EducationPage() {
             "Academic domain within the same operational design as healthcare."
           )}
           adminHref="/admin/education/"
-          secondaryCta={{ href: "/education/student", label: t("Área do Estudante", "Student Area") }}
+          secondaryCta={{ href: "/education/resources", label: t("CRUD Education", "Education CRUD") }}
           metrics={[
             { label: "Students", value: metricValue || students },
             { label: "Teachers", value: metricValue || teachers },
             { label: "Courses", value: metricValue || courses },
             { label: "Enrollments", value: metricValue || enrollments },
           ]}
-          actions={[
-            {
-              title: "Students",
-              description: t("Gestão de perfis estudantis.", "Student profile management."),
-              href: "/resources/education/student",
-              icon: GraduationCap,
-            },
-            {
-              title: "Teachers",
-              description: t("Gestão de docentes e turmas.", "Teacher and class management."),
-              href: "/resources/education/teacher",
-              icon: Users,
-            },
-            {
-              title: "Courses",
-              description: t("Catálogo curricular e carga horária.", "Curriculum catalog and workload."),
-              href: "/resources/education/course",
-              icon: BookOpen,
-            },
-            {
-              title: "Enrollments",
-              description: t("Matrículas e vínculo por turma.", "Enrollments and class assignment."),
-              href: "/resources/education/enrollment",
-              icon: CalendarCheck,
-            },
-          ]}
+          actions={resourceActions}
           noteTitle={t("Governança da migração", "Migration governance")}
           notes={[
             t(
@@ -115,8 +126,8 @@ export default function EducationPage() {
               "Identity and authentication remain centralized in Substrato."
             ),
             t(
-              "Regras de domínio Education vivem em apps/education e services/education.",
-              "Education domain rules live in apps/education and services/education."
+              "Todas as telas de Education para frontend estão disponíveis em /education/resources.",
+              "All Education frontend screens are available under /education/resources."
             ),
             t(
               "Fluxos críticos de Education já executam no domínio novo sem dependência operacional do legado.",
