@@ -1,7 +1,7 @@
 "use client"
 
-import { ReactNode, useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
+import { ReactNode, useEffect, useMemo, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import Sidebar from "./Sidebar"
@@ -10,13 +10,21 @@ import Footer from "./Footer"
 import AccessDenied from "@/components/auth/AccessDenied"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { useLanguage } from "@/hooks/useLanguage"
-import { userHasAnyGroup } from "@/lib/rbac"
+import { getDefaultWorkspaceHref, userHasAnyGroup } from "@/lib/rbac"
 import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import {
     isOperationalScope,
     isPathAllowedForScope,
     workspaceHomeForScope,
 } from "@/lib/workspaceScope"
+import {
+    INTERNAL_NAVIGATION_INTENT_KEY,
+    createInternalNavigationIntent,
+    getPathFromSameOriginHref,
+    normalizeNavigationPath,
+    serializeInternalNavigationIntent,
+    shouldShowRestrictionNotice,
+} from "@/lib/accessRedirect"
 
 interface Props {
     children: ReactNode
@@ -36,21 +44,125 @@ export default function AppLayout ( {
     const { user } = useAuth()
     const { t } = useLanguage()
     const pathname = usePathname() || "/"
+    const searchParams = useSearchParams()
     const router = useRouter()
     const activeScope = useWorkspaceScope()
     const [navOpen, setNavOpen] = useState( false )
     const [desktopSidebarVisible, setDesktopSidebarVisible] = useState( true )
+    const [accessResolutionReady, setAccessResolutionReady] = useState( true )
+    const [showRestrictionNotice, setShowRestrictionNotice] = useState( false )
     const footerLeftOffset = desktopSidebarVisible ? sidebarDesktopWidth : "0px"
     const mustRedirectByScope =
         isOperationalScope(activeScope) &&
         (pathname === "/" || !isPathAllowedForScope(pathname, activeScope))
     const scopeHome = workspaceHomeForScope(activeScope)
+    const currentPath = useMemo(() => {
+        const query = searchParams?.toString()
+        return normalizeNavigationPath(query ? `${pathname}?${query}` : pathname)
+    }, [pathname, searchParams])
+
+    const isUnauthorized =
+        !!user &&
+        !!requiredGroups?.length &&
+        !userHasAnyGroup(user, requiredGroups)
+    const defaultWorkspaceHref = getDefaultWorkspaceHref(user)
 
     useEffect(() => {
         if (!mustRedirectByScope) return
         if (pathname === scopeHome) return
         router.replace(scopeHome)
     }, [mustRedirectByScope, pathname, router, scopeHome])
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        function persistNavigationIntent(targetPath: string) {
+            const intent = createInternalNavigationIntent(targetPath)
+            window.sessionStorage.setItem(
+                INTERNAL_NAVIGATION_INTENT_KEY,
+                serializeInternalNavigationIntent(intent),
+            )
+        }
+
+        function handleAnchorClick(event: MouseEvent) {
+            if (event.defaultPrevented || event.button !== 0) return
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+            const originTarget = event.target
+            if (!(originTarget instanceof Element)) return
+
+            const anchor = originTarget.closest("a[href]")
+            if (!anchor) return
+
+            const targetAttr = anchor.getAttribute("target")
+            if (targetAttr && targetAttr !== "_self") return
+            if (anchor.hasAttribute("download")) return
+
+            const href = anchor.getAttribute("href")
+            if (!href || href.startsWith("#")) return
+
+            const nextPath = getPathFromSameOriginHref(href, window.location.origin)
+            if (!nextPath) return
+            persistNavigationIntent(nextPath)
+        }
+
+        const originalPushState = window.history.pushState
+        const originalReplaceState = window.history.replaceState
+
+        function wrapHistoryMethod(
+            method: typeof window.history.pushState,
+        ): typeof window.history.pushState {
+            return function wrappedHistoryMethod(data, unused, url) {
+                if (url) {
+                    const nextPath = getPathFromSameOriginHref(
+                        typeof url === "string" ? url : url.toString(),
+                        window.location.origin,
+                    )
+                    if (nextPath) persistNavigationIntent(nextPath)
+                }
+                return method.call(this, data, unused, url)
+            }
+        }
+
+        window.history.pushState = wrapHistoryMethod(originalPushState)
+        window.history.replaceState = wrapHistoryMethod(originalReplaceState)
+        document.addEventListener("click", handleAnchorClick, true)
+
+        return () => {
+            window.history.pushState = originalPushState
+            window.history.replaceState = originalReplaceState
+            document.removeEventListener("click", handleAnchorClick, true)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!isUnauthorized) {
+            setAccessResolutionReady(true)
+            setShowRestrictionNotice(false)
+            return
+        }
+
+        if (typeof window === "undefined") return
+
+        setAccessResolutionReady(false)
+        const rawIntent = window.sessionStorage.getItem(INTERNAL_NAVIGATION_INTENT_KEY)
+        const manualPathAttempt = shouldShowRestrictionNotice({
+            currentPath,
+            intentRaw: rawIntent,
+        })
+
+        const normalizedHome = normalizeNavigationPath(defaultWorkspaceHref)
+        if (!manualPathAttempt && currentPath !== normalizedHome) {
+            window.sessionStorage.removeItem(INTERNAL_NAVIGATION_INTENT_KEY)
+            setShowRestrictionNotice(false)
+            router.replace(defaultWorkspaceHref)
+            setAccessResolutionReady(true)
+            return
+        }
+
+        setShowRestrictionNotice(true)
+        setAccessResolutionReady(true)
+    }, [currentPath, defaultWorkspaceHref, isUnauthorized, router])
 
     useEffect( () => {
         if ( typeof window === "undefined" ) return
@@ -111,7 +223,23 @@ export default function AppLayout ( {
     // Auth guard will redirect, but avoid rendering protected shells while it's happening.
     if ( !user ) return null
 
-    if ( requiredGroups?.length && !userHasAnyGroup( user, requiredGroups ) ) {
+    if (isUnauthorized && !accessResolutionReady) {
+        return (
+            <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+                {t("A validar acesso...", "Validating access...")}
+            </div>
+        )
+    }
+
+    if (isUnauthorized && !showRestrictionNotice) {
+        return (
+            <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+                {t("Redirecionando...", "Redirecting...")}
+            </div>
+        )
+    }
+
+    if (isUnauthorized && showRestrictionNotice) {
         return (
             <div className="flex min-h-screen flex-col md:flex-row">
                 <Sidebar
