@@ -1,7 +1,9 @@
-"""Geração do PDF de resultados laboratoriais."""
+"""Geração do PDF de resultados laboratoriais com cabeçalhos personalizados."""
 
 import io
+import os
 
+from django.conf import settings
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
 from reportlab.lib.units import cm
@@ -16,6 +18,16 @@ from reportlab.platypus import (
 
 from domain.clinical.result_state import ResultState
 
+from .pdf_improvements import (
+    A5Margins,
+    DocumentType,
+    bold_text,
+    build_personalized_header,
+    draw_header_improved,
+    section_style_improved,
+    title_style_improved,
+    FONT_IMPROVED_BOLD,
+)
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,
@@ -51,20 +63,19 @@ def _resolve_document_user(request, resultados_qs):
 
 
 def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
-    """Monta e devolve o PDF de resultados laboratoriais em formato A5."""
+    """Monta e devolve o PDF de resultados laboratoriais em formato A5 com cabeçalho personalizado."""
     buffer = io.BytesIO()
 
-    page_width, _ = A5
-    margin = 1 * cm
-    usable_width = page_width - (margin * 2)
+    # Usar margens otimizadas para A5
+    usable_width = A5Margins.usable_width()
 
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A5,
-        leftMargin=margin,
-        rightMargin=margin,
-        topMargin=3.8 * cm,
-        bottomMargin=2.0 * cm,
+        leftMargin=A5Margins.LEFT,
+        rightMargin=A5Margins.RIGHT,
+        topMargin=A5Margins.TOP,
+        bottomMargin=A5Margins.BOTTOM,
         encrypt=pdf_encryption(),
     )
     doc.include_signatures = False
@@ -72,6 +83,17 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     elements = []
 
     patient = request.patient
+
+    # Obter tenant para personalizar cabeçalho
+    tenant = getattr(patient, "tenant", None)
+    tenant_name = getattr(tenant, "name", "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
+    
+    # Construir cabeçalho personalizado para laboratório
+    header_config = build_personalized_header(
+        doc_type=DocumentType.LABORATORY_RESULT,
+        tenant_name=tenant_name,
+        logo_path=os.path.join(settings.BASE_DIR, "static", "img", "logo.png"),
+    )
 
     # Código de barras no header (repete em todas páginas)
     try:
@@ -102,41 +124,38 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     # =====================================
 
     left_lines = [
-        f"{bold('Paciente')}: {patient.name}",
-        f"{bold('Idade')}: {patient.idade()} - {bold('Gênero')}: {patient.gender or '—'} - {bold('Raça')}: {patient.race_origin}",
-        f"{bold('Documento')}: {patient.document_type}: {patient.document_number or 'Não forneceu documento'}",
-        f"{bold('Proveniência')}: {patient.provenance or '—'}",
-        f"{bold('Contacto')}: {patient.contact or '—'}",
+        f"{bold_text('Paciente')}: {patient.name}",
+        f"{bold_text('Idade')}: {patient.idade()} - {bold_text('Gênero')}: {patient.gender or '—'} - {bold_text('Raça')}: {patient.race_origin}",
+        f"{bold_text('Documento')}: {patient.document_type}: {patient.document_number or 'Não forneceu documento'}",
+        f"{bold_text('Proveniência')}: {patient.provenance or '—'}",
+        f"{bold_text('Contacto')}: {patient.contact or '—'}",
     ]
 
     origin_company = getattr(patient, "origin_company", None)
     requesting_company = getattr(request, "requesting_company", None)
     empresa_executora = getattr(request, "external_executing_company", None)
     if requesting_company:
-        left_lines.append(f"{bold('Empresa solicitante')}: {getattr(requesting_company, 'name', '—')}")
+        left_lines.append(f"{bold_text('Empresa solicitante')}: {getattr(requesting_company, 'name', '—')}")
     elif origin_company:
-        left_lines.append(f"{bold('Empresa')}: {getattr(origin_company, 'name', '—')}")
+        left_lines.append(f"{bold_text('Empresa')}: {getattr(origin_company, 'name', '—')}")
     if empresa_executora:
-        left_lines.append(f"{bold('Executora externa')}: {getattr(empresa_executora, 'name', '—')}")
+        left_lines.append(f"{bold_text('Executora externa')}: {getattr(empresa_executora, 'name', '—')}")
 
     technician_texto = institutional_user_identity(user_documento)
 
     right_lines = [
-        f"{bold('E-mail')}: {patient.email or '—'}",
-        f"{bold('Requisição')}: {request.custom_id}",
-        f"{bold('Data dos Resultados')}: {_format_results_date(request)}",
-        f"{bold('Técn. de Laboratório')}: {technician_texto}",
+        f"{bold_text('E-mail')}: {patient.email or '—'}",
+        f"{bold_text('Requisição')}: {request.custom_id}",
+        f"{bold_text('Data dos Resultados')}: {_format_results_date(request)}",
+        f"{bold_text('Técn. de Laboratório')}: {technician_texto}",
     ]
 
     # =====================================
-    # TÍTULO
+    # TÍTULO (Usar estilos melhorados)
     # =====================================
 
-    style_title = document_title_style("HeadingRes")
-    style_section = document_section_style("SectionRes")
-
-    elements.append(Paragraph("RESULTADOS DE ANÁLISES", style_title))
-    elements.append(Spacer(1, 0.3 * cm))
+    elements.append(Paragraph("RESULTADOS DE ANÁLISES", title_style_improved()))
+    elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
     patient_table = montar_bloco_identificacao(
         usable_width=usable_width,
@@ -145,13 +164,22 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     )
 
     elements.append(patient_table)
-    elements.append(Spacer(1, 0.3 * cm))
+    elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
-    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.darkblue))
-    elements.append(Spacer(1, 0.3 * cm))
+    # Linha divisória com cor do setor
+    elements.append(HRFlowable(
+        width="100%",
+        thickness=0.5,
+        color=header_config["sector_color"]
+    ))
+    elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
-    elements.append(Paragraph("ANÁLISES PROCESSADAS", style_section))
-    elements.append(Spacer(1, 0.2 * cm))
+    # Seção com cor personalizada
+    elements.append(Paragraph(
+        "ANÁLISES PROCESSADAS",
+        section_style_improved(color=header_config["sector_color"])
+    ))
+    elements.append(Spacer(1, A5Margins.ROW_SPACING))
 
     # =====================================
     # AGRUPAMENTO POR EXAME
@@ -171,15 +199,15 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
         for exam_name, resultados in exams_agrupados.items():
             exam = resultados[0].exam_field.exam
 
-            elements.append(Spacer(1, 0.2 * cm))
+            elements.append(Spacer(1, A5Margins.ROW_SPACING))
             elements.append(
                 Paragraph(
                     f"{exam_name} — {exam.method}",
-                    style_section,
+                    section_style_improved(color=header_config["sector_color"]),
                 )
             )
 
-            elements.append(Spacer(1, 0.2 * cm))
+            elements.append(Spacer(1, A5Margins.ROW_SPACING))
 
             date = [
                 [
@@ -226,17 +254,17 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
             table.setStyle(
                 TableStyle(
                     [
-                        ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                        ("FONTNAME", (0, 0), (-1, 0), FONT_IMPROVED_BOLD),
                         ("VALIGN", (0, 0), (-1, -1), "TOP"),
                         ("LEFTPADDING", (0, 0), (-1, -1), 2),
                         ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-                        ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.darkblue),
+                        ("LINEBELOW", (0, 0), (-1, 0), 0.5, header_config["sector_color"]),
                     ]
                 )
             )
 
             elements.append(table)
-            elements.append(Spacer(1, 0.3 * cm))
+            elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
     else:
         elements.append(
@@ -249,17 +277,17 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     append_fim(elements)
 
     # =====================================
-    # BUILD
+    # BUILD COM CABEÇALHO PERSONALIZADO
     # =====================================
 
     doc.build(
         elements,
         onFirstPage=lambda c, d: (
-            on_page(c, d, user_documento),
+            draw_header_improved(c, d, header_config),
             draw_line_full_width(c, d),
         ),
         onLaterPages=lambda c, d: (
-            on_page(c, d, user_documento),
+            draw_header_improved(c, d, header_config),
             draw_line_full_width(c, d),
         ),
         canvasmaker=NumberedCanvas,

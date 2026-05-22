@@ -10,6 +10,15 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 type PeriodKey = "daily" | "weekly" | "monthly" | "quarterly" | "annual"
 type ModeKey = "general" | "activity" | "complete"
 type DropdownDirection = "up" | "down"
+type ExportJobPayload = {
+    id?: string
+    job_id?: string
+    status?: string
+    status_url?: string
+    download_url?: string
+    filename?: string | null
+    error?: string | null
+}
 
 const PERIOD_OPTIONS: Array<{ value: PeriodKey; label: string }> = [
     { value: "daily", label: "Diário (1 dia)" },
@@ -32,6 +41,26 @@ function downloadBlob(blob: Blob, filename: string) {
     a.download = filename
     a.click()
     window.URL.revokeObjectURL(url)
+}
+
+function toClientApiPath(urlOrPath: string | null | undefined): string {
+    const raw = String(urlOrPath || "").trim()
+    if (!raw) return ""
+
+    let path = raw
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        try {
+            const parsed = new URL(raw)
+            path = `${parsed.pathname}${parsed.search || ""}`
+        } catch {
+            path = raw
+        }
+    }
+
+    if (!path.startsWith("/")) path = `/${path}`
+    if (path.startsWith("/api/v1/")) return path.slice("/api/v1".length)
+    if (path === "/api/v1") return "/"
+    return path
 }
 
 export default function PageActivityReportMenu() {
@@ -71,14 +100,51 @@ export function PageActivityReportMenuWithDirection({ direction = "down" }: Prop
             params.set("page_path", pathname || "/")
             params.set("limit", mode === "complete" ? "300" : "500")
 
-            const blob = await apiFetch<Blob>(`/audit/atividade/relatorio/pdf/?${params.toString()}`, {
+            const queued = await apiFetch<ExportJobPayload>(`/audit/atividade/relatorio/pdf/?${params.toString()}`, {
+                timeoutMs: 60000,
+                clientCache: false,
+            })
+
+            const statusPath = toClientApiPath(queued?.status_url)
+            const initialDownloadPath = toClientApiPath(queued?.download_url)
+            if (!statusPath) {
+                throw new Error("Resposta sem status_url.")
+            }
+
+            let finalState: ExportJobPayload | null = null
+            for (let attempt = 0; attempt < 120; attempt += 1) {
+                const state = await apiFetch<ExportJobPayload>(statusPath, {
+                    timeoutMs: 30000,
+                    clientCache: false,
+                })
+                const status = String(state?.status || "").toLowerCase()
+                if (status === "ready") {
+                    finalState = state
+                    break
+                }
+                if (status === "failed") {
+                    throw new Error(state?.error || "Falha ao gerar relatório.")
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1500))
+            }
+
+            if (!finalState) {
+                throw new Error("Tempo de processamento excedido.")
+            }
+
+            const downloadPath = toClientApiPath(finalState?.download_url || initialDownloadPath)
+            if (!downloadPath) {
+                throw new Error("Resposta sem download_url.")
+            }
+            const blob = await apiFetch<Blob>(downloadPath, {
                 responseType: "blob",
                 timeoutMs: 120000,
                 clientCache: false,
             })
 
             const pageSlug = (pathname || "pagina").replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "pagina"
-            downloadBlob(blob, `relatorio_atividades_${period}_${pageSlug}.pdf`)
+            const filename = (finalState?.filename || `relatorio_atividades_${period}_${pageSlug}.pdf`).trim()
+            downloadBlob(blob, filename)
             setOpen(false)
         } catch (e: any) {
             setError(isNotFoundLikeError(e) ? "Endpoint de relatório não encontrado." : (e?.message || "Falha ao gerar relatório."))

@@ -9,9 +9,11 @@ from .activity_reports_pdf_generator import generate_activity_report_pdf
 from .billing_invoice_user_history_pdf_generator import generate_billing_user_history_pdf
 from .class_views import RequestPdfView, ResultPdfView
 from .invoice_pdf_generator import generate_invoice_pdf
+from .model_activity_pdf_generator import generate_model_activity_pdf
 from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
+from .pdf_admin_mixin import PDFAdminMixin, SimplePDFAdminMixin
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -23,6 +25,14 @@ from .pdf_base import (
     generate_qr_code,
     on_page,
 )
+from .pdf_improvements import (
+    A5Margins,
+    DocumentType,
+    build_personalized_header,
+    draw_header_improved,
+    title_style_improved,
+)
+from .pdf_registry import PDF_GENERATORS_REGISTRY, register_pdf_generator
 from .pharmacy_reports_pdf_generator import (
     generate_pharmacy_least_requested_products_pdf,
     generate_pharmacy_movements_pdf,
@@ -44,21 +54,28 @@ from .views import (
 )
 
 __all__ = [
+    "A5Margins",
+    "DocumentType",
     "NumberedCanvas",
+    "PDFAdminMixin",
     "RequestPdfView",
     "ResultPdfView",
+    "SimplePDFAdminMixin",
     "_safe_image_reader",
     "apenas_numeros",
     "append_fim",
     "bold",
+    "build_personalized_header",
     "capitalize_name",
     "cell_paragraph",
     "digits_only",
     "draw_header",
+    "draw_header_improved",
     "draw_signatures",
     "generate_activity_report_pdf",
     "generate_billing_user_history_pdf",
     "generate_invoice_pdf",
+    "generate_model_activity_pdf",
     "generate_patient_history_pdf",
     "generate_patient_invoice_history_pdf",
     "generate_patient_payment_history_pdf",
@@ -75,13 +92,16 @@ __all__ = [
     "invoice_pdf",
     "normalizar_texto",
     "on_page",
+    "register_pdf_generator",
     "request_invoice_pdf",
     "request_pdf",
     "results_pdf",
     "slugify_simples",
+    "title_style_improved",
     "validate_code",
     "validate_minimum_text",
     "validate_percentage",
+    "PDF_GENERATORS_REGISTRY",
 ]
 
 RequisicaoPdf = RequestPdfView
@@ -92,6 +112,7 @@ invoice_request_pdf = request_invoice_pdf
 gerar_pdf_invoice = generate_invoice_pdf
 gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
 gerar_pdf_atividades = generate_activity_report_pdf
+gerar_pdf_modelo_operacional = generate_model_activity_pdf
 gerar_pdf_historia_clinica = generate_patient_history_pdf
 gerar_pdf_historia_faturas = generate_patient_invoice_history_pdf
 gerar_pdf_historia_pagamentos = generate_patient_payment_history_pdf

@@ -10,6 +10,8 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
+from tasks.generate_pdf import SimplePDFAdminMixin
+
 from .forms_admin import ResultItemInlineFormSet
 from .models.lab_exam import LabExam
 from .models.lab_exam_field import LabExamField
@@ -167,7 +169,7 @@ class SampleAdmin(CoreAdmin):
 
 
 @admin.register(Patient)
-class PatientAdmin(admin.ModelAdmin):
+class PatientAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """Administra pacientes com filtros por documento e gênero."""
     list_display = (
         "custom_id",
@@ -176,6 +178,7 @@ class PatientAdmin(admin.ModelAdmin):
         "gender",
         "idade",
         "contact",
+        "get_pdf_button_html",
     )
 
     search_fields = (
@@ -208,6 +211,7 @@ class PatientAdmin(admin.ModelAdmin):
         "deleted_at",
         "deleted_by",
         "deleted_by_id",
+        "get_pdf_button_html",
     )
 
     fieldsets = (
@@ -696,7 +700,7 @@ class RequestMedicalItemInline(admin.TabularInline):
 
 
 @admin.register(LabRequest)
-class LabRequestAdmin(CoreAdmin):
+class LabRequestAdmin(SimplePDFAdminMixin, CoreAdmin):
     """Administra requisições de exames (lab e médico) com inlines."""
     list_display = (
         "custom_id",
@@ -708,6 +712,7 @@ class LabRequestAdmin(CoreAdmin):
         "status",
         "clinical_status",
         "created_at",
+        "get_pdf_button_html",
     )
 
     search_fields = (
@@ -748,6 +753,7 @@ class LabRequestAdmin(CoreAdmin):
         "deleted_by_id",
         "deleted_by",
         "version",
+        "get_pdf_button_html",
     )
 
     # Inlines são escolhidos dinamicamente (por type/sector).
@@ -1040,7 +1046,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
 
 @admin.register(Result)
-class ResultAdmin(CoreAdmin):
+class ResultAdmin(SimplePDFAdminMixin, CoreAdmin):
     """Administra resultados consolidados com itens e arquivos."""
     list_display = (
         "custom_id",
@@ -1049,6 +1055,7 @@ class ResultAdmin(CoreAdmin):
         "finalized",
         "created_at",
         "pdf_link",
+        "get_pdf_button_html",
     )
 
     search_fields = (
@@ -1089,6 +1096,7 @@ class ResultAdmin(CoreAdmin):
         "deleted_by",
         "deleted_by_id",
         "version",
+        "get_pdf_button_html",
     )
 
     inlines = (ResultItemInlineAdmin,)

@@ -1,10 +1,12 @@
-"""Geração de PDF institucional do procedimento de enfermagem realizado."""
+"""Geração de PDF institucional do procedimento de enfermagem com cabeçalhos personalizados."""
 
 from __future__ import annotations
 
 from decimal import Decimal
 import io
+import os
 
+from django.conf import settings
 from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
@@ -13,6 +15,16 @@ from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer,
 
 from apps.pharmacy.models.product import Product
 
+from .pdf_improvements import (
+    A5Margins,
+    DocumentType,
+    bold_text,
+    build_personalized_header,
+    draw_header_improved,
+    section_style_improved,
+    title_style_improved,
+    FONT_IMPROVED_BOLD,
+)
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,
@@ -82,10 +94,11 @@ def _append_table(
     rows: list[list[str]],
     usable_width: float,
     col_widths: list[float] | None = None,
+    sector_color=colors.HexColor("#D32F2F"),
 ):
-    section_style = document_section_style("ProcedureSection")
+    section_style = section_style_improved(color=sector_color, name="ProcedureSection")
     elements.append(Paragraph(title, section_style))
-    elements.append(Spacer(1, 0.10 * cm))
+    elements.append(Spacer(1, A5Margins.ROW_SPACING))
 
     data = [[cell_paragraph(h, is_bold=True) for h in headers]]
     for row in rows:
@@ -98,7 +111,7 @@ def _append_table(
     table.setStyle(
         TableStyle(
             [
-                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTNAME", (0, 0), (-1, 0), FONT_IMPROVED_BOLD),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f1f5f9")),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -110,7 +123,7 @@ def _append_table(
         )
     )
     elements.append(table)
-    elements.append(Spacer(1, 0.18 * cm))
+    elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
 
 def _collect_unique_invoices(procedure):
@@ -125,19 +138,19 @@ def _collect_unique_invoices(procedure):
 
 
 def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
-    """Monta e devolve o PDF do procedimento de enfermagem em bytes."""
+    """Monta e devolve o PDF do procedimento de enfermagem com cabeçalho personalizado."""
     buffer = io.BytesIO()
-    page_width, _ = A5
-    margin = 1 * cm
-    usable_width = page_width - (2 * margin)
+    
+    # Usar margens otimizadas para A5
+    usable_width = A5Margins.usable_width()
 
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A5,
-        leftMargin=margin,
-        rightMargin=margin,
-        topMargin=3.8 * cm,
-        bottomMargin=2.0 * cm,
+        leftMargin=A5Margins.LEFT,
+        rightMargin=A5Margins.RIGHT,
+        topMargin=A5Margins.TOP,
+        bottomMargin=A5Margins.BOTTOM,
         encrypt=pdf_encryption(),
     )
     doc.include_signatures = False
@@ -148,29 +161,39 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
 
     patient = procedure.patient
     user_documento = _resolve_document_user(procedure, request=request)
+    
+    # Obter tenant para personalizar cabeçalho
+    tenant = getattr(patient, "tenant", None)
+    tenant_name = getattr(tenant, "name", "SERVIÇO DE ENFERMAGEM")
+    
+    # Construir cabeçalho personalizado para enfermagem (Vermelho)
+    header_config = build_personalized_header(
+        doc_type=DocumentType.NURSING_PROCEDURE,
+        tenant_name=tenant_name,
+        logo_path=os.path.join(settings.BASE_DIR, "static", "img", "logo.png"),
+    )
 
     story: list = []
-    title_style = document_title_style("ProcedureTitle")
-    story.append(Paragraph("RELATÓRIO DE PROCEDIMENTO DE ENFERMAGEM", title_style))
-    story.append(Spacer(1, 0.22 * cm))
+    story.append(Paragraph("RELATÓRIO DE PROCEDIMENTO DE ENFERMAGEM", title_style_improved()))
+    story.append(Spacer(1, A5Margins.SECTION_SPACING))
 
     professionals = [_person_name(prof) for prof in procedure.professional.all()]
     professionals_text = ", ".join(professionals) if professionals else "Sem profissional associado"
 
     left_lines = [
-        f"{bold('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
-        f"{bold('Paciente')}: {_text(patient.name)}",
-        f"{bold('Data de realização')}: {_dt(procedure.performed_date)}",
-        f"{bold('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
-        f"{bold('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
-        f"{bold('Profissionais')}: {_text(professionals_text)}",
+        f"{bold_text('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
+        f"{bold_text('Paciente')}: {_text(patient.name)}",
+        f"{bold_text('Data de realização')}: {_dt(procedure.performed_date)}",
+        f"{bold_text('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
+        f"{bold_text('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
+        f"{bold_text('Profissionais')}: {_text(professionals_text)}",
     ]
     right_lines = [
-        f"{bold('Executado em')}: {_dt(procedure.executed_at)}",
-        f"{bold('Concluído em')}: {_dt(procedure.completed_at)}",
-        f"{bold('Faturado em')}: {_dt(procedure.billed_at)}",
-        f"{bold('Emitido por')}: {institutional_user_identity(user_documento)}",
-        f"{bold('Gerado em')}: {_dt(timezone.now())}",
+        f"{bold_text('Executado em')}: {_dt(procedure.executed_at)}",
+        f"{bold_text('Concluído em')}: {_dt(procedure.completed_at)}",
+        f"{bold_text('Faturado em')}: {_dt(procedure.billed_at)}",
+        f"{bold_text('Emitido por')}: {institutional_user_identity(user_documento)}",
+        f"{bold_text('Gerado em')}: {_dt(timezone.now())}",
     ]
     story.append(
         montar_bloco_identificacao(
@@ -179,14 +202,22 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
             right_lines=right_lines,
         )
     )
-    story.append(Spacer(1, 0.18 * cm))
+    story.append(Spacer(1, A5Margins.SECTION_SPACING))
 
     if (procedure.notes or "").strip():
-        story.append(Paragraph(f"{bold('Observações')}: {_text(procedure.notes)}", document_section_style("ProcedureNotes")))
-        story.append(Spacer(1, 0.16 * cm))
+        story.append(Paragraph(
+            f"{bold_text('Observações')}: {_text(procedure.notes)}",
+            section_style_improved(color=header_config["sector_color"], name="ProcedureNotes")
+        ))
+        story.append(Spacer(1, A5Margins.ROW_SPACING))
 
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.darkblue))
-    story.append(Spacer(1, 0.16 * cm))
+    # Linha divisória com cor do setor (vermelho para enfermagem)
+    story.append(HRFlowable(
+        width="100%",
+        thickness=0.5,
+        color=header_config["sector_color"]
+    ))
+    story.append(Spacer(1, A5Margins.ROW_SPACING))
 
     items = list(
         procedure.itens.filter(deleted=False).select_related("catalog", "value").order_by("created_at", "id")
@@ -212,6 +243,7 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
         item_rows,
         usable_width,
         col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.08, usable_width * 0.14, usable_width * 0.16, usable_width * 0.16],
+        sector_color=header_config["sector_color"],
     )
 
     materials = list(
@@ -243,6 +275,7 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
         medication_rows,
         usable_width,
         col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.12, usable_width * 0.08, usable_width * 0.17, usable_width * 0.17],
+        sector_color=header_config["sector_color"],
     )
 
     _append_table(

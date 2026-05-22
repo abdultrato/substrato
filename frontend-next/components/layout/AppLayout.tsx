@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode, useEffect, useMemo, useState } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import Sidebar from "./Sidebar"
@@ -44,7 +44,6 @@ export default function AppLayout ( {
     const { user } = useAuth()
     const { t } = useLanguage()
     const pathname = usePathname() || "/"
-    const searchParams = useSearchParams()
     const router = useRouter()
     const activeScope = useWorkspaceScope()
     const [navOpen, setNavOpen] = useState( false )
@@ -56,10 +55,10 @@ export default function AppLayout ( {
         isOperationalScope(activeScope) &&
         (pathname === "/" || !isPathAllowedForScope(pathname, activeScope))
     const scopeHome = workspaceHomeForScope(activeScope)
-    const currentPath = useMemo(() => {
-        const query = searchParams?.toString()
-        return normalizeNavigationPath(query ? `${pathname}?${query}` : pathname)
-    }, [pathname, searchParams])
+    const currentPath = useMemo(
+        () => normalizeNavigationPath(pathname),
+        [pathname],
+    )
 
     const isUnauthorized =
         !!user &&

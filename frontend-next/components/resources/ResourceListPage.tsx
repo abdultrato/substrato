@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Search, RotateCcw } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import ResourceModelReportPanel from "@/components/resources/ResourceModelReportPanel"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
@@ -104,6 +105,8 @@ export default function ResourceListPage({
   createHref,
   rowHref,
   requiredGroups,
+  groupLabel,
+  resourceLabel,
 }: {
   title: string
   subtitle?: string
@@ -112,6 +115,8 @@ export default function ResourceListPage({
   createHref?: string
   rowHref?: RowHref
   requiredGroups?: string[]
+  groupLabel?: string
+  resourceLabel?: string
 }) {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
@@ -134,6 +139,18 @@ export default function ResourceListPage({
   const [loadingData, setLoadingData] = useState(true)
   const [bloodStorages, setBloodStorages] = useState<Record<number, string>>({})
   const debouncedSearch = useDebounce(search, 300)
+  const resolvedGroupLabel = useMemo(() => {
+    if (groupLabel && groupLabel.trim()) return groupLabel.trim()
+    const [fromTitle] = String(title || "").split("/")
+    const fallback = (fromTitle || "").trim()
+    return fallback || "Módulo"
+  }, [groupLabel, title])
+  const resolvedResourceLabel = useMemo(() => {
+    if (resourceLabel && resourceLabel.trim()) return resourceLabel.trim()
+    const titleParts = String(title || "").split("/")
+    const fallback = (titleParts[1] || titleParts[0] || "").trim()
+    return fallback || "Recurso"
+  }, [resourceLabel, title])
 
   const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
   const normalizedEndpoint = normalizeEndpointPath(endpoint)
@@ -312,6 +329,14 @@ export default function ResourceListPage({
             {error}
           </div>
         )}
+
+        <ResourceModelReportPanel
+          endpoint={normalizedEndpoint}
+          groupLabel={resolvedGroupLabel}
+          resourceLabel={resolvedResourceLabel}
+          searchTerm={debouncedSearch}
+          statusFilter={statusFilter}
+        />
 
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

@@ -1,26 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import useAuthGuard from "@/hooks/useAuthGuard";
-import AppLayout from "@/components/layout/AppLayout";
-import AutoForm from "@/components/form/AutoForm";
+import { Suspense } from "react";
+import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
 
 export default function CreateLabExamPage() {
-  useAuthGuard();
-  const router = useRouter();
-
   return (
-    <AppLayout>
-      <div className="max-w-2xl space-y-4">
-        <h1 className="text-2xl font-bold">Novo LabExam</h1>
-        
-        <AutoForm
-          endpoint="/clinical/lab-exams/"
-          method="post"
-          submitLabel="Criar LabExam"
-          onSuccess={(data) => router.push(`../${data.id}`)}
-        />
-      </div>
-    </AppLayout>
+    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
+      <GeneratedResourceCreatePage endpoint="/clinical/lab-exams/" />
+    </Suspense>
   );
 }

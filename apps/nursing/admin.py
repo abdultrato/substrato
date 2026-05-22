@@ -14,6 +14,8 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
+from tasks.generate_pdf import SimplePDFAdminMixin
+
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
 
@@ -380,7 +382,7 @@ class NursingRecordAdmin(admin.ModelAdmin):
 
 
 @admin.register(Procedure)
-class ProcedimentoAdmin(admin.ModelAdmin):
+class ProcedimentoAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """Admin de procedimentos de enfermagem com itens e materiais inlines."""
     list_display = (
         "custom_id",
@@ -392,6 +394,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "total",
         "pdf_link",
         "created_at",
+        "get_pdf_button_html",
     )
     search_fields = (
         "custom_id",
@@ -418,6 +421,7 @@ class ProcedimentoAdmin(admin.ModelAdmin):
         "created_by",
         "updated_by",
         "version",
+        "get_pdf_button_html",
     )
     filter_horizontal = ("professional", "selected_catalogs", "selected_materials")
     # inlines defined in get_inlines

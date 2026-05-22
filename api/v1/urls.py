@@ -1,7 +1,7 @@
 from django.urls import include, path, re_path
 from rest_framework.routers import DefaultRouter
 
-from api.v1.audit.views import ActivityReportPdfView
+from api.v1.audit.views import ActivityReportPdfView, ModelActivityReportPdfView
 from api.v1.dashboard.views import DashboardStatsView
 from api.v1.equipment_integrations.views import (
     EquipmentResultsInboxView,
@@ -23,6 +23,11 @@ urlpatterns = [
         r"^audit/atividade/relatorio/pdf/?$",
         ActivityReportPdfView.as_view(),
         name="audit-activity-report-pdf",
+    ),
+    re_path(
+        r"^audit/modelo/relatorio/pdf/?$",
+        ModelActivityReportPdfView.as_view(),
+        name="audit-model-activity-report-pdf",
     ),
     # Integrações de equipamentos (worklist + inbox HTTP).
     re_path(
