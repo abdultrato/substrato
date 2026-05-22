@@ -8,11 +8,13 @@ import { useEffect, useState, useCallback } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
+import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { canonicalModuleGroupKey, findModuleResource } from "@/lib/modules"
+import { canManageUserByHierarchy } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -26,6 +28,7 @@ export default function RecursoDetalhePage() {
     const resourceKey = routeParamToString((params as any)?.resource)
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
+    const { user } = useAuth()
     const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog()
@@ -81,6 +84,15 @@ export default function RecursoDetalhePage() {
         canonicalGroupKey === "bloodbank" &&
         resourceKey.toLocaleLowerCase() === "unidade"
     const isBloodbank = canonicalGroupKey === "bloodbank"
+    const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
+    const isIdentityUserResource =
+        normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
+    const canManageCurrentRecord =
+        !isIdentityUserResource ||
+        canManageUserByHierarchy(user, {
+            id: Number(data?.id || 0) || undefined,
+            groups: Array.isArray(data?.group_names) ? data.group_names : [],
+        })
 
     const criarFatura = useCallback(async () => {
         alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
@@ -238,19 +250,23 @@ export default function RecursoDetalhePage() {
                                     </button>
                                 )
                             ) : null}
-                            <Link
-                                href={`${basePath}/${id}/edit`}
-                                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-                            >
-                                {t("Editar", "Edit")}
-                            </Link>
-                            <button
-                                onClick={handleDelete}
-                                disabled={deleting}
-                                className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
-                            >
-                                {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
-                            </button>
+                            {canManageCurrentRecord ? (
+                                <>
+                                    <Link
+                                        href={`${basePath}/${id}/edit`}
+                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                                    >
+                                        {t("Editar", "Edit")}
+                                    </Link>
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                        className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                                    >
+                                        {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
+                                    </button>
+                                </>
+                            ) : null}
                             <Link
                                 href={basePath}
                                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"

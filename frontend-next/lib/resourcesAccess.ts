@@ -26,6 +26,14 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
     case "entities":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA_OCUPACIONAL]
+    case "identity":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECURSOS_HUMANOS,
+        GROUPS.DIRETOR_ESCOLA,
+        GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+        GROUPS.PROFESSOR,
+      ]
     default:
       return [GROUPS.ADMIN]
   }

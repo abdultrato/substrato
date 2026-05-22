@@ -213,6 +213,70 @@ function normalizeGroupName(value: string): string {
     .replace(/[\u0300-\u036f]/g, "")
 }
 
+const ADMIN_TOKEN = normalizeGroupName(GROUPS.ADMIN)
+const DIRECTOR_TOKENS = new Set(
+  [GROUPS.DIRETOR_ESCOLA, ...(GROUP_SYNONYMS[GROUPS.DIRETOR_ESCOLA] || [])].map(normalizeGroupName)
+)
+const DEPUTY_TOKENS = new Set(
+  [GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO, ...(GROUP_SYNONYMS[GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO] || [])].map(
+    normalizeGroupName
+  )
+)
+const TEACHER_TOKENS = new Set([GROUPS.PROFESSOR, ...(GROUP_SYNONYMS[GROUPS.PROFESSOR] || [])].map(normalizeGroupName))
+const STUDENT_TOKENS = new Set([GROUPS.STUDENT, ...(GROUP_SYNONYMS[GROUPS.ESTUDANTE] || [])].map(normalizeGroupName))
+
+function normalizedGroupSet(values: string[] | undefined | null): Set<string> {
+  return new Set((values || []).map(normalizeGroupName).filter(Boolean))
+}
+
+function setHasAny(source: Set<string>, expected: Set<string>): boolean {
+  for (const item of expected) {
+    if (source.has(item)) return true
+  }
+  return false
+}
+
+function userIsAdmin(user: SessionUser | null): boolean {
+  if (!user) return false
+  if (user.is_superuser || user.is_staff) return true
+  return normalizedGroupSet(userGroups(user)).has(ADMIN_TOKEN)
+}
+
+export function canManageUserByHierarchy(
+  actor: SessionUser | null,
+  target: { id?: number | null; groups?: string[] | null }
+): boolean {
+  if (!actor) return false
+  const actorGroups = normalizedGroupSet(userGroups(actor))
+  const targetGroups = normalizedGroupSet(target.groups || [])
+
+  if (target.id && actor.id === target.id) return true
+  if (userIsAdmin(actor)) return true
+  if (targetGroups.has(ADMIN_TOKEN)) return false
+
+  if (setHasAny(actorGroups, DIRECTOR_TOKENS)) return true
+  if (setHasAny(actorGroups, DEPUTY_TOKENS)) return !setHasAny(targetGroups, DIRECTOR_TOKENS)
+  if (setHasAny(actorGroups, TEACHER_TOKENS)) return setHasAny(targetGroups, STUDENT_TOKENS)
+  return false
+}
+
+export function canCreateUserWithGroupsByHierarchy(
+  actor: SessionUser | null,
+  targetGroups: string[]
+): boolean {
+  if (!actor) return false
+  const actorGroups = normalizedGroupSet(userGroups(actor))
+  const targetGroupSet = normalizedGroupSet(targetGroups)
+
+  if (userIsAdmin(actor)) return true
+  if (targetGroupSet.has(ADMIN_TOKEN)) return false
+
+  if (setHasAny(actorGroups, DIRECTOR_TOKENS)) return true
+  if (setHasAny(actorGroups, DEPUTY_TOKENS)) return !setHasAny(targetGroupSet, DIRECTOR_TOKENS)
+  if (setHasAny(actorGroups, TEACHER_TOKENS)) return targetGroupSet.size > 0 && [...targetGroupSet].every((g) => STUDENT_TOKENS.has(g))
+  return false
+}
+
 export function userGroups(user: SessionUser | null): string[] {
   const base = user?.groups ?? []
   if (user?.is_superuser) {

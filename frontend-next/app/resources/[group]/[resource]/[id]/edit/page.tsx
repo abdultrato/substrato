@@ -8,10 +8,12 @@ import { useEffect, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
+import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
+import { canManageUserByHierarchy } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
@@ -22,6 +24,7 @@ export default function EditarRecursoPage() {
     const resourceKey = routeParamToString((params as any)?.resource)
     const id = routeParamToString((params as any)?.id)
     const { loading } = useAuthGuard()
+    const { user } = useAuth()
     const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog()
@@ -30,6 +33,15 @@ export default function EditarRecursoPage() {
     const [initial, setInitial] = useState<Record<string, any> | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [loadingData, setLoadingData] = useState(true)
+    const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
+    const isIdentityUserResource =
+        normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
+    const canEditRecord =
+        !isIdentityUserResource ||
+        canManageUserByHierarchy(user, {
+            id: Number(initial?.id || 0) || undefined,
+            groups: Array.isArray(initial?.group_names) ? initial.group_names : [],
+        })
 
     useEffect(() => {
         let mounted = true
@@ -100,6 +112,10 @@ export default function EditarRecursoPage() {
 
                 {loadingData ? (
                     <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
+                ) : !canEditRecord ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        {t("Sem autoridade hierárquica para editar este utilizador.", "No hierarchy authority to edit this user.")}
+                    </div>
                 ) : (
                     <AutoForm
                         endpoint={`${found.resource.endpoint.replace(/\/$/, "")}/${id}/`}

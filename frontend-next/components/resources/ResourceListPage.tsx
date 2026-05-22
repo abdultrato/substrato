@@ -14,7 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Row = Record<string, any>
 
@@ -74,6 +74,13 @@ function fmtTemp(minC: any, maxC: any): string {
   return `${min || max} °C`
 }
 
+function normalizeEndpointPath(value: string): string {
+  const clean = String(value || "").split("?")[0].split("#")[0].trim()
+  if (!clean) return "/"
+  const prefixed = clean.startsWith("/") ? clean : `/${clean}`
+  return prefixed.endsWith("/") ? prefixed : `${prefixed}/`
+}
+
 const BLOODBANK_MAINTENANCE_TYPE: Record<string, string> = {
   PRV: "Preventiva",
   COR: "Corretiva",
@@ -110,6 +117,12 @@ export default function ResourceListPage({
   const { user } = useAuth()
   const { t, tr } = useLanguage()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canCreateIdentityUsers = userHasAnyGroup(user, [
+    GROUPS.ADMIN,
+    GROUPS.DIRETOR_ESCOLA,
+    GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+    GROUPS.PROFESSOR,
+  ])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -123,6 +136,9 @@ export default function ResourceListPage({
   const debouncedSearch = useDebounce(search, 300)
 
   const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
+  const normalizedEndpoint = normalizeEndpointPath(endpoint)
+  const isIdentityUserResource =
+    normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
   const needsBloodStorageLookup =
     bloodbankResource === "manutencaoarmazenamento" || bloodbankResource === "unidade" || bloodbankResource === "movimentoestoque"
 
@@ -210,13 +226,27 @@ export default function ResourceListPage({
     return data.filter((row) => String(row?.estado || row?.status || row?.status_comercial || "") === statusFilter)
   }, [data, statusFilter])
 
+  const visibleData = useMemo(() => {
+    if (!isIdentityUserResource) return filteredData
+    return filteredData.filter((row) =>
+      canManageUserByHierarchy(user, {
+        id: Number(row?.id || 0) || undefined,
+        groups: Array.isArray(row?.group_names) ? row.group_names : [],
+      })
+    )
+  }, [filteredData, isIdentityUserResource, user])
+
   const columns = useMemo(
     () => [
       {
         header: t("Código", "Code"),
         render: (row: Row) => {
           const label = pickCode(row)
-          if (!rowHref) return label
+          const canOpenDetails = !isIdentityUserResource || canManageUserByHierarchy(user, {
+            id: Number(row?.id || 0) || undefined,
+            groups: Array.isArray(row?.group_names) ? row.group_names : [],
+          })
+          if (!rowHref || !canOpenDetails) return label
           return (
             <Link
               href={rowHref(row)}
@@ -241,7 +271,7 @@ export default function ResourceListPage({
         render: (row: Row) => fmtDate(row.criado_em || row.created_at),
       },
     ],
-    [rowHref, t, tr]
+    [isIdentityUserResource, rowHref, t, tr, user]
   )
 
   if (loading) return null
@@ -255,12 +285,14 @@ export default function ResourceListPage({
           actions={
             <>
               {createHref ? (
-                <Link
-                  href={createHref}
-                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)]"
-                >
-                  {t("Novo", "New")}
-                </Link>
+                !isIdentityUserResource || canCreateIdentityUsers ? (
+                  <Link
+                    href={createHref}
+                    className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)]"
+                  >
+                    {t("Novo", "New")}
+                  </Link>
+                ) : null
               ) : null}
 
               {adminListHref && podeVerAdmin ? (
@@ -335,7 +367,7 @@ export default function ResourceListPage({
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--gray-600)]">
             <span>
-              {t("Total:", "Total:")} {totalItems} · {t("Na página:", "On page:")} {filteredData.length}
+              {t("Total:", "Total:")} {totalItems} · {t("Na página:", "On page:")} {visibleData.length}
             </span>
             <button
               type="button"
@@ -359,7 +391,7 @@ export default function ResourceListPage({
           <>
             <DataTable<Row>
               columns={columns as any}
-              data={filteredData}
+              data={visibleData}
               emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
               searchable={false}
             />

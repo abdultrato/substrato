@@ -4,6 +4,7 @@ from api.v1.compat import LegacyAliasSerializerMixin
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
+from security.permissions.user_hierarchy import can_assign_groups, is_admin_user, normalized_group_names
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -130,16 +131,51 @@ class UserSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_output_aliases = USER_ALIASES
 
     password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)  # Não retorna senha
+    group_names = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
-    def create(self, validated_date):
+    def get_group_names(self, obj):
+        try:
+            return list(obj.groups.values_list("name", flat=True))
+        except Exception:
+            return []
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        actor = getattr(request, "user", None)
+        actor_is_admin = is_admin_user(actor)
+
+        groups_value = attrs.get("groups")
+        target_groups = set()
+        if groups_value is not None:
+            target_groups = normalized_group_names(getattr(group, "name", "") for group in groups_value)
+        elif self.instance is not None:
+            target_groups = normalized_group_names(self.instance.groups.values_list("name", flat=True))
+
+        if not can_assign_groups(actor, target_groups):
+            raise serializers.ValidationError(
+                {"groups": "Não autorizado a atribuir grupos fora da sua hierarquia de autoridade."}
+            )
+
+        if not actor_is_admin:
+            if attrs.get("is_superuser") is True:
+                raise serializers.ValidationError({"is_superuser": "Apenas administradores podem definir superutilizador."})
+            if attrs.get("is_staff") is True:
+                raise serializers.ValidationError({"is_staff": "Apenas administradores podem definir perfil staff."})
+
+        return attrs
+
+    def create(self, validated_data):
         # Criação: define senha ou bloqueia login se ausente.
-        password = validated_date.pop("password", None)
-        user = super().create(validated_date)
+        password = validated_data.pop("password", None)
+        if not is_admin_user(getattr(self.context.get("request"), "user", None)):
+            validated_data["is_superuser"] = False
+            validated_data["is_staff"] = False
+        user = super().create(validated_data)
         if password:
             user.set_password(password)
         else:
@@ -147,10 +183,15 @@ class UserSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
         user.save(update_fields=["password"])
         return user
 
-    def update(self, instance, validated_date):
+    def update(self, instance, validated_data):
         # Atualização: só mexe na senha se fornecida.
-        password = validated_date.pop("password", None)
-        user = super().update(instance, validated_date)
+        password = validated_data.pop("password", None)
+        if not is_admin_user(getattr(self.context.get("request"), "user", None)):
+            if "is_superuser" in validated_data:
+                validated_data["is_superuser"] = instance.is_superuser
+            if "is_staff" in validated_data:
+                validated_data["is_staff"] = instance.is_staff
+        user = super().update(instance, validated_data)
         if password:
             user.set_password(password)
             user.save(update_fields=["password"])

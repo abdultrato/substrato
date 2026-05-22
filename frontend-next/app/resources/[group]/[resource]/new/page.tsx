@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
+import { canCreateUserWithGroupsByHierarchy, GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
@@ -26,6 +27,10 @@ export default function NovoRecursoPage() {
     const { modules } = useModulesCatalog()
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
+    const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
+    const isIdentityUserResource =
+        normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
+    const canCreateIdentityUser = canCreateUserWithGroupsByHierarchy(user, [GROUPS.STUDENT])
 
     if (loading) return null
 
@@ -65,6 +70,14 @@ export default function NovoRecursoPage() {
                 />
 
                 {(() => {
+                    if (isIdentityUserResource && !canCreateIdentityUser) {
+                        return (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                {t("Sem autoridade hierárquica para criar utilizadores.", "No hierarchy authority to create users.")}
+                            </div>
+                        )
+                    }
+
                     const cfg = getResourceFormConfig(groupKey, resourceKey, found.resource.endpoint)
                     const tenantId = getTenantIdFromUser(user)
 

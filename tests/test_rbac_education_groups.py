@@ -14,6 +14,8 @@ def test_education_management_groups_share_management_permissions():
 
 def test_education_read_groups_share_read_permissions():
     student_policy = _policy_for("ESTUDANTE")
+    student_en_policy = _policy_for("STUDENT_EN")
+    guardian_policy = _policy_for("ENCARREGADO_EDUCACAO")
 
-    for role_key in ("ENCARREGADO_EDUCACAO", "STUDENT_EN"):
-        assert _policy_for(role_key) == student_policy
+    assert student_en_policy == student_policy
+    assert guardian_policy != student_policy

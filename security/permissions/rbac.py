@@ -237,6 +237,10 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "identity-user": SAFE_METHODS,
         "identity-perfilprofissional": SAFE_METHODS,
     }
+    identity_user_hierarchy_manage = {
+        "identidade-user": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+        "identity-user": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
+    }
     human_resources_crud = {
         "recursos_humanos-role": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "recursos_humanos-profissao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
@@ -509,10 +513,22 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
         },
-        g["PROFESSOR"]: education_manage,
-        g["DIRETOR_ESCOLA"]: education_manage,
-        g["DIRETOR_ADJUNTO_PEDAGOGICO"]: education_manage,
-        g["TEACHER"]: education_manage,
+        g["PROFESSOR"]: {
+            **education_manage,
+            **identity_user_hierarchy_manage,
+        },
+        g["DIRETOR_ESCOLA"]: {
+            **education_manage,
+            **identity_user_hierarchy_manage,
+        },
+        g["DIRETOR_ADJUNTO_PEDAGOGICO"]: {
+            **education_manage,
+            **identity_user_hierarchy_manage,
+        },
+        g["TEACHER"]: {
+            **education_manage,
+            **identity_user_hierarchy_manage,
+        },
         g["ESTUDANTE"]: education_student_activity,
         g["ENCARREGADO_EDUCACAO"]: education_read,
         g["STUDENT_EN"]: education_student_activity,

@@ -1,4 +1,5 @@
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated  # Protege endpoints
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
@@ -7,6 +8,10 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
+from security.permissions.user_hierarchy import (
+    can_manage_target_user,
+    manageable_users_queryset,
+)
 
 from ..filters import PasswordResetTokenFilter, ProfessionalProfileFilter, UserFilter
 from ..serializers import PasswordResetTokenSerializer, ProfessionalProfileSerializer, UserSerializer
@@ -61,7 +66,22 @@ class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
         "created_at",
     ]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        actor = getattr(self.request, "user", None)
+        return manageable_users_queryset(actor, qs)
+
+    def _get_target_user_or_raise(self) -> User:
+        target = self.get_object()
+        actor = getattr(self.request, "user", None)
+        if not can_manage_target_user(actor, target):
+            raise PermissionDenied("Não autorizado a gerir este utilizador.")
+        return target
+
     def _set_user_active(self, user: User, active: bool):
+        actor = getattr(self.request, "user", None)
+        if not can_manage_target_user(actor, user):
+            raise PermissionDenied("Não autorizado a gerir este utilizador.")
         if user.is_active != active:
             user.is_active = active
             user.save(update_fields=["is_active"])
@@ -71,17 +91,24 @@ class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
         """
         Não remove usuário: converte DELETE em desativação de conta.
         """
-        user = self.get_object()
+        user = self._get_target_user_or_raise()
         return self._set_user_active(user, False)
+
+    def perform_update(self, serializer):
+        target = serializer.instance
+        actor = getattr(self.request, "user", None)
+        if not can_manage_target_user(actor, target):
+            raise PermissionDenied("Não autorizado a gerir este utilizador.")
+        super().perform_update(serializer)
 
     @action(detail=True, methods=["post"], url_path="desativar", url_name="desativar")
     def deactivate(self, request, pk=None):
-        user = self.get_object()
+        user = self._get_target_user_or_raise()
         return self._set_user_active(user, False)
 
     @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
     def activate(self, request, pk=None):
-        user = self.get_object()
+        user = self._get_target_user_or_raise()
         return self._set_user_active(user, True)
 
     @action(detail=True, methods=["post"], url_path="deactivate", url_name="deactivate")
