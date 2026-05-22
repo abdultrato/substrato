@@ -96,7 +96,7 @@ class StudentProfileViewSet(TenantScopedEducationViewSet):
     queryset = StudentProfile.objects.select_related("user").all()
     serializer_class = StudentProfileSerializer
     filterset_class = StudentProfileFilter
-    search_fields = ["custom_id", "student_code", "user__username", "user__name"]
+    search_fields = ["custom_id", "student_code", "guardian_name", "notes", "user__username", "user__name"]
     ordering_fields = ["student_code", "status", "created_at"]
     ordering = ["student_code", "created_at"]
 

@@ -109,6 +109,14 @@ function localInputToIso(value: string) {
   return date.toISOString()
 }
 
+function normalizeText(value?: string | number | null) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
 export default function EducationTeacherAreaPage() {
   const { user } = useAuth()
 
@@ -134,6 +142,7 @@ export default function EducationTeacherAreaPage() {
   const [questionCountInput, setQuestionCountInput] = useState("15")
   const [titleTemplate, setTitleTemplate] = useState("Teste Aleatório - {student_code}")
   const [scheduleNotes, setScheduleNotes] = useState("")
+  const [studentSearch, setStudentSearch] = useState("")
   const [schedulingClassroom, setSchedulingClassroom] = useState(false)
   const [schedulingStudent, setSchedulingStudent] = useState(false)
   const [randomTestMessage, setRandomTestMessage] = useState<string | null>(null)
@@ -420,6 +429,27 @@ export default function EducationTeacherAreaPage() {
     }))
   }, [randomTests])
 
+  const filteredEnrollments = useMemo(() => {
+    const query = normalizeText(studentSearch)
+    if (!query) return enrollments
+    return enrollments.filter((enrollment) => {
+      const student = enrollment.student ? studentsById.get(enrollment.student) : null
+      const haystack = normalizeText(
+        [
+          student?.student_code,
+          student?.guardian_name,
+          student?.status,
+          enrollment.status,
+          enrollment.id,
+          enrollment.student,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      )
+      return haystack.includes(query)
+    })
+  }, [enrollments, studentSearch, studentsById])
+
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
       <div className="space-y-4">
@@ -473,8 +503,15 @@ export default function EducationTeacherAreaPage() {
 
           <Card title="Estudantes da turma">
             <div className="space-y-1">
-              {enrollments.length ? (
-                enrollments.map((enrollment) => {
+              <input
+                type="text"
+                value={studentSearch}
+                onChange={(event) => setStudentSearch(event.target.value)}
+                placeholder="Buscar estudante/aluno/encarregado..."
+                className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+              />
+              {filteredEnrollments.length ? (
+                filteredEnrollments.map((enrollment) => {
                   const student = enrollment.student ? studentsById.get(enrollment.student) : null
                   const active = enrollment.student === selectedStudentId
                   return (
@@ -489,13 +526,15 @@ export default function EducationTeacherAreaPage() {
                       }`}
                     >
                       <div className="font-semibold">{student?.student_code || `Estudante #${enrollment.student ?? "—"}`}</div>
-                      <div className="text-[0.9em] text-[var(--gray-500)]">Matrícula: {enrollment.status || "—"}</div>
+                      <div className="text-[0.9em] text-[var(--gray-500)]">
+                        Matrícula: {enrollment.status || "—"} • Encarregado: {student?.guardian_name || "—"}
+                      </div>
                     </button>
                   )
                 })
               ) : (
                 <div className="text-xs text-[var(--gray-500)]">
-                  {loadingDetail || loading ? "Carregando..." : "Sem estudantes para esta turma."}
+                  {loadingDetail || loading ? "Carregando..." : "Sem estudantes para o filtro atual."}
                 </div>
               )}
             </div>
@@ -505,6 +544,7 @@ export default function EducationTeacherAreaPage() {
             <div className="space-y-1 text-xs text-[var(--gray-700)]">
               <div><strong>Turmas:</strong> {loading ? "..." : classrooms.length}</div>
               <div><strong>Estudantes na turma:</strong> {loading || loadingDetail ? "..." : enrollments.length}</div>
+              <div><strong>Estudantes no filtro:</strong> {loading || loadingDetail ? "..." : filteredEnrollments.length}</div>
               <div><strong>Notas visíveis:</strong> {loading || loadingDetail ? "..." : grades.length}</div>
               <div className="text-[0.9em] text-[var(--gray-500)]">
                 {canViewAllGrades

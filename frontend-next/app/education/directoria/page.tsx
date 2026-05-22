@@ -53,6 +53,26 @@ type Assignment = {
   work_category?: string
 }
 
+type Examination = {
+  id: number
+  title?: string
+  classroom?: number | null
+  course?: number
+  status?: string
+  opens_at?: string | null
+  closes_at?: string | null
+}
+
+type RandomTest = {
+  id: number
+  title?: string
+  classroom?: number
+  student?: number
+  status?: string
+  opens_at?: string | null
+  closes_at?: string | null
+}
+
 type Submission = {
   id: number
   assignment?: number
@@ -96,6 +116,8 @@ export default function EducationDirectoriaPage() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [examinations, setExaminations] = useState<Examination[]>([])
+  const [randomTests, setRandomTests] = useState<RandomTest[]>([])
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
 
@@ -114,6 +136,8 @@ export default function EducationDirectoriaPage() {
           classroomsRes,
           enrollmentsRes,
           assignmentsRes,
+          examinationsRes,
+          randomTestsRes,
           submissionsRes,
           gradesRes,
         ] = await Promise.all([
@@ -123,6 +147,8 @@ export default function EducationDirectoriaPage() {
           apiFetch<any>("/education/classroom/"),
           apiFetch<any>("/education/enrollment/"),
           apiFetch<any>("/education/assignment/"),
+          apiFetch<any>("/education/examination/"),
+          apiFetch<any>("/education/random_test/"),
           apiFetch<any>("/education/submission/"),
           apiFetch<any>("/education/grade/"),
         ])
@@ -134,6 +160,8 @@ export default function EducationDirectoriaPage() {
         setClassrooms(toList<Classroom>(classroomsRes))
         setEnrollments(toList<Enrollment>(enrollmentsRes))
         setAssignments(toList<Assignment>(assignmentsRes))
+        setExaminations(toList<Examination>(examinationsRes))
+        setRandomTests(toList<RandomTest>(randomTestsRes))
         setSubmissions(toList<Submission>(submissionsRes))
         setGrades(toList<Grade>(gradesRes))
       } catch (e: any) {
@@ -157,6 +185,7 @@ export default function EducationDirectoriaPage() {
   const coursesById = useMemo(() => new Map(courses.map((item) => [item.id, item])), [courses])
   const classroomsById = useMemo(() => new Map(classrooms.map((item) => [item.id, item])), [classrooms])
   const assignmentsById = useMemo(() => new Map(assignments.map((item) => [item.id, item])), [assignments])
+  const studentsById = useMemo(() => new Map(students.map((item) => [item.id, item])), [students])
 
   const teacherRows = useMemo(() => {
     return teachers.map((teacher) => ({
@@ -205,6 +234,41 @@ export default function EducationDirectoriaPage() {
     })
   }, [assignmentsById, classroomsById, coursesById, enrollments, grades, students, submissions])
 
+  const assignmentRows = useMemo(() => {
+    return assignments.map((assignment) => ({
+      title: assignment.title || `Trabalho #${assignment.id}`,
+      category: workCategoryLabel(assignment.work_category),
+    }))
+  }, [assignments])
+
+  const examinationRows = useMemo(() => {
+    return examinations.map((exam) => {
+      const classroom = exam.classroom ? classroomsById.get(exam.classroom) : undefined
+      const course = exam.course ? coursesById.get(exam.course) : undefined
+      return {
+        title: exam.title || `Prova #${exam.id}`,
+        status: exam.status || "—",
+        course: course?.name || course?.code || "—",
+        classroom: classroom?.name || "—",
+        window: `${exam.opens_at ? new Date(exam.opens_at).toLocaleString() : "—"} → ${exam.closes_at ? new Date(exam.closes_at).toLocaleString() : "—"}`,
+      }
+    })
+  }, [classroomsById, coursesById, examinations])
+
+  const randomTestRows = useMemo(() => {
+    return randomTests.map((test) => {
+      const classroom = test.classroom ? classroomsById.get(test.classroom) : undefined
+      const student = test.student ? studentsById.get(test.student) : undefined
+      return {
+        title: test.title || `Teste #${test.id}`,
+        status: test.status || "—",
+        student: student?.student_code || "—",
+        classroom: classroom?.name || "—",
+        window: `${test.opens_at ? new Date(test.opens_at).toLocaleString() : "—"} → ${test.closes_at ? new Date(test.closes_at).toLocaleString() : "—"}`,
+      }
+    })
+  }, [classroomsById, randomTests, studentsById])
+
   const activeTeachers = useMemo(
     () => teachers.filter((item) => normalizeStatus(item.status) === "ACTIVE").length,
     [teachers]
@@ -224,6 +288,9 @@ export default function EducationDirectoriaPage() {
     () => assignments.filter((item) => String(item.work_category || "").toUpperCase() === "HYGIENIC").length,
     [assignments]
   )
+
+  const scheduledExaminations = useMemo(() => examinations.length, [examinations])
+  const scheduledRandomTests = useMemo(() => randomTests.length, [randomTests])
 
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
@@ -245,7 +312,7 @@ export default function EducationDirectoriaPage() {
           <div className="border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">{error}</div>
         ) : null}
 
-        <div className="grid gap-2 md:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-6">
           <Card title="Professores">
             <div className="text-xs text-[var(--gray-700)]">
               {loading ? "..." : teachers.length}
@@ -261,6 +328,12 @@ export default function EducationDirectoriaPage() {
           </Card>
           <Card title="Trabalhos higiénicos">
             <div className="text-xs text-[var(--gray-700)]">{loading ? "..." : hygienicAssignments}</div>
+          </Card>
+          <Card title="Provas">
+            <div className="text-xs text-[var(--gray-700)]">{loading ? "..." : scheduledExaminations}</div>
+          </Card>
+          <Card title="Testes aleatórios">
+            <div className="text-xs text-[var(--gray-700)]">{loading ? "..." : scheduledRandomTests}</div>
           </Card>
         </div>
 
@@ -295,18 +368,43 @@ export default function EducationDirectoriaPage() {
           />
         </Card>
 
-        <Card title="Tipos de trabalhos catalogados">
-          <div className="grid gap-1 md:grid-cols-2">
-            {assignments.length ? (
-              assignments.map((assignment) => (
-                <div key={assignment.id} className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)]">
-                  <strong>{assignment.title || `Trabalho #${assignment.id}`}</strong> • {workCategoryLabel(assignment.work_category)}
-                </div>
-              ))
-            ) : (
-              <div className="text-xs text-[var(--gray-500)]">{loading ? "Carregando..." : "Sem trabalhos registados."}</div>
-            )}
-          </div>
+        <Card title="Trabalhos">
+          <DataTable
+            columns={[
+              { header: "Título", accessor: "title" },
+              { header: "Categoria", accessor: "category" },
+            ]}
+            data={assignmentRows}
+            emptyMessage={loading ? "Carregando..." : "Sem trabalhos registados."}
+          />
+        </Card>
+
+        <Card title="Provas">
+          <DataTable
+            columns={[
+              { header: "Título", accessor: "title" },
+              { header: "Estado", accessor: "status" },
+              { header: "Curso", accessor: "course" },
+              { header: "Turma", accessor: "classroom" },
+              { header: "Janela", accessor: "window" },
+            ]}
+            data={examinationRows}
+            emptyMessage={loading ? "Carregando..." : "Sem provas registadas."}
+          />
+        </Card>
+
+        <Card title="Testes aleatórios">
+          <DataTable
+            columns={[
+              { header: "Título", accessor: "title" },
+              { header: "Estado", accessor: "status" },
+              { header: "Estudante", accessor: "student" },
+              { header: "Turma", accessor: "classroom" },
+              { header: "Janela", accessor: "window" },
+            ]}
+            data={randomTestRows}
+            emptyMessage={loading ? "Carregando..." : "Sem testes aleatórios registados."}
+          />
         </Card>
       </div>
     </AppLayout>
