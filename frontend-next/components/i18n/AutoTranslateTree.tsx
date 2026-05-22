@@ -20,7 +20,7 @@ const STRING_PROPS = [
 
 function translateNode(node: ReactNode, tr: (value: string) => string): ReactNode {
   if (typeof node === "string") return tr(node)
-  if (Array.isArray(node)) return node.map((item) => translateNode(item, tr))
+  if (Array.isArray(node)) return React.Children.map(node, (item) => translateNode(item, tr))
   if (!React.isValidElement(node)) return node
 
   const props = node.props as Record<string, any>
