@@ -464,6 +464,36 @@ class LearningContentViewSet(TenantScopedEducationViewSet):
             AcademicService.publish_learning_content(content=content)
 
 
+class BibliographyContentViewSet(LearningContentViewSet):
+    forced_content_type = LearningContent.ContentType.BIBLIOGRAPHY
+
+    def get_queryset(self):
+        return super().get_queryset().filter(content_type=self.forced_content_type)
+
+    def perform_create(self, serializer):
+        serializer.validated_data["content_type"] = self.forced_content_type
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        serializer.validated_data["content_type"] = self.forced_content_type
+        super().perform_update(serializer)
+
+
+class ThematicMapContentViewSet(LearningContentViewSet):
+    forced_content_type = LearningContent.ContentType.THEMATIC_MAP
+
+    def get_queryset(self):
+        return super().get_queryset().filter(content_type=self.forced_content_type)
+
+    def perform_create(self, serializer):
+        serializer.validated_data["content_type"] = self.forced_content_type
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        serializer.validated_data["content_type"] = self.forced_content_type
+        super().perform_update(serializer)
+
+
 class RandomTestViewSet(TenantScopedEducationViewSet):
     queryset = RandomTest.objects.select_related(
         "course",
@@ -606,6 +636,8 @@ VIEWSET_MAP = {
     "random_test": RandomTestViewSet,
     "content": LearningContentViewSet,
     "lesson": LearningContentViewSet,
+    "bibliography": BibliographyContentViewSet,
+    "thematic_map": ThematicMapContentViewSet,
     "skill": SkillViewSet,
 }
 
@@ -621,6 +653,8 @@ __all__ = [
     "AssignmentViewSet",
     "AssignmentSubmissionViewSet",
     "LearningContentViewSet",
+    "BibliographyContentViewSet",
+    "ThematicMapContentViewSet",
     "RandomTestViewSet",
     "SkillViewSet",
     "StudentProfileViewSet",

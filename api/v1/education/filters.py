@@ -135,6 +135,8 @@ FILTER_MAP = {
     "examination_attempt": ExaminationAttemptFilter,
     "content": LearningContentFilter,
     "lesson": LearningContentFilter,
+    "bibliography": LearningContentFilter,
+    "thematic_map": LearningContentFilter,
     "skill": SkillFilter,
     "random_test": RandomTestFilter,
     "randomtest": RandomTestFilter,

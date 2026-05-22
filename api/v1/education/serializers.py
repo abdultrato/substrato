@@ -356,6 +356,22 @@ CONTENT_ALIASES = {
     "lesson_published": "published",
     "lesson_course": "course",
     "lesson_author": "author",
+    "bibliography_title": "title",
+    "bibliography_type": "content_type",
+    "bibliography_body": "body",
+    "bibliography_file_url": "file_url",
+    "bibliography_external_url": "external_url",
+    "bibliography_published": "published",
+    "bibliography_course": "course",
+    "bibliography_author": "author",
+    "thematic_map_title": "title",
+    "thematic_map_type": "content_type",
+    "thematic_map_body": "body",
+    "thematic_map_file_url": "file_url",
+    "thematic_map_external_url": "external_url",
+    "thematic_map_published": "published",
+    "thematic_map_course": "course",
+    "thematic_map_author": "author",
 }
 
 SKILL_ALIASES = {

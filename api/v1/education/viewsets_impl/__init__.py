@@ -3,6 +3,7 @@ from .core import (
     AssignmentSubmissionViewSet,
     AssignmentViewSet,
     AttendanceRecordViewSet,
+    BibliographyContentViewSet,
     ClassroomViewSet,
     CourseViewSet,
     EnrollmentViewSet,
@@ -14,6 +15,7 @@ from .core import (
     SkillViewSet,
     StudentProfileViewSet,
     TeacherProfileViewSet,
+    ThematicMapContentViewSet,
 )
 
 __all__ = [
@@ -21,6 +23,7 @@ __all__ = [
     "AssignmentViewSet",
     "AssignmentSubmissionViewSet",
     "AttendanceRecordViewSet",
+    "BibliographyContentViewSet",
     "ClassroomViewSet",
     "CourseViewSet",
     "EnrollmentViewSet",
@@ -32,4 +35,5 @@ __all__ = [
     "SkillViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",
+    "ThematicMapContentViewSet",
 ]

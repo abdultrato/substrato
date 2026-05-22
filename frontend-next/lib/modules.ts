@@ -163,6 +163,8 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "submission", label: "Submissões", endpoint: "/education/submission/", adminListHref: "/admin/education/assignmentsubmission/" },
       { key: "exam_attempt", label: "Tentativas de Exame", endpoint: "/education/exam_attempt/", adminListHref: "/admin/education/examinationattempt/" },
       { key: "content", label: "Conteúdos de Aprendizagem", endpoint: "/education/content/", adminListHref: "/admin/education/learningcontent/" },
+      { key: "bibliography", label: "Referências Bibliográficas", endpoint: "/education/bibliography/", adminListHref: "/admin/education/learningcontent/" },
+      { key: "thematic_map", label: "Mapa de Conteúdo Temático", endpoint: "/education/thematic_map/", adminListHref: "/admin/education/learningcontent/" },
       { key: "skill", label: "Skills", endpoint: "/education/skill/", adminListHref: "/admin/education/skill/" },
     ],
   },
@@ -327,6 +329,8 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/education/exam_attempt/": "/admin/education/examinationattempt/",
   "/education/examination_attempt/": "/admin/education/examinationattempt/",
   "/education/content/": "/admin/education/learningcontent/",
+  "/education/bibliography/": "/admin/education/learningcontent/",
+  "/education/thematic_map/": "/admin/education/learningcontent/",
   "/education/skill/": "/admin/education/skill/",
   // Tenants
   "/inquilinos/inquilino/": "/admin/tenants/tenant/",

@@ -109,6 +109,20 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     descriptionEn: "Learning content publishing.",
   },
   {
+    key: "bibliography",
+    labelPt: "Referências Bibliográficas",
+    labelEn: "Bibliographic References",
+    descriptionPt: "Módulos de referência bibliográfica por disciplina.",
+    descriptionEn: "Bibliographic reference modules by course.",
+  },
+  {
+    key: "thematic_map",
+    labelPt: "Mapa de Conteúdo Temático",
+    labelEn: "Thematic Content Map",
+    descriptionPt: "Estrutura temática e sequenciamento curricular por disciplina.",
+    descriptionEn: "Thematic structure and curriculum sequencing per course.",
+  },
+  {
     key: "skill",
     labelPt: "Skills",
     labelEn: "Skills",

@@ -86,6 +86,8 @@ export default function EducationPage() {
       submission: FileCheck2,
       exam_attempt: CalendarCheck,
       content: FileStack,
+      bibliography: FileStack,
+      thematic_map: BookOpen,
       skill: Target,
     }),
     []

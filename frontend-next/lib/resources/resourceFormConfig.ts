@@ -31,10 +31,123 @@ const BLOODBANK_INTERNAL_FIELDS = [
   "deleted_by",
 ]
 
+const EDUCATION_INTERNAL_FIELDS = [
+  "id",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+]
+
 function normalizeEndpoint(endpoint: string): string {
   const p = String(endpoint || "").split("?")[0].split("#")[0]
   const withSlash = p.startsWith("/") ? p : `/${p}`
   return withSlash.replace(/\/+$/, "") + "/"
+}
+
+function educationBibliographyConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...EDUCATION_INTERNAL_FIELDS, "content_type"],
+    somenteLeituraCampos: ["tenant"],
+    ordenarCampos: ["tenant", "course", "author", "title", "body", "file_url", "external_url", "published"],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      course: "Disciplina/Curso",
+      author: "Professor autor",
+      title: "Título do módulo bibliográfico",
+      body: "Resumo e orientação de estudo",
+      file_url: "URL do ficheiro de referência",
+      external_url: "Link externo da referência",
+      published: "Publicado",
+    },
+    placeholders: {
+      title: "Ex.: Referências de Física - 1º Trimestre",
+      body: "Liste os livros, capítulos e observações para estudo.",
+      file_url: "https://...",
+      external_url: "https://...",
+    },
+    hints: {
+      course: "Selecione a disciplina à qual o módulo de referência pertence.",
+      file_url: "Use para anexar PDF/apontamentos hospedados no repositório documental.",
+      external_url: "Use para bibliografia em plataformas externas.",
+    },
+    widgets: {
+      body: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Disciplina",
+        descricao: "Vinculação do módulo bibliográfico",
+        campos: ["tenant", "course", "author"],
+      },
+      {
+        titulo: "Referência",
+        descricao: "Conteúdo e anexação",
+        campos: ["title", "body", "file_url", "external_url"],
+      },
+      {
+        titulo: "Publicação",
+        descricao: "Disponibilização para os estudantes",
+        campos: ["published"],
+      },
+    ],
+    lembrarCampos: ["course", "author"],
+  }
+}
+
+function educationThematicMapConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...EDUCATION_INTERNAL_FIELDS, "content_type"],
+    somenteLeituraCampos: ["tenant"],
+    ordenarCampos: ["tenant", "course", "author", "title", "body", "file_url", "external_url", "published"],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      course: "Disciplina/Curso",
+      author: "Professor autor",
+      title: "Título do mapa temático",
+      body: "Estrutura temática detalhada",
+      file_url: "URL do ficheiro do mapa",
+      external_url: "Link externo do mapa",
+      published: "Publicado",
+    },
+    placeholders: {
+      title: "Ex.: Mapa Temático - Matemática 8ª Classe",
+      body: "Organize unidades, tópicos, sequência, objetivos e carga horária.",
+      file_url: "https://...",
+      external_url: "https://...",
+    },
+    hints: {
+      course: "Selecione a disciplina para estruturar o mapa temático.",
+      body: "Inclua cronologia, unidades e metas pedagógicas por período.",
+      file_url: "Opcional: anexe o mapa em formato digital (PDF/Doc).",
+    },
+    widgets: {
+      body: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Disciplina",
+        descricao: "Contexto e autoria",
+        campos: ["tenant", "course", "author"],
+      },
+      {
+        titulo: "Mapa",
+        descricao: "Conteúdo temático e anexos",
+        campos: ["title", "body", "file_url", "external_url"],
+      },
+      {
+        titulo: "Publicação",
+        descricao: "Disponibilidade no portal",
+        campos: ["published"],
+      },
+    ],
+    lembrarCampos: ["course", "author"],
+  }
 }
 
 function bloodbankDoacaoConfig(): ResourceFormConfig {
@@ -448,6 +561,16 @@ export function getResourceFormConfig(
   const g = canonicalModuleGroupKey(groupKey)
   const r = String(resourceKey || "").toLowerCase()
   const ep = normalizeEndpoint(endpoint)
+
+  if (g === "education") {
+    if (r === "bibliography" || ep === "/education/bibliography/") {
+      return educationBibliographyConfig()
+    }
+    if (r === "thematic_map" || ep === "/education/thematic_map/") {
+      return educationThematicMapConfig()
+    }
+    return null
+  }
 
   if (g !== "bloodbank") return null
 

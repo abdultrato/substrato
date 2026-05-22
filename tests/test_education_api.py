@@ -393,6 +393,14 @@ def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["lesson_1"].id}
 
+    response = api_client.get("/api/v1/education/bibliography/")
+    assert response.status_code == 200, _response_data(response)
+    assert _items(response) == []
+
+    response = api_client.get("/api/v1/education/thematic_map/")
+    assert response.status_code == 200, _response_data(response)
+    assert _items(response) == []
+
     response = api_client.get("/api/v1/education/assignment/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["assignment_1"].id}
@@ -447,6 +455,14 @@ def test_teacher_group_only_sees_owned_scope(api_client):
     response = api_client.get("/api/v1/education/lesson/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["lesson_1"].id}
+
+    response = api_client.get("/api/v1/education/bibliography/")
+    assert response.status_code == 200, _response_data(response)
+    assert _items(response) == []
+
+    response = api_client.get("/api/v1/education/thematic_map/")
+    assert response.status_code == 200, _response_data(response)
+    assert _items(response) == []
 
     response = api_client.get("/api/v1/education/assignment/")
     assert response.status_code == 200, _response_data(response)
@@ -692,6 +708,73 @@ def test_assessment_and_lesson_alias_endpoints_accept_alias_payloads(api_client)
     assert created_lesson.content_type == LearningContent.ContentType.LESSON
     assert created_lesson.course_id == scope["course_1"].id
     assert created_lesson.author_id == scope["teacher_1"].id
+
+
+@pytest.mark.django_db
+def test_bibliography_and_thematic_map_endpoints_force_content_type_and_scope(api_client):
+    tenant = _tenant("tn-edu-content-modules", "edu-content-modules.local")
+    director_user = _user(tenant=tenant, username="director_content_modules", role_group="Diretor da Escola")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=director_user)
+
+    bibliography = LearningContent.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        author=scope["teacher_1"],
+        title="Bibliografia de Matemática",
+        content_type=LearningContent.ContentType.BIBLIOGRAPHY,
+        body="Livro A, Capítulo 1 a 3.",
+        published=True,
+    )
+    thematic_map = LearningContent.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        author=scope["teacher_1"],
+        title="Mapa Temático de Matemática",
+        content_type=LearningContent.ContentType.THEMATIC_MAP,
+        body="Unidade 1, Unidade 2 e Unidade 3.",
+        published=True,
+    )
+
+    response_bibliography = api_client.get("/api/v1/education/bibliography/")
+    assert response_bibliography.status_code == 200, _response_data(response_bibliography)
+    assert {item["id"] for item in _items(response_bibliography)} == {bibliography.id}
+
+    response_thematic_map = api_client.get("/api/v1/education/thematic_map/")
+    assert response_thematic_map.status_code == 200, _response_data(response_thematic_map)
+    assert {item["id"] for item in _items(response_thematic_map)} == {thematic_map.id}
+
+    response_create_bibliography = api_client.post(
+        "/api/v1/education/bibliography/",
+        {
+            "lesson_title": "Bibliografia adicional",
+            "lesson_type": LearningContent.ContentType.LESSON,
+            "lesson_body": "Livro B, capítulo 4.",
+            "lesson_course": scope["course_1"].id,
+            "lesson_author": scope["teacher_1"].id,
+            "lesson_published": False,
+        },
+        format="json",
+    )
+    assert response_create_bibliography.status_code == 201, _response_data(response_create_bibliography)
+    created_bibliography = LearningContent.objects.get(id=_response_data(response_create_bibliography)["id"])
+    assert created_bibliography.content_type == LearningContent.ContentType.BIBLIOGRAPHY
+
+    response_create_thematic_map = api_client.post(
+        "/api/v1/education/thematic_map/",
+        {
+            "thematic_map_title": "Mapa Trimestral",
+            "thematic_map_type": LearningContent.ContentType.DOCUMENT,
+            "thematic_map_body": "Cronologia semanal por unidade.",
+            "thematic_map_course": scope["course_1"].id,
+            "thematic_map_author": scope["teacher_1"].id,
+            "thematic_map_published": True,
+        },
+        format="json",
+    )
+    assert response_create_thematic_map.status_code == 201, _response_data(response_create_thematic_map)
+    created_thematic_map = LearningContent.objects.get(id=_response_data(response_create_thematic_map)["id"])
+    assert created_thematic_map.content_type == LearningContent.ContentType.THEMATIC_MAP
 
 
 @pytest.mark.django_db

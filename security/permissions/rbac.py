@@ -63,6 +63,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-random_test": SAFE_METHODS | WRITE_METHODS,
         "education-content": SAFE_METHODS | WRITE_METHODS,
         "education-lesson": SAFE_METHODS | WRITE_METHODS,
+        "education-bibliography": SAFE_METHODS | WRITE_METHODS,
+        "education-thematic_map": SAFE_METHODS | WRITE_METHODS,
         "education-skill": SAFE_METHODS | WRITE_METHODS,
     }
     education_read = {
@@ -81,6 +83,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-random_test": SAFE_METHODS,
         "education-content": SAFE_METHODS,
         "education-lesson": SAFE_METHODS,
+        "education-bibliography": SAFE_METHODS,
+        "education-thematic_map": SAFE_METHODS,
         "education-skill": SAFE_METHODS,
     }
     education_student_activity = {

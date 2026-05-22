@@ -12,6 +12,8 @@ class LearningContent(NoNameCoreModel):
         DOCUMENT = "DOCUMENT", "Document"
         VIDEO = "VIDEO", "Video"
         LINK = "LINK", "Link"
+        BIBLIOGRAPHY = "BIBLIOGRAPHY", "Bibliography"
+        THEMATIC_MAP = "THEMATIC_MAP", "Thematic map"
 
     prefix = "CNT"
 
