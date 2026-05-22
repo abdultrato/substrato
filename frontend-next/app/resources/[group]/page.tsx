@@ -8,7 +8,6 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
-import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { findModuleGroup } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -21,8 +20,7 @@ export default function RecursosGrupoPage() {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const { t, tr } = useLanguage()
-  const workspaceScope = useWorkspaceScope()
-  const { modules } = useModulesCatalog(workspaceScope)
+  const { modules } = useModulesCatalog("neutral")
   const moduleGroup = findModuleGroup(groupKey, modules)
   const requiredGroups = requiredGroupsForResourceGroup(groupKey)
   const podeVerIndice = userHasAnyGroup(user, [GROUPS.ADMIN])

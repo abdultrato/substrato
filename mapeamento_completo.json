@@ -1,0 +1,7548 @@
+{
+  "modelos_backend": [
+    {
+      "app": "accounting",
+      "modelo": "Account",
+      "tabela": "contabilidade_conta",
+      "campos_total": 16,
+      "campos": [
+        "saldo",
+        "ledgerline",
+        "movimentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "saldo": "OneToOneField",
+        "ledgerline": "ForeignKey",
+        "movimentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "accounting",
+      "modelo": "AccountBalance",
+      "tabela": "contabilidade_saldoconta",
+      "campos_total": 4,
+      "campos": [
+        "id",
+        "account",
+        "current_balance",
+        "updated_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "account": "OneToOneField",
+        "current_balance": "DecimalField",
+        "updated_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "accounting",
+      "modelo": "FinancialReconciliation",
+      "tabela": "contabilidade_conciliacaofinanceira",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "invoice",
+        "external_reference",
+        "accounting_value"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "invoice": "ForeignKey",
+        "external_reference": "CharField",
+        "accounting_value": "DecimalField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "accounting",
+      "modelo": "LedgerEntry",
+      "tabela": "contabilidade_ledgerentry",
+      "campos_total": 23,
+      "campos": [
+        "reversao",
+        "linhas",
+        "id",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "external_reference",
+        "idempotency_key"
+      ],
+      "tipos": {
+        "reversao": "OneToOneField",
+        "linhas": "ForeignKey",
+        "id": "BigAutoField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "external_reference": "CharField",
+        "idempotency_key": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "accounting",
+      "modelo": "LedgerLine",
+      "tabela": "contabilidade_ledgerline",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "position",
+        "entry",
+        "account",
+        "value"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "position": "PositiveIntegerField",
+        "entry": "ForeignKey",
+        "account": "ForeignKey",
+        "value": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "accounting",
+      "modelo": "LegacyEntry",
+      "tabela": "contabilidade_lancamento",
+      "campos_total": 17,
+      "campos": [
+        "movimentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "date"
+      ],
+      "tipos": {
+        "movimentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "date": "DateField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "accounting",
+      "modelo": "LegacyMovement",
+      "tabela": "contabilidade_movimento",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "entry",
+        "account",
+        "debit"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "entry": "ForeignKey",
+        "account": "ForeignKey",
+        "debit": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiSession",
+      "tabela": "ai_assistant_session",
+      "campos_total": 24,
+      "campos": [
+        "messages",
+        "tool_calls",
+        "suggested_actions",
+        "operational_tasks",
+        "investigations",
+        "policy_events",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by"
+      ],
+      "tipos": {
+        "messages": "ForeignKey",
+        "tool_calls": "ForeignKey",
+        "suggested_actions": "ForeignKey",
+        "operational_tasks": "ForeignKey",
+        "investigations": "ForeignKey",
+        "policy_events": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiMessage",
+      "tabela": "ai_assistant_message",
+      "campos_total": 20,
+      "campos": [
+        "tool_calls",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "user",
+        "role"
+      ],
+      "tipos": {
+        "tool_calls": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "user": "ForeignKey",
+        "role": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiToolCall",
+      "tabela": "ai_assistant_tool_call",
+      "campos_total": 21,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "message",
+        "tool_name",
+        "mode"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "message": "ForeignKey",
+        "tool_name": "CharField",
+        "mode": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiSuggestedAction",
+      "tabela": "ai_assistant_suggested_action",
+      "campos_total": 24,
+      "campos": [
+        "operational_task",
+        "id",
+        "created_at",
+        "updated_at",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "created_by",
+        "action_type",
+        "payload"
+      ],
+      "tipos": {
+        "operational_task": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "created_by": "ForeignKey",
+        "action_type": "CharField",
+        "payload": "JSONField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiOperationalTask",
+      "tabela": "ai_assistant_operational_task",
+      "campos_total": 23,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "action",
+        "created_by",
+        "assigned_group",
+        "module_key"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "action": "OneToOneField",
+        "created_by": "ForeignKey",
+        "assigned_group": "CharField",
+        "module_key": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiInvestigation",
+      "tabela": "ai_assistant_investigation",
+      "campos_total": 24,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "created_by",
+        "title",
+        "question",
+        "intent"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "created_by": "ForeignKey",
+        "title": "CharField",
+        "question": "TextField",
+        "intent": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiKnowledgeEntry",
+      "tabela": "ai_assistant_knowledge_entry",
+      "campos_total": 29,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "slug",
+        "title",
+        "category",
+        "module_key"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "slug": "SlugField",
+        "title": "CharField",
+        "category": "CharField",
+        "module_key": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "ai_assistant",
+      "modelo": "AiPolicyEvent",
+      "tabela": "ai_assistant_policy_event",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "session",
+        "user",
+        "severity",
+        "policy_key"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "session": "ForeignKey",
+        "user": "ForeignKey",
+        "severity": "CharField",
+        "policy_key": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "audit_activities",
+      "modelo": "UserActivity",
+      "tabela": "auditoria_atividades_atividadeusuario",
+      "campos_total": 24,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "user",
+        "method",
+        "path",
+        "full_path"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "user": "ForeignKey",
+        "method": "CharField",
+        "path": "CharField",
+        "full_path": "TextField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "billing",
+      "modelo": "Invoice",
+      "tabela": "faturamento_fatura",
+      "campos_total": 32,
+      "campos": [
+        "historico",
+        "items",
+        "pagamentos",
+        "recibos",
+        "conciliacoes",
+        "checkin",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by"
+      ],
+      "tipos": {
+        "historico": "ForeignKey",
+        "items": "ForeignKey",
+        "pagamentos": "ForeignKey",
+        "recibos": "ForeignKey",
+        "conciliacoes": "ForeignKey",
+        "checkin": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "billing",
+      "modelo": "InvoiceHistory",
+      "tabela": "faturamento_historicofatura",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "invoice",
+        "event_type",
+        "description"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "invoice": "ForeignKey",
+        "event_type": "CharField",
+        "description": "TextField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "billing",
+      "modelo": "InvoiceItem",
+      "tabela": "faturamento_faturaitem",
+      "campos_total": 26,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "invoice",
+        "item_type",
+        "exam"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "invoice": "ForeignKey",
+        "item_type": "CharField",
+        "exam": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodDonation",
+      "tabela": "bloodbank_blood_donation",
+      "campos_total": 39,
+      "campos": [
+        "blood_units",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "donor",
+        "donor_role",
+        "replacement_for"
+      ],
+      "tipos": {
+        "blood_units": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "donor": "ForeignKey",
+        "donor_role": "CharField",
+        "replacement_for": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodStorage",
+      "tabela": "bloodbank_blood_storage",
+      "campos_total": 23,
+      "campos": [
+        "blood_units",
+        "stock_movements_out",
+        "stock_movements_in",
+        "maintenances",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "blood_units": "ForeignKey",
+        "stock_movements_out": "ForeignKey",
+        "stock_movements_in": "ForeignKey",
+        "maintenances": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodUnit",
+      "tabela": "bloodbank_blood_unit",
+      "campos_total": 32,
+      "campos": [
+        "transfusions",
+        "stock_movements",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "donation",
+        "storage"
+      ],
+      "tipos": {
+        "transfusions": "ForeignKey",
+        "stock_movements": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "donation": "ForeignKey",
+        "storage": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodTransfusion",
+      "tabela": "bloodbank_blood_transfusion",
+      "campos_total": 22,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "recipient",
+        "blood_unit",
+        "requested_by",
+        "performed_by"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "recipient": "ForeignKey",
+        "blood_unit": "ForeignKey",
+        "requested_by": "ForeignKey",
+        "performed_by": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodStockMovement",
+      "tabela": "bloodbank_blood_stock_movement",
+      "campos_total": 19,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "unit",
+        "source_storage",
+        "destination_storage",
+        "movement_type"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "unit": "ForeignKey",
+        "source_storage": "ForeignKey",
+        "destination_storage": "ForeignKey",
+        "movement_type": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "bloodbank",
+      "modelo": "BloodStorageMaintenance",
+      "tabela": "bloodbank_blood_storage_maintenance",
+      "campos_total": 21,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "storage",
+        "maintenance_type",
+        "status",
+        "scheduled_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "storage": "ForeignKey",
+        "maintenance_type": "CharField",
+        "status": "CharField",
+        "scheduled_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "clinical",
+      "modelo": "LabExam",
+      "tabela": "clinico_exame",
+      "campos_total": 24,
+      "campos": [
+        "lab_requests",
+        "campos",
+        "lab_request_items",
+        "invoiceitem",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "lab_requests": "ManyToManyField",
+        "campos": "ForeignKey",
+        "lab_request_items": "ForeignKey",
+        "invoiceitem": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "clinical",
+      "modelo": "Patient",
+      "tabela": "clinico_paciente",
+      "campos_total": 57,
+      "campos": [
+        "lab_requests",
+        "eventos_clinicos",
+        "clinicalhistory",
+        "evolucoes_enfermagem",
+        "prescricoes_enfermagem",
+        "registros_enfermagem",
+        "procedures_enfermagem",
+        "nursingvitalsign",
+        "internamentos_ward",
+        "invoices",
+        "notificacoes",
+        "vendas_farmacia",
+        "blood_donations",
+        "replacement_blood_donations",
+        "reserved_blood_units"
+      ],
+      "tipos": {
+        "lab_requests": "ForeignKey",
+        "eventos_clinicos": "ForeignKey",
+        "clinicalhistory": "ForeignKey",
+        "evolucoes_enfermagem": "ForeignKey",
+        "prescricoes_enfermagem": "ForeignKey",
+        "registros_enfermagem": "ForeignKey",
+        "procedures_enfermagem": "ForeignKey",
+        "nursingvitalsign": "ForeignKey",
+        "internamentos_ward": "ForeignKey",
+        "invoices": "ForeignKey",
+        "notificacoes": "ForeignKey",
+        "vendas_farmacia": "ForeignKey",
+        "blood_donations": "ForeignKey",
+        "replacement_blood_donations": "ForeignKey",
+        "reserved_blood_units": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "Sample",
+      "tabela": "clinico_amostra",
+      "campos_total": 24,
+      "campos": [
+        "exams",
+        "exam_sample_options",
+        "lab_requests",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "exams": "ForeignKey",
+        "exam_sample_options": "ManyToManyField",
+        "lab_requests": "ManyToManyField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "LabRequest",
+      "tabela": "clinico_requisicaoanalise",
+      "campos_total": 30,
+      "campos": [
+        "result",
+        "eventos_clinicos",
+        "items",
+        "nursing_intake_record",
+        "integration_orders",
+        "invoice",
+        "checkin",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at"
+      ],
+      "tipos": {
+        "result": "OneToOneField",
+        "eventos_clinicos": "ForeignKey",
+        "items": "ForeignKey",
+        "nursing_intake_record": "OneToOneField",
+        "integration_orders": "ForeignKey",
+        "invoice": "OneToOneField",
+        "checkin": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "LabExamField",
+      "tabela": "clinico_examecampo",
+      "campos_total": 24,
+      "campos": [
+        "results",
+        "referencias",
+        "mapeamentos_integracao",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "results": "ForeignKey",
+        "referencias": "ForeignKey",
+        "mapeamentos_integracao": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "clinical",
+      "modelo": "Result",
+      "tabela": "clinico_resultado",
+      "campos_total": 16,
+      "campos": [
+        "items",
+        "arquivos_medicos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "request",
+        "analyst"
+      ],
+      "tipos": {
+        "items": "ForeignKey",
+        "arquivos_medicos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "request": "OneToOneField",
+        "analyst": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "ResultItem",
+      "tabela": "clinico_resultadoitem",
+      "campos_total": 23,
+      "campos": [
+        "eventos_clinicos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "result",
+        "exam_field"
+      ],
+      "tipos": {
+        "eventos_clinicos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "result": "ForeignKey",
+        "exam_field": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "ClinicalEvent",
+      "tabela": "clinico_eventoclinico",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "patient",
+        "request",
+        "result"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "patient": "ForeignKey",
+        "request": "ForeignKey",
+        "result": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "clinical",
+      "modelo": "ClinicalHistory",
+      "tabela": "clinico_historicoclinico",
+      "campos_total": 4,
+      "campos": [
+        "id",
+        "patient",
+        "description",
+        "event_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "patient": "ForeignKey",
+        "description": "TextField",
+        "event_date": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "clinical",
+      "modelo": "MedicalExam",
+      "tabela": "clinico_examemedico",
+      "campos_total": 22,
+      "campos": [
+        "campos",
+        "lab_request_items",
+        "arquivos",
+        "invoiceitem",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "campos": "ForeignKey",
+        "lab_request_items": "ForeignKey",
+        "arquivos": "ForeignKey",
+        "invoiceitem": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "MedicalExamField",
+      "tabela": "clinico_examemedicocampo",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "position",
+        "exam",
+        "type"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "position": "PositiveIntegerField",
+        "exam": "ForeignKey",
+        "type": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "LabRequestItem",
+      "tabela": "clinico_requisicaoitem",
+      "campos_total": 17,
+      "campos": [
+        "arquivos_medicos",
+        "integration_order_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "request"
+      ],
+      "tipos": {
+        "arquivos_medicos": "ForeignKey",
+        "integration_order_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "request": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "MedicalResultFile",
+      "tabela": "clinico_resultadomedicoarquivo",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "result",
+        "request_item",
+        "medical_exam",
+        "type"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "result": "ForeignKey",
+        "request_item": "ForeignKey",
+        "medical_exam": "ForeignKey",
+        "type": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "clinical",
+      "modelo": "ClinicalReference",
+      "tabela": "clinico_referenciaclinica",
+      "campos_total": 20,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "exam_field",
+        "sex",
+        "minimum_age_days"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "exam_field": "ForeignKey",
+        "sex": "CharField",
+        "minimum_age_days": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "consultations",
+      "modelo": "ConsultationSpecialty",
+      "tabela": "consultas_especialidadeconsulta",
+      "campos_total": 17,
+      "campos": [
+        "consultations",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "base_price"
+      ],
+      "tipos": {
+        "consultations": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "base_price": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "consultations",
+      "modelo": "Holiday",
+      "tabela": "consultas_feriado",
+      "campos_total": 14,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "date",
+        "description",
+        "active"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "date": "DateField",
+        "description": "CharField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "consultations",
+      "modelo": "MedicalConsultation",
+      "tabela": "consultas_consultamedica",
+      "campos_total": 28,
+      "campos": [
+        "invoice",
+        "invoices",
+        "invoiceitem",
+        "cardex_registros",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "invoice": "OneToOneField",
+        "invoices": "ManyToManyField",
+        "invoiceitem": "ForeignKey",
+        "cardex_registros": "ManyToManyField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Assignment",
+      "tabela": "education_assignment",
+      "campos_total": 27,
+      "campos": [
+        "submissions",
+        "discipline_schedule_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "course",
+        "classroom"
+      ],
+      "tipos": {
+        "submissions": "ForeignKey",
+        "discipline_schedule_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "course": "ForeignKey",
+        "classroom": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "AssignmentSubmission",
+      "tabela": "education_assignment_submission",
+      "campos_total": 25,
+      "campos": [
+        "grade_records",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "assignment",
+        "enrollment",
+        "student"
+      ],
+      "tipos": {
+        "grade_records": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "assignment": "ForeignKey",
+        "enrollment": "ForeignKey",
+        "student": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "AttendanceRecord",
+      "tabela": "education_attendance_record",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "enrollment",
+        "attendance_date",
+        "status",
+        "notes"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "enrollment": "ForeignKey",
+        "attendance_date": "DateField",
+        "status": "CharField",
+        "notes": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Classroom",
+      "tabela": "education_classroom",
+      "campos_total": 21,
+      "campos": [
+        "assignments",
+        "enrollments",
+        "examinations",
+        "random_tests",
+        "discipline_schedule_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant"
+      ],
+      "tipos": {
+        "assignments": "ForeignKey",
+        "enrollments": "ForeignKey",
+        "examinations": "ForeignKey",
+        "random_tests": "ForeignKey",
+        "discipline_schedule_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "LearningContent",
+      "tabela": "education_learning_content",
+      "campos_total": 20,
+      "campos": [
+        "discipline_schedule_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "course",
+        "author",
+        "title"
+      ],
+      "tipos": {
+        "discipline_schedule_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "course": "ForeignKey",
+        "author": "ForeignKey",
+        "title": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Course",
+      "tabela": "education_course",
+      "campos_total": 23,
+      "campos": [
+        "assignments",
+        "classrooms",
+        "contents",
+        "examinations",
+        "random_tests",
+        "discipline_schedule_items",
+        "skills",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at"
+      ],
+      "tipos": {
+        "assignments": "ForeignKey",
+        "classrooms": "ForeignKey",
+        "contents": "ForeignKey",
+        "examinations": "ForeignKey",
+        "random_tests": "ForeignKey",
+        "discipline_schedule_items": "ForeignKey",
+        "skills": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Enrollment",
+      "tabela": "education_enrollment",
+      "campos_total": 22,
+      "campos": [
+        "assignment_submissions",
+        "attendance",
+        "examination_attempts",
+        "grades",
+        "random_tests",
+        "discipline_schedule_progress",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by"
+      ],
+      "tipos": {
+        "assignment_submissions": "ForeignKey",
+        "attendance": "ForeignKey",
+        "examination_attempts": "ForeignKey",
+        "grades": "ForeignKey",
+        "random_tests": "ForeignKey",
+        "discipline_schedule_progress": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Examination",
+      "tabela": "education_examination",
+      "campos_total": 28,
+      "campos": [
+        "attempts",
+        "discipline_schedule_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "course",
+        "classroom"
+      ],
+      "tipos": {
+        "attempts": "ForeignKey",
+        "discipline_schedule_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "course": "ForeignKey",
+        "classroom": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "ExaminationAttempt",
+      "tabela": "education_examination_attempt",
+      "campos_total": 28,
+      "campos": [
+        "grade_records",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "examination",
+        "enrollment",
+        "student"
+      ],
+      "tipos": {
+        "grade_records": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "examination": "ForeignKey",
+        "enrollment": "ForeignKey",
+        "student": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "GradeRecord",
+      "tabela": "education_grade_record",
+      "campos_total": 20,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "enrollment",
+        "teacher",
+        "assignment_submission",
+        "examination_attempt"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "enrollment": "ForeignKey",
+        "teacher": "ForeignKey",
+        "assignment_submission": "ForeignKey",
+        "examination_attempt": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "RandomTest",
+      "tabela": "education_random_test",
+      "campos_total": 25,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "course",
+        "classroom",
+        "enrollment",
+        "student"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "course": "ForeignKey",
+        "classroom": "ForeignKey",
+        "enrollment": "ForeignKey",
+        "student": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "DisciplineScheduleItem",
+      "tabela": "education_discipline_schedule_item",
+      "campos_total": 25,
+      "campos": [
+        "student_progress",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "course",
+        "classroom",
+        "item_type"
+      ],
+      "tipos": {
+        "student_progress": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "course": "ForeignKey",
+        "classroom": "ForeignKey",
+        "item_type": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "DisciplineScheduleStudentStatus",
+      "tabela": "education_discipline_schedule_student_status",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "schedule_item",
+        "enrollment",
+        "status",
+        "completion_marked"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "schedule_item": "ForeignKey",
+        "enrollment": "ForeignKey",
+        "status": "CharField",
+        "completion_marked": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "Skill",
+      "tabela": "education_skill",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "course",
+        "code",
+        "category"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "course": "ForeignKey",
+        "code": "CharField",
+        "category": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "StudentProfile",
+      "tabela": "education_student_profile",
+      "campos_total": 21,
+      "campos": [
+        "assignment_submissions",
+        "enrollments",
+        "examination_attempts",
+        "random_tests",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "assignment_submissions": "ForeignKey",
+        "enrollments": "ForeignKey",
+        "examination_attempts": "ForeignKey",
+        "random_tests": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "education",
+      "modelo": "TeacherProfile",
+      "tabela": "education_teacher_profile",
+      "campos_total": 22,
+      "campos": [
+        "assignments_created",
+        "submissions_graded",
+        "homeroom_classrooms",
+        "contents_authored",
+        "exam_attempts_graded",
+        "grades_given",
+        "random_tests",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at"
+      ],
+      "tipos": {
+        "assignments_created": "ForeignKey",
+        "submissions_graded": "ForeignKey",
+        "homeroom_classrooms": "ForeignKey",
+        "contents_authored": "ForeignKey",
+        "exam_attempts_graded": "ForeignKey",
+        "grades_given": "ForeignKey",
+        "random_tests": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment",
+      "modelo": "Equipment",
+      "tabela": "equipamentos_equipamento",
+      "campos_total": 25,
+      "campos": [
+        "inspecoes_diarias",
+        "manutencoes",
+        "ocorrencias",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "inspecoes_diarias": "ForeignKey",
+        "manutencoes": "ForeignKey",
+        "ocorrencias": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationMessage",
+      "tabela": "integracoes_equipamentos_integracaomensagem",
+      "campos_total": 24,
+      "campos": [
+        "documentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "order",
+        "direction"
+      ],
+      "tipos": {
+        "documentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "order": "ForeignKey",
+        "direction": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationDocument",
+      "tabela": "integracoes_equipamentos_integracaodocumento",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "message",
+        "order_item",
+        "file",
+        "filename"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "message": "ForeignKey",
+        "order_item": "ForeignKey",
+        "file": "FileField",
+        "filename": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationCredential",
+      "tabela": "integracoes_equipamentos_integracaocredencial",
+      "campos_total": 19,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "label",
+        "key_prefix",
+        "key_last4"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "label": "CharField",
+        "key_prefix": "CharField",
+        "key_last4": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationEquipment",
+      "tabela": "integracoes_equipamentos_integracaoequipamento",
+      "campos_total": 24,
+      "campos": [
+        "mensagens",
+        "credenciais",
+        "mapeamentos_analitos",
+        "orders",
+        "roteamentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant"
+      ],
+      "tipos": {
+        "mensagens": "ForeignKey",
+        "credenciais": "ForeignKey",
+        "mapeamentos_analitos": "ForeignKey",
+        "orders": "ForeignKey",
+        "roteamentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationAnalyteMapping",
+      "tabela": "integracoes_equipamentos_integracaomapeamentoanalito",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "equipment",
+        "code",
+        "exam_field"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "equipment": "ForeignKey",
+        "code": "CharField",
+        "exam_field": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationOrder",
+      "tabela": "integracoes_equipamentos_integracaoordem",
+      "campos_total": 17,
+      "campos": [
+        "mensagens",
+        "items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "request"
+      ],
+      "tipos": {
+        "mensagens": "ForeignKey",
+        "items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "request": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationOrderItem",
+      "tabela": "integracoes_equipamentos_integracaoordemitem",
+      "campos_total": 16,
+      "campos": [
+        "documentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "order",
+        "request_item"
+      ],
+      "tipos": {
+        "documentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "order": "ForeignKey",
+        "request_item": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "equipment_integrations",
+      "modelo": "IntegrationRouting",
+      "tabela": "integracoes_equipamentos_integracaoroteamento",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "exam_type",
+        "sector",
+        "active"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "exam_type": "CharField",
+        "sector": "CharField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "external_entities",
+      "modelo": "Company",
+      "tabela": "entidades_empresa",
+      "campos_total": 24,
+      "campos": [
+        "pacientes",
+        "requested_lab_requests",
+        "outsourced_lab_requests",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "pacientes": "ForeignKey",
+        "requested_lab_requests": "ForeignKey",
+        "outsourced_lab_requests": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Absence",
+      "tabela": "recursos_humanos_falta",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "date",
+        "reason",
+        "justified"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "date": "DateField",
+        "reason": "CharField",
+        "justified": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "DisciplinaryProcess",
+      "tabela": "recursos_humanos_processodisciplinar",
+      "campos_total": 20,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "incident_date",
+        "incident_type",
+        "severity"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "incident_date": "DateField",
+        "incident_type": "CharField",
+        "severity": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Employee",
+      "tabela": "recursos_humanos_funcionario",
+      "campos_total": 41,
+      "campos": [
+        "perfil_professional_rh",
+        "consultations_realizadas",
+        "registros_prontuario",
+        "gestacoes_responsible",
+        "faltas",
+        "processos_disciplinares",
+        "agregados_familiares",
+        "hours_extras",
+        "folhas_payment",
+        "dispensas",
+        "ferias",
+        "horarios",
+        "id",
+        "created_at",
+        "updated_at"
+      ],
+      "tipos": {
+        "perfil_professional_rh": "OneToOneField",
+        "consultations_realizadas": "ForeignKey",
+        "registros_prontuario": "ForeignKey",
+        "gestacoes_responsible": "ForeignKey",
+        "faltas": "ForeignKey",
+        "processos_disciplinares": "ForeignKey",
+        "agregados_familiares": "ForeignKey",
+        "hours_extras": "ForeignKey",
+        "folhas_payment": "ForeignKey",
+        "dispensas": "ForeignKey",
+        "ferias": "ForeignKey",
+        "horarios": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "human_resources",
+      "modelo": "FamilyDependent",
+      "tabela": "recursos_humanos_agregadofamiliar",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "employee",
+        "relationship",
+        "birth_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "employee": "ForeignKey",
+        "relationship": "CharField",
+        "birth_date": "DateField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "JobTitle",
+      "tabela": "recursos_humanos_cargo",
+      "campos_total": 15,
+      "campos": [
+        "funcionarios",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "is_doctor"
+      ],
+      "tipos": {
+        "funcionarios": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "is_doctor": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Overtime",
+      "tabela": "recursos_humanos_horaextra",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "date",
+        "kind",
+        "hours"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "date": "DateField",
+        "kind": "CharField",
+        "hours": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Payroll",
+      "tabela": "recursos_humanos_folhapagamento",
+      "campos_total": 39,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "year",
+        "month",
+        "nominal_salary"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "year": "PositiveSmallIntegerField",
+        "month": "PositiveSmallIntegerField",
+        "nominal_salary": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Profession",
+      "tabela": "recursos_humanos_profissao",
+      "campos_total": 21,
+      "campos": [
+        "funcionarios",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "base_salary"
+      ],
+      "tipos": {
+        "funcionarios": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "base_salary": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Termination",
+      "tabela": "recursos_humanos_dispensa",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "date",
+        "type",
+        "reason"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "date": "DateField",
+        "type": "CharField",
+        "reason": "TextField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "Vacation",
+      "tabela": "recursos_humanos_ferias",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "start_date",
+        "end_date",
+        "status"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "start_date": "DateField",
+        "end_date": "DateField",
+        "status": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "human_resources",
+      "modelo": "WorkSchedule",
+      "tabela": "recursos_humanos_horariotrabalho",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "employee",
+        "weekday",
+        "start_time",
+        "end_time"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "employee": "ForeignKey",
+        "weekday": "IntegerField",
+        "start_time": "TimeField",
+        "end_time": "TimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "identity",
+      "modelo": "PasswordResetToken",
+      "tabela": "identidade_passwordresettoken",
+      "campos_total": 5,
+      "campos": [
+        "id",
+        "user",
+        "token",
+        "used",
+        "created_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "user": "ForeignKey",
+        "token": "CharField",
+        "used": "BooleanField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "identity",
+      "modelo": "ProfessionalProfile",
+      "tabela": "identidade_perfilprofissional",
+      "campos_total": 9,
+      "campos": [
+        "id",
+        "user",
+        "employee",
+        "role",
+        "professional_registration",
+        "department",
+        "active",
+        "created_at",
+        "updated_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "user": "OneToOneField",
+        "employee": "OneToOneField",
+        "role": "CharField",
+        "professional_registration": "CharField",
+        "department": "CharField",
+        "active": "BooleanField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "identity",
+      "modelo": "User",
+      "tabela": "identidade_user",
+      "campos_total": 421,
+      "campos": [
+        "logentry",
+        "password_reset_tokens",
+        "perfil_professional",
+        "user_criado",
+        "user_atualizado",
+        "user_deleted",
+        "coverageplan_criado",
+        "coverageplan_atualizado",
+        "coverageplan_deleted",
+        "insurer_criado",
+        "insurer_atualizado",
+        "insurer_deleted",
+        "procedureauthorization_criado",
+        "procedureauthorization_atualizado",
+        "procedureauthorization_deleted"
+      ],
+      "tipos": {
+        "logentry": "ForeignKey",
+        "password_reset_tokens": "ForeignKey",
+        "perfil_professional": "OneToOneField",
+        "user_criado": "ForeignKey",
+        "user_atualizado": "ForeignKey",
+        "user_deleted": "ForeignKey",
+        "coverageplan_criado": "ForeignKey",
+        "coverageplan_atualizado": "ForeignKey",
+        "coverageplan_deleted": "ForeignKey",
+        "insurer_criado": "ForeignKey",
+        "insurer_atualizado": "ForeignKey",
+        "insurer_deleted": "ForeignKey",
+        "procedureauthorization_criado": "ForeignKey",
+        "procedureauthorization_atualizado": "ForeignKey",
+        "procedureauthorization_deleted": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "incidents",
+      "modelo": "Incident",
+      "tabela": "ocorrencias_ocorrencia",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "date",
+        "type",
+        "description"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "date": "DateTimeField",
+        "type": "CharField",
+        "description": "TextField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "inspections",
+      "modelo": "DailyInspection",
+      "tabela": "inspecoes_inspecaodiaria",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "date",
+        "operation_status",
+        "cleaning_performed"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "date": "DateField",
+        "operation_status": "CharField",
+        "cleaning_performed": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "insurer",
+      "modelo": "CoveragePlan",
+      "tabela": "seguradora_planocobertura",
+      "campos_total": 21,
+      "campos": [
+        "autorizacoes",
+        "overrides_por_tenant",
+        "pagamentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "description"
+      ],
+      "tipos": {
+        "autorizacoes": "ForeignKey",
+        "overrides_por_tenant": "ForeignKey",
+        "pagamentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "description": "TextField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "insurer",
+      "modelo": "Insurer",
+      "tabela": "seguradora_seguradora",
+      "campos_total": 20,
+      "campos": [
+        "planos",
+        "pagamentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "description",
+        "name"
+      ],
+      "tipos": {
+        "planos": "ForeignKey",
+        "pagamentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "description": "TextField",
+        "name": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "insurer",
+      "modelo": "ProcedureAuthorization",
+      "tabela": "seguradora_autorizacaoprocedimento",
+      "campos_total": 20,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "description",
+        "order",
+        "request_id",
+        "plan"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "description": "TextField",
+        "order": "PositiveIntegerField",
+        "request_id": "CharField",
+        "plan": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "insurer",
+      "modelo": "TenantCoveragePlan",
+      "tabela": "seguradora_tenantplanocobertura",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "description",
+        "name",
+        "order",
+        "global_plan"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "description": "TextField",
+        "name": "CharField",
+        "order": "PositiveIntegerField",
+        "global_plan": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "maintenance",
+      "modelo": "Maintenance",
+      "tabela": "manutencoes_manutencao",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "equipment",
+        "type",
+        "scheduled_date",
+        "performed_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "equipment": "ForeignKey",
+        "type": "CharField",
+        "scheduled_date": "DateField",
+        "performed_date": "DateField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "maternity",
+      "modelo": "Pregnancy",
+      "tabela": "maternidade_gestacao",
+      "campos_total": 22,
+      "campos": [
+        "id",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "responsible_doctor",
+        "last_menstrual_period_date",
+        "expected_delivery_date",
+        "nursery"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "responsible_doctor": "ForeignKey",
+        "last_menstrual_period_date": "DateField",
+        "expected_delivery_date": "DateField",
+        "nursery": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "medical_records",
+      "modelo": "MedicalRecordEntry",
+      "tabela": "prontuario_registroprontuario",
+      "campos_total": 22,
+      "campos": [
+        "itens_prescription",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "doctor",
+        "care_start_at"
+      ],
+      "tipos": {
+        "itens_prescription": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "doctor": "ForeignKey",
+        "care_start_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "medical_records",
+      "modelo": "PrescriptionItem",
+      "tabela": "prontuario_prescricaoitem",
+      "campos_total": 19,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "record",
+        "medication",
+        "dosage_value"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "record": "ForeignKey",
+        "medication": "ForeignKey",
+        "dosage_value": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "monitoring",
+      "modelo": "TransactionalOutboxEvent",
+      "tabela": "monitoramento_eventooutbox",
+      "campos_total": 18,
+      "campos": [
+        "id",
+        "event_id",
+        "event_type",
+        "aggregate_id",
+        "aggregate_version",
+        "tenant_identifier",
+        "trace_id",
+        "idempotency_key",
+        "source",
+        "payload",
+        "status",
+        "attempts",
+        "available_at",
+        "occurred_at",
+        "published_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "event_id": "UUIDField",
+        "event_type": "CharField",
+        "aggregate_id": "CharField",
+        "aggregate_version": "PositiveIntegerField",
+        "tenant_identifier": "CharField",
+        "trace_id": "CharField",
+        "idempotency_key": "CharField",
+        "source": "CharField",
+        "payload": "JSONField",
+        "status": "CharField",
+        "attempts": "PositiveIntegerField",
+        "available_at": "DateTimeField",
+        "occurred_at": "DateTimeField",
+        "published_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "monitoring",
+      "modelo": "SystemError",
+      "tabela": "monitoramento_errosistema",
+      "campos_total": 26,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "user",
+        "method",
+        "path",
+        "full_path"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "user": "ForeignKey",
+        "method": "CharField",
+        "path": "CharField",
+        "full_path": "TextField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "notifications",
+      "modelo": "DeliveryLog",
+      "tabela": "notificacoes_logenvio",
+      "campos_total": 5,
+      "campos": [
+        "id",
+        "notification",
+        "status",
+        "response",
+        "created_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "notification": "ForeignKey",
+        "status": "CharField",
+        "response": "TextField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "notifications",
+      "modelo": "Notification",
+      "tabela": "notificacoes_notificacao",
+      "campos_total": 13,
+      "campos": [
+        "logs_envio",
+        "id",
+        "patient",
+        "recipient",
+        "channel",
+        "subject",
+        "event_type",
+        "external_reference",
+        "message",
+        "sent",
+        "send_error",
+        "sent_at",
+        "created_at"
+      ],
+      "tipos": {
+        "logs_envio": "ForeignKey",
+        "id": "BigAutoField",
+        "patient": "ForeignKey",
+        "recipient": "CharField",
+        "channel": "CharField",
+        "subject": "CharField",
+        "event_type": "CharField",
+        "external_reference": "CharField",
+        "message": "TextField",
+        "sent": "BooleanField",
+        "send_error": "TextField",
+        "sent_at": "DateTimeField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "notifications",
+      "modelo": "NotificationTemplate",
+      "tabela": "notificacoes_templatenotificacao",
+      "campos_total": 4,
+      "campos": [
+        "id",
+        "name",
+        "content",
+        "created_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "name": "CharField",
+        "content": "TextField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "NursingEvolution",
+      "tabela": "enfermagem_evolucaoenfermagem",
+      "campos_total": 15,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "patient",
+        "observation",
+        "evolution_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "patient": "ForeignKey",
+        "observation": "TextField",
+        "evolution_date": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "NursingPrescription",
+      "tabela": "enfermagem_prescricaoenfermagem",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "patient",
+        "description",
+        "prescription_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "patient": "ForeignKey",
+        "description": "TextField",
+        "prescription_date": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "NursingRecord",
+      "tabela": "enfermagem_registroenfermagem",
+      "campos_total": 21,
+      "campos": [
+        "signals_vitais",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "patient",
+        "lab_request"
+      ],
+      "tipos": {
+        "signals_vitais": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "patient": "ForeignKey",
+        "lab_request": "OneToOneField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "Procedure",
+      "tabela": "enfermagem_procedimento",
+      "campos_total": 29,
+      "campos": [
+        "itens",
+        "materiais",
+        "invoices_legacy",
+        "invoices",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version"
+      ],
+      "tipos": {
+        "itens": "ForeignKey",
+        "materiais": "ForeignKey",
+        "invoices_legacy": "ForeignKey",
+        "invoices": "ManyToManyField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureCatalog",
+      "tabela": "enfermagem_procedimentocatalogo",
+      "campos_total": 22,
+      "campos": [
+        "procedures_selected",
+        "materiais_padrao",
+        "itens_lancados",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "procedures_selected": "ManyToManyField",
+        "materiais_padrao": "ForeignKey",
+        "itens_lancados": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureCatalogMaterial",
+      "tabela": "enfermagem_procedimentocatalogomaterial",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "catalog",
+        "product",
+        "default_quantity",
+        "default_unit_cost"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "catalog": "ForeignKey",
+        "product": "ForeignKey",
+        "default_quantity": "DecimalField",
+        "default_unit_cost": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureItem",
+      "tabela": "enfermagem_procedimentoitem",
+      "campos_total": 27,
+      "campos": [
+        "value",
+        "materiais_gerados",
+        "invoiceitem",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position"
+      ],
+      "tipos": {
+        "value": "OneToOneField",
+        "materiais_gerados": "ForeignKey",
+        "invoiceitem": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureItemValue",
+      "tabela": "enfermagem_procedimentoitemvalor",
+      "campos_total": 14,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "item",
+        "unit_price",
+        "active"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "item": "OneToOneField",
+        "unit_price": "DecimalField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureMaterial",
+      "tabela": "enfermagem_procedimentomaterial",
+      "campos_total": 22,
+      "campos": [
+        "value",
+        "invoiceitem",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "procedure"
+      ],
+      "tipos": {
+        "value": "OneToOneField",
+        "invoiceitem": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "procedure": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "ProcedureMaterialValue",
+      "tabela": "enfermagem_procedimentomaterialvalor",
+      "campos_total": 14,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "material",
+        "unit_cost",
+        "active"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "material": "OneToOneField",
+        "unit_cost": "DecimalField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "NursingVitalSign",
+      "tabela": "enfermagem_sinalvitalenfermagem",
+      "campos_total": 20,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "patient",
+        "record",
+        "temperature_c"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "patient": "ForeignKey",
+        "record": "ForeignKey",
+        "temperature_c": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "Ward",
+      "tabela": "enfermagem_enfermaria",
+      "campos_total": 15,
+      "campos": [
+        "camas",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "active"
+      ],
+      "tipos": {
+        "camas": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "nursing",
+      "modelo": "WardBed",
+      "tabela": "enfermagem_camaenfermaria",
+      "campos_total": 15,
+      "campos": [
+        "internamentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "ward",
+        "number",
+        "active"
+      ],
+      "tipos": {
+        "internamentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "ward": "ForeignKey",
+        "number": "CharField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "nursing",
+      "modelo": "WardAdmission",
+      "tabela": "enfermagem_internamentoenfermaria",
+      "campos_total": 21,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "bed",
+        "patient",
+        "estimated_observation_hours",
+        "admission_date"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "bed": "ForeignKey",
+        "patient": "ForeignKey",
+        "estimated_observation_hours": "PositiveSmallIntegerField",
+        "admission_date": "DateTimeField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "payments",
+      "modelo": "Payment",
+      "tabela": "pagamentos_pagamento",
+      "campos_total": 25,
+      "campos": [
+        "historico",
+        "recibo",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "invoice"
+      ],
+      "tipos": {
+        "historico": "ForeignKey",
+        "recibo": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "invoice": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "payments",
+      "modelo": "PaymentHistory",
+      "tabela": "pagamentos_historicopagamento",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "payment",
+        "event_type",
+        "value"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "payment": "ForeignKey",
+        "event_type": "CharField",
+        "value": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "payments",
+      "modelo": "Receipt",
+      "tabela": "pagamentos_recibo",
+      "campos_total": 6,
+      "campos": [
+        "id",
+        "invoice",
+        "payment",
+        "number",
+        "value",
+        "created_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "invoice": "ForeignKey",
+        "payment": "OneToOneField",
+        "number": "CharField",
+        "value": "DecimalField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "payments",
+      "modelo": "Reconciliation",
+      "tabela": "pagamentos_reconciliacao",
+      "campos_total": 5,
+      "campos": [
+        "id",
+        "transaction",
+        "confirmed",
+        "confirmation_date",
+        "created_at"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "transaction": "OneToOneField",
+        "confirmed": "BooleanField",
+        "confirmation_date": "DateTimeField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "payments",
+      "modelo": "Transaction",
+      "tabela": "pagamentos_transacao",
+      "campos_total": 7,
+      "campos": [
+        "reconciliacao",
+        "id",
+        "external_reference",
+        "gateway",
+        "status",
+        "gateway_response",
+        "created_at"
+      ],
+      "tipos": {
+        "reconciliacao": "OneToOneField",
+        "id": "BigAutoField",
+        "external_reference": "CharField",
+        "gateway": "CharField",
+        "status": "CharField",
+        "gateway_response": "TextField",
+        "created_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "InventoryMovement",
+      "tabela": "farmacia_movimentoestoque",
+      "campos_total": 19,
+      "campos": [
+        "consumo_procedure",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "lot",
+        "type"
+      ],
+      "tipos": {
+        "consumo_procedure": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "lot": "ForeignKey",
+        "type": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "Lot",
+      "tabela": "farmacia_lote",
+      "campos_total": 20,
+      "campos": [
+        "consumos_procedure",
+        "movimentos",
+        "material_request_items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name"
+      ],
+      "tipos": {
+        "consumos_procedure": "ForeignKey",
+        "movimentos": "ForeignKey",
+        "material_request_items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "MaterialRequisition",
+      "tabela": "farmacia_requisicaomaterial",
+      "campos_total": 20,
+      "campos": [
+        "items",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "sector",
+        "requested_by_department",
+        "status"
+      ],
+      "tipos": {
+        "items": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "sector": "CharField",
+        "requested_by_department": "CharField",
+        "status": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "MaterialRequisitionItem",
+      "tabela": "farmacia_requisicaomaterialitem",
+      "campos_total": 18,
+      "campos": [
+        "movimentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "position",
+        "requisition",
+        "lot"
+      ],
+      "tipos": {
+        "movimentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "position": "PositiveIntegerField",
+        "requisition": "ForeignKey",
+        "lot": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "Product",
+      "tabela": "farmacia_produto",
+      "campos_total": 24,
+      "campos": [
+        "procedures_selected",
+        "materiais_padrao_procedure",
+        "consumos_procedure",
+        "invoiceitem",
+        "lotes",
+        "saleitem",
+        "prescricoes_prontuario",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at"
+      ],
+      "tipos": {
+        "procedures_selected": "ManyToManyField",
+        "materiais_padrao_procedure": "ForeignKey",
+        "consumos_procedure": "ForeignKey",
+        "invoiceitem": "ForeignKey",
+        "lotes": "ForeignKey",
+        "saleitem": "ForeignKey",
+        "prescricoes_prontuario": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "ParentCategory",
+      "tabela": "farmacia_categoriapai",
+      "campos_total": 14,
+      "campos": [
+        "subcategorias",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description"
+      ],
+      "tipos": {
+        "subcategorias": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "ProductCategory",
+      "tabela": "farmacia_categoriaproduto",
+      "campos_total": 15,
+      "campos": [
+        "produtos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "parent_category"
+      ],
+      "tipos": {
+        "produtos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "parent_category": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "Sale",
+      "tabela": "farmacia_venda",
+      "campos_total": 16,
+      "campos": [
+        "invoice",
+        "itens",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "number",
+        "patient"
+      ],
+      "tipos": {
+        "invoice": "OneToOneField",
+        "itens": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "number": "CharField",
+        "patient": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "pharmacy",
+      "modelo": "SaleItem",
+      "tabela": "farmacia_itemvenda",
+      "campos_total": 19,
+      "campos": [
+        "invoiceitem",
+        "movimentos",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "position"
+      ],
+      "tipos": {
+        "invoiceitem": "ForeignKey",
+        "movimentos": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "position": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "reception",
+      "modelo": "ReceptionCheckin",
+      "tabela": "recepcao_checkinrecepcao",
+      "campos_total": 22,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "request",
+        "invoice",
+        "attendant"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "request": "OneToOneField",
+        "invoice": "OneToOneField",
+        "attendant": "ForeignKey"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "surgery",
+      "modelo": "Surgery",
+      "tabela": "cirurgia_cirurgia",
+      "campos_total": 25,
+      "campos": [
+        "invoice",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "surgeon",
+        "procedure"
+      ],
+      "tipos": {
+        "invoice": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "surgeon": "ForeignKey",
+        "procedure": "CharField"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "surgery",
+      "modelo": "SmallSurgery",
+      "tabela": "cirurgia_cirurgia",
+      "campos_total": 25,
+      "campos": [
+        "invoice",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "surgeon",
+        "procedure"
+      ],
+      "tipos": {
+        "invoice": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "surgeon": "ForeignKey",
+        "procedure": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "surgery",
+      "modelo": "LargeSurgery",
+      "tabela": "cirurgia_cirurgia",
+      "campos_total": 25,
+      "campos": [
+        "invoice",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "patient",
+        "surgeon",
+        "procedure"
+      ],
+      "tipos": {
+        "invoice": "OneToOneField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "patient": "ForeignKey",
+        "surgeon": "ForeignKey",
+        "procedure": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "surgery",
+      "modelo": "SurgicalProcedure",
+      "tabela": "cirurgia_procedimentocirurgico",
+      "campos_total": 18,
+      "campos": [
+        "cirurgias",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "name",
+        "description",
+        "base_price"
+      ],
+      "tipos": {
+        "cirurgias": "ManyToManyField",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "name": "CharField",
+        "description": "TextField",
+        "base_price": "DecimalField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "tenants",
+      "modelo": "TenantConfiguration",
+      "tabela": "inquilinos_configuracaoinquilino",
+      "campos_total": 17,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "version",
+        "tenant",
+        "time_zone",
+        "currency",
+        "language",
+        "allows_multi_unit"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "tenant": "OneToOneField",
+        "time_zone": "CharField",
+        "currency": "CharField",
+        "language": "CharField",
+        "allows_multi_unit": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "tenants",
+      "modelo": "TenantFeatureFlag",
+      "tabela": "inquilinos_featureflagtenant",
+      "campos_total": 13,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "tenant",
+        "version",
+        "key",
+        "active"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "tenant": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "key": "CharField",
+        "active": "BooleanField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "tenants",
+      "modelo": "TenantSubscription",
+      "tabela": "inquilinos_assinaturatenant",
+      "campos_total": 16,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "version",
+        "tenant",
+        "plan",
+        "start_date",
+        "end_date",
+        "status"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "tenant": "ForeignKey",
+        "plan": "ForeignKey",
+        "start_date": "DateField",
+        "end_date": "DateField",
+        "status": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "tenants",
+      "modelo": "SubscriptionPlan",
+      "tabela": "inquilinos_planoassinatura",
+      "campos_total": 22,
+      "campos": [
+        "assinaturas",
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "version",
+        "description",
+        "name",
+        "order",
+        "type"
+      ],
+      "tipos": {
+        "assinaturas": "ForeignKey",
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "description": "TextField",
+        "name": "CharField",
+        "order": "PositiveIntegerField",
+        "type": "CharField"
+      },
+      "endpoint_existe": false
+    },
+    {
+      "app": "tenants",
+      "modelo": "Tenant",
+      "tabela": "inquilinos_inquilino",
+      "campos_total": 138,
+      "campos": [
+        "users",
+        "coverageplans",
+        "insurers",
+        "procedureauthorizations",
+        "tenantcoverageplans",
+        "companys",
+        "labexams",
+        "patients",
+        "samples",
+        "labrequests",
+        "labexamfields",
+        "results",
+        "resultitems",
+        "clinicalevents",
+        "medicalexams"
+      ],
+      "tipos": {
+        "users": "ForeignKey",
+        "coverageplans": "ForeignKey",
+        "insurers": "ForeignKey",
+        "procedureauthorizations": "ForeignKey",
+        "tenantcoverageplans": "ForeignKey",
+        "companys": "ForeignKey",
+        "labexams": "ForeignKey",
+        "patients": "ForeignKey",
+        "samples": "ForeignKey",
+        "labrequests": "ForeignKey",
+        "labexamfields": "ForeignKey",
+        "results": "ForeignKey",
+        "resultitems": "ForeignKey",
+        "clinicalevents": "ForeignKey",
+        "medicalexams": "ForeignKey"
+      },
+      "endpoint_existe": true
+    },
+    {
+      "app": "tenants",
+      "modelo": "TenantUsage",
+      "tabela": "inquilinos_usotenant",
+      "campos_total": 13,
+      "campos": [
+        "id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "custom_id",
+        "deleted",
+        "deleted_at",
+        "deleted_by",
+        "version",
+        "tenant",
+        "active_users",
+        "current_month_requests"
+      ],
+      "tipos": {
+        "id": "BigAutoField",
+        "created_at": "DateTimeField",
+        "updated_at": "DateTimeField",
+        "created_by": "ForeignKey",
+        "updated_by": "ForeignKey",
+        "custom_id": "CharField",
+        "deleted": "BooleanField",
+        "deleted_at": "DateTimeField",
+        "deleted_by": "ForeignKey",
+        "version": "PositiveIntegerField",
+        "tenant": "OneToOneField",
+        "active_users": "PositiveIntegerField",
+        "current_month_requests": "PositiveIntegerField"
+      },
+      "endpoint_existe": false
+    }
+  ],
+  "endpoints_por_modulo": {
+    "auth": [
+      {
+        "rota": "/api/v1/auth/user/",
+        "metodos": [
+          "get",
+          "patch"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/login/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/refresh/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/logout/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/password-reset/request/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/password-reset/confirm/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/auth/password/change/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "dashboard": [
+      {
+        "rota": "/api/v1/dashboard/stats/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/dashboard/analytics/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/dashboard/analytics/export/",
+        "metodos": [
+          "get"
+        ]
+      }
+    ],
+    "audit": [
+      {
+        "rota": "/api/v1/audit/atividade/relatorio/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/audit/atividade/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/audit/atividade/{id}/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/audit/usuarios/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/audit/usuarios/{id}/",
+        "metodos": [
+          "get"
+        ]
+      }
+    ],
+    "equipment_integrations": [
+      {
+        "rota": "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/worklist/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/results/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "clinical": [
+      {
+        "rota": "/api/v1/clinical/exam/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/exam/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/examfield/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/examfield/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequest/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequest/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequest/{id}/result_itens/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequest/{id}/resultado_itens/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequest/{id}/pdf_resultados/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequestitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/labrequestitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalexam/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalexam/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalexamfield/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalexamfield/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalresultfile/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/medicalresultfile/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/historia_clinica/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/clinical_history/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/historia_clinica/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/historia_clinica/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/historia_faturas/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/historia_pagamentos/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/invoice_history/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/patient/{id}/payment_history/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/resultitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/resultitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/sample/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/sample/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/resultitem/{id}/gravar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/resultitem/{id}/lancar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/clinical/resultitem/{id}/validar/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "consultations": [
+      {
+        "rota": "/api/v1/consultations/consultation/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/price/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/schedule/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/agenda/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/clinical_history/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/clinical_history/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/historia_clinica/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/historia_clinica/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/doctors/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/doctors/{id}/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/holiday/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/holiday/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/specialty/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/specialty/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/cancel/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/cancelar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/complete/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/concluir/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/create-invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/criar_invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/reschedule/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/consultations/consultation/{id}/remarcar/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "accounting": [
+      {
+        "rota": "/api/v1/accounting/account/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/account/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/entry/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/entry/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/financialreconciliation/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/financialreconciliation/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/movement/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/accounting/movement/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "nursing": [
+      {
+        "rota": "/api/v1/nursing/camaenfermaria/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/camaenfermaria/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/enfermariadashboard/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/evolucaoenfermagem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/evolucaoenfermagem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/internamentoenfermaria/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/internamentoenfermaria/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/prescricaoenfermagem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/prescricaoenfermagem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentocatalogo/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentocatalogo/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentocatalogomaterial/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentocatalogomaterial/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitemvalor/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitemvalor/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentomaterial/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentomaterial/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentomaterialvalor/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentomaterialvalor/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedure/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedure/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedure/{id}/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/registroenfermagem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/registroenfermagem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/sinalvitalenfermagem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/sinalvitalenfermagem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/ward/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/ward/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/{id}/concluir/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/{id}/executar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/{id}/marcar_faturado/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/nursing/procedimentoitem/{id}/nao_concluir/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "equipment": [
+      {
+        "rota": "/api/v1/equipment/daily_inspection/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/daily_inspection/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/equipment/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/equipment/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/incident/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/incident/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/inspecaodiaria/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/inspecaodiaria/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/maintenance/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/maintenance/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/manutencao/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/manutencao/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/ocorrencia/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/equipment/ocorrencia/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "external_entities": [
+      {
+        "rota": "/api/v1/external_entities/empresa/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/external_entities/empresa/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "pharmacy": [
+      {
+        "rota": "/api/v1/pharmacy/itemvenda/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/itemvenda/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/lot/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/lot/disponiveis/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/lot/estoque/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/lot/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/movimentoestoque/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/movimentoestoque/historico/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/movimentoestoque/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/menos_requisitados/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/mais_requisitados/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/consumo/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/setores_requisicao/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/product/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/requester_context/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/historico_movimentos/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterialitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterialitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/sale/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/sale/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/{id}/aviar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/pharmacy/requisicaomaterial/{id}/arquivar/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "billing": [
+      {
+        "rota": "/api/v1/billing/invoice/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/historico_faturamento/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/historico_faturamento/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoicehistory/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoicehistory/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoiceitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoiceitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/confirm-payment/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/confirm-payment-legacy/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/confirmar_pagamento/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/issue/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/emitir/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/void/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/billing/invoice/{id}/anular/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "bloodbank": [
+      {
+        "rota": "/api/v1/bloodbank/armazenamento/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/armazenamento/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/doacao/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/doacao/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/manutencaoarmazenamento/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/manutencaoarmazenamento/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/movimentoestoque/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/movimentoestoque/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/transfusao/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/transfusao/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/aviar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/registrar_desfecho_aviacao/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/liberar_reserva/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/reservar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/bloodbank/unidade/{id}/transfundir/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "identity": [
+      {
+        "rota": "/api/v1/identity/passwordresettoken/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/passwordresettoken/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/perfilprofissional/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/perfilprofissional/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/{id}/ativar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/{id}/activate/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/{id}/desativar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/identity/user/{id}/deactivate/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "tenants": [
+      {
+        "rota": "/api/v1/tenants/configuracaoinquilino/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/configuracaoinquilino/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/featureflagtenant/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/featureflagtenant/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/planoassinatura/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/planoassinatura/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/tenant/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/tenant/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/usotenant/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/tenants/usotenant/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "notifications": [
+      {
+        "rota": "/api/v1/notifications/logenvio/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/notifications/logenvio/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/notifications/notification/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/notifications/notification/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "payments": [
+      {
+        "rota": "/api/v1/payments/payment/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/payment/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/receipt/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/receipt/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/receipt/{id}/pdf/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/reconciliation/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/reconciliation/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/transaction/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/payments/transaction/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "reception": [
+      {
+        "rota": "/api/v1/reception/atendimento/{id}/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/atendimento/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/workspace/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/atendimento/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/cancelar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/concluir/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/criar_invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/criar_request/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/vincular_invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/vincular_request/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/registrar_payment/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/reception/checkin/{id}/iniciar_atendimento/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "insurer": [
+      {
+        "rota": "/api/v1/insurer/autorizacaoprocedimento/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/insurer/autorizacaoprocedimento/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/insurer/insurer/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/insurer/insurer/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/insurer/planocobertura/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/insurer/planocobertura/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "medical_records": [
+      {
+        "rota": "/api/v1/medical_records/prescricaoitem/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/medical_records/prescricaoitem/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/medical_records/record/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/medical_records/record/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "maternity": [
+      {
+        "rota": "/api/v1/maternity/gestacao/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/maternity/gestacao/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      }
+    ],
+    "surgery": [
+      {
+        "rota": "/api/v1/surgery/grandecirurgia/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/grandecirurgia/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/pequenacirurgia/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/pequenacirurgia/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/procedimentocirurgico/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/procedimentocirurgico/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/surgery/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/surgery/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/grandecirurgia/{id}/criar_invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/pequenacirurgia/{id}/criar_invoice/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/surgery/surgery/{id}/criar_invoice/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "human_resources": [
+      {
+        "rota": "/api/v1/human_resources/agregadofamiliar/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/agregadofamiliar/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/dispensa/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/dispensa/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/falta/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/falta/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/ferias/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/ferias/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/folhapagamento/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/folhapagamento/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/horaextra/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/horaextra/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/horario/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/horario/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/processodisciplinar/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/processodisciplinar/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/profissao/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/profissao/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/role/",
+        "metodos": [
+          "get",
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/role/{id}/",
+        "metodos": [
+          "get",
+          "put",
+          "patch",
+          "delete"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/{id}/ativar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/{id}/activate/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/{id}/desativar/",
+        "metodos": [
+          "post"
+        ]
+      },
+      {
+        "rota": "/api/v1/human_resources/employee/{id}/deactivate/",
+        "metodos": [
+          "post"
+        ]
+      }
+    ],
+    "monitoring": [
+      {
+        "rota": "/api/v1/monitoring/error/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/monitoring/error/{id}/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/monitoring/export_job/{id}/",
+        "metodos": [
+          "get"
+        ]
+      },
+      {
+        "rota": "/api/v1/monitoring/export_job/{id}/download/",
+        "metodos": [
+          "get"
+        ]
+      }
+    ]
+  },
+  "resumo": {
+    "total_apps": 27,
+    "total_modelos": 136,
+    "total_endpoints_modulos": 24
+  }
+}

@@ -9,7 +9,6 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
-import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
@@ -20,8 +19,7 @@ export default function ModuloRecursoPage() {
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
     const { t, tr } = useLanguage()
-    const workspaceScope = useWorkspaceScope()
-    const { modules } = useModulesCatalog(workspaceScope)
+    const { modules } = useModulesCatalog("neutral")
     const found = findModuleResource(groupKey, resourceKey, modules)
     const allGroups = Object.values(GROUPS)
     const requiredGroups =

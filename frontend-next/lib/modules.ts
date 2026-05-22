@@ -1,3 +1,5 @@
+import schema from "@/schema.generated.json"
+
 export type ModuleResource = {
   key: string
   label: string
@@ -584,6 +586,86 @@ export function discoverModulesFromApiRoot(
     .sort((a, b) => a.label.localeCompare(b.label, "pt"))
 }
 
+export function discoverModulesFromOpenApiSchema(
+  openApiSchema: Record<string, any> | null | undefined = schema as Record<string, any>
+): ModuleGroup[] {
+  const paths = (openApiSchema as any)?.paths
+  if (!paths || typeof paths !== "object") return []
+
+  const staticByEndpoint = new Map<
+    string,
+    { group: ModuleGroup; resource: ModuleResource }
+  >()
+  MODULES.forEach((group) => {
+    group.resources.forEach((resource) => {
+      staticByEndpoint.set(normalizeEndpoint(resource.endpoint), {
+        group,
+        resource,
+      })
+    })
+  })
+
+  const grouped = new Map<string, ModuleGroup>()
+
+  for (const [rawPath, methods] of Object.entries(paths)) {
+    if (typeof rawPath !== "string" || !rawPath.startsWith("/api/v1/")) continue
+
+    const route = rawPath.replace(/^\/api\/v1\//, "").replace(/\/+$/, "")
+    const parts = route.split("/").filter(Boolean)
+    if (parts.length !== 2) continue
+    if (parts.some((part) => part.includes("{") || part.includes("}"))) continue
+
+    const ops = methods && typeof methods === "object" ? (methods as Record<string, unknown>) : {}
+    if (!ops.get && !ops.post && !ops.put && !ops.patch && !ops.delete) continue
+
+    const [backendGroup, resourceSegment] = parts
+    const groupKey = canonicalModuleGroupKey(backendGroup)
+    const endpoint = normalizeEndpoint(`/${backendGroup}/${resourceSegment}/`)
+    const staticMatch = staticByEndpoint.get(endpoint)
+
+    const resource: ModuleResource = staticMatch
+      ? { ...staticMatch.resource, endpoint }
+      : {
+          key: normalizeResourceKey(resourceSegment),
+          label: titleFromSlug(resourceSegment),
+          endpoint,
+          adminListHref: inferAdminListHref(endpoint),
+        }
+
+    let group = grouped.get(groupKey)
+    if (!group) {
+      const staticGroup = MODULES.find((item) => item.key === groupKey)
+      group = {
+        key: groupKey,
+        label:
+          staticGroup?.label ||
+          staticMatch?.group.label ||
+          titleFromSlug(groupKey),
+        resources: [],
+      }
+      grouped.set(groupKey, group)
+    }
+
+    const exists = group.resources.some(
+      (item) =>
+        normalizeResourceKey(item.key) === normalizeResourceKey(resource.key) ||
+        normalizeEndpoint(item.endpoint) === endpoint
+    )
+    if (!exists) {
+      group.resources.push(resource)
+    }
+  }
+
+  return Array.from(grouped.values())
+    .map((group) => ({
+      ...group,
+      resources: group.resources.sort((a, b) =>
+        a.label.localeCompare(b.label, "pt")
+      ),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, "pt"))
+}
+
 export function mergeModules(
   baseModules: ModuleGroup[],
   discoveredModules: ModuleGroup[]
@@ -631,6 +713,27 @@ export function mergeModules(
 
       const inferredAdminHref =
         incomingResource.adminListHref || inferAdminListHref(incomingEndpoint)
+
+      const existingByAdminHref =
+        inferredAdminHref
+          ? target!.resources.find(
+              (item) =>
+                !!item.adminListHref &&
+                item.adminListHref.toLocaleLowerCase() ===
+                  inferredAdminHref.toLocaleLowerCase()
+            )
+          : undefined
+
+      if (existingByAdminHref) {
+        existingByAdminHref.endpoint = incomingEndpoint
+        if (!existingByAdminHref.label && incomingResource.label) {
+          existingByAdminHref.label = incomingResource.label
+        }
+        if (!existingByAdminHref.adminListHref) {
+          existingByAdminHref.adminListHref = inferredAdminHref
+        }
+        return
+      }
 
       target!.resources.push({
         ...incomingResource,

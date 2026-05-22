@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   MODULES,
   discoverModulesFromApiRoot,
+  discoverModulesFromOpenApiSchema,
   findModuleResource,
   mergeModules,
 } from "@/lib/modules"
@@ -32,6 +33,19 @@ describe("modules catalog discovery", () => {
     const found = findModuleResource("clinical", "customresource", merged)
     expect(found).not.toBeNull()
     expect(found?.resource.endpoint).toBe("/clinical/customresource/")
+  })
+
+  it("discovers resources from OpenAPI paths and keeps backend endpoint", () => {
+    const discovered = discoverModulesFromOpenApiSchema({
+      paths: {
+        "/api/v1/pharmacy/product/": { get: {} },
+      },
+    })
+    const merged = mergeModules(MODULES, discovered)
+    const found = findModuleResource("pharmacy", "product", merged)
+
+    expect(found).not.toBeNull()
+    expect(found?.resource.endpoint).toBe("/pharmacy/product/")
   })
 
   it("creates group entries for new backend groups not mapped in static catalog", () => {
@@ -69,6 +83,24 @@ describe("modules catalog discovery", () => {
     const transfusion = findModuleResource("bloodbank", "transfusao", merged)
 
     expect(transfusion?.resource.adminListHref).toBe("/admin/bloodbank/bloodtransfusion/")
+  })
+
+  it("deduplicates PT/EN endpoint aliases when they map to the same admin model", () => {
+    const discovered = discoverModulesFromApiRoot({
+      "equipment/daily_inspection": "/api/v1/equipment/daily_inspection/",
+    })
+    const merged = mergeModules(MODULES, discovered)
+    const equipment = merged.find((group) => group.key === "equipment")
+
+    expect(equipment).toBeDefined()
+    const inspectionResources =
+      equipment?.resources.filter(
+        (resource) =>
+          resource.adminListHref === "/admin/inspections/dailyinspection/"
+      ) || []
+
+    expect(inspectionResources).toHaveLength(1)
+    expect(inspectionResources[0].endpoint).toBe("/equipment/daily_inspection/")
   })
 
   it("keeps segregated surgery admin shortcuts available", () => {

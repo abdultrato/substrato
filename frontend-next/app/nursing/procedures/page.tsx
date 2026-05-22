@@ -1,127 +1,93 @@
-"use client"
+"use client";
 
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { apiFetchList } from "@/lib/api";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import Pagination from "@/components/ui/Pagination";
 
-import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
-import { apiFetch } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+type ProceduresList = { items: any[]; meta: any };
 
-type ProcedimentoRow = Record<string, any>
+export default function NursingProceduresPage() {
+  useAuthGuard();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const pageSize = 20;
 
-function fmtDate(value: any): string {
-  if (!value) return "-"
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return String(value)
-  return d.toLocaleString()
-}
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["nursing", "procedures", page, search],
+    queryFn: async () => {
+      return await apiFetchList<any>("/api/v1/nursing/procedures/?page={page}&search={search}");
+    },
+    placeholderData: keepPreviousData,
+  });
 
-export default function EnfermagemProcedimentosPage() {
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-
-  const [erro, setErro] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<ProcedimentoRow[]>([])
-
-  useEffect(() => {
-    let mounted = true
-    async function load() {
-      try {
-        setLoading(true)
-        setErro(null)
-        const res = await apiFetch<any>("/nursing/procedimento/")
-        const items = res && (res as any).results ? (res as any).results : res
-        if (!mounted) return
-        setData(Array.isArray(items) ? items : [])
-      } catch (e: any) {
-        if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimentos."))
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  const columns = useMemo(
-    () => [
-      {
-        header: "Código",
-        render: (p: ProcedimentoRow) => (
-          <Link
-            href={`/nursing/procedures/${p.id}`}
-            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
-          >
-            {p.id_custom || p.id || "-"}
-          </Link>
-        ),
-      },
-      { header: "Paciente", render: (p: ProcedimentoRow) => p.paciente || "-" },
-      { header: "Data", render: (p: ProcedimentoRow) => fmtDate(p.data_realizacao) },
-      { header: "Total", render: (p: ProcedimentoRow) => (p.total ?? "-") },
-    ],
-    []
-  )
+  if (isLoading) return <div>Carregando...</div>;
+  if (error) return <div>Erro ao carregar Procedures</div>;
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Procedimentos"
-          subtitle="Registos de procedimentos de enfermagem."
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/nursing/procedures/new"
-                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
-              >
-                Novo
-              </Link>
-              <Link
-                href="/resources/nursing/procedimento"
-                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-              >
-                Gerenciamento
-              </Link>
-              {podeVerAdmin ? (
-                <Link
-                  href="/admin/nursing/procedure/"
-                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                >
-                  Admin
-                </Link>
-              ) : null}
-            </div>
-          }
+    <AppLayout>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Procedures</h1>
+          <Link
+            href="./procedures/new"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            Novo Procedure
+          </Link>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Pesquisar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-lg border px-4 py-2"
         />
 
-        {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
-          </div>
-        ) : null}
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left">ID</th>
+                <th className="px-4 py-2 text-left">Nome</th>
+                <th className="px-4 py-2 text-left">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.items.map((item: any) => (
+                <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{item.id}</td>
+                  <td className="px-4 py-2">{item.name || item.title || "—"}</td>
+                  <td className="px-4 py-2 space-x-2">
+                    <Link
+                      href={`./procedures/${item.id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Ver
+                    </Link>
+                    <button
+                      onClick={() => window.location.href = `./procedures/${item.id}/edit`}
+                      className="text-green-600 hover:underline"
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {loading ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
-        ) : (
-          <DataTable<ProcedimentoRow>
-            columns={columns as any}
-            data={data}
-            emptyMessage="Nenhum procedimento encontrado."
-          />
-        )}
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil((data?.meta.count || 0) / pageSize)}
+          onPageChange={setPage}
+        />
       </div>
     </AppLayout>
-  )
+  );
 }
-
-
-

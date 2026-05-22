@@ -1,47 +1,26 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import AutoForm from "@/components/form/AutoForm";
 
-import AppLayout from "@/components/layout/AppLayout"
-import AutoForm from "@/components/form/AutoForm"
-import PageHeader from "@/components/ui/PageHeader"
-import { GROUPS } from "@/lib/rbac"
-
-export default function NovoProcedimentoPage() {
-  const router = useRouter()
+export default function CreateProcedurePage() {
+  useAuthGuard();
+  const router = useRouter();
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Novo procedimento"
-          subtitle="Preencha os dados para criar um novo procedimento."
-          actions={
-            <Link
-              href="/nursing/procedures"
-              className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-            >
-              Voltar
-            </Link>
-          }
-        />
-
+    <AppLayout>
+      <div className="max-w-2xl space-y-4">
+        <h1 className="text-2xl font-bold">Novo Procedure</h1>
+        
         <AutoForm
-          endpoint="/nursing/procedimento/"
+          endpoint="/api/v1/nursing/procedures/"
           method="post"
-          submitLabel="Criar"
-          onSuccess={(res) => {
-            const id = res?.id ?? res?.pk ?? null
-            if (id) {
-              router.push(`/nursing/procedures/${id}`)
-            } else {
-              router.push("/nursing/procedures")
-            }
-          }}
+          submitLabel="Criar Procedure"
+          onSuccess={(data) => router.push(`./procedures/${data.id}`),}
         />
       </div>
     </AppLayout>
-  )
+  );
 }
-

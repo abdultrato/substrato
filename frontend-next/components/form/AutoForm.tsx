@@ -9,6 +9,10 @@ import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 
 type Method = "post" | "put" | "patch"
+type RuntimeFormSpec = {
+  fields: FormField[]
+  submitFields: FormField[]
+}
 
 export type AutoFormProps = {
   endpoint: string
@@ -178,6 +182,72 @@ function renderInput(
   }
 }
 
+function inferFormFieldTypeFromMetadata(rawType?: string): FormField["type"] {
+  const t = String(rawType || "").toLocaleLowerCase()
+  if (t === "boolean") return "boolean"
+  if (t === "integer") return "integer"
+  if (t === "decimal" || t === "float" || t === "number") return "number"
+  if (t === "date") return "date"
+  if (t === "datetime") return "datetime"
+  if (t === "choice") return "select"
+  if (t === "list") return "array-string"
+  return "text"
+}
+
+function buildFallbackSpecFromOptions(metadata: any, method: Method): RuntimeFormSpec | null {
+  const actions = metadata && typeof metadata === "object" ? metadata.actions : null
+  if (!actions || typeof actions !== "object") return null
+
+  const methodKey = method.toUpperCase()
+  const actionSpec =
+    (actions as Record<string, any>)[methodKey] ||
+    (actions as Record<string, any>)[method] ||
+    (actions as Record<string, any>)[method.toLocaleLowerCase()]
+
+  if (!actionSpec || typeof actionSpec !== "object") return null
+
+  const fields: FormField[] = []
+
+  for (const [name, descRaw] of Object.entries(actionSpec)) {
+    const desc = descRaw && typeof descRaw === "object" ? (descRaw as Record<string, any>) : {}
+    const choices = Array.isArray(desc.choices) ? desc.choices : []
+    const enumValues = choices
+      .map((choice) => (choice && typeof choice === "object" ? choice.value : undefined))
+      .filter((value) => value !== undefined && value !== null)
+      .map((value) => String(value))
+    const enumLabels = choices
+      .map((choice) =>
+        choice && typeof choice === "object"
+          ? String(choice.display_name ?? choice.value ?? "")
+          : ""
+      )
+      .filter(Boolean)
+
+    const type = enumValues.length
+      ? "select"
+      : inferFormFieldTypeFromMetadata(String(desc.type || ""))
+
+    const label =
+      typeof desc.label === "string" && desc.label.trim()
+        ? desc.label.trim()
+        : name
+
+    fields.push({
+      name,
+      label,
+      required: !!desc.required,
+      readOnly: !!desc.read_only,
+      type,
+      enumValues: enumValues.length ? enumValues : undefined,
+      enumLabels: enumLabels.length ? enumLabels : undefined,
+    })
+  }
+
+  if (!fields.length) return null
+  const submitFields = fields.filter((field) => !field.readOnly)
+  return { fields, submitFields }
+}
+
 function normalizeDraftKey(method: Method, endpoint: string): string {
   const e = String(endpoint || "").split("?")[0].split("#")[0]
   return `draft:autofrm:${method}:${e}`
@@ -248,13 +318,44 @@ export default function AutoForm({
   onSuccess,
   config,
 }: AutoFormProps) {
-  const formSpec = useMemo(() => buildFormSpec(endpoint, method), [endpoint, method])
+  const schemaFormSpec = useMemo(() => buildFormSpec(endpoint, method), [endpoint, method])
+  const [fallbackFormSpec, setFallbackFormSpec] = useState<RuntimeFormSpec | null>(null)
+  const [loadingFallbackSpec, setLoadingFallbackSpec] = useState(false)
   const [values, setValues] = useState<Record<string, any>>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const etapas = config?.etapas || null
   const [etapaAtual, setEtapaAtual] = useState(0)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadFallbackSpec() {
+      setFallbackFormSpec(null)
+      if (schemaFormSpec) return
+      try {
+        setLoadingFallbackSpec(true)
+        const metadata = await apiFetch<any>(endpoint, {
+          method: "OPTIONS",
+          clientCache: false,
+        })
+        const derivedSpec = buildFallbackSpecFromOptions(metadata, method)
+        if (mounted) setFallbackFormSpec(derivedSpec)
+      } catch {
+        if (mounted) setFallbackFormSpec(null)
+      } finally {
+        if (mounted) setLoadingFallbackSpec(false)
+      }
+    }
+
+    loadFallbackSpec().catch(() => {})
+    return () => {
+      mounted = false
+    }
+  }, [endpoint, method, schemaFormSpec])
+
+  const formSpec = schemaFormSpec || fallbackFormSpec
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return
@@ -391,6 +492,13 @@ export default function AutoForm({
   }
 
   if (!formSpec) {
+    if (loadingFallbackSpec) {
+      return (
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm text-[var(--gray-700)]">
+          Carregando metadados do formulário...
+        </div>
+      )
+    }
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
         Formulário indisponível para este recurso no momento.

@@ -1,0 +1,26 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import AutoForm from "@/components/form/AutoForm";
+
+export default function CreateReceptionCheckinPage() {
+  useAuthGuard();
+  const router = useRouter();
+
+  return (
+    <AppLayout>
+      <div className="max-w-2xl space-y-4">
+        <h1 className="text-2xl font-bold">Novo ReceptionCheckin</h1>
+        
+        <AutoForm
+          endpoint="/api/v1/reception/reception-checkins/"
+          method="post"
+          submitLabel="Criar ReceptionCheckin"
+          onSuccess={(data) => router.push(`./reception-checkins/${data.id}`),}
+        />
+      </div>
+    </AppLayout>
+  );
+}

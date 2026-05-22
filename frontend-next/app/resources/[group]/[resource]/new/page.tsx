@@ -24,7 +24,7 @@ export default function NovoRecursoPage() {
     const { loading } = useAuthGuard()
     const { t, tr } = useLanguage()
     const { user } = useAuth()
-    const { modules } = useModulesCatalog()
+    const { modules } = useModulesCatalog("neutral")
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()

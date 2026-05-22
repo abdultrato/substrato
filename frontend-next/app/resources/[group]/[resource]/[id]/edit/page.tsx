@@ -27,7 +27,7 @@ export default function EditarRecursoPage() {
     const { user } = useAuth()
     const { t, tr } = useLanguage()
     const router = useRouter()
-    const { modules } = useModulesCatalog()
+    const { modules } = useModulesCatalog("neutral")
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const [initial, setInitial] = useState<Record<string, any> | null>(null)

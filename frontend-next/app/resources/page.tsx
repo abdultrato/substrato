@@ -8,7 +8,6 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
-import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { GROUPS } from "@/lib/rbac"
 
 const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
@@ -40,8 +39,7 @@ const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
 export default function RecursosPage() {
   const { loading } = useAuthGuard()
   const { t, tr, isPortuguese } = useLanguage()
-  const workspaceScope = useWorkspaceScope()
-  const { modules, isFetching, isError } = useModulesCatalog(workspaceScope)
+  const { modules, isFetching, isError } = useModulesCatalog("neutral")
   if (loading) return null
 
   return (

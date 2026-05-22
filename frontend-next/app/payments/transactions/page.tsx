@@ -1,222 +1,93 @@
-"use client"
+"use client";
 
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { apiFetchList } from "@/lib/api";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import Pagination from "@/components/ui/Pagination";
 
-import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
-import Pagination from "@/components/ui/Pagination"
-import { apiFetchList } from "@/lib/api"
-import { reconciliarTransacao, verificarTransacao } from "@/lib/api/payments"
-import { GROUPS } from "@/lib/rbac"
+type TransactionsList = { items: any[]; meta: any };
 
-type TransacaoRow = Record<string, any>
+export default function PaymentsTransactionsPage() {
+  useAuthGuard();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const pageSize = 20;
 
-function fmtDateTime(value: any): string {
-    if (!value) return "-"
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return String(value)
-    return d.toLocaleString()
-}
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["payments", "transactions", page, search],
+    queryFn: async () => {
+      return await apiFetchList<any>("/api/v1/payments/transactions/?page={page}&search={search}");
+    },
+    placeholderData: keepPreviousData,
+  });
 
-export default function PagamentosTransacoesPage() {
-    const [erro, setErro] = useState<string | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [data, setData] = useState<TransacaoRow[]>([])
-    const [page, setPage] = useState(1)
-    const [pageSize, setPageSize] = useState(50)
-    const [totalItems, setTotalItems] = useState(0)
-    const [totalPages, setTotalPages] = useState(1)
-    const [acaoEmCurso, setAcaoEmCurso] = useState<string | null>(null)
-    const [detalheGateway, setDetalheGateway] = useState<string | null>(null)
+  if (isLoading) return <div>Carregando...</div>;
+  if (error) return <div>Erro ao carregar Transactions</div>;
 
-    const carregar = useCallback(async () => {
-        const { items, meta } = await apiFetchList<TransacaoRow>("/payments/transaction/", {
-            page,
-            pageSize,
-        })
-        const total = meta.total ?? items.length
-        const computedTotalPages =
-            meta.totalPages ??
-            (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
-        setData(items)
-        setTotalItems(total || 0)
-        setTotalPages(computedTotalPages)
-        if (page > computedTotalPages) setPage(computedTotalPages)
-    }, [page, pageSize])
+  return (
+    <AppLayout>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Transactions</h1>
+          <Link
+            href="./transactions/new"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            Novo Transaction
+          </Link>
+        </div>
 
-    useEffect(() => {
-        let mounted = true
-        async function load() {
-            try {
-                setLoading(true)
-                setErro(null)
-                await carregar()
-            } catch (e: any) {
-                if (!mounted) return
-                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar transações."))
-            } finally {
-                if (mounted) setLoading(false)
-            }
-        }
-        load()
-        return () => {
-            mounted = false
-        }
-    }, [carregar])
+        <input
+          type="text"
+          placeholder="Pesquisar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-lg border px-4 py-2"
+        />
 
-    const executarAcao = useCallback(
-        async (id: number, tipo: "verificar" | "reconciliar") => {
-            const key = `${tipo}:${id}`
-            try {
-                setAcaoEmCurso(key)
-                setErro(null)
-                setDetalheGateway(null)
-
-                if (tipo === "verificar") {
-                    const resposta = await verificarTransacao(id)
-                    setDetalheGateway(JSON.stringify(resposta.gateway_payload ?? {}, null, 2))
-                } else {
-                    const resposta = await reconciliarTransacao(id, true)
-                    setDetalheGateway(JSON.stringify(resposta.reconciliation ?? {}, null, 2))
-                }
-
-                await carregar()
-            } catch (e: any) {
-                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao executar ação na transação."))
-            } finally {
-                setAcaoEmCurso(null)
-            }
-        },
-        [carregar]
-    )
-
-    const columns = useMemo(
-        () => [
-            {
-                header: "ID",
-                render: (t: TransacaoRow) => (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left">ID</th>
+                <th className="px-4 py-2 text-left">Nome</th>
+                <th className="px-4 py-2 text-left">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.items.map((item: any) => (
+                <tr key={item.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-2">{item.id}</td>
+                  <td className="px-4 py-2">{item.name || item.title || "—"}</td>
+                  <td className="px-4 py-2 space-x-2">
                     <Link
-                        href={`/resources/payments/transaction/${t.id}`}
-                        className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+                      href={`./transactions/${item.id}`}
+                      className="text-blue-600 hover:underline"
                     >
-                        {t.id || "-"}
+                      Ver
                     </Link>
-                ),
-            },
-            { header: "Gateway", render: (t: TransacaoRow) => t.gateway || "-" },
-            { header: "Referência", render: (t: TransacaoRow) => t.referencia_externa || t.external_reference || "-" },
-            { header: "Status", render: (t: TransacaoRow) => t.status || "-" },
-            { header: "Criado em", render: (t: TransacaoRow) => fmtDateTime(t.criado_em || t.created_at) },
-            {
-                header: "Ações",
-                render: (t: TransacaoRow) => {
-                    const id = Number(t.id)
-                    const verifyKey = `verificar:${id}`
-                    const reconcileKey = `reconciliar:${id}`
-                    return (
-                        <div className="flex flex-wrap gap-2">
-                            <button
-                                className="inline-flex items-center rounded-lg border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                                disabled={acaoEmCurso !== null}
-                                onClick={() => executarAcao(id, "verificar")}
-                            >
-                                {acaoEmCurso === verifyKey ? "Verificando..." : "Verificar"}
-                            </button>
-                            <button
-                                className="inline-flex items-center rounded-lg border border-blue-200 px-2 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-50 disabled:opacity-50"
-                                disabled={acaoEmCurso !== null}
-                                onClick={() => executarAcao(id, "reconciliar")}
-                            >
-                                {acaoEmCurso === reconcileKey ? "Reconciliando..." : "Reconciliar"}
-                            </button>
-                        </div>
-                    )
-                },
-            },
-        ],
-        [acaoEmCurso, executarAcao]
-    )
+                    <button
+                      onClick={() => window.location.href = `./transactions/${item.id}/edit`}
+                      className="text-green-600 hover:underline"
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-    return (
-        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
-            <div className="space-y-6">
-                <PageHeader
-                    title="Transações"
-                    subtitle="Transações registradas por gateway."
-                    actions={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Link
-                                href="/resources/payments/transaction/new"
-                                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
-                            >
-                                Novo
-                            </Link>
-                            <Link
-                                href="/resources/payments/transacao"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-                            >
-                                Gerenciamento
-                            </Link>
-                            <Link
-                                href="/payments"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-                            >
-                                Voltar
-                            </Link>
-                        </div>
-                    }
-                />
-
-                {erro ? (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        {erro}
-                    </div>
-                ) : null}
-
-                {detalheGateway ? (
-                    <pre className="overflow-x-auto rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
-                        {detalheGateway}
-                    </pre>
-                ) : null}
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-slate-600">Total: {totalItems}</div>
-                    <label className="flex items-center gap-2 text-sm text-slate-700">
-                        <span>Por página</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => {
-                                setPage(1)
-                                setPageSize(Number(e.target.value))
-                            }}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm"
-                        >
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                        </select>
-                    </label>
-                </div>
-
-                {loading ? (
-                    <div className="text-sm text-gray-500">Carregando...</div>
-                ) : (
-                    <>
-                        <DataTable<TransacaoRow>
-                            columns={columns as any}
-                            data={data}
-                            emptyMessage="Nenhuma transação encontrada."
-                        />
-                        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                    </>
-                )}
-            </div>
-        </AppLayout>
-    )
+        <Pagination
+          currentPage={page}
+          totalPages={Math.ceil((data?.meta.count || 0) / pageSize)}
+          onPageChange={setPage}
+        />
+      </div>
+    </AppLayout>
+  );
 }
-
-
-

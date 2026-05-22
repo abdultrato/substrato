@@ -1,0 +1,2788 @@
+{
+  "titulo": "Mapeamento Completo - Substrato ERP",
+  "data_geracao": "2026-05-22",
+  "versao_api": "1.0.0",
+  "resumo_geral": {
+    "total_modelos": 136,
+    "total_apps": 27,
+    "total_endpoints_modulos": 24,
+    "total_endpoints": 290,
+    "arquitetura": "Django REST Framework + Next.js + OpenAPI/Swagger"
+  },
+  "modelos_backend": {
+    "accounting": {
+      "total_modelos": 7,
+      "modelos": [
+        {
+          "nome": "Account",
+          "tabela": "contabilidade_conta",
+          "campos_total": 16,
+          "campos_principais": [
+            "saldo",
+            "ledgerline",
+            "movimentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "AccountBalance",
+          "tabela": "contabilidade_saldoconta",
+          "campos_total": 4,
+          "campos_principais": [
+            "id",
+            "account",
+            "current_balance",
+            "updated_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "FinancialReconciliation",
+          "tabela": "contabilidade_conciliacaofinanceira",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "LedgerEntry",
+          "tabela": "contabilidade_ledgerentry",
+          "campos_total": 23,
+          "campos_principais": [
+            "reversao",
+            "linhas",
+            "id",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "LedgerLine",
+          "tabela": "contabilidade_ledgerline",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "deleted_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "LegacyEntry",
+          "tabela": "contabilidade_lancamento",
+          "campos_total": 17,
+          "campos_principais": [
+            "movimentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "LegacyMovement",
+          "tabela": "contabilidade_movimento",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "ai_assistant": {
+      "total_modelos": 8,
+      "modelos": [
+        {
+          "nome": "AiSession",
+          "tabela": "ai_assistant_session",
+          "campos_total": 24,
+          "campos_principais": [
+            "messages",
+            "tool_calls",
+            "suggested_actions",
+            "operational_tasks",
+            "investigations",
+            "policy_events",
+            "id",
+            "created_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiMessage",
+          "tabela": "ai_assistant_message",
+          "campos_total": 20,
+          "campos_principais": [
+            "tool_calls",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiToolCall",
+          "tabela": "ai_assistant_tool_call",
+          "campos_total": 21,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiSuggestedAction",
+          "tabela": "ai_assistant_suggested_action",
+          "campos_total": 24,
+          "campos_principais": [
+            "operational_task",
+            "id",
+            "created_at",
+            "updated_at",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiOperationalTask",
+          "tabela": "ai_assistant_operational_task",
+          "campos_total": 23,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "deleted_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiInvestigation",
+          "tabela": "ai_assistant_investigation",
+          "campos_total": 24,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "deleted_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiKnowledgeEntry",
+          "tabela": "ai_assistant_knowledge_entry",
+          "campos_total": 29,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AiPolicyEvent",
+          "tabela": "ai_assistant_policy_event",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "audit_activities": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "UserActivity",
+          "tabela": "auditoria_atividades_atividadeusuario",
+          "campos_total": 24,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "billing": {
+      "total_modelos": 3,
+      "modelos": [
+        {
+          "nome": "Invoice",
+          "tabela": "faturamento_fatura",
+          "campos_total": 32,
+          "campos_principais": [
+            "historico",
+            "items",
+            "pagamentos",
+            "recibos",
+            "conciliacoes",
+            "checkin",
+            "id",
+            "created_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "InvoiceHistory",
+          "tabela": "faturamento_historicofatura",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "InvoiceItem",
+          "tabela": "faturamento_faturaitem",
+          "campos_total": 26,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "bloodbank": {
+      "total_modelos": 6,
+      "modelos": [
+        {
+          "nome": "BloodDonation",
+          "tabela": "bloodbank_blood_donation",
+          "campos_total": 39,
+          "campos_principais": [
+            "blood_units",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "BloodStorage",
+          "tabela": "bloodbank_blood_storage",
+          "campos_total": 23,
+          "campos_principais": [
+            "blood_units",
+            "stock_movements_out",
+            "stock_movements_in",
+            "maintenances",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "BloodUnit",
+          "tabela": "bloodbank_blood_unit",
+          "campos_total": 32,
+          "campos_principais": [
+            "transfusions",
+            "stock_movements",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "BloodTransfusion",
+          "tabela": "bloodbank_blood_transfusion",
+          "campos_total": 22,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "BloodStockMovement",
+          "tabela": "bloodbank_blood_stock_movement",
+          "campos_total": 19,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "BloodStorageMaintenance",
+          "tabela": "bloodbank_blood_storage_maintenance",
+          "campos_total": 21,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "clinical": {
+      "total_modelos": 14,
+      "modelos": [
+        {
+          "nome": "LabExam",
+          "tabela": "clinico_exame",
+          "campos_total": 24,
+          "campos_principais": [
+            "lab_requests",
+            "campos",
+            "lab_request_items",
+            "invoiceitem",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Patient",
+          "tabela": "clinico_paciente",
+          "campos_total": 57,
+          "campos_principais": [
+            "lab_requests",
+            "eventos_clinicos",
+            "clinicalhistory",
+            "evolucoes_enfermagem",
+            "prescricoes_enfermagem",
+            "registros_enfermagem",
+            "procedures_enfermagem",
+            "nursingvitalsign"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "Sample",
+          "tabela": "clinico_amostra",
+          "campos_total": 24,
+          "campos_principais": [
+            "exams",
+            "exam_sample_options",
+            "lab_requests",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "LabRequest",
+          "tabela": "clinico_requisicaoanalise",
+          "campos_total": 30,
+          "campos_principais": [
+            "result",
+            "eventos_clinicos",
+            "items",
+            "nursing_intake_record",
+            "integration_orders",
+            "invoice",
+            "checkin",
+            "id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "LabExamField",
+          "tabela": "clinico_examecampo",
+          "campos_total": 24,
+          "campos_principais": [
+            "results",
+            "referencias",
+            "mapeamentos_integracao",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Result",
+          "tabela": "clinico_resultado",
+          "campos_total": 16,
+          "campos_principais": [
+            "items",
+            "arquivos_medicos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ResultItem",
+          "tabela": "clinico_resultadoitem",
+          "campos_total": 23,
+          "campos_principais": [
+            "eventos_clinicos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ClinicalEvent",
+          "tabela": "clinico_eventoclinico",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ClinicalHistory",
+          "tabela": "clinico_historicoclinico",
+          "campos_total": 4,
+          "campos_principais": [
+            "id",
+            "patient",
+            "description",
+            "event_date"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "MedicalExam",
+          "tabela": "clinico_examemedico",
+          "campos_total": 22,
+          "campos_principais": [
+            "campos",
+            "lab_request_items",
+            "arquivos",
+            "invoiceitem",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "MedicalExamField",
+          "tabela": "clinico_examemedicocampo",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "LabRequestItem",
+          "tabela": "clinico_requisicaoitem",
+          "campos_total": 17,
+          "campos_principais": [
+            "arquivos_medicos",
+            "integration_order_items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "MedicalResultFile",
+          "tabela": "clinico_resultadomedicoarquivo",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ClinicalReference",
+          "tabela": "clinico_referenciaclinica",
+          "campos_total": 20,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "consultations": {
+      "total_modelos": 3,
+      "modelos": [
+        {
+          "nome": "ConsultationSpecialty",
+          "tabela": "consultas_especialidadeconsulta",
+          "campos_total": 17,
+          "campos_principais": [
+            "consultations",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Holiday",
+          "tabela": "consultas_feriado",
+          "campos_total": 14,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "MedicalConsultation",
+          "tabela": "consultas_consultamedica",
+          "campos_total": 28,
+          "campos_principais": [
+            "invoice",
+            "invoices",
+            "invoiceitem",
+            "cardex_registros",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "education": {
+      "total_modelos": 16,
+      "modelos": [
+        {
+          "nome": "Assignment",
+          "tabela": "education_assignment",
+          "campos_total": 27,
+          "campos_principais": [
+            "submissions",
+            "discipline_schedule_items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AssignmentSubmission",
+          "tabela": "education_assignment_submission",
+          "campos_total": 25,
+          "campos_principais": [
+            "grade_records",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "AttendanceRecord",
+          "tabela": "education_attendance_record",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Classroom",
+          "tabela": "education_classroom",
+          "campos_total": 21,
+          "campos_principais": [
+            "assignments",
+            "enrollments",
+            "examinations",
+            "random_tests",
+            "discipline_schedule_items",
+            "id",
+            "created_at",
+            "updated_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "LearningContent",
+          "tabela": "education_learning_content",
+          "campos_total": 20,
+          "campos_principais": [
+            "discipline_schedule_items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Course",
+          "tabela": "education_course",
+          "campos_total": 23,
+          "campos_principais": [
+            "assignments",
+            "classrooms",
+            "contents",
+            "examinations",
+            "random_tests",
+            "discipline_schedule_items",
+            "skills",
+            "id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Enrollment",
+          "tabela": "education_enrollment",
+          "campos_total": 22,
+          "campos_principais": [
+            "assignment_submissions",
+            "attendance",
+            "examination_attempts",
+            "grades",
+            "random_tests",
+            "discipline_schedule_progress",
+            "id",
+            "created_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Examination",
+          "tabela": "education_examination",
+          "campos_total": 28,
+          "campos_principais": [
+            "attempts",
+            "discipline_schedule_items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ExaminationAttempt",
+          "tabela": "education_examination_attempt",
+          "campos_total": 28,
+          "campos_principais": [
+            "grade_records",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "GradeRecord",
+          "tabela": "education_grade_record",
+          "campos_total": 20,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "RandomTest",
+          "tabela": "education_random_test",
+          "campos_total": 25,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "DisciplineScheduleItem",
+          "tabela": "education_discipline_schedule_item",
+          "campos_total": 25,
+          "campos_principais": [
+            "student_progress",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "DisciplineScheduleStudentStatus",
+          "tabela": "education_discipline_schedule_student_status",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Skill",
+          "tabela": "education_skill",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "StudentProfile",
+          "tabela": "education_student_profile",
+          "campos_total": 21,
+          "campos_principais": [
+            "assignment_submissions",
+            "enrollments",
+            "examination_attempts",
+            "random_tests",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "TeacherProfile",
+          "tabela": "education_teacher_profile",
+          "campos_total": 22,
+          "campos_principais": [
+            "assignments_created",
+            "submissions_graded",
+            "homeroom_classrooms",
+            "contents_authored",
+            "exam_attempts_graded",
+            "grades_given",
+            "random_tests",
+            "id"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "equipment": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "Equipment",
+          "tabela": "equipamentos_equipamento",
+          "campos_total": 25,
+          "campos_principais": [
+            "inspecoes_diarias",
+            "manutencoes",
+            "ocorrencias",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "equipment_integrations": {
+      "total_modelos": 8,
+      "modelos": [
+        {
+          "nome": "IntegrationMessage",
+          "tabela": "integracoes_equipamentos_integracaomensagem",
+          "campos_total": 24,
+          "campos_principais": [
+            "documentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationDocument",
+          "tabela": "integracoes_equipamentos_integracaodocumento",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationCredential",
+          "tabela": "integracoes_equipamentos_integracaocredencial",
+          "campos_total": 19,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationEquipment",
+          "tabela": "integracoes_equipamentos_integracaoequipamento",
+          "campos_total": 24,
+          "campos_principais": [
+            "mensagens",
+            "credenciais",
+            "mapeamentos_analitos",
+            "orders",
+            "roteamentos",
+            "id",
+            "created_at",
+            "updated_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationAnalyteMapping",
+          "tabela": "integracoes_equipamentos_integracaomapeamentoanalito",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationOrder",
+          "tabela": "integracoes_equipamentos_integracaoordem",
+          "campos_total": 17,
+          "campos_principais": [
+            "mensagens",
+            "items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationOrderItem",
+          "tabela": "integracoes_equipamentos_integracaoordemitem",
+          "campos_total": 16,
+          "campos_principais": [
+            "documentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "IntegrationRouting",
+          "tabela": "integracoes_equipamentos_integracaoroteamento",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "external_entities": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "Company",
+          "tabela": "entidades_empresa",
+          "campos_total": 24,
+          "campos_principais": [
+            "pacientes",
+            "requested_lab_requests",
+            "outsourced_lab_requests",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "human_resources": {
+      "total_modelos": 11,
+      "modelos": [
+        {
+          "nome": "Absence",
+          "tabela": "recursos_humanos_falta",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "DisciplinaryProcess",
+          "tabela": "recursos_humanos_processodisciplinar",
+          "campos_total": 20,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Employee",
+          "tabela": "recursos_humanos_funcionario",
+          "campos_total": 41,
+          "campos_principais": [
+            "perfil_professional_rh",
+            "consultations_realizadas",
+            "registros_prontuario",
+            "gestacoes_responsible",
+            "faltas",
+            "processos_disciplinares",
+            "agregados_familiares",
+            "hours_extras"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "FamilyDependent",
+          "tabela": "recursos_humanos_agregadofamiliar",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "JobTitle",
+          "tabela": "recursos_humanos_cargo",
+          "campos_total": 15,
+          "campos_principais": [
+            "funcionarios",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Overtime",
+          "tabela": "recursos_humanos_horaextra",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Payroll",
+          "tabela": "recursos_humanos_folhapagamento",
+          "campos_total": 39,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Profession",
+          "tabela": "recursos_humanos_profissao",
+          "campos_total": 21,
+          "campos_principais": [
+            "funcionarios",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Termination",
+          "tabela": "recursos_humanos_dispensa",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Vacation",
+          "tabela": "recursos_humanos_ferias",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "WorkSchedule",
+          "tabela": "recursos_humanos_horariotrabalho",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "identity": {
+      "total_modelos": 3,
+      "modelos": [
+        {
+          "nome": "PasswordResetToken",
+          "tabela": "identidade_passwordresettoken",
+          "campos_total": 5,
+          "campos_principais": [
+            "id",
+            "user",
+            "token",
+            "used",
+            "created_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ProfessionalProfile",
+          "tabela": "identidade_perfilprofissional",
+          "campos_total": 9,
+          "campos_principais": [
+            "id",
+            "user",
+            "employee",
+            "role",
+            "professional_registration",
+            "department",
+            "active",
+            "created_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "User",
+          "tabela": "identidade_user",
+          "campos_total": 421,
+          "campos_principais": [
+            "logentry",
+            "password_reset_tokens",
+            "perfil_professional",
+            "user_criado",
+            "user_atualizado",
+            "user_deleted",
+            "coverageplan_criado",
+            "coverageplan_atualizado"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "incidents": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "Incident",
+          "tabela": "ocorrencias_ocorrencia",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "inspections": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "DailyInspection",
+          "tabela": "inspecoes_inspecaodiaria",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "insurer": {
+      "total_modelos": 4,
+      "modelos": [
+        {
+          "nome": "CoveragePlan",
+          "tabela": "seguradora_planocobertura",
+          "campos_total": 21,
+          "campos_principais": [
+            "autorizacoes",
+            "overrides_por_tenant",
+            "pagamentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Insurer",
+          "tabela": "seguradora_seguradora",
+          "campos_total": 20,
+          "campos_principais": [
+            "planos",
+            "pagamentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ProcedureAuthorization",
+          "tabela": "seguradora_autorizacaoprocedimento",
+          "campos_total": 20,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "TenantCoveragePlan",
+          "tabela": "seguradora_tenantplanocobertura",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "maintenance": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "Maintenance",
+          "tabela": "manutencoes_manutencao",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "maternity": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "Pregnancy",
+          "tabela": "maternidade_gestacao",
+          "campos_total": 22,
+          "campos_principais": [
+            "id",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at",
+            "deleted_by"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "medical_records": {
+      "total_modelos": 2,
+      "modelos": [
+        {
+          "nome": "MedicalRecordEntry",
+          "tabela": "prontuario_registroprontuario",
+          "campos_total": 22,
+          "campos_principais": [
+            "itens_prescription",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "PrescriptionItem",
+          "tabela": "prontuario_prescricaoitem",
+          "campos_total": 19,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "monitoring": {
+      "total_modelos": 2,
+      "modelos": [
+        {
+          "nome": "TransactionalOutboxEvent",
+          "tabela": "monitoramento_eventooutbox",
+          "campos_total": 18,
+          "campos_principais": [
+            "id",
+            "event_id",
+            "event_type",
+            "aggregate_id",
+            "aggregate_version",
+            "tenant_identifier",
+            "trace_id",
+            "idempotency_key"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "SystemError",
+          "tabela": "monitoramento_errosistema",
+          "campos_total": 26,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "notifications": {
+      "total_modelos": 3,
+      "modelos": [
+        {
+          "nome": "DeliveryLog",
+          "tabela": "notificacoes_logenvio",
+          "campos_total": 5,
+          "campos_principais": [
+            "id",
+            "notification",
+            "status",
+            "response",
+            "created_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Notification",
+          "tabela": "notificacoes_notificacao",
+          "campos_total": 13,
+          "campos_principais": [
+            "logs_envio",
+            "id",
+            "patient",
+            "recipient",
+            "channel",
+            "subject",
+            "event_type",
+            "external_reference"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "NotificationTemplate",
+          "tabela": "notificacoes_templatenotificacao",
+          "campos_total": 4,
+          "campos_principais": [
+            "id",
+            "name",
+            "content",
+            "created_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "nursing": {
+      "total_modelos": 14,
+      "modelos": [
+        {
+          "nome": "NursingEvolution",
+          "tabela": "enfermagem_evolucaoenfermagem",
+          "campos_total": 15,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "NursingPrescription",
+          "tabela": "enfermagem_prescricaoenfermagem",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "NursingRecord",
+          "tabela": "enfermagem_registroenfermagem",
+          "campos_total": 21,
+          "campos_principais": [
+            "signals_vitais",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Procedure",
+          "tabela": "enfermagem_procedimento",
+          "campos_total": 29,
+          "campos_principais": [
+            "itens",
+            "materiais",
+            "invoices_legacy",
+            "invoices",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ProcedureCatalog",
+          "tabela": "enfermagem_procedimentocatalogo",
+          "campos_total": 22,
+          "campos_principais": [
+            "procedures_selected",
+            "materiais_padrao",
+            "itens_lancados",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProcedureCatalogMaterial",
+          "tabela": "enfermagem_procedimentocatalogomaterial",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProcedureItem",
+          "tabela": "enfermagem_procedimentoitem",
+          "campos_total": 27,
+          "campos_principais": [
+            "value",
+            "materiais_gerados",
+            "invoiceitem",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProcedureItemValue",
+          "tabela": "enfermagem_procedimentoitemvalor",
+          "campos_total": 14,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProcedureMaterial",
+          "tabela": "enfermagem_procedimentomaterial",
+          "campos_total": 22,
+          "campos_principais": [
+            "value",
+            "invoiceitem",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProcedureMaterialValue",
+          "tabela": "enfermagem_procedimentomaterialvalor",
+          "campos_total": 14,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "NursingVitalSign",
+          "tabela": "enfermagem_sinalvitalenfermagem",
+          "campos_total": 20,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Ward",
+          "tabela": "enfermagem_enfermaria",
+          "campos_total": 15,
+          "campos_principais": [
+            "camas",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "WardBed",
+          "tabela": "enfermagem_camaenfermaria",
+          "campos_total": 15,
+          "campos_principais": [
+            "internamentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "WardAdmission",
+          "tabela": "enfermagem_internamentoenfermaria",
+          "campos_total": 21,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "payments": {
+      "total_modelos": 5,
+      "modelos": [
+        {
+          "nome": "Payment",
+          "tabela": "pagamentos_pagamento",
+          "campos_total": 25,
+          "campos_principais": [
+            "historico",
+            "recibo",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "PaymentHistory",
+          "tabela": "pagamentos_historicopagamento",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Receipt",
+          "tabela": "pagamentos_recibo",
+          "campos_total": 6,
+          "campos_principais": [
+            "id",
+            "invoice",
+            "payment",
+            "number",
+            "value",
+            "created_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "Reconciliation",
+          "tabela": "pagamentos_reconciliacao",
+          "campos_total": 5,
+          "campos_principais": [
+            "id",
+            "transaction",
+            "confirmed",
+            "confirmation_date",
+            "created_at"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "Transaction",
+          "tabela": "pagamentos_transacao",
+          "campos_total": 7,
+          "campos_principais": [
+            "reconciliacao",
+            "id",
+            "external_reference",
+            "gateway",
+            "status",
+            "gateway_response",
+            "created_at"
+          ],
+          "endpoint_existe": true
+        }
+      ]
+    },
+    "pharmacy": {
+      "total_modelos": 9,
+      "modelos": [
+        {
+          "nome": "InventoryMovement",
+          "tabela": "farmacia_movimentoestoque",
+          "campos_total": 19,
+          "campos_principais": [
+            "consumo_procedure",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Lot",
+          "tabela": "farmacia_lote",
+          "campos_total": 20,
+          "campos_principais": [
+            "consumos_procedure",
+            "movimentos",
+            "material_request_items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "MaterialRequisition",
+          "tabela": "farmacia_requisicaomaterial",
+          "campos_total": 20,
+          "campos_principais": [
+            "items",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "MaterialRequisitionItem",
+          "tabela": "farmacia_requisicaomaterialitem",
+          "campos_total": 18,
+          "campos_principais": [
+            "movimentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Product",
+          "tabela": "farmacia_produto",
+          "campos_total": 24,
+          "campos_principais": [
+            "procedures_selected",
+            "materiais_padrao_procedure",
+            "consumos_procedure",
+            "invoiceitem",
+            "lotes",
+            "saleitem",
+            "prescricoes_prontuario",
+            "id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "ParentCategory",
+          "tabela": "farmacia_categoriapai",
+          "campos_total": 14,
+          "campos_principais": [
+            "subcategorias",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "ProductCategory",
+          "tabela": "farmacia_categoriaproduto",
+          "campos_total": 15,
+          "campos_principais": [
+            "produtos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Sale",
+          "tabela": "farmacia_venda",
+          "campos_total": 16,
+          "campos_principais": [
+            "invoice",
+            "itens",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "SaleItem",
+          "tabela": "farmacia_itemvenda",
+          "campos_total": 19,
+          "campos_principais": [
+            "invoiceitem",
+            "movimentos",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "reception": {
+      "total_modelos": 1,
+      "modelos": [
+        {
+          "nome": "ReceptionCheckin",
+          "tabela": "recepcao_checkinrecepcao",
+          "campos_total": 22,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "surgery": {
+      "total_modelos": 4,
+      "modelos": [
+        {
+          "nome": "Surgery",
+          "tabela": "cirurgia_cirurgia",
+          "campos_total": 25,
+          "campos_principais": [
+            "invoice",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "SmallSurgery",
+          "tabela": "cirurgia_cirurgia",
+          "campos_total": 25,
+          "campos_principais": [
+            "invoice",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "LargeSurgery",
+          "tabela": "cirurgia_cirurgia",
+          "campos_total": 25,
+          "campos_principais": [
+            "invoice",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "SurgicalProcedure",
+          "tabela": "cirurgia_procedimentocirurgico",
+          "campos_total": 18,
+          "campos_principais": [
+            "cirurgias",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    },
+    "tenants": {
+      "total_modelos": 6,
+      "modelos": [
+        {
+          "nome": "TenantConfiguration",
+          "tabela": "inquilinos_configuracaoinquilino",
+          "campos_total": 17,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "TenantFeatureFlag",
+          "tabela": "inquilinos_featureflagtenant",
+          "campos_total": 13,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "TenantSubscription",
+          "tabela": "inquilinos_assinaturatenant",
+          "campos_total": 16,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "SubscriptionPlan",
+          "tabela": "inquilinos_planoassinatura",
+          "campos_total": 22,
+          "campos_principais": [
+            "assinaturas",
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted"
+          ],
+          "endpoint_existe": false
+        },
+        {
+          "nome": "Tenant",
+          "tabela": "inquilinos_inquilino",
+          "campos_total": 138,
+          "campos_principais": [
+            "users",
+            "coverageplans",
+            "insurers",
+            "procedureauthorizations",
+            "tenantcoverageplans",
+            "companys",
+            "labexams",
+            "patients"
+          ],
+          "endpoint_existe": true
+        },
+        {
+          "nome": "TenantUsage",
+          "tabela": "inquilinos_usotenant",
+          "campos_total": 13,
+          "campos_principais": [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "custom_id",
+            "deleted",
+            "deleted_at"
+          ],
+          "endpoint_existe": false
+        }
+      ]
+    }
+  },
+  "endpoints_por_modulo": {
+    "auth": {
+      "total_endpoints": 7,
+      "rotas_amostra": [
+        "/api/v1/auth/user/",
+        "/api/v1/auth/login/",
+        "/api/v1/auth/refresh/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "patch"
+      ]
+    },
+    "dashboard": {
+      "total_endpoints": 3,
+      "rotas_amostra": [
+        "/api/v1/dashboard/stats/",
+        "/api/v1/dashboard/analytics/",
+        "/api/v1/dashboard/analytics/export/"
+      ],
+      "metodos_disponíveis": [
+        "get"
+      ]
+    },
+    "audit": {
+      "total_endpoints": 5,
+      "rotas_amostra": [
+        "/api/v1/audit/atividade/relatorio/pdf/",
+        "/api/v1/audit/atividade/",
+        "/api/v1/audit/atividade/{id}/"
+      ],
+      "metodos_disponíveis": [
+        "get"
+      ]
+    },
+    "equipment_integrations": {
+      "total_endpoints": 2,
+      "rotas_amostra": [
+        "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/worklist/",
+        "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/results/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get"
+      ]
+    },
+    "clinical": {
+      "total_endpoints": 34,
+      "rotas_amostra": [
+        "/api/v1/clinical/exam/",
+        "/api/v1/clinical/exam/{id}/",
+        "/api/v1/clinical/examfield/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "consultations": {
+      "total_endpoints": 23,
+      "rotas_amostra": [
+        "/api/v1/consultations/consultation/",
+        "/api/v1/consultations/consultation/price/",
+        "/api/v1/consultations/consultation/schedule/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "accounting": {
+      "total_endpoints": 8,
+      "rotas_amostra": [
+        "/api/v1/accounting/account/",
+        "/api/v1/accounting/account/{id}/",
+        "/api/v1/accounting/entry/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "nursing": {
+      "total_endpoints": 34,
+      "rotas_amostra": [
+        "/api/v1/nursing/camaenfermaria/",
+        "/api/v1/nursing/camaenfermaria/{id}/",
+        "/api/v1/nursing/enfermariadashboard/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "equipment": {
+      "total_endpoints": 14,
+      "rotas_amostra": [
+        "/api/v1/equipment/daily_inspection/",
+        "/api/v1/equipment/daily_inspection/{id}/",
+        "/api/v1/equipment/equipment/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "external_entities": {
+      "total_endpoints": 2,
+      "rotas_amostra": [
+        "/api/v1/external_entities/empresa/",
+        "/api/v1/external_entities/empresa/{id}/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "pharmacy": {
+      "total_endpoints": 25,
+      "rotas_amostra": [
+        "/api/v1/pharmacy/itemvenda/",
+        "/api/v1/pharmacy/itemvenda/{id}/",
+        "/api/v1/pharmacy/lot/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "billing": {
+      "total_endpoints": 16,
+      "rotas_amostra": [
+        "/api/v1/billing/invoice/",
+        "/api/v1/billing/invoice/historico_faturamento/",
+        "/api/v1/billing/invoice/historico_faturamento/pdf/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "bloodbank": {
+      "total_endpoints": 17,
+      "rotas_amostra": [
+        "/api/v1/bloodbank/armazenamento/",
+        "/api/v1/bloodbank/armazenamento/{id}/",
+        "/api/v1/bloodbank/doacao/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "identity": {
+      "total_endpoints": 10,
+      "rotas_amostra": [
+        "/api/v1/identity/passwordresettoken/",
+        "/api/v1/identity/passwordresettoken/{id}/",
+        "/api/v1/identity/perfilprofissional/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "tenants": {
+      "total_endpoints": 10,
+      "rotas_amostra": [
+        "/api/v1/tenants/configuracaoinquilino/",
+        "/api/v1/tenants/configuracaoinquilino/{id}/",
+        "/api/v1/tenants/featureflagtenant/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "notifications": {
+      "total_endpoints": 4,
+      "rotas_amostra": [
+        "/api/v1/notifications/logenvio/",
+        "/api/v1/notifications/logenvio/{id}/",
+        "/api/v1/notifications/notification/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "payments": {
+      "total_endpoints": 9,
+      "rotas_amostra": [
+        "/api/v1/payments/payment/",
+        "/api/v1/payments/payment/{id}/",
+        "/api/v1/payments/receipt/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "reception": {
+      "total_endpoints": 14,
+      "rotas_amostra": [
+        "/api/v1/reception/atendimento/{id}/",
+        "/api/v1/reception/checkin/",
+        "/api/v1/reception/checkin/{id}/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "insurer": {
+      "total_endpoints": 6,
+      "rotas_amostra": [
+        "/api/v1/insurer/autorizacaoprocedimento/",
+        "/api/v1/insurer/autorizacaoprocedimento/{id}/",
+        "/api/v1/insurer/insurer/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "medical_records": {
+      "total_endpoints": 4,
+      "rotas_amostra": [
+        "/api/v1/medical_records/prescricaoitem/",
+        "/api/v1/medical_records/prescricaoitem/{id}/",
+        "/api/v1/medical_records/record/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "maternity": {
+      "total_endpoints": 2,
+      "rotas_amostra": [
+        "/api/v1/maternity/gestacao/",
+        "/api/v1/maternity/gestacao/{id}/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "surgery": {
+      "total_endpoints": 11,
+      "rotas_amostra": [
+        "/api/v1/surgery/grandecirurgia/",
+        "/api/v1/surgery/grandecirurgia/{id}/",
+        "/api/v1/surgery/pequenacirurgia/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "human_resources": {
+      "total_endpoints": 26,
+      "rotas_amostra": [
+        "/api/v1/human_resources/agregadofamiliar/",
+        "/api/v1/human_resources/agregadofamiliar/{id}/",
+        "/api/v1/human_resources/dispensa/"
+      ],
+      "metodos_disponíveis": [
+        "post",
+        "get",
+        "delete",
+        "put",
+        "patch"
+      ]
+    },
+    "monitoring": {
+      "total_endpoints": 4,
+      "rotas_amostra": [
+        "/api/v1/monitoring/error/",
+        "/api/v1/monitoring/error/{id}/",
+        "/api/v1/monitoring/export_job/{id}/"
+      ],
+      "metodos_disponíveis": [
+        "get"
+      ]
+    }
+  },
+  "autoform_info": {
+    "localizado": "frontend-next/components/form/AutoForm.tsx",
+    "como_funciona": "AutoForm é um componente React reutilizável que gera formulários dinâmicos baseados no schema OpenAPI gerado automaticamente. Funciona da seguinte forma:\n1. Recebe 'endpoint' (rota da API) e 'method' (post/put/patch)\n2. Chama buildFormSpec(endpoint, method) que:\n   - Busca o path no schema.json\n   - Extrai o requestBody schema dos components\n   - Mapeia tipos OpenAPI para tipos de formulário (text, number, date, select, etc)\n3. Constrói schema Zod para validação client-side\n4. Renderiza campos com tipos específicos (input, select, checkbox, textarea)\n5. Valida e envia via apiFetch ao servidor\n6. Suporta etapas/wizard mode quando config.etapas é fornecido\n7. Permite customização via ResourceFormConfig: labels, hints, field order, readonly fields",
+    "tipos_campo_suportados": [
+      "text",
+      "number",
+      "integer",
+      "boolean",
+      "date",
+      "datetime",
+      "select",
+      "array-string"
+    ],
+    "features": [
+      "Validação Zod automática",
+      "Multi-step forms (etapas)",
+      "Campos read-only configuráveis",
+      "Componentes de widget customizável (textarea)",
+      "Suporte a localStorage para lembrar valores",
+      "Enum labels from x-choices ou x-enumNames",
+      "Tratamento de erros e mensagens de sucesso",
+      "Integração com schema.json gerado pelo drf-spectacular"
+    ]
+  },
+  "schema_generation": {
+    "script": "generate_schema.py",
+    "output": "frontend-next/schema.json",
+    "tipo": "OpenAPI 3.0.2",
+    "gerador": "drf-spectacular",
+    "comando": "python generate_schema.py",
+    "url_schema_custom": "frontend-next/schema.generated.json",
+    "funcionalidade": "Script que executa à cada build para sincronizar schema da API com frontend.\nLê todos os viewsets registrados em api/v1/routing/routes.py\nExtrai schemas de request/response de cada endpoint\nGera arquivo OpenAPI JSON que AutoForm utiliza",
+    "como_funciona": {
+      "1_coleta": "Iterates através de todos os VIEWSET_GROUPS em routes.py",
+      "2_análise": "Para cada viewset, extrai serializers (request/response schemas)",
+      "3_mapping": "Mapeia models Django → serializers → OpenAPI schemas",
+      "4_geração": "Compila tudo em um único arquivo schema.json",
+      "5_output": "Salva em frontend-next/schema.json (42k linhas)"
+    }
+  },
+  "fluxo_crud_completo": {
+    "CREATE": {
+      "método": "POST",
+      "endpoint": "/api/v1/{modulo}/{modelo}/",
+      "frontend": "AutoForm com method='post' + endpoint",
+      "passos": [
+        "1. User acessa página de criar novo recurso",
+        "2. Componente carrega AutoForm({endpoint, method: 'post'})",
+        "3. AutoForm busca schema no schema.json",
+        "4. Renderiza formulário com campos do requestBody",
+        "5. User preenche dados",
+        "6. Validação Zod no client",
+        "7. POST /api/v1/{modulo}/{modelo}/",
+        "8. Django valida + salva",
+        "9. Retorna dados criado + ID",
+        "10. Toast de sucesso"
+      ]
+    },
+    "READ": {
+      "método": "GET",
+      "endpoint": "/api/v1/{modulo}/{modelo}/ ou /{id}/",
+      "frontend": "useEffect + fetch",
+      "passos": [
+        "1. GET /api/v1/{modulo}/{modelo}/{id}/",
+        "2. Backend retorna serializer instance",
+        "3. Frontend renderiza em leitura ou form"
+      ]
+    },
+    "UPDATE": {
+      "método": "PUT/PATCH",
+      "endpoint": "/api/v1/{modulo}/{modelo}/{id}/",
+      "frontend": "AutoForm com method='put' + initialValues",
+      "passos": [
+        "1. Carregar dados via GET",
+        "2. AutoForm com initialValues populadas",
+        "3. Campos read-only: id, created_at, etc",
+        "4. User edita",
+        "5. PUT/PATCH para atualizar",
+        "6. Backend valida",
+        "7. Retorna dados atualizados"
+      ]
+    },
+    "DELETE": {
+      "método": "DELETE",
+      "endpoint": "/api/v1/{modulo}/{modelo}/{id}/",
+      "frontend": "Botão + confirmação",
+      "passos": [
+        "1. User clica 'Deletar'",
+        "2. Modal de confirmação",
+        "3. DELETE /api/v1/{modulo}/{modelo}/{id}/",
+        "4. Soft-delete (deleted=True, deleted_at=now)",
+        "5. Redireciona para lista"
+      ]
+    }
+  },
+  "stack_tecnológico": {
+    "backend": [
+      "Django 4.2+",
+      "Django REST Framework",
+      "drf-spectacular (OpenAPI)",
+      "PostgreSQL",
+      "Celery + Redis",
+      "Docker"
+    ],
+    "frontend": [
+      "Next.js 14+",
+      "React 18+",
+      "TypeScript",
+      "Zod (validação)",
+      "Tailwind CSS",
+      "Shadcn/ui components"
+    ],
+    "observabilidade": [
+      "Prometheus",
+      "Grafana",
+      "Sentry"
+    ]
+  },
+  "notas_importantes": [
+    "Todos os endpoints têm permissões RBAC (RBACPermission)",
+    "Multi-tenant: tenant é derivado automaticamente de request.tenant",
+    "Campos read-only em frontend: id, created_at, updated_at, created_by, etc",
+    "Schema.json tem 42.359 linhas e contém TODOS os endpoints",
+    "AutoForm usa formBuilder.ts para mapear OpenAPI → componentes React",
+    "Validação dupla: Zod (client) + DRF serializers (server)",
+    "Soft-delete padrão: deleted_at, deleted_by, deleted (boolean)",
+    "Versionamento automático com field 'version'",
+    "Compatibilidade com aliases legados português/inglês nos serializers"
+  ],
+  "exemplo_crud_patient": {
+    "listar": "GET /api/v1/clinical/patient/",
+    "criar": "POST /api/v1/clinical/patient/",
+    "recuperar": "GET /api/v1/clinical/patient/{id}/",
+    "atualizar": "PUT /api/v1/clinical/patient/{id}/",
+    "deletar": "DELETE /api/v1/clinical/patient/{id}/",
+    "campos_principais": [
+      "id, custom_id (PAC-000123)",
+      "name, birth_date, gender",
+      "blood_type (O+, A-, etc)",
+      "pregnant, gestational_age_weeks",
+      "document_type, document_number",
+      "address_street, address_number, address_city",
+      "created_at, updated_at"
+    ]
+  }
+}

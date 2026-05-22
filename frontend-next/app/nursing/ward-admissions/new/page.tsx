@@ -1,0 +1,26 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import AppLayout from "@/components/layout/AppLayout";
+import AutoForm from "@/components/form/AutoForm";
+
+export default function CreateWardAdmissionPage() {
+  useAuthGuard();
+  const router = useRouter();
+
+  return (
+    <AppLayout>
+      <div className="max-w-2xl space-y-4">
+        <h1 className="text-2xl font-bold">Novo WardAdmission</h1>
+        
+        <AutoForm
+          endpoint="/api/v1/nursing/ward-admissions/"
+          method="post"
+          submitLabel="Criar WardAdmission"
+          onSuccess={(data) => router.push(`./ward-admissions/${data.id}`),}
+        />
+      </div>
+    </AppLayout>
+  );
+}
