@@ -1,6 +1,7 @@
 from django.http import HttpResponse
+from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -101,7 +102,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         result = getattr(request_record, "result", None)
         if not result or not result.items.filter(status=ResultState.VALIDATED).exists():
-            raise ValidationError("Não é possível emitir PDF sem nenhum result validado.")
+            return self._results_pdf_not_ready_response(request_record)
 
         queued = queue_export_if_requested(
             request,
@@ -118,6 +119,37 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'inline; filename="{filename}"'
         return resp
+
+    def _results_pdf_not_ready_response(self, request_record):
+        result = getattr(request_record, "result", None)
+        items = result.items.all() if result else LabRequestItem.objects.none()
+        summary = {
+            "total": items.count(),
+            "validated": items.filter(status=ResultState.VALIDATED).count(),
+            "pending": items.filter(status=ResultState.PENDING).count(),
+            "in_analysis": items.filter(status=ResultState.IN_ANALYSIS).count(),
+            "awaiting_validation": items.filter(status=ResultState.AWAITING_VALIDATION).count(),
+            "rejected": items.filter(status=ResultState.REJECTED).count(),
+        }
+        return Response(
+            {
+                "code": "lab_results_pdf_not_ready",
+                "status": "not_ready",
+                "expected": True,
+                "message": "O PDF ainda não pode ser emitido: valide pelo menos um resultado antes de gerar o documento.",
+                "message_en": "The PDF is not ready yet: validate at least one result before generating the document.",
+                "detail": "A emissão de PDF de resultados laboratoriais exige pelo menos um resultado validado.",
+                "action": "Lance e valide pelo menos um item de resultado; depois tente gerar o PDF novamente.",
+                "request": {
+                    "id": request_record.id,
+                    "custom_id": request_record.custom_id,
+                    "status": request_record.status,
+                    "clinical_status": request_record.clinical_status,
+                },
+                "summary": summary,
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
 
     @action(detail=True, methods=["get"], url_path="result_itens", url_name="result-itens")
     def result_items(self, request, pk=None):

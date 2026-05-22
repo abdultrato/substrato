@@ -19,3 +19,10 @@ class IdentityConfig(AppConfig):
         # Garante sincronização automática de flags (staff/superuser) via signals.
         with suppress(Exception):
             from . import signals  # noqa: F401
+
+        # Evita 500 no Admin em violações de integridade (NOT NULL, UNIQUE, FK),
+        # convertendo para mensagem amigável no próprio fluxo do admin.
+        with suppress(Exception):
+            from infrastructure.admin_integrity_guard import install_admin_integrity_guard
+
+            install_admin_integrity_guard()

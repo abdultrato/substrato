@@ -12,6 +12,7 @@ import logging
 from typing import Any
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
@@ -207,6 +208,28 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
         if isinstance(validation_errors, dict):
             problem_details["validationErrors"] = validation_errors
 
+        return Response(problem_details, status=status.HTTP_400_BAD_REQUEST)
+
+    # DB integrity violations (UNIQUE/NOT NULL/FK) should be treated as 4xx
+    # when they are triggered by client payloads.
+    if isinstance(exc, IntegrityError):
+        request_path = context.get("request").path if context.get("request") else None
+        raw = (str(exc) or "").strip()
+        detail = (
+            "Não foi possível concluir a operação: os dados enviados violaram uma "
+            "restrição de integridade."
+        )
+        if raw:
+            detail = f"{detail} {raw}"
+
+        problem_details = {
+            "type": "about:blank",
+            "status": status.HTTP_400_BAD_REQUEST,
+            "title": "Bad Request",
+            "detail": detail,
+            "instance": request_path,
+            "code": "INTEGRITY_ERROR",
+        }
         return Response(problem_details, status=status.HTTP_400_BAD_REQUEST)
 
     # Tentar usar handler padrão do DRF primeiro
