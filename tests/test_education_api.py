@@ -9,8 +9,11 @@ import pytest
 from apps.education.models import (
     Assignment,
     AssignmentSubmission,
+    AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
+    DisciplineScheduleStudentStatus,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -371,6 +374,34 @@ def _seed_scope(tenant: Tenant):
 def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     tenant = _tenant("tn-edu-student", "edu-student.local")
     scope = _seed_scope(tenant)
+    schedule_1 = DisciplineScheduleItem.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        item_type=DisciplineScheduleItem.ItemType.THEME,
+        title="Tema 1",
+        scheduled_date=timezone.localdate() + timedelta(days=1),
+        requires_attendance=True,
+    )
+    schedule_2 = DisciplineScheduleItem.objects.create(
+        tenant=tenant,
+        course=scope["course_2"],
+        classroom=scope["classroom_2"],
+        item_type=DisciplineScheduleItem.ItemType.THEME,
+        title="Tema 2",
+        scheduled_date=timezone.localdate() + timedelta(days=1),
+        requires_attendance=True,
+    )
+    progress_1 = DisciplineScheduleStudentStatus.objects.create(
+        tenant=tenant,
+        schedule_item=schedule_1,
+        enrollment=scope["enrollment_1"],
+    )
+    DisciplineScheduleStudentStatus.objects.create(
+        tenant=tenant,
+        schedule_item=schedule_2,
+        enrollment=scope["enrollment_2"],
+    )
     _authenticate(api_client, tenant=tenant, user=scope["student_user_1"])
 
     response = api_client.get("/api/v1/education/student/")
@@ -421,11 +452,47 @@ def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["random_test_1"].id}
 
+    response = api_client.get("/api/v1/education/discipline_schedule/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {schedule_1.id}
+
+    response = api_client.get("/api/v1/education/schedule_progress/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {progress_1.id}
+
 
 @pytest.mark.django_db
 def test_teacher_group_only_sees_owned_scope(api_client):
     tenant = _tenant("tn-edu-teacher", "edu-teacher.local")
     scope = _seed_scope(tenant)
+    schedule_1 = DisciplineScheduleItem.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        item_type=DisciplineScheduleItem.ItemType.THEME,
+        title="Tema 1",
+        scheduled_date=timezone.localdate() + timedelta(days=1),
+        requires_attendance=True,
+    )
+    schedule_2 = DisciplineScheduleItem.objects.create(
+        tenant=tenant,
+        course=scope["course_2"],
+        classroom=scope["classroom_2"],
+        item_type=DisciplineScheduleItem.ItemType.THEME,
+        title="Tema 2",
+        scheduled_date=timezone.localdate() + timedelta(days=1),
+        requires_attendance=True,
+    )
+    progress_1 = DisciplineScheduleStudentStatus.objects.create(
+        tenant=tenant,
+        schedule_item=schedule_1,
+        enrollment=scope["enrollment_1"],
+    )
+    DisciplineScheduleStudentStatus.objects.create(
+        tenant=tenant,
+        schedule_item=schedule_2,
+        enrollment=scope["enrollment_2"],
+    )
     _authenticate(api_client, tenant=tenant, user=scope["teacher_user_1"])
 
     response = api_client.get("/api/v1/education/teacher/")
@@ -483,6 +550,14 @@ def test_teacher_group_only_sees_owned_scope(api_client):
     response = api_client.get("/api/v1/education/random_test/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["random_test_1"].id}
+
+    response = api_client.get("/api/v1/education/discipline_schedule/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {schedule_1.id}
+
+    response = api_client.get("/api/v1/education/schedule_progress/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {progress_1.id}
 
 
 @pytest.mark.django_db
@@ -563,6 +638,129 @@ def test_teacher_cannot_schedule_random_test_for_unassigned_classroom(api_client
     )
 
     assert response.status_code == 400, _response_data(response)
+
+
+@pytest.mark.django_db
+def test_director_can_create_full_plan_and_roll_call_marks_absence_as_overdue(api_client):
+    tenant = _tenant("tn-edu-schedule-plan", "edu-schedule-plan.local")
+    scope = _seed_scope(tenant)
+    director = _user(tenant=tenant, username="director_schedule_plan", role_group="Diretor da Escola")
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    schedule_date = timezone.localdate() + timedelta(days=1)
+    response_plan = api_client.post(
+        "/api/v1/education/discipline_schedule/create_full_plan/",
+        {
+            "course": scope["course_1"].id,
+            "classroom": scope["classroom_1"].id,
+            "test_dates": [schedule_date.isoformat()],
+            "assignment_dates": [schedule_date.isoformat()],
+            "exercise_dates": [schedule_date.isoformat()],
+            "themes": [
+                {
+                    "title": "Tema 1",
+                    "scheduled_date": schedule_date.isoformat(),
+                    "description": "Introdução à unidade",
+                }
+            ],
+            "notes": "Plano trimestral",
+        },
+        format="json",
+    )
+
+    assert response_plan.status_code == 201, _response_data(response_plan)
+    payload = _response_data(response_plan)
+    assert payload["count"] >= 4
+    created_ids = {item["id"] for item in payload["results"]}
+
+    attendance_bound_item = DisciplineScheduleItem.objects.filter(
+        tenant=tenant,
+        id__in=created_ids,
+        scheduled_date=schedule_date,
+        requires_attendance=True,
+    ).first()
+    assert attendance_bound_item is not None
+
+    response_roll_call = api_client.post(
+        "/api/v1/education/attendance/roll_call/",
+        {
+            "classroom": scope["classroom_1"].id,
+            "attendance_date": schedule_date.isoformat(),
+            "present_student_ids": [],
+            "late_student_ids": [],
+            "notes": "Estudante ausente",
+        },
+        format="json",
+    )
+
+    assert response_roll_call.status_code == 200, _response_data(response_roll_call)
+    attendance = AttendanceRecord.objects.get(
+        tenant=tenant,
+        enrollment=scope["enrollment_1"],
+        attendance_date=schedule_date,
+    )
+    assert attendance.status == AttendanceRecord.Status.ABSENT
+
+    progress = DisciplineScheduleStudentStatus.objects.get(
+        tenant=tenant,
+        schedule_item=attendance_bound_item,
+        enrollment=scope["enrollment_1"],
+    )
+    assert progress.status == DisciplineScheduleStudentStatus.Status.OVERDUE
+    assert progress.attendance_status_snapshot == AttendanceRecord.Status.ABSENT
+
+
+@pytest.mark.django_db
+def test_schedule_progress_can_be_marked_success_and_item_can_be_completed(api_client):
+    tenant = _tenant("tn-edu-schedule-actions", "edu-schedule-actions.local")
+    scope = _seed_scope(tenant)
+    director = _user(tenant=tenant, username="director_schedule_actions", role_group="Diretor da Escola")
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    schedule_date = timezone.localdate() + timedelta(days=2)
+    response_create = api_client.post(
+        "/api/v1/education/discipline_schedule/",
+        {
+            "course": scope["course_1"].id,
+            "classroom": scope["classroom_1"].id,
+            "item_type": DisciplineScheduleItem.ItemType.THEME,
+            "title": "Tema de revisão",
+            "description": "Revisão geral da matéria",
+            "scheduled_date": schedule_date.isoformat(),
+            "requires_attendance": False,
+            "notes": "Planeamento semanal",
+        },
+        format="json",
+    )
+    assert response_create.status_code == 201, _response_data(response_create)
+    schedule_item_id = _response_data(response_create)["id"]
+
+    progress = DisciplineScheduleStudentStatus.objects.get(
+        tenant=tenant,
+        schedule_item_id=schedule_item_id,
+        enrollment=scope["enrollment_1"],
+    )
+    assert progress.status == DisciplineScheduleStudentStatus.Status.PENDING
+
+    response_mark_success = api_client.post(
+        f"/api/v1/education/schedule_progress/{progress.id}/mark_success/",
+        {},
+        format="json",
+    )
+    assert response_mark_success.status_code == 200, _response_data(response_mark_success)
+    progress.refresh_from_db()
+    assert progress.completion_marked is True
+    assert progress.status == DisciplineScheduleStudentStatus.Status.SUCCESS
+
+    response_mark_item = api_client.post(
+        f"/api/v1/education/discipline_schedule/{schedule_item_id}/mark_completed/",
+        {},
+        format="json",
+    )
+    assert response_mark_item.status_code == 200, _response_data(response_mark_item)
+    schedule_item = DisciplineScheduleItem.objects.get(id=schedule_item_id, tenant=tenant)
+    assert schedule_item.status == DisciplineScheduleItem.Status.COMPLETED
+    assert schedule_item.completed_at is not None
 
 
 @pytest.mark.django_db

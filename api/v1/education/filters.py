@@ -5,6 +5,8 @@ from apps.education.models import (
     AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
+    DisciplineScheduleStudentStatus,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -136,6 +138,36 @@ class RandomTestFilter(SafeFilterSet):
         ]
 
 
+class DisciplineScheduleItemFilter(SafeFilterSet):
+    class Meta:
+        model = DisciplineScheduleItem
+        fields = [
+            "course",
+            "classroom",
+            "item_type",
+            "scheduled_date",
+            "requires_attendance",
+            "status",
+            "linked_examination",
+            "linked_assignment",
+            "linked_content",
+            "created_at",
+        ]
+
+
+class DisciplineScheduleStudentStatusFilter(SafeFilterSet):
+    class Meta:
+        model = DisciplineScheduleStudentStatus
+        fields = [
+            "schedule_item",
+            "enrollment",
+            "status",
+            "completion_marked",
+            "attendance_status_snapshot",
+            "created_at",
+        ]
+
+
 FILTER_MAP = {
     "student": StudentProfileFilter,
     "teacher": TeacherProfileFilter,
@@ -157,4 +189,6 @@ FILTER_MAP = {
     "skill": SkillFilter,
     "random_test": RandomTestFilter,
     "randomtest": RandomTestFilter,
+    "discipline_schedule": DisciplineScheduleItemFilter,
+    "schedule_progress": DisciplineScheduleStudentStatusFilter,
 }

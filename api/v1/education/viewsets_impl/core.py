@@ -15,6 +15,8 @@ from apps.education.models import (
     AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
+    DisciplineScheduleStudentStatus,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -33,6 +35,8 @@ from ..filters import (
     AttendanceRecordFilter,
     ClassroomFilter,
     CourseFilter,
+    DisciplineScheduleItemFilter,
+    DisciplineScheduleStudentStatusFilter,
     EnrollmentFilter,
     ExaminationFilter,
     ExaminationAttemptFilter,
@@ -47,8 +51,12 @@ from ..serializers import (
     AssignmentSerializer,
     AssignmentSubmissionSerializer,
     AttendanceRecordSerializer,
+    AttendanceRollCallSerializer,
     ClassroomSerializer,
     CourseSerializer,
+    DisciplineFullPlanSerializer,
+    DisciplineScheduleItemSerializer,
+    DisciplineScheduleStudentStatusSerializer,
     EnrollmentSerializer,
     ExaminationSerializer,
     ExaminationAttemptSerializer,
@@ -242,6 +250,34 @@ class AttendanceRecordViewSet(TenantScopedEducationViewSet):
         )
         if current_state != previous_state:
             AcademicService.record_attendance(attendance=attendance)
+
+    @action(detail=False, methods=["post"], url_path="roll_call")
+    def roll_call(self, request):
+        serializer = AttendanceRollCallSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        classroom = payload["classroom"]
+        user = getattr(request, "user", None)
+        tenant = getattr(request, "tenant", None)
+
+        if _is_teacher_user(user) and not getattr(user, "is_superuser", False):
+            teacher_profile = TeacherProfile.objects.filter(tenant=tenant, user=user).first()
+            if teacher_profile is None:
+                raise ValidationError({"teacher": "Teacher profile not found for the authenticated user."})
+            if classroom.homeroom_teacher_id and classroom.homeroom_teacher_id != teacher_profile.id:
+                raise ValidationError({"classroom": "Teacher can only register attendance for assigned classrooms."})
+
+        records = AcademicService.record_classroom_roll_call(
+            tenant=tenant,
+            classroom=classroom,
+            attendance_date=payload["attendance_date"],
+            present_student_ids=payload.get("present_student_ids") or [],
+            late_student_ids=payload.get("late_student_ids") or [],
+            notes=payload.get("notes", ""),
+        )
+        output = self.get_serializer(records, many=True)
+        return Response({"count": len(output.data), "results": output.data}, status=status.HTTP_200_OK)
 
 
 class GradeRecordViewSet(TenantScopedEducationViewSet):
@@ -600,6 +636,187 @@ class RandomTestViewSet(TenantScopedEducationViewSet):
         )
 
 
+class DisciplineScheduleItemViewSet(TenantScopedEducationViewSet):
+    queryset = DisciplineScheduleItem.objects.select_related(
+        "course",
+        "classroom",
+        "linked_examination",
+        "linked_assignment",
+        "linked_content",
+    ).all()
+    serializer_class = DisciplineScheduleItemSerializer
+    filterset_class = DisciplineScheduleItemFilter
+    search_fields = ["custom_id", "title", "description", "course__name", "classroom__name", "notes"]
+    ordering_fields = ["scheduled_date", "item_type", "status", "created_at"]
+    ordering = ["scheduled_date", "created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_student_user(user):
+                return qs.filter(classroom__enrollments__student__user=user).distinct()
+            if _is_teacher_user(user):
+                return qs.filter(classroom__homeroom_teacher__user=user).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.schedule_discipline_item(item=serializer.instance)
+
+    def perform_update(self, serializer):
+        schedule_item = serializer.instance
+        previous_state = (
+            schedule_item.course_id,
+            schedule_item.classroom_id,
+            schedule_item.item_type,
+            schedule_item.title,
+            schedule_item.description,
+            schedule_item.scheduled_date,
+            schedule_item.requires_attendance,
+            schedule_item.status,
+            schedule_item.completed_at,
+            schedule_item.linked_examination_id,
+            schedule_item.linked_assignment_id,
+            schedule_item.linked_content_id,
+            schedule_item.notes,
+        )
+        super().perform_update(serializer)
+        schedule_item = serializer.instance
+        current_state = (
+            schedule_item.course_id,
+            schedule_item.classroom_id,
+            schedule_item.item_type,
+            schedule_item.title,
+            schedule_item.description,
+            schedule_item.scheduled_date,
+            schedule_item.requires_attendance,
+            schedule_item.status,
+            schedule_item.completed_at,
+            schedule_item.linked_examination_id,
+            schedule_item.linked_assignment_id,
+            schedule_item.linked_content_id,
+            schedule_item.notes,
+        )
+        if current_state != previous_state:
+            AcademicService.schedule_discipline_item(item=schedule_item)
+
+    @action(detail=False, methods=["post"], url_path="create_full_plan")
+    def create_full_plan(self, request):
+        serializer = DisciplineFullPlanSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        classroom = payload["classroom"]
+        user = getattr(request, "user", None)
+        tenant = getattr(request, "tenant", None)
+
+        if _is_teacher_user(user) and not getattr(user, "is_superuser", False):
+            teacher_profile = TeacherProfile.objects.filter(tenant=tenant, user=user).first()
+            if teacher_profile is None:
+                raise ValidationError({"teacher": "Teacher profile not found for the authenticated user."})
+            if classroom.homeroom_teacher_id and classroom.homeroom_teacher_id != teacher_profile.id:
+                raise ValidationError({"classroom": "Teacher can only define plans for assigned classrooms."})
+
+        created_items = AcademicService.create_full_discipline_schedule(
+            tenant=tenant,
+            course=payload["course"],
+            classroom=classroom,
+            test_dates=payload.get("test_dates") or [],
+            assignment_dates=payload.get("assignment_dates") or [],
+            themes=payload.get("themes") or [],
+            exercise_dates=payload.get("exercise_dates") or [],
+            notes=payload.get("notes", ""),
+        )
+        output = self.get_serializer(created_items, many=True)
+        return Response({"count": len(output.data), "results": output.data}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="mark_completed")
+    def mark_completed(self, request, pk=None):
+        schedule_item = self.get_object()
+        schedule_item = AcademicService.mark_schedule_item_completed(schedule_item=schedule_item)
+        output = self.get_serializer(schedule_item)
+        return Response(output.data, status=status.HTTP_200_OK)
+
+
+class DisciplineScheduleStudentStatusViewSet(TenantScopedEducationViewSet):
+    queryset = DisciplineScheduleStudentStatus.objects.select_related(
+        "schedule_item",
+        "enrollment",
+        "enrollment__student",
+        "enrollment__classroom",
+    ).all()
+    serializer_class = DisciplineScheduleStudentStatusSerializer
+    filterset_class = DisciplineScheduleStudentStatusFilter
+    search_fields = [
+        "custom_id",
+        "status",
+        "notes",
+        "enrollment__student__student_code",
+        "schedule_item__title",
+    ]
+    ordering_fields = ["status", "completion_marked", "completed_at", "created_at"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_student_user(user):
+                return qs.filter(enrollment__student__user=user).distinct()
+            if _is_teacher_user(user):
+                return qs.filter(enrollment__classroom__homeroom_teacher__user=user).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        progress = serializer.instance
+        AcademicService.sync_schedule_progress_for_enrollment(
+            schedule_item=progress.schedule_item,
+            enrollment=progress.enrollment,
+        )
+
+    def perform_update(self, serializer):
+        progress = serializer.instance
+        previous_state = (
+            progress.status,
+            progress.completion_marked,
+            progress.completed_at,
+            progress.attendance_status_snapshot,
+            progress.notes,
+        )
+        super().perform_update(serializer)
+        progress = serializer.instance
+        current_state = (
+            progress.status,
+            progress.completion_marked,
+            progress.completed_at,
+            progress.attendance_status_snapshot,
+            progress.notes,
+        )
+        if current_state != previous_state:
+            AcademicService.sync_schedule_progress_for_enrollment(
+                schedule_item=progress.schedule_item,
+                enrollment=progress.enrollment,
+            )
+
+    @action(detail=True, methods=["post"], url_path="mark_success")
+    def mark_success(self, request, pk=None):
+        progress = self.get_object()
+        progress.completion_marked = True
+        notes = request.data.get("notes")
+        if isinstance(notes, str):
+            progress.notes = notes
+        progress.full_clean()
+        progress.save()
+        progress = AcademicService.sync_schedule_progress_for_enrollment(
+            schedule_item=progress.schedule_item,
+            enrollment=progress.enrollment,
+        )
+        output = self.get_serializer(progress)
+        return Response(output.data, status=status.HTTP_200_OK)
+
+
 class SkillViewSet(TenantScopedEducationViewSet):
     queryset = Skill.objects.select_related("course").all()
     serializer_class = SkillSerializer
@@ -638,6 +855,8 @@ VIEWSET_MAP = {
     "lesson": LearningContentViewSet,
     "bibliography": BibliographyContentViewSet,
     "thematic_map": ThematicMapContentViewSet,
+    "discipline_schedule": DisciplineScheduleItemViewSet,
+    "schedule_progress": DisciplineScheduleStudentStatusViewSet,
     "skill": SkillViewSet,
 }
 
@@ -654,6 +873,8 @@ __all__ = [
     "AssignmentSubmissionViewSet",
     "LearningContentViewSet",
     "BibliographyContentViewSet",
+    "DisciplineScheduleItemViewSet",
+    "DisciplineScheduleStudentStatusViewSet",
     "ThematicMapContentViewSet",
     "RandomTestViewSet",
     "SkillViewSet",

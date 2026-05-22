@@ -123,6 +123,20 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     descriptionEn: "Thematic structure and curriculum sequencing per course.",
   },
   {
+    key: "discipline_schedule",
+    labelPt: "Cronograma da Disciplina",
+    labelEn: "Discipline Schedule",
+    descriptionPt: "Plano completo da disciplina: testes, trabalhos, temas e resolução de exercícios.",
+    descriptionEn: "Full discipline plan with tests, assignments, themes and exercise sessions.",
+  },
+  {
+    key: "schedule_progress",
+    labelPt: "Progresso do Cronograma",
+    labelEn: "Schedule Progress",
+    descriptionPt: "Acompanhamento por estudante: sucesso, pendente ou matéria em atraso.",
+    descriptionEn: "Per-student tracking: success, pending or overdue topic.",
+  },
+  {
     key: "skill",
     labelPt: "Skills",
     labelEn: "Skills",

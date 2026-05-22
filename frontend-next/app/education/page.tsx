@@ -88,6 +88,8 @@ export default function EducationPage() {
       content: FileStack,
       bibliography: FileStack,
       thematic_map: BookOpen,
+      discipline_schedule: CalendarCheck,
+      schedule_progress: UserCheck,
       skill: Target,
     }),
     []

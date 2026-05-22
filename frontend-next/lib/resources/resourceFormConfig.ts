@@ -292,6 +292,122 @@ function educationExamAttemptConfig(): ResourceFormConfig {
   }
 }
 
+function educationDisciplineScheduleConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: EDUCATION_INTERNAL_FIELDS,
+    somenteLeituraCampos: ["tenant"],
+    ordenarCampos: [
+      "tenant",
+      "course",
+      "classroom",
+      "item_type",
+      "title",
+      "description",
+      "scheduled_date",
+      "requires_attendance",
+      "status",
+      "completed_at",
+      "linked_examination",
+      "linked_assignment",
+      "linked_content",
+      "notes",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      course: "Disciplina/Curso",
+      classroom: "Turma",
+      item_type: "Tipo de item",
+      title: "Título",
+      description: "Descrição",
+      scheduled_date: "Data de execução",
+      requires_attendance: "Requer presença",
+      status: "Estado",
+      completed_at: "Concluído em",
+      linked_examination: "Exame vinculado",
+      linked_assignment: "Trabalho vinculado",
+      linked_content: "Conteúdo vinculado",
+      notes: "Observações",
+    },
+    hints: {
+      status: "Se a data passar sem conclusão, o item passa para matéria em atraso.",
+      requires_attendance: "Quando ativo, ausência do estudante marca progresso em atraso.",
+    },
+    widgets: {
+      description: "textarea",
+      notes: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Contexto",
+        descricao: "Disciplina e turma",
+        campos: ["tenant", "course", "classroom", "item_type"],
+      },
+      {
+        titulo: "Planeamento",
+        descricao: "Título, descrição e agenda",
+        campos: ["title", "description", "scheduled_date", "requires_attendance"],
+      },
+      {
+        titulo: "Vínculos",
+        descricao: "Conexões com avaliação e conteúdos",
+        campos: ["linked_examination", "linked_assignment", "linked_content", "status", "completed_at", "notes"],
+      },
+    ],
+    lembrarCampos: ["course", "classroom", "item_type", "requires_attendance"],
+  }
+}
+
+function educationScheduleProgressConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: EDUCATION_INTERNAL_FIELDS,
+    somenteLeituraCampos: ["tenant", "attendance_status_snapshot"],
+    ordenarCampos: [
+      "tenant",
+      "schedule_item",
+      "enrollment",
+      "status",
+      "completion_marked",
+      "completed_at",
+      "attendance_status_snapshot",
+      "notes",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      schedule_item: "Item do cronograma",
+      enrollment: "Matrícula",
+      status: "Estado do progresso",
+      completion_marked: "Marcar como concluído",
+      completed_at: "Concluído em",
+      attendance_status_snapshot: "Snapshot de presença",
+      notes: "Observações",
+    },
+    hints: {
+      completion_marked: "Ao marcar concluído, o estudante fica em sucesso para o item.",
+      attendance_status_snapshot: "Preenchido automaticamente com base na chamada.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Referência",
+        descricao: "Item do cronograma e matrícula",
+        campos: ["tenant", "schedule_item", "enrollment"],
+      },
+      {
+        titulo: "Progresso",
+        descricao: "Estado e conclusão",
+        campos: ["status", "completion_marked", "completed_at", "attendance_status_snapshot"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["schedule_item", "enrollment"],
+  }
+}
+
 function bloodbankDoacaoConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
@@ -716,6 +832,12 @@ export function getResourceFormConfig(
     }
     if (r === "exam_attempt" || r === "examination_attempt" || ep === "/education/exam_attempt/" || ep === "/education/examination_attempt/") {
       return educationExamAttemptConfig()
+    }
+    if (r === "discipline_schedule" || ep === "/education/discipline_schedule/") {
+      return educationDisciplineScheduleConfig()
+    }
+    if (r === "schedule_progress" || ep === "/education/schedule_progress/") {
+      return educationScheduleProgressConfig()
     }
     return null
   }

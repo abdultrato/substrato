@@ -10,6 +10,8 @@ def test_education_management_groups_share_management_permissions():
     assert "education-random_test" in professor_policy
     assert "education-bibliography" in professor_policy
     assert "education-thematic_map" in professor_policy
+    assert "education-discipline_schedule" in professor_policy
+    assert "education-schedule_progress" in professor_policy
 
     for role_key in ("DIRETOR_ESCOLA", "DIRETOR_ADJUNTO_PEDAGOGICO", "TEACHER"):
         assert _policy_for(role_key) == professor_policy
@@ -21,6 +23,8 @@ def test_education_read_groups_share_read_permissions():
     guardian_policy = _policy_for("ENCARREGADO_EDUCACAO")
     assert "education-bibliography" in student_policy
     assert "education-thematic_map" in student_policy
+    assert "education-discipline_schedule" in student_policy
+    assert "education-schedule_progress" in student_policy
 
     assert student_en_policy == student_policy
     assert guardian_policy != student_policy

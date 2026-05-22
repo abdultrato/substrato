@@ -10,6 +10,8 @@ from apps.education.models import (
     AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
+    DisciplineScheduleStudentStatus,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -443,6 +445,59 @@ RANDOM_TEST_ALIASES = {
     "observações": "notes",
 }
 
+DISCIPLINE_SCHEDULE_ALIASES = {
+    "id_custom": "custom_id",
+    "curso": "course",
+    "disciplina": "course",
+    "turma": "classroom",
+    "sala": "classroom",
+    "tipo_item": "item_type",
+    "tipo": "item_type",
+    "titulo": "title",
+    "título": "title",
+    "descricao": "description",
+    "descrição": "description",
+    "data_planeada": "scheduled_date",
+    "data_planejada": "scheduled_date",
+    "data_execucao": "scheduled_date",
+    "data_execução": "scheduled_date",
+    "requere_presenca": "requires_attendance",
+    "requer_presenca": "requires_attendance",
+    "requer_presença": "requires_attendance",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "concluido_em": "completed_at",
+    "concluído_em": "completed_at",
+    "exame_vinculado": "linked_examination",
+    "trabalho_vinculado": "linked_assignment",
+    "conteudo_vinculado": "linked_content",
+    "conteúdo_vinculado": "linked_content",
+    "observacoes": "notes",
+    "observações": "notes",
+}
+
+DISCIPLINE_SCHEDULE_STUDENT_ALIASES = {
+    "id_custom": "custom_id",
+    "item_cronograma": "schedule_item",
+    "item_plano": "schedule_item",
+    "matricula": "enrollment",
+    "matrícula": "enrollment",
+    "inscricao": "enrollment",
+    "inscrição": "enrollment",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "marcado_concluido": "completion_marked",
+    "marcado_concluído": "completion_marked",
+    "concluido_em": "completed_at",
+    "concluído_em": "completed_at",
+    "snapshot_presenca": "attendance_status_snapshot",
+    "snapshot_presença": "attendance_status_snapshot",
+    "observacoes": "notes",
+    "observações": "notes",
+}
+
 
 class FullCleanSerializerMixin:
     """
@@ -667,6 +722,101 @@ class RandomTestSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin,
         model = RandomTest
         fields = "__all__"
         read_only_fields = _READ_ONLY_FIELDS
+
+
+class DisciplineScheduleItemSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = DISCIPLINE_SCHEDULE_ALIASES
+    legacy_output_aliases = DISCIPLINE_SCHEDULE_ALIASES
+
+    class Meta:
+        model = DisciplineScheduleItem
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class DisciplineScheduleStudentStatusSerializer(
+    LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer
+):
+    legacy_input_aliases = DISCIPLINE_SCHEDULE_STUDENT_ALIASES
+    legacy_output_aliases = DISCIPLINE_SCHEDULE_STUDENT_ALIASES
+
+    class Meta:
+        model = DisciplineScheduleStudentStatus
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class DisciplineThemePlanEntrySerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=180)
+    scheduled_date = serializers.DateField()
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class DisciplineFullPlanSerializer(serializers.Serializer):
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all())
+    test_dates = serializers.ListField(child=serializers.DateField(), required=False, default=list)
+    assignment_dates = serializers.ListField(child=serializers.DateField(), required=False, default=list)
+    exercise_dates = serializers.ListField(child=serializers.DateField(), required=False, default=list)
+    themes = DisciplineThemePlanEntrySerializer(many=True, required=False, default=list)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant = getattr(request, "tenant", None)
+        course = attrs["course"]
+        classroom = attrs["classroom"]
+
+        if tenant is not None:
+            tenant_id = getattr(tenant, "id", None)
+            if tenant_id and course.tenant_id != tenant_id:
+                raise serializers.ValidationError({"course": "Course must belong to the authenticated tenant."})
+            if tenant_id and classroom.tenant_id != tenant_id:
+                raise serializers.ValidationError({"classroom": "Classroom must belong to the authenticated tenant."})
+
+        if classroom.course_id != course.id:
+            raise serializers.ValidationError({"course": "Course must match classroom course."})
+
+        test_dates = list(dict.fromkeys(attrs.get("test_dates") or []))
+        if len(test_dates) > 3:
+            raise serializers.ValidationError({"test_dates": "At most 3 tests are allowed per discipline plan."})
+        attrs["test_dates"] = test_dates
+        attrs["assignment_dates"] = list(dict.fromkeys(attrs.get("assignment_dates") or []))
+        attrs["exercise_dates"] = list(dict.fromkeys(attrs.get("exercise_dates") or []))
+        attrs["themes"] = attrs.get("themes") or []
+
+        if not (attrs["test_dates"] or attrs["assignment_dates"] or attrs["exercise_dates"] or attrs["themes"]):
+            raise serializers.ValidationError(
+                {"non_field_errors": "At least one schedule segment is required (tests, assignments, themes or exercises)."}
+            )
+
+        return attrs
+
+
+class AttendanceRollCallSerializer(serializers.Serializer):
+    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all())
+    attendance_date = serializers.DateField()
+    present_student_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        default=list,
+    )
+    late_student_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        default=list,
+    )
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant = getattr(request, "tenant", None)
+        classroom = attrs["classroom"]
+        if tenant is not None:
+            tenant_id = getattr(tenant, "id", None)
+            if tenant_id and classroom.tenant_id != tenant_id:
+                raise serializers.ValidationError({"classroom": "Classroom must belong to the authenticated tenant."})
+        return attrs
 
 
 class RandomTestClassroomScheduleSerializer(serializers.Serializer):

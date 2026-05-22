@@ -165,6 +165,8 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "content", label: "Conteúdos de Aprendizagem", endpoint: "/education/content/", adminListHref: "/admin/education/learningcontent/" },
       { key: "bibliography", label: "Referências Bibliográficas", endpoint: "/education/bibliography/", adminListHref: "/admin/education/learningcontent/" },
       { key: "thematic_map", label: "Mapa de Conteúdo Temático", endpoint: "/education/thematic_map/", adminListHref: "/admin/education/learningcontent/" },
+      { key: "discipline_schedule", label: "Cronograma da Disciplina", endpoint: "/education/discipline_schedule/", adminListHref: "/admin/education/disciplinescheduleitem/" },
+      { key: "schedule_progress", label: "Progresso do Cronograma", endpoint: "/education/schedule_progress/", adminListHref: "/admin/education/disciplineschedulestudentstatus/" },
       { key: "skill", label: "Skills", endpoint: "/education/skill/", adminListHref: "/admin/education/skill/" },
     ],
   },

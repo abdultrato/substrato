@@ -8,6 +8,7 @@ from apps.education.models.examination import Examination
 from apps.education.models.examination_attempt import ExaminationAttempt
 from apps.education.models.grade import GradeRecord
 from apps.education.models.random_test import RandomTest
+from apps.education.models.schedule import DisciplineScheduleItem, DisciplineScheduleStudentStatus
 from apps.education.models.skill import Skill
 from apps.education.models.student import StudentProfile
 from apps.education.models.teacher import TeacherProfile
@@ -24,6 +25,8 @@ __all__ = [
     "GradeRecord",
     "LearningContent",
     "RandomTest",
+    "DisciplineScheduleItem",
+    "DisciplineScheduleStudentStatus",
     "Skill",
     "StudentProfile",
     "TeacherProfile",

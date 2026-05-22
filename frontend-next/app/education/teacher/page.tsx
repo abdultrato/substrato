@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -70,6 +70,33 @@ type RandomTest = {
   question_count?: number
 }
 
+type ScheduleItem = {
+  id: number
+  course?: number
+  classroom?: number
+  item_type?: string
+  title?: string
+  description?: string
+  scheduled_date?: string
+  requires_attendance?: boolean
+  status?: string
+  completed_at?: string | null
+  notes?: string
+}
+
+type ScheduleProgress = {
+  id: number
+  schedule_item?: number
+  enrollment?: number
+  status?: string
+  completion_marked?: boolean
+  completed_at?: string | null
+  attendance_status_snapshot?: string
+  notes?: string
+}
+
+type RollCallStatus = "PRESENT" | "LATE" | "ABSENT"
+
 const REQUIRED_GROUPS = [
   GROUPS.ADMIN,
   GROUPS.PROFESSOR,
@@ -107,6 +134,39 @@ function localInputToIso(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return null
   return date.toISOString()
+}
+
+function toDateInputValue(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 10)
+}
+
+function defaultDateInputValue() {
+  return toDateInputValue(new Date())
+}
+
+function parseCsvDates(raw: string): string[] {
+  return Array.from(
+    new Set(
+      String(raw || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))
+    )
+  )
+}
+
+function parseThemes(raw: string): Array<{ title: string; scheduled_date: string; description: string }> {
+  return String(raw || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [date, title, description] = line.split("|").map((value) => value.trim())
+      if (!date || !title || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null
+      return { scheduled_date: date, title, description: description || "" }
+    })
+    .filter(Boolean) as Array<{ title: string; scheduled_date: string; description: string }>
 }
 
 function normalizeText(value?: string | number | null) {
@@ -147,6 +207,25 @@ export default function EducationTeacherAreaPage() {
   const [schedulingStudent, setSchedulingStudent] = useState(false)
   const [randomTestMessage, setRandomTestMessage] = useState<string | null>(null)
   const [randomTestError, setRandomTestError] = useState<string | null>(null)
+
+  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([])
+  const [scheduleProgress, setScheduleProgress] = useState<ScheduleProgress[]>([])
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null)
+  const [scheduleError, setScheduleError] = useState<string | null>(null)
+  const [savingSchedule, setSavingSchedule] = useState(false)
+  const [markingScheduleItemId, setMarkingScheduleItemId] = useState<number | null>(null)
+
+  const [testDatesInput, setTestDatesInput] = useState("")
+  const [assignmentDatesInput, setAssignmentDatesInput] = useState("")
+  const [exerciseDatesInput, setExerciseDatesInput] = useState("")
+  const [themesInput, setThemesInput] = useState("")
+  const [schedulePlanNotes, setSchedulePlanNotes] = useState("")
+
+  const [rollCallDateInput, setRollCallDateInput] = useState(defaultDateInputValue())
+  const [rollCallByStudent, setRollCallByStudent] = useState<Record<number, RollCallStatus>>({})
+  const [rollCallSaving, setRollCallSaving] = useState(false)
+  const [rollCallMessage, setRollCallMessage] = useState<string | null>(null)
+  const [rollCallError, setRollCallError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -256,6 +335,87 @@ export default function EducationTeacherAreaPage() {
       selectedClassroom.homeroom_teacher === teacherProfileId
     return isDirectorRole || isClassDirector
   }, [selectedClassroom?.homeroom_teacher, teacherProfileId, user])
+
+  const refreshScheduleContext = useCallback(async (classroomId: number | null, enrollmentId: number | null) => {
+    if (!classroomId) {
+      setScheduleItems([])
+      setScheduleProgress([])
+      return
+    }
+    try {
+      const scheduleRes = await apiFetch<any>(`/education/discipline_schedule/?classroom=${classroomId}`)
+      const items = toList<ScheduleItem>(scheduleRes)
+      setScheduleItems(items)
+      if (enrollmentId) {
+        const progressRes = await apiFetch<any>(`/education/schedule_progress/?enrollment=${enrollmentId}`)
+        setScheduleProgress(toList<ScheduleProgress>(progressRes))
+      } else {
+        setScheduleProgress([])
+      }
+    } catch (e: any) {
+      setScheduleItems([])
+      setScheduleProgress([])
+      setScheduleError(
+        isNotFoundLikeError(e)
+          ? null
+          : (e?.message || "Falha ao carregar cronograma da disciplina.")
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null).catch(() => undefined)
+  }, [refreshScheduleContext, selectedClassroomId, selectedEnrollment?.id])
+
+  useEffect(() => {
+    setRollCallByStudent((current) => {
+      const next: Record<number, RollCallStatus> = {}
+      enrollments.forEach((enrollment) => {
+        if (!enrollment.student) return
+        next[enrollment.student] = current[enrollment.student] || "PRESENT"
+      })
+      return next
+    })
+  }, [enrollments])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadExistingRollCall() {
+      if (!selectedClassroomId || !rollCallDateInput || !enrollments.length) return
+      try {
+        const attendanceRes = await apiFetch<any>(`/education/attendance/?attendance_date=${rollCallDateInput}`)
+        if (!mounted) return
+        const enrollmentById = new Map(enrollments.map((item) => [item.id, item]))
+        const byStudent: Record<number, RollCallStatus> = {}
+        enrollments.forEach((enrollment) => {
+          if (!enrollment.student) return
+          byStudent[enrollment.student] = "PRESENT"
+        })
+
+        toList<any>(attendanceRes).forEach((record) => {
+          const enrollment = enrollmentById.get(record?.enrollment)
+          const studentId = enrollment?.student
+          if (!studentId) return
+          if (record?.status === "ABSENT") {
+            byStudent[studentId] = "ABSENT"
+          } else if (record?.status === "LATE") {
+            byStudent[studentId] = "LATE"
+          } else {
+            byStudent[studentId] = "PRESENT"
+          }
+        })
+        setRollCallByStudent(byStudent)
+      } catch {
+        // Keep local defaults when attendance records are unavailable.
+      }
+    }
+
+    loadExistingRollCall().catch(() => undefined)
+    return () => {
+      mounted = false
+    }
+  }, [selectedClassroomId, rollCallDateInput, enrollments])
 
   useEffect(() => {
     let mounted = true
@@ -401,6 +561,141 @@ export default function EducationTeacherAreaPage() {
     }
   }
 
+  async function handleCreateFullPlan() {
+    if (!selectedClassroomId) {
+      setScheduleError("Selecione uma turma para criar o cronograma.")
+      return
+    }
+    const selectedClassroomRecord = classrooms.find((item) => item.id === selectedClassroomId)
+    if (!selectedClassroomRecord?.course) {
+      setScheduleError("A turma selecionada não tem curso associado.")
+      return
+    }
+
+    const testDates = parseCsvDates(testDatesInput)
+    const assignmentDates = parseCsvDates(assignmentDatesInput)
+    const exerciseDates = parseCsvDates(exerciseDatesInput)
+    const themes = parseThemes(themesInput)
+
+    if (!testDates.length && !assignmentDates.length && !exerciseDates.length && !themes.length) {
+      setScheduleError("Informe pelo menos uma data de teste/trabalho/exercício ou temas programados.")
+      return
+    }
+
+    try {
+      setSavingSchedule(true)
+      setScheduleError(null)
+      setScheduleMessage(null)
+
+      const response = await apiFetch<any>("/education/discipline_schedule/create_full_plan/", {
+        method: "POST",
+        body: JSON.stringify({
+          classroom: selectedClassroomId,
+          course: selectedClassroomRecord.course,
+          test_dates: testDates,
+          assignment_dates: assignmentDates,
+          exercise_dates: exerciseDates,
+          themes,
+          notes: schedulePlanNotes || "",
+        }),
+      })
+
+      const created = Number(response?.count || 0)
+      setScheduleMessage(
+        created > 0
+          ? `${created} item(ns) de cronograma criado(s) com sucesso.`
+          : "Cronograma processado sem novos itens."
+      )
+
+      await refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null)
+    } catch (e: any) {
+      setScheduleError(e?.message || "Falha ao criar cronograma completo da disciplina.")
+    } finally {
+      setSavingSchedule(false)
+    }
+  }
+
+  async function handleMarkScheduleCompleted(itemId: number) {
+    try {
+      setMarkingScheduleItemId(itemId)
+      setScheduleError(null)
+      setScheduleMessage(null)
+      await apiFetch(`/education/discipline_schedule/${itemId}/mark_completed/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      setScheduleMessage("Item do cronograma marcado como concluído.")
+      await refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null)
+    } catch (e: any) {
+      setScheduleError(e?.message || "Falha ao marcar item como concluído.")
+    } finally {
+      setMarkingScheduleItemId(null)
+    }
+  }
+
+  async function handleMarkStudentProgressSuccess(progressId: number) {
+    try {
+      setScheduleError(null)
+      setScheduleMessage(null)
+      await apiFetch(`/education/schedule_progress/${progressId}/mark_success/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      setScheduleMessage("Progresso do estudante marcado como sucesso.")
+      await refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null)
+    } catch (e: any) {
+      setScheduleError(e?.message || "Falha ao marcar progresso do estudante como sucesso.")
+    }
+  }
+
+  async function handleSubmitRollCall() {
+    if (!selectedClassroomId) {
+      setRollCallError("Selecione uma turma para efetuar a chamada.")
+      return
+    }
+    if (!rollCallDateInput) {
+      setRollCallError("Informe a data da chamada.")
+      return
+    }
+
+    const presentStudentIds = enrollments
+      .map((item) => item.student)
+      .filter((studentId): studentId is number => Boolean(studentId) && rollCallByStudent[studentId] === "PRESENT")
+    const lateStudentIds = enrollments
+      .map((item) => item.student)
+      .filter((studentId): studentId is number => Boolean(studentId) && rollCallByStudent[studentId] === "LATE")
+
+    try {
+      setRollCallSaving(true)
+      setRollCallError(null)
+      setRollCallMessage(null)
+
+      const response = await apiFetch<any>("/education/attendance/roll_call/", {
+        method: "POST",
+        body: JSON.stringify({
+          classroom: selectedClassroomId,
+          attendance_date: rollCallDateInput,
+          present_student_ids: presentStudentIds,
+          late_student_ids: lateStudentIds,
+          notes: "Chamada registada na área do professor.",
+        }),
+      })
+
+      const count = Number(response?.count || 0)
+      setRollCallMessage(
+        count > 0
+          ? `Chamada registada para ${count} matrícula(s).`
+          : "Chamada processada sem registos novos."
+      )
+
+      await refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null)
+    } catch (e: any) {
+      setRollCallError(e?.message || "Falha ao registar chamada.")
+    } finally {
+      setRollCallSaving(false)
+    }
+  }
+
   const disciplineLabels = useMemo(() => {
     return studentEnrollments.map((item) => {
       const classroom = classrooms.find((cls) => cls.id === item.classroom)
@@ -428,6 +723,35 @@ export default function EducationTeacherAreaPage() {
       details: `${item.question_count ?? 0} questões • ${item.duration_minutes ?? 0} min`,
     }))
   }, [randomTests])
+
+  const scheduleRows = useMemo(() => {
+    return scheduleItems.map((item) => ({
+      id: item.id,
+      title: item.title || "—",
+      type: item.item_type || "—",
+      date: item.scheduled_date || "—",
+      status: item.status || "—",
+      attendance: item.requires_attendance ? "Sim" : "Não",
+      completed: parseDate(item.completed_at),
+    }))
+  }, [scheduleItems])
+
+  const scheduleProgressRows = useMemo(() => {
+    if (!selectedEnrollment) return []
+    return scheduleProgress
+      .filter((progress) => progress.enrollment === selectedEnrollment.id)
+      .map((progress) => {
+        const scheduleItem = scheduleItems.find((item) => item.id === progress.schedule_item)
+        return {
+          id: progress.id,
+          item: scheduleItem?.title || `Item #${progress.schedule_item ?? "—"}`,
+          date: scheduleItem?.scheduled_date || "—",
+          status: progress.status || "—",
+          attendance: progress.attendance_status_snapshot || "—",
+          completed: progress.completion_marked ? "Sim" : "Não",
+        }
+      })
+  }, [scheduleItems, scheduleProgress, selectedEnrollment])
 
   const filteredEnrollments = useMemo(() => {
     const query = normalizeText(studentSearch)
@@ -554,6 +878,197 @@ export default function EducationTeacherAreaPage() {
             </div>
           </Card>
         </div>
+
+        <Card title="Cronograma completo da disciplina">
+          <div className="space-y-3">
+            {scheduleError ? (
+              <div className="border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">{scheduleError}</div>
+            ) : null}
+            {scheduleMessage ? (
+              <div className="border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">{scheduleMessage}</div>
+            ) : null}
+
+            <div className="grid gap-2 md:grid-cols-2">
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Datas de testes (YYYY-MM-DD, separadas por vírgula)</span>
+                <input
+                  type="text"
+                  value={testDatesInput}
+                  onChange={(event) => setTestDatesInput(event.target.value)}
+                  placeholder="2026-06-10, 2026-07-05"
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Datas de trabalhos (YYYY-MM-DD, separadas por vírgula)</span>
+                <input
+                  type="text"
+                  value={assignmentDatesInput}
+                  onChange={(event) => setAssignmentDatesInput(event.target.value)}
+                  placeholder="2026-06-15, 2026-07-20"
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Datas de resolução de exercícios (YYYY-MM-DD, separadas por vírgula)</span>
+                <input
+                  type="text"
+                  value={exerciseDatesInput}
+                  onChange={(event) => setExerciseDatesInput(event.target.value)}
+                  placeholder="2026-06-12, 2026-06-26"
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Observações do plano</span>
+                <input
+                  type="text"
+                  value={schedulePlanNotes}
+                  onChange={(event) => setSchedulePlanNotes(event.target.value)}
+                  placeholder="Ex.: Plano trimestral oficial."
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1 text-xs text-[var(--gray-700)]">
+              <span>Temas (uma linha por tema no formato: data|título|descrição)</span>
+              <textarea
+                value={themesInput}
+                onChange={(event) => setThemesInput(event.target.value)}
+                className="min-h-[88px] w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                placeholder={"2026-06-03|Tema 1|Introdução\n2026-06-10|Tema 2|Equações lineares"}
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={handleCreateFullPlan}
+              disabled={savingSchedule || !selectedClassroomId}
+              className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {savingSchedule ? "A criar cronograma..." : "Criar cronograma completo"}
+            </button>
+
+            <DataTable
+              columns={[
+                { header: "ID", accessor: "id" },
+                { header: "Título", accessor: "title" },
+                { header: "Tipo", accessor: "type" },
+                { header: "Data", accessor: "date" },
+                { header: "Estado", accessor: "status" },
+                { header: "Requer presença", accessor: "attendance" },
+                { header: "Concluído em", accessor: "completed" },
+              ]}
+              data={scheduleRows}
+              emptyMessage="Sem itens de cronograma para a turma selecionada."
+            />
+
+            {!!scheduleRows.length ? (
+              <div className="flex flex-wrap gap-1">
+                {scheduleRows.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => handleMarkScheduleCompleted(row.id)}
+                    disabled={markingScheduleItemId === row.id}
+                    className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {markingScheduleItemId === row.id ? "A concluir..." : `Concluir #${row.id}`}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </Card>
+
+        <Card title="Chamada e matéria em atraso por ausência">
+          <div className="space-y-3">
+            {rollCallError ? (
+              <div className="border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">{rollCallError}</div>
+            ) : null}
+            {rollCallMessage ? (
+              <div className="border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">{rollCallMessage}</div>
+            ) : null}
+
+            <label className="space-y-1 text-xs text-[var(--gray-700)]">
+              <span>Data da aula/chamada</span>
+              <input
+                type="date"
+                value={rollCallDateInput}
+                onChange={(event) => setRollCallDateInput(event.target.value)}
+                className="w-full max-w-[220px] border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+              />
+            </label>
+
+            <div className="grid gap-2 md:grid-cols-2">
+              {filteredEnrollments.map((enrollment) => {
+                const studentId = enrollment.student
+                if (!studentId) return null
+                const student = studentsById.get(studentId)
+                const value = rollCallByStudent[studentId] || "PRESENT"
+                return (
+                  <label
+                    key={`roll-${enrollment.id}`}
+                    className="flex items-center justify-between border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)]"
+                  >
+                    <span>{student?.student_code || `Estudante #${studentId}`}</span>
+                    <select
+                      value={value}
+                      onChange={(event) =>
+                        setRollCallByStudent((current) => ({
+                          ...current,
+                          [studentId]: event.target.value as RollCallStatus,
+                        }))
+                      }
+                      className="border border-[var(--border)] bg-[var(--card)] px-1 py-0.5 text-xs text-[var(--text)]"
+                    >
+                      <option value="PRESENT">Presente</option>
+                      <option value="LATE">Atrasado</option>
+                      <option value="ABSENT">Ausente</option>
+                    </select>
+                  </label>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmitRollCall}
+              disabled={rollCallSaving || !selectedClassroomId || !enrollments.length}
+              className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {rollCallSaving ? "A registar chamada..." : "Registar chamada"}
+            </button>
+
+            <DataTable
+              columns={[
+                { header: "Item", accessor: "item" },
+                { header: "Data", accessor: "date" },
+                { header: "Estado", accessor: "status" },
+                { header: "Presença", accessor: "attendance" },
+                { header: "Concluído", accessor: "completed" },
+              ]}
+              data={scheduleProgressRows}
+              emptyMessage="Sem progresso de cronograma para o estudante selecionado."
+            />
+
+            {!!scheduleProgressRows.length ? (
+              <div className="flex flex-wrap gap-1">
+                {scheduleProgressRows.map((row) => (
+                  <button
+                    key={`progress-${row.id}`}
+                    type="button"
+                    onClick={() => handleMarkStudentProgressSuccess(row.id)}
+                    className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                  >
+                    Marcar sucesso #{row.id}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </Card>
 
         <Card title="Marcação de testes aleatórios">
           <div className="space-y-3">

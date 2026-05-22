@@ -6,6 +6,8 @@ from apps.education.models import (
     AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
+    DisciplineScheduleStudentStatus,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -100,6 +102,28 @@ class RandomTestAdmin(admin.ModelAdmin):
     list_display = ("custom_id", "title", "classroom", "student", "scheduled_for", "status", "tenant")
     list_filter = ("status", "tenant")
     search_fields = ("custom_id", "title", "student__student_code", "classroom__name")
+
+
+@admin.register(DisciplineScheduleItem)
+class DisciplineScheduleItemAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "title", "item_type", "course", "classroom", "scheduled_date", "status", "tenant")
+    list_filter = ("item_type", "status", "requires_attendance", "tenant")
+    search_fields = ("custom_id", "title", "course__name", "classroom__name")
+
+
+@admin.register(DisciplineScheduleStudentStatus)
+class DisciplineScheduleStudentStatusAdmin(admin.ModelAdmin):
+    list_display = (
+        "custom_id",
+        "schedule_item",
+        "enrollment",
+        "status",
+        "completion_marked",
+        "attendance_status_snapshot",
+        "tenant",
+    )
+    list_filter = ("status", "completion_marked", "attendance_status_snapshot", "tenant")
+    search_fields = ("custom_id", "schedule_item__title", "enrollment__student__student_code")
 
 
 @admin.register(LearningContent)

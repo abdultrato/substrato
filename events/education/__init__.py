@@ -8,6 +8,8 @@ from events.education.contracts import (
 )
 from events.education.publishers import (
     publish_attendance_recorded,
+    publish_discipline_schedule_item_defined,
+    publish_discipline_schedule_student_status_updated,
     publish_enrollment_completed,
     publish_exam_scheduled,
     publish_grade_published,
@@ -24,6 +26,8 @@ __all__ = [
     "StudentCreated",
     "publish_enrollment_completed",
     "publish_attendance_recorded",
+    "publish_discipline_schedule_item_defined",
+    "publish_discipline_schedule_student_status_updated",
     "publish_exam_scheduled",
     "publish_grade_published",
     "publish_lesson_uploaded",

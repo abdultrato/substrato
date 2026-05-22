@@ -12,6 +12,7 @@ from apps.education.models import (
     AttendanceRecord,
     Classroom,
     Course,
+    DisciplineScheduleItem,
     Enrollment,
     Examination,
     ExaminationAttempt,
@@ -285,6 +286,46 @@ def test_random_test_create_emits_random_test_scheduled_event(api_client, monkey
     assert random_test_events[0].payload["student_id"] == scope["student"].id
     assert random_test_events[0].payload["course_id"] == scope["course"].id
     assert RandomTest.objects.filter(id=random_test_id, tenant=tenant).exists()
+
+
+@pytest.mark.django_db
+def test_discipline_schedule_create_emits_schedule_definition_and_progress_events(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-schedule", "edu-evt-schedule.local")
+    director = _user(tenant=tenant, username="director_evt_schedule", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    scope["enrollment"].status = Enrollment.Status.ACTIVE
+    scope["enrollment"].save(update_fields=["status"])
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response = api_client.post(
+        "/api/v1/education/discipline_schedule/",
+        {
+            "course": scope["course"].id,
+            "classroom": scope["classroom"].id,
+            "item_type": DisciplineScheduleItem.ItemType.THEME,
+            "title": "Tema de eventos",
+            "scheduled_date": (timezone.localdate() + timedelta(days=1)).isoformat(),
+            "requires_attendance": True,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    created_id = _response_data(response)["id"]
+
+    schedule_events = [event for event in captured if event.nome == "DisciplineScheduleItemDefined"]
+    assert len(schedule_events) == 1
+    assert schedule_events[0].payload["tenant_id"] == tenant.id
+    assert schedule_events[0].payload["schedule_item_id"] == created_id
+    assert schedule_events[0].payload["course_id"] == scope["course"].id
+    assert schedule_events[0].payload["classroom_id"] == scope["classroom"].id
+
+    progress_events = [event for event in captured if event.nome == "DisciplineScheduleStudentStatusUpdated"]
+    assert len(progress_events) >= 1
+    assert progress_events[0].payload["tenant_id"] == tenant.id
+    assert progress_events[0].payload["schedule_item_id"] == created_id
+    assert progress_events[0].payload["enrollment_id"] == scope["enrollment"].id
 
 
 @pytest.mark.django_db

@@ -215,3 +215,51 @@ def publish_lesson_uploaded(*, tenant_id: int, content_id: int, course_id: int, 
             },
         )
     )
+
+
+def publish_discipline_schedule_item_defined(
+    *,
+    tenant_id: int,
+    schedule_item_id: int,
+    course_id: int,
+    classroom_id: int,
+    item_type: str,
+    scheduled_date: str,
+    status: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="DisciplineScheduleItemDefined",
+            payload={
+                "tenant_id": tenant_id,
+                "schedule_item_id": schedule_item_id,
+                "course_id": course_id,
+                "classroom_id": classroom_id,
+                "item_type": item_type,
+                "scheduled_date": scheduled_date,
+                "status": status,
+            },
+        )
+    )
+
+
+def publish_discipline_schedule_student_status_updated(
+    *,
+    tenant_id: int,
+    progress_id: int,
+    schedule_item_id: int,
+    enrollment_id: int,
+    status: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="DisciplineScheduleStudentStatusUpdated",
+            payload={
+                "tenant_id": tenant_id,
+                "progress_id": progress_id,
+                "schedule_item_id": schedule_item_id,
+                "enrollment_id": enrollment_id,
+                "status": status,
+            },
+        )
+    )
