@@ -8,7 +8,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchAll } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -47,6 +47,9 @@ type StudentProfile = {
 type TeacherProfile = {
   id: number
   user?: number
+  teacher_code?: string
+  status?: string
+  specialty?: string
 }
 
 type Grade = {
@@ -68,6 +71,26 @@ type RandomTest = {
   closes_at?: string | null
   duration_minutes?: number
   question_count?: number
+}
+
+type Assignment = {
+  id: number
+  course?: number
+  classroom?: number | null
+  title?: string
+  due_at?: string
+  status?: string
+  work_category?: string
+}
+
+type AssignmentSubmission = {
+  id: number
+  assignment?: number
+  student?: number
+  status?: string
+  score?: string | number | null
+  submitted_at?: string
+  graded_at?: string | null
 }
 
 type ScheduleItem = {
@@ -179,6 +202,7 @@ function normalizeText(value?: string | number | null) {
 
 export default function EducationTeacherAreaPage() {
   const { user } = useAuth()
+  const isDirectorScope = useMemo(() => userHasAnyGroup(user, DIRECTOR_GROUPS), [user])
 
   const [loading, setLoading] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -227,6 +251,16 @@ export default function EducationTeacherAreaPage() {
   const [rollCallMessage, setRollCallMessage] = useState<string | null>(null)
   const [rollCallError, setRollCallError] = useState<string | null>(null)
 
+  const [directorLoading, setDirectorLoading] = useState(false)
+  const [directorError, setDirectorError] = useState<string | null>(null)
+  const [directorTeacherSearch, setDirectorTeacherSearch] = useState("")
+  const [directorStudentSearch, setDirectorStudentSearch] = useState("")
+  const [directorTeachers, setDirectorTeachers] = useState<TeacherProfile[]>([])
+  const [directorStudents, setDirectorStudents] = useState<StudentProfile[]>([])
+  const [directorEnrollments, setDirectorEnrollments] = useState<Enrollment[]>([])
+  const [directorAssignments, setDirectorAssignments] = useState<Assignment[]>([])
+  const [directorSubmissions, setDirectorSubmissions] = useState<AssignmentSubmission[]>([])
+
   useEffect(() => {
     let mounted = true
 
@@ -269,6 +303,56 @@ export default function EducationTeacherAreaPage() {
       mounted = false
     }
   }, [user?.id])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadDirectorScope() {
+      if (!isDirectorScope) {
+        setDirectorTeachers([])
+        setDirectorStudents([])
+        setDirectorEnrollments([])
+        setDirectorAssignments([])
+        setDirectorSubmissions([])
+        setDirectorError(null)
+        return
+      }
+
+      try {
+        setDirectorLoading(true)
+        setDirectorError(null)
+
+        const [teachers, students, enrollmentsAll, assignmentsAll, submissionsAll] = await Promise.all([
+          apiFetchAll<TeacherProfile>("/education/teacher/", { pageSize: 100 }),
+          apiFetchAll<StudentProfile>("/education/student/", { pageSize: 100 }),
+          apiFetchAll<Enrollment>("/education/enrollment/", { pageSize: 100 }),
+          apiFetchAll<Assignment>("/education/assignment/", { pageSize: 100 }),
+          apiFetchAll<AssignmentSubmission>("/education/submission/", { pageSize: 100 }),
+        ])
+
+        if (!mounted) return
+        setDirectorTeachers(teachers)
+        setDirectorStudents(students)
+        setDirectorEnrollments(enrollmentsAll)
+        setDirectorAssignments(assignmentsAll)
+        setDirectorSubmissions(submissionsAll)
+      } catch (e: any) {
+        if (!mounted) return
+        setDirectorError(
+          isNotFoundLikeError(e)
+            ? null
+            : (e?.message || "Falha ao carregar a secção de directoria.")
+        )
+      } finally {
+        if (mounted) setDirectorLoading(false)
+      }
+    }
+
+    loadDirectorScope().catch(() => undefined)
+    return () => {
+      mounted = false
+    }
+  }, [isDirectorScope])
 
   useEffect(() => {
     let mounted = true
@@ -328,13 +412,12 @@ export default function EducationTeacherAreaPage() {
   )
 
   const canViewAllGrades = useMemo(() => {
-    const isDirectorRole = userHasAnyGroup(user, DIRECTOR_GROUPS)
     const isClassDirector =
       !!selectedClassroom?.homeroom_teacher &&
       !!teacherProfileId &&
       selectedClassroom.homeroom_teacher === teacherProfileId
-    return isDirectorRole || isClassDirector
-  }, [selectedClassroom?.homeroom_teacher, teacherProfileId, user])
+    return isDirectorScope || isClassDirector
+  }, [isDirectorScope, selectedClassroom?.homeroom_teacher, teacherProfileId])
 
   const refreshScheduleContext = useCallback(async (classroomId: number | null, enrollmentId: number | null) => {
     if (!classroomId) {
@@ -774,6 +857,84 @@ export default function EducationTeacherAreaPage() {
     })
   }, [enrollments, studentSearch, studentsById])
 
+  const filteredDirectorTeachers = useMemo(() => {
+    const query = normalizeText(directorTeacherSearch)
+    if (!query) return directorTeachers
+    return directorTeachers.filter((teacher) => {
+      const haystack = normalizeText(
+        [teacher.id, teacher.teacher_code, teacher.specialty, teacher.status, teacher.user].filter(Boolean).join(" ")
+      )
+      return haystack.includes(query)
+    })
+  }, [directorTeacherSearch, directorTeachers])
+
+  const assignmentById = useMemo(() => {
+    return new Map(directorAssignments.map((assignment) => [assignment.id, assignment]))
+  }, [directorAssignments])
+
+  const enrollmentsByStudentId = useMemo(() => {
+    const map = new Map<number, Enrollment[]>()
+    directorEnrollments.forEach((enrollment) => {
+      if (!enrollment.student) return
+      const current = map.get(enrollment.student) || []
+      current.push(enrollment)
+      map.set(enrollment.student, current)
+    })
+    return map
+  }, [directorEnrollments])
+
+  const workCountsByStudentId = useMemo(() => {
+    const map = new Map<number, { mandatoryDone: number; hygienicDone: number }>()
+    directorSubmissions.forEach((submission) => {
+      const studentId = submission.student
+      if (!studentId) return
+      const assignment = submission.assignment ? assignmentById.get(submission.assignment) : null
+      if (!assignment) return
+      const current = map.get(studentId) || { mandatoryDone: 0, hygienicDone: 0 }
+      if (assignment.work_category === "MANDATORY") current.mandatoryDone += 1
+      if (assignment.work_category === "HYGIENIC") current.hygienicDone += 1
+      map.set(studentId, current)
+    })
+    return map
+  }, [assignmentById, directorSubmissions])
+
+  const filteredDirectorStudents = useMemo(() => {
+    const query = normalizeText(directorStudentSearch)
+    const base = query
+      ? directorStudents.filter((student) => {
+          const haystack = normalizeText(
+            [student.id, student.student_code, student.guardian_name, student.status, student.notes].filter(Boolean).join(" ")
+          )
+          return haystack.includes(query)
+        })
+      : directorStudents
+
+    return base.map((student) => {
+      const enrollmentsForStudent = enrollmentsByStudentId.get(student.id) || []
+      const workCounts = workCountsByStudentId.get(student.id) || { mandatoryDone: 0, hygienicDone: 0 }
+
+      return {
+        id: student.id,
+        code: student.student_code || `Estudante #${student.id}`,
+        status: student.status || "—",
+        guardian: student.guardian_name || "—",
+        enrollments: enrollmentsForStudent.length,
+        activeEnrollments: enrollmentsForStudent.filter((item) => item.status === "ACTIVE").length,
+        mandatoryDone: workCounts.mandatoryDone,
+        hygienicDone: workCounts.hygienicDone,
+      }
+    })
+  }, [directorStudentSearch, directorStudents, enrollmentsByStudentId, workCountsByStudentId])
+
+  const directorTeacherRows = useMemo(() => {
+    return filteredDirectorTeachers.map((teacher) => ({
+      code: teacher.teacher_code || `Professor #${teacher.id}`,
+      status: teacher.status || "—",
+      specialty: teacher.specialty || "—",
+      user: teacher.user ? `#${teacher.user}` : "—",
+    }))
+  }, [filteredDirectorTeachers])
+
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
       <div className="space-y-4">
@@ -878,6 +1039,84 @@ export default function EducationTeacherAreaPage() {
             </div>
           </Card>
         </div>
+
+        {isDirectorScope ? (
+          <Card title="Secção de Directoria">
+            <div className="space-y-3">
+              {directorError ? (
+                <div className="border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">{directorError}</div>
+              ) : null}
+
+              <div className="grid gap-2 md:grid-cols-4">
+                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                  <div><strong>Professores:</strong> {directorLoading ? "..." : directorTeachers.length}</div>
+                  <div className="text-[0.9em] text-[var(--gray-500)]">
+                    Ativos: {directorLoading ? "..." : directorTeachers.filter((item) => item.status === "ACTIVE").length}
+                  </div>
+                </div>
+                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                  <div><strong>Estudantes:</strong> {directorLoading ? "..." : directorStudents.length}</div>
+                  <div className="text-[0.9em] text-[var(--gray-500)]">
+                    Matrículas: {directorLoading ? "..." : directorEnrollments.length}
+                  </div>
+                </div>
+                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                  <div><strong>Trabalhos obrigatórios:</strong> {directorLoading ? "..." : directorAssignments.filter((item) => item.work_category === "MANDATORY").length}</div>
+                </div>
+                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                  <div><strong>Trabalhos higiénicos:</strong> {directorLoading ? "..." : directorAssignments.filter((item) => item.work_category === "HYGIENIC").length}</div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 xl:grid-cols-2">
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-[var(--text)]">Professores activos e inactivos (histórico)</div>
+                  <input
+                    type="text"
+                    value={directorTeacherSearch}
+                    onChange={(event) => setDirectorTeacherSearch(event.target.value)}
+                    placeholder="Buscar professor por código, estado, especialidade..."
+                    className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  />
+                  <DataTable
+                    columns={[
+                      { header: "Código", accessor: "code" },
+                      { header: "Estado", accessor: "status" },
+                      { header: "Especialidade", accessor: "specialty" },
+                      { header: "Utilizador", accessor: "user" },
+                    ]}
+                    data={directorTeacherRows}
+                    emptyMessage={directorLoading ? "Carregando..." : "Sem professores para o filtro atual."}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-[var(--text)]">Estudantes e percurso escolar completo</div>
+                  <input
+                    type="text"
+                    value={directorStudentSearch}
+                    onChange={(event) => setDirectorStudentSearch(event.target.value)}
+                    placeholder="Buscar estudante por código, encarregado, estado..."
+                    className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  />
+                  <DataTable
+                    columns={[
+                      { header: "Estudante", accessor: "code" },
+                      { header: "Estado", accessor: "status" },
+                      { header: "Encarregado", accessor: "guardian" },
+                      { header: "Matrículas", accessor: "enrollments" },
+                      { header: "Activas", accessor: "activeEnrollments" },
+                      { header: "Obrigatórios feitos", accessor: "mandatoryDone" },
+                      { header: "Higiénicos feitos", accessor: "hygienicDone" },
+                    ]}
+                    data={filteredDirectorStudents}
+                    emptyMessage={directorLoading ? "Carregando..." : "Sem estudantes para o filtro atual."}
+                  />
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
 
         <Card title="Cronograma completo da disciplina">
           <div className="space-y-3">

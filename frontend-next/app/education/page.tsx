@@ -95,13 +95,23 @@ export default function EducationPage() {
     []
   )
   const resourceActions = useMemo(
-    () =>
-      EDUCATION_RESOURCE_DESCRIPTORS.map((resource) => ({
+    () => [
+      {
+        title: t("Área do Professor", "Teacher Area"),
+        description: t(
+          "Turmas lecionadas, estudantes, notas da disciplina e chamadas.",
+          "Assigned classrooms, students, course grades and roll call workflows."
+        ),
+        href: "/education/teacher",
+        icon: Users,
+      },
+      ...EDUCATION_RESOURCE_DESCRIPTORS.map((resource) => ({
         title: t(resource.labelPt, resource.labelEn),
         description: t(resource.descriptionPt, resource.descriptionEn),
         href: `/education/resources/${resource.key}`,
         icon: iconByResourceKey[resource.key as keyof typeof iconByResourceKey] || CalendarCheck,
       })),
+    ],
     [iconByResourceKey, t]
   )
 
