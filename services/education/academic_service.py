@@ -246,6 +246,15 @@ class AcademicService:
             attempt.time_limit_minutes_snapshot = attempt.examination.duration_minutes
         if attempt.max_score_snapshot <= 0:
             attempt.max_score_snapshot = attempt.examination.max_score
+        if attempt.attempt_number <= 0:
+            existing = ExaminationAttempt.all_objects.filter(
+                tenant_id=attempt.tenant_id,
+                examination_id=attempt.examination_id,
+                student_id=attempt.student_id,
+            )
+            if attempt.pk:
+                existing = existing.exclude(pk=attempt.pk)
+            attempt.attempt_number = existing.count() + 1
         if not attempt.expires_at:
             expires_at = attempt.started_at + timedelta(minutes=attempt.time_limit_minutes_snapshot)
             if attempt.examination.closes_at and expires_at > attempt.examination.closes_at:

@@ -56,6 +56,8 @@ class ExaminationAttempt(NoNameCoreModel):
     )
     submission_payload = models.TextField(db_column="submission_payload", blank=True, default="")
     score = models.DecimalField(db_column="score", max_digits=6, decimal_places=2, null=True, blank=True)
+    attempt_number = models.PositiveSmallIntegerField(db_column="attempt_number", default=1)
+    requires_year_repeat = models.BooleanField(db_column="requires_year_repeat", default=False)
     teacher_feedback = models.TextField(db_column="teacher_feedback", blank=True, default="")
     graded_by = models.ForeignKey(
         "education.TeacherProfile",
@@ -74,8 +76,8 @@ class ExaminationAttempt(NoNameCoreModel):
         ordering = ["-started_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["tenant", "examination", "student"],
-                name="education_exam_attempt_tenant_exam_student_uniq",
+                fields=["tenant", "examination", "student", "attempt_number"],
+                name="education_exam_attempt_tenant_exam_student_attempt_uniq",
             ),
         ]
         indexes = [
@@ -84,6 +86,7 @@ class ExaminationAttempt(NoNameCoreModel):
             models.Index(fields=["tenant", "expires_at"]),
             models.Index(fields=["tenant", "examination"]),
             models.Index(fields=["tenant", "student"]),
+            models.Index(fields=["tenant", "attempt_number"]),
         ]
 
     def clean(self):
@@ -118,6 +121,9 @@ class ExaminationAttempt(NoNameCoreModel):
         if self.max_score_snapshot <= 0:
             raise ValidationError({"max_score_snapshot": "Max score snapshot must be greater than zero."})
 
+        if self.attempt_number <= 0:
+            raise ValidationError({"attempt_number": "Attempt number must be greater than zero."})
+
         if not self.expires_at and self.started_at:
             self.expires_at = self.started_at + timedelta(minutes=self.time_limit_minutes_snapshot)
 
@@ -141,6 +147,110 @@ class ExaminationAttempt(NoNameCoreModel):
             if self.started_at >= self.expires_at:
                 raise ValidationError({"expires_at": "Attempt window has already expired."})
 
+            sibling_attempts = ExaminationAttempt.all_objects.filter(
+                tenant_id=self.tenant_id,
+                examination_id=self.examination_id,
+                student_id=self.student_id,
+            )
+            if self.pk:
+                sibling_attempts = sibling_attempts.exclude(pk=self.pk)
+
+            if sibling_attempts.filter(attempt_number=self.attempt_number).exists():
+                raise ValidationError({"attempt_number": "Attempt number already used for this student and examination."})
+
+            if self.attempt_number > exam.max_attempts:
+                raise ValidationError({"attempt_number": "Attempt number exceeds the allowed maximum for this examination."})
+
+            if self.attempt_number > 1:
+                previous_attempt = sibling_attempts.filter(attempt_number=self.attempt_number - 1).first()
+                if previous_attempt is None:
+                    raise ValidationError({"attempt_number": "Previous attempt is required before opening the next attempt."})
+                if previous_attempt.status != self.Status.SUBMITTED:
+                    raise ValidationError(
+                        {"attempt_number": "Previous attempt must be submitted before opening a new attempt."}
+                    )
+                if previous_attempt.score is None:
+                    raise ValidationError(
+                        {"attempt_number": "Previous attempt score is required to decide if a new attempt is allowed."}
+                    )
+                if previous_attempt.score >= exam.pass_mark:
+                    raise ValidationError({"attempt_number": "New attempt is not allowed after reaching pass mark."})
+                if self.started_at.date() <= previous_attempt.started_at.date():
+                    raise ValidationError(
+                        {"started_at": "Each new attempt must happen on a different day after the previous one."}
+                    )
+
+            if exam.exam_type == exam.ExamType.DISCIPLINE_FINAL:
+                if self.attempt_number != 1:
+                    raise ValidationError({"attempt_number": "Discipline final exam supports a single attempt per stage."})
+                stage = exam.discipline_final_stage
+                if not stage:
+                    raise ValidationError({"examination": "Discipline final exam stage is required."})
+
+                stage_rank = {
+                    exam.DisciplineFinalStage.NORMAL: 1,
+                    exam.DisciplineFinalStage.RECORRENCIA: 2,
+                    exam.DisciplineFinalStage.ESPECIAL: 3,
+                }
+                current_rank = stage_rank.get(stage, 0)
+                if current_rank == 0:
+                    raise ValidationError({"examination": "Invalid discipline final stage."})
+
+                same_course_attempts = ExaminationAttempt.all_objects.select_related("examination").filter(
+                    tenant_id=self.tenant_id,
+                    student_id=self.student_id,
+                    examination__course_id=exam.course_id,
+                    examination__exam_type=exam.ExamType.DISCIPLINE_FINAL,
+                    status=self.Status.SUBMITTED,
+                    started_at__year=self.started_at.year,
+                )
+                if self.pk:
+                    same_course_attempts = same_course_attempts.exclude(pk=self.pk)
+
+                if same_course_attempts.filter(examination__discipline_final_stage=stage).exists():
+                    raise ValidationError({"examination": "Student already has a submitted attempt for this stage."})
+
+                if same_course_attempts.filter(score__gte=exam.pass_mark).exists():
+                    raise ValidationError(
+                        {"examination": "Student already passed discipline final and cannot open another stage."}
+                    )
+
+                if current_rank > 1:
+                    required_stage = exam.DisciplineFinalStage.NORMAL
+                    if current_rank == 3:
+                        required_stage = exam.DisciplineFinalStage.RECORRENCIA
+                    previous_stage_attempt = (
+                        same_course_attempts.filter(examination__discipline_final_stage=required_stage)
+                        .order_by("-started_at")
+                        .first()
+                    )
+                    if previous_stage_attempt is None:
+                        raise ValidationError(
+                            {"examination": "Previous discipline final stage must be completed before this stage."}
+                        )
+                    if previous_stage_attempt.score is None or previous_stage_attempt.score >= exam.pass_mark:
+                        raise ValidationError(
+                            {"examination": "This stage is only allowed when previous stage score is below pass mark."}
+                        )
+
+            if exam.exam_type == exam.ExamType.COURSE_FINAL:
+                if self.attempt_number != 1:
+                    raise ValidationError({"attempt_number": "Course final exam allows only one attempt per examination."})
+                attempt_year = self.started_at.year
+                course_final_attempts = ExaminationAttempt.all_objects.select_related("examination").filter(
+                    tenant_id=self.tenant_id,
+                    student_id=self.student_id,
+                    examination__course_id=exam.course_id,
+                    examination__exam_type=exam.ExamType.COURSE_FINAL,
+                    started_at__year=attempt_year,
+                )
+                if self.pk:
+                    course_final_attempts = course_final_attempts.exclude(pk=self.pk)
+                if course_final_attempts.exists():
+                    raise ValidationError(
+                        {"started_at": "Course final exam allows only one attempt per student in each year."}
+                    )
+
         if self.status == self.Status.SUBMITTED and self.submitted_at is None:
             raise ValidationError({"submitted_at": "Submission time is required for submitted attempts."})
 
@@ -161,6 +271,11 @@ class ExaminationAttempt(NoNameCoreModel):
             if self.status != self.Status.SUBMITTED:
                 raise ValidationError({"status": "Score can only be registered for submitted attempts."})
 
+        if self.examination_id and self.examination.exam_type == self.examination.ExamType.COURSE_FINAL:
+            self.requires_year_repeat = bool(self.status == self.Status.SUBMITTED and self.score is not None and self.score < self.examination.pass_mark)
+        else:
+            self.requires_year_repeat = False
+
         if self.pk:
             previous = ExaminationAttempt.all_objects.filter(pk=self.pk).first()
             if previous:
@@ -168,6 +283,7 @@ class ExaminationAttempt(NoNameCoreModel):
                     "examination_id",
                     "enrollment_id",
                     "student_id",
+                    "attempt_number",
                     "started_at",
                     "expires_at",
                     "time_limit_minutes_snapshot",

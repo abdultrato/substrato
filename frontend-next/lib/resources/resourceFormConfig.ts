@@ -150,6 +150,148 @@ function educationThematicMapConfig(): ResourceFormConfig {
   }
 }
 
+function educationExaminationConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: EDUCATION_INTERNAL_FIELDS,
+    somenteLeituraCampos: ["tenant", "max_attempts"],
+    ordenarCampos: [
+      "tenant",
+      "course",
+      "classroom",
+      "title",
+      "exam_type",
+      "test_slot",
+      "discipline_final_stage",
+      "pass_mark",
+      "max_score",
+      "duration_minutes",
+      "scheduled_for",
+      "opens_at",
+      "closes_at",
+      "status",
+      "published_at",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      course: "Disciplina/Curso",
+      classroom: "Turma",
+      title: "Título do exame",
+      exam_type: "Tipo de exame",
+      test_slot: "Número do teste (1-3)",
+      discipline_final_stage: "Etapa do exame final da disciplina",
+      pass_mark: "Nota mínima de aprovação",
+      max_score: "Nota máxima",
+      max_attempts: "Tentativas máximas (automático)",
+      duration_minutes: "Duração (minutos)",
+      scheduled_for: "Agendado para",
+      opens_at: "Abre em",
+      closes_at: "Fecha em",
+      status: "Estado",
+      published_at: "Publicado em",
+    },
+    hints: {
+      exam_type:
+        "REGULAR: fluxo padrão. TEST: até 3 tentativas por teste. DISCIPLINE_FINAL: etapas Normal/Recorrência/Especial. COURSE_FINAL: 1 tentativa por ano.",
+      test_slot: "Obrigatório para TEST (slots 1, 2 e 3 por disciplina/turma).",
+      discipline_final_stage: "Obrigatório no DISCIPLINE_FINAL.",
+      max_attempts: "Definido automaticamente pelas regras do tipo de exame.",
+      pass_mark: "Abaixo desta nota (< 10 por padrão), abre regras de nova tentativa.",
+    },
+    etapas: [
+      {
+        titulo: "Estrutura",
+        descricao: "Disciplina, turma e tipo de exame",
+        campos: ["tenant", "course", "classroom", "title", "exam_type", "test_slot", "discipline_final_stage"],
+      },
+      {
+        titulo: "Critérios",
+        descricao: "Nota de aprovação e limites",
+        campos: ["pass_mark", "max_score", "max_attempts", "duration_minutes"],
+      },
+      {
+        titulo: "Calendário",
+        descricao: "Janela temporal e estado",
+        campos: ["scheduled_for", "opens_at", "closes_at", "status", "published_at"],
+      },
+    ],
+    lembrarCampos: ["course", "classroom", "exam_type", "pass_mark"],
+  }
+}
+
+function educationExamAttemptConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: EDUCATION_INTERNAL_FIELDS,
+    somenteLeituraCampos: ["tenant", "requires_year_repeat"],
+    ordenarCampos: [
+      "tenant",
+      "examination",
+      "enrollment",
+      "student",
+      "attempt_number",
+      "status",
+      "started_at",
+      "expires_at",
+      "submitted_at",
+      "time_limit_minutes_snapshot",
+      "max_score_snapshot",
+      "submission_payload",
+      "score",
+      "teacher_feedback",
+      "graded_by",
+      "graded_at",
+      "requires_year_repeat",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      examination: "Exame",
+      enrollment: "Matrícula",
+      student: "Estudante",
+      attempt_number: "Número da tentativa",
+      status: "Estado",
+      started_at: "Iniciado em",
+      expires_at: "Expira em",
+      submitted_at: "Submetido em",
+      time_limit_minutes_snapshot: "Tempo limite (snapshot)",
+      max_score_snapshot: "Nota máxima (snapshot)",
+      submission_payload: "Conteúdo da resposta",
+      score: "Nota obtida",
+      teacher_feedback: "Feedback do professor",
+      graded_by: "Avaliado por",
+      graded_at: "Avaliado em",
+      requires_year_repeat: "Obrigação de repetição de ano",
+    },
+    hints: {
+      attempt_number:
+        "Para TEST: até 3 tentativas em dias diferentes e apenas com nota anterior < nota mínima.",
+      score:
+        "No COURSE_FINAL, nota abaixo da aprovação ativa obrigatoriedade de repetição de ano.",
+      requires_year_repeat: "Campo calculado automaticamente quando aplicável.",
+    },
+    widgets: {
+      submission_payload: "textarea",
+      teacher_feedback: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Tentativa",
+        descricao: "Vinculação e numeração",
+        campos: ["tenant", "examination", "enrollment", "student", "attempt_number", "status"],
+      },
+      {
+        titulo: "Janela",
+        descricao: "Tempos de execução",
+        campos: ["started_at", "expires_at", "submitted_at", "time_limit_minutes_snapshot"],
+      },
+      {
+        titulo: "Avaliação",
+        descricao: "Nota e resultado",
+        campos: ["max_score_snapshot", "submission_payload", "score", "teacher_feedback", "graded_by", "graded_at", "requires_year_repeat"],
+      },
+    ],
+    lembrarCampos: ["examination", "enrollment", "student"],
+  }
+}
+
 function bloodbankDoacaoConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
@@ -568,6 +710,12 @@ export function getResourceFormConfig(
     }
     if (r === "thematic_map" || ep === "/education/thematic_map/") {
       return educationThematicMapConfig()
+    }
+    if (r === "examination" || ep === "/education/examination/") {
+      return educationExaminationConfig()
+    }
+    if (r === "exam_attempt" || r === "examination_attempt" || ep === "/education/exam_attempt/" || ep === "/education/examination_attempt/") {
+      return educationExamAttemptConfig()
     }
     return null
   }

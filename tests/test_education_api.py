@@ -815,7 +815,7 @@ def test_student_submission_rejects_expired_assignment_deadline(api_client):
 
 
 @pytest.mark.django_db
-def test_student_exam_attempt_is_single_use_and_cannot_reopen(api_client):
+def test_test_exam_allows_three_attempts_only_after_failure_and_on_different_days(api_client):
     tenant = _tenant("tn-edu-exam-attempt", "edu-exam-attempt.local")
     scope = _seed_scope(tenant)
     _authenticate(api_client, tenant=tenant, user=scope["student_user_1"])
@@ -824,36 +824,37 @@ def test_student_exam_attempt_is_single_use_and_cannot_reopen(api_client):
         tenant=tenant,
         course=scope["course_1"],
         classroom=scope["classroom_1"],
-        title="Exame online único",
-        scheduled_for=timezone.now() - timedelta(minutes=10),
-        opens_at=timezone.now() - timedelta(minutes=10),
-        closes_at=timezone.now() + timedelta(hours=2),
+        title="Teste avaliativo 1",
+        exam_type=Examination.ExamType.TEST,
+        test_slot=1,
+        scheduled_for=timezone.now() - timedelta(days=5),
+        opens_at=timezone.now() - timedelta(days=5),
+        closes_at=timezone.now() + timedelta(days=10),
         duration_minutes=60,
-        max_attempts=1,
+        max_attempts=3,
+        pass_mark=10,
         status=Examination.Status.PUBLISHED,
-        published_at=timezone.now() - timedelta(hours=1),
+        published_at=timezone.now() - timedelta(days=6),
         max_score=20,
     )
 
+    first_started_at = timezone.now() - timedelta(days=2)
     response_create = api_client.post(
         "/api/v1/education/exam_attempt/",
         {
             "examination": exam.id,
             "enrollment": scope["enrollment_1"].id,
             "student": scope["student_1"].id,
+            "started_at": first_started_at.isoformat(),
             "submission_payload": "Início da prova",
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (first_started_at + timedelta(minutes=50)).isoformat(),
+            "score": "8.00",
         },
         format="json",
     )
     assert response_create.status_code == 201, _response_data(response_create)
     attempt_id = _response_data(response_create)["id"]
-
-    response_submit = api_client.patch(
-        f"/api/v1/education/exam_attempt/{attempt_id}/",
-        {"status": ExaminationAttempt.Status.SUBMITTED, "submitted_at": timezone.now().isoformat()},
-        format="json",
-    )
-    assert response_submit.status_code == 200, _response_data(response_submit)
 
     response_reopen = api_client.patch(
         f"/api/v1/education/exam_attempt/{attempt_id}/",
@@ -862,14 +863,223 @@ def test_student_exam_attempt_is_single_use_and_cannot_reopen(api_client):
     )
     assert response_reopen.status_code == 400, _response_data(response_reopen)
 
-    response_repeat = api_client.post(
+    response_repeat_same_day = api_client.post(
         "/api/v1/education/exam_attempt/",
         {
             "examination": exam.id,
             "enrollment": scope["enrollment_1"].id,
             "student": scope["student_1"].id,
-            "submission_payload": "Tentativa repetida",
+            "attempt_number": 2,
+            "started_at": first_started_at.isoformat(),
+            "submission_payload": "Tentativa no mesmo dia",
         },
         format="json",
     )
-    assert response_repeat.status_code == 400, _response_data(response_repeat)
+    assert response_repeat_same_day.status_code == 400, _response_data(response_repeat_same_day)
+
+    second_started_at = first_started_at + timedelta(days=1)
+    response_second = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "attempt_number": 2,
+            "started_at": second_started_at.isoformat(),
+            "submission_payload": "Segunda tentativa",
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (second_started_at + timedelta(minutes=45)).isoformat(),
+            "score": "9.50",
+        },
+        format="json",
+    )
+    assert response_second.status_code == 201, _response_data(response_second)
+
+    third_started_at = second_started_at + timedelta(days=1)
+    response_third = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "attempt_number": 3,
+            "started_at": third_started_at.isoformat(),
+            "submission_payload": "Terceira tentativa",
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (third_started_at + timedelta(minutes=40)).isoformat(),
+            "score": "10.00",
+        },
+        format="json",
+    )
+    assert response_third.status_code == 201, _response_data(response_third)
+
+    response_fourth = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "attempt_number": 4,
+            "started_at": (third_started_at + timedelta(days=1)).isoformat(),
+            "submission_payload": "Quarta tentativa",
+        },
+        format="json",
+    )
+    assert response_fourth.status_code == 400, _response_data(response_fourth)
+
+
+@pytest.mark.django_db
+def test_discipline_final_stages_require_failing_previous_stage(api_client):
+    tenant = _tenant("tn-edu-discipline-final", "edu-discipline-final.local")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=scope["student_user_1"])
+
+    now = timezone.now()
+    normal_exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        title="Exame Final Normal",
+        exam_type=Examination.ExamType.DISCIPLINE_FINAL,
+        discipline_final_stage=Examination.DisciplineFinalStage.NORMAL,
+        scheduled_for=now - timedelta(days=5),
+        opens_at=now - timedelta(days=5),
+        closes_at=now + timedelta(days=15),
+        duration_minutes=60,
+        max_attempts=1,
+        pass_mark=10,
+        status=Examination.Status.PUBLISHED,
+        published_at=now - timedelta(days=6),
+        max_score=20,
+    )
+    recurr_exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        title="Exame Final de Recorrência",
+        exam_type=Examination.ExamType.DISCIPLINE_FINAL,
+        discipline_final_stage=Examination.DisciplineFinalStage.RECORRENCIA,
+        scheduled_for=now - timedelta(days=2),
+        opens_at=now - timedelta(days=2),
+        closes_at=now + timedelta(days=20),
+        duration_minutes=60,
+        max_attempts=1,
+        pass_mark=10,
+        status=Examination.Status.PUBLISHED,
+        published_at=now - timedelta(days=3),
+        max_score=20,
+    )
+
+    response_recurr_without_normal = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": recurr_exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (now - timedelta(days=1)).isoformat(),
+            "score": "9.00",
+        },
+        format="json",
+    )
+    assert response_recurr_without_normal.status_code == 400, _response_data(response_recurr_without_normal)
+
+    response_normal = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": normal_exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (now - timedelta(days=1)).isoformat(),
+            "score": "8.50",
+        },
+        format="json",
+    )
+    assert response_normal.status_code == 201, _response_data(response_normal)
+
+    response_recurr_with_failure = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": recurr_exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": timezone.now().isoformat(),
+            "score": "12.00",
+        },
+        format="json",
+    )
+    assert response_recurr_with_failure.status_code == 201, _response_data(response_recurr_with_failure)
+
+
+@pytest.mark.django_db
+def test_course_final_is_one_attempt_per_year_and_marks_repeat_when_below_ten(api_client):
+    tenant = _tenant("tn-edu-course-final", "edu-course-final.local")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=scope["student_user_1"])
+
+    now = timezone.now()
+    this_year_exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        title="Exame Final do Curso",
+        exam_type=Examination.ExamType.COURSE_FINAL,
+        scheduled_for=now - timedelta(days=10),
+        opens_at=now - timedelta(days=10),
+        closes_at=now + timedelta(days=30),
+        duration_minutes=90,
+        max_attempts=1,
+        pass_mark=10,
+        status=Examination.Status.PUBLISHED,
+        published_at=now - timedelta(days=11),
+        max_score=20,
+    )
+
+    response_first = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": this_year_exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": (now - timedelta(days=1)).isoformat(),
+            "score": "9.00",
+        },
+        format="json",
+    )
+    assert response_first.status_code == 201, _response_data(response_first)
+    first_attempt = ExaminationAttempt.objects.get(id=_response_data(response_first)["id"])
+    assert first_attempt.requires_year_repeat is True
+
+    same_year_exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course_1"],
+        classroom=scope["classroom_1"],
+        title="Exame Final do Curso (mesmo ano)",
+        exam_type=Examination.ExamType.COURSE_FINAL,
+        scheduled_for=now - timedelta(days=2),
+        opens_at=now - timedelta(days=2),
+        closes_at=now + timedelta(days=60),
+        duration_minutes=90,
+        max_attempts=1,
+        pass_mark=10,
+        status=Examination.Status.PUBLISHED,
+        published_at=now - timedelta(days=3),
+        max_score=20,
+    )
+
+    response_same_year = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": same_year_exam.id,
+            "enrollment": scope["enrollment_1"].id,
+            "student": scope["student_1"].id,
+            "status": ExaminationAttempt.Status.SUBMITTED,
+            "submitted_at": timezone.now().isoformat(),
+            "score": "11.00",
+        },
+        format="json",
+    )
+    assert response_same_year.status_code == 400, _response_data(response_same_year)

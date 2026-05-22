@@ -298,8 +298,8 @@ class ExaminationViewSet(TenantScopedEducationViewSet):
     queryset = Examination.objects.select_related("course", "classroom").all()
     serializer_class = ExaminationSerializer
     filterset_class = ExaminationFilter
-    search_fields = ["custom_id", "title", "course__name", "classroom__name"]
-    ordering_fields = ["scheduled_for", "max_score", "created_at"]
+    search_fields = ["custom_id", "title", "course__name", "classroom__name", "exam_type", "discipline_final_stage"]
+    ordering_fields = ["exam_type", "test_slot", "scheduled_for", "max_score", "created_at"]
     ordering = ["-scheduled_for", "-created_at"]
 
     def get_queryset(self):
@@ -402,7 +402,7 @@ class ExaminationAttemptViewSet(TenantScopedEducationViewSet):
     serializer_class = ExaminationAttemptSerializer
     filterset_class = ExaminationAttemptFilter
     search_fields = ["custom_id", "examination__title", "student__student_code", "status"]
-    ordering_fields = ["started_at", "expires_at", "submitted_at", "status", "created_at"]
+    ordering_fields = ["attempt_number", "started_at", "expires_at", "submitted_at", "status", "created_at"]
     ordering = ["-started_at", "-created_at"]
 
     def get_queryset(self):

@@ -205,6 +205,17 @@ EXAMINATION_ALIASES = {
     "duração_minutos": "duration_minutes",
     "tentativas_maximas": "max_attempts",
     "tentativas_máximas": "max_attempts",
+    "tipo_exame": "exam_type",
+    "tipo": "exam_type",
+    "etapa_final_disciplina": "discipline_final_stage",
+    "etapa_final": "discipline_final_stage",
+    "fase_final": "discipline_final_stage",
+    "teste_numero": "test_slot",
+    "numero_teste": "test_slot",
+    "número_teste": "test_slot",
+    "nota_minima_aprovacao": "pass_mark",
+    "nota_mínima_aprovação": "pass_mark",
+    "nota_corte": "pass_mark",
     "estado": "status",
     "situacao": "status",
     "situação": "status",
@@ -305,6 +316,9 @@ EXAM_ATTEMPT_ALIASES = {
     "estado": "status",
     "situacao": "status",
     "situação": "status",
+    "tentativa": "attempt_number",
+    "numero_tentativa": "attempt_number",
+    "número_tentativa": "attempt_number",
     "iniciado_em": "started_at",
     "data_inicio": "started_at",
     "data_início": "started_at",
@@ -324,6 +338,9 @@ EXAM_ATTEMPT_ALIASES = {
     "nota": "score",
     "pontuacao": "score",
     "pontuação": "score",
+    "repeticao_ano_obrigatoria": "requires_year_repeat",
+    "repetição_ano_obrigatória": "requires_year_repeat",
+    "repete_ano": "requires_year_repeat",
     "feedback_professor": "teacher_feedback",
     "avaliado_por": "graded_by",
     "avaliado_em": "graded_at",
@@ -595,6 +612,17 @@ class ExaminationAttemptSerializer(LegacyAliasSerializerMixin, FullCleanSerializ
 
         if attrs.get("status") == ExaminationAttempt.Status.SUBMITTED and attrs.get("submitted_at") is None:
             attrs["submitted_at"] = timezone.now()
+
+        if self.instance is None:
+            attempt_number = attrs.get("attempt_number")
+            student = attrs.get("student")
+            if attempt_number in (None, 0) and exam is not None and student is not None:
+                existing_qs = ExaminationAttempt.all_objects.filter(examination=exam, student=student)
+                tenant = attrs.get("tenant") or getattr(self.context.get("request"), "tenant", None) or getattr(self.instance, "tenant", None)
+                tenant_id = getattr(tenant, "id", tenant)
+                if tenant_id:
+                    existing_qs = existing_qs.filter(tenant_id=tenant_id)
+                attrs["attempt_number"] = existing_qs.count() + 1
 
         return attrs
 

@@ -70,8 +70,8 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     key: "examination",
     labelPt: "Exames",
     labelEn: "Examinations",
-    descriptionPt: "Agendamento de exames.",
-    descriptionEn: "Exam scheduling.",
+    descriptionPt: "Provas por disciplina: 3 testes (slots), final normal/recorrência/especial e final do curso.",
+    descriptionEn: "Course exams: 3 test slots, discipline final stages and course final exam.",
   },
   {
     key: "random_test",
@@ -98,8 +98,8 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     key: "exam_attempt",
     labelPt: "Tentativas de Exame",
     labelEn: "Exam Attempts",
-    descriptionPt: "Sessões de prova online com início/fim e bloqueio de repetição.",
-    descriptionEn: "Online exam sessions with start/end times and no-repeat lock.",
+    descriptionPt: "Até 3 tentativas por teste em dias diferentes (se nota < 10) e controlo anual no final do curso.",
+    descriptionEn: "Up to 3 attempts per test on different days (when score < 10) and yearly course-final control.",
   },
   {
     key: "content",

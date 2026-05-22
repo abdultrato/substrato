@@ -70,7 +70,15 @@ class GradeRecordFilter(SafeFilterSet):
 class ExaminationFilter(SafeFilterSet):
     class Meta:
         model = Examination
-        fields = ["course", "classroom", "scheduled_for", "created_at"]
+        fields = [
+            "course",
+            "classroom",
+            "exam_type",
+            "discipline_final_stage",
+            "test_slot",
+            "scheduled_for",
+            "created_at",
+        ]
 
 
 class AssignmentFilter(SafeFilterSet):
@@ -88,7 +96,16 @@ class AssignmentSubmissionFilter(SafeFilterSet):
 class ExaminationAttemptFilter(SafeFilterSet):
     class Meta:
         model = ExaminationAttempt
-        fields = ["examination", "enrollment", "student", "status", "started_at", "created_at"]
+        fields = [
+            "examination",
+            "enrollment",
+            "student",
+            "status",
+            "attempt_number",
+            "requires_year_repeat",
+            "started_at",
+            "created_at",
+        ]
 
 
 class LearningContentFilter(SafeFilterSet):
