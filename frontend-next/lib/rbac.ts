@@ -63,6 +63,8 @@ export type WorkspaceKey =
   | "blood-bank"
   | "nursing"
   | "education"
+  | "education-teacher"
+  | "education-directoria"
   | "education-student"
   | "medicine"
   | "pharmacy"
@@ -139,6 +141,25 @@ export const WORKSPACES: WorkspaceDef[] = [
       GROUPS.DIRETOR_ESCOLA,
       GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
     ],
+  },
+  {
+    key: "education-teacher",
+    label: "Teacher Area",
+    href: "/education/teacher",
+    description: "Classes taught by the logged-in teacher and student follow-up.",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.PROFESSOR,
+      GROUPS.DIRETOR_ESCOLA,
+      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+    ],
+  },
+  {
+    key: "education-directoria",
+    label: "Directoria",
+    href: "/education/directoria",
+    description: "School-wide oversight for staff, students, and academic progress.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.DIRETOR_ESCOLA, GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO],
   },
   {
     key: "education-student",
@@ -264,13 +285,12 @@ export function getDefaultWorkspaceHref(user: SessionUser | null): string {
     return "/education/student"
   }
   if (
-    userHasAnyGroup(user, [
-      GROUPS.PROFESSOR,
-      GROUPS.DIRETOR_ESCOLA,
-      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
-    ])
+    userHasAnyGroup(user, [GROUPS.DIRETOR_ESCOLA, GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO])
   ) {
-    return "/education"
+    return "/education/directoria"
+  }
+  if (userHasAnyGroup(user, [GROUPS.PROFESSOR])) {
+    return "/education/teacher"
   }
   if (userHasAnyGroup(user, [GROUPS.CONTABILIDADE])) return "/"
 

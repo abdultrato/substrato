@@ -1,10 +1,13 @@
 from .core import (
     VIEWSET_MAP,
+    AssignmentSubmissionViewSet,
+    AssignmentViewSet,
     AttendanceRecordViewSet,
     ClassroomViewSet,
     CourseViewSet,
     EnrollmentViewSet,
     ExaminationViewSet,
+    ExaminationAttemptViewSet,
     GradeRecordViewSet,
     LearningContentViewSet,
     SkillViewSet,
@@ -14,11 +17,14 @@ from .core import (
 
 __all__ = [
     "VIEWSET_MAP",
+    "AssignmentViewSet",
+    "AssignmentSubmissionViewSet",
     "AttendanceRecordViewSet",
     "ClassroomViewSet",
     "CourseViewSet",
     "EnrollmentViewSet",
     "ExaminationViewSet",
+    "ExaminationAttemptViewSet",
     "GradeRecordViewSet",
     "LearningContentViewSet",
     "SkillViewSet",

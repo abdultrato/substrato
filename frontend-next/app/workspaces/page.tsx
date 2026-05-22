@@ -2,20 +2,25 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { GraduationCap, Stethoscope } from "lucide-react"
+import { GraduationCap, School, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
+import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
-import { GROUPS } from "@/lib/rbac"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { writeStoredWorkspaceScope } from "@/lib/workspaceScope"
 
 export default function WorkspacesPage() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const router = useRouter()
+  const showTeacherArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.PROFESSOR])
+  const showDirectoriaArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.DIRETOR_ESCOLA, GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO])
+  const showStudentArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.STUDENT, GROUPS.ENCARREGADO_EDUCACAO])
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN]}>
+    <AppLayout>
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <PageHeader
           title={t("Selecionar workspace", "Select workspace")}
@@ -25,7 +30,7 @@ export default function WorkspacesPage() {
           )}
         />
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <Link
             href="/healthcare"
             onClick={(event) => {
@@ -79,6 +84,93 @@ export default function WorkspacesPage() {
               </div>
             </div>
           </Link>
+
+          {showTeacherArea ? (
+            <Link
+              href="/education/teacher"
+              onClick={(event) => {
+                event.preventDefault()
+                writeStoredWorkspaceScope("education")
+                router.push("/education/teacher")
+              }}
+              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                  <Users size={20} />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-display text-lg font-semibold text-foreground">
+                    Área do Professor
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Turmas lecionadas, estudantes e notas por disciplina.",
+                      "Classes taught, students, and grades by discipline."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ) : null}
+
+          {showDirectoriaArea ? (
+            <Link
+              href="/education/directoria"
+              onClick={(event) => {
+                event.preventDefault()
+                writeStoredWorkspaceScope("education")
+                router.push("/education/directoria")
+              }}
+              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                  <School size={20} />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-display text-lg font-semibold text-foreground">
+                    Área da Directoria
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Visão global da escola com professores, estudantes e secções.",
+                      "School-wide view with teachers, students, and sections."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ) : null}
+
+          {showStudentArea ? (
+            <Link
+              href="/education/student"
+              onClick={(event) => {
+                event.preventDefault()
+                writeStoredWorkspaceScope("education")
+                router.push("/education/student")
+              }}
+              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                  <GraduationCap size={20} />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-display text-lg font-semibold text-foreground">
+                    Área do Estudante
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Aulas, presenças e notas do estudante autenticado.",
+                      "Classes, attendance, and grades for the authenticated student."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ) : null}
         </div>
       </div>
     </AppLayout>

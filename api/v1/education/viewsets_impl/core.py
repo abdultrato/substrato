@@ -1,15 +1,19 @@
 import unicodedata
 
+from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
     AttendanceRecord,
     Classroom,
     Course,
     Enrollment,
     Examination,
+    ExaminationAttempt,
     GradeRecord,
     LearningContent,
     Skill,
@@ -19,11 +23,14 @@ from apps.education.models import (
 from services.education import AcademicService
 
 from ..filters import (
+    AssignmentFilter,
+    AssignmentSubmissionFilter,
     AttendanceRecordFilter,
     ClassroomFilter,
     CourseFilter,
     EnrollmentFilter,
     ExaminationFilter,
+    ExaminationAttemptFilter,
     GradeRecordFilter,
     LearningContentFilter,
     SkillFilter,
@@ -31,11 +38,14 @@ from ..filters import (
     TeacherProfileFilter,
 )
 from ..serializers import (
+    AssignmentSerializer,
+    AssignmentSubmissionSerializer,
     AttendanceRecordSerializer,
     ClassroomSerializer,
     CourseSerializer,
     EnrollmentSerializer,
     ExaminationSerializer,
+    ExaminationAttemptSerializer,
     GradeRecordSerializer,
     LearningContentSerializer,
     SkillSerializer,
@@ -227,10 +237,24 @@ class AttendanceRecordViewSet(TenantScopedEducationViewSet):
 
 
 class GradeRecordViewSet(TenantScopedEducationViewSet):
-    queryset = GradeRecord.objects.select_related("enrollment", "enrollment__student", "teacher", "teacher__user").all()
+    queryset = GradeRecord.objects.select_related(
+        "enrollment",
+        "enrollment__student",
+        "teacher",
+        "teacher__user",
+        "assignment_submission",
+        "examination_attempt",
+    ).all()
     serializer_class = GradeRecordSerializer
     filterset_class = GradeRecordFilter
-    search_fields = ["custom_id", "component", "enrollment__student__student_code", "teacher__teacher_code"]
+    search_fields = [
+        "custom_id",
+        "component",
+        "enrollment__student__student_code",
+        "teacher__teacher_code",
+        "assignment_submission__custom_id",
+        "examination_attempt__custom_id",
+    ]
     ordering_fields = ["component", "score", "published_at", "created_at"]
     ordering = ["-created_at"]
 
@@ -241,7 +265,9 @@ class GradeRecordViewSet(TenantScopedEducationViewSet):
             if _is_student_user(user):
                 return qs.filter(enrollment__student__user=user)
             if _is_teacher_user(user):
-                return qs.filter(teacher__user=user)
+                return qs.filter(
+                    Q(teacher__user=user) | Q(enrollment__classroom__homeroom_teacher__user=user)
+                ).distinct()
         return qs
 
     def perform_create(self, serializer):
@@ -290,6 +316,110 @@ class ExaminationViewSet(TenantScopedEducationViewSet):
         current_schedule = (exam.scheduled_for, exam.course_id, exam.classroom_id)
         if current_schedule != previous_schedule:
             AcademicService.schedule_examination(exam=exam)
+
+
+class AssignmentViewSet(TenantScopedEducationViewSet):
+    queryset = Assignment.objects.select_related("course", "classroom", "teacher", "teacher__user").all()
+    serializer_class = AssignmentSerializer
+    filterset_class = AssignmentFilter
+    search_fields = ["custom_id", "title", "course__name", "classroom__name", "teacher__teacher_code"]
+    ordering_fields = ["due_at", "status", "created_at"]
+    ordering = ["due_at", "-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_teacher_user(user):
+                return qs.filter(classroom__homeroom_teacher__user=user).distinct()
+            if _is_student_user(user):
+                return qs.filter(classroom__enrollments__student__user=user).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        assignment = serializer.instance
+        if assignment.status == Assignment.Status.PUBLISHED:
+            AcademicService.publish_assignment(assignment=assignment)
+
+    def perform_update(self, serializer):
+        assignment = serializer.instance
+        was_published = assignment.status == Assignment.Status.PUBLISHED
+        super().perform_update(serializer)
+        assignment = serializer.instance
+        is_published = assignment.status == Assignment.Status.PUBLISHED
+        if not was_published and is_published:
+            AcademicService.publish_assignment(assignment=assignment)
+
+
+class AssignmentSubmissionViewSet(TenantScopedEducationViewSet):
+    queryset = AssignmentSubmission.objects.select_related(
+        "assignment",
+        "enrollment",
+        "student",
+        "student__user",
+        "graded_by",
+        "graded_by__user",
+    ).all()
+    serializer_class = AssignmentSubmissionSerializer
+    filterset_class = AssignmentSubmissionFilter
+    search_fields = ["custom_id", "assignment__title", "student__student_code", "status"]
+    ordering_fields = ["submitted_at", "status", "created_at"]
+    ordering = ["-submitted_at", "-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_student_user(user):
+                return qs.filter(student__user=user)
+            if _is_teacher_user(user):
+                return qs.filter(assignment__classroom__homeroom_teacher__user=user).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.register_assignment_submission(submission=serializer.instance)
+
+
+class ExaminationAttemptViewSet(TenantScopedEducationViewSet):
+    queryset = ExaminationAttempt.objects.select_related(
+        "examination",
+        "enrollment",
+        "student",
+        "student__user",
+        "graded_by",
+        "graded_by__user",
+    ).all()
+    serializer_class = ExaminationAttemptSerializer
+    filterset_class = ExaminationAttemptFilter
+    search_fields = ["custom_id", "examination__title", "student__student_code", "status"]
+    ordering_fields = ["started_at", "expires_at", "submitted_at", "status", "created_at"]
+    ordering = ["-started_at", "-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_student_user(user):
+                return qs.filter(student__user=user)
+            if _is_teacher_user(user):
+                return qs.filter(examination__classroom__homeroom_teacher__user=user).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.open_exam_attempt(attempt=serializer.instance)
+
+    def perform_update(self, serializer):
+        attempt = serializer.instance
+        previous_status = attempt.status
+        super().perform_update(serializer)
+        attempt = serializer.instance
+        if attempt.status == ExaminationAttempt.Status.SUBMITTED and previous_status != ExaminationAttempt.Status.SUBMITTED:
+            AcademicService.submit_exam_attempt(attempt=attempt)
+        elif attempt.status == ExaminationAttempt.Status.EXPIRED and previous_status != ExaminationAttempt.Status.EXPIRED:
+            AcademicService.expire_exam_attempt(attempt=attempt)
 
 
 class LearningContentViewSet(TenantScopedEducationViewSet):
@@ -355,6 +485,10 @@ VIEWSET_MAP = {
     "grade": GradeRecordViewSet,
     "assessment": GradeRecordViewSet,
     "examination": ExaminationViewSet,
+    "assignment": AssignmentViewSet,
+    "submission": AssignmentSubmissionViewSet,
+    "exam_attempt": ExaminationAttemptViewSet,
+    "examination_attempt": ExaminationAttemptViewSet,
     "content": LearningContentViewSet,
     "lesson": LearningContentViewSet,
     "skill": SkillViewSet,
@@ -367,7 +501,10 @@ __all__ = [
     "CourseViewSet",
     "EnrollmentViewSet",
     "ExaminationViewSet",
+    "ExaminationAttemptViewSet",
     "GradeRecordViewSet",
+    "AssignmentViewSet",
+    "AssignmentSubmissionViewSet",
     "LearningContentViewSet",
     "SkillViewSet",
     "StudentProfileViewSet",

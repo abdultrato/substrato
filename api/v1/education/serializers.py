@@ -1,12 +1,18 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
 from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
     AttendanceRecord,
     Classroom,
     Course,
     Enrollment,
     Examination,
+    ExaminationAttempt,
     GradeRecord,
     LearningContent,
     Skill,
@@ -169,6 +175,11 @@ GRADE_ALIASES = {
     "assessment_max_score": "max_score",
     "assessment_weight": "weight",
     "assessment_published_at": "published_at",
+    "submissao": "assignment_submission",
+    "submissão": "assignment_submission",
+    "trabalho_submetido": "assignment_submission",
+    "tentativa_exame": "examination_attempt",
+    "attempt": "examination_attempt",
 }
 
 EXAMINATION_ALIASES = {
@@ -185,6 +196,136 @@ EXAMINATION_ALIASES = {
     "nota_máxima": "max_score",
     "pontuacao_maxima": "max_score",
     "pontuação_máxima": "max_score",
+    "abre_em": "opens_at",
+    "abre_ao": "opens_at",
+    "fecha_em": "closes_at",
+    "fecha_ao": "closes_at",
+    "duracao_minutos": "duration_minutes",
+    "duração_minutos": "duration_minutes",
+    "tentativas_maximas": "max_attempts",
+    "tentativas_máximas": "max_attempts",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "publicado_em": "published_at",
+    "data_publicacao": "published_at",
+    "data_publicação": "published_at",
+}
+
+ASSIGNMENT_ALIASES = {
+    "id_custom": "custom_id",
+    "curso": "course",
+    "turma": "classroom",
+    "sala": "classroom",
+    "professor": "teacher",
+    "titulo": "title",
+    "título": "title",
+    "instrucoes": "instructions",
+    "instruções": "instructions",
+    "abre_em": "opens_at",
+    "abre_ao": "opens_at",
+    "prazo": "due_at",
+    "prazo_final": "due_at",
+    "prazo_limite": "due_at",
+    "categoria_trabalho": "work_category",
+    "tipo_trabalho": "work_category",
+    "tipo": "work_category",
+    "categoria": "work_category",
+    "obrigatorio": "work_category",
+    "obrigatório": "work_category",
+    "higienico": "work_category",
+    "higiénico": "work_category",
+    "nota_maxima": "max_score",
+    "nota_máxima": "max_score",
+    "pontuacao_maxima": "max_score",
+    "pontuação_máxima": "max_score",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "permite_atraso": "allow_late_submission",
+    "permite_submissao_atrasada": "allow_late_submission",
+    "permite_submissão_atrasada": "allow_late_submission",
+    "permite_multiplas_submissoes": "allow_multiple_submissions",
+    "permite_múltiplas_submissões": "allow_multiple_submissions",
+    "max_submissoes": "max_submissions",
+    "max_submissões": "max_submissions",
+    "publicado_em": "published_at",
+    "data_publicacao": "published_at",
+    "data_publicação": "published_at",
+}
+
+ASSIGNMENT_SUBMISSION_ALIASES = {
+    "id_custom": "custom_id",
+    "trabalho": "assignment",
+    "tarefa": "assignment",
+    "assignment_id": "assignment",
+    "matricula": "enrollment",
+    "matrícula": "enrollment",
+    "inscricao": "enrollment",
+    "inscrição": "enrollment",
+    "estudante": "student",
+    "aluno": "student",
+    "tentativa": "attempt_number",
+    "numero_tentativa": "attempt_number",
+    "número_tentativa": "attempt_number",
+    "submetido_em": "submitted_at",
+    "data_submissao": "submitted_at",
+    "data_submissão": "submitted_at",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "resposta": "content_text",
+    "conteudo": "content_text",
+    "conteúdo": "content_text",
+    "url_anexo": "attachment_url",
+    "anexo_url": "attachment_url",
+    "nota": "score",
+    "pontuacao": "score",
+    "pontuação": "score",
+    "nota_maxima_snapshot": "max_score_snapshot",
+    "nota_máxima_snapshot": "max_score_snapshot",
+    "feedback_professor": "teacher_feedback",
+    "comentario_professor": "teacher_feedback",
+    "comentário_professor": "teacher_feedback",
+    "avaliado_por": "graded_by",
+    "avaliado_em": "graded_at",
+}
+
+EXAM_ATTEMPT_ALIASES = {
+    "id_custom": "custom_id",
+    "exame": "examination",
+    "prova": "examination",
+    "matricula": "enrollment",
+    "matrícula": "enrollment",
+    "inscricao": "enrollment",
+    "inscrição": "enrollment",
+    "estudante": "student",
+    "aluno": "student",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "iniciado_em": "started_at",
+    "data_inicio": "started_at",
+    "data_início": "started_at",
+    "expira_em": "expires_at",
+    "data_expiracao": "expires_at",
+    "data_expiração": "expires_at",
+    "submetido_em": "submitted_at",
+    "data_submissao": "submitted_at",
+    "data_submissão": "submitted_at",
+    "tempo_limite_minutos": "time_limit_minutes_snapshot",
+    "tempo_limite": "time_limit_minutes_snapshot",
+    "nota_maxima_snapshot": "max_score_snapshot",
+    "nota_máxima_snapshot": "max_score_snapshot",
+    "resposta": "submission_payload",
+    "conteudo_resposta": "submission_payload",
+    "conteúdo_resposta": "submission_payload",
+    "nota": "score",
+    "pontuacao": "score",
+    "pontuação": "score",
+    "feedback_professor": "teacher_feedback",
+    "avaliado_por": "graded_by",
+    "avaliado_em": "graded_at",
 }
 
 CONTENT_ALIASES = {
@@ -234,6 +375,25 @@ SKILL_ALIASES = {
     "situacao": "status",
     "situação": "status",
 }
+
+
+class FullCleanSerializerMixin:
+    """
+    Force model-level validation before writing to the database.
+    """
+
+    def create(self, validated_data):
+        model = self.Meta.model(**validated_data)
+        model.full_clean()
+        model.save()
+        return model
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.full_clean()
+        instance.save()
+        return instance
 
 
 class StudentProfileSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -306,7 +466,51 @@ class GradeRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         read_only_fields = _READ_ONLY_FIELDS
 
 
-class ExaminationSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+class AssignmentSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = ASSIGNMENT_ALIASES
+    legacy_output_aliases = ASSIGNMENT_ALIASES
+
+    class Meta:
+        model = Assignment
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class AssignmentSubmissionSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = ASSIGNMENT_SUBMISSION_ALIASES
+    legacy_output_aliases = ASSIGNMENT_SUBMISSION_ALIASES
+
+    def validate(self, attrs):
+        assignment = attrs.get("assignment") or getattr(self.instance, "assignment", None)
+        student = attrs.get("student") or getattr(self.instance, "student", None)
+        tenant = (
+            attrs.get("tenant")
+            or getattr(self.instance, "tenant", None)
+            or getattr(getattr(self.context.get("request"), "tenant", None), "id", None)
+        )
+
+        if attrs.get("submitted_at") is None and not getattr(self.instance, "submitted_at", None):
+            attrs["submitted_at"] = timezone.now()
+
+        if assignment and attrs.get("max_score_snapshot") is None and not getattr(self.instance, "max_score_snapshot", None):
+            attrs["max_score_snapshot"] = assignment.max_score
+
+        if self.instance is None and assignment and student:
+            existing_qs = AssignmentSubmission.all_objects.filter(assignment=assignment, student=student)
+            if tenant:
+                existing_qs = existing_qs.filter(tenant=tenant)
+            if attrs.get("attempt_number") in (None, 0):
+                attrs["attempt_number"] = existing_qs.count() + 1
+
+        return attrs
+
+    class Meta:
+        model = AssignmentSubmission
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class ExaminationSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = EXAMINATION_ALIASES
     legacy_output_aliases = EXAMINATION_ALIASES
 
@@ -314,6 +518,47 @@ class ExaminationSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         model = Examination
         fields = "__all__"
         read_only_fields = _READ_ONLY_FIELDS
+
+
+class ExaminationAttemptSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = EXAM_ATTEMPT_ALIASES
+    legacy_output_aliases = EXAM_ATTEMPT_ALIASES
+
+    def validate(self, attrs):
+        exam = attrs.get("examination") or getattr(self.instance, "examination", None)
+        started_at = attrs.get("started_at") or getattr(self.instance, "started_at", None) or timezone.now()
+        attrs["started_at"] = started_at
+
+        time_limit = attrs.get("time_limit_minutes_snapshot") or getattr(self.instance, "time_limit_minutes_snapshot", None)
+        if time_limit is None and exam is not None:
+            time_limit = exam.duration_minutes
+            attrs["time_limit_minutes_snapshot"] = time_limit
+
+        if attrs.get("max_score_snapshot") is None and getattr(self.instance, "max_score_snapshot", None) is None and exam is not None:
+            attrs["max_score_snapshot"] = exam.max_score
+
+        if attrs.get("expires_at") is None and getattr(self.instance, "expires_at", None) is None and time_limit is not None:
+            expires_at = started_at + timedelta(minutes=int(time_limit))
+            if exam and exam.closes_at and expires_at > exam.closes_at:
+                expires_at = exam.closes_at
+            attrs["expires_at"] = expires_at
+
+        if attrs.get("status") == ExaminationAttempt.Status.SUBMITTED and attrs.get("submitted_at") is None:
+            attrs["submitted_at"] = timezone.now()
+
+        return attrs
+
+    class Meta:
+        model = ExaminationAttempt
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+        extra_kwargs = {
+            "expires_at": {"required": False},
+            "started_at": {"required": False},
+            "submitted_at": {"required": False},
+            "time_limit_minutes_snapshot": {"required": False},
+            "max_score_snapshot": {"required": False},
+        }
 
 
 class LearningContentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

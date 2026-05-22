@@ -78,6 +78,107 @@ def publish_exam_scheduled(*, tenant_id: int, exam_id: int, course_id: int) -> N
     )
 
 
+def publish_assignment_published(*, tenant_id: int, assignment_id: int, course_id: int) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="AssignmentPublished",
+            payload={
+                "tenant_id": tenant_id,
+                "assignment_id": assignment_id,
+                "course_id": course_id,
+            },
+        )
+    )
+
+
+def publish_assignment_submitted(
+    *,
+    tenant_id: int,
+    submission_id: int,
+    assignment_id: int,
+    student_id: int,
+    status: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="AssignmentSubmitted",
+            payload={
+                "tenant_id": tenant_id,
+                "submission_id": submission_id,
+                "assignment_id": assignment_id,
+                "student_id": student_id,
+                "status": status,
+            },
+        )
+    )
+
+
+def publish_exam_attempt_opened(
+    *,
+    tenant_id: int,
+    attempt_id: int,
+    exam_id: int,
+    student_id: int,
+    expires_at: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="ExamAttemptOpened",
+            payload={
+                "tenant_id": tenant_id,
+                "attempt_id": attempt_id,
+                "exam_id": exam_id,
+                "student_id": student_id,
+                "expires_at": expires_at,
+            },
+        )
+    )
+
+
+def publish_exam_attempt_submitted(
+    *,
+    tenant_id: int,
+    attempt_id: int,
+    exam_id: int,
+    student_id: int,
+    submitted_at: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="ExamAttemptSubmitted",
+            payload={
+                "tenant_id": tenant_id,
+                "attempt_id": attempt_id,
+                "exam_id": exam_id,
+                "student_id": student_id,
+                "submitted_at": submitted_at,
+            },
+        )
+    )
+
+
+def publish_exam_attempt_expired(
+    *,
+    tenant_id: int,
+    attempt_id: int,
+    exam_id: int,
+    student_id: int,
+    expired_at: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="ExamAttemptExpired",
+            payload={
+                "tenant_id": tenant_id,
+                "attempt_id": attempt_id,
+                "exam_id": exam_id,
+                "student_id": student_id,
+                "expired_at": expired_at,
+            },
+        )
+    )
+
+
 def publish_lesson_uploaded(*, tenant_id: int, content_id: int, course_id: int, content_type: str) -> None:
     event_bus.publish_after_commit(
         BaseEvent(

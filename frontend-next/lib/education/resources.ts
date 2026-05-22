@@ -74,6 +74,27 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     descriptionEn: "Exam scheduling.",
   },
   {
+    key: "assignment",
+    labelPt: "Trabalhos",
+    labelEn: "Assignments",
+    descriptionPt: "Configuração de trabalhos com cronologia e prazo de submissão.",
+    descriptionEn: "Assignments with timeline and strict submission deadlines.",
+  },
+  {
+    key: "submission",
+    labelPt: "Submissões",
+    labelEn: "Submissions",
+    descriptionPt: "Submissões de estudantes com estado e avaliação.",
+    descriptionEn: "Student submissions with status and grading data.",
+  },
+  {
+    key: "exam_attempt",
+    labelPt: "Tentativas de Exame",
+    labelEn: "Exam Attempts",
+    descriptionPt: "Sessões de prova online com início/fim e bloqueio de repetição.",
+    descriptionEn: "Online exam sessions with start/end times and no-repeat lock.",
+  },
+  {
     key: "content",
     labelPt: "Conteúdos",
     labelEn: "Learning Content",

@@ -1,11 +1,14 @@
 from django.contrib import admin
 
 from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
     AttendanceRecord,
     Classroom,
     Course,
     Enrollment,
     Examination,
+    ExaminationAttempt,
     GradeRecord,
     LearningContent,
     Skill,
@@ -68,6 +71,27 @@ class ExaminationAdmin(admin.ModelAdmin):
     list_display = ("custom_id", "title", "course", "scheduled_for", "tenant")
     list_filter = ("tenant",)
     search_fields = ("custom_id", "title", "course__name")
+
+
+@admin.register(Assignment)
+class AssignmentAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "title", "course", "classroom", "due_at", "status", "tenant")
+    list_filter = ("status", "tenant")
+    search_fields = ("custom_id", "title", "course__name", "classroom__name")
+
+
+@admin.register(AssignmentSubmission)
+class AssignmentSubmissionAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "assignment", "student", "attempt_number", "status", "submitted_at", "tenant")
+    list_filter = ("status", "tenant")
+    search_fields = ("custom_id", "assignment__title", "student__student_code")
+
+
+@admin.register(ExaminationAttempt)
+class ExaminationAttemptAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "examination", "student", "status", "started_at", "submitted_at", "tenant")
+    list_filter = ("status", "tenant")
+    search_fields = ("custom_id", "examination__title", "student__student_code")
 
 
 @admin.register(LearningContent)

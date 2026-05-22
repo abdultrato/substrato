@@ -1,10 +1,13 @@
 from api.core.filters import SafeFilterSet
 from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
     AttendanceRecord,
     Classroom,
     Course,
     Enrollment,
     Examination,
+    ExaminationAttempt,
     GradeRecord,
     LearningContent,
     Skill,
@@ -52,13 +55,39 @@ class AttendanceRecordFilter(SafeFilterSet):
 class GradeRecordFilter(SafeFilterSet):
     class Meta:
         model = GradeRecord
-        fields = ["enrollment", "teacher", "component", "published_at", "created_at"]
+        fields = [
+            "enrollment",
+            "teacher",
+            "assignment_submission",
+            "examination_attempt",
+            "component",
+            "published_at",
+            "created_at",
+        ]
 
 
 class ExaminationFilter(SafeFilterSet):
     class Meta:
         model = Examination
         fields = ["course", "classroom", "scheduled_for", "created_at"]
+
+
+class AssignmentFilter(SafeFilterSet):
+    class Meta:
+        model = Assignment
+        fields = ["course", "classroom", "teacher", "status", "work_category", "due_at", "created_at"]
+
+
+class AssignmentSubmissionFilter(SafeFilterSet):
+    class Meta:
+        model = AssignmentSubmission
+        fields = ["assignment", "enrollment", "student", "status", "submitted_at", "created_at"]
+
+
+class ExaminationAttemptFilter(SafeFilterSet):
+    class Meta:
+        model = ExaminationAttempt
+        fields = ["examination", "enrollment", "student", "status", "started_at", "created_at"]
 
 
 class LearningContentFilter(SafeFilterSet):
@@ -83,6 +112,10 @@ FILTER_MAP = {
     "grade": GradeRecordFilter,
     "assessment": GradeRecordFilter,
     "examination": ExaminationFilter,
+    "assignment": AssignmentFilter,
+    "submission": AssignmentSubmissionFilter,
+    "exam_attempt": ExaminationAttemptFilter,
+    "examination_attempt": ExaminationAttemptFilter,
     "content": LearningContentFilter,
     "lesson": LearningContentFilter,
     "skill": SkillFilter,

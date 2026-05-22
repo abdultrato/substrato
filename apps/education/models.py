@@ -1,9 +1,12 @@
 from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
     AttendanceRecord,
     Classroom,
     Course,
     Enrollment,
     Examination,
+    ExaminationAttempt,
     GradeRecord,
     LearningContent,
     Skill,
@@ -12,11 +15,14 @@ from apps.education.models import (
 )
 
 __all__ = [
+    "Assignment",
+    "AssignmentSubmission",
     "AttendanceRecord",
     "Classroom",
     "Course",
     "Enrollment",
     "Examination",
+    "ExaminationAttempt",
     "GradeRecord",
     "LearningContent",
     "Skill",

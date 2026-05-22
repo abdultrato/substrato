@@ -56,6 +56,10 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-grade": SAFE_METHODS | WRITE_METHODS,
         "education-assessment": SAFE_METHODS | WRITE_METHODS,
         "education-examination": SAFE_METHODS | WRITE_METHODS,
+        "education-assignment": SAFE_METHODS | WRITE_METHODS,
+        "education-submission": SAFE_METHODS | WRITE_METHODS,
+        "education-exam_attempt": SAFE_METHODS | WRITE_METHODS,
+        "education-examination_attempt": SAFE_METHODS | WRITE_METHODS,
         "education-content": SAFE_METHODS | WRITE_METHODS,
         "education-lesson": SAFE_METHODS | WRITE_METHODS,
         "education-skill": SAFE_METHODS | WRITE_METHODS,
@@ -69,9 +73,19 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "education-grade": SAFE_METHODS,
         "education-assessment": SAFE_METHODS,
         "education-examination": SAFE_METHODS,
+        "education-assignment": SAFE_METHODS,
+        "education-submission": SAFE_METHODS,
+        "education-exam_attempt": SAFE_METHODS,
+        "education-examination_attempt": SAFE_METHODS,
         "education-content": SAFE_METHODS,
         "education-lesson": SAFE_METHODS,
         "education-skill": SAFE_METHODS,
+    }
+    education_student_activity = {
+        **education_read,
+        "education-submission": SAFE_METHODS | WRITE_METHODS,
+        "education-exam_attempt": SAFE_METHODS | WRITE_METHODS,
+        "education-examination_attempt": SAFE_METHODS | WRITE_METHODS,
     }
     accounting_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
     payments_crud = {
@@ -499,9 +513,9 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["DIRETOR_ESCOLA"]: education_manage,
         g["DIRETOR_ADJUNTO_PEDAGOGICO"]: education_manage,
         g["TEACHER"]: education_manage,
-        g["ESTUDANTE"]: education_read,
+        g["ESTUDANTE"]: education_student_activity,
         g["ENCARREGADO_EDUCACAO"]: education_read,
-        g["STUDENT_EN"]: education_read,
+        g["STUDENT_EN"]: education_student_activity,
         g["FARMACIA"]: {
             # Almoxarifado / estoque
             **pharmacy_crud,

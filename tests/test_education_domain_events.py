@@ -1,10 +1,24 @@
 import json
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.utils import timezone
 import pytest
 
-from apps.education.models import AttendanceRecord, Classroom, Course, Enrollment, Examination, GradeRecord, LearningContent, StudentProfile
+from apps.education.models import (
+    Assignment,
+    AssignmentSubmission,
+    AttendanceRecord,
+    Classroom,
+    Course,
+    Enrollment,
+    Examination,
+    ExaminationAttempt,
+    GradeRecord,
+    LearningContent,
+    StudentProfile,
+)
 from apps.tenants.models.tenant import Tenant
 from events.bus import event_bus
 from security.permissions.rbac import GROUPS
@@ -266,3 +280,185 @@ def test_learning_content_publish_transition_emits_lesson_uploaded_event(api_cli
     assert content_events[0].payload["content_id"] == content.id
     assert content_events[0].payload["course_id"] == scope["course"].id
     assert content_events[0].payload["content_type"] == LearningContent.ContentType.LESSON
+
+
+@pytest.mark.django_db
+def test_assignment_publish_transition_emits_assignment_published_event(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-assignment", "edu-evt-assignment.local")
+    director = _user(tenant=tenant, username="director_evt_assignment", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    assignment = Assignment.objects.create(
+        tenant=tenant,
+        course=scope["course"],
+        classroom=scope["classroom"],
+        title="Projeto Integrador",
+        instructions="Entregar ficheiro final.",
+        opens_at=timezone.now() - timedelta(hours=2),
+        due_at=timezone.now() + timedelta(days=1),
+        status=Assignment.Status.DRAFT,
+        max_score=20,
+    )
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response = api_client.patch(
+        f"/api/v1/education/assignment/{assignment.id}/",
+        {"status": Assignment.Status.PUBLISHED},
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    assignment_events = [event for event in captured if event.nome == "AssignmentPublished"]
+    assert len(assignment_events) == 1
+    assert assignment_events[0].payload["tenant_id"] == tenant.id
+    assert assignment_events[0].payload["assignment_id"] == assignment.id
+    assert assignment_events[0].payload["course_id"] == scope["course"].id
+
+
+@pytest.mark.django_db
+def test_assignment_submission_create_emits_assignment_submitted_event(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-submission", "edu-evt-submission.local")
+    director = _user(tenant=tenant, username="director_evt_submission", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    assignment = Assignment.objects.create(
+        tenant=tenant,
+        course=scope["course"],
+        classroom=scope["classroom"],
+        title="Ficha 2",
+        instructions="Resolver exercícios.",
+        opens_at=timezone.now() - timedelta(hours=1),
+        due_at=timezone.now() + timedelta(days=1),
+        status=Assignment.Status.PUBLISHED,
+        max_score=20,
+        published_at=timezone.now() - timedelta(hours=1),
+    )
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response = api_client.post(
+        "/api/v1/education/submission/",
+        {
+            "assignment": assignment.id,
+            "enrollment": scope["enrollment"].id,
+            "student": scope["student"].id,
+            "content_text": "Entrega inicial",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    submission_id = _response_data(response)["id"]
+    submission_events = [event for event in captured if event.nome == "AssignmentSubmitted"]
+    assert len(submission_events) == 1
+    assert submission_events[0].payload["tenant_id"] == tenant.id
+    assert submission_events[0].payload["submission_id"] == submission_id
+    assert submission_events[0].payload["assignment_id"] == assignment.id
+    assert submission_events[0].payload["student_id"] == scope["student"].id
+
+
+@pytest.mark.django_db
+def test_exam_attempt_open_and_submit_emit_domain_events(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-exam-attempt", "edu-evt-exam-attempt.local")
+    director = _user(tenant=tenant, username="director_evt_attempt", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course"],
+        classroom=scope["classroom"],
+        title="Prova online",
+        scheduled_for=timezone.now() - timedelta(minutes=15),
+        opens_at=timezone.now() - timedelta(minutes=15),
+        closes_at=timezone.now() + timedelta(hours=1),
+        duration_minutes=60,
+        max_attempts=1,
+        status=Examination.Status.PUBLISHED,
+        published_at=timezone.now() - timedelta(hours=1),
+        max_score=20,
+    )
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response_create = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": exam.id,
+            "enrollment": scope["enrollment"].id,
+            "student": scope["student"].id,
+            "submission_payload": "Resolução parcial",
+        },
+        format="json",
+    )
+
+    assert response_create.status_code == 201, _response_data(response_create)
+    attempt_id = _response_data(response_create)["id"]
+    opened_events = [event for event in captured if event.nome == "ExamAttemptOpened"]
+    assert len(opened_events) == 1
+    assert opened_events[0].payload["tenant_id"] == tenant.id
+    assert opened_events[0].payload["attempt_id"] == attempt_id
+    assert opened_events[0].payload["exam_id"] == exam.id
+    assert opened_events[0].payload["student_id"] == scope["student"].id
+
+    response_submit = api_client.patch(
+        f"/api/v1/education/exam_attempt/{attempt_id}/",
+        {"status": ExaminationAttempt.Status.SUBMITTED, "submitted_at": timezone.now().isoformat()},
+        format="json",
+    )
+
+    assert response_submit.status_code == 200, _response_data(response_submit)
+    submitted_events = [event for event in captured if event.nome == "ExamAttemptSubmitted"]
+    assert len(submitted_events) == 1
+    assert submitted_events[0].payload["tenant_id"] == tenant.id
+    assert submitted_events[0].payload["attempt_id"] == attempt_id
+    assert submitted_events[0].payload["exam_id"] == exam.id
+    assert submitted_events[0].payload["student_id"] == scope["student"].id
+
+
+@pytest.mark.django_db
+def test_exam_attempt_expire_emits_domain_event(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-expire-attempt", "edu-evt-expire-attempt.local")
+    director = _user(tenant=tenant, username="director_evt_expire_attempt", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    exam = Examination.objects.create(
+        tenant=tenant,
+        course=scope["course"],
+        classroom=scope["classroom"],
+        title="Prova curta",
+        scheduled_for=timezone.now() - timedelta(minutes=10),
+        opens_at=timezone.now() - timedelta(minutes=10),
+        closes_at=timezone.now() + timedelta(minutes=30),
+        duration_minutes=20,
+        max_attempts=1,
+        status=Examination.Status.PUBLISHED,
+        published_at=timezone.now() - timedelta(hours=1),
+        max_score=20,
+    )
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response_create = api_client.post(
+        "/api/v1/education/exam_attempt/",
+        {
+            "examination": exam.id,
+            "enrollment": scope["enrollment"].id,
+            "student": scope["student"].id,
+            "submission_payload": "Tentativa em aberto",
+        },
+        format="json",
+    )
+
+    assert response_create.status_code == 201, _response_data(response_create)
+    attempt_id = _response_data(response_create)["id"]
+
+    response_expire = api_client.patch(
+        f"/api/v1/education/exam_attempt/{attempt_id}/",
+        {"status": ExaminationAttempt.Status.EXPIRED},
+        format="json",
+    )
+    assert response_expire.status_code == 200, _response_data(response_expire)
+
+    expired_events = [event for event in captured if event.nome == "ExamAttemptExpired"]
+    assert len(expired_events) == 1
+    assert expired_events[0].payload["tenant_id"] == tenant.id
+    assert expired_events[0].payload["attempt_id"] == attempt_id
+    assert expired_events[0].payload["exam_id"] == exam.id
+    assert expired_events[0].payload["student_id"] == scope["student"].id

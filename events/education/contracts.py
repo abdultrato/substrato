@@ -41,6 +41,49 @@ class ExamScheduled:
 
 
 @dataclass(frozen=True)
+class AssignmentPublished:
+    assignment_id: int
+    tenant_id: int
+    course_id: int
+
+
+@dataclass(frozen=True)
+class AssignmentSubmitted:
+    submission_id: int
+    tenant_id: int
+    assignment_id: int
+    student_id: int
+    status: str
+
+
+@dataclass(frozen=True)
+class ExamAttemptOpened:
+    attempt_id: int
+    tenant_id: int
+    exam_id: int
+    student_id: int
+    expires_at: str
+
+
+@dataclass(frozen=True)
+class ExamAttemptSubmitted:
+    attempt_id: int
+    tenant_id: int
+    exam_id: int
+    student_id: int
+    submitted_at: str
+
+
+@dataclass(frozen=True)
+class ExamAttemptExpired:
+    attempt_id: int
+    tenant_id: int
+    exam_id: int
+    student_id: int
+    expired_at: str
+
+
+@dataclass(frozen=True)
 class LessonUploaded:
     content_id: int
     tenant_id: int
