@@ -15,10 +15,10 @@ export default function CreateDisciplineScheduleStudentStatusPage() {
         <h1 className="text-2xl font-bold">Novo DisciplineScheduleStudentStatus</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/discipline-schedule-student-statuses/"
+          endpoint="/education/discipline-schedule-student-statuses/"
           method="post"
           submitLabel="Criar DisciplineScheduleStudentStatus"
-          onSuccess={(data) => router.push(`./discipline-schedule-student-statuses/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

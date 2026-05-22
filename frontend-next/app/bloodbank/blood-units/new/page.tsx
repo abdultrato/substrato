@@ -15,10 +15,10 @@ export default function CreateBloodUnitPage() {
         <h1 className="text-2xl font-bold">Novo BloodUnit</h1>
         
         <AutoForm
-          endpoint="/api/v1/bloodbank/blood-units/"
+          endpoint="/bloodbank/blood-units/"
           method="post"
           submitLabel="Criar BloodUnit"
-          onSuccess={(data) => router.push(`./blood-units/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

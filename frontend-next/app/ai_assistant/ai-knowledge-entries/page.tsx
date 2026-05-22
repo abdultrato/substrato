@@ -7,6 +7,7 @@ import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
+import { hasWriteContract } from "@/lib/openapi/writeContract";
 
 type AiKnowledgeEntriesList = { items: any[]; meta: any };
 
@@ -14,12 +15,14 @@ export default function Ai_AssistantAiKnowledgeEntriesPage() {
   useAuthGuard();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const canCreate = hasWriteContract("/ai_assistant/ai-knowledge-entries/", "post");
+  const canEdit = hasWriteContract("/ai_assistant/ai-knowledge-entries/{id}/", "put");
   const pageSize = 20;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["ai_assistant", "ai-knowledge-entries", page, search],
     queryFn: async () => {
-      return await apiFetchList<any>("/api/v1/ai_assistant/ai-knowledge-entries/?page={page}&search={search}");
+      return await apiFetchList<any>("/ai_assistant/ai-knowledge-entries/", { page, pageSize, query: { search: search || undefined } });
     },
     placeholderData: keepPreviousData,
   });
@@ -32,12 +35,14 @@ export default function Ai_AssistantAiKnowledgeEntriesPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">AiKnowledgeEntries</h1>
+          {canCreate ? (
           <Link
-            href="./ai-knowledge-entries/new"
+            href="./new"
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Novo AiKnowledgeEntry
           </Link>
+          ) : null}
         </div>
 
         <input
@@ -64,17 +69,19 @@ export default function Ai_AssistantAiKnowledgeEntriesPage() {
                   <td className="px-4 py-2">{item.name || item.title || "—"}</td>
                   <td className="px-4 py-2 space-x-2">
                     <Link
-                      href={`./ai-knowledge-entries/${item.id}`}
+                      href={`./${item.id}`}
                       className="text-blue-600 hover:underline"
                     >
                       Ver
                     </Link>
+                    {canEdit ? (
                     <button
-                      onClick={() => window.location.href = `./ai-knowledge-entries/${item.id}/edit`}
+                      onClick={() => window.location.href = `./${item.id}/edit`}
                       className="text-green-600 hover:underline"
                     >
                       Editar
                     </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -83,9 +90,9 @@ export default function Ai_AssistantAiKnowledgeEntriesPage() {
         </div>
 
         <Pagination
-          currentPage={page}
-          totalPages={Math.ceil((data?.meta.count || 0) / pageSize)}
-          onPageChange={setPage}
+          page={page}
+          totalPages={data?.meta?.totalPages || 1}
+          onChange={setPage}
         />
       </div>
     </AppLayout>

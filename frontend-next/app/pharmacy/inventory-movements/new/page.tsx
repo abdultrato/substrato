@@ -15,10 +15,10 @@ export default function CreateInventoryMovementPage() {
         <h1 className="text-2xl font-bold">Novo InventoryMovement</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/inventory-movements/"
+          endpoint="/pharmacy/inventory-movements/"
           method="post"
           submitLabel="Criar InventoryMovement"
-          onSuccess={(data) => router.push(`./inventory-movements/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

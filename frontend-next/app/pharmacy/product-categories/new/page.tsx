@@ -15,10 +15,10 @@ export default function CreateProductCategoryPage() {
         <h1 className="text-2xl font-bold">Novo ProductCategory</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/product-categories/"
+          endpoint="/pharmacy/product-categories/"
           method="post"
           submitLabel="Criar ProductCategory"
-          onSuccess={(data) => router.push(`./product-categories/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreatePatientPage() {
         <h1 className="text-2xl font-bold">Novo Patient</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/patients/"
+          endpoint="/clinical/patients/"
           method="post"
           submitLabel="Criar Patient"
-          onSuccess={(data) => router.push(`./patients/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreatePregnancyPage() {
         <h1 className="text-2xl font-bold">Novo Pregnancy</h1>
         
         <AutoForm
-          endpoint="/api/v1/maternity/pregnancies/"
+          endpoint="/maternity/pregnancies/"
           method="post"
           submitLabel="Criar Pregnancy"
-          onSuccess={(data) => router.push(`./pregnancies/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

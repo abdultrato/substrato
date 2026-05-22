@@ -84,6 +84,32 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/audit/atividade/relatorio/pdf/?period=daily")
   })
 
+  it("aceita URL já prefixada com /api/v1 e evita duplicação de prefixo", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/api/v1/clinical/exam/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/exam/")
+  })
+
+  it("normaliza alias gerado de lab-exams para o endpoint canónico exam", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    await apiFetch("/clinical/lab-exams/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/exam/")
+  })
+
   it("reescreve alias legado de seguradora para insurer", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {

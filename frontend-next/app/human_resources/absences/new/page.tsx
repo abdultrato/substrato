@@ -15,10 +15,10 @@ export default function CreateAbsencePage() {
         <h1 className="text-2xl font-bold">Novo Absence</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/absences/"
+          endpoint="/human_resources/absences/"
           method="post"
           submitLabel="Criar Absence"
-          onSuccess={(data) => router.push(`./absences/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

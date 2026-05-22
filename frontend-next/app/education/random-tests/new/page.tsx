@@ -15,10 +15,10 @@ export default function CreateRandomTestPage() {
         <h1 className="text-2xl font-bold">Novo RandomTest</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/random-tests/"
+          endpoint="/education/random-tests/"
           method="post"
           submitLabel="Criar RandomTest"
-          onSuccess={(data) => router.push(`./random-tests/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateLegacyEntryPage() {
         <h1 className="text-2xl font-bold">Novo LegacyEntry</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/legacy-entries/"
+          endpoint="/accounting/legacy-entries/"
           method="post"
           submitLabel="Criar LegacyEntry"
-          onSuccess={(data) => router.push(`./legacy-entries/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

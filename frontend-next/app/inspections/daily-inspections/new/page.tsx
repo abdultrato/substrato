@@ -15,10 +15,10 @@ export default function CreateDailyInspectionPage() {
         <h1 className="text-2xl font-bold">Novo DailyInspection</h1>
         
         <AutoForm
-          endpoint="/api/v1/inspections/daily-inspections/"
+          endpoint="/inspections/daily-inspections/"
           method="post"
           submitLabel="Criar DailyInspection"
-          onSuccess={(data) => router.push(`./daily-inspections/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

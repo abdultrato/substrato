@@ -15,10 +15,10 @@ export default function CreateTerminationPage() {
         <h1 className="text-2xl font-bold">Novo Termination</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/terminations/"
+          endpoint="/human_resources/terminations/"
           method="post"
           submitLabel="Criar Termination"
-          onSuccess={(data) => router.push(`./terminations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

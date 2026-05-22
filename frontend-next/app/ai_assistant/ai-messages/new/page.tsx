@@ -15,10 +15,10 @@ export default function CreateAiMessagePage() {
         <h1 className="text-2xl font-bold">Novo AiMessage</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-messages/"
+          endpoint="/ai_assistant/ai-messages/"
           method="post"
           submitLabel="Criar AiMessage"
-          onSuccess={(data) => router.push(`./ai-messages/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

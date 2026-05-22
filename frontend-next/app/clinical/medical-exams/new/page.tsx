@@ -15,10 +15,10 @@ export default function CreateMedicalExamPage() {
         <h1 className="text-2xl font-bold">Novo MedicalExam</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/medical-exams/"
+          endpoint="/clinical/medical-exams/"
           method="post"
           submitLabel="Criar MedicalExam"
-          onSuccess={(data) => router.push(`./medical-exams/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

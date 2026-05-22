@@ -15,10 +15,10 @@ export default function CreateDeliveryLogPage() {
         <h1 className="text-2xl font-bold">Novo DeliveryLog</h1>
         
         <AutoForm
-          endpoint="/api/v1/notifications/delivery-logs/"
+          endpoint="/notifications/delivery-logs/"
           method="post"
           submitLabel="Criar DeliveryLog"
-          onSuccess={(data) => router.push(`./delivery-logs/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

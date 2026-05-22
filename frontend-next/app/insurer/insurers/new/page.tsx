@@ -15,10 +15,10 @@ export default function CreateInsurerPage() {
         <h1 className="text-2xl font-bold">Novo Insurer</h1>
         
         <AutoForm
-          endpoint="/api/v1/insurer/insurers/"
+          endpoint="/insurer/insurers/"
           method="post"
           submitLabel="Criar Insurer"
-          onSuccess={(data) => router.push(`./insurers/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

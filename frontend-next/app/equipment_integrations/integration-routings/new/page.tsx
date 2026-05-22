@@ -15,10 +15,10 @@ export default function CreateIntegrationRoutingPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationRouting</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-routings/"
+          endpoint="/equipment_integrations/integration-routings/"
           method="post"
           submitLabel="Criar IntegrationRouting"
-          onSuccess={(data) => router.push(`./integration-routings/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

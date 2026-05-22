@@ -15,10 +15,10 @@ export default function CreateReceptionCheckinPage() {
         <h1 className="text-2xl font-bold">Novo ReceptionCheckin</h1>
         
         <AutoForm
-          endpoint="/api/v1/reception/reception-checkins/"
+          endpoint="/reception/reception-checkins/"
           method="post"
           submitLabel="Criar ReceptionCheckin"
-          onSuccess={(data) => router.push(`./reception-checkins/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

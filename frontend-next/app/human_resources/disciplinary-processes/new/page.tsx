@@ -15,10 +15,10 @@ export default function CreateDisciplinaryProcessPage() {
         <h1 className="text-2xl font-bold">Novo DisciplinaryProcess</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/disciplinary-processes/"
+          endpoint="/human_resources/disciplinary-processes/"
           method="post"
           submitLabel="Criar DisciplinaryProcess"
-          onSuccess={(data) => router.push(`./disciplinary-processes/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

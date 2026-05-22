@@ -15,10 +15,10 @@ export default function CreatePrescriptionItemPage() {
         <h1 className="text-2xl font-bold">Novo PrescriptionItem</h1>
         
         <AutoForm
-          endpoint="/api/v1/medical_records/prescription-items/"
+          endpoint="/medical_records/prescription-items/"
           method="post"
           submitLabel="Criar PrescriptionItem"
-          onSuccess={(data) => router.push(`./prescription-items/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

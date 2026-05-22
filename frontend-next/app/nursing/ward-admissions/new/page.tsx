@@ -15,10 +15,10 @@ export default function CreateWardAdmissionPage() {
         <h1 className="text-2xl font-bold">Novo WardAdmission</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/ward-admissions/"
+          endpoint="/nursing/ward-admissions/"
           method="post"
           submitLabel="Criar WardAdmission"
-          onSuccess={(data) => router.push(`./ward-admissions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

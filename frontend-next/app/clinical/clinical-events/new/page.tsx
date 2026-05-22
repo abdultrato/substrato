@@ -15,10 +15,10 @@ export default function CreateClinicalEventPage() {
         <h1 className="text-2xl font-bold">Novo ClinicalEvent</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/clinical-events/"
+          endpoint="/clinical/clinical-events/"
           method="post"
           submitLabel="Criar ClinicalEvent"
-          onSuccess={(data) => router.push(`./clinical-events/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

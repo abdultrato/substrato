@@ -2,6 +2,7 @@ import { logout as clearSession } from "../session"
 import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
 import { reportFrontendApiError, reportFrontendTelemetry } from "../monitoring/telemetry"
 import { getCurrentLanguage, toBackendLanguage } from "../language"
+import { canonicalizeEndpointPath } from "@/lib/openapi/endpointResolver"
 
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
@@ -45,7 +46,8 @@ export type ApiListMeta = {
 }
 
 function rewriteUrl(url: string): string {
-  const u = url.startsWith("/") ? url : `/${url}`
+  const resolved = canonicalizeEndpointPath(url)
+  const u = resolved.startsWith("/") ? resolved : `/${resolved}`
 
   // Telemetria de erros e listagem canónicas (sem alias PT para evitar ambiguidades).
   if (u === "/monitoring/error" || u === "/monitoring/error/") return "/monitoring/error"
@@ -666,15 +668,28 @@ function isProbablyPaginated(res: any): boolean {
 
 export async function apiFetchList<T = any>(
   url: string,
-  opts: { page?: number; pageSize?: number } & ApiFetchOptions = {}
+  opts: {
+    page?: number
+    pageSize?: number
+    query?: Record<string, string | number | boolean | null | undefined>
+  } & ApiFetchOptions = {}
 ): Promise<{ items: T[]; meta: ApiListMeta; raw: any }> {
-  const { page, pageSize, ...fetchOptions } = opts
-  const urlWithPaging =
-    page || pageSize
-      ? addQueryParams(url, { page, page_size: pageSize })
-      : url
+  const { page, pageSize, query, ...fetchOptions } = opts
+  const cleanedUrl = String(url || "")
+    .replace(/\{page\}/g, "")
+    .replace(/\{search\}/g, "")
+    .replace(/\{page_size\}/g, "")
 
-  const raw = await apiFetch<any>(urlWithPaging, fetchOptions)
+  const urlWithPagingOrQuery =
+    page || pageSize || (query && Object.keys(query).length)
+      ? addQueryParams(cleanedUrl, {
+          page,
+          page_size: pageSize,
+          ...(query || {}),
+        })
+      : cleanedUrl
+
+  const raw = await apiFetch<any>(urlWithPagingOrQuery, fetchOptions)
   return {
     items: extractResults<T>(raw),
     meta: extractListMeta(raw),

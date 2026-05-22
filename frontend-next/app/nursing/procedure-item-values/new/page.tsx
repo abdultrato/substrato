@@ -15,10 +15,10 @@ export default function CreateProcedureItemValuePage() {
         <h1 className="text-2xl font-bold">Novo ProcedureItemValue</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/procedure-item-values/"
+          endpoint="/nursing/procedure-item-values/"
           method="post"
           submitLabel="Criar ProcedureItemValue"
-          onSuccess={(data) => router.push(`./procedure-item-values/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateVacationPage() {
         <h1 className="text-2xl font-bold">Novo Vacation</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/vacations/"
+          endpoint="/human_resources/vacations/"
           method="post"
           submitLabel="Criar Vacation"
-          onSuccess={(data) => router.push(`./vacations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

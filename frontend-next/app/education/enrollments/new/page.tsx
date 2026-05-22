@@ -15,10 +15,10 @@ export default function CreateEnrollmentPage() {
         <h1 className="text-2xl font-bold">Novo Enrollment</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/enrollments/"
+          endpoint="/education/enrollments/"
           method="post"
           submitLabel="Criar Enrollment"
-          onSuccess={(data) => router.push(`./enrollments/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateAiPolicyEventPage() {
         <h1 className="text-2xl font-bold">Novo AiPolicyEvent</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-policy-events/"
+          endpoint="/ai_assistant/ai-policy-events/"
           method="post"
           submitLabel="Criar AiPolicyEvent"
-          onSuccess={(data) => router.push(`./ai-policy-events/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

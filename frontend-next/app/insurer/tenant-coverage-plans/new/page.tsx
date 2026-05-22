@@ -15,10 +15,10 @@ export default function CreateTenantCoveragePlanPage() {
         <h1 className="text-2xl font-bold">Novo TenantCoveragePlan</h1>
         
         <AutoForm
-          endpoint="/api/v1/insurer/tenant-coverage-plans/"
+          endpoint="/insurer/tenant-coverage-plans/"
           method="post"
           submitLabel="Criar TenantCoveragePlan"
-          onSuccess={(data) => router.push(`./tenant-coverage-plans/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

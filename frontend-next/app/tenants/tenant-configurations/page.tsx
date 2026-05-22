@@ -7,6 +7,7 @@ import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
+import { hasWriteContract } from "@/lib/openapi/writeContract";
 
 type TenantConfigurationsList = { items: any[]; meta: any };
 
@@ -14,12 +15,14 @@ export default function TenantsTenantConfigurationsPage() {
   useAuthGuard();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const canCreate = hasWriteContract("/tenants/tenant-configurations/", "post");
+  const canEdit = hasWriteContract("/tenants/tenant-configurations/{id}/", "put");
   const pageSize = 20;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["tenants", "tenant-configurations", page, search],
     queryFn: async () => {
-      return await apiFetchList<any>("/api/v1/tenants/tenant-configurations/?page={page}&search={search}");
+      return await apiFetchList<any>("/tenants/tenant-configurations/", { page, pageSize, query: { search: search || undefined } });
     },
     placeholderData: keepPreviousData,
   });
@@ -32,12 +35,14 @@ export default function TenantsTenantConfigurationsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">TenantConfigurations</h1>
+          {canCreate ? (
           <Link
-            href="./tenant-configurations/new"
+            href="./new"
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Novo TenantConfiguration
           </Link>
+          ) : null}
         </div>
 
         <input
@@ -64,17 +69,19 @@ export default function TenantsTenantConfigurationsPage() {
                   <td className="px-4 py-2">{item.name || item.title || "—"}</td>
                   <td className="px-4 py-2 space-x-2">
                     <Link
-                      href={`./tenant-configurations/${item.id}`}
+                      href={`./${item.id}`}
                       className="text-blue-600 hover:underline"
                     >
                       Ver
                     </Link>
+                    {canEdit ? (
                     <button
-                      onClick={() => window.location.href = `./tenant-configurations/${item.id}/edit`}
+                      onClick={() => window.location.href = `./${item.id}/edit`}
                       className="text-green-600 hover:underline"
                     >
                       Editar
                     </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -83,9 +90,9 @@ export default function TenantsTenantConfigurationsPage() {
         </div>
 
         <Pagination
-          currentPage={page}
-          totalPages={Math.ceil((data?.meta.count || 0) / pageSize)}
-          onPageChange={setPage}
+          page={page}
+          totalPages={data?.meta?.totalPages || 1}
+          onChange={setPage}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateLedgerEntryPage() {
         <h1 className="text-2xl font-bold">Novo LedgerEntry</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/ledger-entries/"
+          endpoint="/accounting/ledger-entries/"
           method="post"
           submitLabel="Criar LedgerEntry"
-          onSuccess={(data) => router.push(`./ledger-entries/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

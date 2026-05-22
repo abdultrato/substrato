@@ -15,10 +15,10 @@ export default function CreateInvoiceItemPage() {
         <h1 className="text-2xl font-bold">Novo InvoiceItem</h1>
         
         <AutoForm
-          endpoint="/api/v1/billing/invoice-items/"
+          endpoint="/billing/invoice-items/"
           method="post"
           submitLabel="Criar InvoiceItem"
-          onSuccess={(data) => router.push(`./invoice-items/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

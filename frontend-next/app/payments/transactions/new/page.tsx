@@ -15,10 +15,10 @@ export default function CreateTransactionPage() {
         <h1 className="text-2xl font-bold">Novo Transaction</h1>
         
         <AutoForm
-          endpoint="/api/v1/payments/transactions/"
+          endpoint="/payments/transactions/"
           method="post"
           submitLabel="Criar Transaction"
-          onSuccess={(data) => router.push(`./transactions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

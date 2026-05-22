@@ -15,10 +15,10 @@ export default function CreateLearningContentPage() {
         <h1 className="text-2xl font-bold">Novo LearningContent</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/learning-contents/"
+          endpoint="/education/learning-contents/"
           method="post"
           submitLabel="Criar LearningContent"
-          onSuccess={(data) => router.push(`./learning-contents/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

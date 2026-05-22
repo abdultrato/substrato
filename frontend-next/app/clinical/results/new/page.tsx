@@ -15,10 +15,10 @@ export default function CreateResultPage() {
         <h1 className="text-2xl font-bold">Novo Result</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/results/"
+          endpoint="/clinical/results/"
           method="post"
           submitLabel="Criar Result"
-          onSuccess={(data) => router.push(`./results/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

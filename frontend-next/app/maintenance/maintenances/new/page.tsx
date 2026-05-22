@@ -15,10 +15,10 @@ export default function CreateMaintenancePage() {
         <h1 className="text-2xl font-bold">Novo Maintenance</h1>
         
         <AutoForm
-          endpoint="/api/v1/maintenance/maintenances/"
+          endpoint="/maintenance/maintenances/"
           method="post"
           submitLabel="Criar Maintenance"
-          onSuccess={(data) => router.push(`./maintenances/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

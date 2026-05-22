@@ -15,10 +15,10 @@ export default function CreateAccountPage() {
         <h1 className="text-2xl font-bold">Novo Account</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/accounts/"
+          endpoint="/accounting/accounts/"
           method="post"
           submitLabel="Criar Account"
-          onSuccess={(data) => router.push(`./accounts/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

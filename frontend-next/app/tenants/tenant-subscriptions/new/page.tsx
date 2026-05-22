@@ -15,10 +15,10 @@ export default function CreateTenantSubscriptionPage() {
         <h1 className="text-2xl font-bold">Novo TenantSubscription</h1>
         
         <AutoForm
-          endpoint="/api/v1/tenants/tenant-subscriptions/"
+          endpoint="/tenants/tenant-subscriptions/"
           method="post"
           submitLabel="Criar TenantSubscription"
-          onSuccess={(data) => router.push(`./tenant-subscriptions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateCoursePage() {
         <h1 className="text-2xl font-bold">Novo Course</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/courses/"
+          endpoint="/education/courses/"
           method="post"
           submitLabel="Criar Course"
-          onSuccess={(data) => router.push(`./courses/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

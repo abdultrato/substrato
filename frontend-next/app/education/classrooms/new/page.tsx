@@ -15,10 +15,10 @@ export default function CreateClassroomPage() {
         <h1 className="text-2xl font-bold">Novo Classroom</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/classrooms/"
+          endpoint="/education/classrooms/"
           method="post"
           submitLabel="Criar Classroom"
-          onSuccess={(data) => router.push(`./classrooms/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

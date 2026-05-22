@@ -15,10 +15,10 @@ export default function CreateLabRequestItemPage() {
         <h1 className="text-2xl font-bold">Novo LabRequestItem</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/lab-request-items/"
+          endpoint="/clinical/lab-request-items/"
           method="post"
           submitLabel="Criar LabRequestItem"
-          onSuccess={(data) => router.push(`./lab-request-items/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

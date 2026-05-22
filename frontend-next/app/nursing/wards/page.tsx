@@ -7,6 +7,7 @@ import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
+import { hasWriteContract } from "@/lib/openapi/writeContract";
 
 type WardsList = { items: any[]; meta: any };
 
@@ -14,12 +15,14 @@ export default function NursingWardsPage() {
   useAuthGuard();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const canCreate = hasWriteContract("/nursing/wards/", "post");
+  const canEdit = hasWriteContract("/nursing/wards/{id}/", "put");
   const pageSize = 20;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["nursing", "wards", page, search],
     queryFn: async () => {
-      return await apiFetchList<any>("/api/v1/nursing/wards/?page={page}&search={search}");
+      return await apiFetchList<any>("/nursing/wards/", { page, pageSize, query: { search: search || undefined } });
     },
     placeholderData: keepPreviousData,
   });
@@ -32,12 +35,14 @@ export default function NursingWardsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Wards</h1>
+          {canCreate ? (
           <Link
-            href="./wards/new"
+            href="./new"
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Novo Ward
           </Link>
+          ) : null}
         </div>
 
         <input
@@ -64,17 +69,19 @@ export default function NursingWardsPage() {
                   <td className="px-4 py-2">{item.name || item.title || "—"}</td>
                   <td className="px-4 py-2 space-x-2">
                     <Link
-                      href={`./wards/${item.id}`}
+                      href={`./${item.id}`}
                       className="text-blue-600 hover:underline"
                     >
                       Ver
                     </Link>
+                    {canEdit ? (
                     <button
-                      onClick={() => window.location.href = `./wards/${item.id}/edit`}
+                      onClick={() => window.location.href = `./${item.id}/edit`}
                       className="text-green-600 hover:underline"
                     >
                       Editar
                     </button>
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -83,9 +90,9 @@ export default function NursingWardsPage() {
         </div>
 
         <Pagination
-          currentPage={page}
-          totalPages={Math.ceil((data?.meta.count || 0) / pageSize)}
-          onPageChange={setPage}
+          page={page}
+          totalPages={data?.meta?.totalPages || 1}
+          onChange={setPage}
         />
       </div>
     </AppLayout>

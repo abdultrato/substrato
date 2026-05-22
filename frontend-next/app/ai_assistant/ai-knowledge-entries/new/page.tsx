@@ -15,10 +15,10 @@ export default function CreateAiKnowledgeEntryPage() {
         <h1 className="text-2xl font-bold">Novo AiKnowledgeEntry</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-knowledge-entries/"
+          endpoint="/ai_assistant/ai-knowledge-entries/"
           method="post"
           submitLabel="Criar AiKnowledgeEntry"
-          onSuccess={(data) => router.push(`./ai-knowledge-entries/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

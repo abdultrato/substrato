@@ -15,10 +15,10 @@ export default function CreateLotPage() {
         <h1 className="text-2xl font-bold">Novo Lot</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/lots/"
+          endpoint="/pharmacy/lots/"
           method="post"
           submitLabel="Criar Lot"
-          onSuccess={(data) => router.push(`./lots/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

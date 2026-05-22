@@ -15,10 +15,10 @@ export default function CreateClinicalReferencePage() {
         <h1 className="text-2xl font-bold">Novo ClinicalReference</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/clinical-references/"
+          endpoint="/clinical/clinical-references/"
           method="post"
           submitLabel="Criar ClinicalReference"
-          onSuccess={(data) => router.push(`./clinical-references/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

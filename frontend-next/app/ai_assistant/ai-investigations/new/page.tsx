@@ -15,10 +15,10 @@ export default function CreateAiInvestigationPage() {
         <h1 className="text-2xl font-bold">Novo AiInvestigation</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-investigations/"
+          endpoint="/ai_assistant/ai-investigations/"
           method="post"
           submitLabel="Criar AiInvestigation"
-          onSuccess={(data) => router.push(`./ai-investigations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

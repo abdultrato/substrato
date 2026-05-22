@@ -15,10 +15,10 @@ export default function CreateIntegrationAnalyteMappingPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationAnalyteMapping</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-analyte-mappings/"
+          endpoint="/equipment_integrations/integration-analyte-mappings/"
           method="post"
           submitLabel="Criar IntegrationAnalyteMapping"
-          onSuccess={(data) => router.push(`./integration-analyte-mappings/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

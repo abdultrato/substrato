@@ -15,10 +15,10 @@ export default function CreateHolidayPage() {
         <h1 className="text-2xl font-bold">Novo Holiday</h1>
         
         <AutoForm
-          endpoint="/api/v1/consultations/holidaies/"
+          endpoint="/consultations/holidaies/"
           method="post"
           submitLabel="Criar Holiday"
-          onSuccess={(data) => router.push(`./holidaies/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

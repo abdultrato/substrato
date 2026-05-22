@@ -15,10 +15,10 @@ export default function CreateIntegrationCredentialPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationCredential</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-credentials/"
+          endpoint="/equipment_integrations/integration-credentials/"
           method="post"
           submitLabel="Criar IntegrationCredential"
-          onSuccess={(data) => router.push(`./integration-credentials/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

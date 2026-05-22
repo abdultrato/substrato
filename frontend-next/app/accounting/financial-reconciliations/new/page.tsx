@@ -15,10 +15,10 @@ export default function CreateFinancialReconciliationPage() {
         <h1 className="text-2xl font-bold">Novo FinancialReconciliation</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/financial-reconciliations/"
+          endpoint="/accounting/financial-reconciliations/"
           method="post"
           submitLabel="Criar FinancialReconciliation"
-          onSuccess={(data) => router.push(`./financial-reconciliations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

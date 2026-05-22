@@ -15,10 +15,10 @@ export default function CreateProcedureItemPage() {
         <h1 className="text-2xl font-bold">Novo ProcedureItem</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/procedure-items/"
+          endpoint="/nursing/procedure-items/"
           method="post"
           submitLabel="Criar ProcedureItem"
-          onSuccess={(data) => router.push(`./procedure-items/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

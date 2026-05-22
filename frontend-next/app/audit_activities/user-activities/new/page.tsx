@@ -15,10 +15,10 @@ export default function CreateUserActivityPage() {
         <h1 className="text-2xl font-bold">Novo UserActivity</h1>
         
         <AutoForm
-          endpoint="/api/v1/audit_activities/user-activities/"
+          endpoint="/audit_activities/user-activities/"
           method="post"
           submitLabel="Criar UserActivity"
-          onSuccess={(data) => router.push(`./user-activities/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

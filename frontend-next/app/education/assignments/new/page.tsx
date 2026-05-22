@@ -15,10 +15,10 @@ export default function CreateAssignmentPage() {
         <h1 className="text-2xl font-bold">Novo Assignment</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/assignments/"
+          endpoint="/education/assignments/"
           method="post"
           submitLabel="Criar Assignment"
-          onSuccess={(data) => router.push(`./assignments/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

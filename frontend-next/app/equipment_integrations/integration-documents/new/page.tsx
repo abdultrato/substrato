@@ -15,10 +15,10 @@ export default function CreateIntegrationDocumentPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationDocument</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-documents/"
+          endpoint="/equipment_integrations/integration-documents/"
           method="post"
           submitLabel="Criar IntegrationDocument"
-          onSuccess={(data) => router.push(`./integration-documents/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateAccountBalancePage() {
         <h1 className="text-2xl font-bold">Novo AccountBalance</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/account-balances/"
+          endpoint="/accounting/account-balances/"
           method="post"
           submitLabel="Criar AccountBalance"
-          onSuccess={(data) => router.push(`./account-balances/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

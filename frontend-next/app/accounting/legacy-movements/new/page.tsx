@@ -15,10 +15,10 @@ export default function CreateLegacyMovementPage() {
         <h1 className="text-2xl font-bold">Novo LegacyMovement</h1>
         
         <AutoForm
-          endpoint="/api/v1/accounting/legacy-movements/"
+          endpoint="/accounting/legacy-movements/"
           method="post"
           submitLabel="Criar LegacyMovement"
-          onSuccess={(data) => router.push(`./legacy-movements/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

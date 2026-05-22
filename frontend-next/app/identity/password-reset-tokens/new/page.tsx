@@ -15,10 +15,10 @@ export default function CreatePasswordResetTokenPage() {
         <h1 className="text-2xl font-bold">Novo PasswordResetToken</h1>
         
         <AutoForm
-          endpoint="/api/v1/identity/password-reset-tokens/"
+          endpoint="/identity/password-reset-tokens/"
           method="post"
           submitLabel="Criar PasswordResetToken"
-          onSuccess={(data) => router.push(`./password-reset-tokens/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

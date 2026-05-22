@@ -15,10 +15,10 @@ export default function CreateExaminationAttemptPage() {
         <h1 className="text-2xl font-bold">Novo ExaminationAttempt</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/examination-attempts/"
+          endpoint="/education/examination-attempts/"
           method="post"
           submitLabel="Criar ExaminationAttempt"
-          onSuccess={(data) => router.push(`./examination-attempts/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

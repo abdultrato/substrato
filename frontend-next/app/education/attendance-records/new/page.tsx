@@ -15,10 +15,10 @@ export default function CreateAttendanceRecordPage() {
         <h1 className="text-2xl font-bold">Novo AttendanceRecord</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/attendance-records/"
+          endpoint="/education/attendance-records/"
           method="post"
           submitLabel="Criar AttendanceRecord"
-          onSuccess={(data) => router.push(`./attendance-records/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

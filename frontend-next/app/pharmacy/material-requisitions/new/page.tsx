@@ -15,10 +15,10 @@ export default function CreateMaterialRequisitionPage() {
         <h1 className="text-2xl font-bold">Novo MaterialRequisition</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/material-requisitions/"
+          endpoint="/pharmacy/material-requisitions/"
           method="post"
           submitLabel="Criar MaterialRequisition"
-          onSuccess={(data) => router.push(`./material-requisitions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

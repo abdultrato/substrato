@@ -15,10 +15,10 @@ export default function CreateEquipmentPage() {
         <h1 className="text-2xl font-bold">Novo Equipment</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment/equipments/"
+          endpoint="/equipment/equipments/"
           method="post"
           submitLabel="Criar Equipment"
-          onSuccess={(data) => router.push(`./equipments/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

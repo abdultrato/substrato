@@ -15,10 +15,10 @@ export default function CreateProfessionalProfilePage() {
         <h1 className="text-2xl font-bold">Novo ProfessionalProfile</h1>
         
         <AutoForm
-          endpoint="/api/v1/identity/professional-profiles/"
+          endpoint="/identity/professional-profiles/"
           method="post"
           submitLabel="Criar ProfessionalProfile"
-          onSuccess={(data) => router.push(`./professional-profiles/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

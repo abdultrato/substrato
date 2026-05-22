@@ -15,10 +15,10 @@ export default function CreateEmployeePage() {
         <h1 className="text-2xl font-bold">Novo Employee</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/employees/"
+          endpoint="/human_resources/employees/"
           method="post"
           submitLabel="Criar Employee"
-          onSuccess={(data) => router.push(`./employees/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

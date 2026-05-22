@@ -15,10 +15,10 @@ export default function CreateLabExamFieldPage() {
         <h1 className="text-2xl font-bold">Novo LabExamField</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/lab-exam-fields/"
+          endpoint="/clinical/lab-exam-fields/"
           method="post"
           submitLabel="Criar LabExamField"
-          onSuccess={(data) => router.push(`./lab-exam-fields/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

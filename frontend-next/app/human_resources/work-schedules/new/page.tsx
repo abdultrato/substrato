@@ -15,10 +15,10 @@ export default function CreateWorkSchedulePage() {
         <h1 className="text-2xl font-bold">Novo WorkSchedule</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/work-schedules/"
+          endpoint="/human_resources/work-schedules/"
           method="post"
           submitLabel="Criar WorkSchedule"
-          onSuccess={(data) => router.push(`./work-schedules/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateParentCategoryPage() {
         <h1 className="text-2xl font-bold">Novo ParentCategory</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/parent-categories/"
+          endpoint="/pharmacy/parent-categories/"
           method="post"
           submitLabel="Criar ParentCategory"
-          onSuccess={(data) => router.push(`./parent-categories/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

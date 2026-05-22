@@ -15,10 +15,10 @@ export default function CreateNotificationPage() {
         <h1 className="text-2xl font-bold">Novo Notification</h1>
         
         <AutoForm
-          endpoint="/api/v1/notifications/notifications/"
+          endpoint="/notifications/notifications/"
           method="post"
           submitLabel="Criar Notification"
-          onSuccess={(data) => router.push(`./notifications/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

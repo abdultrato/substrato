@@ -15,10 +15,10 @@ export default function CreateIncidentPage() {
         <h1 className="text-2xl font-bold">Novo Incident</h1>
         
         <AutoForm
-          endpoint="/api/v1/incidents/incidents/"
+          endpoint="/incidents/incidents/"
           method="post"
           submitLabel="Criar Incident"
-          onSuccess={(data) => router.push(`./incidents/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

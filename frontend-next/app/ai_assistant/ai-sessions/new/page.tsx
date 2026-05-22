@@ -15,10 +15,10 @@ export default function CreateAiSessionPage() {
         <h1 className="text-2xl font-bold">Novo AiSession</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-sessions/"
+          endpoint="/ai_assistant/ai-sessions/"
           method="post"
           submitLabel="Criar AiSession"
-          onSuccess={(data) => router.push(`./ai-sessions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

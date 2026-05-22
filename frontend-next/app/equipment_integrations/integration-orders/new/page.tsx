@@ -15,10 +15,10 @@ export default function CreateIntegrationOrderPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationOrder</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-orders/"
+          endpoint="/equipment_integrations/integration-orders/"
           method="post"
           submitLabel="Criar IntegrationOrder"
-          onSuccess={(data) => router.push(`./integration-orders/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

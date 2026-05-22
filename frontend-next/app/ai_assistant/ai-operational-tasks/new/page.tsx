@@ -15,10 +15,10 @@ export default function CreateAiOperationalTaskPage() {
         <h1 className="text-2xl font-bold">Novo AiOperationalTask</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-operational-tasks/"
+          endpoint="/ai_assistant/ai-operational-tasks/"
           method="post"
           submitLabel="Criar AiOperationalTask"
-          onSuccess={(data) => router.push(`./ai-operational-tasks/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

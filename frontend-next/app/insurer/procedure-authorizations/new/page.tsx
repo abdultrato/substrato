@@ -15,10 +15,10 @@ export default function CreateProcedureAuthorizationPage() {
         <h1 className="text-2xl font-bold">Novo ProcedureAuthorization</h1>
         
         <AutoForm
-          endpoint="/api/v1/insurer/procedure-authorizations/"
+          endpoint="/insurer/procedure-authorizations/"
           method="post"
           submitLabel="Criar ProcedureAuthorization"
-          onSuccess={(data) => router.push(`./procedure-authorizations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateFamilyDependentPage() {
         <h1 className="text-2xl font-bold">Novo FamilyDependent</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/family-dependents/"
+          endpoint="/human_resources/family-dependents/"
           method="post"
           submitLabel="Criar FamilyDependent"
-          onSuccess={(data) => router.push(`./family-dependents/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

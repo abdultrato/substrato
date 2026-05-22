@@ -15,10 +15,10 @@ export default function CreateStudentProfilePage() {
         <h1 className="text-2xl font-bold">Novo StudentProfile</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/student-profiles/"
+          endpoint="/education/student-profiles/"
           method="post"
           submitLabel="Criar StudentProfile"
-          onSuccess={(data) => router.push(`./student-profiles/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

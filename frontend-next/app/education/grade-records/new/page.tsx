@@ -15,10 +15,10 @@ export default function CreateGradeRecordPage() {
         <h1 className="text-2xl font-bold">Novo GradeRecord</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/grade-records/"
+          endpoint="/education/grade-records/"
           method="post"
           submitLabel="Criar GradeRecord"
-          onSuccess={(data) => router.push(`./grade-records/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

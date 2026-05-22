@@ -15,10 +15,10 @@ export default function CreateNursingVitalSignPage() {
         <h1 className="text-2xl font-bold">Novo NursingVitalSign</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/nursing-vital-signs/"
+          endpoint="/nursing/nursing-vital-signs/"
           method="post"
           submitLabel="Criar NursingVitalSign"
-          onSuccess={(data) => router.push(`./nursing-vital-signs/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

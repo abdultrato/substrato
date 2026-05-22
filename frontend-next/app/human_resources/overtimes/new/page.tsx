@@ -15,10 +15,10 @@ export default function CreateOvertimePage() {
         <h1 className="text-2xl font-bold">Novo Overtime</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/overtimes/"
+          endpoint="/human_resources/overtimes/"
           method="post"
           submitLabel="Criar Overtime"
-          onSuccess={(data) => router.push(`./overtimes/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

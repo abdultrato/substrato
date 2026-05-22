@@ -15,10 +15,10 @@ export default function CreateAiSuggestedActionPage() {
         <h1 className="text-2xl font-bold">Novo AiSuggestedAction</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-suggested-actions/"
+          endpoint="/ai_assistant/ai-suggested-actions/"
           method="post"
           submitLabel="Criar AiSuggestedAction"
-          onSuccess={(data) => router.push(`./ai-suggested-actions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

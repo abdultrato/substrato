@@ -15,10 +15,10 @@ export default function CreateNursingRecordPage() {
         <h1 className="text-2xl font-bold">Novo NursingRecord</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/nursing-records/"
+          endpoint="/nursing/nursing-records/"
           method="post"
           submitLabel="Criar NursingRecord"
-          onSuccess={(data) => router.push(`./nursing-records/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateIntegrationEquipmentPage() {
         <h1 className="text-2xl font-bold">Novo IntegrationEquipment</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-equipments/"
+          endpoint="/equipment_integrations/integration-equipments/"
           method="post"
           submitLabel="Criar IntegrationEquipment"
-          onSuccess={(data) => router.push(`./integration-equipments/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

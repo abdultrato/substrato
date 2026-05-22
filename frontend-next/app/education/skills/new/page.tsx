@@ -15,10 +15,10 @@ export default function CreateSkillPage() {
         <h1 className="text-2xl font-bold">Novo Skill</h1>
         
         <AutoForm
-          endpoint="/api/v1/education/skills/"
+          endpoint="/education/skills/"
           method="post"
           submitLabel="Criar Skill"
-          onSuccess={(data) => router.push(`./skills/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

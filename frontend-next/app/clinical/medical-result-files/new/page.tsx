@@ -15,10 +15,10 @@ export default function CreateMedicalResultFilePage() {
         <h1 className="text-2xl font-bold">Novo MedicalResultFile</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/medical-result-files/"
+          endpoint="/clinical/medical-result-files/"
           method="post"
           submitLabel="Criar MedicalResultFile"
-          onSuccess={(data) => router.push(`./medical-result-files/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateNursingPrescriptionPage() {
         <h1 className="text-2xl font-bold">Novo NursingPrescription</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/nursing-prescriptions/"
+          endpoint="/nursing/nursing-prescriptions/"
           method="post"
           submitLabel="Criar NursingPrescription"
-          onSuccess={(data) => router.push(`./nursing-prescriptions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

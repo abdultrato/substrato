@@ -15,10 +15,10 @@ export default function CreateReceiptPage() {
         <h1 className="text-2xl font-bold">Novo Receipt</h1>
         
         <AutoForm
-          endpoint="/api/v1/payments/receipts/"
+          endpoint="/payments/receipts/"
           method="post"
           submitLabel="Criar Receipt"
-          onSuccess={(data) => router.push(`./receipts/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

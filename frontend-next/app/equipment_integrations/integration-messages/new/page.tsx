@@ -15,10 +15,10 @@ export default function CreateIntegrationMessagePage() {
         <h1 className="text-2xl font-bold">Novo IntegrationMessage</h1>
         
         <AutoForm
-          endpoint="/api/v1/equipment_integrations/integration-messages/"
+          endpoint="/equipment_integrations/integration-messages/"
           method="post"
           submitLabel="Criar IntegrationMessage"
-          onSuccess={(data) => router.push(`./integration-messages/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

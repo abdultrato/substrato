@@ -15,10 +15,10 @@ export default function CreateUserPage() {
         <h1 className="text-2xl font-bold">Novo User</h1>
         
         <AutoForm
-          endpoint="/api/v1/identity/users/"
+          endpoint="/identity/users/"
           method="post"
           submitLabel="Criar User"
-          onSuccess={(data) => router.push(`./users/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

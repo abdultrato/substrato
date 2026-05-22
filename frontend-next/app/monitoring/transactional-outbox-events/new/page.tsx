@@ -15,10 +15,10 @@ export default function CreateTransactionalOutboxEventPage() {
         <h1 className="text-2xl font-bold">Novo TransactionalOutboxEvent</h1>
         
         <AutoForm
-          endpoint="/api/v1/monitoring/transactional-outbox-events/"
+          endpoint="/monitoring/transactional-outbox-events/"
           method="post"
           submitLabel="Criar TransactionalOutboxEvent"
-          onSuccess={(data) => router.push(`./transactional-outbox-events/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

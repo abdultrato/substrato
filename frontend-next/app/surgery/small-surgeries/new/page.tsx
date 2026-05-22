@@ -15,10 +15,10 @@ export default function CreateSmallSurgeryPage() {
         <h1 className="text-2xl font-bold">Novo SmallSurgery</h1>
         
         <AutoForm
-          endpoint="/api/v1/surgery/small-surgeries/"
+          endpoint="/surgery/small-surgeries/"
           method="post"
           submitLabel="Criar SmallSurgery"
-          onSuccess={(data) => router.push(`./small-surgeries/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

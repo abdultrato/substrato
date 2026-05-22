@@ -15,10 +15,10 @@ export default function CreateNursingEvolutionPage() {
         <h1 className="text-2xl font-bold">Novo NursingEvolution</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/nursing-evolutions/"
+          endpoint="/nursing/nursing-evolutions/"
           method="post"
           submitLabel="Criar NursingEvolution"
-          onSuccess={(data) => router.push(`./nursing-evolutions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

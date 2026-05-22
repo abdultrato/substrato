@@ -1,5 +1,6 @@
 import schema from "@/schema.generated.json"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
+import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 
 type HttpMethod = "post" | "put" | "patch"
 
@@ -74,8 +75,38 @@ function resolveRef(ref: string): any {
 function normalizeSchema(s: any): any {
   if (!s) return null
   if (s.$ref) return normalizeSchema(resolveRef(s.$ref))
-  if (s.oneOf?.length) return normalizeSchema(s.oneOf[0])
-  if (s.anyOf?.length) return normalizeSchema(s.anyOf[0])
+  if (Array.isArray(s.allOf) && s.allOf.length) {
+    const merged: Record<string, any> = {
+      type: "object",
+      properties: {},
+      required: [],
+    }
+    for (const part of s.allOf) {
+      const resolved = normalizeSchema(part)
+      if (!resolved || typeof resolved !== "object") continue
+      if (resolved.properties && typeof resolved.properties === "object") {
+        Object.assign(merged.properties, resolved.properties)
+      }
+      if (Array.isArray(resolved.required)) {
+        merged.required = Array.from(new Set([...(merged.required as string[]), ...resolved.required]))
+      }
+    }
+    if (Object.keys(merged.properties).length) return merged
+  }
+  if (Array.isArray(s.oneOf) && s.oneOf.length) {
+    const preferred = s.oneOf.find((item: any) => {
+      const resolved = normalizeSchema(item)
+      return !!resolved?.properties || resolved?.type === "object"
+    })
+    return normalizeSchema(preferred || s.oneOf[0])
+  }
+  if (Array.isArray(s.anyOf) && s.anyOf.length) {
+    const preferred = s.anyOf.find((item: any) => {
+      const resolved = normalizeSchema(item)
+      return !!resolved?.properties || resolved?.type === "object"
+    })
+    return normalizeSchema(preferred || s.anyOf[0])
+  }
   return s
 }
 
@@ -155,7 +186,7 @@ function pathSegments(path: string): string[] {
 }
 
 function normalizeEndpointAlias(endpoint: string): string {
-  const normalized = normalizePath(endpoint)
+  const normalized = normalizePath(canonicalCollectionPath(endpoint))
   if (normalized === "/medical-records/registro") return "/medical_records/record"
   if (normalized.startsWith("/medical-records/registro/")) {
     return normalized.replace("/medical-records/registro", "/medical_records/record")
@@ -210,6 +241,7 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
   const reqNorm = normalizeSchema(req)
   const reqRequired = (reqNorm?.required || []) as string[]
   const reqFields = schemaToFields(reqNorm, reqRequired, endpoint)
+  if (!reqFields.length) return null
   const reqFieldNames = new Set(reqFields.map((f) => f.name))
 
   // Prefer the write response schema; fallback to GET response schema.

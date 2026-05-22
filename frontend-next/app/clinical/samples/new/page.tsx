@@ -15,10 +15,10 @@ export default function CreateSamplePage() {
         <h1 className="text-2xl font-bold">Novo Sample</h1>
         
         <AutoForm
-          endpoint="/api/v1/clinical/samples/"
+          endpoint="/clinical/samples/"
           method="post"
           submitLabel="Criar Sample"
-          onSuccess={(data) => router.push(`./samples/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

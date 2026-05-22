@@ -15,10 +15,10 @@ export default function CreateMedicalConsultationPage() {
         <h1 className="text-2xl font-bold">Novo MedicalConsultation</h1>
         
         <AutoForm
-          endpoint="/api/v1/consultations/medical-consultations/"
+          endpoint="/consultations/medical-consultations/"
           method="post"
           submitLabel="Criar MedicalConsultation"
-          onSuccess={(data) => router.push(`./medical-consultations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -52,7 +52,13 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       base = z.string()
       break
     case "select":
-      base = z.enum((field.enumValues || [""]).map(String) as [string, ...string[]])
+      {
+        const enumValues = (field.enumValues || []).map(String).filter(Boolean)
+        base =
+          enumValues.length > 0
+            ? z.enum(enumValues as [string, ...string[]])
+            : z.string()
+      }
       break
     case "array-string":
       base = z.array(z.string())
@@ -248,6 +254,49 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method): RuntimeFor
   return { fields, submitFields }
 }
 
+function mergeSpecs(
+  schemaSpec: RuntimeFormSpec | null,
+  optionsSpec: RuntimeFormSpec | null
+): RuntimeFormSpec | null {
+  if (!schemaSpec && !optionsSpec) return null
+  if (!schemaSpec) return optionsSpec
+  if (!optionsSpec) return schemaSpec
+
+  const byName = new Map<string, FormField>()
+  for (const field of schemaSpec.fields) {
+    byName.set(field.name, { ...field })
+  }
+
+  for (const source of optionsSpec.fields) {
+    const current = byName.get(source.name)
+    if (!current) {
+      byName.set(source.name, { ...source })
+      continue
+    }
+
+    const merged: FormField = {
+      ...current,
+      required: source.required || current.required,
+      readOnly: source.readOnly ?? current.readOnly,
+    }
+
+    if (source.type === "select" && source.enumValues?.length) {
+      merged.type = "select"
+      merged.enumValues = source.enumValues
+      merged.enumLabels = source.enumLabels?.length ? source.enumLabels : source.enumValues
+    } else if (current.type === "text" && source.type !== "text") {
+      // OPTIONS fornece tipos mais precisos quando o schema é genérico.
+      merged.type = source.type
+    }
+
+    byName.set(source.name, merged)
+  }
+
+  const fields = Array.from(byName.values())
+  const submitFields = fields.filter((field) => !field.readOnly)
+  return { fields, submitFields }
+}
+
 function normalizeDraftKey(method: Method, endpoint: string): string {
   const e = String(endpoint || "").split("?")[0].split("#")[0]
   return `draft:autofrm:${method}:${e}`
@@ -318,9 +367,18 @@ export default function AutoForm({
   onSuccess,
   config,
 }: AutoFormProps) {
-  const schemaFormSpec = useMemo(() => buildFormSpec(endpoint, method), [endpoint, method])
-  const [fallbackFormSpec, setFallbackFormSpec] = useState<RuntimeFormSpec | null>(null)
-  const [loadingFallbackSpec, setLoadingFallbackSpec] = useState(false)
+  const effectiveMethod = useMemo<Method>(() => {
+    if (buildFormSpec(endpoint, method)) return method
+    if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
+    return method
+  }, [endpoint, method])
+
+  const schemaFormSpec = useMemo(
+    () => buildFormSpec(endpoint, effectiveMethod),
+    [endpoint, effectiveMethod]
+  )
+  const [optionsFormSpec, setOptionsFormSpec] = useState<RuntimeFormSpec | null>(null)
+  const [loadingOptionsSpec, setLoadingOptionsSpec] = useState(false)
   const [values, setValues] = useState<Record<string, any>>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -331,31 +389,33 @@ export default function AutoForm({
   useEffect(() => {
     let mounted = true
 
-    async function loadFallbackSpec() {
-      setFallbackFormSpec(null)
-      if (schemaFormSpec) return
+    async function loadOptionsSpec() {
+      setOptionsFormSpec(null)
       try {
-        setLoadingFallbackSpec(true)
+        setLoadingOptionsSpec(true)
         const metadata = await apiFetch<any>(endpoint, {
           method: "OPTIONS",
           clientCache: false,
         })
-        const derivedSpec = buildFallbackSpecFromOptions(metadata, method)
-        if (mounted) setFallbackFormSpec(derivedSpec)
+        const derivedSpec = buildFallbackSpecFromOptions(metadata, effectiveMethod)
+        if (mounted) setOptionsFormSpec(derivedSpec)
       } catch {
-        if (mounted) setFallbackFormSpec(null)
+        if (mounted) setOptionsFormSpec(null)
       } finally {
-        if (mounted) setLoadingFallbackSpec(false)
+        if (mounted) setLoadingOptionsSpec(false)
       }
     }
 
-    loadFallbackSpec().catch(() => {})
+    loadOptionsSpec().catch(() => {})
     return () => {
       mounted = false
     }
-  }, [endpoint, method, schemaFormSpec])
+  }, [endpoint, effectiveMethod])
 
-  const formSpec = schemaFormSpec || fallbackFormSpec
+  const formSpec = useMemo(
+    () => mergeSpecs(schemaFormSpec, optionsFormSpec),
+    [schemaFormSpec, optionsFormSpec]
+  )
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return
@@ -458,7 +518,7 @@ export default function AutoForm({
     try {
       const parsed = schema.parse(values)
       const res = await apiFetch(endpoint, {
-        method: method.toUpperCase(),
+        method: effectiveMethod.toUpperCase(),
         body: JSON.stringify(parsed),
       })
       setMessage("Salvo com sucesso.")
@@ -492,7 +552,7 @@ export default function AutoForm({
   }
 
   if (!formSpec) {
-    if (loadingFallbackSpec) {
+    if (loadingOptionsSpec) {
       return (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm text-[var(--gray-700)]">
           Carregando metadados do formulário...

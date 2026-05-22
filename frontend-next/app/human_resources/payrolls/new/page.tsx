@@ -15,10 +15,10 @@ export default function CreatePayrollPage() {
         <h1 className="text-2xl font-bold">Novo Payroll</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/payrolls/"
+          endpoint="/human_resources/payrolls/"
           method="post"
           submitLabel="Criar Payroll"
-          onSuccess={(data) => router.push(`./payrolls/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

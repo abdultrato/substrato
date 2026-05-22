@@ -15,10 +15,10 @@ export default function CreateBloodStoragePage() {
         <h1 className="text-2xl font-bold">Novo BloodStorage</h1>
         
         <AutoForm
-          endpoint="/api/v1/bloodbank/blood-storages/"
+          endpoint="/bloodbank/blood-storages/"
           method="post"
           submitLabel="Criar BloodStorage"
-          onSuccess={(data) => router.push(`./blood-storages/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

@@ -15,10 +15,10 @@ export default function CreateCompanyPage() {
         <h1 className="text-2xl font-bold">Novo Company</h1>
         
         <AutoForm
-          endpoint="/api/v1/external_entities/companies/"
+          endpoint="/external_entities/companies/"
           method="post"
           submitLabel="Criar Company"
-          onSuccess={(data) => router.push(`./companies/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

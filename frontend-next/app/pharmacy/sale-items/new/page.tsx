@@ -15,10 +15,10 @@ export default function CreateSaleItemPage() {
         <h1 className="text-2xl font-bold">Novo SaleItem</h1>
         
         <AutoForm
-          endpoint="/api/v1/pharmacy/sale-items/"
+          endpoint="/pharmacy/sale-items/"
           method="post"
           submitLabel="Criar SaleItem"
-          onSuccess={(data) => router.push(`./sale-items/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

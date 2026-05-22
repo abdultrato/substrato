@@ -15,10 +15,10 @@ export default function CreateJobTitlePage() {
         <h1 className="text-2xl font-bold">Novo JobTitle</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/job-titles/"
+          endpoint="/human_resources/job-titles/"
           method="post"
           submitLabel="Criar JobTitle"
-          onSuccess={(data) => router.push(`./job-titles/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

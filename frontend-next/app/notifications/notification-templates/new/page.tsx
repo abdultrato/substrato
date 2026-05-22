@@ -15,10 +15,10 @@ export default function CreateNotificationTemplatePage() {
         <h1 className="text-2xl font-bold">Novo NotificationTemplate</h1>
         
         <AutoForm
-          endpoint="/api/v1/notifications/notification-templates/"
+          endpoint="/notifications/notification-templates/"
           method="post"
           submitLabel="Criar NotificationTemplate"
-          onSuccess={(data) => router.push(`./notification-templates/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

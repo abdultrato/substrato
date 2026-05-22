@@ -15,10 +15,10 @@ export default function CreateProfessionPage() {
         <h1 className="text-2xl font-bold">Novo Profession</h1>
         
         <AutoForm
-          endpoint="/api/v1/human_resources/professions/"
+          endpoint="/human_resources/professions/"
           method="post"
           submitLabel="Criar Profession"
-          onSuccess={(data) => router.push(`./professions/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

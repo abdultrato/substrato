@@ -15,10 +15,10 @@ export default function CreateProcedureCatalogMaterialPage() {
         <h1 className="text-2xl font-bold">Novo ProcedureCatalogMaterial</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/procedure-catalog-materials/"
+          endpoint="/nursing/procedure-catalog-materials/"
           method="post"
           submitLabel="Criar ProcedureCatalogMaterial"
-          onSuccess={(data) => router.push(`./procedure-catalog-materials/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

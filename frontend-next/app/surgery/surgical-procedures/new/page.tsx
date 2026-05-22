@@ -15,10 +15,10 @@ export default function CreateSurgicalProcedurePage() {
         <h1 className="text-2xl font-bold">Novo SurgicalProcedure</h1>
         
         <AutoForm
-          endpoint="/api/v1/surgery/surgical-procedures/"
+          endpoint="/surgery/surgical-procedures/"
           method="post"
           submitLabel="Criar SurgicalProcedure"
-          onSuccess={(data) => router.push(`./surgical-procedures/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

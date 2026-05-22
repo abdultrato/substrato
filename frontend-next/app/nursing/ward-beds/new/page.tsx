@@ -15,10 +15,10 @@ export default function CreateWardBedPage() {
         <h1 className="text-2xl font-bold">Novo WardBed</h1>
         
         <AutoForm
-          endpoint="/api/v1/nursing/ward-beds/"
+          endpoint="/nursing/ward-beds/"
           method="post"
           submitLabel="Criar WardBed"
-          onSuccess={(data) => router.push(`./ward-beds/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

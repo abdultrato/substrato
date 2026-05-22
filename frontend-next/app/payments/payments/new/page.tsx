@@ -15,10 +15,10 @@ export default function CreatePaymentPage() {
         <h1 className="text-2xl font-bold">Novo Payment</h1>
         
         <AutoForm
-          endpoint="/api/v1/payments/payments/"
+          endpoint="/payments/payments/"
           method="post"
           submitLabel="Criar Payment"
-          onSuccess={(data) => router.push(`./payments/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

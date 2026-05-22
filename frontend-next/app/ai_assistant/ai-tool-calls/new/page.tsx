@@ -15,10 +15,10 @@ export default function CreateAiToolCallPage() {
         <h1 className="text-2xl font-bold">Novo AiToolCall</h1>
         
         <AutoForm
-          endpoint="/api/v1/ai_assistant/ai-tool-calls/"
+          endpoint="/ai_assistant/ai-tool-calls/"
           method="post"
           submitLabel="Criar AiToolCall"
-          onSuccess={(data) => router.push(`./ai-tool-calls/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

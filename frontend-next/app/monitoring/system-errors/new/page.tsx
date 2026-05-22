@@ -15,10 +15,10 @@ export default function CreateSystemErrorPage() {
         <h1 className="text-2xl font-bold">Novo SystemError</h1>
         
         <AutoForm
-          endpoint="/api/v1/monitoring/system-errors/"
+          endpoint="/monitoring/system-errors/"
           method="post"
           submitLabel="Criar SystemError"
-          onSuccess={(data) => router.push(`./system-errors/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

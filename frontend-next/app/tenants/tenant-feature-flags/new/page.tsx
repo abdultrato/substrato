@@ -15,10 +15,10 @@ export default function CreateTenantFeatureFlagPage() {
         <h1 className="text-2xl font-bold">Novo TenantFeatureFlag</h1>
         
         <AutoForm
-          endpoint="/api/v1/tenants/tenant-feature-flags/"
+          endpoint="/tenants/tenant-feature-flags/"
           method="post"
           submitLabel="Criar TenantFeatureFlag"
-          onSuccess={(data) => router.push(`./tenant-feature-flags/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

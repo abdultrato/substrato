@@ -15,10 +15,10 @@ export default function CreateInvoiceHistoryPage() {
         <h1 className="text-2xl font-bold">Novo InvoiceHistory</h1>
         
         <AutoForm
-          endpoint="/api/v1/billing/invoice-histories/"
+          endpoint="/billing/invoice-histories/"
           method="post"
           submitLabel="Criar InvoiceHistory"
-          onSuccess={(data) => router.push(`./invoice-histories/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>

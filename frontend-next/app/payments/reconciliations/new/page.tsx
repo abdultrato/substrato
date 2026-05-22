@@ -15,10 +15,10 @@ export default function CreateReconciliationPage() {
         <h1 className="text-2xl font-bold">Novo Reconciliation</h1>
         
         <AutoForm
-          endpoint="/api/v1/payments/reconciliations/"
+          endpoint="/payments/reconciliations/"
           method="post"
           submitLabel="Criar Reconciliation"
-          onSuccess={(data) => router.push(`./reconciliations/${data.id}`),}
+          onSuccess={(data) => router.push(`../${data.id}`)}
         />
       </div>
     </AppLayout>
