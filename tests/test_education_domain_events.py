@@ -17,6 +17,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     StudentProfile,
 )
 from apps.tenants.models.tenant import Tenant
@@ -249,6 +250,41 @@ def test_examination_create_emits_exam_scheduled_event(api_client, monkeypatch):
     assert exam_events[0].payload["exam_id"] == exam_id
     assert exam_events[0].payload["course_id"] == scope["course"].id
     assert Examination.objects.filter(id=exam_id, tenant=tenant).exists()
+
+
+@pytest.mark.django_db
+def test_random_test_create_emits_random_test_scheduled_event(api_client, monkeypatch):
+    tenant = _tenant("tn-edu-evt-random-test", "edu-evt-random-test.local")
+    director = _user(tenant=tenant, username="director_evt_random_test", group_name=GROUPS["DIRETOR_ESCOLA"])
+    scope = _base_school_scope(tenant=tenant)
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    captured = _capture_published_events(monkeypatch)
+    response = api_client.post(
+        "/api/v1/education/random_test/",
+        {
+            "course": scope["course"].id,
+            "classroom": scope["classroom"].id,
+            "enrollment": scope["enrollment"].id,
+            "student": scope["student"].id,
+            "title": "Teste relâmpago",
+            "scheduled_for": "2026-06-12T09:30:00+02:00",
+            "duration_minutes": 35,
+            "question_count": 10,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    random_test_id = _response_data(response)["id"]
+    random_test_events = [event for event in captured if event.nome == "RandomTestScheduled"]
+    assert len(random_test_events) == 1
+    assert random_test_events[0].payload["tenant_id"] == tenant.id
+    assert random_test_events[0].payload["random_test_id"] == random_test_id
+    assert random_test_events[0].payload["classroom_id"] == scope["classroom"].id
+    assert random_test_events[0].payload["student_id"] == scope["student"].id
+    assert random_test_events[0].payload["course_id"] == scope["course"].id
+    assert RandomTest.objects.filter(id=random_test_id, tenant=tenant).exists()
 
 
 @pytest.mark.django_db

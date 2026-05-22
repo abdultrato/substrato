@@ -11,6 +11,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     Skill,
     StudentProfile,
     TeacherProfile,
@@ -92,6 +93,13 @@ class ExaminationAttemptAdmin(admin.ModelAdmin):
     list_display = ("custom_id", "examination", "student", "status", "started_at", "submitted_at", "tenant")
     list_filter = ("status", "tenant")
     search_fields = ("custom_id", "examination__title", "student__student_code")
+
+
+@admin.register(RandomTest)
+class RandomTestAdmin(admin.ModelAdmin):
+    list_display = ("custom_id", "title", "classroom", "student", "scheduled_for", "status", "tenant")
+    list_filter = ("status", "tenant")
+    search_fields = ("custom_id", "title", "student__student_code", "classroom__name")
 
 
 @admin.register(LearningContent)

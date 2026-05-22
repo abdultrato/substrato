@@ -81,6 +81,7 @@ export default function EducationPage() {
       attendance: UserCheck,
       grade: Pencil,
       examination: FileCheck2,
+      random_test: CalendarCheck,
       assignment: ClipboardCheck,
       submission: FileCheck2,
       exam_attempt: CalendarCheck,

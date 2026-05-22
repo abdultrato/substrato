@@ -78,6 +78,30 @@ def publish_exam_scheduled(*, tenant_id: int, exam_id: int, course_id: int) -> N
     )
 
 
+def publish_random_test_scheduled(
+    *,
+    tenant_id: int,
+    random_test_id: int,
+    classroom_id: int,
+    student_id: int,
+    course_id: int,
+    opens_at: str,
+) -> None:
+    event_bus.publish_after_commit(
+        BaseEvent(
+            nome="RandomTestScheduled",
+            payload={
+                "tenant_id": tenant_id,
+                "random_test_id": random_test_id,
+                "classroom_id": classroom_id,
+                "student_id": student_id,
+                "course_id": course_id,
+                "opens_at": opens_at,
+            },
+        )
+    )
+
+
 def publish_assignment_published(*, tenant_id: int, assignment_id: int, course_id: int) -> None:
     event_bus.publish_after_commit(
         BaseEvent(

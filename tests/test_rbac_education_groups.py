@@ -7,6 +7,7 @@ def _policy_for(group_key: str) -> dict[str, frozenset[str]]:
 
 def test_education_management_groups_share_management_permissions():
     professor_policy = _policy_for("PROFESSOR")
+    assert "education-random_test" in professor_policy
 
     for role_key in ("DIRETOR_ESCOLA", "DIRETOR_ADJUNTO_PEDAGOGICO", "TEACHER"):
         assert _policy_for(role_key) == professor_policy

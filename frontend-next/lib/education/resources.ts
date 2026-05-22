@@ -74,6 +74,13 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
     descriptionEn: "Exam scheduling.",
   },
   {
+    key: "random_test",
+    labelPt: "Testes Aleatórios",
+    labelEn: "Random Tests",
+    descriptionPt: "Marcação de testes aleatórios por turma e por estudante.",
+    descriptionEn: "Random test scheduling per classroom and student.",
+  },
+  {
     key: "assignment",
     labelPt: "Trabalhos",
     labelEn: "Assignments",

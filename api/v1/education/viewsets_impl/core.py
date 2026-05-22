@@ -1,7 +1,11 @@
 import unicodedata
 
 from django.db.models import Q
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
@@ -16,6 +20,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     Skill,
     StudentProfile,
     TeacherProfile,
@@ -33,6 +38,7 @@ from ..filters import (
     ExaminationAttemptFilter,
     GradeRecordFilter,
     LearningContentFilter,
+    RandomTestFilter,
     SkillFilter,
     StudentProfileFilter,
     TeacherProfileFilter,
@@ -48,6 +54,8 @@ from ..serializers import (
     ExaminationAttemptSerializer,
     GradeRecordSerializer,
     LearningContentSerializer,
+    RandomTestClassroomScheduleSerializer,
+    RandomTestSerializer,
     SkillSerializer,
     StudentProfileSerializer,
     TeacherProfileSerializer,
@@ -456,6 +464,112 @@ class LearningContentViewSet(TenantScopedEducationViewSet):
             AcademicService.publish_learning_content(content=content)
 
 
+class RandomTestViewSet(TenantScopedEducationViewSet):
+    queryset = RandomTest.objects.select_related(
+        "course",
+        "classroom",
+        "enrollment",
+        "student",
+        "student__user",
+        "teacher",
+        "teacher__user",
+    ).all()
+    serializer_class = RandomTestSerializer
+    filterset_class = RandomTestFilter
+    search_fields = ["custom_id", "title", "student__student_code", "classroom__name", "course__name"]
+    ordering_fields = ["scheduled_for", "opens_at", "closes_at", "status", "created_at"]
+    ordering = ["-opens_at", "-scheduled_for", "-created_at"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if user and not getattr(user, "is_superuser", False):
+            if _is_student_user(user):
+                return qs.filter(student__user=user)
+            if _is_teacher_user(user):
+                return qs.filter(
+                    Q(classroom__homeroom_teacher__user=user) | Q(teacher__user=user)
+                ).distinct()
+        return qs
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        AcademicService.schedule_random_test(random_test=serializer.instance)
+
+    def perform_update(self, serializer):
+        random_test = serializer.instance
+        previous_schedule = (
+            random_test.classroom_id,
+            random_test.student_id,
+            random_test.enrollment_id,
+            random_test.scheduled_for,
+            random_test.opens_at,
+            random_test.closes_at,
+            random_test.duration_minutes,
+            random_test.question_count,
+            random_test.status,
+        )
+        super().perform_update(serializer)
+        random_test = serializer.instance
+        current_schedule = (
+            random_test.classroom_id,
+            random_test.student_id,
+            random_test.enrollment_id,
+            random_test.scheduled_for,
+            random_test.opens_at,
+            random_test.closes_at,
+            random_test.duration_minutes,
+            random_test.question_count,
+            random_test.status,
+        )
+        if current_schedule != previous_schedule:
+            AcademicService.schedule_random_test(random_test=random_test)
+
+    @action(detail=False, methods=["post"], url_path="schedule_for_classroom")
+    def schedule_for_classroom(self, request):
+        serializer = RandomTestClassroomScheduleSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        classroom = payload["classroom"]
+        teacher = payload.get("teacher")
+        user = getattr(request, "user", None)
+        tenant = getattr(request, "tenant", None)
+
+        if _is_teacher_user(user) and not getattr(user, "is_superuser", False):
+            teacher_profile = TeacherProfile.objects.filter(tenant=tenant, user=user).first()
+            if teacher_profile is None:
+                raise ValidationError({"teacher": "Teacher profile not found for the authenticated user."})
+            if classroom.homeroom_teacher_id and classroom.homeroom_teacher_id != teacher_profile.id:
+                raise ValidationError({"classroom": "Teacher can only schedule random tests for assigned classrooms."})
+            if teacher is not None and teacher.id != teacher_profile.id:
+                raise ValidationError({"teacher": "Teacher must match the authenticated teacher profile."})
+            teacher = teacher_profile
+        elif teacher is None and user and tenant is not None:
+            teacher = TeacherProfile.objects.filter(tenant=tenant, user=user).first()
+
+        scheduled = AcademicService.schedule_random_tests_for_classroom(
+            tenant=tenant,
+            classroom=classroom,
+            course=payload["course"],
+            scheduled_for=payload["scheduled_for"],
+            opens_at=payload["opens_at"],
+            closes_at=payload.get("closes_at"),
+            duration_minutes=payload["duration_minutes"],
+            question_count=payload["question_count"],
+            title_template=payload["title_template"],
+            student_ids=payload.get("student_ids") or [],
+            only_active_enrollments=payload["only_active_enrollments"],
+            notes=payload.get("notes", ""),
+            teacher=teacher,
+        )
+        output = self.get_serializer(scheduled, many=True)
+        return Response(
+            {"count": len(output.data), "results": output.data},
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class SkillViewSet(TenantScopedEducationViewSet):
     queryset = Skill.objects.select_related("course").all()
     serializer_class = SkillSerializer
@@ -489,6 +603,7 @@ VIEWSET_MAP = {
     "submission": AssignmentSubmissionViewSet,
     "exam_attempt": ExaminationAttemptViewSet,
     "examination_attempt": ExaminationAttemptViewSet,
+    "random_test": RandomTestViewSet,
     "content": LearningContentViewSet,
     "lesson": LearningContentViewSet,
     "skill": SkillViewSet,
@@ -506,6 +621,7 @@ __all__ = [
     "AssignmentViewSet",
     "AssignmentSubmissionViewSet",
     "LearningContentViewSet",
+    "RandomTestViewSet",
     "SkillViewSet",
     "StudentProfileViewSet",
     "TeacherProfileViewSet",

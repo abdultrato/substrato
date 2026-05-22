@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -14,7 +15,9 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     StudentProfile,
+    TeacherProfile,
 )
 from events.education.publishers import (
     publish_assignment_published,
@@ -27,6 +30,7 @@ from events.education.publishers import (
     publish_exam_scheduled,
     publish_grade_published,
     publish_lesson_uploaded,
+    publish_random_test_scheduled,
     publish_student_created,
 )
 
@@ -102,6 +106,93 @@ class AcademicService:
             course_id=exam.course_id,
         )
         return exam
+
+    @staticmethod
+    @transaction.atomic
+    def schedule_random_test(*, random_test: RandomTest) -> RandomTest:
+        random_test.full_clean()
+        random_test.save()
+        publish_random_test_scheduled(
+            tenant_id=random_test.tenant_id,
+            random_test_id=random_test.id,
+            classroom_id=random_test.classroom_id,
+            student_id=random_test.student_id,
+            course_id=random_test.course_id,
+            opens_at=(random_test.opens_at or random_test.scheduled_for).isoformat(),
+        )
+        return random_test
+
+    @staticmethod
+    @transaction.atomic
+    def schedule_random_tests_for_classroom(
+        *,
+        tenant,
+        classroom,
+        course,
+        scheduled_for,
+        opens_at,
+        closes_at,
+        duration_minutes: int,
+        question_count: int,
+        title_template: str,
+        student_ids: list[int],
+        only_active_enrollments: bool,
+        notes: str,
+        teacher: TeacherProfile | None = None,
+    ) -> list[RandomTest]:
+        if tenant is None:
+            raise ValidationError({"tenant": "Authenticated tenant is required."})
+
+        enrollments_qs = Enrollment.objects.select_related("student", "classroom", "classroom__course").filter(
+            tenant=tenant,
+            classroom=classroom,
+        )
+        if only_active_enrollments:
+            enrollments_qs = enrollments_qs.filter(status=Enrollment.Status.ACTIVE)
+        if student_ids:
+            enrollments_qs = enrollments_qs.filter(student_id__in=student_ids)
+
+        enrollments = list(enrollments_qs)
+        if not enrollments:
+            raise ValidationError({"classroom": "No matching enrollments found for the selected classroom."})
+
+        if student_ids:
+            found_student_ids = {item.student_id for item in enrollments}
+            missing = [sid for sid in student_ids if sid not in found_student_ids]
+            if missing:
+                raise ValidationError({"student_ids": f"Students not enrolled in this classroom: {missing}"})
+
+        created: list[RandomTest] = []
+        for enrollment in enrollments:
+            student = enrollment.student
+            try:
+                title = title_template.format(
+                    student_id=student.id,
+                    student_code=student.student_code,
+                    enrollment_id=enrollment.id,
+                    classroom_id=classroom.id,
+                )
+            except Exception:
+                title = title_template
+
+            random_test = RandomTest(
+                tenant=tenant,
+                course=course,
+                classroom=classroom,
+                enrollment=enrollment,
+                student=student,
+                teacher=teacher,
+                title=title,
+                scheduled_for=scheduled_for,
+                opens_at=opens_at,
+                closes_at=closes_at,
+                duration_minutes=duration_minutes,
+                question_count=question_count,
+                notes=notes or "",
+            )
+            created.append(AcademicService.schedule_random_test(random_test=random_test))
+
+        return created
 
     @staticmethod
     @transaction.atomic

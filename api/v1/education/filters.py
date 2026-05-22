@@ -10,6 +10,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     Skill,
     StudentProfile,
     TeacherProfile,
@@ -102,6 +103,22 @@ class SkillFilter(SafeFilterSet):
         fields = ["course", "code", "category", "level", "status", "created_at"]
 
 
+class RandomTestFilter(SafeFilterSet):
+    class Meta:
+        model = RandomTest
+        fields = [
+            "course",
+            "classroom",
+            "enrollment",
+            "student",
+            "teacher",
+            "status",
+            "scheduled_for",
+            "opens_at",
+            "created_at",
+        ]
+
+
 FILTER_MAP = {
     "student": StudentProfileFilter,
     "teacher": TeacherProfileFilter,
@@ -119,4 +136,6 @@ FILTER_MAP = {
     "content": LearningContentFilter,
     "lesson": LearningContentFilter,
     "skill": SkillFilter,
+    "random_test": RandomTestFilter,
+    "randomtest": RandomTestFilter,
 }

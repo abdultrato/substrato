@@ -15,6 +15,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     Skill,
     StudentProfile,
     TeacherProfile,
@@ -376,6 +377,39 @@ SKILL_ALIASES = {
     "situação": "status",
 }
 
+RANDOM_TEST_ALIASES = {
+    "id_custom": "custom_id",
+    "curso": "course",
+    "turma": "classroom",
+    "sala": "classroom",
+    "matricula": "enrollment",
+    "matrícula": "enrollment",
+    "inscricao": "enrollment",
+    "inscrição": "enrollment",
+    "estudante": "student",
+    "aluno": "student",
+    "professor": "teacher",
+    "titulo": "title",
+    "título": "title",
+    "agendado_para": "scheduled_for",
+    "marcado_para": "scheduled_for",
+    "abre_em": "opens_at",
+    "abre_ao": "opens_at",
+    "fecha_em": "closes_at",
+    "fecha_ao": "closes_at",
+    "duracao_minutos": "duration_minutes",
+    "duração_minutos": "duration_minutes",
+    "quantidade_questoes": "question_count",
+    "quantidade_questões": "question_count",
+    "semente_aleatoria": "random_seed",
+    "semente_aleatória": "random_seed",
+    "estado": "status",
+    "situacao": "status",
+    "situação": "status",
+    "observacoes": "notes",
+    "observações": "notes",
+}
+
 
 class FullCleanSerializerMixin:
     """
@@ -579,3 +613,69 @@ class SkillSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
         model = Skill
         fields = "__all__"
         read_only_fields = _READ_ONLY_FIELDS
+
+
+class RandomTestSerializer(LegacyAliasSerializerMixin, FullCleanSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = RANDOM_TEST_ALIASES
+    legacy_output_aliases = RANDOM_TEST_ALIASES
+
+    class Meta:
+        model = RandomTest
+        fields = "__all__"
+        read_only_fields = _READ_ONLY_FIELDS
+
+
+class RandomTestClassroomScheduleSerializer(serializers.Serializer):
+    classroom = serializers.PrimaryKeyRelatedField(queryset=Classroom.objects.all())
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), required=False)
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=TeacherProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    scheduled_for = serializers.DateTimeField()
+    opens_at = serializers.DateTimeField(required=False)
+    closes_at = serializers.DateTimeField(required=False, allow_null=True)
+    duration_minutes = serializers.IntegerField(min_value=1, default=45)
+    question_count = serializers.IntegerField(min_value=1, default=15)
+    title_template = serializers.CharField(max_length=180, default="Teste Aleatório - {student_code}")
+    student_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=False,
+    )
+    only_active_enrollments = serializers.BooleanField(default=True)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant = getattr(request, "tenant", None)
+        classroom = attrs["classroom"]
+        course = attrs.get("course") or classroom.course
+        teacher = attrs.get("teacher")
+
+        if tenant is not None:
+            tenant_id = getattr(tenant, "id", None)
+            if tenant_id and classroom.tenant_id != tenant_id:
+                raise serializers.ValidationError({"classroom": "Classroom must belong to the authenticated tenant."})
+            if tenant_id and course.tenant_id != tenant_id:
+                raise serializers.ValidationError({"course": "Course must belong to the authenticated tenant."})
+            if teacher is not None and tenant_id and teacher.tenant_id != tenant_id:
+                raise serializers.ValidationError({"teacher": "Teacher must belong to the authenticated tenant."})
+
+        if classroom.course_id != course.id:
+            raise serializers.ValidationError({"course": "Course must match classroom course."})
+
+        opens_at = attrs.get("opens_at") or attrs["scheduled_for"]
+        closes_at = attrs.get("closes_at")
+        if closes_at and closes_at <= opens_at:
+            raise serializers.ValidationError({"closes_at": "Close time must be after opens_at."})
+
+        student_ids = attrs.get("student_ids") or []
+        if student_ids:
+            attrs["student_ids"] = list(dict.fromkeys(student_ids))
+
+        attrs["course"] = course
+        attrs["opens_at"] = opens_at
+        attrs["scheduled_for"] = opens_at
+        return attrs

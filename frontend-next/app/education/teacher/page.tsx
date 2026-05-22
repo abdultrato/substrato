@@ -58,6 +58,18 @@ type Grade = {
   published_at?: string | null
 }
 
+type RandomTest = {
+  id: number
+  title?: string
+  classroom?: number
+  student?: number
+  status?: string
+  opens_at?: string | null
+  closes_at?: string | null
+  duration_minutes?: number
+  question_count?: number
+}
+
 const REQUIRED_GROUPS = [
   GROUPS.ADMIN,
   GROUPS.PROFESSOR,
@@ -79,6 +91,24 @@ function parseDate(value?: string | null) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
+function toLocalDateTimeInputValue(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
+function defaultScheduleInputValue() {
+  const date = new Date(Date.now() + 60 * 60_000)
+  date.setSeconds(0, 0)
+  return toLocalDateTimeInputValue(date)
+}
+
+function localInputToIso(value: string) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
+
 export default function EducationTeacherAreaPage() {
   const { user } = useAuth()
 
@@ -95,9 +125,19 @@ export default function EducationTeacherAreaPage() {
 
   const [studentEnrollments, setStudentEnrollments] = useState<Enrollment[]>([])
   const [grades, setGrades] = useState<Grade[]>([])
+  const [randomTests, setRandomTests] = useState<RandomTest[]>([])
 
   const [selectedClassroomId, setSelectedClassroomId] = useState<number | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [scheduleAtInput, setScheduleAtInput] = useState(defaultScheduleInputValue())
+  const [durationMinutesInput, setDurationMinutesInput] = useState("45")
+  const [questionCountInput, setQuestionCountInput] = useState("15")
+  const [titleTemplate, setTitleTemplate] = useState("Teste Aleatório - {student_code}")
+  const [scheduleNotes, setScheduleNotes] = useState("")
+  const [schedulingClassroom, setSchedulingClassroom] = useState(false)
+  const [schedulingStudent, setSchedulingStudent] = useState(false)
+  const [randomTestMessage, setRandomTestMessage] = useState<string | null>(null)
+  const [randomTestError, setRandomTestError] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -249,6 +289,109 @@ export default function EducationTeacherAreaPage() {
     }
   }, [canViewAllGrades, selectedEnrollment, selectedStudent, teacherProfileId])
 
+  useEffect(() => {
+    let mounted = true
+
+    async function loadRandomTests() {
+      if (!selectedClassroomId) {
+        setRandomTests([])
+        return
+      }
+
+      try {
+        const query = selectedStudentId
+          ? `/education/random_test/?classroom=${selectedClassroomId}&student=${selectedStudentId}`
+          : `/education/random_test/?classroom=${selectedClassroomId}`
+        const testsRes = await apiFetch<any>(query)
+        if (!mounted) return
+        setRandomTests(toList<RandomTest>(testsRes))
+      } catch (e: any) {
+        if (!mounted) return
+        setRandomTests([])
+        setRandomTestError(
+          isNotFoundLikeError(e)
+            ? null
+            : (e?.message || "Falha ao carregar testes aleatórios.")
+        )
+      }
+    }
+
+    loadRandomTests().catch(() => undefined)
+    return () => {
+      mounted = false
+    }
+  }, [selectedClassroomId, selectedStudentId])
+
+  async function handleScheduleRandomTest(scope: "classroom" | "student") {
+    if (!selectedClassroomId) {
+      setRandomTestError("Selecione uma turma para agendar o teste.")
+      return
+    }
+    if (scope === "student" && !selectedStudentId) {
+      setRandomTestError("Selecione um estudante para marcação individual.")
+      return
+    }
+
+    const scheduledForIso = localInputToIso(scheduleAtInput)
+    const durationMinutes = Number.parseInt(durationMinutesInput, 10)
+    const questionCount = Number.parseInt(questionCountInput, 10)
+
+    if (!scheduledForIso) {
+      setRandomTestError("Informe uma data/hora válida para o teste.")
+      return
+    }
+    if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+      setRandomTestError("A duração deve ser maior que zero.")
+      return
+    }
+    if (!Number.isFinite(questionCount) || questionCount <= 0) {
+      setRandomTestError("A quantidade de questões deve ser maior que zero.")
+      return
+    }
+
+    try {
+      setRandomTestError(null)
+      setRandomTestMessage(null)
+      if (scope === "classroom") setSchedulingClassroom(true)
+      if (scope === "student") setSchedulingStudent(true)
+
+      const payload: Record<string, any> = {
+        classroom: selectedClassroomId,
+        scheduled_for: scheduledForIso,
+        duration_minutes: durationMinutes,
+        question_count: questionCount,
+        title_template: titleTemplate || "Teste Aleatório - {student_code}",
+        notes: scheduleNotes || "",
+      }
+      if (scope === "student" && selectedStudentId) {
+        payload.student_ids = [selectedStudentId]
+      }
+
+      const response = await apiFetch<any>("/education/random_test/schedule_for_classroom/", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+
+      const created = Number(response?.count || 0)
+      setRandomTestMessage(
+        created > 0
+          ? `${created} teste(s) aleatório(s) marcado(s) com sucesso.`
+          : "Agendamento concluído sem novos testes."
+      )
+
+      const refreshQuery = scope === "student" && selectedStudentId
+        ? `/education/random_test/?classroom=${selectedClassroomId}&student=${selectedStudentId}`
+        : `/education/random_test/?classroom=${selectedClassroomId}`
+      const refreshed = await apiFetch<any>(refreshQuery)
+      setRandomTests(toList<RandomTest>(refreshed))
+    } catch (e: any) {
+      setRandomTestError(e?.message || "Falha ao marcar teste aleatório.")
+    } finally {
+      setSchedulingClassroom(false)
+      setSchedulingStudent(false)
+    }
+  }
+
   const disciplineLabels = useMemo(() => {
     return studentEnrollments.map((item) => {
       const classroom = classrooms.find((cls) => cls.id === item.classroom)
@@ -267,6 +410,15 @@ export default function EducationTeacherAreaPage() {
       published: parseDate(grade.published_at),
     }))
   }, [grades])
+
+  const randomTestRows = useMemo(() => {
+    return randomTests.map((item) => ({
+      title: item.title || "—",
+      status: item.status || "—",
+      window: `${parseDate(item.opens_at)} → ${parseDate(item.closes_at)}`,
+      details: `${item.question_count ?? 0} questões • ${item.duration_minutes ?? 0} min`,
+    }))
+  }, [randomTests])
 
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
@@ -362,6 +514,102 @@ export default function EducationTeacherAreaPage() {
             </div>
           </Card>
         </div>
+
+        <Card title="Marcação de testes aleatórios">
+          <div className="space-y-3">
+            {randomTestError ? (
+              <div className="border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">{randomTestError}</div>
+            ) : null}
+            {randomTestMessage ? (
+              <div className="border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800">{randomTestMessage}</div>
+            ) : null}
+
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-5">
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Data/hora de início</span>
+                <input
+                  type="datetime-local"
+                  value={scheduleAtInput}
+                  onChange={(event) => setScheduleAtInput(event.target.value)}
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Duração (min)</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={durationMinutesInput}
+                  onChange={(event) => setDurationMinutesInput(event.target.value)}
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+
+              <label className="space-y-1 text-xs text-[var(--gray-700)]">
+                <span>Questões</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={questionCountInput}
+                  onChange={(event) => setQuestionCountInput(event.target.value)}
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                />
+              </label>
+
+              <label className="space-y-1 text-xs text-[var(--gray-700)] md:col-span-2">
+                <span>Título/template</span>
+                <input
+                  type="text"
+                  value={titleTemplate}
+                  onChange={(event) => setTitleTemplate(event.target.value)}
+                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  placeholder="Teste Aleatório - {student_code}"
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1 text-xs text-[var(--gray-700)]">
+              <span>Observações</span>
+              <textarea
+                value={scheduleNotes}
+                onChange={(event) => setScheduleNotes(event.target.value)}
+                className="min-h-[64px] w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                placeholder="Notas opcionais da marcação."
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-1">
+              <button
+                type="button"
+                onClick={() => handleScheduleRandomTest("classroom")}
+                disabled={schedulingClassroom || schedulingStudent || !selectedClassroomId}
+                className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {schedulingClassroom ? "A marcar..." : "Marcar para toda turma"}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScheduleRandomTest("student")}
+                disabled={schedulingClassroom || schedulingStudent || !selectedClassroomId || !selectedStudentId}
+                className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {schedulingStudent ? "A marcar..." : "Marcar para estudante selecionado"}
+              </button>
+            </div>
+
+            <DataTable
+              columns={[
+                { header: "Título", accessor: "title" },
+                { header: "Estado", accessor: "status" },
+                { header: "Janela", accessor: "window" },
+                { header: "Detalhes", accessor: "details" },
+              ]}
+              data={randomTestRows}
+              emptyMessage="Sem testes aleatórios marcados para o filtro atual."
+            />
+          </div>
+        </Card>
 
         <Card title="Dados do estudante selecionado">
           {!selectedStudent || !selectedEnrollment ? (

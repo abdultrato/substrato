@@ -16,6 +16,7 @@ from apps.education.models import (
     ExaminationAttempt,
     GradeRecord,
     LearningContent,
+    RandomTest,
     Skill,
     StudentProfile,
     TeacherProfile,
@@ -301,6 +302,36 @@ def _seed_scope(tenant: Tenant):
         max_score_snapshot=20,
         submission_payload="Respostas do exame 2",
     )
+    random_test_1 = RandomTest.objects.create(
+        tenant=tenant,
+        course=course_1,
+        classroom=classroom_1,
+        enrollment=enrollment_1,
+        student=student_1,
+        teacher=teacher_1,
+        title="Teste aleatório A",
+        scheduled_for=now + timedelta(days=1),
+        opens_at=now + timedelta(days=1),
+        closes_at=now + timedelta(days=1, hours=1),
+        duration_minutes=45,
+        question_count=12,
+        status=RandomTest.Status.SCHEDULED,
+    )
+    random_test_2 = RandomTest.objects.create(
+        tenant=tenant,
+        course=course_2,
+        classroom=classroom_2,
+        enrollment=enrollment_2,
+        student=student_2,
+        teacher=teacher_2,
+        title="Teste aleatório B",
+        scheduled_for=now + timedelta(days=1),
+        opens_at=now + timedelta(days=1),
+        closes_at=now + timedelta(days=1, hours=1),
+        duration_minutes=45,
+        question_count=12,
+        status=RandomTest.Status.SCHEDULED,
+    )
 
     return {
         "teacher_user_1": teacher_user_1,
@@ -331,6 +362,8 @@ def _seed_scope(tenant: Tenant):
         "exam_2": exam_2,
         "exam_attempt_1": exam_attempt_1,
         "exam_attempt_2": exam_attempt_2,
+        "random_test_1": random_test_1,
+        "random_test_2": random_test_2,
     }
 
 
@@ -375,6 +408,10 @@ def test_student_group_only_sees_own_profile_and_academic_records(api_client):
     response = api_client.get("/api/v1/education/skill/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["skill_1"].id}
+
+    response = api_client.get("/api/v1/education/random_test/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["random_test_1"].id}
 
 
 @pytest.mark.django_db
@@ -426,6 +463,90 @@ def test_teacher_group_only_sees_owned_scope(api_client):
     response = api_client.get("/api/v1/education/skill/")
     assert response.status_code == 200, _response_data(response)
     assert {item["id"] for item in _items(response)} == {scope["skill_1"].id}
+
+    response = api_client.get("/api/v1/education/random_test/")
+    assert response.status_code == 200, _response_data(response)
+    assert {item["id"] for item in _items(response)} == {scope["random_test_1"].id}
+
+
+@pytest.mark.django_db
+def test_director_can_schedule_random_tests_for_whole_classroom(api_client):
+    tenant = _tenant("tn-edu-random-class", "edu-random-class.local")
+    scope = _seed_scope(tenant)
+    director = _user(tenant=tenant, username="director_random_tests", role_group="Diretor da Escola")
+    _authenticate(api_client, tenant=tenant, user=director)
+
+    response = api_client.post(
+        "/api/v1/education/random_test/schedule_for_classroom/",
+        {
+            "classroom": scope["classroom_1"].id,
+            "scheduled_for": (timezone.now() + timedelta(days=2)).isoformat(),
+            "duration_minutes": 50,
+            "question_count": 20,
+            "title_template": "Teste surpresa - {student_code}",
+            "notes": "Agendamento automático por turma.",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    payload = _response_data(response)
+    assert payload["count"] == 1
+    created_id = payload["results"][0]["id"]
+    created = RandomTest.objects.get(id=created_id, tenant=tenant)
+    assert created.classroom_id == scope["classroom_1"].id
+    assert created.student_id == scope["student_1"].id
+    assert created.enrollment_id == scope["enrollment_1"].id
+    assert created.duration_minutes == 50
+    assert created.question_count == 20
+
+
+@pytest.mark.django_db
+def test_teacher_can_schedule_random_test_for_selected_student_in_assigned_classroom(api_client):
+    tenant = _tenant("tn-edu-random-student", "edu-random-student.local")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=scope["teacher_user_1"])
+
+    response = api_client.post(
+        "/api/v1/education/random_test/schedule_for_classroom/",
+        {
+            "classroom": scope["classroom_1"].id,
+            "student_ids": [scope["student_1"].id],
+            "scheduled_for": (timezone.now() + timedelta(days=3)).isoformat(),
+            "duration_minutes": 40,
+            "question_count": 10,
+            "title_template": "Teste individual - {student_code}",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201, _response_data(response)
+    payload = _response_data(response)
+    assert payload["count"] == 1
+    created = RandomTest.objects.get(id=payload["results"][0]["id"], tenant=tenant)
+    assert created.teacher_id == scope["teacher_1"].id
+    assert created.student_id == scope["student_1"].id
+
+
+@pytest.mark.django_db
+def test_teacher_cannot_schedule_random_test_for_unassigned_classroom(api_client):
+    tenant = _tenant("tn-edu-random-forbidden", "edu-random-forbidden.local")
+    scope = _seed_scope(tenant)
+    _authenticate(api_client, tenant=tenant, user=scope["teacher_user_1"])
+
+    response = api_client.post(
+        "/api/v1/education/random_test/schedule_for_classroom/",
+        {
+            "classroom": scope["classroom_2"].id,
+            "scheduled_for": (timezone.now() + timedelta(days=3)).isoformat(),
+            "duration_minutes": 40,
+            "question_count": 10,
+            "title_template": "Teste fora de escopo",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400, _response_data(response)
 
 
 @pytest.mark.django_db
