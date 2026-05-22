@@ -46,6 +46,14 @@ docker compose up --build
 make quality-gate
 make ops-health
 make production-readiness
+make migration-check
+make release-baseline
+```
+
+## Backup e rollback operacional
+```bash
+make backup-automatic
+make restore-backup BACKUP=backups/substrato_backup_YYYYmmdd_HHMMSS.tgz
 ```
 
 ## Governança técnica

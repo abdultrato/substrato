@@ -69,6 +69,35 @@ jobs:
         run: |
           ruff check . --output-format=github
 
+      - name: Migration drift gate (model files)
+        env:
+          DJANGO_SETTINGS_MODULE: platform.settings.development
+          DJANGO_SECRET_KEY: test-secret-key
+          DB_ENGINE: postgres
+          DB_NAME: substrato_ci
+          DB_USER: substrato_ci
+          DB_PASSWORD: substrato_ci
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          python manage.py makemigrations --check --dry-run
+
+      - name: Migration apply gate (database sync)
+        env:
+          DJANGO_SETTINGS_MODULE: platform.settings.development
+          DJANGO_SECRET_KEY: test-secret-key
+          DB_ENGINE: postgres
+          DB_NAME: substrato_ci
+          DB_USER: substrato_ci
+          DB_PASSWORD: substrato_ci
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          python scripts/migrate_with_lock.py
+          python manage.py migrate --check
+
       - name: Run backend tests with coverage
         env:
           DJANGO_SETTINGS_MODULE: platform.settings.development

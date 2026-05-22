@@ -50,6 +50,11 @@ help:
 	@echo "  make ops-alert-rules    - Validar regras Prometheus com promtool"
 	@echo "  make ops-slo            - Resumo rápido de latência/erros no /metrics"
 	@echo "  make production-readiness - Gate de prontidão para produção"
+	@echo "  make migration-check    - Falha se houver drift de migrations (modelos/DB)"
+	@echo "  make migrate-safe       - Aplicar migrate com lock operacional (Postgres)"
+	@echo "  make release-baseline   - Readiness + migration-check + migrate-safe"
+	@echo "  make backup-automatic   - Backup DB/media para ./backups"
+	@echo "  make restore-backup BACKUP=<path> - Restore de backup (.tgz ou diretório)"
 	@echo "  make education-migration-preview - Inventário rápido de migração education"
 	@echo "  make education-migration-audit   - Auditoria de divergências (education)"
 	@echo "  make education-migration-audit-markdown - Auditoria com relatório Markdown em logs/"
@@ -227,6 +232,25 @@ ops-slo:
 
 production-readiness:
 	python scripts/production_readiness_check.py
+
+migration-check:
+	python manage.py makemigrations --check --dry-run
+	python manage.py migrate --check
+
+migrate-safe:
+	python scripts/migrate_with_lock.py
+
+release-baseline: production-readiness migration-check migrate-safe
+
+backup-automatic:
+	./scripts/backup_automatic.sh --dest backups --keep 30
+
+restore-backup:
+	@if [ -z "$(BACKUP)" ]; then \
+		echo "Uso: make restore-backup BACKUP=backups/substrato_backup_YYYYmmdd_HHMMSS.tgz"; \
+		exit 2; \
+	fi
+	./scripts/restore_backup.sh --from "$(BACKUP)"
 
 education-migration-preview:
 	python manage.py education_migrate_legacy --format text
