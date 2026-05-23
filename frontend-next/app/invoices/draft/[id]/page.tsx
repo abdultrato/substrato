@@ -383,7 +383,7 @@ export default function FaturaRascunhoPage() {
       setFatura(fat)
 
       if (fat?.paciente) {
-        const pac = await apiFetch<any>(`/patients/${fat.paciente}/`)
+        const pac = await apiFetch<any>(`/clinical/patients/${fat.paciente}/`)
         setPaciente(pac)
         if (podeEditar) {
           await carregarRecursosPaciente(fat.paciente)

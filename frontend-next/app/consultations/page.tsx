@@ -110,7 +110,7 @@ export default function ConsultasPage() {
   const carregar = useCallback(async () => {
     const [cons, pacs, meds, especs] = await Promise.all([
       apiFetch<any>("/consultations/"),
-      apiFetch<any>("/patients/"),
+      apiFetch<any>("/clinical/patients/"),
       apiFetch<any>("/consultations/doctors/"),
       apiFetch<any>("/consultations/specialty/"),
     ])

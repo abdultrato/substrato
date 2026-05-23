@@ -45,7 +45,7 @@ export default function NovaFaturaPage() {
           return
         }
         setLoading(true)
-        const res = await apiFetch<any>(`/patients/?search=${encodeURIComponent(search.trim())}`)
+        const res = await apiFetch<any>(`/clinical/patients/?search=${encodeURIComponent(search.trim())}`)
         const items = listFrom(res)
         if (mounted) setPacientes(items as PacienteRow[])
       } catch (e: any) {
