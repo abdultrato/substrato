@@ -50,3 +50,21 @@ def test_pdf_registry_resolves_all_models_using_runtime_app_labels():
         "Models sem resolução de gerador PDF via label runtime: "
         f"{unresolved}"
     )
+
+
+def test_pdf_registry_has_default_for_runtime_and_module_labels():
+    missing_defaults = []
+    for config in _domain_app_configs():
+        runtime_generator = PDF_GENERATORS_REGISTRY.get(config.label, "__missing_model__")
+        if runtime_generator is None:
+            missing_defaults.append(f"{config.label}.__default__")
+
+        module_app_label = config.name.split(".")[-1]
+        module_generator = PDF_GENERATORS_REGISTRY.get(module_app_label, "__missing_model__")
+        if module_generator is None:
+            missing_defaults.append(f"{module_app_label}.__default__")
+
+    assert not missing_defaults, (
+        "Apps sem fallback __default__ para label runtime/módulo: "
+        f"{missing_defaults}"
+    )
