@@ -198,24 +198,82 @@ def _register_builtin_generators():
     from .request_pdf_generator import generate_request_pdf
     from .result_pdf_generator import generate_results_pdf
 
+    domain_app_configs = {
+        config.name.split(".")[-1]: config
+        for config in django_apps.get_app_configs()
+        if config.name.startswith("apps.")
+    }
+
+    def _alias_labels_for(app_label: str) -> set[str]:
+        config = domain_app_configs.get(app_label)
+        if config is None:
+            return set()
+
+        aliases = set()
+        runtime_label = str(getattr(config, "label", "") or "").strip()
+        module_label = str(config.name.split(".")[-1]).strip()
+        if runtime_label and runtime_label != app_label:
+            aliases.add(runtime_label)
+        if module_label and module_label != app_label:
+            aliases.add(module_label)
+        return aliases
+
+    def _register_specific_generator(
+        *,
+        app_label: str,
+        model_name: str,
+        generator: Callable,
+        doc_type: str,
+        description: str,
+    ) -> None:
+        PDF_GENERATORS_REGISTRY.register(
+            app_label=app_label,
+            model_name=model_name,
+            generator=generator,
+            doc_type=doc_type,
+            description=description,
+        )
+        for alias in sorted(_alias_labels_for(app_label)):
+            PDF_GENERATORS_REGISTRY.register(
+                app_label=alias,
+                model_name=model_name,
+                generator=generator,
+                doc_type=doc_type,
+                description=f"{description} ({alias})",
+            )
+
     def _lab_request_admin_generator(obj, request=None):
         # `generate_request_pdf` é legado e aceita apenas o objeto da requisição.
         return generate_request_pdf(obj)
 
-    def _lab_result_admin_generator(obj, request=None):
+    def _lab_results_from_request_generator(obj, request=None):
         # `generate_results_pdf` legado não aceita kwarg `request`.
         return generate_results_pdf(obj)
 
+    def _result_admin_generator(obj, request=None):
+        lab_request = getattr(obj, "request", None)
+        if lab_request is None:
+            raise ValueError("Result sem requisição associada para gerar PDF de resultados.")
+        return generate_results_pdf(lab_request)
+
     # Clínica
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
         app_label="clinical",
         model_name="labresult",
-        generator=_lab_result_admin_generator,
+        generator=_lab_results_from_request_generator,
         doc_type=DocumentType.LABORATORY_RESULT,
         description="Resultado de análises laboratoriais",
     )
 
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
+        app_label="clinical",
+        model_name="result",
+        generator=_result_admin_generator,
+        doc_type=DocumentType.LABORATORY_RESULT,
+        description="Resultado de análises laboratoriais",
+    )
+
+    _register_specific_generator(
         app_label="clinical",
         model_name="labrequest",
         generator=_lab_request_admin_generator,
@@ -224,7 +282,7 @@ def _register_builtin_generators():
     )
 
     # Enfermagem
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
         app_label="nursing",
         model_name="procedure",
         generator=generate_procedure_pdf,
@@ -233,7 +291,7 @@ def _register_builtin_generators():
     )
 
     # Farmácia
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
         app_label="pharmacy",
         model_name="movement",
         generator=generate_pharmacy_movements_pdf,
@@ -242,7 +300,7 @@ def _register_builtin_generators():
     )
 
     # Faturação
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
         app_label="billing",
         model_name="invoice",
         generator=generate_invoice_pdf,
@@ -250,19 +308,13 @@ def _register_builtin_generators():
         description="Fatura",
     )
 
-    PDF_GENERATORS_REGISTRY.register(
+    _register_specific_generator(
         app_label="billing",
         model_name="receipt",
         generator=generate_receipt_pdf,
         doc_type=DocumentType.RECEIPT,
         description="Comprovante de pagamento",
     )
-
-    domain_app_configs = {
-        config.name.split(".")[-1]: config
-        for config in django_apps.get_app_configs()
-        if config.name.startswith("apps.")
-    }
 
     def _build_generic_app_fallback(app_label: str):
         def _generator(obj, request=None):
@@ -297,14 +349,7 @@ def _register_builtin_generators():
             description=f"{description} (default)",
         )
 
-        alias_labels = set()
-        if app_config is not None:
-            runtime_label = str(getattr(app_config, "label", "") or "").strip()
-            module_label = str(app_config.name.split(".")[-1]).strip()
-            if runtime_label and runtime_label != app_label:
-                alias_labels.add(runtime_label)
-            if module_label and module_label != app_label:
-                alias_labels.add(module_label)
+        alias_labels = _alias_labels_for(app_label)
 
         # Registro para labels customizados usados em runtime (pt-* e futuros aliases).
         for alias in sorted(alias_labels):
