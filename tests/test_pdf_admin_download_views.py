@@ -109,3 +109,4 @@ def test_simple_pdf_admin_button_is_rendered_on_first_load():
         html = model_admin.get_pdf_button_html(obj)
         assert html != "—"
         assert "/download-pdf/" in str(html)
+        assert model_admin.pdf_generator is None

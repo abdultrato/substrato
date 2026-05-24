@@ -47,6 +47,10 @@ class PDFAdminMixin:
     pdf_action_label: str = "⬇ Baixar PDF"
     pdf_icon_html: str = "📄"
 
+    def _get_pdf_generator(self) -> Callable | None:
+        """Resolve o gerador de PDF efetivo para a requisição atual."""
+        return self.pdf_generator
+
     def _invoke_pdf_generator(self, obj, request: HttpRequest | None = None):
         """
         Chama o gerador de PDF com compatibilidade para assinaturas legadas.
@@ -56,26 +60,27 @@ class PDFAdminMixin:
         - generator(obj)
         - generator(obj, req=None)  # segundo argumento posicional não nomeado "request"
         """
-        if not self.pdf_generator:
+        generator = self._get_pdf_generator()
+        if not generator:
             raise ValueError("Gerador de PDF não configurado.")
 
         try:
-            return self.pdf_generator(obj, request=request)
+            return generator(obj, request=request)
         except TypeError as exc:
             message = str(exc)
             if "got multiple values for argument 'request'" in message:
-                return self.pdf_generator(obj)
+                return generator(obj)
             if "unexpected keyword argument 'request'" in message:
                 from inspect import Parameter, signature
 
-                params = list(signature(self.pdf_generator).parameters.values())
+                params = list(signature(generator).parameters.values())
                 positional_params = [
                     param for param in params
                     if param.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
                 ]
                 if len(positional_params) <= 1:
-                    return self.pdf_generator(obj)
-                return self.pdf_generator(obj, request)
+                    return generator(obj)
+                return generator(obj, request)
             raise
 
     def get_urls(self):
@@ -98,7 +103,7 @@ class PDFAdminMixin:
             self.message_user(request, "Objeto não encontrado.", messages.ERROR)
             return redirect("admin:index")
 
-        if not self.pdf_generator:
+        if not self._get_pdf_generator():
             self.message_user(
                 request,
                 "Gerador de PDF não configurado para este modelo.",
@@ -147,7 +152,7 @@ class PDFAdminMixin:
 
         obj = queryset.first()
 
-        if not self.pdf_generator:
+        if not self._get_pdf_generator():
             self.message_user(
                 request,
                 "Gerador de PDF não configurado.",
@@ -185,7 +190,7 @@ class PDFAdminMixin:
 
     def get_pdf_button_html(self, obj) -> str:
         """Retorna HTML do botão de download de PDF."""
-        if not self.pdf_generator or not obj.pk:
+        if not self._get_pdf_generator() or not obj.pk:
             return "—"
 
         url = f"/admin/{self.model._meta.app_label}/{self.model._meta.model_name}/{obj.pk}/download-pdf/"
@@ -199,12 +204,12 @@ class PDFAdminMixin:
     def get_actions(self, request):
         """Adiciona ação de PDF se gerador estiver configurado."""
         actions = super().get_actions(request)
-        if self.pdf_generator:
-            self.download_pdf_action.short_description = self.pdf_action_label or "⬇ Baixar PDF"
+        if self._get_pdf_generator():
+            action_label = self.pdf_action_label or "⬇ Baixar PDF"
             actions["download_pdf_action"] = (
                 self.download_pdf_action,
                 "download_pdf_action",
-                self.pdf_action_label or "⬇ Baixar PDF",
+                action_label,
             )
         return actions
 
@@ -219,30 +224,16 @@ class SimplePDFAdminMixin(PDFAdminMixin):
             pass  # Automaticamente usa generate_invoice_pdf
     """
 
+    def _get_pdf_generator(self) -> Callable | None:
+        """Resolve gerador sem mutar estado compartilhado do ModelAdmin."""
+        return self.pdf_generator or self.get_pdf_generator()
+
     def get_pdf_generator(self):
         """Detecta automaticamente qual gerador usar baseado no modelo."""
         from .pdf_registry import PDF_GENERATORS_REGISTRY
 
         model_path = f"{self.model._meta.app_label}.{self.model._meta.model_name}"
         return PDF_GENERATORS_REGISTRY.get(model_path)
-
-    def get_actions(self, request):
-        """Override para detectar automaticamente o gerador."""
-        if not self.pdf_generator:
-            self.pdf_generator = self.get_pdf_generator()
-        return super().get_actions(request)
-
-    def download_pdf_view(self, request: HttpRequest, pk: int) -> HttpResponse:
-        """Override para detectar automaticamente o gerador."""
-        if not self.pdf_generator:
-            self.pdf_generator = self.get_pdf_generator()
-        return super().download_pdf_view(request, pk)
-
-    def get_pdf_button_html(self, obj) -> str:
-        """Resolve o gerador lazy para exibir botão no primeiro carregamento do admin."""
-        if not self.pdf_generator:
-            self.pdf_generator = self.get_pdf_generator()
-        return super().get_pdf_button_html(obj)
 
 
 __all__ = [
