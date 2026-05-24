@@ -190,7 +190,6 @@ def _register_builtin_generators():
 
     from .generic_app_pdf_generator import generate_generic_app_pdf
     from .invoice_pdf_generator import generate_invoice_pdf
-    from .patient_history_pdf_generator import generate_patient_history_pdf
     from .pharmacy_reports_pdf_generator import (
         generate_pharmacy_movements_pdf,
     )
@@ -199,11 +198,19 @@ def _register_builtin_generators():
     from .request_pdf_generator import generate_request_pdf
     from .result_pdf_generator import generate_results_pdf
 
+    def _lab_request_admin_generator(obj, request=None):
+        # `generate_request_pdf` é legado e aceita apenas o objeto da requisição.
+        return generate_request_pdf(obj)
+
+    def _lab_result_admin_generator(obj, request=None):
+        # `generate_results_pdf` legado não aceita kwarg `request`.
+        return generate_results_pdf(obj)
+
     # Clínica
     PDF_GENERATORS_REGISTRY.register(
         app_label="clinical",
         model_name="labresult",
-        generator=generate_results_pdf,
+        generator=_lab_result_admin_generator,
         doc_type=DocumentType.LABORATORY_RESULT,
         description="Resultado de análises laboratoriais",
     )
@@ -211,17 +218,9 @@ def _register_builtin_generators():
     PDF_GENERATORS_REGISTRY.register(
         app_label="clinical",
         model_name="labrequest",
-        generator=generate_request_pdf,
+        generator=_lab_request_admin_generator,
         doc_type=DocumentType.REQUEST,
         description="Requisição de exames",
-    )
-
-    PDF_GENERATORS_REGISTRY.register(
-        app_label="clinical",
-        model_name="patient",
-        generator=generate_patient_history_pdf,
-        doc_type=DocumentType.PATIENT_HISTORY,
-        description="Histórico do paciente",
     )
 
     # Enfermagem
