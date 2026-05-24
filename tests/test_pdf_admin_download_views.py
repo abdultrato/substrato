@@ -86,3 +86,26 @@ def test_simple_pdf_admin_download_view_returns_pdf_for_registered_models():
 
         pdf_bytes = b"".join(response.streaming_content)
         assert pdf_bytes.startswith(b"%PDF")
+
+
+@pytest.mark.django_db
+def test_simple_pdf_admin_button_is_rendered_on_first_load():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    lab_request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    result = Result.objects.create(tenant=tenant, request=lab_request)
+    procedure = Procedure.objects.create(tenant=tenant, patient=patient)
+
+    cases = [
+        (Patient, patient),
+        (LabRequest, lab_request),
+        (Result, result),
+        (Procedure, procedure),
+    ]
+
+    for model_cls, obj in cases:
+        model_admin = _admin_instance(model_cls)
+        model_admin.pdf_generator = None
+        html = model_admin.get_pdf_button_html(obj)
+        assert html != "—"
+        assert "/download-pdf/" in str(html)

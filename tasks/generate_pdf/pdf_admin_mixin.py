@@ -238,6 +238,12 @@ class SimplePDFAdminMixin(PDFAdminMixin):
             self.pdf_generator = self.get_pdf_generator()
         return super().download_pdf_view(request, pk)
 
+    def get_pdf_button_html(self, obj) -> str:
+        """Resolve o gerador lazy para exibir botão no primeiro carregamento do admin."""
+        if not self.pdf_generator:
+            self.pdf_generator = self.get_pdf_generator()
+        return super().get_pdf_button_html(obj)
+
 
 __all__ = [
     "PDFAdminMixin",
