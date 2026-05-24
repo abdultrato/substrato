@@ -1,17 +1,50 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, Tuple
+import hashlib
+import json
 
 
 class LocalLlmGateway:
     """
-    Gateway determinístico local.
+    Gateway determinístico local com cache de prompts.
 
     Mantém a arquitectura pronta para provedor externo, mas evita enviar dados
     sensíveis a terceiros enquanto as políticas e ferramentas ainda amadurecem.
+    Implementa cache para evitar regeneracao de respostas identicas.
     """
 
     provider = "local"
+
+    # Cache simples em memoria (em producao, usar Redis ou similar)
+    _cache: Dict[str, str] = {}
+    _max_cache_size = 100  # Limite simples para evitar crescimento infinito
+
+    def _get_cache_key(
+        self,
+        question: str,
+        language: str,
+        tool_results: list[dict[str, Any]],
+        blocked_tools: list[dict[str, Any]] | None,
+    ) -> str:
+        """Generate a deterministic cache key from the inputs."""
+        # Sort tool_results and blocked_tools by tool_name for consistent ordering
+        sorted_tool_results = sorted(tool_results, key=lambda x: x.get("tool_name", ""))
+        sorted_blocked_tools = sorted(blocked_tools or [], key=lambda x: x.get("tool_name", ""))
+
+        # Create a string representation that's consistent for the same inputs
+        cache_data = {
+            "question": question,
+            "language": language,
+            "tool_results": sorted_tool_results,
+            "blocked_tools": sorted_blocked_tools,
+        }
+
+        # JSON serialize with sort_keys=True for deterministic output
+        cache_string = json.dumps(cache_data, sort_keys=True)
+
+        # Return MD5 hash as the cache key
+        return hashlib.md5(cache_string.encode()).hexdigest()
 
     def build_answer(
         self,
@@ -21,85 +54,159 @@ class LocalLlmGateway:
         tool_results: list[dict[str, Any]],
         blocked_tools: list[dict[str, Any]] | None = None,
     ) -> str:
+        # Check cache first
+        cache_key = self._get_cache_key(question, language, tool_results, blocked_tools)
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
         blocked_tools = blocked_tools or []
         denied_result = next((item for item in tool_results if (item.get("result") or {}).get("access_denied")), None)
         if denied_result:
-            return self._access_denied_answer(denied_result.get("result") or {}, language=language)
+            result = self._access_denied_answer(denied_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            # Simple cache eviction: remove oldest if over limit
+            if len(self._cache) > self._max_cache_size:
+                # Remove first item (FIFO - simple but not optimal)
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         project_identity_result = next((item for item in tool_results if item.get("tool_name") == "get_project_identity"), None)
         if project_identity_result:
-            return self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
+            result = self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         knowledge_result = next((item for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
         if knowledge_result:
-            return self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
+            result = self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
         if sql_analytics_result:
-            return self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
+            result = self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
         if crud_result:
-            return self._crud_answer(crud_result.get("result") or {}, language=language)
+            result = self._crud_answer(crud_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
         data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
         if user_context_result and len(tool_results) == 1:
-            return self._user_context_answer(user_context_result.get("result") or {}, language=language)
+            result = self._user_context_answer(user_context_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
         if data_explorer_result and len(tool_results) == 1:
-            return self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
+            result = self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
         if user_context_result and data_explorer_result and len(tool_results) == 2:
-            return "\n\n".join(
+            result = "\n\n".join(
                 [
                     self._user_context_answer(user_context_result.get("result") or {}, language=language, compact=True),
                     self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
                 ]
             )
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         command_result = next((item for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
         if command_result and len(tool_results) == 1:
-            return self._command_center_answer(command_result.get("result") or {}, language=language)
+            result = self._command_center_answer(command_result.get("result") or {}, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         if command_result and len(tool_results) > 1:
             other_results = [item for item in tool_results if item.get("tool_name") != "get_command_center_alerts"]
-            return "\n\n".join(
+            result = "\n\n".join(
                 [
                     self._command_center_answer(command_result.get("result") or {}, language=language),
                     self._generic_tool_answer(other_results, language=language),
                 ]
             )
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         if tool_results:
-            return self._generic_tool_answer(tool_results, language=language)
+            result = self._generic_tool_answer(tool_results, language=language)
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         if blocked_tools:
             if language == "en":
-                return (
+                result = (
                     "I could not run the requested operational tool because your current permissions do not allow it.\n\n"
                     "Internal evidence used: AI policy guard.\n"
                     "Limitation: no operational data was queried after the policy block.\n"
                     "Suggested next step: ask an administrator to review your access profile."
                 )
-            return (
-                "Não consegui executar a ferramenta operacional solicitada porque o seu perfil actual não tem permissão.\n\n"
-                "Evidência interna usada: guarda de política da IA.\n"
-                "Limitação: nenhum dado operacional foi consultado depois do bloqueio de política.\n"
-                "Próximo passo sugerido: peça a um administrador para rever o seu perfil de acesso."
-            )
+            else:
+                result = (
+                    "Não consegui executar a ferramenta operacional solicitada porque o seu perfil actual não tem permissão.\n\n"
+                    "Evidência interna usada: guarda de política da IA.\n"
+                    "Limitação: nenhum dado operacional foi consultado depois do bloqueio de política.\n"
+                    "Próximo passo sugerido: peça a um administrador para rever o seu perfil de acesso."
+                )
+            self._cache[cache_key] = result
+            if len(self._cache) > self._max_cache_size:
+                if self._cache:
+                    del self._cache[next(iter(self._cache))]
+            return result
 
         if language == "en":
-            return (
+            result = (
                 "This first AI increment can answer operational Command Center questions: active alerts, 5xx routes, SLO state and outbox backlog.\n\n"
                 "Internal evidence used: tool registry.\n"
                 "Limitation: I only run tools that match the question and your RBAC profile.\n"
                 "Suggested next step: ask about active alerts, clinical requests, nursing pending work, finance, pharmacy or education."
             )
-        return (
-            "Este primeiro incremento da IA responde a perguntas operacionais do Command Center: alertas activos, rotas 5xx, estado de SLO e backlog da outbox.\n\n"
-            "Evidência interna usada: registry de ferramentas.\n"
-            "Limitação: só executo ferramentas que correspondem à pergunta e ao seu perfil RBAC.\n"
-            "Próximo passo sugerido: pergunte por alertas activos, requisições clínicas, pendências de enfermagem, financeiro, farmácia ou educação."
-        )
+        else:
+            result = (
+                "Este primeiro incremento da IA responde a perguntas operacionais do Command Center: alertas activos, rotas 5xx, estado de SLO e backlog da outbox.\n\n"
+                "Evidência interna usada: registry de ferramentas.\n"
+                "Limitação: só executo ferramentas que correspondem à pergunta e ao seu perfil RBAC.\n"
+                "Próximo passo sugerido: pergunte por alertas activos, requisições clínicas, pendências de enfermagem, financeiro, farmácia ou educação."
+            )
+        self._cache[cache_key] = result
+        if len(self._cache) > self._max_cache_size:
+            if self._cache:
+                del self._cache[next(iter(self._cache))]
+        return result
 
     def _command_center_answer(self, result: dict[str, Any], *, language: str) -> str:
         totals = result.get("global_totals") or {}

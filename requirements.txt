@@ -69,6 +69,9 @@ referencing==0.37.0
 reportlab==4.4.7
 rpds-py==0.30.0
 ruff==0.15.5
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+numpy==1.24.3
 six==1.17.0
 sqlparse==0.5.5
 tablib==3.9.0

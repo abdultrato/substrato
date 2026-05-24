@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from functools import lru_cache
 import re
-from typing import Any
+from typing import Any, List, Tuple, Optional
+import numpy as np
 
 from apps.ai_assistant.tools.resource_catalog import normalize_text
+from apps.ai_assistant.services.vector_store import get_vector_store_service
 
 from .base import AiTool, AiToolContext
 
@@ -189,6 +191,25 @@ def entry_by_id(entry_id: str, *, tenant=None) -> KnowledgeEntry | None:
 
 
 def rank_knowledge_entries(message: str, *, limit: int = 5, tenant=None, active_module: str = "") -> list[RankedEntry]:
+    # Try vector search first if available
+    vector_results = _vector_search_knowledge_entries(message, limit=limit, tenant=tenant)
+    if vector_results:
+        # Convert vector results to RankedEntry objects
+        ranked: list[RankedEntry] = []
+        for entry_id, score in vector_results:
+            entry = entry_by_id(entry_id, tenant=tenant)
+            if entry:
+                # Get the best matched question for this entry
+                _, matched_question = _entry_score(entry=entry, normalized=normalize_text(message))
+                # Apply module boost
+                score = min(1.0, score + _module_boost(entry=entry, active_module=active_module))
+                ranked.append(RankedEntry(entry=entry, score=score, matched_question=matched_question))
+
+        # Sort by score and return
+        ranked.sort(key=lambda item: (item.score, item.entry.priority, item.entry.source == "database"), reverse=True)
+        return ranked[:limit]
+
+    # Fallback to original text-based search
     normalized = normalize_text(message)
     if not normalized:
         return []
@@ -201,6 +222,34 @@ def rank_knowledge_entries(message: str, *, limit: int = 5, tenant=None, active_
         ranked.append(RankedEntry(entry=entry, score=score, matched_question=matched))
     ranked.sort(key=lambda item: (item.score, item.entry.priority, item.entry.source == "database"), reverse=True)
     return ranked[:limit]
+
+
+def _vector_search_knowledge_entries(message: str, *, limit: int = 5, tenant=None) -> List[Tuple[str, float]]:
+    """
+    Search for knowledge entries using vector similarity.
+
+    Returns:
+        List of tuples (entry_id, similarity_score) sorted by score descending
+    """
+    try:
+        # Get vector store service
+        vector_store = get_vector_store_service()
+        if vector_store is None:
+            return []
+
+        # If the index is not loaded (e.g., first time or after failure), rebuild it.
+        # We do not rebuild on every search to avoid performance degradation.
+        # The index is rebuilt when the knowledge base is updated via the management command
+        # or when the service detects a model/version change.
+        if vector_store.index is None:
+            vector_store.rebuild_index()
+
+        # Search using vector similarity
+        results = vector_store.search(message, k=limit)
+        return results
+    except Exception:
+        # If vector search fails, return empty to fall back to text search
+        return []
 
 
 def knowledge_entries(*, tenant=None) -> tuple[KnowledgeEntry, ...]:
