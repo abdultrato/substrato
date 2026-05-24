@@ -19,7 +19,7 @@ import logging
 from django.contrib import messages
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import redirect
-from django.urls import path
+from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 
 logger = logging.getLogger("pdf.admin")
@@ -193,7 +193,14 @@ class PDFAdminMixin:
         if not self._get_pdf_generator() or not obj.pk:
             return "—"
 
-        url = f"/admin/{self.model._meta.app_label}/{self.model._meta.model_name}/{obj.pk}/download-pdf/"
+        try:
+            url = reverse(
+                f"admin:{self.model._meta.app_label}_{self.model._meta.model_name}_download_pdf",
+                args=[obj.pk],
+            )
+        except Exception:
+            # Fallback para manter compatibilidade quando o resolver ainda não está pronto.
+            url = f"/admin/{self.model._meta.app_label}/{self.model._meta.model_name}/{obj.pk}/download-pdf/"
         return mark_safe(
             f'<a class="button" href="{url}" title="Baixar PDF">'
             f'{self.pdf_icon_html} PDF</a>'

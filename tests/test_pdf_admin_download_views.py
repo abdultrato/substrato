@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory
+from django.urls import reverse
 import pytest
 
 from apps.clinical.models.lab_request import LabRequest
@@ -108,5 +109,24 @@ def test_simple_pdf_admin_button_is_rendered_on_first_load():
         model_admin.pdf_generator = None
         html = model_admin.get_pdf_button_html(obj)
         assert html != "—"
-        assert "/download-pdf/" in str(html)
+        expected_url = reverse(
+            f"admin:{obj._meta.app_label}_{obj._meta.model_name}_download_pdf",
+            args=[obj.pk],
+        )
+        assert expected_url in str(html)
         assert model_admin.pdf_generator is None
+
+
+@pytest.mark.django_db
+def test_simple_pdf_admin_button_uses_fallback_url_when_reverse_fails(monkeypatch):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    model_admin = _admin_instance(Patient)
+    model_admin.pdf_generator = None
+
+    def _raise_reverse(*_args, **_kwargs):
+        raise RuntimeError("reverse unavailable")
+
+    monkeypatch.setattr("tasks.generate_pdf.pdf_admin_mixin.reverse", _raise_reverse)
+    html = model_admin.get_pdf_button_html(patient)
+    assert f"/admin/{patient._meta.app_label}/{patient._meta.model_name}/{patient.pk}/download-pdf/" in str(html)
