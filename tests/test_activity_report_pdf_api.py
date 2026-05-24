@@ -1,5 +1,7 @@
 """Testes para o endpoint PDF de relatório de actividades por página."""
 
+import json
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 import pytest
@@ -7,6 +9,7 @@ import pytest
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.tenants.models.tenant import Tenant
 from security.permissions.rbac import GROUPS
+from services.reports.async_exports import get_export_job_payload, get_export_job_state
 
 
 def _tenant():
@@ -50,8 +53,25 @@ def _activity(tenant: Tenant, user, *, referer: str, status_code: int = 200):
     )
 
 
+def _response_data(response):
+    if hasattr(response, "data"):
+        return response.data
+    return json.loads(response.content)
+
+
+def _assert_job_queued(response):
+    assert response.status_code == 202
+    data = _response_data(response)
+    assert data["status"] == "queued"
+    assert data["export_key"] == "activity_report_pdf"
+    assert data["id"]
+    assert data["status_url"]
+    assert data["download_url"]
+    return data["id"]
+
+
 @pytest.mark.django_db
-def test_activity_report_pdf_returns_pdf_for_admin_with_page_filter(api_client):
+def test_activity_report_pdf_returns_pdf_for_admin_with_page_filter(api_client, monkeypatch):
     tenant = _tenant()
     admin = _user(tenant, "admin_activity_pdf", GROUPS["ADMIN"])
     other = _user(tenant, "operador_activity_pdf", GROUPS["RECEPCAO"])
@@ -62,6 +82,7 @@ def test_activity_report_pdf_returns_pdf_for_admin_with_page_filter(api_client):
 
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=admin)
+    monkeypatch.setattr("api.utils.async_exports.enqueue_task", lambda *args, **kwargs: None)
 
     response = api_client.get(
         "/api/v1/audit/atividade/relatorio/pdf/",
@@ -72,15 +93,18 @@ def test_activity_report_pdf_returns_pdf_for_admin_with_page_filter(api_client):
         },
     )
 
-    assert response.status_code == 200
-    assert "application/pdf" in response["Content-Type"]
-    assert len(response.content) > 0
-    assert response["X-Report-Scope"] == "tenant"
-    assert response["X-Activity-Count"] == "2"
+    job_id = _assert_job_queued(response)
+    state = get_export_job_state(job_id)
+    payload = get_export_job_payload(job_id)
+    assert state is not None
+    assert payload["scope"] == "tenant"
+    assert payload["summary"]["total_activities"] == 2
+    assert payload["summary"]["error_count"] == 1
+    assert payload["page"]["path"] == "/invoices"
 
 
 @pytest.mark.django_db
-def test_activity_report_pdf_scopes_non_admin_to_own_activities(api_client):
+def test_activity_report_pdf_scopes_non_admin_to_own_activities(api_client, monkeypatch):
     tenant = _tenant()
     user_a = _user(tenant, "recepcao_activity_pdf_a", GROUPS["RECEPCAO"])
     user_b = _user(tenant, "recepcao_activity_pdf_b", GROUPS["RECEPCAO"])
@@ -90,6 +114,7 @@ def test_activity_report_pdf_scopes_non_admin_to_own_activities(api_client):
 
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=user_a)
+    monkeypatch.setattr("api.utils.async_exports.enqueue_task", lambda *args, **kwargs: None)
 
     response = api_client.get(
         "/api/v1/audit/atividade/relatorio/pdf/",
@@ -100,8 +125,10 @@ def test_activity_report_pdf_scopes_non_admin_to_own_activities(api_client):
         },
     )
 
-    assert response.status_code == 200
-    assert "application/pdf" in response["Content-Type"]
-    assert len(response.content) > 0
-    assert response["X-Report-Scope"] == "user"
-    assert response["X-Activity-Count"] == "1"
+    job_id = _assert_job_queued(response)
+    state = get_export_job_state(job_id)
+    payload = get_export_job_payload(job_id)
+    assert state is not None
+    assert payload["scope"] == "user"
+    assert payload["summary"]["total_activities"] == 1
+    assert payload["summary"]["error_count"] == 0

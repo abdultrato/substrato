@@ -143,6 +143,11 @@ def test_pdf_resultados_requires_at_least_one_validated_result(api_client):
 
     response = api_client.get(f"/api/v1/clinical/labrequest/{request.id}/pdf_resultados/")
 
-    assert response.status_code == 400
+    assert response.status_code == 409
     payload = _response_data(response)
-    assert "Não é possível emitir PDF sem nenhum result validado." in str(payload)
+    assert payload["code"] == "lab_results_pdf_not_ready"
+    assert payload["status"] == "not_ready"
+    assert payload["expected"] is True
+    assert payload["summary"]["validated"] == 0
+    assert payload["request"]["id"] == request.id
+    assert "valide pelo menos um resultado" in payload["message"].lower()

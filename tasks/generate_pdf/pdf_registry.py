@@ -9,7 +9,7 @@ Registra todos os geradores de PDF disponíveis, permitindo:
 
 Uso:
     from .pdf_registry import register_pdf_generator, PDF_GENERATORS_REGISTRY
-    
+
     # Registrar um gerador
     register_pdf_generator(
         app_label="clinical",
@@ -17,15 +17,15 @@ Uso:
         generator=generate_lab_request_pdf,
         doc_type=DocumentType.REQUEST,
     )
-    
+
     # Buscar gerador
     gen = PDF_GENERATORS_REGISTRY.get("clinical.labrequest")
     if gen:
         pdf_bytes, filename = gen(obj, request)
 """
 
+from collections.abc import Callable
 import logging
-from typing import Callable, Dict, Optional
 
 from .pdf_improvements import DocumentType
 
@@ -34,21 +34,21 @@ logger = logging.getLogger("pdf.registry")
 
 class PDFGeneratorRegistry:
     """Registry centralizado de geradores de PDF."""
-    
+
     def __init__(self):
-        self._generators: Dict[str, dict] = {}
-    
+        self._generators: dict[str, dict] = {}
+
     def register(
         self,
         app_label: str,
         model_name: str,
         generator: Callable,
-        doc_type: str = None,
-        description: str = None,
+        doc_type: str | None = None,
+        description: str | None = None,
     ) -> None:
         """
         Registra um gerador de PDF.
-        
+
         Args:
             app_label: Label da app (ex: 'clinical', 'pharmacy')
             model_name: Nome do model (ex: 'labrequest')
@@ -57,7 +57,7 @@ class PDFGeneratorRegistry:
             description: Descrição legível
         """
         key = f"{app_label}.{model_name}"
-        
+
         self._generators[key] = {
             "app_label": app_label,
             "model_name": model_name,
@@ -65,62 +65,79 @@ class PDFGeneratorRegistry:
             "doc_type": doc_type or DocumentType.LABORATORY_RESULT,
             "description": description or f"PDF for {model_name}",
         }
-        
+
         logger.info(f"✓ PDF gerador registrado: {key} → {doc_type or 'default'}")
-    
-    def get(self, app_label: str, model_name: str = None) -> Optional[Callable]:
+
+    def _candidate_keys(self, app_label: str, model_name: str | None = None) -> list[str]:
+        """
+        Resolve chaves candidatas com fallback por app.
+
+        Ordem de busca:
+        1) app.model (exato)
+        2) app.__default__ (fallback explícito)
+        3) app.app (compatibilidade com registros legados)
+        """
+        if model_name is None:
+            if "." in app_label:
+                app, _, model = app_label.partition(".")
+            else:
+                app, model = app_label, None
+        else:
+            app, model = app_label, model_name
+
+        keys = []
+        if model:
+            keys.append(f"{app}.{model}")
+        elif "." in app_label:
+            keys.append(app_label)
+        else:
+            keys.append(app_label)
+        keys.extend([f"{app}.__default__", f"{app}.{app}"])
+        return keys
+
+    def get(self, app_label: str, model_name: str | None = None) -> Callable | None:
         """
         Busca um gerador de PDF.
-        
+
         Suporta dois formatos:
         - get("clinical", "labrequest") → gerador
         - get("clinical.labrequest") → gerador
         """
-        if model_name is None:
-            # Formato "app.model"
-            key = app_label
-        else:
-            # Formato app, model
-            key = f"{app_label}.{model_name}"
-        
-        entry = self._generators.get(key)
-        return entry["generator"] if entry else None
-    
-    def get_entry(self, app_label: str, model_name: str = None) -> Optional[dict]:
+        for key in self._candidate_keys(app_label, model_name):
+            entry = self._generators.get(key)
+            if entry:
+                return entry["generator"]
+        return None
+
+    def get_entry(self, app_label: str, model_name: str | None = None) -> dict | None:
         """Retorna entrada completa (generator + metadata)."""
-        if model_name is None:
-            key = app_label
-        else:
-            key = f"{app_label}.{model_name}"
-        
-        return self._generators.get(key)
-    
-    def list_all(self) -> Dict[str, dict]:
+        for key in self._candidate_keys(app_label, model_name):
+            entry = self._generators.get(key)
+            if entry:
+                return entry
+        return None
+
+    def list_all(self) -> dict[str, dict]:
         """Retorna todos os geradores registrados."""
         return self._generators.copy()
-    
-    def list_by_app(self, app_label: str) -> Dict[str, dict]:
+
+    def list_by_app(self, app_label: str) -> dict[str, dict]:
         """Retorna geradores de uma app específica."""
         return {
             k: v for k, v in self._generators.items()
             if v["app_label"] == app_label
         }
-    
-    def list_by_doc_type(self, doc_type: str) -> Dict[str, dict]:
+
+    def list_by_doc_type(self, doc_type: str) -> dict[str, dict]:
         """Retorna geradores de um tipo de documento específico."""
         return {
             k: v for k, v in self._generators.items()
             if v["doc_type"] == doc_type
         }
-    
-    def exists(self, app_label: str, model_name: str = None) -> bool:
+
+    def exists(self, app_label: str, model_name: str | None = None) -> bool:
         """Verifica se um gerador está registrado."""
-        if model_name is None:
-            key = app_label
-        else:
-            key = f"{app_label}.{model_name}"
-        
-        return key in self._generators
+        return any(key in self._generators for key in self._candidate_keys(app_label, model_name))
 
 
 # Instância global
@@ -131,15 +148,15 @@ def register_pdf_generator(
     app_label: str,
     model_name: str,
     generator: Callable,
-    doc_type: str = None,
-    description: str = None,
+    doc_type: str | None = None,
+    description: str | None = None,
 ) -> Callable:
     """
     Decorator ou função para registrar um gerador de PDF.
-    
+
     Como função:
         register_pdf_generator("clinical", "labrequest", generate_lab_request_pdf)
-    
+
     Como decorator:
         @register_pdf_generator("clinical", "labrequest", doc_type=DocumentType.REQUEST)
         def generate_lab_request_pdf(obj, request=None):
@@ -154,11 +171,11 @@ def register_pdf_generator(
             description=description,
         )
         return gen
-    
+
     # Se generator é callable, registrar diretamente
     if callable(generator):
         return _register(generator)
-    
+
     # Caso contrário, retornar decorator
     return _register
 
@@ -169,18 +186,19 @@ def register_pdf_generator(
 
 def _register_builtin_generators():
     """Registra geradores padrão do sistema."""
-    from .result_pdf_generator import generate_results_pdf
-    from .procedure_pdf_generator import generate_procedure_pdf
-    from .request_pdf_generator import generate_request_pdf
+    from django.apps import apps as django_apps
+
+    from .generic_app_pdf_generator import generate_generic_app_pdf
     from .invoice_pdf_generator import generate_invoice_pdf
-    from .receipt_pdf_generator import generate_receipt_pdf
     from .patient_history_pdf_generator import generate_patient_history_pdf
     from .pharmacy_reports_pdf_generator import (
-        generate_pharmacy_product_consumption_pdf,
         generate_pharmacy_movements_pdf,
     )
-    from .activity_reports_pdf_generator import generate_activity_report_pdf
-    
+    from .procedure_pdf_generator import generate_procedure_pdf
+    from .receipt_pdf_generator import generate_receipt_pdf
+    from .request_pdf_generator import generate_request_pdf
+    from .result_pdf_generator import generate_results_pdf
+
     # Clínica
     PDF_GENERATORS_REGISTRY.register(
         app_label="clinical",
@@ -189,7 +207,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.LABORATORY_RESULT,
         description="Resultado de análises laboratoriais",
     )
-    
+
     PDF_GENERATORS_REGISTRY.register(
         app_label="clinical",
         model_name="labrequest",
@@ -197,7 +215,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.REQUEST,
         description="Requisição de exames",
     )
-    
+
     PDF_GENERATORS_REGISTRY.register(
         app_label="clinical",
         model_name="patient",
@@ -205,7 +223,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.PATIENT_HISTORY,
         description="Histórico do paciente",
     )
-    
+
     # Enfermagem
     PDF_GENERATORS_REGISTRY.register(
         app_label="nursing",
@@ -214,7 +232,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.NURSING_PROCEDURE,
         description="Procedimento de enfermagem",
     )
-    
+
     # Farmácia
     PDF_GENERATORS_REGISTRY.register(
         app_label="pharmacy",
@@ -223,7 +241,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.PHARMACY_REPORT,
         description="Movimentos de farmácia",
     )
-    
+
     # Faturação
     PDF_GENERATORS_REGISTRY.register(
         app_label="billing",
@@ -232,7 +250,7 @@ def _register_builtin_generators():
         doc_type=DocumentType.INVOICE,
         description="Fatura",
     )
-    
+
     PDF_GENERATORS_REGISTRY.register(
         app_label="billing",
         model_name="receipt",
@@ -240,7 +258,65 @@ def _register_builtin_generators():
         doc_type=DocumentType.RECEIPT,
         description="Comprovante de pagamento",
     )
-    
+
+    domain_app_configs = {
+        config.name.split(".")[-1]: config
+        for config in django_apps.get_app_configs()
+        if config.name.startswith("apps.")
+    }
+
+    def _build_generic_app_fallback(app_label: str):
+        def _generator(obj, request=None):
+            return generate_generic_app_pdf(obj, request=request, app_label=app_label)
+
+        _generator.__name__ = f"generate_{app_label}_pdf"
+        return _generator
+
+    for app_label, app_config in sorted(domain_app_configs.items()):
+        generator = _build_generic_app_fallback(app_label)
+        app_verbose_name = ""
+        if app_config is not None:
+            app_verbose_name = str(getattr(app_config, "verbose_name", "") or "").strip()
+        if not app_verbose_name:
+            app_verbose_name = app_label.replace("_", " ").title()
+        description = f"Documento de {app_verbose_name}"
+
+        # Registro principal (compatibilidade com legados app.app)
+        PDF_GENERATORS_REGISTRY.register(
+            app_label=app_label,
+            model_name=app_label,
+            generator=generator,
+            doc_type=DocumentType.LABORATORY_RESULT,
+            description=description,
+        )
+        # Registro explicito de fallback app.__default__
+        PDF_GENERATORS_REGISTRY.register(
+            app_label=app_label,
+            model_name="__default__",
+            generator=generator,
+            doc_type=DocumentType.LABORATORY_RESULT,
+            description=f"{description} (default)",
+        )
+
+        alias_labels = set()
+        if app_config is not None:
+            runtime_label = str(getattr(app_config, "label", "") or "").strip()
+            module_label = str(app_config.name.split(".")[-1]).strip()
+            if runtime_label and runtime_label != app_label:
+                alias_labels.add(runtime_label)
+            if module_label and module_label != app_label:
+                alias_labels.add(module_label)
+
+        # Registro para labels customizados usados em runtime (pt-* e futuros aliases).
+        for alias in sorted(alias_labels):
+            PDF_GENERATORS_REGISTRY.register(
+                app_label=alias,
+                model_name="__default__",
+                generator=generator,
+                doc_type=DocumentType.LABORATORY_RESULT,
+                description=f"{description} ({alias})",
+            )
+
     logger.info(f"✓ {len(PDF_GENERATORS_REGISTRY.list_all())} geradores padrão registrados")
 
 
