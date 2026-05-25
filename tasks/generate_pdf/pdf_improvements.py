@@ -187,7 +187,7 @@ def _configure_fonts_improved() -> tuple[str, str]:
             logger.warning("Falha ao registar Segoe. Usando Helvetica.", exc_info=err)
 
     # 3) Fallback final (Helvetica)
-    logger.warning("⚠ Fontes otimizadas não disponíveis — usando Helvetica (fallback)")
+    logger.info("Fontes otimizadas indisponiveis; a usar Helvetica como fallback.")
     return "Helvetica", "Helvetica-Bold"
 
 
