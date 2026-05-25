@@ -5,6 +5,7 @@ from uuid import uuid4
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -67,8 +68,8 @@ class RandomTest(NoNameCoreModel):
 
     class Meta:
         db_table = "education_random_test"
-        verbose_name = "Random test"
-        verbose_name_plural = "Random tests"
+        verbose_name = education_label("Teste Aleatório", "Random test")
+        verbose_name_plural = education_label("Testes Aleatórios", "Random tests")
         ordering = ["-opens_at", "-scheduled_for", "-created_at"]
         constraints = [
             models.UniqueConstraint(

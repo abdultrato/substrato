@@ -8,6 +8,7 @@ from . import (
     payments,
     pharmacy,
     tenants,
+    warehouse,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "payments",
     "pharmacy",
     "tenants",
+    "warehouse",
 ]

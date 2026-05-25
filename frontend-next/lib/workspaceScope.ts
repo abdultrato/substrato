@@ -6,6 +6,7 @@ const EDUCATION_PATH_PREFIX = "/education"
 const HEALTHCARE_SWITCH_PATH_PREFIX = "/healthcare"
 const NEUTRAL_PATH_PREFIXES = [
   "/workspaces",
+  "/warehouse",
   "/resources",
   "/modules",
   "/ai",
@@ -68,6 +69,7 @@ export function resolveWorkspaceScope(pathname: string, storedScope: WorkspaceSc
   // Explicit workspace routes always switch scope.
   if (isPrefixMatch(normalized, EDUCATION_PATH_PREFIX)) return "education"
   if (isPrefixMatch(normalized, HEALTHCARE_SWITCH_PATH_PREFIX)) return "healthcare"
+  if (isPrefixMatch(normalized, "/warehouse")) return "neutral"
 
   // For all other routes, preserve selected workspace when available.
   if (storedScope === "education" || storedScope === "healthcare") return storedScope

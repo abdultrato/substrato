@@ -1,0 +1,90 @@
+import type { LucideIcon } from "lucide-react"
+import {
+  Activity,
+  Baby,
+  Bell,
+  Bot,
+  BrainCircuit,
+  Briefcase,
+  Building2,
+  Calculator,
+  ClipboardCheck,
+  ClipboardList,
+  CreditCard,
+  Droplet,
+  FileText,
+  FlaskConical,
+  GraduationCap,
+  HeartPulse,
+  Layers,
+  Lightbulb,
+  Microscope,
+  PackageSearch,
+  PackageCheck,
+  Pill,
+  Scissors,
+  Search,
+  ShieldCheck,
+  ShoppingCart,
+  Stethoscope,
+  TerminalSquare,
+  Truck,
+  Users,
+} from "lucide-react"
+
+const MODULE_ICON_BY_KEY: Record<string, LucideIcon> = {
+  accounting: Calculator,
+  ai_assistant: Bot,
+  audit: Activity,
+  billing: FileText,
+  bloodbank: Droplet,
+  clinical: Stethoscope,
+  consultations: ClipboardList,
+  dashboard: ClipboardList,
+  education: GraduationCap,
+  entities: Building2,
+  equipment: Microscope,
+  human_resources: Users,
+  identity: ShieldCheck,
+  insurer: ShieldCheck,
+  maternity: Baby,
+  medical_records: FileText,
+  monitoring: Activity,
+  notifications: Bell,
+  nursing: HeartPulse,
+  payments: CreditCard,
+  pharmacy: Pill,
+  reception: Briefcase,
+  surgery: Scissors,
+  tenants: Building2,
+  warehouse: PackageSearch,
+}
+
+const RESOURCE_ICON_BY_KEY: Record<string, LucideIcon> = {
+  "ai_assistant.ai_session": Bot,
+  "ai_assistant.ai_message": FileText,
+  "ai_assistant.ai_tool_call": TerminalSquare,
+  "ai_assistant.ai_suggested_action": Lightbulb,
+  "ai_assistant.ai_operational_task": ClipboardCheck,
+  "ai_assistant.ai_investigation": Search,
+  "ai_assistant.ai_knowledge_entry": BrainCircuit,
+  "ai_assistant.ai_policy_event": ShieldCheck,
+  "ai_assistant.ai_tools": TerminalSquare,
+  "warehouse.planoreposicao": ClipboardList,
+  "warehouse.sugestaoreposicao": ClipboardCheck,
+  "warehouse.pedidovenda": ShoppingCart,
+  "warehouse.linhapedidovenda": ClipboardList,
+  "warehouse.reserva": ClipboardCheck,
+  "warehouse.separacao": PackageSearch,
+  "warehouse.linhaseparacao": ClipboardList,
+  "warehouse.expedicao": Truck,
+  "warehouse.linhaexpedicao": PackageCheck,
+}
+
+export function getModuleIcon(moduleKey: string): LucideIcon {
+  return MODULE_ICON_BY_KEY[moduleKey] || Layers
+}
+
+export function getResourceIcon(moduleKey: string, resourceKey: string): LucideIcon {
+  return RESOURCE_ICON_BY_KEY[`${moduleKey}.${resourceKey}`] || getModuleIcon(moduleKey)
+}

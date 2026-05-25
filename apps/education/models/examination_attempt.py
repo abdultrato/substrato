@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -71,8 +72,8 @@ class ExaminationAttempt(NoNameCoreModel):
 
     class Meta:
         db_table = "education_examination_attempt"
-        verbose_name = "Examination attempt"
-        verbose_name_plural = "Examination attempts"
+        verbose_name = education_label("Tentativa de Exame", "Examination attempt")
+        verbose_name_plural = education_label("Tentativas de Exame", "Examination attempts")
         ordering = ["-started_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(

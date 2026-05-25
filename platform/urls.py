@@ -12,6 +12,8 @@ from django.views.decorators.http import require_GET
 from django.views.generic import RedirectView
 from django.views.static import serve as django_static_serve
 
+from core.admin_autoregister import register_unregistered_local_models
+
 if find_spec("django_prometheus"):
     from django_prometheus.exports import ExportToDjangoView
 else:
@@ -92,6 +94,8 @@ def safe_debug_media_serve(request, path, document_root=None, show_indexes=False
     except SuspiciousFileOperation:
         return HttpResponseBadRequest("Bad Request: invalid media path.")
 
+
+register_unregistered_local_models()
 
 urlpatterns = [
     # Entrada principal: começa no login e, após autenticação, segue para o dashboard do Admin.

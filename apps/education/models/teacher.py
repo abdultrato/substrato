@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -31,8 +32,8 @@ class TeacherProfile(NoNameCoreModel):
 
     class Meta:
         db_table = "education_teacher_profile"
-        verbose_name = "Teacher"
-        verbose_name_plural = "Teachers"
+        verbose_name = education_label("Professor", "Teacher")
+        verbose_name_plural = education_label("Professores", "Teachers")
         ordering = ["teacher_code", "created_at"]
         constraints = [
             models.UniqueConstraint(fields=["tenant", "user"], name="education_teacher_tenant_user_uniq"),

@@ -89,8 +89,8 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
   },
   {
     key: "submission",
-    labelPt: "Submissões",
-    labelEn: "Submissions",
+    labelPt: "Submissões de Trabalho",
+    labelEn: "Assignment Submissions",
     descriptionPt: "Submissões de estudantes com estado e avaliação.",
     descriptionEn: "Student submissions with status and grading data.",
   },
@@ -103,7 +103,7 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
   },
   {
     key: "content",
-    labelPt: "Conteúdos",
+    labelPt: "Conteúdos de Aprendizagem",
     labelEn: "Learning Content",
     descriptionPt: "Publicação de conteúdos.",
     descriptionEn: "Learning content publishing.",
@@ -138,9 +138,9 @@ export const EDUCATION_RESOURCE_DESCRIPTORS: EducationResourceDescriptor[] = [
   },
   {
     key: "skill",
-    labelPt: "Skills",
+    labelPt: "Competências",
     labelEn: "Skills",
-    descriptionPt: "Catálogo de skills por curso.",
+    descriptionPt: "Catálogo de competências por curso.",
     descriptionEn: "Course skills catalog.",
   },
 ]

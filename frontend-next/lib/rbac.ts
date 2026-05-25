@@ -68,6 +68,7 @@ export type WorkspaceKey =
   | "education-student"
   | "medicine"
   | "pharmacy"
+  | "erp-wms"
   | "occupational-medicine"
   | "accounting"
   | "resources-human-resources"
@@ -181,6 +182,13 @@ export const WORKSPACES: WorkspaceDef[] = [
     href: "/pharmacy",
     description: "Stock, lots, and warehouse movements.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
+  },
+  {
+    key: "erp-wms",
+    label: "ERP & WMS",
+    href: "/warehouse",
+    description: "Enterprise planning, warehouses, purchases, reservations, picking, shipping, and cycle counts.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS],
   },
   {
     key: "occupational-medicine",

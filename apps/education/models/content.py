@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -45,8 +46,8 @@ class LearningContent(NoNameCoreModel):
 
     class Meta:
         db_table = "education_learning_content"
-        verbose_name = "Learning content"
-        verbose_name_plural = "Learning contents"
+        verbose_name = education_label("Conteúdo de Aprendizagem", "Learning content")
+        verbose_name_plural = education_label("Conteúdos de Aprendizagem", "Learning contents")
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["tenant", "content_type"]),

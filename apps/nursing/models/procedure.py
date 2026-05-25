@@ -169,67 +169,84 @@ class Procedure(NoNameCoreModel):
         if not self.pk:
             return
 
-        items = list(self.itens.filter(deleted=False))
-        if not items:
-            workflow_status = self.WorkflowStatus.REQUESTED
-            billing_status = self.BillingStatus.PENDING
-            billed_at = None
-            executed_at = None
-            completed_at = None
-        else:
-            billed_count = sum(1 for item in items if item.billed)
-            if billed_count == 0:
+        # P0.4: CRÍTICO - Transação atômica com lock pessimista para evitar race conditions
+        from django.db import transaction
+
+        with transaction.atomic():
+            # Lock pessimista: garante que nenhuma outra thread modifica a Procedure enquanto sincronizamos
+            locked_procedure = (
+                self.__class__.all_objects
+                .select_for_update()
+                .get(pk=self.pk)
+            )
+
+            # Busca items com lock também para evitar leitura suja
+            items = list(
+                locked_procedure.itens
+                .select_for_update()
+                .filter(deleted=False)
+            )
+
+            if not items:
+                workflow_status = self.WorkflowStatus.REQUESTED
                 billing_status = self.BillingStatus.PENDING
                 billed_at = None
-            elif billed_count == len(items):
-                billing_status = self.BillingStatus.BILLED
-                billed_dates = [item.billed_at for item in items if item.billed_at]
-                billed_at = max(billed_dates) if billed_dates else timezone.now()
+                executed_at = None
+                completed_at = None
             else:
-                billing_status = self.BillingStatus.PARTIAL
-                billed_dates = [item.billed_at for item in items if item.billed_at]
-                billed_at = max(billed_dates) if billed_dates else None
+                billed_count = sum(1 for item in items if item.billed)
+                if billed_count == 0:
+                    billing_status = self.BillingStatus.PENDING
+                    billed_at = None
+                elif billed_count == len(items):
+                    billing_status = self.BillingStatus.BILLED
+                    billed_dates = [item.billed_at for item in items if item.billed_at]
+                    billed_at = max(billed_dates) if billed_dates else timezone.now()
+                else:
+                    billing_status = self.BillingStatus.PARTIAL
+                    billed_dates = [item.billed_at for item in items if item.billed_at]
+                    billed_at = max(billed_dates) if billed_dates else None
 
-            statuses = {item.execution_status for item in items}
-            execution_status = items[0].ExecutionStatus
-            if statuses == {execution_status.PENDING}:
-                workflow_status = (
-                    self.WorkflowStatus.BILLED if billing_status == self.BillingStatus.BILLED else self.WorkflowStatus.REQUESTED
-                )
-            elif statuses == {execution_status.EXECUTED}:
-                workflow_status = self.WorkflowStatus.EXECUTED
-            elif statuses == {execution_status.COMPLETED}:
-                workflow_status = self.WorkflowStatus.COMPLETED
-            elif statuses == {execution_status.NOT_COMPLETED}:
-                workflow_status = self.WorkflowStatus.NOT_COMPLETED
-            else:
-                workflow_status = self.WorkflowStatus.PARTIAL
+                statuses = {item.execution_status for item in items}
+                execution_status = items[0].ExecutionStatus
+                if statuses == {execution_status.PENDING}:
+                    workflow_status = (
+                        self.WorkflowStatus.BILLED if billing_status == self.BillingStatus.BILLED else self.WorkflowStatus.REQUESTED
+                    )
+                elif statuses == {execution_status.EXECUTED}:
+                    workflow_status = self.WorkflowStatus.EXECUTED
+                elif statuses == {execution_status.COMPLETED}:
+                    workflow_status = self.WorkflowStatus.COMPLETED
+                elif statuses == {execution_status.NOT_COMPLETED}:
+                    workflow_status = self.WorkflowStatus.NOT_COMPLETED
+                else:
+                    workflow_status = self.WorkflowStatus.PARTIAL
 
-            executed_dates = [
-                dt
-                for dt in [item.executed_at for item in items]
-                if dt is not None
-            ]
-            completed_dates = [
-                dt
-                for dt in [item.completed_at for item in items]
-                if dt is not None
-            ]
-            executed_at = max(executed_dates) if executed_dates else None
-            completed_at = max(completed_dates) if completed_dates else None
+                executed_dates = [
+                    dt
+                    for dt in [item.executed_at for item in items]
+                    if dt is not None
+                ]
+                completed_dates = [
+                    dt
+                    for dt in [item.completed_at for item in items]
+                    if dt is not None
+                ]
+                executed_at = max(executed_dates) if executed_dates else None
+                completed_at = max(completed_dates) if completed_dates else None
 
-        self.__class__.all_objects.filter(pk=self.pk).update(
-            workflow_status=workflow_status,
-            billing_status=billing_status,
-            billed_at=billed_at,
-            executed_at=executed_at,
-            completed_at=completed_at,
-        )
-        self.workflow_status = workflow_status
-        self.billing_status = billing_status
-        self.billed_at = billed_at
-        self.executed_at = executed_at
-        self.completed_at = completed_at
+            self.__class__.all_objects.filter(pk=self.pk).update(
+                workflow_status=workflow_status,
+                billing_status=billing_status,
+                billed_at=billed_at,
+                executed_at=executed_at,
+                completed_at=completed_at,
+            )
+            self.workflow_status = workflow_status
+            self.billing_status = billing_status
+            self.billed_at = billed_at
+            self.executed_at = executed_at
+            self.completed_at = completed_at
 
     def __str__(self):
         return f"{self.custom_id} - {self.patient.name}"

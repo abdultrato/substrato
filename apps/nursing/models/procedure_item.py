@@ -124,6 +124,25 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
         if self.procedure_id and self.catalog_id and self.procedure.tenant_id != self.catalog.tenant_id:
             raise ValidationError({"catalog": "Catálogo e procedure devem pertencer ao mesmo tenant."})
 
+        # P1.4: Validação cruzada - patient.tenant == item.tenant
+        if self.procedure_id and self.procedure.patient_id:
+            if self.tenant_id != self.procedure.patient.tenant_id:
+                raise ValidationError(
+                    {"tenant": "Item deve pertencer ao mesmo tenant do paciente."}
+                )
+
+        # P1.2: Validar timing - executed_at < billed_at
+        if self.executed_at and self.billed_at and self.billed_at < self.executed_at:
+            raise ValidationError(
+                {"billed_at": "Data de faturamento não pode ser anterior à data de execução."}
+            )
+
+        # P1.2: Validar que completed_at >= executed_at
+        if self.executed_at and self.completed_at and self.completed_at < self.executed_at:
+            raise ValidationError(
+                {"completed_at": "Data de conclusão não pode ser anterior à data de execução."}
+            )
+
         if self.pk:
             original = self.__class__.all_objects.get(pk=self.pk)
 
@@ -132,6 +151,17 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
 
             if original.procedure_id != self.procedure_id:
                 raise ValidationError({"procedure": "Procedimento do item não pode ser alterado."})
+
+            # P0.1: CRÍTICO - Proteger alterações após faturamento
+            if original.billed:
+                if original.quantity != self.quantity:
+                    raise ValidationError(
+                        {"quantity": "Item já faturado é imutável. Estorno requerido para alterações."}
+                    )
+                if original.unit_price != self.unit_price:
+                    raise ValidationError(
+                        {"unit_price": "Item já faturado é imutável. Estorno requerido para alterações."}
+                    )
 
             if original.quantity != self.quantity and self.materiais_gerados.exists():
                 raise ValidationError(
@@ -299,9 +329,15 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
 
     @transaction.atomic
     def mark_billed(self):
-        if self.execution_status == self.ExecutionStatus.NOT_COMPLETED and not self.billed:
+        # P0.2: CRÍTICO - Corrigir lógica: NOT_COMPLETED nunca pode ser faturado
+        if self.execution_status == self.ExecutionStatus.NOT_COMPLETED:
             raise ValidationError(
-                {"billed": "Procedimento não concluído e ainda não faturado não pode mais ser faturado."}
+                {"billed": "Procedimento não-concluído não pode ser faturado. Apenas itens EXECUTADOS ou CONCLUÍDOS podem ser faturados."}
+            )
+
+        if self.execution_status == self.ExecutionStatus.PENDING:
+            raise ValidationError(
+                {"billed": "Procedimento ainda não foi executado. Marque como executado antes de faturar."}
             )
 
         if self.billed:

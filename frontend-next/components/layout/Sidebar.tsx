@@ -89,6 +89,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/surgery", label: "Cirurgia", labelEn: "Surgery", icon: Scissors, desc: "Procedimentos cirúrgicos", descEn: "Surgical procedures", groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/occupational-medicine", label: "Med. Ocupacional", labelEn: "Occupational med.", icon: BriefcaseIcon, desc: "Saúde no trabalho", descEn: "Workplace health", groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/pharmacy", label: "Farmácia", labelEn: "Pharmacy", icon: Pill, desc: "Dispensação e estoque", descEn: "Dispensing and stock", groups: [GROUPS.ADMIN, GROUPS.FARMACIA] },
+    { href: "/warehouse", label: "ERP e WMS", labelEn: "ERP & WMS", icon: PackageSearch, desc: "Compras, reservas, separação e expedição", descEn: "Purchasing, reservations, picking and shipping", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS] },
     { href: "/pharmacy/material-requests", label: "Req. Materiais", labelEn: "Material req.", icon: PackageSearch, desc: "Solicitar e acompanhar avio de materiais", descEn: "Request and track material dispatch", groups: ALL_GROUPS },
     { href: "/payments", label: "Pagamentos", labelEn: "Payments", icon: CreditCard, desc: "Recebimentos", descEn: "Collections", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
     { href: "/invoices", label: "Faturas", labelEn: "Invoices", icon: Receipt, desc: "Emissão e revisão", descEn: "Issuance and review", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
@@ -155,6 +156,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             "/laboratory",
             "/invoices",
             "/pharmacy",
+            "/warehouse",
         ]
             .filter((href) => allowed.has(href))
             .slice(0, PRIORITY_PREFETCH_LIMIT)

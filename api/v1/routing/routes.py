@@ -23,6 +23,7 @@ from api.v1.pharmacy.viewsets import VIEWSET_MAP as PHARMACY_VIEWSET_MAP
 from api.v1.reception.viewsets import VIEWSET_MAP as RECEPTION_VIEWSET_MAP
 from api.v1.surgery.viewsets import VIEWSET_MAP as SURGERY_VIEWSET_MAP
 from api.v1.tenants.viewsets import VIEWSET_MAP as TENANTS_VIEWSET_MAP
+from api.v1.warehouse.viewsets import VIEWSET_MAP as WAREHOUSE_VIEWSET_MAP
 from security.permissions.rbac import RBACPermission
 
 VIEWSET_GROUPS = {
@@ -36,6 +37,7 @@ VIEWSET_GROUPS = {
     "equipment_integrations": EQUIPMENT_INTEGRATIONS_VIEWSET_MAP,
     "external_entities": EXTERNAL_ENTITIES_VIEWSET_MAP,
     "pharmacy": PHARMACY_VIEWSET_MAP,
+    "warehouse": WAREHOUSE_VIEWSET_MAP,
     "billing": BILLING_VIEWSET_MAP,
     "bloodbank": BLOODBANK_VIEWSET_MAP,
     "identity": IDENTITY_VIEWSET_MAP,

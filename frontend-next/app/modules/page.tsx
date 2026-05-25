@@ -7,6 +7,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { getModuleIcon } from "@/lib/moduleIcons"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ModulosPage() {
@@ -39,18 +40,28 @@ export default function ModulosPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {modules.map((m) => (
-            <Link
-              key={m.key}
-              href={`/modules/${m.key}`}
-              className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/40"
-            >
-              <div className="text-sm font-semibold text-foreground">{tr(m.label)}</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {t(`${m.resources.length} recursos`, `${m.resources.length} resources`)}
-              </div>
-            </Link>
-          ))}
+          {modules.map((m) => {
+            const ModuleIcon = getModuleIcon(m.key)
+            return (
+              <Link
+                key={m.key}
+                href={`/modules/${m.key}`}
+                className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/40"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl border border-border bg-background p-2 text-foreground">
+                    <ModuleIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-foreground">{tr(m.label)}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {t(`${m.resources.length} recursos`, `${m.resources.length} resources`)}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </AppLayout>

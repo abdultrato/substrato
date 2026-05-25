@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -72,8 +73,8 @@ class Examination(NoNameCoreModel):
 
     class Meta:
         db_table = "education_examination"
-        verbose_name = "Examination"
-        verbose_name_plural = "Examinations"
+        verbose_name = education_label("Exame", "Examination")
+        verbose_name_plural = education_label("Exames", "Examinations")
         ordering = ["-opens_at", "-scheduled_for", "-created_at"]
         indexes = [
             models.Index(fields=["tenant", "scheduled_for"]),

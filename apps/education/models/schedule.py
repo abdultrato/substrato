@@ -5,6 +5,7 @@ from django.db import models
 from django.utils import timezone
 
 from apps.education.models.attendance import AttendanceRecord
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -79,8 +80,8 @@ class DisciplineScheduleItem(NoNameCoreModel):
 
     class Meta:
         db_table = "education_discipline_schedule_item"
-        verbose_name = "Discipline schedule item"
-        verbose_name_plural = "Discipline schedule items"
+        verbose_name = education_label("Item do Cronograma da Disciplina", "Discipline schedule item")
+        verbose_name_plural = education_label("Itens do Cronograma da Disciplina", "Discipline schedule items")
         ordering = ["scheduled_date", "item_type", "created_at"]
         constraints = [
             models.UniqueConstraint(
@@ -175,8 +176,8 @@ class DisciplineScheduleStudentStatus(NoNameCoreModel):
 
     class Meta:
         db_table = "education_discipline_schedule_student_status"
-        verbose_name = "Discipline schedule student status"
-        verbose_name_plural = "Discipline schedule student statuses"
+        verbose_name = education_label("Estado do Estudante no Cronograma", "Discipline schedule student status")
+        verbose_name_plural = education_label("Estados dos Estudantes no Cronograma", "Discipline schedule student statuses")
         ordering = ["schedule_item__scheduled_date", "enrollment_id", "created_at"]
         constraints = [
             models.UniqueConstraint(

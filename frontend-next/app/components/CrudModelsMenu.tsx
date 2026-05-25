@@ -2,8 +2,26 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  Bot,
+  BrainCircuit,
+  ClipboardCheck,
+  FileText,
+  Lightbulb,
+  Package,
+  Search,
+  ShieldCheck,
+  TerminalSquare,
+  type LucideIcon,
+} from "lucide-react";
 
-const MODULES = {
+type CrudMenuItem = {
+  nome: string;
+  href: string;
+  icon?: LucideIcon;
+};
+
+const MODULES: Record<string, CrudMenuItem[]> = {
   "accounting": [
     { nome: "Account", href: "/accounting/accounts" },
     { nome: "AccountBalance", href: "/accounting/account-balances" },
@@ -14,14 +32,14 @@ const MODULES = {
     { nome: "LegacyMovement", href: "/accounting/legacy-movements" },
   ],
   "ai_assistant": [
-    { nome: "AiSession", href: "/ai_assistant/ai-sessions" },
-    { nome: "AiMessage", href: "/ai_assistant/ai-messages" },
-    { nome: "AiToolCall", href: "/ai_assistant/ai-tool-calls" },
-    { nome: "AiSuggestedAction", href: "/ai_assistant/ai-suggested-actions" },
-    { nome: "AiOperationalTask", href: "/ai_assistant/ai-operational-tasks" },
-    { nome: "AiInvestigation", href: "/ai_assistant/ai-investigations" },
-    { nome: "AiKnowledgeEntry", href: "/ai_assistant/ai-knowledge-entries" },
-    { nome: "AiPolicyEvent", href: "/ai_assistant/ai-policy-events" },
+    { nome: "Sessões da IA", href: "/ai_assistant/ai-sessions", icon: Bot },
+    { nome: "Mensagens da IA", href: "/ai_assistant/ai-messages", icon: FileText },
+    { nome: "Chamadas de Ferramenta", href: "/ai_assistant/ai-tool-calls", icon: TerminalSquare },
+    { nome: "Acções Sugeridas", href: "/ai_assistant/ai-suggested-actions", icon: Lightbulb },
+    { nome: "Tarefas Operacionais", href: "/ai_assistant/ai-operational-tasks", icon: ClipboardCheck },
+    { nome: "Investigações da IA", href: "/ai_assistant/ai-investigations", icon: Search },
+    { nome: "Base de Conhecimento", href: "/ai_assistant/ai-knowledge-entries", icon: BrainCircuit },
+    { nome: "Eventos de Política", href: "/ai_assistant/ai-policy-events", icon: ShieldCheck },
   ],
   "audit_activities": [
     { nome: "UserActivity", href: "/audit_activities/user-activities" },
@@ -61,22 +79,22 @@ const MODULES = {
     { nome: "MedicalConsultation", href: "/consultations/medical-consultations" },
   ],
   "education": [
-    { nome: "Assignment", href: "/education/assignments" },
-    { nome: "AssignmentSubmission", href: "/education/assignment-submissions" },
-    { nome: "AttendanceRecord", href: "/education/attendance-records" },
-    { nome: "Classroom", href: "/education/classrooms" },
-    { nome: "LearningContent", href: "/education/learning-contents" },
-    { nome: "Course", href: "/education/courses" },
-    { nome: "Enrollment", href: "/education/enrollments" },
-    { nome: "Examination", href: "/education/examinations" },
-    { nome: "ExaminationAttempt", href: "/education/examination-attempts" },
-    { nome: "GradeRecord", href: "/education/grade-records" },
-    { nome: "RandomTest", href: "/education/random-tests" },
-    { nome: "DisciplineScheduleItem", href: "/education/discipline-schedule-items" },
-    { nome: "DisciplineScheduleStudentStatus", href: "/education/discipline-schedule-student-statuses" },
-    { nome: "Skill", href: "/education/skills" },
-    { nome: "StudentProfile", href: "/education/student-profiles" },
-    { nome: "TeacherProfile", href: "/education/teacher-profiles" },
+    { nome: "Trabalho", href: "/education/assignments" },
+    { nome: "Submissão de Trabalho", href: "/education/assignment-submissions" },
+    { nome: "Presença", href: "/education/attendance-records" },
+    { nome: "Turma", href: "/education/classrooms" },
+    { nome: "Conteúdo de Aprendizagem", href: "/education/learning-contents" },
+    { nome: "Curso", href: "/education/courses" },
+    { nome: "Matrícula", href: "/education/enrollments" },
+    { nome: "Exame", href: "/education/examinations" },
+    { nome: "Tentativa de Exame", href: "/education/examination-attempts" },
+    { nome: "Nota", href: "/education/grade-records" },
+    { nome: "Teste Aleatório", href: "/education/random-tests" },
+    { nome: "Item do Cronograma da Disciplina", href: "/education/discipline-schedule-items" },
+    { nome: "Estado do Estudante no Cronograma", href: "/education/discipline-schedule-student-statuses" },
+    { nome: "Competência", href: "/education/skills" },
+    { nome: "Estudante", href: "/education/student-profiles" },
+    { nome: "Professor", href: "/education/teacher-profiles" },
   ],
   "equipment": [
     { nome: "Equipment", href: "/equipment/equipments" },
@@ -177,6 +195,23 @@ const MODULES = {
     { nome: "Sale", href: "/pharmacy/sales" },
     { nome: "SaleItem", href: "/pharmacy/sale-items" },
   ],
+  "warehouse": [
+    { nome: "Armazém", href: "/warehouse/warehouses" },
+    { nome: "Localização de Armazém", href: "/warehouse/storage-locations" },
+    { nome: "Categoria de Item", href: "/warehouse/item-categories" },
+    { nome: "Item de Estoque", href: "/warehouse/items" },
+    { nome: "Lote WMS", href: "/warehouse/lots" },
+    { nome: "Saldo de Estoque", href: "/warehouse/stock-levels" },
+    { nome: "Movimento WMS", href: "/warehouse/stock-movements" },
+    { nome: "Pedido de Compra", href: "/warehouse/purchase-orders" },
+    { nome: "Linha de Compra", href: "/warehouse/purchase-order-lines" },
+    { nome: "Recebimento", href: "/warehouse/goods-receipts" },
+    { nome: "Linha de Recebimento", href: "/warehouse/goods-receipt-lines" },
+    { nome: "Transferência", href: "/warehouse/stock-transfers" },
+    { nome: "Linha de Transferência", href: "/warehouse/stock-transfer-lines" },
+    { nome: "Inventário Cíclico", href: "/warehouse/cycle-counts" },
+    { nome: "Linha de Inventário", href: "/warehouse/cycle-count-lines" },
+  ],
   "reception": [
     { nome: "ReceptionCheckin", href: "/reception/reception-checkins" },
   ],
@@ -196,35 +231,47 @@ const MODULES = {
   ],
 };
 
+const MODULE_ICONS: Record<string, LucideIcon> = {
+  ai_assistant: Bot,
+};
+
 export default function CrudSidebar() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   return (
     <div className="w-64 bg-gray-900 text-white p-4 overflow-y-auto">
       <h2 className="text-lg font-bold mb-4">Modelos</h2>
-      {Object.entries(MODULES).map(([module, items]) => (
-        <div key={module} className="mb-4">
-          <button
-            onClick={() => setExpanded(p => ({ ...p, [module]: !p[module] }))}
-            className="w-full text-left font-semibold text-sm py-2 hover:bg-gray-800 px-2 rounded"
-          >
-            📦 {module.charAt(0).toUpperCase() + module.slice(1)}
-          </button>
-          {expanded[module] && (
-            <div className="ml-4 space-y-1">
-              {items.map((item: any) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block text-sm py-1 hover:text-blue-400 text-gray-300"
-                >
-                  • {item.nome}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      {Object.entries(MODULES).map(([module, items]) => {
+        const ModuleIcon = MODULE_ICONS[module] || Package;
+        return (
+          <div key={module} className="mb-4">
+            <button
+              onClick={() => setExpanded(p => ({ ...p, [module]: !p[module] }))}
+              className="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm font-semibold hover:bg-gray-800"
+            >
+              <ModuleIcon size={16} />
+              <span>{module.charAt(0).toUpperCase() + module.slice(1)}</span>
+            </button>
+            {expanded[module] && (
+              <div className="ml-4 space-y-1">
+                {items.map((item) => {
+                  const ItemIcon = item.icon || Package;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="flex items-center gap-2 py-1 text-sm text-gray-300 hover:text-blue-400"
+                    >
+                      <ItemIcon size={14} />
+                      <span>{item.nome}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

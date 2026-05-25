@@ -24,6 +24,8 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
       return [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS]
     case "pharmacy":
       return [GROUPS.ADMIN, GROUPS.FARMACIA]
+    case "warehouse":
+      return [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS]
     case "bloodbank":
       return [GROUPS.ADMIN, GROUPS.LABORATORIO]
     case "accounting":

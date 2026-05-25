@@ -8,6 +8,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { getModuleIcon, getResourceIcon } from "@/lib/moduleIcons"
 import { GROUPS } from "@/lib/rbac"
 
 const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
@@ -32,6 +33,7 @@ const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
   surgery: "Surgery",
   human_resources: "Human resources",
   monitoring: "Monitoring",
+  ai_assistant: "Operational AI",
   audit: "Audit",
   dashboard: "Dashboard",
 }
@@ -67,6 +69,7 @@ export default function RecursosPage() {
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {modules.map((m) => {
+            const ModuleIcon = getModuleIcon(m.key)
             const previewResources = m.resources.slice(0, 8)
             const hiddenResources = Math.max(0, m.resources.length - previewResources.length)
 
@@ -76,13 +79,20 @@ export default function RecursosPage() {
                 href={`/resources/${m.key}`}
                 className="group relative rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
               >
-                <div className="text-sm font-semibold text-[var(--text)]">
-                  {isPortuguese ? m.label : (MODULE_LABEL_EN_BY_KEY[m.key] || tr(m.label))}
-                </div>
-                <div className="mt-1 text-xs text-[var(--gray-500)]">
-                  {isPortuguese
-                    ? `${m.resources.length} ${m.resources.length === 1 ? "recurso" : "recursos"}`
-                    : `${m.resources.length} ${m.resources.length === 1 ? "resource" : "resources"}`}
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-50)] p-2 text-[var(--primary-700)] transition group-hover:border-[var(--primary-300)] group-hover:bg-[var(--primary-50)]">
+                    <ModuleIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[var(--text)]">
+                      {isPortuguese ? m.label : (MODULE_LABEL_EN_BY_KEY[m.key] || tr(m.label))}
+                    </div>
+                    <div className="mt-1 text-xs text-[var(--gray-500)]">
+                      {isPortuguese
+                        ? `${m.resources.length} ${m.resources.length === 1 ? "recurso" : "recursos"}`
+                        : `${m.resources.length} ${m.resources.length === 1 ? "resource" : "resources"}`}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pointer-events-none absolute inset-x-0 top-full z-30 pt-2 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -107,15 +117,19 @@ export default function RecursosPage() {
 
                     <ul className="mt-3 grid max-h-44 gap-1.5 overflow-auto pr-1">
                       {previewResources.length ? (
-                        previewResources.map((resource) => (
-                          <li
-                            key={`${m.key}-${resource.key}`}
-                            className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--gray-50)] px-2 py-1.5 text-xs text-[var(--gray-700)]"
-                          >
-                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--primary-600)]" />
-                            <span className="truncate">{tr(resource.label)}</span>
-                          </li>
-                        ))
+                        previewResources.map((resource) => {
+                          const ResourceIcon = getResourceIcon(m.key, resource.key)
+                          return (
+                            <li
+                              key={`${m.key}-${resource.key}`}
+                              className="flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--gray-50)] px-2 py-1.5 text-xs text-[var(--gray-700)]"
+                            >
+                              <ResourceIcon className="h-3.5 w-3.5 shrink-0 text-[var(--primary-600)]" />
+                              <span className="truncate">{tr(resource.label)}</span>
+                              <ChevronRight className="ml-auto h-3 w-3 shrink-0 text-[var(--gray-400)]" />
+                            </li>
+                          )
+                        })
                       ) : (
                         <li className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--gray-50)] px-2 py-2 text-xs text-[var(--gray-500)]">
                           {t("Sem submódulos disponíveis.", "No submodules available.")}

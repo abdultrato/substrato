@@ -8,6 +8,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { getResourceIcon } from "@/lib/moduleIcons"
 import { findModuleGroup } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
@@ -53,16 +54,26 @@ export default function ModuloGrupoPage() {
         />
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {moduleGroup.resources.map((r) => (
-            <Link
-              key={r.key}
-              href={`/modules/${moduleGroup.key}/${r.key}`}
-              className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
-            >
-              <div className="text-sm font-semibold text-gray-900">{tr(r.label)}</div>
-              <div className="mt-1 text-xs text-gray-500">{t("Abrir lista", "Open list")}</div>
-            </Link>
-          ))}
+          {moduleGroup.resources.map((r) => {
+            const ResourceIcon = getResourceIcon(moduleGroup.key, r.key)
+            return (
+              <Link
+                key={r.key}
+                href={`/modules/${moduleGroup.key}/${r.key}`}
+                className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-2 text-gray-800">
+                    <ResourceIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gray-900">{tr(r.label)}</div>
+                    <div className="mt-1 text-xs text-gray-500">{t("Abrir lista", "Open list")}</div>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
 
         <div className="pt-2">

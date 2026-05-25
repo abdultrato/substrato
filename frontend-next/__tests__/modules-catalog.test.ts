@@ -75,6 +75,16 @@ describe("modules catalog discovery", () => {
     expect(maintenance?.resource.adminListHref).toBe("/admin/bloodbank/bloodstoragemaintenance/")
   })
 
+  it("keeps operational AI labels and admin shortcuts available", () => {
+    const session = findModuleResource("ai_assistant", "ai_session", MODULES)
+    const task = findModuleResource("ia_operacional", "ai_operational_task", MODULES)
+
+    expect(session?.group.label).toBe("IA Operacional")
+    expect(session?.resource.label).toBe("Sessões da IA")
+    expect(session?.resource.adminListHref).toBe("/admin/ai_assistant/aisession/")
+    expect(task?.resource.adminListHref).toBe("/admin/ai_assistant/aioperationaltask/")
+  })
+
   it("infers bloodbank admin path when route comes from backend discovery", () => {
     const discovered = discoverModulesFromApiRoot({
       "bloodbank/transfusao": "/api/v1/bloodbank/transfusao/",

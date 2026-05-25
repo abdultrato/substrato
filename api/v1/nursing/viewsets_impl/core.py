@@ -316,6 +316,32 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
             raise serializers.ValidationError(exc.messages) from exc
         raise serializers.ValidationError(str(exc)) from exc
 
+    def update(self, request, *args, **kwargs):
+        """
+        P1.3: CRÍTICO - Prevenir modificações diretas via PATCH/PUT em campos críticos.
+        Use endpoints específicos para transições de estado (executar, concluir, etc).
+        """
+        instance = self.get_object()
+
+        # Campos que NÃO podem ser modificados via PATCH/PUT direto
+        protected_fields = {
+            'execution_status': 'Use /executar, /concluir, ou /nao_concluir',
+            'billed': 'Use /marcar_faturado',
+            'billed_at': 'Campo read-only, definido automaticamente',
+            'executed_at': 'Campo read-only, definido automaticamente',
+            'completed_at': 'Campo read-only, definido automaticamente',
+        }
+
+        # Verificar se algum campo protegido está sendo modificado
+        for field, reason in protected_fields.items():
+            if field in request.data:
+                raise serializers.ValidationError(
+                    {field: f"Campo não pode ser modificado diretamente. {reason}"}
+                )
+
+        # Aplicar update normal para campos permitidos
+        return super().update(request, *args, **kwargs)
+
     @action(detail=True, methods=["post"], url_path="executar", url_name="executar")
     def execute(self, request, pk=None):
         item = self.get_object()

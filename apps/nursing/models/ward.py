@@ -226,6 +226,29 @@ class WardAdmission(NoNameCoreModel):
         if self.discharged_at and self.admission_date and self.discharged_at < self.admission_date:
             raise ValidationError({"discharged_at": "Data de alta não pode ser anterior ao internamento."})
 
+        # P0.3: CRÍTICO - Validar alta com procedures pendentes
+        if self.discharged_at and self.patient_id:
+            from apps.nursing.models import Procedure
+
+            pending_procedures = self.patient.procedures_enfermagem.filter(
+                deleted=False,
+                workflow_status__in=[
+                    Procedure.WorkflowStatus.REQUESTED,
+                    Procedure.WorkflowStatus.EXECUTED,
+                    Procedure.WorkflowStatus.PARTIAL,
+                ]
+            )
+
+            if pending_procedures.exists():
+                proc_ids = ", ".join(
+                    str(p.custom_id or p.pk) for p in pending_procedures[:5]
+                )
+                raise ValidationError(
+                    {"discharged_at":
+                     f"Paciente possui {pending_procedures.count()} procedimento(s) de enfermagem não concluído(s): {proc_ids}. "
+                     f"Conclua ou cancele antes de dar alta."}
+                )
+
         if self.active and self.bed_id:
             qs = self.__class__.all_objects.filter(
                 bed_id=self.bed_id,

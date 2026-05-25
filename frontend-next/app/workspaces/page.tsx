@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { GraduationCap, School, Stethoscope, Users } from "lucide-react"
+import { GraduationCap, PackageSearch, School, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -18,6 +18,7 @@ export default function WorkspacesPage() {
   const showTeacherArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.PROFESSOR])
   const showDirectoriaArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.DIRETOR_ESCOLA, GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO])
   const showStudentArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.STUDENT, GROUPS.ENCARREGADO_EDUCACAO])
+  const showErpWmsArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS])
 
   return (
     <AppLayout>
@@ -84,6 +85,30 @@ export default function WorkspacesPage() {
               </div>
             </div>
           </Link>
+
+          {showErpWmsArea ? (
+            <Link
+              href="/warehouse"
+              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                  <PackageSearch size={20} />
+                </div>
+                <div className="space-y-1">
+                  <div className="font-display text-lg font-semibold text-foreground">
+                    Substrato ERP e WMS
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Compras, reservas, separação, expedição, saldos e inventários com lógica empresarial.",
+                      "Purchasing, reservations, picking, shipping, stock balances, and enterprise inventory."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ) : null}
 
           {showTeacherArea ? (
             <Link

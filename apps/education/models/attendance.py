@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -27,8 +28,8 @@ class AttendanceRecord(NoNameCoreModel):
 
     class Meta:
         db_table = "education_attendance_record"
-        verbose_name = "Attendance"
-        verbose_name_plural = "Attendance"
+        verbose_name = education_label("Presença", "Attendance")
+        verbose_name_plural = education_label("Presenças", "Attendance")
         ordering = ["-attendance_date", "-created_at"]
         constraints = [
             models.UniqueConstraint(

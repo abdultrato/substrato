@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -66,8 +67,8 @@ class Assignment(NoNameCoreModel):
 
     class Meta:
         db_table = "education_assignment"
-        verbose_name = "Assignment"
-        verbose_name_plural = "Assignments"
+        verbose_name = education_label("Trabalho", "Assignment")
+        verbose_name_plural = education_label("Trabalhos", "Assignments")
         ordering = ["due_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(
@@ -173,8 +174,8 @@ class AssignmentSubmission(NoNameCoreModel):
 
     class Meta:
         db_table = "education_assignment_submission"
-        verbose_name = "Assignment submission"
-        verbose_name_plural = "Assignment submissions"
+        verbose_name = education_label("Submissão de Trabalho", "Assignment submission")
+        verbose_name_plural = education_label("Submissões de Trabalho", "Assignment submissions")
         ordering = ["-submitted_at", "-created_at"]
         constraints = [
             models.UniqueConstraint(

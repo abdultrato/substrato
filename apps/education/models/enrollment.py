@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.education.i18n import education_label
 from core.models.base import NoNameCoreModel
 
 
@@ -40,8 +41,8 @@ class Enrollment(NoNameCoreModel):
 
     class Meta:
         db_table = "education_enrollment"
-        verbose_name = "Enrollment"
-        verbose_name_plural = "Enrollments"
+        verbose_name = education_label("Matrícula", "Enrollment")
+        verbose_name_plural = education_label("Matrículas", "Enrollments")
         ordering = ["-enrolled_on", "-created_at"]
         constraints = [
             models.UniqueConstraint(

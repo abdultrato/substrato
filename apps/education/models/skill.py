@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import CoreModel
 
 
@@ -53,8 +54,8 @@ class Skill(CoreModel):
 
     class Meta:
         db_table = "education_skill"
-        verbose_name = "Skill"
-        verbose_name_plural = "Skills"
+        verbose_name = education_label("Competência", "Skill")
+        verbose_name_plural = education_label("Competências", "Skills")
         ordering = ["name", "created_at"]
         constraints = [
             models.UniqueConstraint(fields=["tenant", "course", "code"], name="education_skill_tenant_course_code_uniq"),
@@ -76,4 +77,3 @@ class Skill(CoreModel):
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"
-

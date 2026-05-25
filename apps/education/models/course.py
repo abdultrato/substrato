@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.education.i18n import education_label
 from core.models.base import CoreModel
 
 
@@ -26,8 +27,8 @@ class Course(CoreModel):
 
     class Meta:
         db_table = "education_course"
-        verbose_name = "Course"
-        verbose_name_plural = "Courses"
+        verbose_name = education_label("Curso", "Course")
+        verbose_name_plural = education_label("Cursos", "Courses")
         ordering = ["name", "created_at"]
         constraints = [
             models.UniqueConstraint(fields=["tenant", "code"], name="education_course_tenant_code_uniq"),
