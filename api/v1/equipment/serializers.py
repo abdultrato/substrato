@@ -57,6 +57,10 @@ EQUIPMENT_ALIASES = {
     "estado_actual_label": "current_status_label",
     "ultima_inspecao": "last_inspection",
     "última_inspeção": "last_inspection",
+    "requer_manutencao": "requires_maintenance",
+    "requer_manutenção": "requires_maintenance",
+    "manutencao_requerida_desde": "maintenance_required_since",
+    "manutenção_requerida_desde": "maintenance_required_since",
 }
 
 INSPECTION_ALIASES = {
@@ -92,10 +96,17 @@ INSPECTION_ALIASES = {
 
 MAINTENANCE_ALIASES = {
     "id_custom": "custom_id",
+    "ocorrencia": "incident",
+    "ocorrência": "incident",
+    "pedido_manutencao": "incident",
+    "pedido_manutenção": "incident",
     "equipamento": "equipment",
     "tipo": "type",
     "recorrencia": "type",
     "recorrência": "type",
+    "tipo_manutencao": "maintenance_type",
+    "tipo_manutenção": "maintenance_type",
+    "natureza": "maintenance_type",
     "agendada_para": "scheduled_date",
     "programada_para": "scheduled_date",
     "data_programada": "scheduled_date",
@@ -126,6 +137,16 @@ INCIDENT_ALIASES = {
     "contacto_assistencia": "support_contact",
     "contacto_assistência": "support_contact",
     "suporte": "support_contact",
+    "acoes_pos_ocorrencia": "post_incident_actions",
+    "ações_pós_ocorrência": "post_incident_actions",
+    "acoes_apos_ocorrencia": "post_incident_actions",
+    "ações_após_ocorrência": "post_incident_actions",
+    "requer_manutencao": "requires_maintenance",
+    "requer_manutenção": "requires_maintenance",
+    "pedido_manutencao_em": "maintenance_requested_at",
+    "pedido_manutenção_em": "maintenance_requested_at",
+    "manutencao_concluida_em": "maintenance_completed_at",
+    "manutenção_concluída_em": "maintenance_completed_at",
     "resolvido": "resolved",
     "resolvida": "resolved",
 }
@@ -169,6 +190,8 @@ class EquipmentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
             "current_status",
             "current_status_label",
             "last_inspection",
+            "requires_maintenance",
+            "maintenance_required_since",
         ]
         extra_kwargs = {
             "name": {"required": True},
@@ -205,28 +228,123 @@ class MaintenanceSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     legacy_input_aliases = MAINTENANCE_ALIASES
     legacy_output_aliases = MAINTENANCE_ALIASES
     status = serializers.SerializerMethodField()
+    maintenance_type_display = serializers.CharField(source="get_maintenance_type_display", read_only=True)
+    equipment_name = serializers.SerializerMethodField()
+    incident_code = serializers.SerializerMethodField()
+    incident_context = serializers.SerializerMethodField()
 
     def get_status(self, obj: Maintenance) -> str:
         return "Executada" if obj.performed else "Programada"
 
+    def get_equipment_name(self, obj: Maintenance) -> str:
+        equipment = getattr(obj, "equipment", None)
+        return getattr(equipment, "name", "") or getattr(equipment, "serial_number", "") or ""
+
+    def get_incident_code(self, obj: Maintenance) -> str:
+        incident = getattr(obj, "incident", None)
+        return getattr(incident, "custom_id", "") or ""
+
+    def get_incident_context(self, obj: Maintenance):
+        incident = getattr(obj, "incident", None)
+        if not incident:
+            return None
+        return {
+            "id": incident.id,
+            "custom_id": incident.custom_id,
+            "date": incident.date,
+            "type": incident.type,
+            "description": incident.description,
+            "support_contact": incident.support_contact,
+            "post_incident_actions": incident.post_incident_actions,
+            "maintenance_status": incident.maintenance_status,
+        }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        incident = attrs.get("incident") or getattr(self.instance, "incident", None)
+        equipment = attrs.get("equipment") or getattr(self.instance, "equipment", None)
+
+        if incident and not equipment:
+            attrs["equipment"] = incident.equipment
+        elif incident and equipment and incident.equipment_id != equipment.id:
+            raise serializers.ValidationError(
+                {"incident": "A ocorrência deve pertencer ao equipamento da manutenção."}
+            )
+        elif not incident and not equipment:
+            raise serializers.ValidationError({"equipment": "Informe o equipamento da manutenção."})
+
+        return attrs
+
     class Meta:
         model = Maintenance
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "status"]
+        read_only_fields = [
+            *CORE_READ_ONLY_FIELDS,
+            "status",
+            "maintenance_type_display",
+            "equipment_name",
+            "incident_code",
+            "incident_context",
+        ]
+        extra_kwargs = {
+            "equipment": {"required": False},
+            "maintenance_type": {"required": True},
+        }
 
 
 class IncidentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = INCIDENT_ALIASES
     legacy_output_aliases = INCIDENT_ALIASES
     status = serializers.SerializerMethodField()  # Rótulo legível
+    equipment_name = serializers.SerializerMethodField()
+    equipment_serial_number = serializers.SerializerMethodField()
+    maintenance_status = serializers.SerializerMethodField()
+    maintenance_count = serializers.SerializerMethodField()
+    latest_maintenance = serializers.SerializerMethodField()
 
     def get_status(self, obj: Incident) -> str:
         return "Resolvida" if obj.resolved else "Pendente"
 
+    def get_equipment_name(self, obj: Incident) -> str:
+        equipment = getattr(obj, "equipment", None)
+        return getattr(equipment, "name", "") or getattr(equipment, "serial_number", "") or ""
+
+    def get_equipment_serial_number(self, obj: Incident) -> str:
+        equipment = getattr(obj, "equipment", None)
+        return getattr(equipment, "serial_number", "") or ""
+
+    def get_maintenance_status(self, obj: Incident) -> str:
+        return obj.maintenance_status
+
+    def get_maintenance_count(self, obj: Incident) -> int:
+        return obj.maintenances.count()
+
+    def get_latest_maintenance(self, obj: Incident):
+        maintenance = obj.maintenances.order_by("-performed_date", "-scheduled_date", "-created_at").first()
+        if not maintenance:
+            return None
+        return {
+            "id": maintenance.id,
+            "custom_id": maintenance.custom_id,
+            "maintenance_type": maintenance.maintenance_type,
+            "scheduled_date": maintenance.scheduled_date,
+            "performed_date": maintenance.performed_date,
+            "technician": maintenance.technician,
+            "description": maintenance.description,
+        }
+
     class Meta:
         model = Incident
         fields = "__all__"
-        read_only_fields = [*CORE_READ_ONLY_FIELDS, "status"]
+        read_only_fields = [
+            *CORE_READ_ONLY_FIELDS,
+            "status",
+            "equipment_name",
+            "equipment_serial_number",
+            "maintenance_status",
+            "maintenance_count",
+            "latest_maintenance",
+        ]
 
 
 SERIALIZER_MAP = {

@@ -44,6 +44,27 @@ const EDUCATION_INTERNAL_FIELDS = [
   "deleted_by",
 ]
 
+const EQUIPMENT_INTERNAL_FIELDS = [
+  "id",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+  "status",
+  "equipment_name",
+  "equipment_serial_number",
+  "incident_code",
+  "incident_context",
+  "maintenance_status",
+  "maintenance_count",
+  "latest_maintenance",
+]
+
 function normalizeEndpoint(endpoint: string): string {
   const p = String(endpoint || "").split("?")[0].split("#")[0]
   const withSlash = p.startsWith("/") ? p : `/${p}`
@@ -811,6 +832,107 @@ function bloodbankManutencaoConfig(): ResourceFormConfig {
   }
 }
 
+function equipmentMaintenanceConfig(): ResourceFormConfig {
+  return {
+    somenteLeituraCampos: ["tenant"],
+    esconderCampos: EQUIPMENT_INTERNAL_FIELDS,
+    ordenarCampos: [
+      "tenant",
+      "incident",
+      "equipment",
+      "maintenance_type",
+      "type",
+      "scheduled_date",
+      "performed_date",
+      "technician",
+      "description",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      incident: "Ocorrência de origem",
+      equipment: "Equipamento",
+      maintenance_type: "Tipo de manutenção",
+      type: "Recorrência/plano",
+      scheduled_date: "Data programada",
+      performed_date: "Data executada",
+      technician: "Técnico responsável",
+      description: "Trabalho realizado",
+    },
+    widgets: {
+      description: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Origem",
+        descricao: "Ocorrência e equipamento",
+        campos: ["tenant", "incident", "equipment"],
+      },
+      {
+        titulo: "Tipo",
+        descricao: "Natureza e planeamento",
+        campos: ["maintenance_type", "type", "scheduled_date", "performed_date"],
+      },
+      {
+        titulo: "Execução",
+        descricao: "Responsável e trabalho realizado",
+        campos: ["technician", "description"],
+      },
+    ],
+    lembrarCampos: ["technician"],
+  }
+}
+
+function equipmentIncidentConfig(): ResourceFormConfig {
+  return {
+    somenteLeituraCampos: ["tenant", "requires_maintenance", "maintenance_requested_at", "maintenance_completed_at"],
+    esconderCampos: EQUIPMENT_INTERNAL_FIELDS,
+    ordenarCampos: [
+      "tenant",
+      "equipment",
+      "date",
+      "type",
+      "description",
+      "support_contact",
+      "post_incident_actions",
+      "requires_maintenance",
+      "resolved",
+    ],
+    labels: {
+      tenant: "Inquilino (tenant)",
+      equipment: "Equipamento",
+      date: "Data/hora da ocorrência",
+      type: "Tipo de ocorrência",
+      description: "Descrição da ocorrência",
+      support_contact: "Contacto de assistência",
+      post_incident_actions: "Ações após ocorrência",
+      requires_maintenance: "Requer manutenção",
+      resolved: "Resolvida",
+    },
+    widgets: {
+      description: "textarea",
+      post_incident_actions: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Ocorrência",
+        descricao: "Equipamento, data e tipo",
+        campos: ["tenant", "equipment", "date", "type"],
+      },
+      {
+        titulo: "Detalhes",
+        descricao: "Contexto operacional",
+        campos: ["description", "support_contact", "post_incident_actions"],
+      },
+      {
+        titulo: "Estado",
+        descricao: "Seguimento da manutenção",
+        campos: ["requires_maintenance", "resolved"],
+      },
+    ],
+    lembrarCampos: ["equipment", "support_contact"],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -838,6 +960,28 @@ export function getResourceFormConfig(
     }
     if (r === "schedule_progress" || ep === "/education/schedule_progress/") {
       return educationScheduleProgressConfig()
+    }
+    return null
+  }
+
+  if (g === "equipment") {
+    if (
+      r === "manutencao" ||
+      r === "maintenance" ||
+      ep === "/maintenance/maintenances/" ||
+      ep === "/equipment/maintenance/" ||
+      ep === "/equipamentos/manutencao/"
+    ) {
+      return equipmentMaintenanceConfig()
+    }
+    if (
+      r === "ocorrencia" ||
+      r === "incident" ||
+      ep === "/incidents/incidents/" ||
+      ep === "/equipment/incident/" ||
+      ep === "/equipamentos/ocorrencia/"
+    ) {
+      return equipmentIncidentConfig()
     }
     return null
   }

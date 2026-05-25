@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
+from apps.incidents.models.incident import sync_equipment_maintenance_flag
 
 
 class Maintenance(TenantPropagationMixin, NoNameCoreModel):
@@ -23,6 +24,21 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         SEMIANNUAL = "SEMESTRAL", "Semestral"
         YEARLY = "ANUAL", "Anual"
 
+    class MaintenanceType(models.TextChoices):
+        PREVENTIVE = "PREVENTIVA", "Preventiva"
+        CORRECTIVE = "CORRECTIVA", "Correctiva"
+
+    incident = models.ForeignKey(
+        "ocorrencias.Incident",
+        db_column="incident_id",
+        on_delete=models.SET_NULL,
+        related_name="maintenances",
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Ocorrência de origem",
+        help_text="Ocorrência que deu origem a esta manutenção.",
+    )
     equipment = models.ForeignKey(  # Equipamento alvo da manutenção
         "equipamentos.Equipment",
         db_column="equipment_id",
@@ -37,6 +53,15 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         choices=Type.choices,
         default=Type.MONTHLY,
         db_index=True,
+    )
+    maintenance_type = models.CharField(
+        "Tipo de manutenção",
+        db_column="maintenance_type",
+        max_length=20,
+        choices=MaintenanceType.choices,
+        default=MaintenanceType.PREVENTIVE,
+        db_index=True,
+        help_text="Indica se a manutenção é preventiva ou correctiva.",
     )
     scheduled_date = models.DateField(  # Data prevista
         db_column="scheduled_date",
@@ -69,8 +94,10 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         verbose_name_plural = "Manutenções"
         ordering = ["-scheduled_date", "-created_at"]  # Últimas/agendadas primeiro
         indexes = [
+            models.Index(fields=["tenant", "incident"]),
             models.Index(fields=["tenant", "equipment", "scheduled_date"]),
             models.Index(fields=["tenant", "type", "scheduled_date"]),
+            models.Index(fields=["tenant", "maintenance_type", "scheduled_date"]),
             models.Index(fields=["tenant", "performed_date"]),
         ]
 
@@ -86,3 +113,37 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
 
         if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
             raise ValidationError({"equipment": "Equipamento e manutenção devem pertencer ao mesmo tenant."})
+
+        if self.incident_id and self.equipment_id and self.incident.equipment_id != self.equipment_id:
+            raise ValidationError({"incident": "A ocorrência deve pertencer ao equipamento da manutenção."})
+
+        if self.incident_id and self.tenant_id and self.incident.tenant_id != self.tenant_id:
+            raise ValidationError({"incident": "Ocorrência e manutenção devem pertencer ao mesmo tenant."})
+
+    def save(self, *args, **kwargs):
+        if self.incident_id and not self.equipment_id:
+            self.equipment = self.incident.equipment
+
+        super().save(*args, **kwargs)
+
+        if not self.incident_id:
+            return
+
+        incident = self.incident
+        update_fields = []
+
+        if self.performed_date:
+            if not incident.resolved:
+                incident.resolved = True
+                update_fields.append("resolved")
+            if incident.requires_maintenance:
+                incident.requires_maintenance = False
+                update_fields.append("requires_maintenance")
+            if not incident.maintenance_completed_at:
+                incident.maintenance_completed_at = timezone.now()
+                update_fields.append("maintenance_completed_at")
+
+        if update_fields:
+            incident.save(update_fields=update_fields)
+        elif incident.equipment_id:
+            sync_equipment_maintenance_flag(incident.equipment_id)
