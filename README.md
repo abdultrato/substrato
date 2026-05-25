@@ -16,6 +16,7 @@ A documentação consolidada do projeto está em `SUBSTRATO.md`. Este `README.md
 - `api/`: endpoints REST, serializers e viewsets.
 - `frontend-next/`: aplicação web.
 - `SUBSTRATO.md`: documentação consolidada completa.
+- `docs/backend/`: documentação técnica do backend, catálogo de módulos, API, dados, tenancy, segurança e operação.
 
 ## Execução local
 ```bash
@@ -58,6 +59,7 @@ make restore-backup BACKUP=backups/substrato_backup_YYYYmmdd_HHMMSS.tgz
 
 ## Governança técnica
 - SLOs, gates e política de dívida técnica: `docs/engineering_quality.md`
+- Documentação técnica do backend: `docs/backend/README.md`
 - Runbook operacional: `docs/operations_runbook.md`
 - Registro de dívida técnica: `docs/technical_debt_register.md`
 - Fluxo de exportações assíncronas: `docs/async_exports.md`
