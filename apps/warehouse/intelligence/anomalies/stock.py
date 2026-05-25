@@ -3,8 +3,8 @@ from __future__ import annotations
 from decimal import Decimal
 
 
-def detectar_consumo_anomalo(consumo_atual: Decimal, media_historica: Decimal, fator_limite: Decimal = Decimal("2")) -> bool:
-    media = Decimal(str(media_historica))
-    if media <= 0:
+def detect_anomalous_consumption(current_consumption: Decimal, historical_average: Decimal, limit_factor: Decimal = Decimal("2")) -> bool:
+    average = Decimal(str(historical_average))
+    if average <= 0:
         return False
-    return Decimal(str(consumo_atual)) > media * Decimal(str(fator_limite))
+    return Decimal(str(current_consumption)) > average * Decimal(str(limit_factor))

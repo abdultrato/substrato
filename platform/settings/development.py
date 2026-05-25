@@ -44,6 +44,7 @@ ALLOWED_HOSTS = _csv_env(
             "::1",
             "[::1]",
             "testserver",
+            ".local",
             "100.93.161.102",
             ".replit.dev",
             ".repl.co",

@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from core.models.base import CoreModel, NoNameCoreModel
 
-
 ZERO = Decimal("0.0000")
 MIN_QUANTITY = MinValueValidator(Decimal("0.0001"))
 MIN_NON_NEGATIVE = MinValueValidator(ZERO)
@@ -418,7 +417,7 @@ class StockLevel(NoNameCoreModel):
         return max(available, ZERO)
 
     @classmethod
-    def adjust(cls, *, tenant, item, location, quantity_delta: Decimal, lot=None) -> "StockLevel":
+    def adjust(cls, *, tenant, item, location, quantity_delta: Decimal, lot=None) -> StockLevel:
         if not location:
             raise ValidationError("Localização é obrigatória para ajustar estoque.")
 

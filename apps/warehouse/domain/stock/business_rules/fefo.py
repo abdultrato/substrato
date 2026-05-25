@@ -5,24 +5,24 @@ from datetime import date
 from typing import Protocol, TypeVar
 
 
-class LoteComValidade(Protocol):
+class LotWithExpiration(Protocol):
     lot_number: str
     expiration_date: date | None
 
 
-Lote = TypeVar("Lote", bound=LoteComValidade)
+Lot = TypeVar("Lot", bound=LotWithExpiration)
 
 
-def produto_perecivel(lotes: Iterable[LoteComValidade]) -> bool:
-    return any(lote.expiration_date is not None for lote in lotes)
+def has_perishable_lots(lots: Iterable[LotWithExpiration]) -> bool:
+    return any(lot.expiration_date is not None for lot in lots)
 
 
-def priorizar_lotes_fefo(lotes: Iterable[Lote]) -> list[Lote]:
+def prioritize_fefo_lots(lots: Iterable[Lot]) -> list[Lot]:
     return sorted(
-        lotes,
-        key=lambda lote: (
-            lote.expiration_date is None,
-            lote.expiration_date or date.max,
-            getattr(lote, "lot_number", ""),
+        lots,
+        key=lambda lot: (
+            lot.expiration_date is None,
+            lot.expiration_date or date.max,
+            getattr(lot, "lot_number", ""),
         ),
     )

@@ -8,6 +8,7 @@ from django.utils import timezone
 import pytest
 
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
 from apps.nursing.models import (
     NursingEvolution,
@@ -255,6 +256,48 @@ def test_record_and_vital_sign():
     assert record.tenant == tenant
     assert sv.tenant == tenant
     assert sv.record == record
+
+
+@pytest.mark.django_db
+def test_nursing_record_rejects_lab_request_from_other_patient():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    other_patient = Patient.objects.create(
+        tenant=tenant,
+        name="Outro paciente",
+        gender="Masculino",
+        address_street="Rua Y",
+    )
+    lab_request = LabRequest.objects.create(tenant=tenant, patient=other_patient)
+
+    with pytest.raises(ValidationError):
+        NursingRecord.objects.create(
+            tenant=tenant,
+            patient=patient,
+            lab_request=lab_request,
+            observation="Obs",
+        )
+
+
+@pytest.mark.django_db
+def test_vital_sign_rejects_patient_different_from_record():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    other_patient = Patient.objects.create(
+        tenant=tenant,
+        name="Outro paciente",
+        gender="Masculino",
+        address_street="Rua Y",
+    )
+    record = NursingRecord.objects.create(patient=patient, tenant=tenant, observation="Obs")
+
+    with pytest.raises(ValidationError):
+        NursingVitalSign.objects.create(
+            record=record,
+            patient=other_patient,
+            tenant=tenant,
+            temperature_c=Decimal("36.5"),
+        )
 
 
 @pytest.mark.django_db

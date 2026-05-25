@@ -125,11 +125,10 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
             raise ValidationError({"catalog": "Catálogo e procedure devem pertencer ao mesmo tenant."})
 
         # P1.4: Validação cruzada - patient.tenant == item.tenant
-        if self.procedure_id and self.procedure.patient_id:
-            if self.tenant_id != self.procedure.patient.tenant_id:
-                raise ValidationError(
-                    {"tenant": "Item deve pertencer ao mesmo tenant do paciente."}
-                )
+        if self.procedure_id and self.procedure.patient_id and self.tenant_id != self.procedure.patient.tenant_id:
+            raise ValidationError(
+                {"tenant": "Item deve pertencer ao mesmo tenant do paciente."}
+            )
 
         # P1.2: Validar timing - executed_at < billed_at
         if self.executed_at and self.billed_at and self.billed_at < self.executed_at:
@@ -332,7 +331,12 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
         # P0.2: CRÍTICO - Corrigir lógica: NOT_COMPLETED nunca pode ser faturado
         if self.execution_status == self.ExecutionStatus.NOT_COMPLETED:
             raise ValidationError(
-                {"billed": "Procedimento não-concluído não pode ser faturado. Apenas itens EXECUTADOS ou CONCLUÍDOS podem ser faturados."}
+                {
+                    "billed": (
+                        "Procedimento não-concluído não pode mais ser faturado. "
+                        "Apenas itens EXECUTADOS ou CONCLUÍDOS podem ser faturados."
+                    )
+                }
             )
 
         if self.execution_status == self.ExecutionStatus.PENDING:

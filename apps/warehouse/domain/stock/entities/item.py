@@ -4,15 +4,15 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
-class ItemEstoque:
+class StockItem:
     sku: str
-    nome: str
-    unidade: str = "UN"
-    perecivel: bool = False
+    name: str
+    unit: str = "UN"
+    is_perishable: bool = False
 
     def __post_init__(self) -> None:
         sku = (self.sku or "").strip()
         if not sku:
-            raise ValueError("SKU e obrigatorio para item de estoque.")
+            raise ValueError("SKU is required for a warehouse stock item.")
         object.__setattr__(self, "sku", sku)
-        object.__setattr__(self, "unidade", (self.unidade or "UN").upper())
+        object.__setattr__(self, "unit", (self.unit or "UN").upper())

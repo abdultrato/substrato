@@ -14,6 +14,12 @@ from apps.bloodbank.services.compatibility import (
     is_blood_compatible,
 )
 from core.models.base import NoNameCoreModel
+from domain.bloodbank.state_machines import (
+    BloodDispatchOutcomePolicy,
+    BloodDonationStateMachine,
+    BloodTransfusionStateMachine,
+    BloodUnitStateMachine,
+)
 
 User = settings.AUTH_USER_MODEL
 
@@ -300,6 +306,10 @@ class BloodDonation(NoNameCoreModel):
     def clean(self):
         super().clean()
 
+        if self.pk:
+            previous_status = type(self).all_objects.filter(pk=self.pk).values_list("status", flat=True).first()
+            BloodDonationStateMachine.validate_transition(previous_status, self.status)
+
         if self.donor_id and self.tenant_id and self.donor.tenant_id != self.tenant_id:
             raise ValidationError({"donor": "Doador e doacao devem pertencer ao mesmo tenant."})
 
@@ -507,7 +517,7 @@ class BloodDonation(NoNameCoreModel):
             )
             created = True
         else:
-            if unit.status != BloodUnit.UnitStatus.TRANSFUSED:
+            if not BloodUnitStateMachine.is_terminal(unit.status):
                 unit.status = self._resolve_unit_status_for_screening()
             if unit.status == BloodUnit.UnitStatus.QUARANTINE:
                 unit.reserved_for = None
@@ -536,6 +546,8 @@ class BloodDonation(NoNameCoreModel):
         now = timezone.now()
         qs = BloodUnit.objects.filter(tenant_id=self.tenant_id, donation_id=self.id, deleted=False)
         for unit in qs.select_related("storage"):
+            if unit.status == BloodUnit.UnitStatus.TRANSFUSED:
+                continue
             if unit.status == BloodUnit.UnitStatus.DISCARDED:
                 continue
             unit.status = BloodUnit.UnitStatus.DISCARDED
@@ -898,14 +910,7 @@ class BloodUnit(NoNameCoreModel):
         if self.status == self.UnitStatus.RESERVED and not self.reserved_for_id:
             raise ValidationError({"reserved_for": "Informe o paciente quando a unidade estiver reservada."})
 
-        if self.dispatch_outcome == self.DispatchOutcome.TRANSFUSED and self.status != self.UnitStatus.TRANSFUSED:
-            raise ValidationError({"dispatch_outcome": "Desfecho transfundida exige estado transfundida."})
-
-        if self.dispatch_outcome == self.DispatchOutcome.RETURNED and self.status != self.UnitStatus.AVAILABLE:
-            raise ValidationError({"dispatch_outcome": "Desfecho devolvida exige estado disponível."})
-
-        if self.dispatch_outcome == self.DispatchOutcome.DISCARDED and self.status != self.UnitStatus.DISCARDED:
-            raise ValidationError({"dispatch_outcome": "Desfecho descartada exige estado descartada."})
+        BloodDispatchOutcomePolicy.validate(outcome=self.dispatch_outcome, unit_status=self.status)
 
         if self._has_positive_serology() and self.status not in {
             self.UnitStatus.QUARANTINE,
@@ -926,8 +931,7 @@ class BloodUnit(NoNameCoreModel):
     def save(self, *args, **kwargs):
         if self.pk:
             previous_status = type(self).all_objects.filter(pk=self.pk).values_list("status", flat=True).first()
-            if previous_status == self.UnitStatus.TRANSFUSED and self.status != self.UnitStatus.TRANSFUSED:
-                raise ValidationError({"status": "Unidade transfundida não pode ter estado alterado."})
+            BloodUnitStateMachine.validate_transition(previous_status, self.status)
 
         if self.donation_id:
             if not self.blood_type:
@@ -1054,6 +1058,10 @@ class BloodTransfusion(NoNameCoreModel):
 
     def clean(self):
         super().clean()
+
+        if self.pk:
+            previous_status = type(self).all_objects.filter(pk=self.pk).values_list("status", flat=True).first()
+            BloodTransfusionStateMachine.validate_transition(previous_status, self.status)
 
         if self.recipient_id and self.tenant_id and self.recipient.tenant_id != self.tenant_id:
             raise ValidationError({"recipient": "Paciente e transfusao devem pertencer ao mesmo tenant."})

@@ -6,9 +6,9 @@ from decimal import Decimal
 ZERO = Decimal("0")
 
 
-def prever_consumo_medio(consumos_diarios: Iterable[Decimal], horizonte_dias: int) -> Decimal:
-    consumos = [Decimal(str(valor)) for valor in consumos_diarios]
-    if not consumos or horizonte_dias <= 0:
+def forecast_average_consumption(daily_consumption: Iterable[Decimal], horizon_days: int) -> Decimal:
+    samples = [Decimal(str(value)) for value in daily_consumption]
+    if not samples or horizon_days <= 0:
         return ZERO
-    media = sum(consumos, ZERO) / Decimal(len(consumos))
-    return media * Decimal(horizonte_dias)
+    average = sum(samples, ZERO) / Decimal(len(samples))
+    return average * Decimal(horizon_days)

@@ -5,6 +5,6 @@ from decimal import Decimal
 ZERO = Decimal("0")
 
 
-def recomendar_reposicao(consumo_previsto: Decimal, estoque_atual: Decimal, estoque_seguranca: Decimal = ZERO) -> Decimal:
-    necessidade = Decimal(str(consumo_previsto)) + Decimal(str(estoque_seguranca)) - Decimal(str(estoque_atual))
-    return max(ZERO, necessidade)
+def recommend_replenishment(forecast_consumption: Decimal, current_stock: Decimal, safety_stock: Decimal = ZERO) -> Decimal:
+    required = Decimal(str(forecast_consumption)) + Decimal(str(safety_stock)) - Decimal(str(current_stock))
+    return max(ZERO, required)

@@ -3,93 +3,111 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
-from apps.warehouse.aplicacao.casos_de_uso.gerar_requisicao_automatica import GerarRequisicaoAutomatica
-from apps.warehouse.aplicacao.consultas.estoque import ConsultaEstoqueMinimo
-from apps.warehouse.domain.stock.aggregates.estoque import AgregadoEstoque
-from apps.warehouse.domain.stock.business_rules.fefo import priorizar_lotes_fefo
-from apps.warehouse.domain.stock.value_objects.politica_reposicao import PoliticaReposicao
-from apps.warehouse.workflows.motor.motor import MotorWorkflowsWarehouse
+from apps.warehouse.application.queries.stock import MinimumStockQuery
+from apps.warehouse.application.use_cases.generate_automatic_requisition import GenerateAutomaticRequisition
+from apps.warehouse.domain.stock.aggregates.stock import StockAggregate
+from apps.warehouse.domain.stock.business_rules.fefo import prioritize_fefo_lots
+from apps.warehouse.domain.stock.value_objects.replenishment_policy import ReplenishmentPolicy
+from apps.warehouse.infrastructure.substrato_os import get_substrato_os_integrations
+from apps.warehouse.workflows.engine.engine import WarehouseWorkflowEngine
+
+WAREHOUSE_ROOT = Path(__file__).resolve().parent
 
 
 @dataclass(frozen=True)
-class LoteTeste:
+class TestLot:
     lot_number: str
     expiration_date: date | None
 
 
-class RepositorioEstoqueMemoria:
-    def consultar_saldo(self, consulta: ConsultaEstoqueMinimo) -> Decimal:
+class InMemoryStockRepository:
+    def get_balance(self, query: MinimumStockQuery) -> Decimal:
         return Decimal("2")
 
-    def politica_reposicao(self, consulta: ConsultaEstoqueMinimo) -> PoliticaReposicao:
-        return PoliticaReposicao(minimo=Decimal("5"), quantidade_requisicao=Decimal("10"))
+    def get_replenishment_policy(self, query: MinimumStockQuery) -> ReplenishmentPolicy:
+        return ReplenishmentPolicy(minimum_quantity=Decimal("5"), requisition_quantity=Decimal("10"))
 
 
-class RepositorioRequisicoesMemoria:
+class InMemoryRequisitionRepository:
     def __init__(self) -> None:
-        self.comandos = []
+        self.commands = []
 
-    def criar_requisicao(self, comando) -> str:
-        self.comandos.append(comando)
+    def create_requisition(self, command) -> str:
+        self.commands.append(command)
         return "REQ-1"
 
 
-class PublicadorEventosMemoria:
+class InMemoryEventPublisher:
     def __init__(self) -> None:
-        self.eventos = []
+        self.events = []
 
-    def publicar(self, evento) -> None:
-        self.eventos.append(evento)
+    def publish(self, event) -> None:
+        self.events.append(event)
 
 
-def test_agregado_estoque_gera_evento_quando_abaixo_do_minimo():
-    agregado = AgregadoEstoque(
+def test_stock_aggregate_generates_event_when_below_minimum():
+    aggregate = StockAggregate(
         sku="SKU-001",
-        quantidade_atual=Decimal("2"),
-        politica=PoliticaReposicao(minimo=Decimal("5"), quantidade_requisicao=Decimal("10")),
+        current_quantity=Decimal("2"),
+        policy=ReplenishmentPolicy(minimum_quantity=Decimal("5"), requisition_quantity=Decimal("10")),
         tenant_id="tenant-1",
     )
 
-    evento = agregado.avaliar_reposicao()
+    event = aggregate.evaluate_replenishment()
 
-    assert evento is not None
-    assert evento.payload()["sku"] == "SKU-001"
-    assert evento.quantidade_requisicao == Decimal("10")
+    assert event is not None
+    assert event.payload()["sku"] == "SKU-001"
+    assert event.requested_quantity == Decimal("10")
+    assert event.display_name_pt == "Estoque abaixo do minimo"
 
 
-def test_priorizar_lotes_fefo_coloca_validade_mais_proxima_primeiro():
-    lotes = [
-        LoteTeste("L3", None),
-        LoteTeste("L2", date(2026, 6, 1)),
-        LoteTeste("L1", date(2026, 5, 1)),
+def test_prioritize_fefo_lots_puts_nearest_expiration_first():
+    lots = [
+        TestLot("L3", None),
+        TestLot("L2", date(2026, 6, 1)),
+        TestLot("L1", date(2026, 5, 1)),
     ]
 
-    ordenados = priorizar_lotes_fefo(lotes)
+    ordered_lots = prioritize_fefo_lots(lots)
 
-    assert [lote.lot_number for lote in ordenados] == ["L1", "L2", "L3"]
-
-
-def test_caso_de_uso_gera_requisicao_automatica_e_publica_evento():
-    requisicoes = RepositorioRequisicoesMemoria()
-    publicador = PublicadorEventosMemoria()
-    caso_de_uso = GerarRequisicaoAutomatica(RepositorioEstoqueMemoria(), requisicoes, publicador)
-
-    resultado = caso_de_uso.executar(ConsultaEstoqueMinimo(sku="SKU-001", tenant_id="tenant-1"))
-
-    assert resultado is not None
-    assert resultado.requisicao_id == "REQ-1"
-    assert requisicoes.comandos[0].quantidade == Decimal("10")
-    assert publicador.eventos[0].sku == "SKU-001"
+    assert [lot.lot_number for lot in ordered_lots] == ["L1", "L2", "L3"]
 
 
-def test_motor_workflows_decide_reposicao_e_fefo():
-    decisoes = MotorWorkflowsWarehouse().avaliar(
+def test_use_case_generates_automatic_requisition_and_publishes_event():
+    requisitions = InMemoryRequisitionRepository()
+    publisher = InMemoryEventPublisher()
+    use_case = GenerateAutomaticRequisition(InMemoryStockRepository(), requisitions, publisher)
+
+    result = use_case.execute(MinimumStockQuery(sku="SKU-001", tenant_id="tenant-1"))
+
+    assert result is not None
+    assert result.requisition_id == "REQ-1"
+    assert requisitions.commands[0].quantity == Decimal("10")
+    assert publisher.events[0].sku == "SKU-001"
+
+
+def test_workflow_engine_decides_replenishment_and_fefo():
+    decisions = WarehouseWorkflowEngine().evaluate(
         {
-            "quantidade_atual": "2",
-            "minimo": "5",
-            "produto_perecivel": True,
+            "current_quantity": "2",
+            "minimum_quantity": "5",
+            "is_perishable_product": True,
         }
     )
 
-    assert [decisao.acao for decisao in decisoes] == ["GERAR_REQUISICAO", "PRIORIZAR_FEFO"]
+    assert [decision.action for decision in decisions] == ["GENERATE_REQUISITION", "PRIORITIZE_FEFO"]
+    assert [decision.label_pt for decision in decisions] == ["Gerar requisicao", "Priorizar FEFO"]
+
+
+def test_warehouse_reuses_substrato_os_boundaries_instead_of_duplicating_platform_modules():
+    integrations = get_substrato_os_integrations()
+
+    assert not (WAREHOUSE_ROOT / "platform").exists()
+    assert integrations.event_bus == "events.bus.event_bus"
+    assert integrations.tenant_context == "apps.tenants"
+    assert integrations.billing == "apps.billing"
+    assert integrations.audit == "apps.audit_activities"
+    assert integrations.permissions == "security.permissions.rbac"
+    assert integrations.observability == "observability.opentelemetry"

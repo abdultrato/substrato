@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 import pytest
 
-from apps.bloodbank.models import BloodDonation, BloodStockMovement, BloodStorage, BloodUnit
+from apps.bloodbank.models import BloodDonation, BloodStockMovement, BloodStorage, BloodTransfusion, BloodUnit
 from apps.clinical.models.patient import Patient
 from apps.tenants.models.tenant import Tenant
 
@@ -257,6 +257,43 @@ def test_transfused_unit_cannot_change_status_and_manual_stock_adjustment_is_blo
         format="json",
     )
     assert movement_response.status_code == 405
+
+
+@pytest.mark.django_db
+def test_bloodbank_domain_state_machines_block_terminal_reopen():
+    tenant = _tenant()
+    donor = _patient(tenant, "Doador Estado")
+    donor_transfusion = _patient(tenant, "Doador Estado Transfusão")
+    recipient = _patient(tenant, "Paciente Estado")
+    BloodStorage.objects.create(tenant=tenant, name="Frio Estados", location="Banco de Sangue")
+
+    donation = _create_completed_donation(tenant=tenant, donor=donor, positive=False)
+    donation.status = BloodDonation.DonationStatus.SCREENING
+    with pytest.raises(DjangoValidationError):
+        donation.save()
+
+    unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
+    unit.status = BloodUnit.UnitStatus.DISCARDED
+    unit.save()
+    unit.status = BloodUnit.UnitStatus.AVAILABLE
+    with pytest.raises(DjangoValidationError):
+        unit.save()
+
+    transfusion_donation = _create_completed_donation(tenant=tenant, donor=donor_transfusion, positive=False)
+    transfusion_unit = BloodUnit.objects.get(tenant=tenant, donation=transfusion_donation)
+    now = timezone.now()
+    transfusion = BloodTransfusion.objects.create(
+        tenant=tenant,
+        recipient=recipient,
+        blood_unit=transfusion_unit,
+        status=BloodTransfusion.TransfusionStatus.COMPLETED,
+        requested_at=now,
+        started_at=now,
+        finished_at=now,
+    )
+    transfusion.status = BloodTransfusion.TransfusionStatus.REQUESTED
+    with pytest.raises(DjangoValidationError):
+        transfusion.save()
 
 
 @pytest.mark.django_db

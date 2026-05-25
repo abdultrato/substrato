@@ -141,6 +141,48 @@ def test_product_inventory_total_uses_effective_lot_balance():
 
 
 @pytest.mark.django_db
+def test_inventory_movement_queryset_delete_is_soft_delete():
+    tenant = _tenant()
+    prod = _product(tenant)
+    lot = _lot(prod, quantity=5)
+
+    movement = InventoryMovement.objects.create(
+        tenant=tenant,
+        lot=lot,
+        type=MovementType.SAIDA,
+        origin=MovementOrigin.AJUSTE,
+        quantity=2,
+    )
+
+    deleted_count, deleted_by_model = InventoryMovement.objects.filter(pk=movement.pk).delete()
+
+    assert deleted_count == 1
+    assert deleted_by_model == {"farmacia.InventoryMovement": 1}
+    assert not InventoryMovement.objects.filter(pk=movement.pk).exists()
+    assert InventoryMovement.all_objects.get(pk=movement.pk).deleted is True
+
+
+@pytest.mark.django_db
+def test_lot_disponiveis_ignores_soft_deleted_movements():
+    tenant = _tenant()
+    prod = _product(tenant)
+    lot = _lot(prod, quantity=5)
+
+    movement = InventoryMovement.objects.create(
+        tenant=tenant,
+        lot=lot,
+        type=MovementType.SAIDA,
+        origin=MovementOrigin.AJUSTE,
+        quantity=2,
+    )
+    InventoryMovement.objects.filter(pk=movement.pk).delete()
+
+    lot.refresh_from_db()
+    assert lot.balance() == 5
+    assert Lot.disponiveis(prod).get(pk=lot.pk).saldo == 5
+
+
+@pytest.mark.django_db
 def test_sale_itens_e_total():
     """Valida quantidade de itens e total calculado da venda."""
     tenant = _tenant()
