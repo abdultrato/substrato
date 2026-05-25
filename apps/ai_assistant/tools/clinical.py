@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
 from datetime import timedelta
+import re
 from typing import Any
 
 from django.db.models import Count
@@ -13,7 +13,6 @@ from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
 from .base import AiTool, AiToolContext
 from .command_center import coerce_int
-
 
 CLINICAL_GROUPS = (
     RBAC_GROUPS["ADMIN"],

@@ -6,6 +6,9 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 import pytest
 
+from apps.accounting.models.account import Account
+from apps.accounting.models.legacy_entry import LegacyEntry
+from apps.accounting.models.legacy_movement import LegacyMovement
 from apps.ai_assistant.models import (
     AiInvestigation,
     AiKnowledgeEntry,
@@ -18,9 +21,6 @@ from apps.ai_assistant.models import (
 )
 from apps.ai_assistant.services.redaction import redact_value
 from apps.ai_assistant.services.registry import AiToolRegistry
-from apps.accounting.models.account import Account
-from apps.accounting.models.legacy_entry import LegacyEntry
-from apps.accounting.models.legacy_movement import LegacyMovement
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
@@ -80,16 +80,19 @@ from apps.human_resources.models.work_schedule import WorkSchedule
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.incidents.models.incident import Incident
+from apps.inspections.models.daily_inspection import DailyInspection
 from apps.insurer.models.coverage_plan import CoveragePlan
 from apps.insurer.models.insurer import Insurer
 from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
-from apps.inspections.models.daily_inspection import DailyInspection
-from apps.maternity.models.pregnancy import Pregnancy
 from apps.maintenance.models.maintenance import Maintenance
+from apps.maternity.models.pregnancy import Pregnancy
 from apps.medical_records.models.medical_record_entry import MedicalRecordEntry
 from apps.medical_records.models.prescription_item import PrescriptionItem
 from apps.monitoring.models import SystemError, TransactionalOutboxEvent
+from apps.notifications.models.delivery_log import DeliveryLog
+from apps.notifications.models.notification import Notification
+from apps.notifications.models.notification_template import NotificationTemplate
 from apps.nursing.models import (
     NursingEvolution,
     NursingPrescription,
@@ -106,10 +109,6 @@ from apps.payments.models.payment import Payment
 from apps.payments.models.receipt import Receipt
 from apps.payments.models.reconciliation import Reconciliation
 from apps.payments.models.transaction import Transaction
-from apps.reception.models.reception_checkin import ReceptionCheckin
-from apps.notifications.models.delivery_log import DeliveryLog
-from apps.notifications.models.notification import Notification
-from apps.notifications.models.notification_template import NotificationTemplate
 from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.material_requisition import MaterialRequisition, MaterialRequisitionStatus, RequestingSector
@@ -117,6 +116,7 @@ from apps.pharmacy.models.material_requisition_item import MaterialRequisitionIt
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
+from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
 from apps.surgery.models.surgical_procedure import SurgicalProcedure
 from apps.tenants.models.configuration import TenantConfiguration
@@ -128,8 +128,8 @@ from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.sector import Sector
 from core.constants.laboratory.units import DefaultUnit
-from services.reports.async_exports import get_export_job_result, get_export_job_state
 from security.permissions.rbac import GROUPS
+from services.reports.async_exports import get_export_job_result, get_export_job_state
 
 
 def _response_data(response):
@@ -1749,7 +1749,7 @@ def test_ai_consultations_crud_updates_consultation_by_code(api_client):
         tenant=tenant,
         patient=patient,
         specialty=specialty,
-        scheduled_for=timezone.make_aware(datetime(2026, 6, 15, 10, 0, 0)),
+        scheduled_for=datetime(2026, 6, 15, 10, 0, 0, tzinfo=timezone.get_current_timezone()),
         description="Original",
     )
     _authenticate(api_client, tenant, user)
@@ -4652,7 +4652,7 @@ def test_ai_surgery_crud_creates_catalog_procedure_and_surgery_for_medicine(api_
 def test_ai_surgery_crud_creates_small_and_large_segmented_resources(api_client):
     tenant = _tenant(identifier="tn-ai-surgery-segmented", domain="tn-ai-surgery-segmented.local")
     user = _user(tenant, "medicina_ai_surgery_segmented", GROUPS["MEDICINA"])
-    patient = Patient.objects.create(tenant=tenant, name="Paciente Cirurgia Segmentada", document_number="BI-SURG-002")
+    Patient.objects.create(tenant=tenant, name="Paciente Cirurgia Segmentada", document_number="BI-SURG-002")
     _authenticate(api_client, tenant, user)
 
     _data, small_action = _prepare_ai_crud_action(

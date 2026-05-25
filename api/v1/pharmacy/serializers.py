@@ -12,7 +12,6 @@ from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",

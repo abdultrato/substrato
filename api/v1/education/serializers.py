@@ -671,13 +671,21 @@ class ExaminationAttemptSerializer(LegacyAliasSerializerMixin, FullCleanSerializ
         if self.instance is None:
             attempt_number = attrs.get("attempt_number")
             student = attrs.get("student")
-            if attempt_number in (None, 0) and exam is not None and student is not None:
+            if exam is not None and student is not None:
                 existing_qs = ExaminationAttempt.all_objects.filter(examination=exam, student=student)
                 tenant = attrs.get("tenant") or getattr(self.context.get("request"), "tenant", None) or getattr(self.instance, "tenant", None)
                 tenant_id = getattr(tenant, "id", tenant)
                 if tenant_id:
                     existing_qs = existing_qs.filter(tenant_id=tenant_id)
-                attrs["attempt_number"] = existing_qs.count() + 1
+                if attempt_number in (None, 0):
+                    attempt_number = existing_qs.count() + 1
+                    attrs["attempt_number"] = attempt_number
+                if attempt_number and attempt_number > 1:
+                    previous_attempt = existing_qs.filter(attempt_number=attempt_number - 1).first()
+                    if previous_attempt is not None and started_at.date() <= previous_attempt.started_at.date():
+                        raise serializers.ValidationError(
+                            {"started_at": "Each new attempt must happen on a different day after the previous one."}
+                        )
 
         return attrs
 

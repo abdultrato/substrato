@@ -14,10 +14,9 @@ from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from tasks.generate_pdf import SimplePDFAdminMixin
-
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.product import Product
+from tasks.generate_pdf import SimplePDFAdminMixin
 
 from .models import (
     NursingRecord,

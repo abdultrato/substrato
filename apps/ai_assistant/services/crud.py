@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import re
-from dataclasses import dataclass
 from typing import Any
 
 from django.apps import apps as django_apps
@@ -17,8 +17,8 @@ from rest_framework.test import APIRequestFactory, force_authenticate
 from apps.ai_assistant.models import AiSession, AiSuggestedAction
 from apps.ai_assistant.services.policy import AiPolicyGuard
 from apps.ai_assistant.tools.resource_catalog import (
-    ResourceDescriptor,
     RESOURCE_ALIASES,
+    ResourceDescriptor,
     descriptor_by_basename,
     get_resource_descriptors,
     match_resource_descriptors,
@@ -26,7 +26,6 @@ from apps.ai_assistant.tools.resource_catalog import (
     user_can_method_resource,
     viewset_for_descriptor,
 )
-
 
 CRUD_DRAFT_KEY = "crud_draft"
 CORE_READ_ONLY_FIELDS = {
@@ -153,9 +152,9 @@ CHOICE_VALUE_ALIASES = {
     "rascunho": ("DRAFT", "RASCUNHO"),
     "arquivado": ("ARCHIVED", "ARQUIVADO"),
     "arquivada": ("ARCHIVED", "ARQUIVADA"),
-    "pendente": ("PENDING", "pendente", "PENDENTE"),
-    "aprovado": ("APROVADA", "APPROVED", "approved"),
-    "aprovada": ("APROVADA", "APPROVED", "approved"),
+    "pendente": ("PENDING", "pendente", "PENDENTE", "PEN"),
+    "aprovado": ("APROVADA", "APPROVED", "approved", "APROV"),
+    "aprovada": ("APROVADA", "APPROVED", "approved", "APROV"),
     "approved": ("APROVADA", "APPROVED", "approved"),
     "negado": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
     "negada": ("NEGADA", "DENIED", "REJECTED", "denied", "rejected"),
@@ -171,10 +170,10 @@ CHOICE_VALUE_ALIASES = {
     "justificada": ("EXCUSED",),
     "transferido": ("TRANSFERRED",),
     "transferida": ("TRANSFERRED",),
-    "concluido": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
-    "concluida": ("COMPLETED", "CONCLUIDA", "CONCLUIDO"),
-    "cancelado": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
-    "cancelada": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
+    "concluido": ("COMPLETED", "CONCLUIDA", "CONCLUIDO", "CON", "CONC"),
+    "concluida": ("COMPLETED", "CONCLUIDA", "CONCLUIDO", "CON", "CONC"),
+    "cancelado": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO", "CAN", "CANC"),
+    "cancelada": ("CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO", "CAN", "CANC"),
     "acompanhamento": ("ACOMP", "FOLLOW_UP"),
     "em acompanhamento": ("ACOMP", "FOLLOW_UP"),
     "follow up": ("ACOMP", "FOLLOW_UP"),
@@ -235,16 +234,13 @@ CHOICE_VALUE_ALIASES = {
     "off": ("DESLIGADO",),
     "incidente": ("INCIDENTE",),
     "incident": ("INCIDENTE",),
-    "outro": ("OUTRO",),
-    "outra": ("OUTRO",),
+    "outro": ("OUTRO", "OUT", "OTHER"),
+    "outra": ("OUTRO", "OUT", "OTHER"),
     "other": ("OUTRO",),
-    "solicitada": ("SOLIC",),
-    "solicitado": ("SOLIC",),
-    "aprovada": ("APROV",),
-    "aprovado": ("APROV",),
+    "solicitada": ("SOLIC", "REQ"),
+    "solicitado": ("SOLIC", "REQ"),
     "gozada": ("GOZADA",),
     "gozado": ("GOZADA",),
-    "cancelada": ("CANCEL",),
     "demissao": ("DEMISSAO",),
     "demissão": ("DEMISSAO",),
     "rescisao": ("RESCISAO",),
@@ -330,9 +326,6 @@ CHOICE_VALUE_ALIASES = {
     "colheita laboratorial": ("LAB_COLLECTION_REQUEST", "LAB"),
     "marcado": ("REQ", "SOLIC"),
     "marcada": ("REQ", "SOLIC"),
-    "solicitado": ("REQ", "SOLIC"),
-    "solicitada": ("REQ", "SOLIC"),
-    "pendente": ("PEN", "PENDING", "pendente", "PENDENTE"),
     "aguardando": ("AGUARD", "WAITING"),
     "em espera": ("AGUARD", "WAITING"),
     "espera": ("AGUARD", "WAITING"),
@@ -352,8 +345,6 @@ CHOICE_VALUE_ALIASES = {
     "facturada": ("BIL", "FACTURADA", "INVOICED"),
     "executado": ("EXE", "EXECUTED"),
     "executada": ("EXE", "EXECUTED"),
-    "concluido": ("CON", "CONC", "COMPLETED", "CONCLUIDA", "CONCLUIDO"),
-    "concluida": ("CON", "CONC", "COMPLETED", "CONCLUIDA", "CONCLUIDO"),
     "concluído": ("CON", "CONC", "COMPLETED", "CONCLUIDA", "CONCLUIDO"),
     "concluída": ("CON", "CONC", "COMPLETED", "CONCLUIDA", "CONCLUIDO"),
     "finalizado": ("CONC", "COMPLETED", "CONCLUIDA", "CONCLUIDO"),
@@ -382,8 +373,6 @@ CHOICE_VALUE_ALIASES = {
     "seguro de saude": ("SEG", "HEALTH_INSURANCE"),
     "seguro de saúde": ("SEG", "HEALTH_INSURANCE"),
     "health insurance": ("SEG", "HEALTH_INSURANCE"),
-    "outro": ("OUT", "OUTRO", "OTHER"),
-    "outra": ("OUT", "OUTRO", "OTHER"),
     "confirmado": ("CON", "CONFIRMED", "APROVADA", "APPROVED"),
     "confirmada": ("CON", "CONFIRMED", "APROVADA", "APPROVED"),
     "confirmed": ("CON", "CONFIRMED"),
@@ -394,8 +383,6 @@ CHOICE_VALUE_ALIASES = {
     "estornado": ("EST", "REFUNDED"),
     "estornada": ("EST", "REFUNDED"),
     "refunded": ("EST", "REFUNDED"),
-    "cancelado": ("CAN", "CANC", "CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
-    "cancelada": ("CAN", "CANC", "CANCEL", "CANCELLED", "CANCELED", "CANCELADA", "CANCELADO"),
 }
 
 
@@ -993,7 +980,7 @@ class AiCrudConversationManager:
 
     def _is_many_related_field(self, field: CrudFieldSpec) -> bool:
         field_type = field.field_type.lower()
-        return "manyrelated" in field_type or "many" in field_type and bool(field.related_model_name)
+        return "manyrelated" in field_type or ("many" in field_type and bool(field.related_model_name))
 
     def _resolve_many_related_value(self, *, field: CrudFieldSpec, value: Any, tenant) -> list[Any]:
         raw_items = value if isinstance(value, list) else self._split_related_values(str(value or ""))

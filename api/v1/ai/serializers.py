@@ -56,7 +56,7 @@ class AiSessionDetailSerializer(AiSessionSerializer):
     messages = AiMessageSerializer(many=True, read_only=True)
 
     class Meta(AiSessionSerializer.Meta):
-        fields = AiSessionSerializer.Meta.fields + ["messages"]
+        fields = [*AiSessionSerializer.Meta.fields, "messages"]
 
 
 class AiInvestigationSerializer(serializers.ModelSerializer):

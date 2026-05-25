@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 """Script para extrair mapeamento completo de modelos e endpoints."""
+import json
+import logging
 import os
 import sys
-import json
+
+import django
+from django.apps import apps
 
 sys.path.insert(0, '.')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'platform.settings')
 
-import django
 django.setup()
 
-from django.apps import apps
-from rest_framework.routers import DefaultRouter
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 # Mapear modelos por app
 models_by_app = {}
@@ -19,19 +22,19 @@ for app_config in apps.get_app_configs():
     app_name = app_config.name
     if not app_name.startswith(('apps', 'core')):
         continue
-    
+
     for model in app_config.get_models():
         short_app = app_name.replace('apps.', '').replace('core.', '')
         if short_app not in models_by_app:
             models_by_app[short_app] = []
-        
+
         fields = []
         for f in model._meta.get_fields():
             fields.append({
                 'nome': f.name,
                 'tipo': f.get_internal_type()
             })
-        
+
         models_by_app[short_app].append({
             'modelo': model.__name__,
             'tabela': model._meta.db_table if hasattr(model._meta, 'db_table') else '',
@@ -40,11 +43,11 @@ for app_config in apps.get_app_configs():
         })
 
 # Extrair endpoints
-print("Lendo schema.json para endpoints...")
+logger.info("Lendo schema.json para endpoints...")
 try:
-    with open('frontend-next/schema.json', 'r', encoding='utf-8') as f:
+    with open('frontend-next/schema.json', encoding='utf-8') as f:
         schema = json.load(f)
-    
+
     endpoints = {}
     for path, methods in schema.get('paths', {}).items():
         if '/api/v1/' in path:
@@ -58,8 +61,8 @@ try:
                     'rota': path,
                     'metodos': list(methods.keys()) if isinstance(methods, dict) else []
                 })
-except Exception as e:
-    print(f"Erro ao ler schema: {e}")
+except Exception as exc:
+    logger.warning("Erro ao ler schema: %s", exc)
     endpoints = {}
 
 # Compilar resultado final
@@ -84,8 +87,8 @@ for app, modelos in sorted(models_by_app.items()):
             'campos': [f['nome'] for f in modelo_info['campos']],
             'tipos': {f['nome']: f['tipo'] for f in modelo_info['campos']},
             'endpoint_existe': any(
-                modelo_info['modelo'].lower() in rota.lower() 
-                for rotas in endpoints.values() 
+                modelo_info['modelo'].lower() in rota.lower()
+                for rotas in endpoints.values()
                 for rota in [r['rota'] for r in rotas]
             )
         })
@@ -97,7 +100,7 @@ resultado['endpoints_por_modulo'] = endpoints
 with open('mapeamento_completo.json', 'w', encoding='utf-8') as f:
     json.dump(resultado, f, indent=2, ensure_ascii=False)
 
-print(f"✓ Mapeamento completo salvo em mapeamento_completo.json")
-print(f"  - {resultado['resumo']['total_modelos']} modelos")
-print(f"  - {resultado['resumo']['total_endpoints_modulos']} módulos com endpoints")
-print(f"  - {len(resultado['modelos_backend'])} modelos mapeados")
+logger.info("✓ Mapeamento completo salvo em mapeamento_completo.json")
+logger.info("  - %s modelos", resultado['resumo']['total_modelos'])
+logger.info("  - %s módulos com endpoints", resultado['resumo']['total_endpoints_modulos'])
+logger.info("  - %s modelos mapeados", len(resultado['modelos_backend']))

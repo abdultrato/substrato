@@ -7,7 +7,6 @@ from security.permissions.rbac import GROUPS as RBAC_GROUPS
 from .base import AiTool, AiToolContext
 from .command_center import coerce_int
 
-
 REPORT_GROUPS = (
     RBAC_GROUPS["ADMIN"],
     RBAC_GROUPS["CONTABILIDADE"],

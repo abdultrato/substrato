@@ -9,7 +9,6 @@ from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.models.tenant import Tenant
 from apps.tenants.models.tenant_usage import TenantUsage
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",

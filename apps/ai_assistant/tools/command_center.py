@@ -14,7 +14,6 @@ from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
 from .base import AiTool, AiToolContext
 
-
 MODULES = (
     {"key": "clinical", "label_pt": "Clínico", "label_en": "Clinical", "prefixes": ("/api/v1/clinical/", "/clinical/")},
     {"key": "reception", "label_pt": "Recepção", "label_en": "Reception", "prefixes": ("/api/v1/reception/", "/reception/")},

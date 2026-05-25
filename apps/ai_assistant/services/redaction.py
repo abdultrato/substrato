@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections.abc import Mapping, Sequence
+import re
 from typing import Any
-
+import unicodedata
 
 SENSITIVE_KEY_PARTS = {
     "authorization",
@@ -53,8 +52,7 @@ def redact_text(value: str) -> str:
         return ""
     text = EMAIL_RE.sub("[email-redigido]", text)
     text = LONG_TOKEN_RE.sub("[segredo-redigido]", text)
-    text = PHONE_RE.sub("[telefone-redigido]", text)
-    return text
+    return PHONE_RE.sub("[telefone-redigido]", text)
 
 
 def redact_value(value: Any, *, key: str | None = None) -> Any:

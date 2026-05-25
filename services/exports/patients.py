@@ -2,7 +2,6 @@
 
 import csv
 from io import StringIO
-from decimal import Decimal
 
 from apps.clinical.models.patient import Patient
 

@@ -156,15 +156,21 @@ class Examination(NoNameCoreModel):
             if self.pk:
                 base_qs = base_qs.exclude(pk=self.pk)
 
-            if self.exam_type == self.ExamType.TEST and self.test_slot is not None:
-                if base_qs.filter(test_slot=self.test_slot).exists():
-                    raise ValidationError({"test_slot": "Each discipline/classroom can only have one test per slot (1, 2, 3)."})
+            if (
+                self.exam_type == self.ExamType.TEST
+                and self.test_slot is not None
+                and base_qs.filter(test_slot=self.test_slot).exists()
+            ):
+                raise ValidationError({"test_slot": "Each discipline/classroom can only have one test per slot (1, 2, 3)."})
 
-            if self.exam_type == self.ExamType.DISCIPLINE_FINAL and self.discipline_final_stage:
-                if base_qs.filter(discipline_final_stage=self.discipline_final_stage).exists():
-                    raise ValidationError(
-                        {"discipline_final_stage": "Each discipline/classroom can only have one final exam for each stage."}
-                    )
+            if (
+                self.exam_type == self.ExamType.DISCIPLINE_FINAL
+                and self.discipline_final_stage
+                and base_qs.filter(discipline_final_stage=self.discipline_final_stage).exists()
+            ):
+                raise ValidationError(
+                    {"discipline_final_stage": "Each discipline/classroom can only have one final exam for each stage."}
+                )
 
         if self.status == self.Status.PUBLISHED and self.published_at is None:
             self.published_at = timezone.now()

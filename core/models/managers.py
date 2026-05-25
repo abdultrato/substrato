@@ -1,10 +1,9 @@
 """Managers base: ativos e filtrados por soft delete."""
 
-from django.db import models
-from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
-from django.contrib.postgres.search import TrigramSimilarity
-from django.core.cache import cache
-import hashlib
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramSimilarity
+from django.core.exceptions import FieldDoesNotExist
+from django.db import connections, models
+from django.db.models import Q
 
 
 def _normalize_args(model, args):
@@ -23,6 +22,21 @@ def _normalize_fields(model, fields):
     if hasattr(model, "normalize_lookup_keys"):
         return model.normalize_lookup_keys(fields)
     return fields
+
+
+def _model_has_field(model, field_name: str) -> bool:
+    try:
+        model._meta.get_field(field_name)
+    except FieldDoesNotExist:
+        return False
+    return True
+
+
+def _first_model_field(model, field_names: tuple[str, ...]) -> str | None:
+    for field_name in field_names:
+        if _model_has_field(model, field_name):
+            return field_name
+    return None
 
 
 class QuerySetAtivo(models.QuerySet):
@@ -54,12 +68,27 @@ class QuerySetAtivo(models.QuerySet):
         return super().update(**_normalize_kwargs(self.model, kwargs))
 
     def ativos(self):
-        return self.filter(ativo=True, deleted=False)
+        filters = {}
+        active_field = _first_model_field(self.model, ("ativo", "active", "is_active"))
+        if active_field is not None:
+            filters[active_field] = True
+        if _model_has_field(self.model, "deleted"):
+            filters["deleted"] = False
+        return self.filter(**filters) if filters else self
 
     def inativos(self):
-        return self.filter(ativo=False, deleted=False)
+        active_field = _first_model_field(self.model, ("ativo", "active", "is_active"))
+        if active_field is None:
+            return self.none()
+
+        filters = {active_field: False}
+        if _model_has_field(self.model, "deleted"):
+            filters["deleted"] = False
+        return self.filter(**filters)
 
     def deletados(self):
+        if not _model_has_field(self.model, "deleted"):
+            return self.none()
         return self.filter(deleted=True)
 
     def search(self, query, fields=None, config=None, use_trigram=False, trigram_threshold=0.3):
@@ -81,28 +110,22 @@ class QuerySetAtivo(models.QuerySet):
         if not query:
             return self
 
-        # Create a cache key for this search query
-        cache_key = f"search_{hashlib.md5(f'{query}_{fields}_{config}_{use_trigram}_{trigram_threshold}'.encode()).hexdigest()}"
-
-        # Try to get cached results (for very frequent searches)
-        # Note: In practice, you might want to be more selective about what to cache
-        # cached_result = cache.get(cache_key)
-        # if cached_result is not None:
-        #     return cached_result
-
         # If no fields are provided, try to get the default searchable fields
         if fields is None:
             fields = []
-            # Check for 'name' field
-            if hasattr(self.model, 'name'):
-                fields.append('name')
-            # Check for 'custom_id' field
-            if hasattr(self.model, 'custom_id'):
-                fields.append('custom_id')
+            for default_field in ("name", "custom_id", "description"):
+                if _model_has_field(self.model, default_field):
+                    fields.append(default_field)
 
             # If we still have no fields, return empty queryset
             if not fields:
                 return self.none()
+
+        if connections[self.db].vendor != "postgresql":
+            conditions = Q()
+            for field in fields:
+                conditions |= Q(**{f"{field}__icontains": query})
+            return self.filter(conditions) if conditions else self.none()
 
         # Start with base queryset
         queryset = self
@@ -126,7 +149,6 @@ class QuerySetAtivo(models.QuerySet):
 
             if trigram_conditions:
                 # Combine trigram conditions with OR
-                from django.db.models import Q
                 combined_trigram = Q()
                 for condition in trigram_conditions:
                     combined_trigram |= condition
@@ -168,19 +190,15 @@ class QuerySetAtivo(models.QuerySet):
             # Standard full-text search ordering
             queryset = queryset.order_by('-rank')
 
-        # Cache the queryset (evaluate it to cache the actual results)
-        # Note: We don't cache QuerySets directly as they are lazy
-        # Instead, we could cache the evaluated results or count
-        # For now, we'll skip caching to avoid stale data issues
-        # list(queryset)  # Force evaluation
-        # cache.set(cache_key, list(queryset), 300)  # Cache for 5 minutes
-
         return queryset
 
 
 class ManagerAtivo(models.Manager.from_queryset(QuerySetAtivo)):
     def get_queryset(self):
-        return super().get_queryset().filter(deleted=False)
+        queryset = super().get_queryset()
+        if not _model_has_field(self.model, "deleted"):
+            return queryset
+        return queryset.filter(deleted=False)
 
 
 class AllObjectsManager(models.Manager.from_queryset(QuerySetAtivo)):

@@ -8,8 +8,6 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from rest_framework.exceptions import PermissionDenied
 
-from tasks.generate_pdf import SimplePDFAdminMixin
-
 from .models.invoice import Invoice
 from .models.invoice_items import InvoiceItem
 

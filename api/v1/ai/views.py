@@ -10,7 +10,10 @@ from rest_framework.views import APIView
 
 from apps.ai_assistant.models import AiInvestigation, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
-from apps.ai_assistant.services.investigation_followup import AiInvestigationFollowUpBuilder, AiInvestigationFollowUpError
+from apps.ai_assistant.services.investigation_followup import (
+    AiInvestigationFollowUpBuilder,
+    AiInvestigationFollowUpError,
+)
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
 from apps.ai_assistant.services.registry import AiToolRegistry

@@ -87,7 +87,7 @@ class FinancialReconciliationSerializer(LegacyAliasSerializerMixin, serializers.
     class Meta:
         model = FinancialReconciliation
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ("discrepancy", "reconciled")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "discrepancy", "reconciled")
 
 
 SERIALIZER_MAP = {

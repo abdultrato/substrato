@@ -1,23 +1,27 @@
 #!/usr/bin/env python
 """Gerar JSON estruturado final para mapeamento completo do Substrato."""
 import json
+import logging
 import os
 import sys
+
+import django
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 sys.path.insert(0, '.')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'platform.settings')
 
-import django
 django.setup()
 
-from django.apps import apps
 
 # Ler mapeamento gerado
-with open('mapeamento_completo.json', 'r', encoding='utf-8') as f:
+with open('mapeamento_completo.json', encoding='utf-8') as f:
     mapeamento = json.load(f)
 
 # Ler schema.json
-with open('frontend-next/schema.json', 'r', encoding='utf-8') as f:
+with open('frontend-next/schema.json', encoding='utf-8') as f:
     schema = json.load(f)
 
 # 1. Agrupar modelos por app
@@ -90,9 +94,9 @@ for modulo, rotas in mapeamento['endpoints_por_modulo'].items():
     endpoints_resumido[modulo] = {
         "total_endpoints": len(rotas),
         "rotas_amostra": [r['rota'] for r in rotas[:3]],
-        "metodos_disponíveis": list(set(
+        "metodos_disponíveis": list({
             m for r in rotas for m in r['metodos']
-        ))
+        })
     }
 
 # 5. Modelos por app - versão condensada
@@ -117,7 +121,7 @@ resultado_final = {
     "titulo": "Mapeamento Completo - Substrato ERP",
     "data_geracao": "2026-05-22",
     "versao_api": "1.0.0",
-    
+
     "resumo_geral": {
         "total_modelos": mapeamento['resumo']['total_modelos'],
         "total_apps": mapeamento['resumo']['total_apps'],
@@ -125,15 +129,15 @@ resultado_final = {
         "total_endpoints": sum(len(r) for r in mapeamento['endpoints_por_modulo'].values()),
         "arquitetura": "Django REST Framework + Next.js + OpenAPI/Swagger"
     },
-    
+
     "modelos_backend": modelos_resumido,
-    
+
     "endpoints_por_modulo": endpoints_resumido,
-    
+
     "autoform_info": autoform_info,
-    
+
     "schema_generation": schema_generation,
-    
+
     "fluxo_crud_completo": {
         "CREATE": {
             "método": "POST",
@@ -189,7 +193,7 @@ resultado_final = {
             ]
         }
     },
-    
+
     "stack_tecnológico": {
         "backend": [
             "Django 4.2+",
@@ -213,7 +217,7 @@ resultado_final = {
             "Sentry"
         ]
     },
-    
+
     "notas_importantes": [
         "Todos os endpoints têm permissões RBAC (RBACPermission)",
         "Multi-tenant: tenant é derivado automaticamente de request.tenant",
@@ -225,7 +229,7 @@ resultado_final = {
         "Versionamento automático com field 'version'",
         "Compatibilidade com aliases legados português/inglês nos serializers"
     ],
-    
+
     "exemplo_crud_patient": {
         "listar": "GET /api/v1/clinical/patient/",
         "criar": "POST /api/v1/clinical/patient/",
@@ -248,9 +252,9 @@ resultado_final = {
 with open('SUBSTRATO_MAPEAMENTO_COMPLETO.json', 'w', encoding='utf-8') as f:
     json.dump(resultado_final, f, indent=2, ensure_ascii=False)
 
-print("✓ Arquivo SUBSTRATO_MAPEAMENTO_COMPLETO.json criado com sucesso!")
-print(f"  - {resultado_final['resumo_geral']['total_modelos']} modelos mapeados")
-print(f"  - {resultado_final['resumo_geral']['total_endpoints']} endpoints catalogados")
-print(f"  - AutoForm documentado em detalhes")
-print(f"  - Schema generation explicado")
-print(f"  - Fluxo CRUD completo descrito")
+logger.info("✓ Arquivo SUBSTRATO_MAPEAMENTO_COMPLETO.json criado com sucesso!")
+logger.info("  - %s modelos mapeados", resultado_final['resumo_geral']['total_modelos'])
+logger.info("  - %s endpoints catalogados", resultado_final['resumo_geral']['total_endpoints'])
+logger.info("  - AutoForm documentado em detalhes")
+logger.info("  - Schema generation explicado")
+logger.info("  - Fluxo CRUD completo descrito")

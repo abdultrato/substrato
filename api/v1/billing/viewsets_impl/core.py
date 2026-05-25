@@ -25,7 +25,6 @@ from apps.billing.models.invoice_items import InvoiceItem
 from infrastructure.cache import CacheService
 from services.reports.async_exports import create_export_job
 from tasks.export_jobs import run_export_job
-from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
 from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, InvoiceSerializer

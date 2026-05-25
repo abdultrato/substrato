@@ -20,7 +20,6 @@ from apps.nursing.models import (
     WardBed,
 )
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",

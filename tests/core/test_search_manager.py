@@ -1,9 +1,10 @@
 """Tests for the search functionality in QuerySetAtivo."""
 
+from django.db import connection, models
 from django.test import TestCase
-from django.db import models
-from core.models.managers import QuerySetAtivo, ManagerAtivo, AllObjectsManager
+
 from core.models.base import BaseModel
+from core.models.managers import AllObjectsManager, ManagerAtivo
 
 
 # Define test model outside of test methods so it's properly registered
@@ -23,8 +24,62 @@ class TestSearchModel(BaseModel):
     all_objects = AllObjectsManager()
 
 
+class NoSearchModel(BaseModel):
+    some_field = models.CharField(max_length=100)
+
+    class Meta:
+        app_label = 'core'
+        db_table = 'core_nosearchmodel'
+
+    objects = ManagerAtivo()
+    all_objects = AllObjectsManager()
+
+
+class ActiveStateModel(BaseModel):
+    name = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
+    deleted = models.BooleanField(default=False)
+
+    class Meta:
+        app_label = 'core'
+        db_table = 'core_activestatemodel'
+
+    objects = ManagerAtivo()
+    all_objects = AllObjectsManager()
+
+
+def _create_table_if_missing(model):
+    if model._meta.db_table in connection.introspection.table_names():
+        return
+    with connection.schema_editor() as schema_editor:
+        schema_editor.create_model(model)
+
+
+def _drop_table_if_exists(model):
+    if model._meta.db_table not in connection.introspection.table_names():
+        return
+    with connection.schema_editor() as schema_editor:
+        schema_editor.delete_model(model)
+
+
 class TestSearchManager(TestCase):
     """Test the search manager functionality."""
+
+    @classmethod
+    def setUpClass(cls):
+        _create_table_if_missing(TestSearchModel)
+        _create_table_if_missing(NoSearchModel)
+        _create_table_if_missing(ActiveStateModel)
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            super().tearDownClass()
+        finally:
+            _drop_table_if_exists(ActiveStateModel)
+            _drop_table_if_exists(NoSearchModel)
+            _drop_table_if_exists(TestSearchModel)
 
     @classmethod
     def setUpTestData(cls):
@@ -83,13 +138,6 @@ class TestSearchManager(TestCase):
     def test_search_no_searchable_fields(self):
         """Test search on model with no searchable fields."""
 
-        class NoSearchModel(BaseModel):
-            some_field = models.CharField(max_length=100)
-
-            class Meta:
-                app_label = 'core'
-                db_table = 'core_nosearchmodel'
-
         # Create instance
         NoSearchModel.objects.create(some_field="test")
 
@@ -119,3 +167,19 @@ class TestSearchManager(TestCase):
         # (exact match in name field should rank higher than in description)
         if results.count() >= 2:
             self.assertIn(results.first().name, ["Johnny Doe", "Jane Johnson"])
+
+    def test_state_helpers_respect_available_active_and_deleted_fields(self):
+        ActiveStateModel.all_objects.create(name="active", active=True, deleted=False)
+        ActiveStateModel.all_objects.create(name="inactive", active=False, deleted=False)
+        ActiveStateModel.all_objects.create(name="deleted", active=True, deleted=True)
+
+        self.assertEqual(list(ActiveStateModel.objects.ativos().values_list("name", flat=True)), ["active"])
+        self.assertEqual(list(ActiveStateModel.objects.inativos().values_list("name", flat=True)), ["inactive"])
+        self.assertEqual(list(ActiveStateModel.all_objects.deletados().values_list("name", flat=True)), ["deleted"])
+
+    def test_state_helpers_are_safe_without_active_or_deleted_fields(self):
+        row = NoSearchModel.objects.create(some_field="visible")
+
+        self.assertEqual(list(NoSearchModel.objects.ativos()), [row])
+        self.assertEqual(list(NoSearchModel.objects.inativos()), [])
+        self.assertEqual(list(NoSearchModel.objects.deletados()), [])

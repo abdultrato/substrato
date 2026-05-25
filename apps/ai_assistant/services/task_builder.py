@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import re
 from datetime import timedelta
+import re
 from typing import Any
 
 from django.utils import timezone
 
 from security.permissions.rbac import GROUPS as RBAC_GROUPS
-
 
 TASK_GROUPS = (
     RBAC_GROUPS["ADMIN"],

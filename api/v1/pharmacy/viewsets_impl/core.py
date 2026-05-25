@@ -184,34 +184,21 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
             "rows": rows,
         }
 
-        tenant = getattr(request, "tenant", None)
-        user = getattr(request, "user", None)
-
-        job_state = create_export_job(
+        queued = queue_export_if_requested(
+            request,
             export_key="pharmacy_stock_pdf",
             payload=payload,
-            tenant_id=tenant.id if tenant else None,
-            user_id=user.id if user else None,
             content_disposition="inline",
         )
+        if queued is not None:
+            return queued
 
-        run_export_job.delay(job_state["id"])
+        from tasks.generate_pdf.pharmacy_reports_pdf_generator import generate_pharmacy_stock_pdf
 
-        return Response(
-            {
-                "job_id": job_state["id"],
-                "status": "queued",
-                "export_key": "pharmacy_stock_pdf",
-                "created_at": job_state["created_at"],
-                "status_url": request.build_absolute_uri(
-                    f"/api/v1/monitoring/export_job/{job_state['id']}/"
-                ),
-                "download_url": request.build_absolute_uri(
-                    f"/api/v1/monitoring/export_job/{job_state['id']}/download/"
-                ),
-            },
-            status=202,
-        )
+        pdf_bytes, filename = generate_pharmacy_stock_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
 
 class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

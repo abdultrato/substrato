@@ -4,9 +4,7 @@ import io
 import os
 
 from django.conf import settings
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.units import cm
 from reportlab.platypus import (
     HRFlowable,
     Paragraph,
@@ -18,7 +16,17 @@ from reportlab.platypus import (
 
 from domain.clinical.result_state import ResultState
 
+from .pdf_base import (
+    NumberedCanvas,
+    append_fim,
+    cell_paragraph,
+    draw_line_full_width,
+    institutional_user_identity,
+    montar_bloco_identificacao,
+    pdf_encryption,
+)
 from .pdf_improvements import (
+    FONT_IMPROVED_BOLD,
     A5Margins,
     DocumentType,
     bold_text,
@@ -26,21 +34,6 @@ from .pdf_improvements import (
     draw_header_improved,
     section_style_improved,
     title_style_improved,
-    FONT_IMPROVED_BOLD,
-)
-from .pdf_base import (
-    FONT_BOLD,
-    NumberedCanvas,
-    append_fim,
-    bold,
-    cell_paragraph,
-    document_section_style,
-    document_title_style,
-    draw_line_full_width,
-    institutional_user_identity,
-    montar_bloco_identificacao,
-    on_page,
-    pdf_encryption,
 )
 
 
@@ -87,7 +80,7 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     # Obter tenant para personalizar cabeçalho
     tenant = getattr(patient, "tenant", None)
     tenant_name = getattr(tenant, "name", "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
-    
+
     # Construir cabeçalho personalizado para laboratório
     header_config = build_personalized_header(
         doc_type=DocumentType.LABORATORY_RESULT,

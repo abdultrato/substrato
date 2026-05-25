@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
+import unicodedata
 
 from security.permissions.rbac import GROUPS as RBAC_GROUPS
 

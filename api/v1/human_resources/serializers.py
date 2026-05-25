@@ -13,7 +13,6 @@ from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
 from apps.human_resources.models.work_schedule import WorkSchedule
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",

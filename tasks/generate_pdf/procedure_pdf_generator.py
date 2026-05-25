@@ -10,34 +10,28 @@ from django.conf import settings
 from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
-from reportlab.lib.units import cm
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from apps.pharmacy.models.product import Product
 
-from .pdf_improvements import (
-    A5Margins,
-    DocumentType,
-    bold_text,
-    build_personalized_header,
-    draw_header_improved,
-    section_style_improved,
-    title_style_improved,
-    FONT_IMPROVED_BOLD,
-)
 from .pdf_base import (
-    FONT_BOLD,
     NumberedCanvas,
     append_fim,
-    bold,
     cell_paragraph,
-    document_section_style,
-    document_title_style,
     draw_line_full_width,
     institutional_user_identity,
     montar_bloco_identificacao,
     on_page,
     pdf_encryption,
+)
+from .pdf_improvements import (
+    FONT_IMPROVED_BOLD,
+    A5Margins,
+    DocumentType,
+    bold_text,
+    build_personalized_header,
+    section_style_improved,
+    title_style_improved,
 )
 
 
@@ -140,7 +134,7 @@ def _collect_unique_invoices(procedure):
 def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
     """Monta e devolve o PDF do procedimento de enfermagem com cabeçalho personalizado."""
     buffer = io.BytesIO()
-    
+
     # Usar margens otimizadas para A5
     usable_width = A5Margins.usable_width()
 
@@ -161,11 +155,11 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
 
     patient = procedure.patient
     user_documento = _resolve_document_user(procedure, request=request)
-    
+
     # Obter tenant para personalizar cabeçalho
     tenant = getattr(patient, "tenant", None)
     tenant_name = getattr(tenant, "name", "SERVIÇO DE ENFERMAGEM")
-    
+
     # Construir cabeçalho personalizado para enfermagem (Vermelho)
     header_config = build_personalized_header(
         doc_type=DocumentType.NURSING_PROCEDURE,

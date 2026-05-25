@@ -54,6 +54,7 @@ from .views import (
 )
 
 __all__ = [
+    "PDF_GENERATORS_REGISTRY",
     "A5Margins",
     "DocumentType",
     "NumberedCanvas",
@@ -101,7 +102,6 @@ __all__ = [
     "validate_code",
     "validate_minimum_text",
     "validate_percentage",
-    "PDF_GENERATORS_REGISTRY",
 ]
 
 RequisicaoPdf = RequestPdfView

@@ -2,7 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from apps.education.models import AttendanceRecord, Classroom, Course, Enrollment, GradeRecord, StudentProfile, TeacherProfile
+from apps.education.models import (
+    AttendanceRecord,
+    Classroom,
+    Course,
+    Enrollment,
+    GradeRecord,
+    StudentProfile,
+    TeacherProfile,
+)
 from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
 from .base import AiTool, AiToolContext

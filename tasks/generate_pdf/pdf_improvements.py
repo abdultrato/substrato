@@ -14,10 +14,9 @@ from functools import lru_cache
 import io
 import logging
 import os
-from PIL import Image, ImageDraw
 
 from django.conf import settings
-from django.utils import timezone
+from PIL import Image
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A5
@@ -27,7 +26,6 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
 logger = logging.getLogger("pdf.improvements")
 
 # =========================================================
@@ -36,7 +34,7 @@ logger = logging.getLogger("pdf.improvements")
 
 class DocumentType:
     """Tipos de documentos suportados com configurações específicas."""
-    
+
     LABORATORY_RESULT = "laboratory_result"
     NURSING_PROCEDURE = "nursing_procedure"
     MEDICAL_REPORT = "medical_report"
@@ -47,7 +45,7 @@ class DocumentType:
     PATIENT_HISTORY = "patient_history"
     ANALYTICS = "analytics"
     REQUEST = "request"
-    
+
     SECTOR_HEADERS = {
         LABORATORY_RESULT: {
             "title": "LABORATÓRIO DE ANÁLISES CLÍNICAS",
@@ -127,7 +125,7 @@ def _first_existing(paths: list[str]) -> str | None:
 def _configure_fonts_improved() -> tuple[str, str]:
     """
     Configura fontes otimizadas para documentos clínicos.
-    
+
     Ordem de preferência:
     1) Calibri (Microsoft, muito legível para documentos)
     2) Segoe UI (Microsoft, profissional)
@@ -135,9 +133,9 @@ def _configure_fonts_improved() -> tuple[str, str]:
     4) Liberation Sans (fallback livre)
     5) Helvetica (fallback final)
     """
-    
+
     base_dir = getattr(settings, "BASE_DIR", os.getcwd())
-    
+
     # 1) Calibri (preferido)
     calibri_paths = [
         os.path.join(base_dir, "static", "fonts", "Calibri.ttf"),
@@ -145,17 +143,17 @@ def _configure_fonts_improved() -> tuple[str, str]:
         "/usr/share/fonts/truetype/msttcorefonts/Calibri.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     ]
-    
+
     calibri_bold_paths = [
         os.path.join(base_dir, "static", "fonts", "Calibri-Bold.ttf"),
         os.path.join(base_dir, "static", "fonts", "calibrib.ttf"),
         "/usr/share/fonts/truetype/msttcorefonts/Calibri_Bold.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
     ]
-    
+
     calibri_regular = _first_existing(calibri_paths)
     calibri_bold = _first_existing(calibri_bold_paths)
-    
+
     if calibri_regular and calibri_bold:
         try:
             pdfmetrics.registerFont(TTFont("Calibri", calibri_regular))
@@ -164,21 +162,21 @@ def _configure_fonts_improved() -> tuple[str, str]:
             return "Calibri", "Calibri-Bold"
         except Exception as err:
             logger.warning("Falha ao registar Calibri. Tentando Segoe.", exc_info=err)
-    
+
     # 2) Segoe UI (fallback Microsoft)
     segoe_paths = [
         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     ]
-    
+
     segoe_bold_paths = [
         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     ]
-    
+
     segoe_regular = _first_existing(segoe_paths)
     segoe_bold = _first_existing(segoe_bold_paths)
-    
+
     if segoe_regular and segoe_bold:
         try:
             pdfmetrics.registerFont(TTFont("Segoe", segoe_regular))
@@ -187,7 +185,7 @@ def _configure_fonts_improved() -> tuple[str, str]:
             return "Segoe", "Segoe-Bold"
         except Exception as err:
             logger.warning("Falha ao registar Segoe. Usando Helvetica.", exc_info=err)
-    
+
     # 3) Fallback final (Helvetica)
     logger.warning("⚠ Fontes otimizadas não disponíveis — usando Helvetica (fallback)")
     return "Helvetica", "Helvetica-Bold"
@@ -204,14 +202,14 @@ FONT_IMPROVED, FONT_IMPROVED_BOLD = _configure_fonts_improved()
 def _safe_image_reader_transparent(path: str):
     """
     Processa logo com suporte a fundo transparente.
-    
+
     Converte para PNG com transparência, removendo fundos sólidos ou
     mantendo transparência se já existir.
     """
     if not path or not os.path.exists(path):
         logger.warning("Logo não encontrado: %s", path)
         return None
-    
+
     try:
         with Image.open(path) as img:
             # Se já tiver transparência, manter
@@ -220,22 +218,22 @@ def _safe_image_reader_transparent(path: str):
                 img.save(buf, format="PNG", optimize=True)
                 buf.seek(0)
                 return ImageReader(buf)
-            
+
             # Converter para RGBA para transparência
             if img.mode != "RGBA":
                 img = img.convert("RGBA")
-            
+
             # Se tiver fundo branco ou próximo de branco, tentar remover
             # Detectar cor dominante das bordas e remover
             if hasattr(img, "getextrema"):
                 try:
                     # Simples: se a cor da borda é clara, tornar transparente
                     pixels = img.load()
-                    width, height = img.size
-                    
+                    _width, _height = img.size
+
                     # Amostrar cor da borda (canto superior esquerdo)
                     edge_color = pixels[0, 0]
-                    
+
                     # Se for branco ou muito claro (RGB > 200), remover
                     if len(edge_color) >= 3:
                         r, g, b = edge_color[:3]
@@ -252,14 +250,14 @@ def _safe_image_reader_transparent(path: str):
                             img.putdata(new_data)
                 except Exception as e:
                     logger.debug("Não foi possível remover fundo. Mantendo original: %s", e)
-            
+
             # Salvar como PNG com transparência
             buf = io.BytesIO()
             img.save(buf, format="PNG", optimize=True)
             buf.seek(0)
             logger.info("✓ Logo processada com transparência")
             return ImageReader(buf)
-            
+
     except Exception as err:
         logger.warning("Falha ao processar logo com transparência.", exc_info=err)
         return None
@@ -350,18 +348,18 @@ def cell_style_improved(is_bold=False, name="CellImproved"):
 
 class A5Margins:
     """Margens otimizadas para documentos A5 (tamanho reduzido)."""
-    
+
     # Margens mínimas (0.8 cm = ~0.3 polegadas)
     LEFT = 0.8 * cm
     RIGHT = 0.8 * cm
     TOP = 3.5 * cm  # Para cabeçalho
     BOTTOM = 1.8 * cm
-    
+
     # Espaçamento compacto
     SECTION_SPACING = 0.08 * cm
     ROW_SPACING = 0.06 * cm
     PARAGRAPH_SPACING = 0.05 * cm
-    
+
     @classmethod
     def usable_width(cls) -> float:
         """Largura utilizável após margens."""
@@ -376,25 +374,25 @@ class A5Margins:
 def build_personalized_header(
     doc_type: str = DocumentType.LABORATORY_RESULT,
     tenant_name: str = "INSTITUIÇÃO",
-    logo_path: str = None,
+    logo_path: str | None = None,
 ) -> dict:
     """
     Constrói configuração personalizada de cabeçalho.
-    
+
     Args:
         doc_type: Um dos DocumentType.* constants
         tenant_name: Nome do tenant/instituição
         logo_path: Caminho opcional para logo
-    
+
     Returns:
         Dicionário com configurações de cabeçalho
     """
-    
+
     header_config = DocumentType.SECTOR_HEADERS.get(
         doc_type,
         DocumentType.SECTOR_HEADERS[DocumentType.LABORATORY_RESULT]
     )
-    
+
     return {
         "doc_type": doc_type,
         "tenant_name": tenant_name or "INSTITUIÇÃO",
@@ -409,29 +407,29 @@ def build_personalized_header(
 def draw_header_improved(canvas_obj, doc, header_config: dict):
     """
     Desenha cabeçalho personalizado com suporte a múltiplos tipos.
-    
+
     Args:
         canvas_obj: ReportLab canvas
         doc: SimpleDocTemplate
         header_config: Resultado de build_personalized_header()
     """
     canvas_obj.saveState()
-    
+
     page_w, page_h = doc.pagesize
     left_margin = getattr(doc, "leftMargin", A5Margins.LEFT)
     right_margin = getattr(doc, "rightMargin", A5Margins.RIGHT)
     top_margin = getattr(doc, "topMargin", A5Margins.TOP)
-    
+
     logo = None
     logo_path = header_config.get("logo_path")
     if logo_path:
         logo = _safe_image_reader_transparent(logo_path)
-    
+
     # Logo
     logo_w, logo_h = 2.8 * cm, 2.3 * cm
     logo_x = left_margin + 0.1 * cm
     logo_y = page_h - top_margin + 0.8 * cm
-    
+
     if logo:
         try:
             canvas_obj.drawImage(
@@ -445,38 +443,38 @@ def draw_header_improved(canvas_obj, doc, header_config: dict):
             )
         except Exception as e:
             logger.warning("Falha ao desenhar logo: %s", e)
-    
+
     # Texto do cabeçalho (dinâmico por setor)
     text_x = logo_x + logo_w + 0.4 * cm
     text_top_y = logo_y + logo_h - 0.25 * cm
-    
+
     sector_color = header_config.get("sector_color", colors.HexColor("#1976D2"))
     tenant_name = header_config.get("tenant_name", "INSTITUIÇÃO")
     sector_title = header_config.get("sector_title", "DOCUMENTO")
     sector_subtitle = header_config.get("sector_subtitle", "")
-    
+
     try:
         canvas_obj.setFillColor(sector_color)
         canvas_obj.setFont(FONT_IMPROVED_BOLD, 10)
         canvas_obj.drawString(text_x, text_top_y, tenant_name.upper())
-        
+
         canvas_obj.setFillColor(sector_color)
         canvas_obj.setFont(FONT_IMPROVED_BOLD, 9)
         canvas_obj.drawString(text_x, text_top_y - 0.50 * cm, sector_title)
-        
+
         if sector_subtitle:
             canvas_obj.setFillColor(colors.HexColor("#666666"))
             canvas_obj.setFont(FONT_IMPROVED, 8)
             canvas_obj.drawString(text_x, text_top_y - 0.90 * cm, sector_subtitle)
     except Exception as e:
         logger.warning("Falha ao desenhar texto do cabeçalho: %s", e)
-    
+
     # Linha divisória
     y_line = logo_y - 0.25 * cm
     canvas_obj.setStrokeColor(sector_color)
     canvas_obj.setLineWidth(1.5)
     canvas_obj.line(left_margin, y_line, page_w - right_margin, y_line)
-    
+
     canvas_obj.restoreState()
 
 
@@ -500,6 +498,8 @@ def bold_colored_text(text: str, color: str = "#1976D2") -> str:
 
 
 __all__ = [
+    "FONT_IMPROVED",
+    "FONT_IMPROVED_BOLD",
     "A5Margins",
     "DocumentType",
     "bold_colored_text",
@@ -513,6 +513,4 @@ __all__ = [
     "section_style_improved",
     "subtitle_style_improved",
     "title_style_improved",
-    "FONT_IMPROVED",
-    "FONT_IMPROVED_BOLD",
 ]

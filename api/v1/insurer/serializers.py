@@ -6,7 +6,6 @@ from apps.insurer.models.insurer import Insurer
 from apps.insurer.models.procedure_authorization import ProcedureAuthorization
 from apps.insurer.models.tenant_coverage_plan import TenantCoveragePlan
 
-
 CORE_READ_ONLY_FIELDS = (
     "id",
     "custom_id",

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import unicodedata
 from typing import TYPE_CHECKING
+import unicodedata
 
 from core.constants.laboratory.clinical_status import ClinicalStatus
 
@@ -21,7 +21,7 @@ def _normalize(value: str) -> str:
     return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
 
 
-def _origin_group_metadata(lab_request: "LabRequest") -> tuple[str, bool]:
+def _origin_group_metadata(lab_request: LabRequest) -> tuple[str, bool]:
     """
     Retorna (label_origem, pode_gerar_registro_automatico).
 
@@ -65,7 +65,7 @@ def _origin_group_metadata(lab_request: "LabRequest") -> tuple[str, bool]:
     return "Outro", False
 
 
-def _priority_from_clinical_status(lab_request: "LabRequest") -> str:
+def _priority_from_clinical_status(lab_request: LabRequest) -> str:
     urgent_statuses = {
         ClinicalStatus.URGENT,
         ClinicalStatus.VERY_URGENT,
@@ -86,7 +86,7 @@ def _priority_from_clinical_status(lab_request: "LabRequest") -> str:
     return NursingRecord.Prioridade.NORMAL
 
 
-def _format_observation(lab_request: "LabRequest", collection_guidance: list[dict]) -> str:
+def _format_observation(lab_request: LabRequest, collection_guidance: list[dict]) -> str:
     intro = (
         f"Entrada automática de enfermagem para coleta: {lab_request.custom_id}. "
         f"Paciente: {lab_request.patient.name}."
@@ -114,7 +114,7 @@ def _format_observation(lab_request: "LabRequest", collection_guidance: list[dic
     return "\n".join(lines)
 
 
-def sync_lab_collection_record(lab_request: "LabRequest") -> NursingRecord | None:
+def sync_lab_collection_record(lab_request: LabRequest) -> NursingRecord | None:
     """
     Mantém um registo de entrada de enfermagem sincronizado com a requisição LAB.
     """

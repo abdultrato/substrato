@@ -17,7 +17,6 @@ from .resource_catalog import (
     user_can_read_resource,
 )
 
-
 DATA_QUERY_TERMS = (
     "quantos",
     "quantas",

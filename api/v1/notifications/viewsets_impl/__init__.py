@@ -3,6 +3,6 @@ from .core import VIEWSET_MAP, DeliveryLogViewSet, NotificationTemplateViewSet, 
 __all__ = [
     "VIEWSET_MAP",
     "DeliveryLogViewSet",
-    "NotificationViewSet",
     "NotificationTemplateViewSet",
+    "NotificationViewSet",
 ]

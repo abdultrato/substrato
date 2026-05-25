@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 RUNTIME_SURFACES = (

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple
 import hashlib
 import json
+from typing import Any
 
 
 class LocalLlmGateway:
@@ -17,7 +17,7 @@ class LocalLlmGateway:
     provider = "local"
 
     # Cache simples em memoria (em producao, usar Redis ou similar)
-    _cache: Dict[str, str] = {}
+    _cache: dict[str, str] = {}
     _max_cache_size = 100  # Limite simples para evitar crescimento infinito
 
     def _get_cache_key(
@@ -46,6 +46,12 @@ class LocalLlmGateway:
         # Return MD5 hash as the cache key
         return hashlib.md5(cache_string.encode()).hexdigest()
 
+    def _remember(self, cache_key: str, result: str) -> str:
+        self._cache[cache_key] = result
+        if len(self._cache) > self._max_cache_size:
+            self._cache.pop(next(iter(self._cache)), None)
+        return result
+
     def build_answer(
         self,
         *,
@@ -63,66 +69,36 @@ class LocalLlmGateway:
         denied_result = next((item for item in tool_results if (item.get("result") or {}).get("access_denied")), None)
         if denied_result:
             result = self._access_denied_answer(denied_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            # Simple cache eviction: remove oldest if over limit
-            if len(self._cache) > self._max_cache_size:
-                # Remove first item (FIFO - simple but not optimal)
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         project_identity_result = next((item for item in tool_results if item.get("tool_name") == "get_project_identity"), None)
         if project_identity_result:
             result = self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         knowledge_result = next((item for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
         if knowledge_result:
             result = self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
         if sql_analytics_result:
             result = self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
         if crud_result:
             result = self._crud_answer(crud_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
         data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
         if user_context_result and len(tool_results) == 1:
             result = self._user_context_answer(user_context_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
         if data_explorer_result and len(tool_results) == 1:
             result = self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
         if user_context_result and data_explorer_result and len(tool_results) == 2:
             result = "\n\n".join(
                 [
@@ -130,20 +106,12 @@ class LocalLlmGateway:
                     self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
                 ]
             )
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         command_result = next((item for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
         if command_result and len(tool_results) == 1:
             result = self._command_center_answer(command_result.get("result") or {}, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         if command_result and len(tool_results) > 1:
             other_results = [item for item in tool_results if item.get("tool_name") != "get_command_center_alerts"]
@@ -153,19 +121,11 @@ class LocalLlmGateway:
                     self._generic_tool_answer(other_results, language=language),
                 ]
             )
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         if tool_results:
             result = self._generic_tool_answer(tool_results, language=language)
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         if blocked_tools:
             if language == "en":
@@ -182,11 +142,7 @@ class LocalLlmGateway:
                     "Limitação: nenhum dado operacional foi consultado depois do bloqueio de política.\n"
                     "Próximo passo sugerido: peça a um administrador para rever o seu perfil de acesso."
                 )
-            self._cache[cache_key] = result
-            if len(self._cache) > self._max_cache_size:
-                if self._cache:
-                    del self._cache[next(iter(self._cache))]
-            return result
+            return self._remember(cache_key, result)
 
         if language == "en":
             result = (
@@ -202,11 +158,7 @@ class LocalLlmGateway:
                 "Limitação: só executo ferramentas que correspondem à pergunta e ao seu perfil RBAC.\n"
                 "Próximo passo sugerido: pergunte por alertas activos, requisições clínicas, pendências de enfermagem, financeiro, farmácia ou educação."
             )
-        self._cache[cache_key] = result
-        if len(self._cache) > self._max_cache_size:
-            if self._cache:
-                del self._cache[next(iter(self._cache))]
-        return result
+        return self._remember(cache_key, result)
 
     def _command_center_answer(self, result: dict[str, Any], *, language: str) -> str:
         totals = result.get("global_totals") or {}
@@ -584,7 +536,7 @@ class LocalLlmGateway:
                     if date_filter_applied:
                         direct += f" The range filter used {date_field or 'the available date field'} between {start_date} and {end_date}."
                     else:
-                        direct += f" I could not apply the requested date range because this resource has no compatible date field."
+                        direct += " I could not apply the requested date range because this resource has no compatible date field."
                 if search_query:
                     direct += f" Text filter: '{search_query}'."
 

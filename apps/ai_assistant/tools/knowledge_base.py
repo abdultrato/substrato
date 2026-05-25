@@ -4,11 +4,10 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from functools import lru_cache
 import re
-from typing import Any, List, Tuple, Optional
-import numpy as np
+from typing import Any
 
-from apps.ai_assistant.tools.resource_catalog import normalize_text
 from apps.ai_assistant.services.vector_store import get_vector_store_service
+from apps.ai_assistant.tools.resource_catalog import normalize_text
 
 from .base import AiTool, AiToolContext
 
@@ -224,7 +223,7 @@ def rank_knowledge_entries(message: str, *, limit: int = 5, tenant=None, active_
     return ranked[:limit]
 
 
-def _vector_search_knowledge_entries(message: str, *, limit: int = 5, tenant=None) -> List[Tuple[str, float]]:
+def _vector_search_knowledge_entries(message: str, *, limit: int = 5, tenant=None) -> list[tuple[str, float]]:
     """
     Search for knowledge entries using vector similarity.
 
@@ -245,8 +244,7 @@ def _vector_search_knowledge_entries(message: str, *, limit: int = 5, tenant=Non
             vector_store.rebuild_index()
 
         # Search using vector similarity
-        results = vector_store.search(message, k=limit)
-        return results
+        return vector_store.search(message, k=limit)
     except Exception:
         # If vector search fails, return empty to fall back to text search
         return []

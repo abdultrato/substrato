@@ -9,10 +9,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 # 1. Importar o mixin
-from tasks.generate_pdf import SimplePDFAdminMixin, PDFAdminMixin
+from tasks.generate_pdf import PDFAdminMixin, SimplePDFAdminMixin, generate_results_pdf
 
 # 2. Importar os models
-from .models import LabRequest, LabResult, Patient, Consultation
+from .models import Consultation, LabRequest, LabResult, Patient
 
 # ============================================================
 # EXEMPLO 1: SimplePDFAdminMixin - Auto-detect (RECOMENDADO)
@@ -23,16 +23,16 @@ from .models import LabRequest, LabResult, Patient, Consultation
 class LabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """
     Admin de Requisição de Exames com PDF automático.
-    
+
     O mixin procura automaticamente por:
     - PDF_GENERATORS_REGISTRY["clinical.labrequest"]
-    
+
     Se encontrado, adiciona:
     - Botão "Download PDF" no list view
     - Ação "⬇ Baixar PDF" no dropdown
     - URL /admin/clinical/labrequest/{pk}/download-pdf/
     """
-    
+
     list_display = [
         "id",
         "patient",
@@ -40,25 +40,25 @@ class LabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
         "created_at",
         "get_pdf_button_html",  # ← Botão de PDF
     ]
-    
+
     list_filter = [
         "created_at",
         "status",
         "tenant",
     ]
-    
+
     search_fields = [
         "patient__name",
         "doctor__name",
         "id",
     ]
-    
+
     readonly_fields = [
         "created_at",
         "updated_at",
         "get_pdf_button_html",  # ← Tornar visível no change view
     ]
-    
+
     fieldsets = (
         ("Informações Gerais", {
             "fields": ("id", "patient", "doctor", "status", "created_at", "updated_at")
@@ -71,14 +71,14 @@ class LabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
             "classes": ("collapse",),
         }),
     )
-    
+
     date_hierarchy = "created_at"
 
 
 @admin.register(LabResult)
 class LabResultAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """Admin de Resultado de Exames com PDF automático."""
-    
+
     list_display = [
         "id",
         "request",
@@ -86,24 +86,24 @@ class LabResultAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
         "status",
         "get_pdf_button_html",
     ]
-    
+
     list_filter = [
         "created_at",
         "status",
         "test_type",
     ]
-    
+
     search_fields = [
         "request__patient__name",
         "test_type",
     ]
-    
+
     readonly_fields = [
         "created_at",
         "updated_at",
         "get_pdf_button_html",
     ]
-    
+
     fieldsets = (
         ("Resultado", {
             "fields": ("request", "test_type", "result_value", "unit", "reference_range")
@@ -120,7 +120,7 @@ class LabResultAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
 @admin.register(Patient)
 class PatientAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """Admin de Paciente com PDF automático (histórico)."""
-    
+
     list_display = [
         "id",
         "name",
@@ -128,25 +128,25 @@ class PatientAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
         "created_at",
         "get_pdf_button_html",
     ]
-    
+
     list_filter = [
         "created_at",
         "gender",
         "status",
     ]
-    
+
     search_fields = [
         "name",
         "cpf",
         "email",
     ]
-    
+
     readonly_fields = [
         "created_at",
         "updated_at",
         "get_pdf_button_html",
     ]
-    
+
     fieldsets = (
         ("Dados Pessoais", {
             "fields": ("name", "date_of_birth", "gender", "cpf")
@@ -168,23 +168,20 @@ class PatientAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
 # EXEMPLO 2: PDFAdminMixin - Customizado Manualmente
 # ============================================================
 
-from tasks.generate_pdf import generate_results_pdf, generate_request_pdf
-
-
 @admin.register(Consultation)
 class ConsultationAdmin(PDFAdminMixin, admin.ModelAdmin):
     """
     Admin de Consulta com gerador de PDF customizado.
-    
+
     Aqui especificamos manualmente qual gerador usar.
     """
-    
+
     # Configurar qual gerador usar
     pdf_generator = generate_results_pdf  # Reutilizar gerador existente
     pdf_filename_template = "consulta_{pk}.pdf"
     pdf_action_label = "📝 Gerar Resumo (PDF)"
     pdf_icon_html = "📄"
-    
+
     list_display = [
         "id",
         "patient",
@@ -193,7 +190,7 @@ class ConsultationAdmin(PDFAdminMixin, admin.ModelAdmin):
         "status",
         "get_pdf_button_html",
     ]
-    
+
     readonly_fields = [
         "created_at",
         "get_pdf_button_html",
@@ -227,7 +224,7 @@ class AdvancedLabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     """
     Exemplo com customizações avançadas.
     """
-    
+
     list_display = [
         "id",
         "patient",
@@ -236,30 +233,30 @@ class AdvancedLabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
         "created_at",
         "get_pdf_button_html",
     ]
-    
+
     # Adicionar filters mais sofisticados
     list_filter = [
         ("created_at", admin.DateFieldListFilter),
         ("status", admin.ChoicesFieldListFilter),
     ]
-    
+
     # Adicionar ações customizadas
     actions = ["mark_as_completed", "mark_as_cancelled"]
-    
+
     def mark_as_completed(self, request, queryset):
         """Ação: Marcar como completado."""
         updated = queryset.update(status="completed")
         self.message_user(request, f"{updated} requisições marcadas como completadas.")
-    
+
     mark_as_completed.short_description = "✓ Marcar como completado"
-    
+
     def mark_as_cancelled(self, request, queryset):
         """Ação: Marcar como cancelado."""
         updated = queryset.update(status="cancelled")
         self.message_user(request, f"{updated} requisições canceladas.")
-    
+
     mark_as_cancelled.short_description = "✗ Cancelar"
-    
+
     def status_badge(self, obj):
         """Mostrar status como badge colorido."""
         colors = {
@@ -274,7 +271,7 @@ class AdvancedLabRequestAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
             color,
             obj.get_status_display(),
         )
-    
+
     status_badge.short_description = "Status"
 
 

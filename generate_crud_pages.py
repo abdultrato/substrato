@@ -5,11 +5,13 @@ Lê SUBSTRATO_MAPEAMENTO_COMPLETO.json e gera páginas para TODOS os modelos
 """
 
 import json
-import os
+import logging
 from pathlib import Path
-from typing import Any, Dict, List
 import sys
-from string import Template
+from typing import Any
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 # Constantes
 FRONTEND_PATH = Path("frontend-next/app")
@@ -126,7 +128,7 @@ export default function Create$ModelNamePage() {
     <AppLayout>
       <div className="max-w-2xl space-y-4">
         <h1 className="text-2xl font-bold">Novo $ModelName</h1>
-        
+
         <AutoForm
           endpoint="/api/v1/$module/$model_plural/"
           method="post"
@@ -241,25 +243,24 @@ def pluralize(name: str) -> str:
     """Pluraliza um nome simples (não perfeito, mas funcional)"""
     if name.endswith("y"):
         return name[:-1] + "ies"
-    elif name.endswith(("s", "x", "z")):
+    if name.endswith(("s", "x", "z")):
         return name + "es"
-    else:
-        return name + "s"
+    return name + "s"
 
 
-def create_crud_pages(model_info: Dict[str, Any], module: str) -> None:
+def create_crud_pages(model_info: dict[str, Any], module: str) -> None:
     """Cria as páginas CRUD para um modelo"""
     model_name = model_info["nome"]
     model_name_kebab = camel_to_kebab(model_name)
     model_plural = pluralize(model_name_kebab)
-    
+
     module_path = FRONTEND_PATH / module / model_plural
-    
+
     # Cria diretório base
     module_path.mkdir(parents=True, exist_ok=True)
     (module_path / "new").mkdir(exist_ok=True)
     (module_path / "[id]").mkdir(exist_ok=True)
-    
+
     # Página de listagem
     list_page = TEMPLATE_PAGE_LIST.format(
         ModelName=model_name,
@@ -270,7 +271,7 @@ def create_crud_pages(model_info: Dict[str, Any], module: str) -> None:
     )
     with open(module_path / "page.tsx", "w", encoding="utf-8") as f:
         f.write(list_page)
-    
+
     # Página de criação
     create_page = TEMPLATE_PAGE_CREATE.format(
         ModelName=model_name,
@@ -279,7 +280,7 @@ def create_crud_pages(model_info: Dict[str, Any], module: str) -> None:
     )
     with open(module_path / "new" / "page.tsx", "w", encoding="utf-8") as f:
         f.write(create_page)
-    
+
     # Página de detalhe/edição
     detail_page = TEMPLATE_PAGE_DETAIL.format(
         ModelName=model_name,
@@ -288,18 +289,18 @@ def create_crud_pages(model_info: Dict[str, Any], module: str) -> None:
     )
     with open(module_path / "[id]" / "page.tsx", "w", encoding="utf-8") as f:
         f.write(detail_page)
-    
-    # Layout do módulo (index)
-    layout = f'''\"use client\";
 
-export default function Layout({{ children }}) {{
+    # Layout do módulo (index)
+    layout = '''\"use client\";
+
+export default function Layout({ children }) {
   return children;
-}}
+}
 '''
     with open(module_path / "layout.tsx", "w", encoding="utf-8") as f:
         f.write(layout)
-    
-    print(f"✅ {module}/{model_plural} - 3 páginas CRUD criadas")
+
+    logger.info("✅ %s/%s - 3 páginas CRUD criadas", module, model_plural)
 
 
 def generate_menu_sidebar() -> str:
@@ -311,24 +312,24 @@ import { useState } from "react";
 
 const MODULES = {
 '''
-    
+
     # Lê mapeamento
-    with open(MAPEAMENTO_FILE, "r", encoding="utf-8") as f:
+    with open(MAPEAMENTO_FILE, encoding="utf-8") as f:
         mapeamento = json.load(f)
-    
+
     modelos_backend = mapeamento.get("modelos_backend", {})
-    
+
     for module, info in modelos_backend.items():
         modelos = info.get("modelos", [])
         menu_code += f'  "{module}": [\n'
-        
+
         for modelo in modelos:
             model_name = modelo["nome"]
             model_plural = pluralize(camel_to_kebab(model_name))
             menu_code += f'    {{ nome: "{model_name}", href: "/{module}/{model_plural}" }},\n'
-        
+
         menu_code += "  ],\n"
-    
+
     menu_code += '''};
 
 export default function CrudSidebar() {
@@ -369,58 +370,58 @@ export default function CrudSidebar() {
 
 def main():
     """Função principal"""
-    print("🚀 Iniciando geração de páginas CRUD...")
-    
+    logger.info("🚀 Iniciando geração de páginas CRUD...")
+
     # Carrega mapeamento
     try:
-        with open(MAPEAMENTO_FILE, "r", encoding="utf-8") as f:
+        with open(MAPEAMENTO_FILE, encoding="utf-8") as f:
             mapeamento = json.load(f)
     except FileNotFoundError:
-        print(f"❌ Arquivo {MAPEAMENTO_FILE} não encontrado!")
+        logger.error("❌ Arquivo %s não encontrado!", MAPEAMENTO_FILE)
         sys.exit(1)
-    
+
     modelos_backend = mapeamento.get("modelos_backend", {})
     total_modelos = 0
     total_paginas = 0
-    
+
     # Gera páginas para cada módulo
     for module, info in modelos_backend.items():
         modelos = info.get("modelos", [])
-        print(f"\n📁 Processando módulo: {module} ({len(modelos)} modelos)")
-        
+        logger.info("\n📁 Processando módulo: %s (%s modelos)", module, len(modelos))
+
         for modelo in modelos:
             try:
                 create_crud_pages(modelo, module)
                 total_modelos += 1
                 total_paginas += 3
-            except Exception as e:
-                print(f"⚠️ Erro ao processar {module}/{modelo['nome']}: {e}")
-    
+            except Exception as exc:
+                logger.warning("⚠️ Erro ao processar %s/%s: %s", module, modelo["nome"], exc)
+
     # Gera menu sidebar
-    print("\n📋 Gerando menu sidebar...")
+    logger.info("\n📋 Gerando menu sidebar...")
     sidebar_code = generate_menu_sidebar()
     sidebar_path = FRONTEND_PATH / "components" / "CrudModelsMenu.tsx"
     sidebar_path.parent.mkdir(parents=True, exist_ok=True)
     with open(sidebar_path, "w", encoding="utf-8") as f:
         f.write(sidebar_code)
-    print(f"✅ Menu sidebar criado em {sidebar_path}")
-    
+    logger.info("✅ Menu sidebar criado em %s", sidebar_path)
+
     # Resumo
-    print(f"\n{'='*60}")
-    print(f"✅ GERAÇÃO CONCLUÍDA!")
-    print(f"{'='*60}")
-    print(f"📊 Estatísticas:")
-    print(f"   • Modelos processados: {total_modelos}")
-    print(f"   • Páginas geradas: {total_paginas} (3 por modelo)")
-    print(f"   • Estrutura: LIST, CREATE, DETAIL/EDIT/DELETE")
-    print(f"{'='*60}")
-    print(f"\n🔗 Como usar:")
-    print(f"   1. Importe CrudModelsMenu no seu layout")
-    print(f"   2. Visite /app/nome-do-modulo para ver a listagem")
-    print(f"   3. Clique em 'Novo' para criar")
-    print(f"   4. Clique em 'Ver' para detalhar")
-    print(f"   5. AutoForm cuidará de validação e submit")
-    print(f"\n📁 Todos os arquivos em: {FRONTEND_PATH}")
+    logger.info("\n%s", "=" * 60)
+    logger.info("✅ GERAÇÃO CONCLUÍDA!")
+    logger.info("%s", "=" * 60)
+    logger.info("📊 Estatísticas:")
+    logger.info("   • Modelos processados: %s", total_modelos)
+    logger.info("   • Páginas geradas: %s (3 por modelo)", total_paginas)
+    logger.info("   • Estrutura: LIST, CREATE, DETAIL/EDIT/DELETE")
+    logger.info("%s", "=" * 60)
+    logger.info("\n🔗 Como usar:")
+    logger.info("   1. Importe CrudModelsMenu no seu layout")
+    logger.info("   2. Visite /app/nome-do-modulo para ver a listagem")
+    logger.info("   3. Clique em 'Novo' para criar")
+    logger.info("   4. Clique em 'Ver' para detalhar")
+    logger.info("   5. AutoForm cuidará de validação e submit")
+    logger.info("\n📁 Todos os arquivos em: %s", FRONTEND_PATH)
 
 
 if __name__ == "__main__":

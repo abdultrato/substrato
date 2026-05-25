@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+import re
 from typing import Any
 
 from django.apps import apps as django_apps
@@ -20,7 +20,6 @@ from apps.ai_assistant.tools.resource_catalog import (
 )
 
 from .base import AiTool, AiToolContext
-
 
 DATE_PATTERN = r"\b(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b"
 
@@ -676,7 +675,7 @@ class SqlAnalyticsTool(AiTool):
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
             columns = [column[0] for column in cursor.description]
-            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+            return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
 
     def _extract_dates(self, message: str) -> list[date]:
         values: list[date] = []
@@ -723,16 +722,14 @@ class SqlAnalyticsTool(AiTool):
         )
         if explicit:
             value = _remove_date_expressions(explicit.group("value"))
-            value = _strip_resource_terms(value=value, descriptor=descriptor)
-            return value
+            return _strip_resource_terms(value=value, descriptor=descriptor)
 
         normalized_intent = normalize_text(message)
         if not any(term in normalized_intent for term in ("listar", "lista", "mostre", "mostrar", "buscar", "pesquisar", "procure", "search", "list")):
             return ""
 
         cleaned = _remove_date_expressions(message or "")
-        cleaned = _strip_resource_terms(value=cleaned, descriptor=descriptor)
-        return cleaned
+        return _strip_resource_terms(value=cleaned, descriptor=descriptor)
 
     def _access_denied(self, *, language: str, resources: list[tuple[str, str, str]]) -> dict[str, Any]:
         denied_payload = [
@@ -1163,9 +1160,8 @@ def _select_group_fields(model: type[models.Model], normalized: str = "") -> lis
         field = _field_by_name(model, field_name)
         if field is None:
             continue
-        if isinstance(field, (models.CharField, models.BooleanField, models.IntegerField)):
-            if field not in selected:
-                selected.append(field)
+        if isinstance(field, (models.CharField, models.BooleanField, models.IntegerField)) and field not in selected:
+            selected.append(field)
     return selected
 
 
@@ -1522,11 +1518,22 @@ def _strip_resource_terms(*, value: str, descriptor: ResourceDescriptor) -> str:
 
 def _parse_date(raw: str) -> date | None:
     raw = (raw or "").strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d/%m/%y", "%d-%m-%y"):
+    iso_match = re.fullmatch(r"(\d{4})-(\d{1,2})-(\d{1,2})", raw)
+    if iso_match:
         try:
-            return datetime.strptime(raw, fmt).date()
+            return date(*(int(part) for part in iso_match.groups()))
         except ValueError:
-            continue
+            return None
+
+    local_match = re.fullmatch(r"(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})", raw)
+    if local_match:
+        day, month, year = (int(part) for part in local_match.groups())
+        if year < 100:
+            year += 2000
+        try:
+            return date(year, month, day)
+        except ValueError:
+            return None
     return None
 
 

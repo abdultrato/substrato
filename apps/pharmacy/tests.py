@@ -18,6 +18,7 @@ from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 from apps.tenants.models.tenant import Tenant
+from services.reports.async_exports import get_export_job_payload, get_export_job_state
 
 
 def _tenant():
@@ -182,6 +183,71 @@ def test_sale_item_ignores_manual_unit_price_and_inherits_product_price():
 
 
 _product = _product
+
+
+def _api_user(tenant, *, username="pharmacy_api_user"):
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        username=username,
+        email=f"{username}@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    group, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+    user.groups.add(group)
+    return user
+
+
+@pytest.mark.django_db
+def test_stock_pdf_returns_pdf_synchronously(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-stock-pdf",
+        name="Tenant Stock PDF",
+        domain="tenant-stock-pdf.local",
+        active=True,
+    )
+    product = _product(tenant)
+    _lot(product, quantity=5)
+    user = _api_user(tenant)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get("/api/v1/pharmacy/lot/estoque/pdf/")
+
+    assert response.status_code == 200
+    assert response["Content-Type"] == "application/pdf"
+    assert response.content.startswith(b"%PDF")
+
+
+@pytest.mark.django_db
+def test_stock_pdf_can_be_queued_as_async_export(api_client, monkeypatch):
+    tenant = Tenant.objects.create(
+        identifier="tn-stock-pdf-async",
+        name="Tenant Stock PDF Async",
+        domain="tenant-stock-pdf-async.local",
+        active=True,
+    )
+    product = _product(tenant)
+    _lot(product, quantity=3)
+    user = _api_user(tenant, username="pharmacy_api_user_async")
+    monkeypatch.setattr("api.utils.async_exports.enqueue_task", lambda *args, **kwargs: None)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get("/api/v1/pharmacy/lot/estoque/pdf/?async=1")
+
+    assert response.status_code == 202
+    data = response.data
+    assert data["status"] == "queued"
+    assert data["export_key"] == "pharmacy_stock_pdf"
+    assert data["id"]
+    assert data["download_url"]
+    assert get_export_job_state(data["id"]) is not None
+    payload = get_export_job_payload(data["id"])
+    assert payload["summary"]["lots_count"] == 1
+    assert payload["summary"]["total_balance"] == 3
 
 
 @pytest.mark.django_db

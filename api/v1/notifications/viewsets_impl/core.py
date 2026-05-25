@@ -69,7 +69,7 @@ VIEWSET_MAP = {
 __all__ = [
     "VIEWSET_MAP",
     "DeliveryLogViewSet",
-    "NotificationViewSet",
     "NotificationTemplateViewSet",
+    "NotificationViewSet",
 ]
 

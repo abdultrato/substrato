@@ -61,7 +61,7 @@ export default function EnfermagemPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [t])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>

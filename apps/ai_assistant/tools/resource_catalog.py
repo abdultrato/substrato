@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import re
-import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
+import re
 from types import SimpleNamespace
 from typing import Any
+import unicodedata
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model, QuerySet
@@ -2159,10 +2159,7 @@ def user_can_method_resource(*, user, basename: str, method: str) -> bool:
 
 
 def user_can_read_resource(*, user, basename: str) -> bool:
-    for method in SAFE_METHODS:
-        if user_can_method_resource(user=user, basename=basename, method=method):
-            return True
-    return False
+    return any(user_can_method_resource(user=user, basename=basename, method=method) for method in SAFE_METHODS)
 
 
 def accessible_resources_for_user(user) -> list[ResourceDescriptor]:

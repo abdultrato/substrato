@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import json
 import os
 import pickle
-import hashlib
-import json
-from typing import List, Tuple, Optional, Dict, Set
+
 import numpy as np
 
 try:
@@ -17,7 +16,6 @@ except ImportError:
     SentenceTransformer = None
 
 from django.conf import settings
-from django.core.cache import cache
 
 from apps.ai_assistant.models import AiKnowledgeEntry
 
@@ -49,13 +47,13 @@ class VectorStoreService:
         self.model = SentenceTransformer(self.model_name)
         self.index = None
         self.id_mapping = []  # Maps FAISS index positions to knowledge entry IDs
-        self._id_to_index: Dict[str, int] = {}  # Reverse mapping for quick lookup
+        self._id_to_index: dict[str, int] = {}  # Reverse mapping for quick lookup
         self._dirty = False  # Track if index needs saving
 
         # Try to load existing index
         self._load_index()
 
-    def _get_index_files(self) -> Tuple[str, str]:
+    def _get_index_files(self) -> tuple[str, str]:
         """Get paths for index and mapping files."""
         index_file = os.path.join(self.index_path, "knowledge.index")
         mapping_file = os.path.join(self.index_path, "id_mapping.pkl")
@@ -77,7 +75,7 @@ class VectorStoreService:
                 # Check if we need to rebuild based on version or model changes
                 version_file = os.path.join(self.index_path, "version.json")
                 if os.path.exists(version_file):
-                    with open(version_file, 'r') as f:
+                    with open(version_file) as f:
                         version_data = json.load(f)
                         if (version_data.get("model") != self.model_name or
                             version_data.get("version") != self._index_version):
@@ -88,7 +86,7 @@ class VectorStoreService:
                     return False
 
                 return True
-        except Exception as e:
+        except Exception:
             # If loading fails, we'll rebuild the index
             pass
         return False
@@ -114,7 +112,7 @@ class VectorStoreService:
                     json.dump(version_data, f)
 
                 self._dirty = False
-        except Exception as e:
+        except Exception:
             # Log error but don't crash
             pass
 
@@ -172,7 +170,7 @@ class VectorStoreService:
         # Save to disk
         self._save_index()
 
-    def search(self, query: str, k: int = 5) -> List[Tuple[str, float]]:
+    def search(self, query: str, k: int = 5) -> list[tuple[str, float]]:
         """
         Search for similar knowledge entries using vector similarity.
 
@@ -193,7 +191,7 @@ class VectorStoreService:
 
         # Convert results
         results = []
-        for score, idx in zip(scores[0], indices[0]):
+        for score, idx in zip(scores[0], indices[0], strict=False):
             if idx < len(self.id_mapping):  # Valid index
                 entry_id = self.id_mapping[idx]
                 # Convert from inner product to cosine similarity (already normalized)
@@ -272,7 +270,7 @@ class VectorStoreService:
 _vector_store_service = None
 
 
-def get_vector_store_service() -> Optional[VectorStoreService]:
+def get_vector_store_service() -> VectorStoreService | None:
     """Get or create the global vector store service instance."""
     global _vector_store_service
 

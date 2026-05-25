@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from django.core.management.base import BaseCommand
-from django.apps import apps
+
 
 class Command(BaseCommand):
     help = 'Rebuild the AI assistant vector index for knowledge base search'
@@ -35,13 +35,13 @@ class Command(BaseCommand):
         except ImportError as e:
             self.stdout.write(
                 self.style.ERROR(
-                    f'Failed to import vector store dependencies: {str(e)}. '
+                    f'Failed to import vector store dependencies: {e!s}. '
                     'Please install sentence-transformers, faiss-cpu, and numpy.'
                 )
             )
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(
-                    f'Failed to rebuild vector index: {str(e)}'
+                    f'Failed to rebuild vector index: {e!s}'
                 )
             )

@@ -463,8 +463,7 @@ class AcademicService:
         schedule_item.status = DisciplineScheduleItem.Status.COMPLETED
         if schedule_item.completed_at is None:
             schedule_item.completed_at = timezone.now()
-        schedule_item = AcademicService.schedule_discipline_item(item=schedule_item)
-        return schedule_item
+        return AcademicService.schedule_discipline_item(item=schedule_item)
 
     @staticmethod
     @transaction.atomic

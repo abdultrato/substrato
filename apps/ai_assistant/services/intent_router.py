@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
+import re
 from typing import Any
 
 from apps.ai_assistant.tools.knowledge_base import should_select_knowledge_base
 from apps.ai_assistant.tools.resource_catalog import match_resource_descriptors, normalize_text
-
 
 CLARIFICATION_METADATA_KEY = "intent_clarification"
 CONVERSATION_FOCUS_KEY = "conversation_focus"

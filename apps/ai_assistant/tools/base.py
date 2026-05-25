@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-
 ToolMode = Literal["read", "prepare_action", "write_confirmed"]
 
 
