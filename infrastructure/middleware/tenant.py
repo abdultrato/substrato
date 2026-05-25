@@ -58,6 +58,7 @@ class TenantMiddleware:
         if (
             request.path.startswith("/health/")
             or request.path.startswith("/metrics")
+            or request.path.startswith(getattr(settings, "MEDIA_URL", "/media/"))
             or request.path in self.FAST_REDIRECT_PATHS
         ):
             token = set_tenant(None)

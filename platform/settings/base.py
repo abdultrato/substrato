@@ -770,6 +770,7 @@ ENABLE_API_LOGGING_MIDDLEWARE = get_env("ENABLE_API_LOGGING_MIDDLEWARE", "true")
 MIDDLEWARE = [
     *(["django_prometheus.middleware.PrometheusBeforeMiddleware"] if _module_available("django_prometheus") else []),
     "django.middleware.security.SecurityMiddleware",
+    "infrastructure.middleware.trusted_host.TrustedHostMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

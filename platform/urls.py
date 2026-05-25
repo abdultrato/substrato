@@ -1,14 +1,16 @@
 """Roteamento principal do projeto (admin, APIs, health checks, docs)."""
 
 from importlib.util import find_spec
+import re
 
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.http import HttpResponse, JsonResponse
-from django.urls import include, path
+from django.core.exceptions import SuspiciousFileOperation
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.urls import include, path, re_path
 from django.views.decorators.http import require_GET
 from django.views.generic import RedirectView
+from django.views.static import serve as django_static_serve
 
 if find_spec("django_prometheus"):
     from django_prometheus.exports import ExportToDjangoView
@@ -82,6 +84,15 @@ def prometheus_metrics(request):
     return ExportToDjangoView(request)
 
 
+def safe_debug_media_serve(request, path, document_root=None, show_indexes=False):
+    """Serve media in DEBUG without exposing technical error pages for traversal."""
+
+    try:
+        return django_static_serve(request, path, document_root=document_root, show_indexes=show_indexes)
+    except SuspiciousFileOperation:
+        return HttpResponseBadRequest("Bad Request: invalid media path.")
+
+
 urlpatterns = [
     # Entrada principal: começa no login e, após autenticação, segue para o dashboard do Admin.
     path("", RedirectView.as_view(url="/admin/login/?next=/admin/", permanent=False), name="root"),
@@ -108,4 +119,11 @@ if SpectacularAPIView is not None:
     ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    media_prefix = settings.MEDIA_URL.lstrip("/").rstrip("/")
+    urlpatterns += [
+        re_path(
+            rf"^{re.escape(media_prefix)}/(?P<path>.*)$",
+            safe_debug_media_serve,
+            {"document_root": settings.MEDIA_ROOT},
+        )
+    ]
