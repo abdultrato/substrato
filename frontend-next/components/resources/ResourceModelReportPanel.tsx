@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CalendarRange, Download, FileText, Loader2, Sparkles } from "lucide-react"
+import { CalendarRange, FileDown, FileText, Loader2, Sparkles } from "lucide-react"
 
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -291,7 +291,7 @@ export default function ResourceModelReportPanel({
             disabled={running}
             className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-600)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-70"
           >
-            {running ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+            {running ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
             {running ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
           </button>
         </div>
@@ -334,4 +334,3 @@ export default function ResourceModelReportPanel({
     </section>
   )
 }
-

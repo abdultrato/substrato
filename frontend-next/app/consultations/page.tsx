@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -344,9 +345,9 @@ export default function ConsultasPage() {
               <button
                 type="button"
                 onClick={() => abrirPdfFatura(Number(r.fatura_id))}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
-                {t("PDF Fatura", "Invoice PDF")}
+                <PdfActionLabel>{t("PDF Fatura", "Invoice PDF")}</PdfActionLabel>
               </button>
             ) : (
               <span className="text-xs text-gray-500">—</span>

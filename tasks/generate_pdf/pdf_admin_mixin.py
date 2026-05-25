@@ -20,9 +20,53 @@ from django.contrib import messages
 from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import path, reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 logger = logging.getLogger("pdf.admin")
+
+PDF_ICON_SVG = """
+<svg aria-hidden="true" class="substrato-pdf-icon" width="14" height="14"
+     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round">
+  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+  <path d="M14 2v6h6"/>
+  <path d="M9 15h6"/>
+  <path d="M9 18h3"/>
+</svg>
+"""
+
+
+def pdf_action_content(label: str = "PDF", *, icon_html: str | None = None):
+    """Renderiza o rótulo visual padrão para ações de geração/download de PDF."""
+    return format_html("{}<span>{}</span>", mark_safe(icon_html or PDF_ICON_SVG), label)
+
+
+def pdf_action_link(
+    url: str,
+    label: str = "Gerar PDF",
+    *,
+    title: str | None = None,
+    css_class: str = "button substrato-pdf-action",
+    icon_html: str | None = None,
+    style: str | None = None,
+    target_blank: bool = True,
+):
+    """Renderiza um link de PDF com ícone, acessível e consistente no Admin."""
+    title_attr = format_html(' title="{}"', title or label)
+    target_attr = format_html(' target="{}"', "_blank") if target_blank else ""
+    rel_attr = format_html(' rel="{}"', "noopener") if target_blank else ""
+    style_attr = format_html(' style="{}"', style) if style else ""
+    return format_html(
+        '<a class="{}" href="{}"{}{}{}{}>{}</a>',
+        css_class,
+        url,
+        title_attr,
+        target_attr,
+        rel_attr,
+        style_attr,
+        pdf_action_content(label, icon_html=icon_html),
+    )
 
 
 class PDFAdminMixin:
@@ -39,13 +83,13 @@ class PDFAdminMixin:
         class InvoiceAdmin(PDFAdminMixin, admin.ModelAdmin):
             pdf_generator = generate_invoice_pdf
             pdf_filename_template = "fatura_{pk}.pdf"
-            pdf_action_label = "⬇ Baixar Fatura"
+            pdf_action_label = "Baixar Fatura"
     """
 
     pdf_generator: Callable | None = None
     pdf_filename_template: str = "documento_{pk}.pdf"
-    pdf_action_label: str = "⬇ Baixar PDF"
-    pdf_icon_html: str = "📄"
+    pdf_action_label: str = "Baixar PDF"
+    pdf_icon_html: str = PDF_ICON_SVG
 
     def _get_pdf_generator(self) -> Callable | None:
         """Resolve o gerador de PDF efetivo para a requisição atual."""
@@ -201,9 +245,11 @@ class PDFAdminMixin:
         except Exception:
             # Fallback para manter compatibilidade quando o resolver ainda não está pronto.
             url = f"/admin/{self.model._meta.app_label}/{self.model._meta.model_name}/{obj.pk}/download-pdf/"
-        return mark_safe(
-            f'<a class="button" href="{url}" title="Baixar PDF">'
-            f'{self.pdf_icon_html} PDF</a>'
+        return pdf_action_link(
+            url,
+            "PDF",
+            title=self.pdf_action_label or "Baixar PDF",
+            icon_html=self.pdf_icon_html,
         )
 
     get_pdf_button_html.short_description = "Ação"
@@ -212,7 +258,7 @@ class PDFAdminMixin:
         """Adiciona ação de PDF se gerador estiver configurado."""
         actions = super().get_actions(request)
         if self._get_pdf_generator():
-            action_label = self.pdf_action_label or "⬇ Baixar PDF"
+            action_label = self.pdf_action_label or "Baixar PDF"
             actions["download_pdf_action"] = (
                 self.download_pdf_action,
                 "download_pdf_action",
@@ -246,4 +292,6 @@ class SimplePDFAdminMixin(PDFAdminMixin):
 __all__ = [
     "PDFAdminMixin",
     "SimplePDFAdminMixin",
+    "pdf_action_content",
+    "pdf_action_link",
 ]

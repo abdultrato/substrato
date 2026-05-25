@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -87,9 +88,11 @@ export default function ProcedimentoDetailPage() {
                 type="button"
                 onClick={handleOpenPdf}
                 disabled={downloadingPdf}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
-                {downloadingPdf ? "Gerando PDF..." : "PDF"}
+                <PdfActionLabel loading={downloadingPdf} loadingLabel="Gerando PDF...">
+                  PDF
+                </PdfActionLabel>
               </button>
               <Link
                 href={`/nursing/procedures/${id}/edit`}

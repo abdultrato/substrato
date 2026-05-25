@@ -10,6 +10,7 @@ import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PageHeader from "@/components/ui/PageHeader"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
@@ -766,9 +767,11 @@ export default function EstatisticasPage() {
                 type="button"
                 onClick={() => exportar("pdf")}
                 disabled={!!exportando}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
-                {exportando === "pdf" ? "PDF..." : "PDF"}
+                <PdfActionLabel loading={exportando === "pdf"} loadingLabel="PDF...">
+                  PDF
+                </PdfActionLabel>
               </button>
               <button
                 type="button"

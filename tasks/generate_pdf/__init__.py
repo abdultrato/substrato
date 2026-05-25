@@ -13,7 +13,7 @@ from .model_activity_pdf_generator import generate_model_activity_pdf
 from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
-from .pdf_admin_mixin import PDFAdminMixin, SimplePDFAdminMixin
+from .pdf_admin_mixin import PDFAdminMixin, SimplePDFAdminMixin, pdf_action_content, pdf_action_link
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -93,6 +93,8 @@ __all__ = [
     "invoice_pdf",
     "normalizar_texto",
     "on_page",
+    "pdf_action_content",
+    "pdf_action_link",
     "register_pdf_generator",
     "request_invoice_pdf",
     "request_pdf",

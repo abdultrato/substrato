@@ -8,6 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import MoneyValue from "@/components/ui/MoneyValue"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -80,9 +81,11 @@ export default function RecibosPage() {
             type="button"
             onClick={() => onPdf(Number(r.id))}
             disabled={acaoId === r.id}
-            className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
           >
-            PDF
+            <PdfActionLabel loading={acaoId === r.id} loadingLabel="PDF...">
+              PDF
+            </PdfActionLabel>
           </button>
         ),
       },

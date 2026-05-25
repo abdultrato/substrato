@@ -8,6 +8,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useAuth } from "@/hooks/useAuth"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -382,57 +383,71 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={gerarPdfEntradasSaidas}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "moves" ? "Gerando..." : "PDF histórico entradas/saídas"}
+              <PdfActionLabel loading={reportLoading === "moves"} loadingLabel="Gerando...">
+                PDF histórico entradas/saídas
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfEstoque}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "stock" ? "Gerando..." : "PDF estoque existente"}
+              <PdfActionLabel loading={reportLoading === "stock"} loadingLabel="Gerando...">
+                PDF estoque existente
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfMovimentosPorSetor}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "sector" ? "Gerando..." : "PDF movimentos por setor solicitante"}
+              <PdfActionLabel loading={reportLoading === "sector"} loadingLabel="Gerando...">
+                PDF movimentos por setor solicitante
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfConsumoProdutos}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "consumption" ? "Gerando..." : "PDF consumo por produto"}
+              <PdfActionLabel loading={reportLoading === "consumption"} loadingLabel="Gerando...">
+                PDF consumo por produto
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfProdutosMaisRequisitados}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "top" ? "Gerando..." : "PDF produtos mais requisitados"}
+              <PdfActionLabel loading={reportLoading === "top"} loadingLabel="Gerando...">
+                PDF produtos mais requisitados
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfProdutosMenosRequisitados}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "least" ? "Gerando..." : "PDF produtos menos requisitados"}
+              <PdfActionLabel loading={reportLoading === "least"} loadingLabel="Gerando...">
+                PDF produtos menos requisitados
+              </PdfActionLabel>
             </button>
             <button
               type="button"
               onClick={gerarPdfSetoresPorProduto}
               disabled={reportLoading !== null}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              {reportLoading === "sector-product" ? "Gerando..." : "PDF setores por produto"}
+              <PdfActionLabel loading={reportLoading === "sector-product"} loadingLabel="Gerando...">
+                PDF setores por produto
+              </PdfActionLabel>
             </button>
           </div>
         </div>

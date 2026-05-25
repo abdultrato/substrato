@@ -13,6 +13,7 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import MoneyValue from "@/components/ui/MoneyValue"
 import Card from "@/components/ui/Card"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 
 type FaturaRow = Record<string, any>
 type FaturaItem = {
@@ -372,11 +373,13 @@ export default function FaturasPage() {
               </button>
             ) : null}
             <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               disabled={acaoId === f.id}
               onClick={() => baixarPdf(f.id)}
             >
-              PDF
+              <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">
+                PDF
+              </PdfActionLabel>
             </button>
             <button
               className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
@@ -588,39 +591,49 @@ export default function FaturasPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("daily")}
               >
-                {reportLoading === "daily" ? "Gerando..." : "Gerar histórico diário"}
+                <PdfActionLabel loading={reportLoading === "daily"} loadingLabel="Gerando...">
+                  Gerar histórico diário
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("monthly")}
               >
-                {reportLoading === "monthly" ? "Gerando..." : "Gerar histórico mensal"}
+                <PdfActionLabel loading={reportLoading === "monthly"} loadingLabel="Gerando...">
+                  Gerar histórico mensal
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("quarterly")}
               >
-                {reportLoading === "quarterly" ? "Gerando..." : "Gerar histórico trimestral"}
+                <PdfActionLabel loading={reportLoading === "quarterly"} loadingLabel="Gerando...">
+                  Gerar histórico trimestral
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("semiannual")}
               >
-                {reportLoading === "semiannual" ? "Gerando..." : "Gerar histórico semestral"}
+                <PdfActionLabel loading={reportLoading === "semiannual"} loadingLabel="Gerando...">
+                  Gerar histórico semestral
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("annual")}
               >
-                {reportLoading === "annual" ? "Gerando..." : "Gerar histórico anual"}
+                <PdfActionLabel loading={reportLoading === "annual"} loadingLabel="Gerando...">
+                  Gerar histórico anual
+                </PdfActionLabel>
               </button>
             </div>
 
@@ -629,25 +642,31 @@ export default function FaturasPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("daily", true)}
               >
-                {reportLoading === "general-daily" ? "Gerando..." : "Gerar histórico geral diário"}
+                <PdfActionLabel loading={reportLoading === "general-daily"} loadingLabel="Gerando...">
+                  Gerar histórico geral diário
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("monthly", true)}
               >
-                {reportLoading === "general-monthly" ? "Gerando..." : "Gerar histórico geral mensal"}
+                <PdfActionLabel loading={reportLoading === "general-monthly"} loadingLabel="Gerando...">
+                  Gerar histórico geral mensal
+                </PdfActionLabel>
               </button>
               <button
-                className="inline-flex items-center rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
                 onClick={() => gerarHistoricoFaturamentoPdf("annual", true)}
               >
-                {reportLoading === "general-annual" ? "Gerando..." : "Gerar histórico geral anual"}
+                <PdfActionLabel loading={reportLoading === "general-annual"} loadingLabel="Gerando...">
+                  Gerar histórico geral anual
+                </PdfActionLabel>
               </button>
             </div>
           </div>

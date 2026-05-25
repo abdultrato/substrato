@@ -14,6 +14,7 @@ import TextAreaInput from "@/components/ui/TextAreaInput"
 import TextInput from "@/components/ui/TextInput"
 import StatusBadge from "@/components/ui/StatusBadge"
 import MoneyValue from "@/components/ui/MoneyValue"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -850,18 +851,18 @@ export default function FaturaRascunhoPage() {
             ) : null}
 
             <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               onClick={baixarPdfFatura}
             >
-              PDF da fatura
+              <PdfActionLabel>PDF da fatura</PdfActionLabel>
             </button>
 
             {recibo ? (
               <button
-                className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
                 onClick={baixarPdfRecibo}
               >
-                PDF do recibo
+                <PdfActionLabel>PDF do recibo</PdfActionLabel>
               </button>
             ) : null}
           </div>

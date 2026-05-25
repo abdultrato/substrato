@@ -10,7 +10,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from tasks.generate_pdf import SimplePDFAdminMixin
+from tasks.generate_pdf import SimplePDFAdminMixin, pdf_action_link
 
 from .forms_admin import ResultItemInlineFormSet
 from .models.lab_exam import LabExam
@@ -896,11 +896,12 @@ class LabRequestAdmin(SimplePDFAdminMixin, CoreAdmin):
             args=[obj.custom_id],
         )
 
-        return format_html(
-            '<a style="background:{};color:white;padding:4px 10px;border-radius:4px;text-decoration:none;" target="_blank" href="{}">{}</a>',
-            cor,
+        return pdf_action_link(
             url,
             texto,
+            title=texto,
+            css_class="substrato-pdf-action substrato-pdf-action--status",
+            style=f"--substrato-pdf-accent:{cor};",
         )
 
     view_result_pdf.short_description = "Resultado PDF"
@@ -1164,7 +1165,7 @@ class ResultAdmin(SimplePDFAdminMixin, CoreAdmin):
         app_label = self.model._meta.app_label
         model_name = self.model._meta.model_name
         url = reverse(f"admin:{app_label}_{model_name}_pdf", args=[obj.pk])
-        return format_html('<a href="{}" target="_blank" rel="noopener">Gerar PDF</a>', url)
+        return pdf_action_link(url, "Gerar PDF", title="Gerar PDF de resultados")
 
     pdf_link.short_description = "PDF"
 

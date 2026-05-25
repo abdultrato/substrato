@@ -5,8 +5,9 @@ from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from django.urls import path, reverse
-from django.utils.html import format_html
 from rest_framework.exceptions import PermissionDenied
+
+from tasks.generate_pdf import pdf_action_link
 
 from .models.invoice import Invoice
 from .models.invoice_items import InvoiceItem
@@ -387,7 +388,7 @@ class InvoiceAdmin(CoreAdmin):
         app_label = self.model._meta.app_label
         model_name = self.model._meta.model_name
         url = reverse(f"admin:{app_label}_{model_name}_pdf", args=[obj.pk])
-        return format_html('<a href="{}" target="_blank" rel="noopener">Gerar PDF</a>', url)
+        return pdf_action_link(url, "Gerar PDF", title="Gerar PDF da fatura")
 
     pdf_link.short_description = "PDF"
 

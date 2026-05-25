@@ -9,7 +9,7 @@
     npm run build:admin-css
 
   Output:
-    aplicativos/clinico/static/admin/css/substrato-admin-tailwind.css
+    apps/clinical/static/admin/css/substrato-admin-tailwind.css
 
   Note (important):
     Our Tailwind admin config intentionally does not scan Django admin HTML for
@@ -209,6 +209,123 @@ input[type='submit'].default,
 .deletelink,
 .deletelink-box a {
   @apply bg-rose-600 text-white hover:bg-rose-700;
+}
+
+/* PDF actions */
+.substrato-pdf-action {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #eff6ff, #ffffff) !important;
+  color: #1d4ed8 !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  padding: 0.35rem 0.7rem !important;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.substrato-pdf-action:hover {
+  border-color: #60a5fa !important;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.18);
+  color: #1e40af !important;
+  transform: translateY(-1px);
+}
+
+.substrato-pdf-action .substrato-pdf-icon {
+  flex: 0 0 auto;
+}
+
+.substrato-pdf-action--status {
+  background: var(--substrato-pdf-accent, #0f172a) !important;
+  border-color: var(--substrato-pdf-accent, #0f172a) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+.substrato-pdf-action--status:hover {
+  color: #ffffff !important;
+  filter: brightness(0.96);
+}
+
+/* Admin polish: make the backoffice feel like the product UI */
+.content-header h1,
+.content-header .m-0 {
+  @apply text-2xl font-semibold tracking-tight text-slate-900;
+}
+
+.breadcrumb,
+.breadcrumb a {
+  @apply text-xs font-medium text-slate-600;
+}
+
+.object-tools,
+.object-tools li {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.object-tools a,
+.object-tools a:link,
+.object-tools a:visited {
+  @apply inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition;
+}
+
+.object-tools a:hover {
+  @apply border-slate-300 bg-slate-50 text-slate-950;
+}
+
+.object-tools a.addlink {
+  @apply border-slate-900 bg-slate-900 text-white hover:bg-slate-800;
+}
+
+.actions,
+.paginator {
+  @apply rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm;
+}
+
+.actions label,
+.actions span,
+.paginator {
+  @apply text-slate-600;
+}
+
+.form-row,
+.aligned .form-row {
+  @apply border-b border-slate-100 py-3;
+}
+
+.form-row label,
+.aligned label {
+  @apply text-sm font-semibold text-slate-700;
+}
+
+.help,
+.helptext,
+p.help {
+  @apply text-xs leading-relaxed text-slate-500;
+}
+
+.submit-row {
+  @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+}
+
+.submit-row input,
+.submit-row a {
+  @apply shadow-sm;
+}
+
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+  @apply rounded-lg border-slate-300 bg-white shadow-sm;
+}
+
+.selector,
+.selector select {
+  @apply rounded-xl border-slate-200;
 }
 
 /* Tables */
@@ -521,6 +638,62 @@ body.dark-mode .table tbody tr:hover {
 body.dark-mode .table th,
 body.dark-mode .table td {
   @apply px-2 py-1;
+}
+
+body.dark-mode .substrato-pdf-action:not(.substrato-pdf-action--status) {
+  border-color: #1e3a8a !important;
+  background: linear-gradient(135deg, #0f172a, #111827) !important;
+  color: #93c5fd !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+body.dark-mode .substrato-pdf-action:not(.substrato-pdf-action--status):hover {
+  border-color: #60a5fa !important;
+  color: #bfdbfe !important;
+}
+
+body.dark-mode .content-header h1,
+body.dark-mode .content-header .m-0 {
+  @apply text-slate-100;
+}
+
+body.dark-mode .breadcrumb,
+body.dark-mode .breadcrumb a,
+body.dark-mode .actions label,
+body.dark-mode .actions span,
+body.dark-mode .paginator,
+body.dark-mode .help,
+body.dark-mode .helptext,
+body.dark-mode p.help {
+  @apply text-slate-300;
+}
+
+body.dark-mode .object-tools a,
+body.dark-mode .object-tools a:link,
+body.dark-mode .object-tools a:visited,
+body.dark-mode .actions,
+body.dark-mode .paginator,
+body.dark-mode .submit-row {
+  @apply border-slate-800 bg-slate-900 text-slate-100;
+}
+
+body.dark-mode .object-tools a:hover {
+  @apply border-slate-700 bg-slate-800 text-white;
+}
+
+body.dark-mode .form-row,
+body.dark-mode .aligned .form-row {
+  @apply border-slate-800;
+}
+
+body.dark-mode .form-row label,
+body.dark-mode .aligned label {
+  @apply text-slate-200;
+}
+
+body.dark-mode .select2-container--default .select2-selection--single,
+body.dark-mode .select2-container--default .select2-selection--multiple {
+  @apply border-slate-700 bg-slate-950 text-slate-100;
 }
 
 /* ------------------------------

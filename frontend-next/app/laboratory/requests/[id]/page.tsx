@@ -301,7 +301,7 @@ export default function LaboratorioRequisicaoResultadosPage() {
                 title={!temValidado ? "Precisa ter pelo menos 1 resultado validado." : "Gerar PDF (somente validados)"}
               >
                 <FileDown size={16} />
-                PDF
+                Gerar PDF
               </button>
             </div>
           }

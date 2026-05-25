@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -236,9 +237,11 @@ export default function RecursoDetalhePage() {
                                     <button
                                         onClick={abrirPdf}
                                         disabled={actionId === data?.fatura_id}
-                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
-                                        PDF Fatura
+                                        <PdfActionLabel loading={actionId === data?.fatura_id} loadingLabel="PDF...">
+                                            PDF Fatura
+                                        </PdfActionLabel>
                                     </button>
                                 ) : (
                                     <button

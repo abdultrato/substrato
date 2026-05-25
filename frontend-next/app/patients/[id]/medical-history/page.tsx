@@ -11,6 +11,7 @@ import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { apiFetch } from "@/lib/api"
 import { routeParamToString } from "@/lib/routeParams"
@@ -306,25 +307,31 @@ export default function HistoriaClinicaPage() {
                 type="button"
                 onClick={exportarHistoricoFaturasPdf}
                 disabled={exportandoPdf !== null}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
-                {exportandoPdf === "invoices" ? "Gerando PDF..." : "Gerar histórico de faturas"}
+                <PdfActionLabel loading={exportandoPdf === "invoices"} loadingLabel="Gerando PDF...">
+                  Gerar histórico de faturas
+                </PdfActionLabel>
               </button>
               <button
                 type="button"
                 onClick={exportarHistoricoPagamentosPdf}
                 disabled={exportandoPdf !== null}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
-                {exportandoPdf === "payments" ? "Gerando PDF..." : "Gerar histórico de pagamentos"}
+                <PdfActionLabel loading={exportandoPdf === "payments"} loadingLabel="Gerando PDF...">
+                  Gerar histórico de pagamentos
+                </PdfActionLabel>
               </button>
               <button
                 type="button"
                 onClick={exportarHistoricoMedicoPdf}
                 disabled={exportandoPdf !== null}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
-                {exportandoPdf === "medical" ? "Gerando PDF..." : "Gerar histórico médico"}
+                <PdfActionLabel loading={exportandoPdf === "medical"} loadingLabel="Gerando PDF...">
+                  Gerar histórico médico
+                </PdfActionLabel>
               </button>
               <Link
                 href={`/patients/${id}`}

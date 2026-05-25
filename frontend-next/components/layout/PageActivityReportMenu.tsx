@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
-import { FileText } from "lucide-react"
+import { FileDown } from "lucide-react"
 
+import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
@@ -163,8 +164,8 @@ export function PageActivityReportMenuWithDirection({ direction = "down" }: Prop
                 className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/25 bg-white/15 px-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                 title="Gerar relatório de actividade da página"
             >
-                <FileText size={14} />
-                <span className="hidden sm:inline">Relatório</span>
+                <FileDown size={14} />
+                <span className="hidden sm:inline">Gerar PDF</span>
             </button>
 
             {open ? (
@@ -222,9 +223,11 @@ export function PageActivityReportMenuWithDirection({ direction = "down" }: Prop
                             type="button"
                             onClick={handleGeneratePdf}
                             disabled={loading}
-                            className="inline-flex items-center rounded-lg border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/25 disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/25 disabled:opacity-60"
                         >
-                            {loading ? "Gerando..." : "Gerar PDF"}
+                            <PdfActionLabel loading={loading} loadingLabel="Gerando...">
+                                Gerar PDF
+                            </PdfActionLabel>
                         </button>
                     </div>
                 </div>
