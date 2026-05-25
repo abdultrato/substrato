@@ -27,6 +27,14 @@ services:
       DJANGO_SETTINGS_MODULE: platform.settings.production
       DJANGO_DEBUG: "False"
       REDIS_URL: redis://redis:6379/0
+      WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
+      WAREHOUSE_KAFKA_TOPIC_PREFIX: ${WAREHOUSE_KAFKA_TOPIC_PREFIX:-warehouse}
+      WAREHOUSE_RABBITMQ_EXCHANGE: ${WAREHOUSE_RABBITMQ_EXCHANGE:-warehouse.events}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-substrato-backend}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel_collector:4318}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${API_DOMAIN}`)"
@@ -57,6 +65,15 @@ services:
     image: substrato_backend:latest
     env_file:
       - .env.prod
+    environment:
+      WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
+      WAREHOUSE_KAFKA_TOPIC_PREFIX: ${WAREHOUSE_KAFKA_TOPIC_PREFIX:-warehouse}
+      WAREHOUSE_RABBITMQ_EXCHANGE: ${WAREHOUSE_RABBITMQ_EXCHANGE:-warehouse.events}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-substrato-celery}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel_collector:4318}
     command: celery -A platform worker -l info
     healthcheck:
       disable: true
@@ -70,6 +87,15 @@ services:
     image: substrato_backend:latest
     env_file:
       - .env.prod
+    environment:
+      WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
+      RABBITMQ_URL: ${RABBITMQ_URL:-}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
+      WAREHOUSE_KAFKA_TOPIC_PREFIX: ${WAREHOUSE_KAFKA_TOPIC_PREFIX:-warehouse}
+      WAREHOUSE_RABBITMQ_EXCHANGE: ${WAREHOUSE_RABBITMQ_EXCHANGE:-warehouse.events}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-substrato-celery-beat}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel_collector:4318}
     command: celery -A platform beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     healthcheck:
       disable: true
@@ -84,6 +110,36 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    networks:
+      - internal
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    profiles: ["messaging"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - internal
+
+  kafka:
+    image: bitnami/kafka:3.7
+    profiles: ["analytics"]
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/bitnami/kafka
     networks:
       - internal
 
@@ -120,6 +176,14 @@ services:
     networks:
       - internal
 
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./monitoring/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro
+    networks:
+      - internal
+
   alertmanager:
     image: prom/alertmanager
     volumes:
@@ -144,6 +208,8 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  rabbitmq_data:
+  kafka_data:
   traefik_letsencrypt:
   media_volume:
 

@@ -49,7 +49,7 @@ class Invoice(NoNameCoreModel):
         LabRequest,  # Requisição laboratorial (origem clínica)
         db_column="request_id",
         verbose_name="Requisição",
-        on_delete=models.CASCADE,  # Apaga fatura se requisição for removida
+        on_delete=models.PROTECT,  # Preserva fatura/histórico se houver requisição vinculada
         related_name="invoice",
         null=True,
         blank=True,

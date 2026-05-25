@@ -17,11 +17,13 @@ class EquipmentAdmin(admin.ModelAdmin):
         "location",
         "responsible",
         "current_status",
+        "requires_maintenance",
         "active",
         "created_at",
     )
     list_filter = (
         "active",
+        "requires_maintenance",
         "acquisition_status",
         "initial_operational_status",
     )

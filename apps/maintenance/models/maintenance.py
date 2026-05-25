@@ -42,7 +42,7 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
     equipment = models.ForeignKey(  # Equipamento alvo da manutenção
         "equipamentos.Equipment",
         db_column="equipment_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="manutencoes",
         db_index=True,
     )
@@ -121,9 +121,13 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
             raise ValidationError({"incident": "Ocorrência e manutenção devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
         if self.incident_id and not self.equipment_id:
             self.equipment = self.incident.equipment
+            if update_fields is not None:
+                kwargs["update_fields"] = list({*update_fields, "equipment"})
 
+        self.full_clean()
         super().save(*args, **kwargs)
 
         if not self.incident_id:

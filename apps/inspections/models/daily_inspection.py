@@ -24,7 +24,7 @@ class DailyInspection(TenantPropagationMixin, NoNameCoreModel):
     equipment = models.ForeignKey(  # Equipamento inspecionado
         "equipamentos.Equipment",
         db_column="equipment_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="inspecoes_diarias",
         db_index=True,
     )

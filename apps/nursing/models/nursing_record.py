@@ -23,7 +23,7 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
         "clinical.Patient",
         verbose_name="Paciente",
         db_column="patient_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="registros_enfermagem",
     )
 
@@ -31,7 +31,7 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
         "clinical.LabRequest",
         verbose_name="Requisição laboratorial",
         db_column="lab_request_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="nursing_intake_record",

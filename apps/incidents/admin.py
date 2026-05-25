@@ -10,11 +10,14 @@ class OcorrenciaAdmin(admin.ModelAdmin):
         "equipment",
         "date",
         "type",
+        "requires_maintenance",
+        "maintenance_status",
         "resolved",
         "created_at",
     )
     list_filter = (
         "type",
+        "requires_maintenance",
         "resolved",
         "date",
     )
@@ -23,6 +26,16 @@ class OcorrenciaAdmin(admin.ModelAdmin):
         "equipment__name",
         "equipment__serial_number",
         "description",
+        "post_incident_actions",
         "support_contact",
     )
+    readonly_fields = (
+        "maintenance_status",
+        "maintenance_requested_at",
+        "maintenance_completed_at",
+    )
     ordering = ("-date",)  # Incidentes mais recentes primeiro
+
+    @admin.display(description="Estado da manutenção")
+    def maintenance_status(self, obj: Incident) -> str:
+        return obj.maintenance_status

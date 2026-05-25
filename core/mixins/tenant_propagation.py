@@ -1,3 +1,6 @@
+from django.core.exceptions import ValidationError
+
+
 class TenantPropagationMixin:
     """Propaga automaticamente o tenant de um campo relacionado (`tenant_source`)."""
 
@@ -14,11 +17,30 @@ class TenantPropagationMixin:
 
         return getattr(source_object, "tenant", None)
 
-    def save(self, *args, **kwargs):
-        if not getattr(self, "tenant", None):
-            tenant = self.resolve_tenant()
+    def _sync_or_validate_tenant_from_source(self):
+        tenant = self.resolve_tenant()
+        if not tenant:
+            return
 
-            if tenant:
-                self.tenant = tenant
+        if not getattr(self, "tenant_id", None):
+            self.tenant = tenant
+            return
+
+        if self.tenant_id != tenant.pk:
+            raise ValidationError(
+                {
+                    "tenant": (
+                        f"Inquilino de {self.__class__.__name__} difere do "
+                        f"inquilino de {self.tenant_source}."
+                    )
+                }
+            )
+
+    def clean(self):
+        super().clean()
+        self._sync_or_validate_tenant_from_source()
+
+    def save(self, *args, **kwargs):
+        self._sync_or_validate_tenant_from_source()
 
         super().save(*args, **kwargs)

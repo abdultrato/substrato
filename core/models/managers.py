@@ -4,6 +4,9 @@ from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.core.exceptions import FieldDoesNotExist
 from django.db import connections, models
 from django.db.models import Q
+from django.utils import timezone
+
+from infrastructure.context.request_user import get_current_user
 
 
 def _normalize_args(model, args):
@@ -66,6 +69,24 @@ class QuerySetAtivo(models.QuerySet):
 
     def update(self, **kwargs):
         return super().update(**_normalize_kwargs(self.model, kwargs))
+
+    def delete(self):
+        if not _model_has_field(self.model, "deleted"):
+            return super().delete()
+
+        updates = {"deleted": True}
+        if _model_has_field(self.model, "deleted_at"):
+            updates["deleted_at"] = timezone.now()
+
+        actor = get_current_user()
+        if actor and getattr(actor, "is_authenticated", False) and _model_has_field(self.model, "deleted_by"):
+            updates["deleted_by"] = actor
+
+        count = self.update(**updates)
+        return count, {self.model._meta.label: count}
+
+    def hard_delete(self):
+        return super().delete()
 
     def ativos(self):
         filters = {}

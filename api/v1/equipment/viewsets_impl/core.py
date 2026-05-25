@@ -1,4 +1,9 @@
+from django.db import transaction
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated  # Protege endpoints
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
@@ -35,6 +40,7 @@ class EquipmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
         "serial_number",
         "acquisition_status",
         "initial_operational_status",
+        "requires_maintenance",
         "active",
         "created_at",
         "updated_at",
@@ -65,7 +71,7 @@ class DailyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
 
 
 class MaintenanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Maintenance.objects.select_related("equipment")
+    queryset = Maintenance.objects.select_related("equipment", "incident")
     serializer_class = MaintenanceSerializer
     filterset_class = MaintenanceFilter
     permission_classes = [IsAuthenticated]
@@ -75,11 +81,14 @@ class MaintenanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
         "equipment__serial_number",
         "description",
         "technician",
+        "incident__custom_id",
+        "incident__description",
     ]
     ordering_fields = [
         "scheduled_date",
         "performed_date",
         "type",
+        "maintenance_type",
         "created_at",
         "updated_at",
     ]
@@ -97,15 +106,58 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
         "equipment__serial_number",
         "description",
         "support_contact",
+        "post_incident_actions",
     ]
     ordering_fields = [
         "date",
         "type",
         "resolved",
+        "requires_maintenance",
+        "maintenance_requested_at",
+        "maintenance_completed_at",
         "created_at",
         "updated_at",
     ]
     ordering = ["-date", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="realizar-manutencao")
+    def realizar_manutencao(self, request, pk=None):
+        incident = self.get_object()
+        if not incident.equipment_id:
+            return Response(
+                {"detail": "Esta ocorrência não está vinculada a um equipamento."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = {key: value for key, value in request.data.items()}
+        post_incident_actions = str(payload.pop("post_incident_actions", "") or "").strip()
+        payload["incident"] = incident.pk
+        payload["equipment"] = incident.equipment_id
+        payload.setdefault("maintenance_type", Maintenance.MaintenanceType.CORRECTIVE)
+        payload.setdefault("type", Maintenance.Type.MONTHLY)
+        payload.setdefault("scheduled_date", timezone.localdate().isoformat())
+        payload.setdefault("performed_date", timezone.localdate().isoformat())
+
+        serializer = MaintenanceSerializer(data=payload, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            if post_incident_actions:
+                existing = (incident.post_incident_actions or "").strip()
+                incident.post_incident_actions = (
+                    f"{existing}\n\n{post_incident_actions}" if existing else post_incident_actions
+                )
+                incident.save(update_fields=["post_incident_actions"])
+
+            save_kwargs = {}
+            if incident.tenant_id:
+                save_kwargs["tenant"] = incident.tenant
+            maintenance = serializer.save(**save_kwargs)
+
+        return Response(
+            MaintenanceSerializer(maintenance, context=self.get_serializer_context()).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 VIEWSET_MAP = {

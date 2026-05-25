@@ -84,6 +84,17 @@ class Equipment(CoreModel):
         db_column="active",
         verbose_name="Ativo",
         default=True, db_index=True)
+    requires_maintenance = models.BooleanField(
+        "Requer manutenção",
+        db_column="requires_maintenance",
+        default=False,
+        db_index=True)
+    maintenance_required_since = models.DateTimeField(
+        "Manutenção requerida desde",
+        db_column="maintenance_required_since",
+        blank=True,
+        null=True,
+        db_index=True)
 
     class Meta:
         db_table = "equipamentos_equipamento"
@@ -94,6 +105,7 @@ class Equipment(CoreModel):
             models.Index(fields=["tenant", "serial_number"]),
             models.Index(fields=["tenant", "active"]),
             models.Index(fields=["tenant", "initial_operational_status"]),
+            models.Index(fields=["tenant", "requires_maintenance"]),
         ]
         constraints = [
             models.UniqueConstraint(

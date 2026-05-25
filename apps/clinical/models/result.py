@@ -20,7 +20,7 @@ class Result(NoNameCoreModel):
         LabRequest,
 
         db_column="request_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="result",
         verbose_name="requisição",
     )

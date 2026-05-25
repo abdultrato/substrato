@@ -24,7 +24,7 @@ User = settings.AUTH_USER_MODEL
 class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     """Linha de resultado para um campo específico do exame."""
 
-    tenant_source = "user"  # Propaga tenant via usuário responsável
+    tenant_source = "result"  # O resultado agregado define o tenant da linha.
 
     prefix = "RES"  # Prefixo para IDs amigáveis
 
@@ -137,12 +137,21 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     # SAVE CONTROLADO
     # =====================================================
 
+    def clean(self):
+        super().clean()
+
+        if self.exam_field_id and self.tenant_id and self.exam_field.tenant_id != self.tenant_id:
+            raise ValidationError({"exam_field": "Campo do exame e resultado devem pertencer ao mesmo tenant."})
+
+        if self.user_id and self.tenant_id and getattr(self.user, "tenant_id", None) != self.tenant_id:
+            raise ValidationError({"user": "Usuário e resultado devem pertencer ao mesmo tenant."})
+
     def save(self, *args, **kwargs):
         if not self.tenant:
-            if self.user and getattr(self.user, "tenant_id", None):
-                self.tenant = self.user.tenant
-            elif self.result:
+            if self.result:
                 self.tenant = self.result.tenant
+            elif self.user and getattr(self.user, "tenant_id", None):
+                self.tenant = self.user.tenant
 
         previous_value = None
 

@@ -14,7 +14,7 @@ class NursingPrescription(TenantPropagationMixin, CoreModel):
         "clinical.Patient",
         verbose_name="Paciente",
         db_column="patient_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="prescricoes_enfermagem",
     )
 

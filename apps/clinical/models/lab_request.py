@@ -48,7 +48,7 @@ class LabRequest(NoNameCoreModel):
         Patient,
 
         db_column="patient_id",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="lab_requests",
         verbose_name="Paciente",
     )

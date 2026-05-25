@@ -14,6 +14,7 @@ from core.models.base import CoreModel
 class LabExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
     """Campo mensurado de um exame laboratorial (valor numérico, texto etc.)."""
 
+    tenant_source = "exam"
     prefix = "CMP"  # Prefixo para IDs amigáveis
 
     exam = models.ForeignKey(

@@ -95,6 +95,27 @@ TRANSACTIONAL_OUTBOX_RETRY_AFTER_SECONDS = int(get_env("TRANSACTIONAL_OUTBOX_RET
 TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS = int(get_env("TRANSACTIONAL_OUTBOX_MAX_ATTEMPTS", "10"))
 
 # =========================================================
+# WAREHOUSE MODULAR MONOLITH
+# =========================================================
+WAREHOUSE_MODULAR_MONOLITH_ENABLED = get_env("WAREHOUSE_MODULAR_MONOLITH_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+WAREHOUSE_EVENT_BACKBONE = get_env("WAREHOUSE_EVENT_BACKBONE", "local").strip().lower()
+WAREHOUSE_ANALYTICS_ENABLED = get_env("WAREHOUSE_ANALYTICS_ENABLED", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+WAREHOUSE_KAFKA_TOPIC_PREFIX = get_env("WAREHOUSE_KAFKA_TOPIC_PREFIX", "warehouse")
+WAREHOUSE_RABBITMQ_EXCHANGE = get_env("WAREHOUSE_RABBITMQ_EXCHANGE", "warehouse.events")
+RABBITMQ_URL = get_env("RABBITMQ_URL", "")
+KAFKA_BOOTSTRAP_SERVERS = get_env("KAFKA_BOOTSTRAP_SERVERS", "")
+
+# =========================================================
 # IA OPERACIONAL
 # =========================================================
 AI_ASSISTANT_ENABLED = get_env("AI_ASSISTANT_ENABLED", "true").lower() in (
@@ -134,6 +155,14 @@ AI_RATE_LIMIT_PER_USER_PER_HOUR = int(get_env("AI_RATE_LIMIT_PER_USER_PER_HOUR",
 #
 # Se definido, exige `Authorization: Bearer <token>` no endpoint /metrics.
 PROMETHEUS_BEARER_TOKEN = get_env("PROMETHEUS_BEARER_TOKEN", "")
+
+# =========================================================
+# OPENTELEMETRY
+# =========================================================
+OTEL_ENABLED = get_env("OTEL_ENABLED", "false").lower() in ("1", "true", "yes", "on")
+OTEL_SERVICE_NAME = get_env("OTEL_SERVICE_NAME", "substrato-backend")
+OTEL_EXPORTER_OTLP_ENDPOINT = get_env("OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel_collector:4318")
+OTEL_TRACES_EXPORTER = get_env("OTEL_TRACES_EXPORTER", "otlp")
 
 # =========================================================
 # APPLICATIONS
