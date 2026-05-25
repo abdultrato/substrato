@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -61,6 +62,15 @@ class NursingVitalSign(TenantPropagationMixin, CoreModel):
         verbose_name = "Sinal Vital"
         verbose_name_plural = "Sinais Vitais"
         ordering = ["-collected_at", "-created_at"]
+
+    def clean(self):
+        super().clean()
+
+        if self.patient_id and self.tenant_id and self.patient.tenant_id != self.tenant_id:
+            raise ValidationError({"patient": "Paciente e sinal vital devem pertencer ao mesmo tenant."})
+
+        if self.record_id and self.patient_id and self.record.patient_id != self.patient_id:
+            raise ValidationError({"record": "Registro de enfermagem deve pertencer ao paciente informado."})
 
     def __str__(self):
         return f"Sinais vitais - {self.record_id}"

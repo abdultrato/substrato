@@ -185,7 +185,8 @@ class Lot(CoreModel):
                     ),
                     default=F("movimentos__quantity"),  # Entradas positivas
                     output_field=IntegerField(),
-                )
+                ),
+                filter=models.Q(movimentos__deleted=False),
             ),
             0,
         )

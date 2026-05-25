@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
@@ -96,6 +97,15 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
             models.Index(fields=["record_kind", "record_date"]),
             models.Index(fields=["lab_request", "deleted"]),
         ]
+
+    def clean(self):
+        super().clean()
+
+        if self.lab_request_id and self.tenant_id and self.lab_request.tenant_id != self.tenant_id:
+            raise ValidationError({"lab_request": "Requisição e registro de enfermagem devem pertencer ao mesmo tenant."})
+
+        if self.lab_request_id and self.patient_id and self.lab_request.patient_id != self.patient_id:
+            raise ValidationError({"lab_request": "Requisição deve pertencer ao mesmo paciente do registro."})
 
     def __str__(self):
         return f"Registro - {self.patient}"

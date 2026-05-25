@@ -4,9 +4,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from apps.incidents.models.incident import sync_equipment_maintenance_flag
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
-from apps.incidents.models.incident import sync_equipment_maintenance_flag
 
 
 class Maintenance(TenantPropagationMixin, NoNameCoreModel):

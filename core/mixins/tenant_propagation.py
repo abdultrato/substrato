@@ -41,6 +41,6 @@ class TenantPropagationMixin:
         self._sync_or_validate_tenant_from_source()
 
     def save(self, *args, **kwargs):
-        self._sync_or_validate_tenant_from_source()
+        self.clean()
 
         super().save(*args, **kwargs)
