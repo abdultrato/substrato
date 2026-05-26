@@ -12,8 +12,10 @@ from apps.warehouse.domain.stock.business_rules.fefo import prioritize_fefo_lots
 from apps.warehouse.domain.stock.value_objects.replenishment_policy import ReplenishmentPolicy
 from apps.warehouse.infrastructure.substrato_os import get_substrato_os_integrations
 from apps.warehouse.workflows.engine.engine import WarehouseWorkflowEngine
+from quality.english_naming import scan_repository
 
 WAREHOUSE_ROOT = Path(__file__).resolve().parent
+REPOSITORY_ROOT = WAREHOUSE_ROOT.parents[1]
 
 
 @dataclass(frozen=True)
@@ -111,3 +113,72 @@ def test_warehouse_reuses_substrato_os_boundaries_instead_of_duplicating_platfor
     assert integrations.audit == "apps.audit_activities"
     assert integrations.permissions == "security.permissions.rbac"
     assert integrations.observability == "observability.opentelemetry"
+
+
+def test_warehouse_logical_code_and_paths_remain_english_only():
+    findings = scan_repository(REPOSITORY_ROOT, targets=(WAREHOUSE_ROOT,))
+
+    assert not findings, "\n".join(finding.format(REPOSITORY_ROOT) for finding in findings)
+
+
+def test_warehouse_required_modular_boundaries_are_present_in_english():
+    expected_directories = {
+        "analytics",
+        "analytics/data_lake",
+        "analytics/events",
+        "analytics/metrics",
+        "analytics/pipelines",
+        "analytics/warehouse",
+        "application",
+        "application/commands",
+        "application/contracts",
+        "application/orchestrators",
+        "application/queries",
+        "application/use_cases",
+        "domain",
+        "domain/assets",
+        "domain/billing",
+        "domain/inventory",
+        "domain/logistics",
+        "domain/production",
+        "domain/purchasing",
+        "domain/sales",
+        "domain/stock",
+        "edge",
+        "edge/conflicts",
+        "edge/local_cache",
+        "edge/offline_mode",
+        "edge/replication",
+        "edge/synchronization",
+        "events",
+        "events/audit",
+        "events/bus",
+        "events/consumers",
+        "events/producers",
+        "events/schemas",
+        "infrastructure",
+        "intelligence",
+        "intelligence/anomalies",
+        "intelligence/behavior",
+        "intelligence/bottlenecks",
+        "intelligence/costs",
+        "intelligence/forecasting",
+        "intelligence/recommendations",
+        "intelligence/simulations",
+        "realtime",
+        "realtime/notifications",
+        "realtime/queues",
+        "realtime/streams",
+        "realtime/synchronization",
+        "realtime/websocket",
+        "workflows",
+        "workflows/automations",
+        "workflows/engine",
+        "workflows/rules",
+        "workflows/states",
+        "workflows/transitions",
+    }
+
+    missing = sorted(path for path in expected_directories if not (WAREHOUSE_ROOT / path).is_dir())
+
+    assert missing == []
