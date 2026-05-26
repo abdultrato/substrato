@@ -5,11 +5,12 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
-from rest_framework import status
+from rest_framework import serializers as drf_serializers, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
@@ -29,13 +30,133 @@ from ..filters import (
 )
 from ..serializers import (
     CancelConsultationSerializer,
+    ConsultationPricePreviewSerializer,
     ConsultationSpecialtySerializer,
+    CreateConsultationInvoiceResponseSerializer,
     CreateConsultationInvoiceSerializer,
     DoctorSerializer,
     HolidaySerializer,
     MedicalConsultationSerializer,
     RescheduleConsultationSerializer,
 )
+
+
+class MedicalConsultationActionSchema(AutoSchema):
+    query_parameters = {
+        "price_preview": [
+            {"name": "specialty", "type": "integer", "required": True},
+            {"name": "scheduled_for", "type": "string", "format": "date-time", "required": False},
+            {"name": "manual_holiday", "type": "boolean", "required": False},
+        ],
+        "schedule": [
+            {"name": "doctor", "type": "integer", "required": False},
+            {"name": "start", "type": "string", "format": "date-time", "required": False},
+            {"name": "end", "type": "string", "format": "date-time", "required": False},
+            {"name": "status", "type": "string", "required": False},
+        ],
+    }
+    request_serializers = {
+        "create_invoice": CreateConsultationInvoiceSerializer,
+        "reschedule": RescheduleConsultationSerializer,
+        "cancel": CancelConsultationSerializer,
+        "complete": None,
+    }
+    response_serializers = {
+        "price_preview": ConsultationPricePreviewSerializer,
+        "schedule": MedicalConsultationSerializer(many=True),
+        "create_invoice": CreateConsultationInvoiceResponseSerializer,
+        "reschedule": MedicalConsultationSerializer,
+        "cancel": MedicalConsultationSerializer,
+        "complete": MedicalConsultationSerializer,
+    }
+
+    def _action_name(self) -> str:
+        return getattr(self.view, "action", "") or ""
+
+    def _serializer_instance(self, value):
+        if value is None:
+            return None
+        if isinstance(value, drf_serializers.BaseSerializer):
+            return value
+        if isinstance(value, type) and issubclass(value, drf_serializers.BaseSerializer):
+            return value()
+        return value
+
+    def _schema_for_serializer(self, serializer):
+        if isinstance(serializer, drf_serializers.ListSerializer):
+            return {"type": "array", "items": self.get_reference(serializer.child)}
+        if isinstance(serializer, drf_serializers.Serializer):
+            return self.get_reference(serializer)
+        return {}
+
+    def get_operation(self, path, method):
+        operation = super().get_operation(path, method)
+        parameters = self.query_parameters.get(self._action_name(), [])
+        if parameters:
+            existing = operation.get("parameters", [])
+            operation["parameters"] = existing + [
+                {
+                    "name": item["name"],
+                    "in": "query",
+                    "required": item.get("required", False),
+                    "schema": {
+                        key: value
+                        for key, value in {
+                            "type": item["type"],
+                            "format": item.get("format"),
+                        }.items()
+                        if value
+                    },
+                }
+                for item in parameters
+            ]
+        return operation
+
+    def get_request_body(self, path, method):
+        action = self._action_name()
+        if action in self.request_serializers and self.request_serializers[action] is None:
+            return {}
+        return super().get_request_body(path, method)
+
+    def get_request_serializer(self, path, method):
+        action = self._action_name()
+        if action in self.request_serializers:
+            return self._serializer_instance(self.request_serializers[action])
+        return super().get_request_serializer(path, method)
+
+    def get_response_serializer(self, path, method):
+        action = self._action_name()
+        if action in self.response_serializers:
+            return self._serializer_instance(self.response_serializers[action])
+        return super().get_response_serializer(path, method)
+
+    def get_responses(self, path, method):
+        if self._action_name() not in self.response_serializers:
+            return super().get_responses(path, method)
+
+        self.response_media_types = self.map_renderers(path, method)
+        response_schema = self._schema_for_serializer(self.get_response_serializer(path, method))
+        return {
+            "200": {
+                "content": {
+                    content_type: {"schema": response_schema}
+                    for content_type in self.response_media_types
+                },
+                "description": "",
+            }
+        }
+
+    def get_components(self, path, method):
+        components = super().get_components(path, method)
+        for serializer in (
+            self.get_request_serializer(path, method),
+            self.get_response_serializer(path, method),
+        ):
+            if isinstance(serializer, drf_serializers.ListSerializer):
+                serializer = serializer.child
+            if isinstance(serializer, drf_serializers.Serializer):
+                components[self.get_component_name(serializer)] = self.map_serializer(serializer)
+        return components
 
 
 class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
@@ -78,6 +199,7 @@ class HolidayViewSet(TenantScopedModelViewSet):
 class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MedicalConsultation.objects.select_related("patient", "doctor", "specialty").all()
     serializer_class = MedicalConsultationSerializer
+    schema = MedicalConsultationActionSchema()
     filterset_class = MedicalConsultationFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["custom_id", "type", "patient__name", "doctor__name"]
@@ -87,10 +209,9 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     @action(detail=True, methods=["get"], url_path="clinical-history", url_name="clinical-history")
     def clinical_history(self, request, pk=None):
         """
-        Retorna a história clínica agregada do paciente desta consulta.
+        Return the aggregated clinical history for the consultation patient.
 
-        Este endpoint existe para evitar que o frontend faça várias chamadas e
-        consolide dados sensíveis localmente.
+        This endpoint keeps sensitive clinical aggregation on the backend.
         """
         if not user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
@@ -105,7 +226,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     @action(detail=True, methods=["get"], url_path="clinical-history/pdf", url_name="clinical-history-pdf")
     def clinical_history_pdf(self, request, pk=None):
         """
-        Emite o PDF da história clínica agregada do paciente desta consulta.
+        Return the aggregated clinical history PDF for the consultation patient.
         """
         if not user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir a história clínica.")
@@ -146,11 +267,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if tenant is None:
             raise ValidationError("Tenant não identificado.")
 
-        specialty_id = (
-            request.query_params.get("specialty")
-            or request.query_params.get("especialidade")
-            or ""
-        ).strip()
+        specialty_id = (request.query_params.get("specialty") or "").strip()
         if not specialty_id:
             raise ValidationError({"specialty": "Informe o id da specialty."})
 
@@ -158,11 +275,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if not specialty:
             raise ValidationError({"specialty": "Especialidade não encontrada."})
 
-        raw_dt = (
-            request.query_params.get("scheduled_for")
-            or request.query_params.get("agendada_para")
-            or ""
-        ).strip()
+        raw_dt = (request.query_params.get("scheduled_for") or "").strip()
         dt = parse_datetime(raw_dt) if raw_dt else None
         if raw_dt and not dt:
             # Accept YYYY-MM-DD as a convenience fallback.
@@ -174,12 +287,8 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if not dt:
             dt = timezone.now()
 
-        manual_holiday_raw = (
-            request.query_params.get("manual_holiday")
-            or request.query_params.get("feriado_manual")
-            or ""
-        )
-        manual_holiday = manual_holiday_raw.lower() in {"1", "true", "t", "sim"}
+        manual_holiday_raw = request.query_params.get("manual_holiday") or ""
+        manual_holiday = manual_holiday_raw.lower() in {"1", "true", "t", "yes"}
 
         consultation = MedicalConsultation(
             tenant=tenant,
@@ -209,18 +318,6 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             "price_final": str(consultation.price or Decimal("0.00")),
             "currency": currency,
         }
-        payload.update(
-            {
-                "especialidade": payload["specialty"],
-                "especialidade_nome": payload["specialty_name"],
-                "preco_base": payload["base_price"],
-                "feriado_manual": payload["manual_holiday"],
-                "tipo_horario": payload["schedule_type"],
-                "multiplicador_preco": payload["price_multiplier"],
-                "preco_final": payload["price_final"],
-                "moeda": payload["currency"],
-            }
-        )
         return Response(payload, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_path="schedule", url_name="schedule")
@@ -237,22 +334,22 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         qs = self.get_queryset()
 
-        doctor_id = (request.query_params.get("doctor") or request.query_params.get("medico") or "").strip()
+        doctor_id = (request.query_params.get("doctor") or "").strip()
         if doctor_id:
             qs = qs.filter(doctor_id=doctor_id)
 
-        requested_status = (request.query_params.get("status") or request.query_params.get("estado") or "").strip()
+        requested_status = (request.query_params.get("status") or "").strip()
         if requested_status:
             qs = qs.filter(status=requested_status)
 
-        start = (request.query_params.get("start") or request.query_params.get("inicio") or "").strip()
+        start = (request.query_params.get("start") or "").strip()
         if start:
             dt = parse_datetime(start)
             if not dt:
                 raise ValidationError({"start": "Datetime inválido (use ISO 8601)."})
             qs = qs.filter(scheduled_for__gte=dt)
 
-        end = (request.query_params.get("end") or request.query_params.get("fim") or "").strip()
+        end = (request.query_params.get("end") or "").strip()
         if end:
             dt = parse_datetime(end)
             if not dt:
@@ -290,9 +387,9 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             invoice.full_clean()
             invoice.save()
 
-        # Keep the invoice draft aligned with the consultation pricing.
+        # Keep the draft invoice aligned with the consultation pricing.
         if invoice.status != Invoice.Status.DRAFT:
-            raise ValidationError("A invoice vinculada já foi emitida/paga/cancelada.")
+            raise ValidationError("A fatura vinculada já foi emitida/paga/cancelada.")
 
         # Replace draft items from the current consultation state.
         invoice.sync_items_from_origin()
@@ -380,5 +477,3 @@ __all__ = [
     "DoctorsViewSet",
     "MedicalConsultationViewSet",
 ]
-
-# Backwards-compatible aliases while imports are migrated module by module.

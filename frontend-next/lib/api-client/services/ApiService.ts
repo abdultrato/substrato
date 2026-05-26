@@ -14,10 +14,14 @@ import type { BloodStorage } from '../models/BloodStorage';
 import type { BloodStorageMaintenance } from '../models/BloodStorageMaintenance';
 import type { BloodTransfusion } from '../models/BloodTransfusion';
 import type { BloodUnit } from '../models/BloodUnit';
+import type { CancelConsultation } from '../models/CancelConsultation';
 import type { Classroom } from '../models/Classroom';
+import type { ConsultationPricePreview } from '../models/ConsultationPricePreview';
 import type { ConsultationSpecialty } from '../models/ConsultationSpecialty';
 import type { Course } from '../models/Course';
 import type { CoveragePlan } from '../models/CoveragePlan';
+import type { CreateConsultationInvoice } from '../models/CreateConsultationInvoice';
+import type { CreateConsultationInvoiceResponse } from '../models/CreateConsultationInvoiceResponse';
 import type { CycleCount } from '../models/CycleCount';
 import type { CycleCountLine } from '../models/CycleCountLine';
 import type { DailyInspection } from '../models/DailyInspection';
@@ -105,6 +109,7 @@ import type { ReceptionCheckin } from '../models/ReceptionCheckin';
 import type { Reconciliation } from '../models/Reconciliation';
 import type { ReplenishmentPlan } from '../models/ReplenishmentPlan';
 import type { ReplenishmentSuggestion } from '../models/ReplenishmentSuggestion';
+import type { RescheduleConsultation } from '../models/RescheduleConsultation';
 import type { ResultItem } from '../models/ResultItem';
 import type { Sale } from '../models/Sale';
 import type { SaleItem } from '../models/SaleItem';
@@ -2267,13 +2272,25 @@ export class ApiService {
      * - specialty: id (required)
      * - scheduled_for: ISO datetime (optional; default: now)
      * - manual_holiday: bool (optional; default: False)
-     * @returns MedicalConsultation
+     * @param specialty
+     * @param scheduledFor
+     * @param manualHoliday
+     * @returns ConsultationPricePreview
      * @throws ApiError
      */
-    public static pricePreviewMedicalConsultation(): CancelablePromise<MedicalConsultation> {
+    public static pricePreviewMedicalConsultation(
+        specialty: number,
+        scheduledFor?: string,
+        manualHoliday?: boolean,
+    ): CancelablePromise<ConsultationPricePreview> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/consultations/consultation/price/',
+            query: {
+                'specialty': specialty,
+                'scheduled_for': scheduledFor,
+                'manual_holiday': manualHoliday,
+            },
         });
     }
     /**
@@ -2284,13 +2301,28 @@ export class ApiService {
      * - start: ISO datetime (optional)
      * - end: ISO datetime (optional)
      * - status: MARCADA|CONCLUIDA|CANCELADA (optional)
+     * @param doctor
+     * @param start
+     * @param end
+     * @param status
      * @returns MedicalConsultation
      * @throws ApiError
      */
-    public static scheduleMedicalConsultation(): CancelablePromise<MedicalConsultation> {
+    public static scheduleMedicalConsultation(
+        doctor?: number,
+        start?: string,
+        end?: string,
+        status?: string,
+    ): CancelablePromise<Array<MedicalConsultation>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/consultations/consultation/schedule/',
+            query: {
+                'doctor': doctor,
+                'start': start,
+                'end': end,
+                'status': status,
+            },
         });
     }
     /**
@@ -2398,10 +2430,9 @@ export class ApiService {
         });
     }
     /**
-     * Retorna a história clínica agregada do paciente desta consulta.
+     * Return the aggregated clinical history for the consultation patient.
      *
-     * Este endpoint existe para evitar que o frontend faça várias chamadas e
-     * consolide dados sensíveis localmente.
+     * This endpoint keeps sensitive clinical aggregation on the backend.
      * @param id A unique integer value identifying this Consulta Médica.
      * @returns MedicalConsultation
      * @throws ApiError
@@ -2418,7 +2449,7 @@ export class ApiService {
         });
     }
     /**
-     * Emite o PDF da história clínica agregada do paciente desta consulta.
+     * Return the aggregated clinical history PDF for the consultation patient.
      * @param id A unique integer value identifying this Consulta Médica.
      * @returns MedicalConsultation
      * @throws ApiError
@@ -21311,7 +21342,7 @@ export class ApiService {
          */
         public static cancelMedicalConsultation(
             id: string,
-            requestBody?: MedicalConsultation,
+            requestBody?: CancelConsultation,
         ): CancelablePromise<MedicalConsultation> {
             return __request(OpenAPI, {
                 method: 'POST',
@@ -21325,13 +21356,11 @@ export class ApiService {
         }
         /**
          * @param id A unique integer value identifying this Consulta Médica.
-         * @param requestBody
          * @returns MedicalConsultation
          * @throws ApiError
          */
         public static completeMedicalConsultation(
             id: string,
-            requestBody?: MedicalConsultation,
         ): CancelablePromise<MedicalConsultation> {
             return __request(OpenAPI, {
                 method: 'POST',
@@ -21339,20 +21368,18 @@ export class ApiService {
                 path: {
                     'id': id,
                 },
-                body: requestBody,
-                mediaType: 'application/json',
             });
         }
         /**
          * @param id A unique integer value identifying this Consulta Médica.
          * @param requestBody
-         * @returns MedicalConsultation
+         * @returns CreateConsultationInvoiceResponse
          * @throws ApiError
          */
         public static createInvoiceMedicalConsultation(
             id: string,
-            requestBody?: MedicalConsultation,
-        ): CancelablePromise<MedicalConsultation> {
+            requestBody?: CreateConsultationInvoice,
+        ): CancelablePromise<CreateConsultationInvoiceResponse> {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/consultations/consultation/{id}/create-invoice/',
@@ -21371,7 +21398,7 @@ export class ApiService {
          */
         public static rescheduleMedicalConsultation(
             id: string,
-            requestBody?: MedicalConsultation,
+            requestBody?: RescheduleConsultation,
         ): CancelablePromise<MedicalConsultation> {
             return __request(OpenAPI, {
                 method: 'POST',

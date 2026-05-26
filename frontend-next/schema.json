@@ -4306,13 +4306,39 @@
       "get": {
         "operationId": "pricePreviewMedicalConsultation",
         "description": "Price preview for a specialty at a given date/time.\n\nQuery params:\n- specialty: id (required)\n- scheduled_for: ISO datetime (optional; default: now)\n- manual_holiday: bool (optional; default: False)",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "specialty",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "scheduled_for",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "manual_holiday",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MedicalConsultation"
+                  "$ref": "#/components/schemas/ConsultationPricePreview"
                 }
               }
             },
@@ -4328,13 +4354,51 @@
       "get": {
         "operationId": "scheduleMedicalConsultation",
         "description": "List consultations by doctor and time range.\n\nQuery params:\n- doctor: user id (optional)\n- start: ISO datetime (optional)\n- end: ISO datetime (optional)\n- status: MARCADA|CONCLUIDA|CANCELADA (optional)",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "doctor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MedicalConsultation"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MedicalConsultation"
+                  }
                 }
               }
             },
@@ -4574,7 +4638,7 @@
     "/api/v1/consultations/consultation/{id}/clinical-history/": {
       "get": {
         "operationId": "clinicalHistoryMedicalConsultation",
-        "description": "Retorna a hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.\n\nEste endpoint existe para evitar que o frontend fa\u00e7a v\u00e1rias chamadas e\nconsolide dados sens\u00edveis localmente.",
+        "description": "Return the aggregated clinical history for the consultation patient.\n\nThis endpoint keeps sensitive clinical aggregation on the backend.",
         "parameters": [
           {
             "name": "id",
@@ -4606,7 +4670,7 @@
     "/api/v1/consultations/consultation/{id}/clinical-history/pdf/": {
       "get": {
         "operationId": "clinicalHistoryPdfMedicalConsultation",
-        "description": "Emite o PDF da hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.",
+        "description": "Return the aggregated clinical history PDF for the consultation patient.",
         "parameters": [
           {
             "name": "id",
@@ -46650,23 +46714,23 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CancelConsultation"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CancelConsultation"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CancelConsultation"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -46697,27 +46761,8 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
-              }
-            }
-          }
-        },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -46752,27 +46797,27 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CreateConsultationInvoice"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CreateConsultationInvoice"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/CreateConsultationInvoice"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MedicalConsultation"
+                  "$ref": "#/components/schemas/CreateConsultationInvoiceResponse"
                 }
               }
             },
@@ -46803,23 +46848,23 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/RescheduleConsultation"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/RescheduleConsultation"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/MedicalConsultation"
+                "$ref": "#/components/schemas/RescheduleConsultation"
               }
             }
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
@@ -51861,6 +51906,49 @@
         },
         "required": [
           "patient"
+        ]
+      },
+      "ConsultationPricePreview": {
+        "type": "object",
+        "properties": {
+          "specialty": {
+            "type": "integer"
+          },
+          "specialty_name": {
+            "type": "string"
+          },
+          "base_price": {
+            "type": "string"
+          },
+          "manual_holiday": {
+            "type": "boolean"
+          },
+          "is_holiday": {
+            "type": "boolean"
+          },
+          "schedule_type": {
+            "type": "string"
+          },
+          "price_multiplier": {
+            "type": "string"
+          },
+          "price_final": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "specialty",
+          "specialty_name",
+          "base_price",
+          "manual_holiday",
+          "is_holiday",
+          "schedule_type",
+          "price_multiplier",
+          "price_final",
+          "currency"
         ]
       },
       "Doctor": {
@@ -66068,6 +66156,63 @@
         },
         "required": [
           "refresh"
+        ]
+      },
+      "CancelConsultation": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 255
+          }
+        }
+      },
+      "CreateConsultationInvoice": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "CreateConsultationInvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "consultation_id": {
+            "type": "integer"
+          },
+          "invoice_id": {
+            "type": "integer"
+          },
+          "invoice_code": {
+            "type": "string"
+          },
+          "invoice_status": {
+            "type": "string"
+          },
+          "total": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "consultation_id",
+          "invoice_id",
+          "invoice_code",
+          "invoice_status",
+          "total"
+        ]
+      },
+      "RescheduleConsultation": {
+        "type": "object",
+        "properties": {
+          "scheduled_for": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "scheduled_for"
         ]
       }
     }

@@ -46,7 +46,7 @@ def _authenticate_admin(tenant: Tenant, api_client):
 
 
 @pytest.mark.django_db
-def test_consultations_accept_frontend_pt_payload_and_return_aliases(api_client):
+def test_consultations_use_english_payload_and_reject_legacy_aliases(api_client):
     tenant = _tenant(identifier="tn-consults-compat", domain="consults-compat.local")
     _authenticate_admin(tenant, api_client)
 
@@ -67,10 +67,10 @@ def test_consultations_accept_frontend_pt_payload_and_return_aliases(api_client)
     response = api_client.post(
         "/api/v1/consultations/consultation/",
         {
-            "paciente": patient.id,
-            "especialidade": specialty.id,
-            "agendada_para": scheduled_for,
-            "feriado_manual": True,
+            "patient": patient.id,
+            "specialty": specialty.id,
+            "scheduled_for": scheduled_for,
+            "manual_holiday": True,
         },
         format="json",
     )
@@ -79,19 +79,28 @@ def test_consultations_accept_frontend_pt_payload_and_return_aliases(api_client)
     payload = _response_data(response)
 
     assert payload["patient"] == patient.id
-    assert payload["paciente"] == patient.id
     assert payload["specialty"] == specialty.id
-    assert payload["especialidade"] == specialty.id
     assert payload["manual_holiday"] is True
-    assert payload["feriado_manual"] is True
     assert payload["patient_name"] == patient.name
-    assert payload["paciente_nome"] == patient.name
-    assert payload["status"] == payload["estado"]
-    assert payload["scheduled_for"] == payload["agendada_para"]
+    assert "paciente" not in payload
+    assert "especialidade" not in payload
+    assert "agendada_para" not in payload
+
+    legacy_response = api_client.post(
+        "/api/v1/consultations/consultation/",
+        {
+            "paciente": patient.id,
+            "especialidade": specialty.id,
+            "agendada_para": scheduled_for,
+            "feriado_manual": True,
+        },
+        format="json",
+    )
+    assert legacy_response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_consultation_price_preview_uses_english_route_and_preserves_pt_aliases(api_client):
+def test_consultation_price_preview_uses_english_contract(api_client):
     tenant = _tenant(identifier="tn-consults-price", domain="consults-price.local")
     _authenticate_admin(tenant, api_client)
 
@@ -103,20 +112,21 @@ def test_consultation_price_preview_uses_english_route_and_preserves_pt_aliases(
     )
 
     response = api_client.get(
-        f"/api/v1/consultations/consultation/price/?especialidade={specialty.id}&feriado_manual=true"
+        f"/api/v1/consultations/consultation/price/?specialty={specialty.id}&manual_holiday=true"
     )
 
     assert response.status_code == 200, _response_data(response)
     payload = _response_data(response)
 
     assert payload["specialty"] == specialty.id
-    assert payload["especialidade"] == specialty.id
     assert payload["specialty_name"] == specialty.name
-    assert payload["especialidade_nome"] == specialty.name
     assert payload["manual_holiday"] is True
-    assert payload["feriado_manual"] is True
-    assert payload["price_final"] == payload["preco_final"]
-    assert payload["currency"] == payload["moeda"]
+    assert "especialidade" not in payload
+    assert "preco_final" not in payload
+    assert "moeda" not in payload
+    assert api_client.get(
+        f"/api/v1/consultations/consultation/price/?especialidade={specialty.id}&feriado_manual=true"
+    ).status_code == 400
     assert api_client.get(f"/api/v1/consultations/consultation/preco/?especialidade={specialty.id}").status_code == 404
 
 

@@ -40,9 +40,7 @@ class HolidayFilter(SafeFilterSet):
 
 FILTER_MAP = {
     "consultation": MedicalConsultationFilter,
-    "medicos": DoctorFilter,
+    "doctors": DoctorFilter,
     "specialty": ConsultationSpecialtyFilter,
-    "feriado": HolidayFilter,
+    "holiday": HolidayFilter,
 }
-
-# Backwards-compatible aliases while the rest of the codebase is still migrating.

@@ -14,13 +14,13 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-type Paciente = { id: number; nome: string }
-type Medico = { id: number; nome?: string; profissao?: string; cargo_nome?: string }
-type Especialidade = {
+type Patient = { id: number; name?: string }
+type Doctor = { id: number; name?: string; profession_name?: string; role_name?: string }
+type Specialty = {
   id: number
-  nome?: string
-  preco_base?: string | number
-  ativo?: boolean
+  name?: string
+  base_price?: string | number
+  active?: boolean
 }
 
 type PricePreview = {
@@ -35,23 +35,23 @@ type PricePreview = {
   currency?: string
 }
 
-type ConsultaRow = {
+type ConsultationRow = {
   id: number
-  id_custom?: string
-  paciente?: number
-  paciente_nome?: string
-  medico?: number | null
-  medico_nome?: string
-  tipo?: string
-  estado?: string
-  preco?: string | number
-  tipo_horario?: string
-  multiplicador_preco?: string | number
-  feriado_manual?: boolean
-  agendada_para?: string
-  fatura_id?: number | null
-  fatura_codigo?: string
-  fatura_estado?: string
+  custom_id?: string
+  patient?: number
+  patient_name?: string
+  doctor?: number | null
+  doctor_name?: string
+  type?: string
+  status?: string
+  price?: string | number
+  schedule_type?: string
+  price_multiplier?: string | number
+  manual_holiday?: boolean
+  scheduled_for?: string
+  invoice_id?: number | null
+  invoice_code?: string
+  invoice_status?: string
 }
 
 function fmtDate(value: any): string {
@@ -61,14 +61,14 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
-async function abrirPdfFatura(faturaId: number) {
-  const blob = await apiFetch<Blob>(`/invoices/${faturaId}/pdf/`, { responseType: "blob" })
+async function openInvoicePdf(invoiceId: number) {
+  const blob = await apiFetch<Blob>(`/invoices/${invoiceId}/pdf/`, { responseType: "blob" })
   const url = window.URL.createObjectURL(blob)
   window.open(url, "_blank", "noopener,noreferrer")
   setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
 }
 
-export default function ConsultasPage() {
+export default function ConsultationsPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
 
@@ -79,25 +79,25 @@ export default function ConsultasPage() {
     GROUPS.MEDICINA_OCUPACIONAL,
   ])
 
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const [consultas, setConsultas] = useState<ConsultaRow[]>([])
-  const [pacientes, setPacientes] = useState<Paciente[]>([])
-  const [medicos, setMedicos] = useState<Medico[]>([])
-  const [especialidades, setEspecialidades] = useState<Especialidade[]>([])
+  const [consultations, setConsultations] = useState<ConsultationRow[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [specialties, setSpecialties] = useState<Specialty[]>([])
 
-  const [pacienteId, setPacienteId] = useState("")
-  const [medicoId, setMedicoId] = useState("")
-  const [especialidadeId, setEspecialidadeId] = useState("")
-  const [agendadaPara, setAgendadaPara] = useState("")
-  const [feriado, setFeriado] = useState(false)
-  const [salvando, setSalvando] = useState(false)
+  const [patientId, setPatientId] = useState("")
+  const [doctorId, setDoctorId] = useState("")
+  const [specialtyId, setSpecialtyId] = useState("")
+  const [scheduledForInput, setScheduledForInput] = useState("")
+  const [manualHoliday, setManualHoliday] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [pricePreview, setPricePreview] = useState<PricePreview | null>(null)
-  const [remarcarModalOpen, setRemarcarModalOpen] = useState(false)
-  const [remarcando, setRemarcando] = useState(false)
-  const [consultaRemarcar, setConsultaRemarcar] = useState<ConsultaRow | null>(null)
-  const [novaDataHoraConsulta, setNovaDataHoraConsulta] = useState("")
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false)
+  const [rescheduling, setRescheduling] = useState(false)
+  const [consultationToReschedule, setConsultationToReschedule] = useState<ConsultationRow | null>(null)
+  const [newScheduledFor, setNewScheduledFor] = useState("")
 
   const localizeErrorMessage = useCallback((message?: string) => {
     const raw = (message || "").trim()
@@ -108,8 +108,8 @@ export default function ConsultasPage() {
     return raw
   }, [t])
 
-  const carregar = useCallback(async () => {
-    const [cons, pacs, meds, especs] = await Promise.all([
+  const loadData = useCallback(async () => {
+    const [consultationsResponse, patientsResponse, doctorsResponse, specialtiesResponse] = await Promise.all([
       apiFetch<any>("/consultations/"),
       apiFetch<any>("/clinical/patients/"),
       apiFetch<any>("/consultations/doctors/"),
@@ -118,12 +118,12 @@ export default function ConsultasPage() {
 
     const list = (v: any) => (v && v.results ? v.results : v) || []
 
-    setConsultas(Array.isArray(list(cons)) ? list(cons) : [])
-    setPacientes(Array.isArray(list(pacs)) ? list(pacs) : [])
-    setMedicos(Array.isArray(list(meds)) ? list(meds) : [])
-    const especItems = Array.isArray(list(especs)) ? (list(especs) as Especialidade[]) : []
-    setEspecialidades(especItems)
-    setEspecialidadeId((prev) => prev || (especItems[0]?.id ? String(especItems[0].id) : ""))
+    setConsultations(Array.isArray(list(consultationsResponse)) ? list(consultationsResponse) : [])
+    setPatients(Array.isArray(list(patientsResponse)) ? list(patientsResponse) : [])
+    setDoctors(Array.isArray(list(doctorsResponse)) ? list(doctorsResponse) : [])
+    const specialtyItems = Array.isArray(list(specialtiesResponse)) ? (list(specialtiesResponse) as Specialty[]) : []
+    setSpecialties(specialtyItems)
+    setSpecialtyId((prev) => prev || (specialtyItems[0]?.id ? String(specialtyItems[0].id) : ""))
   }, [])
 
   useEffect(() => {
@@ -131,12 +131,12 @@ export default function ConsultasPage() {
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
-        await carregar()
+        setErrorMessage(null)
+        await loadData()
         if (!mounted) return
       } catch (e: any) {
         if (!mounted) return
-        setErro(
+        setErrorMessage(
           isNotFoundLikeError(e)
             ? null
             : localizeErrorMessage(e?.message) || t("Falha ao carregar consultas.", "Failed to load consultations.")
@@ -149,136 +149,132 @@ export default function ConsultasPage() {
     return () => {
       mounted = false
     }
-  }, [carregar, localizeErrorMessage, t])
+  }, [loadData, localizeErrorMessage, t])
 
-  async function criarConsulta(e: any) {
+  async function createConsultation(e: any) {
     e.preventDefault()
     if (!canWrite) return
 
-    if (!pacienteId) {
+    if (!patientId) {
       alert(t("Selecione um paciente.", "Select a patient."))
       return
     }
-    if (!especialidadeId) {
+    if (!specialtyId) {
       alert(t("Selecione uma especialidade.", "Select a specialty."))
       return
     }
 
-    setSalvando(true)
+    setSaving(true)
     try {
       const payload: any = {
-        paciente: Number(pacienteId),
-        especialidade: Number(especialidadeId),
+        patient: Number(patientId),
+        specialty: Number(specialtyId),
       }
 
-      if (medicoId) payload.medico = Number(medicoId)
+      if (doctorId) payload.doctor = Number(doctorId)
 
-      if (agendadaPara) {
-        const d = new Date(agendadaPara)
-        payload.agendada_para = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
+      if (scheduledForInput) {
+        const d = new Date(scheduledForInput)
+        payload.scheduled_for = Number.isNaN(d.getTime()) ? scheduledForInput : d.toISOString()
       }
 
-      if (feriado) payload.feriado_manual = true
+      if (manualHoliday) payload.manual_holiday = true
 
       await apiFetch("/consultations/", {
         method: "POST",
         body: JSON.stringify(payload),
       })
 
-      setPacienteId("")
-      setMedicoId("")
-      setEspecialidadeId("")
-      setAgendadaPara("")
-      setFeriado(false)
+      setPatientId("")
+      setDoctorId("")
+      setSpecialtyId("")
+      setScheduledForInput("")
+      setManualHoliday(false)
       setPricePreview(null)
 
-      await carregar()
+      await loadData()
     } catch (e: any) {
       alert(localizeErrorMessage(e?.message) || t("Falha ao criar consulta.", "Failed to create consultation."))
     } finally {
-      setSalvando(false)
+      setSaving(false)
     }
   }
 
-  const criarFatura = useCallback(async (_consultaId: number) => {
-    alert(t("Criar fatura apenas em Faturamento/Receção.", "Create invoice only in Billing/Reception."))
-  }, [t])
-
-  const cancelarConsulta = useCallback(async (consultaId: number) => {
+  const cancelConsultation = useCallback(async (consultationId: number) => {
     if (!canWrite) return
     if (!confirm(t("Cancelar esta consulta?", "Cancel this consultation?"))) return
     try {
-      await apiFetch(`/consultations/${consultaId}/cancel/`, {
+      await apiFetch(`/consultations/${consultationId}/cancel/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
-      await carregar()
+      await loadData()
     } catch (e: any) {
       alert(localizeErrorMessage(e?.message) || t("Falha ao cancelar consulta.", "Failed to cancel consultation."))
     }
-  }, [canWrite, carregar, localizeErrorMessage, t])
+  }, [canWrite, loadData, localizeErrorMessage, t])
 
-  const concluirConsulta = useCallback(async (consultaId: number) => {
+  const completeConsultation = useCallback(async (consultationId: number) => {
     if (!canWrite) return
     if (!confirm(t("Marcar esta consulta como concluída?", "Mark this consultation as completed?"))) return
     try {
-      await apiFetch(`/consultations/${consultaId}/complete/`, {
+      await apiFetch(`/consultations/${consultationId}/complete/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
-      await carregar()
+      await loadData()
     } catch (e: any) {
       alert(localizeErrorMessage(e?.message) || t("Falha ao concluir consulta.", "Failed to complete consultation."))
     }
-  }, [canWrite, carregar, localizeErrorMessage, t])
+  }, [canWrite, loadData, localizeErrorMessage, t])
 
-  const fecharModalRemarcacao = useCallback(() => {
-    if (remarcando) return
-    setRemarcarModalOpen(false)
-    setConsultaRemarcar(null)
-    setNovaDataHoraConsulta("")
-  }, [remarcando])
+  const closeRescheduleModal = useCallback(() => {
+    if (rescheduling) return
+    setRescheduleModalOpen(false)
+    setConsultationToReschedule(null)
+    setNewScheduledFor("")
+  }, [rescheduling])
 
-  const remarcarConsulta = useCallback(async (row: ConsultaRow) => {
+  const openRescheduleModal = useCallback(async (row: ConsultationRow) => {
     if (!canWrite) return
-    const current = row.agendada_para ? new Date(row.agendada_para) : null
+    const current = row.scheduled_for ? new Date(row.scheduled_for) : null
     const defaultValue = current && !Number.isNaN(current.getTime())
       ? current.toISOString().slice(0, 16) // yyyy-mm-ddThh:mm
       : ""
-    setConsultaRemarcar(row)
-    setNovaDataHoraConsulta(defaultValue)
-    setRemarcarModalOpen(true)
+    setConsultationToReschedule(row)
+    setNewScheduledFor(defaultValue)
+    setRescheduleModalOpen(true)
   }, [canWrite])
 
-  const confirmarRemarcacaoConsulta = useCallback(async () => {
-    if (!consultaRemarcar?.id) return
-    if (!novaDataHoraConsulta.trim()) {
+  const confirmReschedule = useCallback(async () => {
+    if (!consultationToReschedule?.id) return
+    if (!newScheduledFor.trim()) {
       alert(t("Informe a nova data/hora da consulta.", "Provide the new consultation date/time."))
       return
     }
-    const d = new Date(novaDataHoraConsulta)
-    const value = Number.isNaN(d.getTime()) ? novaDataHoraConsulta : d.toISOString()
+    const d = new Date(newScheduledFor)
+    const value = Number.isNaN(d.getTime()) ? newScheduledFor : d.toISOString()
 
-    setRemarcando(true)
+    setRescheduling(true)
     try {
-      await apiFetch(`/consultations/${consultaRemarcar.id}/reschedule/`, {
+      await apiFetch(`/consultations/${consultationToReschedule.id}/reschedule/`, {
         method: "POST",
-        body: JSON.stringify({ agendada_para: value }),
+        body: JSON.stringify({ scheduled_for: value }),
       })
-      setRemarcarModalOpen(false)
-      setConsultaRemarcar(null)
-      setNovaDataHoraConsulta("")
-      await carregar()
+      setRescheduleModalOpen(false)
+      setConsultationToReschedule(null)
+      setNewScheduledFor("")
+      await loadData()
     } catch (e: any) {
       alert(localizeErrorMessage(e?.message) || t("Falha ao remarcar consulta.", "Failed to reschedule consultation."))
     } finally {
-      setRemarcando(false)
+      setRescheduling(false)
     }
-  }, [carregar, consultaRemarcar?.id, localizeErrorMessage, novaDataHoraConsulta, t])
+  }, [loadData, consultationToReschedule?.id, localizeErrorMessage, newScheduledFor, t])
 
   const columns = useMemo(
     () => {
-      const labelHorario = (value?: string) => {
+      const formatScheduleType = (value?: string) => {
         if (!value) return t("Normal", "Normal")
         if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
         if (value === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
@@ -286,7 +282,7 @@ export default function ConsultasPage() {
         return t("Normal", "Normal")
       }
 
-      const labelEstado = (value?: string) => {
+      const formatStatus = (value?: string) => {
         if (!value) return "-"
         if (value === "MARCADA") return t("Marcada", "Scheduled")
         if (value === "CONCLUIDA") return t("Concluída", "Completed")
@@ -295,56 +291,56 @@ export default function ConsultasPage() {
       }
 
       return [
-        { header: t("Código", "Code"), render: (r: ConsultaRow) => r.id_custom || r.id },
-        { header: t("Paciente", "Patient"), render: (r: ConsultaRow) => r.paciente_nome || "-" },
-        { header: t("Médico", "Doctor"), render: (r: ConsultaRow) => r.medico_nome || "—" },
-        { header: t("Tipo", "Type"), render: (r: ConsultaRow) => r.tipo || "-" },
-        { header: t("Estado", "Status"), render: (r: ConsultaRow) => labelEstado(r.estado) },
-        { header: t("Horário", "Schedule"), render: (r: ConsultaRow) => labelHorario(r.tipo_horario) },
-        { header: t("Agendada", "Scheduled"), render: (r: ConsultaRow) => fmtDate(r.agendada_para) },
-        { header: t("Preço", "Price"), render: (r: ConsultaRow) => <MoneyValue value={r.preco} />, className: "text-right" },
+        { header: t("Código", "Code"), render: (r: ConsultationRow) => r.custom_id || r.id },
+        { header: t("Paciente", "Patient"), render: (r: ConsultationRow) => r.patient_name || "-" },
+        { header: t("Médico", "Doctor"), render: (r: ConsultationRow) => r.doctor_name || "—" },
+        { header: t("Tipo", "Type"), render: (r: ConsultationRow) => r.type || "-" },
+        { header: t("Estado", "Status"), render: (r: ConsultationRow) => formatStatus(r.status) },
+        { header: t("Horário", "Schedule"), render: (r: ConsultationRow) => formatScheduleType(r.schedule_type) },
+        { header: t("Agendada", "Scheduled"), render: (r: ConsultationRow) => fmtDate(r.scheduled_for) },
+        { header: t("Preço", "Price"), render: (r: ConsultationRow) => <MoneyValue value={r.price} />, className: "text-right" },
         {
           header: t("Fatura", "Invoice"),
-          render: (r: ConsultaRow) => r.fatura_codigo || "—",
+          render: (r: ConsultationRow) => r.invoice_code || "—",
         },
         {
           header: t("Ações", "Actions"),
-          render: (r: ConsultaRow) => (
+          render: (r: ConsultationRow) => (
             <div className="flex flex-wrap gap-2">
-              {canWrite && r.estado === "MARCADA" ? (
+              {canWrite && r.status === "MARCADA" ? (
                 <button
                   type="button"
-                  onClick={() => remarcarConsulta(r)}
+                  onClick={() => openRescheduleModal(r)}
                   className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                 >
                   {t("Remarcar", "Reschedule")}
                 </button>
               ) : null}
 
-              {canWrite && r.estado === "MARCADA" ? (
+              {canWrite && r.status === "MARCADA" ? (
                 <button
                   type="button"
-                  onClick={() => concluirConsulta(r.id)}
+                  onClick={() => completeConsultation(r.id)}
                   className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                 >
                   {t("Concluir", "Complete")}
                 </button>
               ) : null}
 
-              {canWrite && r.estado !== "CANCELADA" && r.estado !== "CONCLUIDA" ? (
+              {canWrite && r.status !== "CANCELADA" && r.status !== "CONCLUIDA" ? (
                 <button
                   type="button"
-                  onClick={() => cancelarConsulta(r.id)}
+                  onClick={() => cancelConsultation(r.id)}
                   className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
                 >
                   {t("Cancelar", "Cancel")}
                 </button>
               ) : null}
 
-            {r.fatura_id ? (
+            {r.invoice_id ? (
               <button
                 type="button"
-                onClick={() => abrirPdfFatura(Number(r.fatura_id))}
+                onClick={() => openInvoicePdf(Number(r.invoice_id))}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <PdfActionLabel>{t("PDF Fatura", "Invoice PDF")}</PdfActionLabel>
@@ -357,35 +353,35 @@ export default function ConsultasPage() {
       },
       ]
     },
-    [canWrite, cancelarConsulta, concluirConsulta, remarcarConsulta, t]
+    [canWrite, cancelConsultation, completeConsultation, openRescheduleModal, t]
   )
 
-  const tipoHorarioLabel = useMemo(() => {
-    const tipo = pricePreview?.schedule_type
-    if (!tipo) return t("Normal", "Normal")
-    if (tipo === "FIM_SEMANA") return t("Fim de semana", "Weekend")
-    if (tipo === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
-    if (tipo === "FERIADO_MANUAL") return t("Feriado", "Holiday")
+  const scheduleTypeLabel = useMemo(() => {
+    const scheduleType = pricePreview?.schedule_type
+    if (!scheduleType) return t("Normal", "Normal")
+    if (scheduleType === "FIM_SEMANA") return t("Fim de semana", "Weekend")
+    if (scheduleType === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
+    if (scheduleType === "FERIADO_MANUAL") return t("Feriado", "Holiday")
     return t("Normal", "Normal")
   }, [pricePreview?.schedule_type, t])
 
   useEffect(() => {
     let mounted = true
     async function loadPreview() {
-      if (!especialidadeId) {
+      if (!specialtyId) {
         if (mounted) setPricePreview(null)
         return
       }
 
       try {
         const params = new URLSearchParams()
-        params.set("specialty", String(especialidadeId))
-        if (agendadaPara) {
-          const d = new Date(agendadaPara)
-          const value = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
+        params.set("specialty", String(specialtyId))
+        if (scheduledForInput) {
+          const d = new Date(scheduledForInput)
+          const value = Number.isNaN(d.getTime()) ? scheduledForInput : d.toISOString()
           params.set("scheduled_for", value)
         }
-        if (feriado) params.set("manual_holiday", "true")
+        if (manualHoliday) params.set("manual_holiday", "true")
         const res = await apiFetch<PricePreview>(`/consultations/consultation/price/?${params.toString()}`)
         if (mounted) setPricePreview(res || null)
       } catch {
@@ -397,7 +393,7 @@ export default function ConsultasPage() {
     return () => {
       mounted = false
     }
-  }, [especialidadeId, agendadaPara, feriado])
+  }, [specialtyId, scheduledForInput, manualHoliday])
 
   return (
     <AppLayout
@@ -418,9 +414,9 @@ export default function ConsultasPage() {
           )}
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
@@ -429,19 +425,19 @@ export default function ConsultasPage() {
             title={t("Nova consulta", "New consultation")}
             subtitle={t("Crie a consulta e, se necessário, emita a fatura.", "Create the consultation and issue the invoice if needed.")}
           >
-            <form onSubmit={criarConsulta} className="grid gap-3 md:grid-cols-2">
+            <form onSubmit={createConsultation} className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Paciente", "Patient")}</label>
                 <select
-                  value={pacienteId}
-                  onChange={(e) => setPacienteId(e.target.value)}
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   required
                 >
                   <option value="">{t("Selecione", "Select")}</option>
-                  {pacientes.map((p) => (
+                  {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.nome}
+                      {p.name || `${t("Paciente", "Patient")} ${p.id}`}
                     </option>
                   ))}
                 </select>
@@ -450,14 +446,14 @@ export default function ConsultasPage() {
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Médico (opcional)", "Doctor (optional)")}</label>
                 <select
-                  value={medicoId}
-                  onChange={(e) => setMedicoId(e.target.value)}
+                  value={doctorId}
+                  onChange={(e) => setDoctorId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 >
                   <option value="">{t("Sem médico", "No doctor")}</option>
-                  {medicos.map((m) => {
-                    const detalhe = m.cargo_nome || m.profissao
-                    const label = [m.nome || `${t("Médico", "Doctor")} ${m.id}`, detalhe].filter(Boolean).join(" · ")
+                  {doctors.map((m) => {
+                    const detail = m.role_name || m.profession_name
+                    const label = [m.name || `${t("Médico", "Doctor")} ${m.id}`, detail].filter(Boolean).join(" · ")
                     return (
                       <option key={m.id} value={m.id}>
                         {label}
@@ -470,17 +466,17 @@ export default function ConsultasPage() {
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Especialidade", "Specialty")}</label>
                 <select
-                  value={especialidadeId}
-                  onChange={(e) => setEspecialidadeId(e.target.value)}
+                  value={specialtyId}
+                  onChange={(e) => setSpecialtyId(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   required
                 >
                   <option value="">{t("Selecione", "Select")}</option>
-                  {especialidades
-                    .filter((x) => x.ativo !== false)
+                  {specialties
+                    .filter((x) => x.active !== false)
                     .map((esp) => (
                       <option key={esp.id} value={esp.id}>
-                        {esp.nome || `${t("Especialidade", "Specialty")} ${esp.id}`}
+                        {esp.name || `${t("Especialidade", "Specialty")} ${esp.id}`}
                       </option>
                     ))}
                 </select>
@@ -495,12 +491,12 @@ export default function ConsultasPage() {
                     value={pricePreview?.price_final || ""}
                     readOnly
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
-                    placeholder={especialidadeId ? t("Calculando...", "Calculating...") : t("Selecione uma especialidade", "Select a specialty")}
+                    placeholder={specialtyId ? t("Calculando...", "Calculating...") : t("Selecione uma especialidade", "Select a specialty")}
                   />
 
                   <div className="flex flex-col items-start">
                     <span className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                      {tipoHorarioLabel}
+                      {scheduleTypeLabel}
                     </span>
                     {pricePreview?.price_multiplier ? (
                       <span className="text-[11px] text-gray-500">x{pricePreview.price_multiplier}</span>
@@ -516,22 +512,22 @@ export default function ConsultasPage() {
                 <label className="text-xs text-gray-600">{t("Agendada para (opcional)", "Scheduled for (optional)")}</label>
                 <input
                   type="datetime-local"
-                  value={agendadaPara}
-                  onChange={(e) => setAgendadaPara(e.target.value)}
+                  value={scheduledForInput}
+                  onChange={(e) => setScheduledForInput(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                 />
               </div>
 
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm">
                 <input
-                  id="feriado-manual"
+                  id="manualHoliday-manual"
                   type="checkbox"
-                  checked={feriado}
-                  onChange={(e) => setFeriado(e.target.checked)}
+                  checked={manualHoliday}
+                  onChange={(e) => setManualHoliday(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
                 />
                 <div className="flex flex-col leading-tight">
-                  <label htmlFor="feriado-manual" className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</label>
+                  <label htmlFor="manualHoliday-manual" className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</label>
                   <span className="text-[11px] text-gray-500">
                     {t(
                       "Marca 2x o valor quando não for fim de semana/fora de expediente.",
@@ -543,10 +539,10 @@ export default function ConsultasPage() {
 
               <div className="flex items-end">
                 <button
-                  disabled={salvando}
+                  disabled={saving}
                   className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
                 >
-                  {salvando ? t("Salvando...", "Saving...") : t("Criar consulta", "Create consultation")}
+                  {saving ? t("Salvando...", "Saving...") : t("Criar consulta", "Create consultation")}
                 </button>
               </div>
             </form>
@@ -555,8 +551,8 @@ export default function ConsultasPage() {
           <Card title={t("Modo leitura", "Read-only mode")} subtitle={t("Contabilidade pode ver, mas não alterar.", "Accounting can view, but cannot edit.")}>
             <div className="text-sm text-gray-600">
               {t(
-                "Este módulo está disponível para auditoria e estatística. Para criar/edit consultas, use uma conta com permissão clínica.",
-                "This module is available for auditing and statistics. To create/edit consultations, use an account with clinical permissions."
+                "Este módulo está disponível para auditoria e estatística. Para criar ou editar consultas, use uma conta com permissão clínica.",
+                "This module is available for auditing and statistics. To create or edit consultations, use an account with clinical permissions."
               )}
             </div>
           </Card>
@@ -566,20 +562,20 @@ export default function ConsultasPage() {
           {loading ? (
             <div className="text-sm text-gray-500">{t("Carregando...", "Loading...")}</div>
           ) : (
-            <DataTable<ConsultaRow>
+            <DataTable<ConsultationRow>
               columns={columns as any}
-              data={consultas}
+              data={consultations}
               emptyMessage={t("Nenhuma consulta encontrada.", "No consultations found.")}
             />
           )}
         </Card>
       </div>
 
-      {remarcarModalOpen ? (
+      {rescheduleModalOpen ? (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
-            onClick={fecharModalRemarcacao}
+            onClick={closeRescheduleModal}
           />
           <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
             <div className="border-b border-[var(--border)] px-4 py-3">
@@ -595,12 +591,12 @@ export default function ConsultasPage() {
               <div className="text-xs text-[var(--gray-600)]">
                 {t("Consulta:", "Consultation:")}{" "}
                 <span className="font-semibold text-[var(--text)]">
-                  {consultaRemarcar?.id_custom || consultaRemarcar?.id || "-"}
+                  {consultationToReschedule?.custom_id || consultationToReschedule?.id || "-"}
                 </span>
                 {" · "}
                 {t("Paciente:", "Patient:")}{" "}
                 <span className="font-semibold text-[var(--text)]">
-                  {consultaRemarcar?.paciente_nome || "-"}
+                  {consultationToReschedule?.patient_name || "-"}
                 </span>
               </div>
 
@@ -610,8 +606,8 @@ export default function ConsultasPage() {
                 </span>
                 <input
                   type="datetime-local"
-                  value={novaDataHoraConsulta}
-                  onChange={(e) => setNovaDataHoraConsulta(e.target.value)}
+                  value={newScheduledFor}
+                  onChange={(e) => setNewScheduledFor(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   autoFocus
                 />
@@ -621,19 +617,19 @@ export default function ConsultasPage() {
             <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] px-4 py-3">
               <button
                 type="button"
-                onClick={fecharModalRemarcacao}
-                disabled={remarcando}
+                onClick={closeRescheduleModal}
+                disabled={rescheduling}
                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
                 {t("Cancelar", "Cancel")}
               </button>
               <button
                 type="button"
-                onClick={confirmarRemarcacaoConsulta}
-                disabled={remarcando}
+                onClick={confirmReschedule}
+                disabled={rescheduling}
                 className="inline-flex items-center rounded-lg bg-[var(--primary-700)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--primary-800)] disabled:opacity-60"
               >
-                {remarcando ? t("Atualizando...", "Updating...") : t("Atualizar data/hora", "Update date/time")}
+                {rescheduling ? t("Atualizando...", "Updating...") : t("Atualizar data/hora", "Update date/time")}
               </button>
             </div>
           </div>
