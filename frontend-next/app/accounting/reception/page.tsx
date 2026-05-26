@@ -34,7 +34,7 @@ export default function ContabilidadeRecepcaoAuditPage() {
 
         const [cRes, aRes] = await Promise.all([
           apiFetch<any>("/reception/checkin/"),
-          apiFetch<any>("/reception/atendimento/"),
+          apiFetch<any>("/reception/care/"),
         ])
 
         const list = (v: any) => (v && v.results ? v.results : v) || []

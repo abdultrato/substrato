@@ -2328,16 +2328,6 @@ export class ApiService {
         });
     }
     /**
-     * @returns MedicalConsultation
-     * @throws ApiError
-     */
-    public static pricePreviewLegacyMedicalConsultation(): CancelablePromise<MedicalConsultation> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/consultations/consultation/preco/',
-        });
-    }
-    /**
      * List consultations by doctor and time range.
      *
      * Query params:
@@ -2352,16 +2342,6 @@ export class ApiService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/consultations/consultation/schedule/',
-        });
-    }
-    /**
-     * @returns MedicalConsultation
-     * @throws ApiError
-     */
-    public static scheduleLegacyMedicalConsultation(): CancelablePromise<MedicalConsultation> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/consultations/consultation/agenda/',
         });
     }
     /**
@@ -14609,7 +14589,7 @@ export class ApiService {
     ): CancelablePromise<any> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/reception/atendimento/{id}/',
+            url: '/api/v1/reception/care/{id}/',
             path: {
                 'id': id,
             },
@@ -14770,7 +14750,7 @@ export class ApiService {
     ): CancelablePromise<ReceptionCheckin> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/reception/checkin/{id}/atendimento/',
+            url: '/api/v1/reception/checkin/{id}/care/',
             path: {
                 'id': id,
             },
@@ -21433,26 +21413,6 @@ export class ApiService {
          * @returns MedicalConsultation
          * @throws ApiError
          */
-        public static cancelLegacyMedicalConsultation(
-            id: string,
-            requestBody?: MedicalConsultation,
-        ): CancelablePromise<MedicalConsultation> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/consultations/consultation/{id}/cancelar/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Consulta Médica.
-         * @param requestBody
-         * @returns MedicalConsultation
-         * @throws ApiError
-         */
         public static completeMedicalConsultation(
             id: string,
             requestBody?: MedicalConsultation,
@@ -21460,26 +21420,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/consultations/consultation/{id}/complete/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Consulta Médica.
-         * @param requestBody
-         * @returns MedicalConsultation
-         * @throws ApiError
-         */
-        public static completeLegacyMedicalConsultation(
-            id: string,
-            requestBody?: MedicalConsultation,
-        ): CancelablePromise<MedicalConsultation> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/consultations/consultation/{id}/concluir/',
                 path: {
                     'id': id,
                 },
@@ -21513,26 +21453,6 @@ export class ApiService {
          * @returns MedicalConsultation
          * @throws ApiError
          */
-        public static createInvoiceLegacyMedicalConsultation(
-            id: string,
-            requestBody?: MedicalConsultation,
-        ): CancelablePromise<MedicalConsultation> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/consultations/consultation/{id}/criar_invoice/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Consulta Médica.
-         * @param requestBody
-         * @returns MedicalConsultation
-         * @throws ApiError
-         */
         public static rescheduleMedicalConsultation(
             id: string,
             requestBody?: MedicalConsultation,
@@ -21540,26 +21460,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/consultations/consultation/{id}/reschedule/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Consulta Médica.
-         * @param requestBody
-         * @returns MedicalConsultation
-         * @throws ApiError
-         */
-        public static rescheduleLegacyMedicalConsultation(
-            id: string,
-            requestBody?: MedicalConsultation,
-        ): CancelablePromise<MedicalConsultation> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/consultations/consultation/{id}/remarcar/',
                 path: {
                     'id': id,
                 },
@@ -22519,7 +22419,7 @@ export class ApiService {
         ): CancelablePromise<any> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/atendimento/',
+                url: '/api/v1/reception/care/',
                 body: requestBody,
                 mediaType: 'application/json',
             });
@@ -22537,7 +22437,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/cancelar/',
+                url: '/api/v1/reception/checkin/{id}/cancel/',
                 path: {
                     'id': id,
                 },
@@ -22558,7 +22458,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/concluir/',
+                url: '/api/v1/reception/checkin/{id}/complete/',
                 path: {
                     'id': id,
                 },
@@ -22579,7 +22479,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/criar_invoice/',
+                url: '/api/v1/reception/checkin/{id}/create-invoice/',
                 path: {
                     'id': id,
                 },
@@ -22600,7 +22500,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/criar_request/',
+                url: '/api/v1/reception/checkin/{id}/create-request/',
                 path: {
                     'id': id,
                 },
@@ -22621,7 +22521,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/vincular_invoice/',
+                url: '/api/v1/reception/checkin/{id}/link-invoice/',
                 path: {
                     'id': id,
                 },
@@ -22642,7 +22542,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/vincular_request/',
+                url: '/api/v1/reception/checkin/{id}/link-request/',
                 path: {
                     'id': id,
                 },
@@ -22663,7 +22563,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/registrar_payment/',
+                url: '/api/v1/reception/checkin/{id}/register-payment/',
                 path: {
                     'id': id,
                 },
@@ -22684,7 +22584,7 @@ export class ApiService {
         ): CancelablePromise<ReceptionCheckin> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/reception/checkin/{id}/iniciar_atendimento/',
+                url: '/api/v1/reception/checkin/{id}/start-care/',
                 path: {
                     'id': id,
                 },

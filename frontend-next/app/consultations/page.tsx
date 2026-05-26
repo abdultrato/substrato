@@ -23,16 +23,16 @@ type Especialidade = {
   ativo?: boolean
 }
 
-type PrecoPreview = {
-  especialidade: number
-  especialidade_nome?: string
-  preco_base?: string
-  feriado_manual?: boolean
+type PricePreview = {
+  specialty: number
+  specialty_name?: string
+  base_price?: string
+  manual_holiday?: boolean
   is_holiday?: boolean
-  tipo_horario?: string
-  multiplicador_preco?: string
-  preco_final?: string
-  moeda?: string
+  schedule_type?: string
+  price_multiplier?: string
+  price_final?: string
+  currency?: string
 }
 
 type ConsultaRow = {
@@ -93,7 +93,7 @@ export default function ConsultasPage() {
   const [agendadaPara, setAgendadaPara] = useState("")
   const [feriado, setFeriado] = useState(false)
   const [salvando, setSalvando] = useState(false)
-  const [precoPreview, setPrecoPreview] = useState<PrecoPreview | null>(null)
+  const [pricePreview, setPricePreview] = useState<PricePreview | null>(null)
   const [remarcarModalOpen, setRemarcarModalOpen] = useState(false)
   const [remarcando, setRemarcando] = useState(false)
   const [consultaRemarcar, setConsultaRemarcar] = useState<ConsultaRow | null>(null)
@@ -190,7 +190,7 @@ export default function ConsultasPage() {
       setEspecialidadeId("")
       setAgendadaPara("")
       setFeriado(false)
-      setPrecoPreview(null)
+      setPricePreview(null)
 
       await carregar()
     } catch (e: any) {
@@ -208,7 +208,7 @@ export default function ConsultasPage() {
     if (!canWrite) return
     if (!confirm(t("Cancelar esta consulta?", "Cancel this consultation?"))) return
     try {
-      await apiFetch(`/consultations/${consultaId}/cancelar/`, {
+      await apiFetch(`/consultations/${consultaId}/cancel/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
@@ -222,7 +222,7 @@ export default function ConsultasPage() {
     if (!canWrite) return
     if (!confirm(t("Marcar esta consulta como concluída?", "Mark this consultation as completed?"))) return
     try {
-      await apiFetch(`/consultations/${consultaId}/concluir/`, {
+      await apiFetch(`/consultations/${consultaId}/complete/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
@@ -261,7 +261,7 @@ export default function ConsultasPage() {
 
     setRemarcando(true)
     try {
-      await apiFetch(`/consultations/${consultaRemarcar.id}/remarcar/`, {
+      await apiFetch(`/consultations/${consultaRemarcar.id}/reschedule/`, {
         method: "POST",
         body: JSON.stringify({ agendada_para: value }),
       })
@@ -361,35 +361,35 @@ export default function ConsultasPage() {
   )
 
   const tipoHorarioLabel = useMemo(() => {
-    const tipo = precoPreview?.tipo_horario
+    const tipo = pricePreview?.schedule_type
     if (!tipo) return t("Normal", "Normal")
     if (tipo === "FIM_SEMANA") return t("Fim de semana", "Weekend")
     if (tipo === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
     if (tipo === "FERIADO_MANUAL") return t("Feriado", "Holiday")
     return t("Normal", "Normal")
-  }, [precoPreview?.tipo_horario, t])
+  }, [pricePreview?.schedule_type, t])
 
   useEffect(() => {
     let mounted = true
     async function loadPreview() {
       if (!especialidadeId) {
-        if (mounted) setPrecoPreview(null)
+        if (mounted) setPricePreview(null)
         return
       }
 
       try {
         const params = new URLSearchParams()
-        params.set("especialidade", String(especialidadeId))
+        params.set("specialty", String(especialidadeId))
         if (agendadaPara) {
           const d = new Date(agendadaPara)
           const value = Number.isNaN(d.getTime()) ? agendadaPara : d.toISOString()
-          params.set("agendada_para", value)
+          params.set("scheduled_for", value)
         }
-        if (feriado) params.set("feriado_manual", "true")
-        const res = await apiFetch<PrecoPreview>(`/consultations/consultation/preco/?${params.toString()}`)
-        if (mounted) setPrecoPreview(res || null)
+        if (feriado) params.set("manual_holiday", "true")
+        const res = await apiFetch<PricePreview>(`/consultations/consultation/price/?${params.toString()}`)
+        if (mounted) setPricePreview(res || null)
       } catch {
-        if (mounted) setPrecoPreview(null)
+        if (mounted) setPricePreview(null)
       }
     }
 
@@ -488,11 +488,11 @@ export default function ConsultasPage() {
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">
-                  {t("Preço", "Price")} {precoPreview?.moeda ? `(${precoPreview.moeda})` : "(MZN)"}
+                  {t("Preço", "Price")} {pricePreview?.currency ? `(${pricePreview.currency})` : "(MZN)"}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
-                    value={precoPreview?.preco_final || ""}
+                    value={pricePreview?.price_final || ""}
                     readOnly
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
                     placeholder={especialidadeId ? t("Calculando...", "Calculating...") : t("Selecione uma especialidade", "Select a specialty")}
@@ -502,10 +502,10 @@ export default function ConsultasPage() {
                     <span className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-gray-700">
                       {tipoHorarioLabel}
                     </span>
-                    {precoPreview?.multiplicador_preco ? (
-                      <span className="text-[11px] text-gray-500">x{precoPreview.multiplicador_preco}</span>
+                    {pricePreview?.price_multiplier ? (
+                      <span className="text-[11px] text-gray-500">x{pricePreview.price_multiplier}</span>
                     ) : null}
-                    {precoPreview?.feriado_manual ? (
+                    {pricePreview?.manual_holiday ? (
                       <span className="text-[11px] text-amber-700">{t("Feriado marcado", "Holiday marked")}</span>
                     ) : null}
                   </div>

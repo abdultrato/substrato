@@ -203,7 +203,7 @@ class PatientFlowSerializer(serializers.Serializer):
     gestational_age_weeks = serializers.IntegerField(required=False, allow_null=True, min_value=0)
 
 
-class CheckinFlowSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+class CheckinFlowSerializer(serializers.Serializer):
     priority = serializers.ChoiceField(
         choices=ReceptionCheckin.Priority.choices,
         required=False,
@@ -211,8 +211,6 @@ class CheckinFlowSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
     reason = serializers.CharField(max_length=255, required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
     start_care = serializers.BooleanField(default=False)
-    legacy_input_aliases = {"iniciar_atendimento": "start_care"}
-    legacy_output_aliases = {"iniciar_atendimento": "start_care"}
 
 
 class CareFlowCreateSerializer(LegacyAliasSerializerMixin, serializers.Serializer):

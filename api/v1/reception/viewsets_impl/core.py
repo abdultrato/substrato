@@ -121,31 +121,31 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
 
-    @action(detail=True, methods=["post"], url_path="iniciar_atendimento", url_name="iniciar-atendimento")
+    @action(detail=True, methods=["post"], url_path="start-care", url_name="start-care")
     def start_care(self, request, pk=None):
         checkin = self.get_object()
         self.execute_safely(checkin.start_care, attendant=request.user)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    @action(detail=True, methods=["post"], url_path="complete", url_name="complete")
     def complete(self, request, pk=None):
         checkin = self.get_object()
         self.execute_safely(checkin.complete)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
     def cancel(self, request, pk=None):
         checkin = self.get_object()
         self.execute_safely(checkin.cancel)
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["get"], url_path="atendimento", url_name="atendimento")
+    @action(detail=True, methods=["get"], url_path="care", url_name="care")
     def care(self, request, pk=None):
         checkin = self.get_object()
         return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="criar_request", url_name="criar-request")
+    @action(detail=True, methods=["post"], url_path="create-request", url_name="create-request")
     def create_request(self, request, pk=None):
         payload = CreateReceptionRequestSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -163,7 +163,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
+    @action(detail=True, methods=["post"], url_path="create-invoice", url_name="create-invoice")
     def create_invoice(self, request, pk=None):
         payload = CreateReceptionInvoiceSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -180,7 +180,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         return Response(get_care_summary(checkin))
 
     @transaction.atomic
-    @action(detail=True, methods=["post"], url_path="registrar_payment", url_name="registrar-payment")
+    @action(detail=True, methods=["post"], url_path="register-payment", url_name="register-payment")
     def register_payment(self, request, pk=None):
         payload = RegisterReceptionPaymentSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -203,7 +203,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         )
         return Response(get_care_summary(checkin))
 
-    @action(detail=True, methods=["post"], url_path="vincular_request", url_name="vincular-request")
+    @action(detail=True, methods=["post"], url_path="link-request", url_name="link-request")
     def link_request(self, request, pk=None):
         payload = LinkRequestSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -219,7 +219,7 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         )
         return Response(self.get_serializer(checkin).data)
 
-    @action(detail=True, methods=["post"], url_path="vincular_invoice", url_name="vincular-invoice")
+    @action(detail=True, methods=["post"], url_path="link-invoice", url_name="link-invoice")
     def link_invoice(self, request, pk=None):
         payload = LinkInvoiceSerializer(data=request.data)
         payload.is_valid(raise_exception=True)
@@ -269,7 +269,7 @@ class ReceptionCareViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, ViewS
 
 
 VIEWSET_MAP = {
-    "atendimento": ReceptionCareViewSet,
+    "care": ReceptionCareViewSet,
     "checkin": ReceptionCheckinViewSet,
     "workspace": ReceptionWorkspaceViewSet,
 }

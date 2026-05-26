@@ -91,7 +91,7 @@ def test_consultations_accept_frontend_pt_payload_and_return_aliases(api_client)
 
 
 @pytest.mark.django_db
-def test_consultation_price_preview_supports_pt_route_and_query_params(api_client):
+def test_consultation_price_preview_uses_english_route_and_preserves_pt_aliases(api_client):
     tenant = _tenant(identifier="tn-consults-price", domain="consults-price.local")
     _authenticate_admin(tenant, api_client)
 
@@ -103,7 +103,7 @@ def test_consultation_price_preview_supports_pt_route_and_query_params(api_clien
     )
 
     response = api_client.get(
-        f"/api/v1/consultations/consultation/preco/?especialidade={specialty.id}&feriado_manual=true"
+        f"/api/v1/consultations/consultation/price/?especialidade={specialty.id}&feriado_manual=true"
     )
 
     assert response.status_code == 200, _response_data(response)
@@ -117,6 +117,7 @@ def test_consultation_price_preview_supports_pt_route_and_query_params(api_clien
     assert payload["feriado_manual"] is True
     assert payload["price_final"] == payload["preco_final"]
     assert payload["currency"] == payload["moeda"]
+    assert api_client.get(f"/api/v1/consultations/consultation/preco/?especialidade={specialty.id}").status_code == 404
 
 
 @pytest.mark.django_db

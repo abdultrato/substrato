@@ -16,7 +16,7 @@ import {
   SpecialtySchema,
   HolidaySchema,
   WorkspaceSchema,
-  AtendimentoSchema,
+  ReceptionCareSchema,
   ReceiptSchema,
   TransactionSchema,
   ReconciliationSchema,
@@ -38,7 +38,7 @@ import {
   type Specialty,
   type Holiday,
   type Workspace,
-  type Atendimento,
+  type ReceptionCare,
   type Receipt,
   type Transaction,
   type Reconciliation,
@@ -499,12 +499,12 @@ export class ReceptionService {
     return this.client.get('/api/v1/reception/workspace/', WorkspaceSchema.array(), { retryOptions })
   }
 
-  async listAtendimentos(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/reception/atendimento/', AtendimentoSchema.array(), { retryOptions })
+  async listCare(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/reception/care/', ReceptionCareSchema.array(), { retryOptions })
   }
 
-  async retrieveAtendimento(id: number, retryOptions?: RetryOptions) {
-    return this.client.get(`/api/v1/reception/atendimento/${id}/`, AtendimentoSchema, { retryOptions })
+  async retrieveCare(id: number, retryOptions?: RetryOptions) {
+    return this.client.get(`/api/v1/reception/care/${id}/`, ReceptionCareSchema, { retryOptions })
   }
 }
 

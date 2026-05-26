@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 import pytest
 
 from application.reception.care_flow import (
@@ -21,7 +22,12 @@ from core.constants.laboratory.sector import Sector
 
 
 def _tenant():
-    return Tenant.objects.create(identifier="tn-rec", name="Tenant Recepcao")
+    return Tenant.objects.create(
+        identifier="tn-rec",
+        name="Tenant Recepcao",
+        domain="tn-rec.local",
+        active=True,
+    )
 
 
 def _patient(tenant):
@@ -46,6 +52,49 @@ def _exam(tenant):
         method=Method.ENZIMATICO,
         sector=Sector.RADIOLOGIA if hasattr(Sector, "RADIOLOGIA") else Sector.HEMATOLOGIA,
         sample_type=sample,
+    )
+
+
+def _authenticate_admin(tenant, api_client):
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        username="reception_contract_admin",
+        email="reception-contract-admin@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    admin_group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(admin_group)
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.mark.django_db
+def test_reception_api_uses_english_resource_routes_and_actions(api_client):
+    from api.v1.reception.viewsets import VIEWSET_MAP
+
+    expected = {"workspace", "checkin", "care"}
+    legacy = {"atendimento"}
+
+    assert set(VIEWSET_MAP) == expected
+    assert not (set(VIEWSET_MAP) & legacy)
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+    checkin = open_checkin(tenant=tenant, patient=patient, priority=ReceptionCheckin.Priority.NORMAL)
+
+    assert api_client.get(f"/api/v1/reception/care/{checkin.id}/", HTTP_HOST=tenant.domain).status_code == 200
+    assert api_client.get(f"/api/v1/reception/atendimento/{checkin.id}/", HTTP_HOST=tenant.domain).status_code == 404
+
+    assert api_client.post(f"/api/v1/reception/checkin/{checkin.id}/start-care/", HTTP_HOST=tenant.domain).status_code == 200
+    assert (
+        api_client.post(
+            f"/api/v1/reception/checkin/{checkin.id}/iniciar_atendimento/",
+            HTTP_HOST=tenant.domain,
+        ).status_code
+        == 404
     )
 
 

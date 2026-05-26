@@ -378,32 +378,6 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_200_OK,
         )
 
-    # Legacy Portuguese aliases
-    @action(detail=False, methods=["get"], url_path="agenda", url_name="agenda")
-    def schedule_legacy(self, request):
-        return self.schedule(request)
-
-    @action(detail=False, methods=["get"], url_path="preco", url_name="preco")
-    def price_preview_legacy(self, request):
-        return self.price_preview(request)
-
-    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
-    def create_invoice_legacy(self, request, pk=None):
-        return self.create_invoice(request, pk)
-
-    @action(detail=True, methods=["post"], url_path="remarcar", url_name="remarcar")
-    def reschedule_legacy(self, request, pk=None):
-        return self.reschedule(request, pk)
-
-    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
-    def cancel_legacy(self, request, pk=None):
-        return self.cancel(request, pk)
-
-    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
-    def complete_legacy(self, request, pk=None):
-        return self.complete(request, pk)
-
-
 VIEWSET_MAP = {
     "consultation": MedicalConsultationViewSet,
     "doctors": DoctorsViewSet,

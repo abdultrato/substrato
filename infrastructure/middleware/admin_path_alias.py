@@ -143,7 +143,6 @@ API_MODEL_ALIASES: dict[str, str] = _with_hyphen_aliases(
         "vital-sign": "sinalvitalenfermagem",
         "nursing-record": "registroenfermagem",
         "family-group": "agregadofamiliar",
-        "care": "atendimento",
         "activity": "atividade",
         "procedure-authorization": "autorizacaoprocedimento",
         "ward-bed": "camaenfermaria",

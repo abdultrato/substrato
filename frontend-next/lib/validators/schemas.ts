@@ -261,13 +261,13 @@ export const WorkspaceSchema = z.object({
 })
 export type Workspace = z.infer<typeof WorkspaceSchema>
 
-export const AtendimentoSchema = z.object({
+export const ReceptionCareSchema = z.object({
   id: z.number().int().readonly(),
   patient: z.number().int().optional().nullable(),
   checkin: z.number().int().optional().nullable(),
   status: z.string().optional().nullable(),
 })
-export type Atendimento = z.infer<typeof AtendimentoSchema>
+export type ReceptionCare = z.infer<typeof ReceptionCareSchema>
 
 /**
  * Pagamentos

@@ -64,7 +64,7 @@ function rewriteUrl(url: string): string {
     const rest = u.slice("/consultations/".length)
     const firstSeg = rest.split("/")[0] || ""
     const isNumericId = /^\d+$/.test(firstSeg)
-    const isConsultationCollectionAction = new Set(["agenda", "preco"]).has(firstSeg)
+    const isConsultationCollectionAction = new Set(["schedule", "price"]).has(firstSeg)
     if (isNumericId || isConsultationCollectionAction) {
       return u.replace("/consultations", "/consultations/consultation")
     }
@@ -96,8 +96,6 @@ function rewriteUrl(url: string): string {
     ["/audit", "/auditoria"],
     ["/notifications", "/notificacoes"],
     ["/monitoring", "/monitoramento"],
-    ["/reception/checkin", "/recepcao/checkin"],
-    ["/reception/atendimento", "/recepcao/atendimento"],
   ]
 
   for (const [from, to] of mappings) {

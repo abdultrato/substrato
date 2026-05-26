@@ -123,6 +123,28 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/insurer/coverage_plan/")
   })
 
+  it("mantém ações de consultas e recepção em inglês", async () => {
+    ;(global.fetch as any)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 7 }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    await apiFetch("/consultations/42/cancel/", { method: "POST", body: JSON.stringify({}) })
+    await apiFetch("/reception/care/7/")
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/consultations/consultation/42/cancel/")
+    expect((global.fetch as any).mock.calls[1][0]).toBe("/api/v1/reception/care/7/")
+  })
+
   it("reescreve alias legado de reconciliacao para o endpoint atual", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {

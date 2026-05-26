@@ -136,7 +136,7 @@ COMMAND_CENTER_MODULES = (
         "label_pt": "Recepção",
         "label_en": "Reception",
         "prefixes": ("/api/v1/reception/", "/reception/", "/api/v1/recepcao/", "/recepcao/"),
-        "critical_paths": ("/api/v1/reception/checkin/", "/api/v1/reception/atendimento/"),
+        "critical_paths": ("/api/v1/reception/checkin/", "/api/v1/reception/care/"),
     },
     {
         "key": "equipment",

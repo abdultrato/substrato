@@ -37,7 +37,7 @@ const MODULES_BASE: ModuleGroup[] = [
     resources: [
       { key: "workspace", label: "Workspace", endpoint: "/reception/workspace/", adminListHref: "/admin/reception/" },
       { key: "checkin", label: "Check-ins", endpoint: "/reception/checkin/", adminListHref: "/admin/reception/checkinrecepcao/" },
-      { key: "atendimento", label: "Atendimentos", endpoint: "/reception/atendimento/", adminListHref: "/admin/reception/" },
+      { key: "care", label: "Atendimentos", endpoint: "/reception/care/", adminListHref: "/admin/reception/" },
     ],
   },
   {
