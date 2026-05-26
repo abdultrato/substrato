@@ -28,6 +28,7 @@ EXPECTED_VERBOSE_NAMES = {
     "apps.reception": "Recepção e Atendimento ao Paciente",
     "apps.surgery": "Cirurgias e Procedimentos Cirúrgicos",
     "apps.tenants": "Inquilinos e Locações de Hospitais",
+    "apps.warehouse": "Logística Empresarial",
 }
 
 
