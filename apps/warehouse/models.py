@@ -732,8 +732,18 @@ class SalesOrder(CoreModel):
                 levels = (
                     StockLevel.objects.select_for_update()
                     .filter(tenant=order.tenant, item=line.item, quantity__gt=ZERO)
+                    .filter(models.Q(lot__isnull=True) | models.Q(lot__status=WarehouseLot.LotStatus.AVAILABLE))
+                    .filter(
+                        models.Q(lot__isnull=True)
+                        | models.Q(lot__expiration_date__isnull=True)
+                        | models.Q(lot__expiration_date__gte=timezone.localdate())
+                    )
                     .select_related("lot", "location")
-                    .order_by("lot__expiration_date", "created_at")
+                    .order_by(
+                        models.F("lot__expiration_date").asc(nulls_last=True),
+                        models.F("lot__received_at").asc(nulls_last=True),
+                        "created_at",
+                    )
                 )
                 if line.lot_id:
                     levels = levels.filter(lot=line.lot)

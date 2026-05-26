@@ -1,7 +1,9 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.tenants.models import Tenant
 from apps.warehouse.application.queries.stock import MinimumStockQuery
@@ -236,6 +238,69 @@ class WarehouseStockTests(TestCase):
 
         with self.assertRaises(ValidationError):
             oversized_order.allocate()
+
+    def test_sales_order_allocation_prioritizes_fefo_and_ignores_unavailable_lots(self):
+        today = timezone.localdate()
+        early_lot = WarehouseLot.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            lot_number="LOT-FEFO-001",
+            expiration_date=today + timedelta(days=5),
+            received_at=today,
+        )
+        late_lot = WarehouseLot.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            lot_number="LOT-FEFO-002",
+            expiration_date=today + timedelta(days=30),
+            received_at=today,
+        )
+        blocked_lot = WarehouseLot.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            lot_number="LOT-BLOCKED",
+            expiration_date=today + timedelta(days=1),
+            received_at=today,
+            status=WarehouseLot.LotStatus.BLOCKED,
+        )
+
+        for lot in (late_lot, early_lot, blocked_lot):
+            StockMovement.objects.create(
+                tenant=self.tenant,
+                item=self.item,
+                lot=lot,
+                destination_location=self.location,
+                movement_type=StockMovement.MovementType.RECEIPT,
+                quantity=Decimal("1"),
+                name=f"Entrada {lot.lot_number}",
+            )
+        StockMovement.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            destination_location=self.location,
+            movement_type=StockMovement.MovementType.RECEIPT,
+            quantity=Decimal("1"),
+            name="Entrada sem lote",
+        )
+        order = SalesOrder.objects.create(
+            tenant=self.tenant,
+            order_number="SO-FEFO",
+            customer_name="Cliente FEFO",
+        )
+        SalesOrderLine.objects.create(
+            tenant=self.tenant,
+            sales_order=order,
+            item=self.item,
+            ordered_quantity=Decimal("3"),
+            preferred_location=self.location,
+        )
+
+        order.allocate()
+
+        reservations = list(order.active_reservations.select_related("lot").order_by("id"))
+        reserved_lots = [reservation.lot.lot_number if reservation.lot else None for reservation in reservations]
+        self.assertEqual(reserved_lots, ["LOT-FEFO-001", "LOT-FEFO-002", None])
+        self.assertFalse(StockReservation.objects.filter(lot=blocked_lot).exists())
 
     def test_automatic_replenishment_records_real_balance_and_reuses_open_plan(self):
         self.item.reorder_point = Decimal("5")
