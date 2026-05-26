@@ -150,8 +150,8 @@ describe("modules catalog discovery", () => {
   })
 
   it("keeps segregated surgery admin shortcuts available", () => {
-    const small = findModuleResource("surgery", "pequenacirurgia", MODULES)
-    const large = findModuleResource("surgery", "grandecirurgia", MODULES)
+    const small = findModuleResource("surgery", "small_surgery", MODULES)
+    const large = findModuleResource("surgery", "large_surgery", MODULES)
 
     expect(small?.resource.adminListHref).toBe("/admin/surgery/smallsurgery/")
     expect(large?.resource.adminListHref).toBe("/admin/surgery/largesurgery/")
@@ -159,7 +159,14 @@ describe("modules catalog discovery", () => {
 
   it("hides admin shortcut when backend has no registered model admin", () => {
     const invoiceItem = findModuleResource("billing", "faturaitem", MODULES)
+    const discovered = discoverModulesFromApiRoot({
+      "insurer/tenant_coverage_plan": "/api/v1/insurer/tenant_coverage_plan/",
+    })
+    const merged = mergeModules(MODULES, discovered)
+    const tenantPlan = findModuleResource("insurer", "tenant_coverage_plan", merged)
+
     expect(invoiceItem?.resource.adminListHref).toBeUndefined()
+    expect(tenantPlan?.resource.adminListHref).toBeUndefined()
   })
 
   it("does not expose legacy portuguese admin slugs in generated shortcuts", () => {

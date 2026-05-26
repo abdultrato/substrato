@@ -6,7 +6,7 @@ import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedRes
 export default function CreateSmallSurgeryPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/surgery/small-surgeries/" />
+      <GeneratedResourceCreatePage endpoint="/surgery/small_surgery/" />
     </Suspense>
   );
 }

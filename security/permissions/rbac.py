@@ -185,13 +185,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
     external_entities_crud = SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
     insurer_read = {
         "insurer-insurer": SAFE_METHODS,
-        "insurer-planocobertura": SAFE_METHODS,
-        "insurer-tenantplanocobertura": SAFE_METHODS,
-        "insurer-autorizacaoprocedimento": SAFE_METHODS,
+        "insurer-coverage_plan": SAFE_METHODS,
+        "insurer-tenant_coverage_plan": SAFE_METHODS,
+        "insurer-procedure_authorization": SAFE_METHODS,
     }
     insurer_authorization_write = {
         **insurer_read,
-        "insurer-autorizacaoprocedimento": SAFE_METHODS | WRITE_METHODS,
+        "insurer-procedure_authorization": SAFE_METHODS | WRITE_METHODS,
     }
     insurer_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
@@ -206,14 +206,10 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         for basename in maternity_read
     }
     surgery_read = {
-        "cirurgia-surgery": SAFE_METHODS,
-        "cirurgia-pequenacirurgia": SAFE_METHODS,
-        "cirurgia-grandecirurgia": SAFE_METHODS,
-        "cirurgia-procedimentocirurgico": SAFE_METHODS,
         "surgery-surgery": SAFE_METHODS,
-        "surgery-pequenacirurgia": SAFE_METHODS,
-        "surgery-grandecirurgia": SAFE_METHODS,
-        "surgery-procedimentocirurgico": SAFE_METHODS,
+        "surgery-small_surgery": SAFE_METHODS,
+        "surgery-large_surgery": SAFE_METHODS,
+        "surgery-surgical_procedure": SAFE_METHODS,
     }
     surgery_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})

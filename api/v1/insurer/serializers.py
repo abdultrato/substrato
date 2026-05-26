@@ -148,9 +148,9 @@ class InsurerSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
 
 
 SERIALIZER_MAP = {
-    "autorizacaoprocedimento": ProcedureAuthorizationSerializer,
-    "planocobertura": CoveragePlanSerializer,
-    "tenantplanocobertura": TenantCoveragePlanSerializer,
+    "procedure_authorization": ProcedureAuthorizationSerializer,
+    "coverage_plan": CoveragePlanSerializer,
+    "tenant_coverage_plan": TenantCoveragePlanSerializer,
     "insurer": InsurerSerializer,
 }
 

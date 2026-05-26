@@ -566,11 +566,11 @@ export class InsurersService {
   }
 
   async listCoveragePlans(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/insurer/planocobertura/', CoveragePlanSchema.array(), { retryOptions })
+    return this.client.get('/api/v1/insurer/coverage_plan/', CoveragePlanSchema.array(), { retryOptions })
   }
 
   async listAuthorizations(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/insurer/autorizacaoprocedimento/', AuthorizationProcedureSchema.array(), {
+    return this.client.get('/api/v1/insurer/procedure_authorization/', AuthorizationProcedureSchema.array(), {
       retryOptions,
     })
   }

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 import pytest
 
 from apps.clinical.models.patient import Patient
@@ -97,7 +98,28 @@ def test_surgery_proxy_models_are_registered_in_admin_site():
 
 
 def test_surgery_viewset_map_exposes_segmented_resources():
+    from api.v1.surgery.filters import FILTER_MAP
+    from api.v1.surgery.serializers import SERIALIZER_MAP
     from api.v1.surgery.viewsets import VIEWSET_MAP
 
-    assert "pequenacirurgia" in VIEWSET_MAP
-    assert "grandecirurgia" in VIEWSET_MAP
+    expected = {"surgery", "small_surgery", "large_surgery", "surgical_procedure"}
+    legacy = {"pequenacirurgia", "grandecirurgia", "procedimentocirurgico"}
+
+    assert set(VIEWSET_MAP) == expected
+    assert set(SERIALIZER_MAP) == expected
+    assert set(FILTER_MAP) == expected
+    assert not (set(VIEWSET_MAP) & legacy)
+
+
+@pytest.mark.django_db
+def test_surgery_api_uses_english_resource_routes(api_client):
+    tenant = _tenant()
+    user = _surgeon(tenant)
+    admin_group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(admin_group)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+
+    assert api_client.get("/api/v1/surgery/small_surgery/").status_code == 200
+    assert api_client.get("/api/v1/surgery/pequenacirurgia/").status_code == 404

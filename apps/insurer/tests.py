@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 import pytest
 
 from apps.insurer.models.coverage_plan import CoveragePlan
@@ -53,5 +55,42 @@ def test_authorization_flow():
     assert aut.status == ProcedureAuthorization.Status.APROVADA
     assert aut.authorization_code == "AUTH-001"
     assert aut.response_date is not None
+
+
+@pytest.mark.django_db
+def test_insurer_api_uses_english_resource_routes(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-insurer-contracts",
+        name="Tenant Insurer Contracts",
+        domain="insurer-contracts.local",
+        active=True,
+    )
+    user_model = get_user_model()
+    user = user_model.objects.create_user(
+        username="insurer_contract_user",
+        email="insurer-contract@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    admin_group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(admin_group)
+
+    from api.v1.insurer.filters import FILTER_MAP
+    from api.v1.insurer.serializers import SERIALIZER_MAP
+    from api.v1.insurer.viewsets import VIEWSET_MAP
+
+    expected = {"insurer", "coverage_plan", "tenant_coverage_plan", "procedure_authorization"}
+    legacy = {"planocobertura", "tenantplanocobertura", "autorizacaoprocedimento"}
+
+    assert set(VIEWSET_MAP) == expected
+    assert set(SERIALIZER_MAP) == expected
+    assert set(FILTER_MAP) == expected
+    assert not (set(VIEWSET_MAP) & legacy)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+
+    assert api_client.get("/api/v1/insurer/coverage_plan/").status_code == 200
+    assert api_client.get("/api/v1/insurer/planocobertura/").status_code == 404
 
 

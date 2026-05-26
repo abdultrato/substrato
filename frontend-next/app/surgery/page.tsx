@@ -14,36 +14,36 @@ import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-export default function CirurgiaPage() {
+export default function SurgeryPage() {
     const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
     const [loading, setLoading] = useState(true)
-    const [erro, setErro] = useState<string | null>(null)
-    const [pequenasCirurgias, setPequenasCirurgias] = useState<number>(0)
-    const [grandesCirurgias, setGrandesCirurgias] = useState<number>(0)
-    const [procedimentos, setProcedimentos] = useState<number>(0)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [smallSurgeries, setSmallSurgeries] = useState<number>(0)
+    const [largeSurgeries, setLargeSurgeries] = useState<number>(0)
+    const [procedures, setProcedures] = useState<number>(0)
 
     useEffect(() => {
         let mounted = true
         async function load() {
             try {
                 setLoading(true)
-                setErro(null)
+                setErrorMessage(null)
 
                 const [small, large, procs] = await Promise.all([
-                    apiFetch<any>("/surgery/pequenacirurgia/"),
-                    apiFetch<any>("/surgery/grandecirurgia/"),
-                    apiFetch<any>("/surgery/procedimentocirurgico/"),
+                    apiFetch<any>("/surgery/small_surgery/"),
+                    apiFetch<any>("/surgery/large_surgery/"),
+                    apiFetch<any>("/surgery/surgical_procedure/"),
                 ])
 
                 if (!mounted) return
-                setPequenasCirurgias(extractTotalCount(small))
-                setGrandesCirurgias(extractTotalCount(large))
-                setProcedimentos(extractTotalCount(procs))
+                setSmallSurgeries(extractTotalCount(small))
+                setLargeSurgeries(extractTotalCount(large))
+                setProcedures(extractTotalCount(procs))
             } catch (e: any) {
                 if (!mounted) return
-                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgia."))
+                setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgia."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -61,7 +61,7 @@ export default function CirurgiaPage() {
                     title="Cirurgia"
                     subtitle="Agendamento e registo de cirurgias."
                     actions={
-                        podeVerAdmin ? (
+                        canViewAdmin ? (
                             <Link
                                 href="/admin/surgery/surgery/"
                                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
@@ -72,19 +72,19 @@ export default function CirurgiaPage() {
                     }
                 />
 
-                {erro ? (
+                {errorMessage ? (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        {erro}
+                        {errorMessage}
                     </div>
                 ) : null}
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <MetricCard label="Pequenas cirurgias" value={loading ? "..." : pequenasCirurgias} />
-                    <MetricCard label="Grandes cirurgias" value={loading ? "..." : grandesCirurgias} />
-                    <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedimentos} />
+                    <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} />
+                    <MetricCard label="Grandes cirurgias" value={loading ? "..." : largeSurgeries} />
+                    <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedures} />
                     <MetricCard
                         label="Total"
-                        value={loading ? "..." : pequenasCirurgias + grandesCirurgias}
+                        value={loading ? "..." : smallSurgeries + largeSurgeries}
                     />
                 </div>
 
@@ -92,13 +92,13 @@ export default function CirurgiaPage() {
                     <ActionTile
                         title="Pequenas cirurgias"
                         description="Listar e gerir pequenas cirurgias (CRUD)."
-                        href="/resources/surgery/pequenacirurgia"
+                        href="/resources/surgery/small_surgery"
                         icon={Scissors}
                     />
                     <ActionTile
                         title="Grandes cirurgias"
                         description="Listar e gerir grandes cirurgias (CRUD)."
-                        href="/resources/surgery/grandecirurgia"
+                        href="/resources/surgery/large_surgery"
                         icon={ClipboardList}
                     />
                     <ActionTile

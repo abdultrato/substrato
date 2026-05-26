@@ -205,8 +205,8 @@ class LargeSurgerySerializer(BaseSurgerySerializer):
 
 SERIALIZER_MAP = {
     "surgery": SurgerySerializer,
-    "pequenacirurgia": SmallSurgerySerializer,
-    "grandecirurgia": LargeSurgerySerializer,
-    "procedimentocirurgico": SurgicalProcedureSerializer,
+    "small_surgery": SmallSurgerySerializer,
+    "large_surgery": LargeSurgerySerializer,
+    "surgical_procedure": SurgicalProcedureSerializer,
 }
 

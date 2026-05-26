@@ -42,8 +42,8 @@ class SurgicalProcedureFilter(SafeFilterSet):
 
 FILTER_MAP = {
     "surgery": SurgeryFilter,
-    "pequenacirurgia": SmallSurgeryFilter,
-    "grandecirurgia": LargeSurgeryFilter,
-    "procedimentocirurgico": SurgicalProcedureFilter,
+    "small_surgery": SmallSurgeryFilter,
+    "large_surgery": LargeSurgeryFilter,
+    "surgical_procedure": SurgicalProcedureFilter,
 }
 

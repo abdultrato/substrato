@@ -12,15 +12,15 @@ import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-type ProcRow = Record<string, any>
+type ProcedureRow = Record<string, any>
 
-export default function CirurgiaProcedimentosPage() {
+export default function SurgicalProceduresPage() {
     const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
-    const [erro, setErro] = useState<string | null>(null)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
-    const [data, setData] = useState<ProcRow[]>([])
+    const [data, setData] = useState<ProcedureRow[]>([])
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
@@ -31,8 +31,8 @@ export default function CirurgiaProcedimentosPage() {
         async function load() {
             try {
                 setLoading(true)
-                setErro(null)
-                const { items, meta } = await apiFetchList<ProcRow>("/surgery/procedimentocirurgico/", {
+                setErrorMessage(null)
+                const { items, meta } = await apiFetchList<ProcedureRow>("/surgery/surgical_procedure/", {
                     page,
                     pageSize,
                 })
@@ -47,7 +47,7 @@ export default function CirurgiaProcedimentosPage() {
                 if (page > computedTotalPages) setPage(computedTotalPages)
             } catch (e: any) {
                 if (!mounted) return
-                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimentos."))
+                setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimentos."))
             } finally {
                 if (mounted) setLoading(false)
             }
@@ -62,17 +62,17 @@ export default function CirurgiaProcedimentosPage() {
         () => [
             {
                 header: "Código",
-                render: (p: ProcRow) => (
+                render: (p: ProcedureRow) => (
                     <Link
-                        href={`/resources/surgery/procedimentocirurgico/${p.id}`}
+                        href={`/resources/surgery/surgical_procedure/${p.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {p.id_custom || p.id || "-"}
                     </Link>
                 ),
             },
-            { header: "Nome", render: (p: ProcRow) => p.nome || p.descricao || "-" },
-            { header: "Ativo", render: (p: ProcRow) => (p.ativo === false ? "Não" : "Sim") },
+            { header: "Nome", render: (p: ProcedureRow) => p.nome || p.descricao || "-" },
+            { header: "Ativo", render: (p: ProcedureRow) => (p.ativo === false ? "Não" : "Sim") },
         ],
         []
     )
@@ -86,13 +86,13 @@ export default function CirurgiaProcedimentosPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/resources/surgery/procedimentocirurgico/new"
+                                href="/resources/surgery/surgical_procedure/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Novo
                             </Link>
                             <Link
-                                href="/resources/surgery/procedimentocirurgico"
+                                href="/resources/surgery/surgical_procedure"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento
@@ -103,7 +103,7 @@ export default function CirurgiaProcedimentosPage() {
                             >
                                 Voltar
                             </Link>
-                            {podeVerAdmin ? (
+                            {canViewAdmin ? (
                                 <Link
                                     href="/admin/surgery/surgicalprocedure/"
                                     className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
@@ -115,9 +115,9 @@ export default function CirurgiaProcedimentosPage() {
                     }
                 />
 
-                {erro ? (
+                {errorMessage ? (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        {erro}
+                        {errorMessage}
                     </div>
                 ) : null}
 
@@ -144,7 +144,7 @@ export default function CirurgiaProcedimentosPage() {
                     <div className="text-sm text-gray-500">Carregando...</div>
                 ) : (
                     <>
-                        <DataTable<ProcRow>
+                        <DataTable<ProcedureRow>
                             columns={columns as any}
                             data={data}
                             emptyMessage="Nenhum procedimento encontrado."

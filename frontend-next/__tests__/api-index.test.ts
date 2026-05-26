@@ -110,7 +110,7 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/exam/")
   })
 
-  it("reescreve alias legado de seguradora para insurer", async () => {
+  it("mantém planos de cobertura no endpoint canónico em inglês", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {
         status: 200,
@@ -118,9 +118,9 @@ describe("API facade contract", () => {
       })
     )
 
-    await apiFetch("/seguradora/planocobertura/")
+    await apiFetch("/insurer/coverage_plan/")
 
-    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/insurer/planocobertura/")
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/insurer/coverage_plan/")
   })
 
   it("reescreve alias legado de reconciliacao para o endpoint atual", async () => {

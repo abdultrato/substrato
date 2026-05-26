@@ -87,15 +87,11 @@ function rewriteUrl(url: string): string {
     ["/receipts", "/payments/receipt"],
     ["/transactions", "/payments/transaction"],
     ["/reconciliations", "/payments/reconciliation"],
-    ["/seguradora/seguradora", "/insurer/insurer"],
-    ["/seguradora/planocobertura", "/insurer/planocobertura"],
-    ["/seguradora/autorizacaoprocedimento", "/insurer/autorizacaoprocedimento"],
     ["/medical-records/registro", "/medical_records/record"],
     ["/medical-records/record", "/medical_records/record"],
     ["/medical-records", "/medical_records"],
 
     // Legacy backend modules still exposed with Portuguese slugs.
-    ["/surgery", "/cirurgia"],
     ["/maternity", "/maternidade"],
     ["/audit", "/auditoria"],
     ["/notifications", "/notificacoes"],

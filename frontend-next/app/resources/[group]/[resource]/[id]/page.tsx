@@ -23,7 +23,7 @@ function ensureTrailingSlash(url: string) {
     return url.endsWith("/") ? url : `${url}/`
 }
 
-export default function RecursoDetalhePage() {
+export default function ResourceDetailPage() {
     const params = useParams()
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
@@ -41,10 +41,10 @@ export default function RecursoDetalhePage() {
     const [loadingData, setLoadingData] = useState(true)
     const [deleting, setDeleting] = useState(false)
     const [actionId, setActionId] = useState<number | null>(null)
-    const cirurgiaKeys = ["cirurgia", "pequenacirurgia", "grandecirurgia"]
-    const isCirurgia =
+    const surgeryKeys = ["surgery", "small_surgery", "large_surgery"]
+    const isSurgery =
         canonicalGroupKey === "surgery" &&
-        cirurgiaKeys.includes(resourceKey.toLocaleLowerCase())
+        surgeryKeys.includes(resourceKey.toLocaleLowerCase())
 
     const reloadResource = useCallback(async () => {
         if (!found) return
@@ -95,11 +95,11 @@ export default function RecursoDetalhePage() {
             groups: Array.isArray(data?.group_names) ? data.group_names : [],
         })
 
-    const criarFatura = useCallback(async () => {
+    const createInvoice = useCallback(async () => {
         alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
     }, [])
 
-    const abrirPdf = useCallback(async () => {
+    const openPdf = useCallback(async () => {
         const faturaId = data?.fatura_id
         if (!faturaId) return
         try {
@@ -232,10 +232,10 @@ export default function RecursoDetalhePage() {
                                     </button>
                                 </>
                             ) : null}
-                            {isCirurgia ? (
+                            {isSurgery ? (
                                 data?.fatura_id ? (
                                     <button
-                                        onClick={abrirPdf}
+                                        onClick={openPdf}
                                         disabled={actionId === data?.fatura_id}
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
@@ -245,7 +245,7 @@ export default function RecursoDetalhePage() {
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={criarFatura}
+                                        onClick={createInvoice}
                                         disabled={actionId !== null}
                                         className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >

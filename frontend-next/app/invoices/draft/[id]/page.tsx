@@ -292,7 +292,7 @@ export default function FaturaRascunhoPage() {
     try {
       const [segRes, planoRes] = await Promise.all([
         apiFetch<any>("/insurer/insurer/"),
-        apiFetch<any>("/insurer/planocobertura/"),
+        apiFetch<any>("/insurer/coverage_plan/"),
       ])
       setSeguradoras(listFrom(segRes))
       setPlanos(listFrom(planoRes))
@@ -714,7 +714,7 @@ export default function FaturaRascunhoPage() {
       return
     }
     try {
-      const res = await apiFetch<any>(`/surgery/procedimentocirurgico/?search=${encodeURIComponent(q)}`)
+      const res = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}`)
       setSearchProcedimentoCirurgico(listFrom(res))
     } catch {
       setSearchProcedimentoCirurgico([])

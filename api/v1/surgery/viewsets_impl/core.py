@@ -40,7 +40,7 @@ class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
             return
         serializer.save()
 
-    @action(detail=True, methods=["post"], url_path="criar_invoice", url_name="criar-invoice")
+    @action(detail=True, methods=["post"], url_path="create-invoice", url_name="create-invoice")
     def create_invoice(self, request, pk=None):
         surgery = self.get_object()
 
@@ -109,9 +109,9 @@ class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
 
 VIEWSET_MAP = {
     "surgery": SurgeryViewSet,
-    "pequenacirurgia": SmallSurgeryViewSet,
-    "grandecirurgia": LargeSurgeryViewSet,
-    "procedimentocirurgico": SurgicalProcedureViewSet,
+    "small_surgery": SmallSurgeryViewSet,
+    "large_surgery": LargeSurgeryViewSet,
+    "surgical_procedure": SurgicalProcedureViewSet,
 }
 
 __all__ = [

@@ -119,9 +119,9 @@ class InsurerFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "autorizacaoprocedimento": ProcedureAuthorizationFilter,
-    "planocobertura": CoveragePlanFilter,
-    "tenantplanocobertura": TenantCoveragePlanFilter,
+    "procedure_authorization": ProcedureAuthorizationFilter,
+    "coverage_plan": CoveragePlanFilter,
+    "tenant_coverage_plan": TenantCoveragePlanFilter,
     "insurer": InsurerFilter,
 }
 

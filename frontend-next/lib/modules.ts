@@ -155,9 +155,9 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "insurer",
     label: "Seguradora",
     resources: [
-      { key: "seguradora", label: "Seguradoras", endpoint: "/insurer/insurer/", adminListHref: "/admin/insurer/insurer/" },
-      { key: "planocobertura", label: "Planos", endpoint: "/insurer/planocobertura/", adminListHref: "/admin/insurer/coverageplan/" },
-      { key: "autorizacaoprocedimento", label: "Autorizações", endpoint: "/insurer/autorizacaoprocedimento/", adminListHref: "/admin/insurer/procedureauthorization/" },
+      { key: "insurer", label: "Seguradoras", endpoint: "/insurer/insurer/", adminListHref: "/admin/insurer/insurer/" },
+      { key: "coverage_plan", label: "Planos", endpoint: "/insurer/coverage_plan/", adminListHref: "/admin/insurer/coverageplan/" },
+      { key: "procedure_authorization", label: "Autorizações", endpoint: "/insurer/procedure_authorization/", adminListHref: "/admin/insurer/procedureauthorization/" },
     ],
   },
   {
@@ -251,10 +251,10 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "surgery",
     label: "Cirurgia",
     resources: [
-      { key: "pequenacirurgia", label: "Pequenas Cirurgias", endpoint: "/surgery/pequenacirurgia/", adminListHref: "/admin/surgery/smallsurgery/" },
-      { key: "grandecirurgia", label: "Grandes Cirurgias", endpoint: "/surgery/grandecirurgia/", adminListHref: "/admin/surgery/largesurgery/" },
-      { key: "cirurgia", label: "Todas as Cirurgias", endpoint: "/surgery/surgery/", adminListHref: "/admin/surgery/surgery/" },
-      { key: "procedimentocirurgico", label: "Procedimentos Cirúrgicos", endpoint: "/surgery/procedimentocirurgico/", adminListHref: "/admin/surgery/procedimentocirurgico/" },
+      { key: "small_surgery", label: "Pequenas Cirurgias", endpoint: "/surgery/small_surgery/", adminListHref: "/admin/surgery/smallsurgery/" },
+      { key: "large_surgery", label: "Grandes Cirurgias", endpoint: "/surgery/large_surgery/", adminListHref: "/admin/surgery/largesurgery/" },
+      { key: "surgery", label: "Todas as Cirurgias", endpoint: "/surgery/surgery/", adminListHref: "/admin/surgery/surgery/" },
+      { key: "surgical_procedure", label: "Procedimentos Cirúrgicos", endpoint: "/surgery/surgical_procedure/", adminListHref: "/admin/surgery/surgicalprocedure/" },
     ],
   },
   {
@@ -363,12 +363,9 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/nursing/nursing_record/": "/admin/nursing/nursingrecord/",
   "/nursing/nursing_vital_sign/": "/admin/nursing/nursingvitalsign/",
   // Insurer
-  "/seguradora/seguradora/": "/admin/insurer/insurer/",
-  "/seguradora/planocobertura/": "/admin/insurer/coverageplan/",
-  "/seguradora/autorizacaoprocedimento/": "/admin/insurer/procedureauthorization/",
   "/insurer/insurer/": "/admin/insurer/insurer/",
-  "/insurer/planocobertura/": "/admin/insurer/coverageplan/",
-  "/insurer/autorizacaoprocedimento/": "/admin/insurer/procedureauthorization/",
+  "/insurer/coverage_plan/": "/admin/insurer/coverageplan/",
+  "/insurer/procedure_authorization/": "/admin/insurer/procedureauthorization/",
   // Accounting
   "/accounting/account/": "/admin/accounting/account/",
   "/accounting/entry/": "/admin/accounting/legacyentry/",
@@ -422,10 +419,10 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   // Maternity
   "/maternity/gestacao/": "/admin/maternity/pregnancy/",
   // Surgery
-  "/surgery/pequenacirurgia/": "/admin/surgery/smallsurgery/",
-  "/surgery/grandecirurgia/": "/admin/surgery/largesurgery/",
   "/surgery/surgery/": "/admin/surgery/surgery/",
-  "/surgery/procedimentocirurgico/": "/admin/surgery/surgicalprocedure/",
+  "/surgery/small_surgery/": "/admin/surgery/smallsurgery/",
+  "/surgery/large_surgery/": "/admin/surgery/largesurgery/",
+  "/surgery/surgical_procedure/": "/admin/surgery/surgicalprocedure/",
   // Human resources
   "/resources_humanos/cargo/": "/admin/human-resources/jobtitle/",
   "/resources_humanos/funcionario/": "/admin/human-resources/employee/",

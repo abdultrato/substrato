@@ -4368,7 +4368,7 @@ def test_ai_insurer_crud_creates_all_insurer_resources_for_accounting_group(api_
         'Crie plano de cobertura {"insurer":"SEG-001","name":"Plano Ouro IA","coverage_percentage":"80.00","requires_authorization":true,"active":true}',
     )
 
-    assert plan_action.payload["basename"] == "insurer-planocobertura"
+    assert plan_action.payload["basename"] == "insurer-coverage_plan"
     assert plan_action.payload["data"]["insurer"] == insurer.id
     assert plan_action.payload["data"]["coverage_percentage"] == "80.00"
 
@@ -4381,7 +4381,7 @@ def test_ai_insurer_crud_creates_all_insurer_resources_for_accounting_group(api_
         'Crie plano por tenant {"global_plan":"Plano Ouro IA","name":"Plano Ouro IA Local","override_percentage":"85.00","active":true}',
     )
 
-    assert tenant_plan_action.payload["basename"] == "insurer-tenantplanocobertura"
+    assert tenant_plan_action.payload["basename"] == "insurer-tenant_coverage_plan"
     assert tenant_plan_action.payload["data"]["global_plan"] == plan.id
     assert tenant_plan_action.payload["data"]["override_percentage"] == "85.00"
 
@@ -4394,7 +4394,7 @@ def test_ai_insurer_crud_creates_all_insurer_resources_for_accounting_group(api_
         'Crie autorização de procedimento {"request_id":"REQ-INS-AI-001","plan":"Plano Ouro IA","status":"approved","authorization_code":"AUTH-INS-001","name":"Autorização IA"}',
     )
 
-    assert authorization_action.payload["basename"] == "insurer-autorizacaoprocedimento"
+    assert authorization_action.payload["basename"] == "insurer-procedure_authorization"
     assert authorization_action.payload["data"]["plan"] == plan.id
     assert authorization_action.payload["data"]["status"] == ProcedureAuthorization.Status.APROVADA
 
@@ -4408,7 +4408,7 @@ def test_ai_insurer_crud_creates_all_insurer_resources_for_accounting_group(api_
         action_type="ai_crud_delete",
     )
 
-    assert delete_action.payload["basename"] == "insurer-tenantplanocobertura"
+    assert delete_action.payload["basename"] == "insurer-tenant_coverage_plan"
     _confirm_ai_action(api_client, delete_action)
     assert TenantCoveragePlan.all_objects.get(id=tenant_plan.id).deleted is True
 
@@ -4570,7 +4570,7 @@ def test_ai_surgery_crud_creates_catalog_procedure_and_surgery_for_medicine(api_
         'Crie procedimento cirúrgico {"nome":"Apendicectomia IA","descricao":"Catálogo cirúrgico IA","preco_base":"2500.00","iva":"0.00","aplica_iva":false}',
     )
 
-    assert procedure_action.payload["basename"] == "surgery-procedimentocirurgico"
+    assert procedure_action.payload["basename"] == "surgery-surgical_procedure"
     assert procedure_action.payload["data"]["name"] == "Apendicectomia IA"
     assert procedure_action.payload["data"]["base_price"] == "2500.00"
     assert procedure_action.payload["data"]["applies_vat_by_default"] is False
@@ -4583,7 +4583,7 @@ def test_ai_surgery_crud_creates_catalog_procedure_and_surgery_for_medicine(api_
         action_type="ai_crud_update",
     )
 
-    assert procedure_update_action.payload["basename"] == "surgery-procedimentocirurgico"
+    assert procedure_update_action.payload["basename"] == "surgery-surgical_procedure"
     assert procedure_update_action.payload["data"]["description"] == "Catálogo actualizado"
     assert procedure_update_action.payload["data"]["base_price"] == "2750.00"
     _confirm_ai_action(api_client, procedure_update_action)
@@ -4647,7 +4647,7 @@ def test_ai_surgery_crud_creates_catalog_procedure_and_surgery_for_medicine(api_
         action_type="ai_crud_delete",
     )
 
-    assert procedure_delete_action.payload["basename"] == "surgery-procedimentocirurgico"
+    assert procedure_delete_action.payload["basename"] == "surgery-surgical_procedure"
     _confirm_ai_action(api_client, procedure_delete_action)
     assert SurgicalProcedure.all_objects.get(id=procedure.id).deleted is True
 
@@ -4664,7 +4664,7 @@ def test_ai_surgery_crud_creates_small_and_large_segmented_resources(api_client)
         'Crie pequena cirurgia {"paciente":"Paciente Cirurgia Segmentada","cirurgiao":"medicina_ai_surgery_segmented","procedimento":"Biópsia IA","estado":"agendada","preco_estimado":"800.00"}',
     )
 
-    assert small_action.payload["basename"] == "surgery-pequenacirurgia"
+    assert small_action.payload["basename"] == "surgery-small_surgery"
     _confirm_ai_action(api_client, small_action)
     small = SmallSurgery.objects.get(tenant=tenant, procedure="Biópsia IA")
     assert small.surgery_size == Surgery.Size.SMALL
@@ -4674,7 +4674,7 @@ def test_ai_surgery_crud_creates_small_and_large_segmented_resources(api_client)
         'Crie grande cirurgia {"paciente":"Paciente Cirurgia Segmentada","cirurgiao":"medicina_ai_surgery_segmented","procedimento":"Laparotomia IA","estado":"agendada","preco_estimado":"4500.00"}',
     )
 
-    assert large_action.payload["basename"] == "surgery-grandecirurgia"
+    assert large_action.payload["basename"] == "surgery-large_surgery"
     _confirm_ai_action(api_client, large_action)
     large = LargeSurgery.objects.get(tenant=tenant, procedure="Laparotomia IA")
     assert large.surgery_size == Surgery.Size.LARGE

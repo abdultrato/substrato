@@ -130,9 +130,9 @@ class InsurerViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
 
 VIEWSET_MAP = {
-    "autorizacaoprocedimento": ProcedureAuthorizationViewSet,
-    "planocobertura": CoveragePlanViewSet,
-    "tenantplanocobertura": TenantCoveragePlanViewSet,
+    "procedure_authorization": ProcedureAuthorizationViewSet,
+    "coverage_plan": CoveragePlanViewSet,
+    "tenant_coverage_plan": TenantCoveragePlanViewSet,
     "insurer": InsurerViewSet,
 }
 

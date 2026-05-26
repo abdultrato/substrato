@@ -74,15 +74,15 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
     "bloodbank-stock_movement": ("Movimentações de stock de sangue", "Blood stock movements"),
     "bloodbank-storage_maintenance": ("Manutenções de armazenamento", "Storage maintenance"),
     "insurer-insurer": ("Seguradoras", "Insurers"),
-    "insurer-planocobertura": ("Planos de cobertura", "Coverage plans"),
-    "insurer-tenantplanocobertura": ("Planos de cobertura por tenant", "Tenant coverage plans"),
-    "insurer-autorizacaoprocedimento": ("Autorizações de procedimento", "Procedure authorizations"),
+    "insurer-coverage_plan": ("Planos de cobertura", "Coverage plans"),
+    "insurer-tenant_coverage_plan": ("Planos de cobertura por tenant", "Tenant coverage plans"),
+    "insurer-procedure_authorization": ("Autorizações de procedimento", "Procedure authorizations"),
     "medical_records-record": ("Cardex clínico", "Clinical records"),
     "medical_records-prescricaoitem": ("Itens de prescrição", "Prescription items"),
     "surgery-surgery": ("Cirurgias", "Surgeries"),
-    "surgery-pequenacirurgia": ("Pequenas cirurgias", "Small surgeries"),
-    "surgery-grandecirurgia": ("Grandes cirurgias", "Large surgeries"),
-    "surgery-procedimentocirurgico": ("Procedimentos cirúrgicos", "Surgical procedures"),
+    "surgery-small_surgery": ("Pequenas cirurgias", "Small surgeries"),
+    "surgery-large_surgery": ("Grandes cirurgias", "Large surgeries"),
+    "surgery-surgical_procedure": ("Procedimentos cirúrgicos", "Surgical procedures"),
     "identity-user": ("Utilizadores", "Users"),
     "identity-perfilprofissional": ("Perfis profissionais", "Professional profiles"),
     "identity-passwordresettoken": ("Tokens de redefinição de palavra-passe", "Password reset tokens"),
@@ -482,7 +482,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "insurance companies",
         "insurance carrier",
     ),
-    "insurer-planocobertura": (
+    "insurer-coverage_plan": (
         "plano de cobertura",
         "planos de cobertura",
         "plano de seguro",
@@ -497,7 +497,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "health plan",
         "policy plan",
     ),
-    "insurer-tenantplanocobertura": (
+    "insurer-tenant_coverage_plan": (
         "plano por tenant",
         "planos por tenant",
         "plano de cobertura por tenant",
@@ -511,7 +511,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "coverage override",
         "local coverage plan",
     ),
-    "insurer-autorizacaoprocedimento": (
+    "insurer-procedure_authorization": (
         "autorizacao de procedimento",
         "autorização de procedimento",
         "autorizacoes de procedimento",
@@ -1144,7 +1144,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "operation",
         "operations",
     ),
-    "surgery-pequenacirurgia": (
+    "surgery-small_surgery": (
         "pequena cirurgia",
         "pequenas cirurgias",
         "cirurgia pequena",
@@ -1156,7 +1156,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "small surgery",
         "small surgeries",
     ),
-    "surgery-grandecirurgia": (
+    "surgery-large_surgery": (
         "grande cirurgia",
         "grandes cirurgias",
         "cirurgia grande",
@@ -1168,7 +1168,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "large surgery",
         "large surgeries",
     ),
-    "surgery-procedimentocirurgico": (
+    "surgery-surgical_procedure": (
         "procedimento cirurgico",
         "procedimento cirúrgico",
         "procedimentos cirurgicos",

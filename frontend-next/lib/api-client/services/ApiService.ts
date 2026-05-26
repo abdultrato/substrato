@@ -14790,16 +14790,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureAuthorization
+     * @returns CoveragePlan
      * @throws ApiError
      */
-    public static listProcedureAuthorizations(
+    public static listCoveragePlans(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<ProcedureAuthorization>> {
+    ): CancelablePromise<Array<CoveragePlan>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/autorizacaoprocedimento/',
+            url: '/api/v1/insurer/coverage_plan/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -14808,34 +14808,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns ProcedureAuthorization
+     * @returns CoveragePlan
      * @throws ApiError
      */
-    public static createProcedureAuthorization(
-        requestBody?: ProcedureAuthorization,
-    ): CancelablePromise<ProcedureAuthorization> {
+    public static createCoveragePlan(
+        requestBody?: CoveragePlan,
+    ): CancelablePromise<CoveragePlan> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/insurer/autorizacaoprocedimento/',
+            url: '/api/v1/insurer/coverage_plan/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Autorização de Procedimento.
+     * @param id A unique integer value identifying this Plano de Cobertura.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureAuthorization
+     * @returns CoveragePlan
      * @throws ApiError
      */
-    public static retrieveProcedureAuthorization(
+    public static retrieveCoveragePlan(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<ProcedureAuthorization> {
+    ): CancelablePromise<CoveragePlan> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/autorizacaoprocedimento/{id}/',
+            url: '/api/v1/insurer/coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -14846,22 +14846,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Autorização de Procedimento.
+     * @param id A unique integer value identifying this Plano de Cobertura.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureAuthorization
+     * @returns CoveragePlan
      * @throws ApiError
      */
-    public static updateProcedureAuthorization(
+    public static updateCoveragePlan(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureAuthorization,
-    ): CancelablePromise<ProcedureAuthorization> {
+        requestBody?: CoveragePlan,
+    ): CancelablePromise<CoveragePlan> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/insurer/autorizacaoprocedimento/{id}/',
+            url: '/api/v1/insurer/coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -14874,22 +14874,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Autorização de Procedimento.
+     * @param id A unique integer value identifying this Plano de Cobertura.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureAuthorization
+     * @returns CoveragePlan
      * @throws ApiError
      */
-    public static partialUpdateProcedureAuthorization(
+    public static partialUpdateCoveragePlan(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureAuthorization,
-    ): CancelablePromise<ProcedureAuthorization> {
+        requestBody?: CoveragePlan,
+    ): CancelablePromise<CoveragePlan> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/insurer/autorizacaoprocedimento/{id}/',
+            url: '/api/v1/insurer/coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -14902,20 +14902,20 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Autorização de Procedimento.
+     * @param id A unique integer value identifying this Plano de Cobertura.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyProcedureAuthorization(
+    public static destroyCoveragePlan(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/insurer/autorizacaoprocedimento/{id}/',
+            url: '/api/v1/insurer/coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -15066,16 +15066,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns CoveragePlan
+     * @returns ProcedureAuthorization
      * @throws ApiError
      */
-    public static listCoveragePlans(
+    public static listProcedureAuthorizations(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<CoveragePlan>> {
+    ): CancelablePromise<Array<ProcedureAuthorization>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/planocobertura/',
+            url: '/api/v1/insurer/procedure_authorization/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -15084,34 +15084,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns CoveragePlan
+     * @returns ProcedureAuthorization
      * @throws ApiError
      */
-    public static createCoveragePlan(
-        requestBody?: CoveragePlan,
-    ): CancelablePromise<CoveragePlan> {
+    public static createProcedureAuthorization(
+        requestBody?: ProcedureAuthorization,
+    ): CancelablePromise<ProcedureAuthorization> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/insurer/planocobertura/',
+            url: '/api/v1/insurer/procedure_authorization/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Plano de Cobertura.
+     * @param id A unique integer value identifying this Autorização de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns CoveragePlan
+     * @returns ProcedureAuthorization
      * @throws ApiError
      */
-    public static retrieveCoveragePlan(
+    public static retrieveProcedureAuthorization(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<CoveragePlan> {
+    ): CancelablePromise<ProcedureAuthorization> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/planocobertura/{id}/',
+            url: '/api/v1/insurer/procedure_authorization/{id}/',
             path: {
                 'id': id,
             },
@@ -15122,22 +15122,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Plano de Cobertura.
+     * @param id A unique integer value identifying this Autorização de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns CoveragePlan
+     * @returns ProcedureAuthorization
      * @throws ApiError
      */
-    public static updateCoveragePlan(
+    public static updateProcedureAuthorization(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: CoveragePlan,
-    ): CancelablePromise<CoveragePlan> {
+        requestBody?: ProcedureAuthorization,
+    ): CancelablePromise<ProcedureAuthorization> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/insurer/planocobertura/{id}/',
+            url: '/api/v1/insurer/procedure_authorization/{id}/',
             path: {
                 'id': id,
             },
@@ -15150,22 +15150,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Plano de Cobertura.
+     * @param id A unique integer value identifying this Autorização de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns CoveragePlan
+     * @returns ProcedureAuthorization
      * @throws ApiError
      */
-    public static partialUpdateCoveragePlan(
+    public static partialUpdateProcedureAuthorization(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: CoveragePlan,
-    ): CancelablePromise<CoveragePlan> {
+        requestBody?: ProcedureAuthorization,
+    ): CancelablePromise<ProcedureAuthorization> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/insurer/planocobertura/{id}/',
+            url: '/api/v1/insurer/procedure_authorization/{id}/',
             path: {
                 'id': id,
             },
@@ -15178,20 +15178,20 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Plano de Cobertura.
+     * @param id A unique integer value identifying this Autorização de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyCoveragePlan(
+    public static destroyProcedureAuthorization(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/insurer/planocobertura/{id}/',
+            url: '/api/v1/insurer/procedure_authorization/{id}/',
             path: {
                 'id': id,
             },
@@ -15213,7 +15213,7 @@ export class ApiService {
     ): CancelablePromise<Array<TenantCoveragePlan>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/tenantplanocobertura/',
+            url: '/api/v1/insurer/tenant_coverage_plan/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -15230,7 +15230,7 @@ export class ApiService {
     ): CancelablePromise<TenantCoveragePlan> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/insurer/tenantplanocobertura/',
+            url: '/api/v1/insurer/tenant_coverage_plan/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -15249,7 +15249,7 @@ export class ApiService {
     ): CancelablePromise<TenantCoveragePlan> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/insurer/tenantplanocobertura/{id}/',
+            url: '/api/v1/insurer/tenant_coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -15275,7 +15275,7 @@ export class ApiService {
     ): CancelablePromise<TenantCoveragePlan> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/insurer/tenantplanocobertura/{id}/',
+            url: '/api/v1/insurer/tenant_coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -15303,7 +15303,7 @@ export class ApiService {
     ): CancelablePromise<TenantCoveragePlan> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/insurer/tenantplanocobertura/{id}/',
+            url: '/api/v1/insurer/tenant_coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -15329,7 +15329,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/insurer/tenantplanocobertura/{id}/',
+            url: '/api/v1/insurer/tenant_coverage_plan/{id}/',
             path: {
                 'id': id,
             },
@@ -15913,7 +15913,7 @@ export class ApiService {
     ): CancelablePromise<Array<LargeSurgery>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/surgery/grandecirurgia/',
+            url: '/api/v1/surgery/large_surgery/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -15930,7 +15930,7 @@ export class ApiService {
     ): CancelablePromise<LargeSurgery> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/surgery/grandecirurgia/',
+            url: '/api/v1/surgery/large_surgery/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -15949,7 +15949,7 @@ export class ApiService {
     ): CancelablePromise<LargeSurgery> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/surgery/grandecirurgia/{id}/',
+            url: '/api/v1/surgery/large_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -15975,7 +15975,7 @@ export class ApiService {
     ): CancelablePromise<LargeSurgery> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/surgery/grandecirurgia/{id}/',
+            url: '/api/v1/surgery/large_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16003,7 +16003,7 @@ export class ApiService {
     ): CancelablePromise<LargeSurgery> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/surgery/grandecirurgia/{id}/',
+            url: '/api/v1/surgery/large_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16029,7 +16029,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/surgery/grandecirurgia/{id}/',
+            url: '/api/v1/surgery/large_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16051,7 +16051,7 @@ export class ApiService {
     ): CancelablePromise<Array<SmallSurgery>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/surgery/pequenacirurgia/',
+            url: '/api/v1/surgery/small_surgery/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -16068,7 +16068,7 @@ export class ApiService {
     ): CancelablePromise<SmallSurgery> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/surgery/pequenacirurgia/',
+            url: '/api/v1/surgery/small_surgery/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -16087,7 +16087,7 @@ export class ApiService {
     ): CancelablePromise<SmallSurgery> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/surgery/pequenacirurgia/{id}/',
+            url: '/api/v1/surgery/small_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16113,7 +16113,7 @@ export class ApiService {
     ): CancelablePromise<SmallSurgery> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/surgery/pequenacirurgia/{id}/',
+            url: '/api/v1/surgery/small_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16141,7 +16141,7 @@ export class ApiService {
     ): CancelablePromise<SmallSurgery> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/surgery/pequenacirurgia/{id}/',
+            url: '/api/v1/surgery/small_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16167,145 +16167,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/surgery/pequenacirurgia/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns SurgicalProcedure
-     * @throws ApiError
-     */
-    public static listSurgicalProcedures(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<SurgicalProcedure>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/surgery/procedimentocirurgico/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns SurgicalProcedure
-     * @throws ApiError
-     */
-    public static createSurgicalProcedure(
-        requestBody?: SurgicalProcedure,
-    ): CancelablePromise<SurgicalProcedure> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/surgery/procedimentocirurgico/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento Cirúrgico.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns SurgicalProcedure
-     * @throws ApiError
-     */
-    public static retrieveSurgicalProcedure(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<SurgicalProcedure> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/surgery/procedimentocirurgico/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento Cirúrgico.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns SurgicalProcedure
-     * @throws ApiError
-     */
-    public static updateSurgicalProcedure(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: SurgicalProcedure,
-    ): CancelablePromise<SurgicalProcedure> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/surgery/procedimentocirurgico/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento Cirúrgico.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns SurgicalProcedure
-     * @throws ApiError
-     */
-    public static partialUpdateSurgicalProcedure(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: SurgicalProcedure,
-    ): CancelablePromise<SurgicalProcedure> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/surgery/procedimentocirurgico/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento Cirúrgico.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroySurgicalProcedure(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/surgery/procedimentocirurgico/{id}/',
+            url: '/api/v1/surgery/small_surgery/{id}/',
             path: {
                 'id': id,
             },
@@ -16444,6 +16306,144 @@ export class ApiService {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/v1/surgery/surgery/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns SurgicalProcedure
+     * @throws ApiError
+     */
+    public static listSurgicalProcedures(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<SurgicalProcedure>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/surgery/surgical_procedure/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns SurgicalProcedure
+     * @throws ApiError
+     */
+    public static createSurgicalProcedure(
+        requestBody?: SurgicalProcedure,
+    ): CancelablePromise<SurgicalProcedure> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/surgery/surgical_procedure/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento Cirúrgico.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns SurgicalProcedure
+     * @throws ApiError
+     */
+    public static retrieveSurgicalProcedure(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<SurgicalProcedure> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/surgery/surgical_procedure/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento Cirúrgico.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns SurgicalProcedure
+     * @throws ApiError
+     */
+    public static updateSurgicalProcedure(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: SurgicalProcedure,
+    ): CancelablePromise<SurgicalProcedure> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/surgery/surgical_procedure/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento Cirúrgico.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns SurgicalProcedure
+     * @throws ApiError
+     */
+    public static partialUpdateSurgicalProcedure(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: SurgicalProcedure,
+    ): CancelablePromise<SurgicalProcedure> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/surgery/surgical_procedure/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento Cirúrgico.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroySurgicalProcedure(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/surgery/surgical_procedure/{id}/',
             path: {
                 'id': id,
             },
@@ -22704,7 +22704,7 @@ export class ApiService {
         ): CancelablePromise<LargeSurgery> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/surgery/grandecirurgia/{id}/criar_invoice/',
+                url: '/api/v1/surgery/large_surgery/{id}/create-invoice/',
                 path: {
                     'id': id,
                 },
@@ -22724,7 +22724,7 @@ export class ApiService {
         ): CancelablePromise<SmallSurgery> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/surgery/pequenacirurgia/{id}/criar_invoice/',
+                url: '/api/v1/surgery/small_surgery/{id}/create-invoice/',
                 path: {
                     'id': id,
                 },
@@ -22744,7 +22744,7 @@ export class ApiService {
         ): CancelablePromise<Surgery> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/surgery/surgery/{id}/criar_invoice/',
+                url: '/api/v1/surgery/surgery/{id}/create-invoice/',
                 path: {
                     'id': id,
                 },

@@ -32094,9 +32094,9 @@
         ]
       }
     },
-    "/api/v1/insurer/autorizacaoprocedimento/": {
+    "/api/v1/insurer/coverage_plan/": {
       "get": {
-        "operationId": "listProcedureAuthorizations",
+        "operationId": "listCoveragePlans",
         "description": "",
         "parameters": [
           {
@@ -32125,7 +32125,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ProcedureAuthorization"
+                    "$ref": "#/components/schemas/CoveragePlan"
                   }
                 }
               }
@@ -32138,24 +32138,24 @@
         ]
       },
       "post": {
-        "operationId": "createProcedureAuthorization",
+        "operationId": "createCoveragePlan",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             }
           }
@@ -32165,7 +32165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureAuthorization"
+                  "$ref": "#/components/schemas/CoveragePlan"
                 }
               }
             },
@@ -32177,16 +32177,16 @@
         ]
       }
     },
-    "/api/v1/insurer/autorizacaoprocedimento/{id}/": {
+    "/api/v1/insurer/coverage_plan/{id}/": {
       "get": {
-        "operationId": "retrieveProcedureAuthorization",
+        "operationId": "retrieveCoveragePlan",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
+            "description": "A unique integer value identifying this Plano de Cobertura.",
             "schema": {
               "type": "string"
             }
@@ -32215,7 +32215,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureAuthorization"
+                  "$ref": "#/components/schemas/CoveragePlan"
                 }
               }
             },
@@ -32227,14 +32227,14 @@
         ]
       },
       "put": {
-        "operationId": "updateProcedureAuthorization",
+        "operationId": "updateCoveragePlan",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
+            "description": "A unique integer value identifying this Plano de Cobertura.",
             "schema": {
               "type": "string"
             }
@@ -32262,17 +32262,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             }
           }
@@ -32282,7 +32282,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureAuthorization"
+                  "$ref": "#/components/schemas/CoveragePlan"
                 }
               }
             },
@@ -32294,14 +32294,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateProcedureAuthorization",
+        "operationId": "partialUpdateCoveragePlan",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
+            "description": "A unique integer value identifying this Plano de Cobertura.",
             "schema": {
               "type": "string"
             }
@@ -32329,17 +32329,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureAuthorization"
+                "$ref": "#/components/schemas/CoveragePlan"
               }
             }
           }
@@ -32349,7 +32349,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureAuthorization"
+                  "$ref": "#/components/schemas/CoveragePlan"
                 }
               }
             },
@@ -32361,14 +32361,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroyProcedureAuthorization",
+        "operationId": "destroyCoveragePlan",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
+            "description": "A unique integer value identifying this Plano de Cobertura.",
             "schema": {
               "type": "string"
             }
@@ -32710,9 +32710,9 @@
         ]
       }
     },
-    "/api/v1/insurer/planocobertura/": {
+    "/api/v1/insurer/procedure_authorization/": {
       "get": {
-        "operationId": "listCoveragePlans",
+        "operationId": "listProcedureAuthorizations",
         "description": "",
         "parameters": [
           {
@@ -32741,7 +32741,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CoveragePlan"
+                    "$ref": "#/components/schemas/ProcedureAuthorization"
                   }
                 }
               }
@@ -32754,24 +32754,24 @@
         ]
       },
       "post": {
-        "operationId": "createCoveragePlan",
+        "operationId": "createProcedureAuthorization",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             }
           }
@@ -32781,7 +32781,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoveragePlan"
+                  "$ref": "#/components/schemas/ProcedureAuthorization"
                 }
               }
             },
@@ -32793,16 +32793,16 @@
         ]
       }
     },
-    "/api/v1/insurer/planocobertura/{id}/": {
+    "/api/v1/insurer/procedure_authorization/{id}/": {
       "get": {
-        "operationId": "retrieveCoveragePlan",
+        "operationId": "retrieveProcedureAuthorization",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Plano de Cobertura.",
+            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -32831,7 +32831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoveragePlan"
+                  "$ref": "#/components/schemas/ProcedureAuthorization"
                 }
               }
             },
@@ -32843,14 +32843,14 @@
         ]
       },
       "put": {
-        "operationId": "updateCoveragePlan",
+        "operationId": "updateProcedureAuthorization",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Plano de Cobertura.",
+            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -32878,17 +32878,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             }
           }
@@ -32898,7 +32898,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoveragePlan"
+                  "$ref": "#/components/schemas/ProcedureAuthorization"
                 }
               }
             },
@@ -32910,14 +32910,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateCoveragePlan",
+        "operationId": "partialUpdateProcedureAuthorization",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Plano de Cobertura.",
+            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -32945,17 +32945,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/CoveragePlan"
+                "$ref": "#/components/schemas/ProcedureAuthorization"
               }
             }
           }
@@ -32965,7 +32965,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoveragePlan"
+                  "$ref": "#/components/schemas/ProcedureAuthorization"
                 }
               }
             },
@@ -32977,14 +32977,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroyCoveragePlan",
+        "operationId": "destroyProcedureAuthorization",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Plano de Cobertura.",
+            "description": "A unique integer value identifying this Autoriza\u00e7\u00e3o de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -33018,7 +33018,7 @@
         ]
       }
     },
-    "/api/v1/insurer/tenantplanocobertura/": {
+    "/api/v1/insurer/tenant_coverage_plan/": {
       "get": {
         "operationId": "listTenantCoveragePlans",
         "description": "",
@@ -33101,7 +33101,7 @@
         ]
       }
     },
-    "/api/v1/insurer/tenantplanocobertura/{id}/": {
+    "/api/v1/insurer/tenant_coverage_plan/{id}/": {
       "get": {
         "operationId": "retrieveTenantCoveragePlan",
         "description": "",
@@ -34580,7 +34580,7 @@
         ]
       }
     },
-    "/api/v1/surgery/grandecirurgia/": {
+    "/api/v1/surgery/large_surgery/": {
       "get": {
         "operationId": "listLargeSurgeries",
         "description": "",
@@ -34663,7 +34663,7 @@
         ]
       }
     },
-    "/api/v1/surgery/grandecirurgia/{id}/": {
+    "/api/v1/surgery/large_surgery/{id}/": {
       "get": {
         "operationId": "retrieveLargeSurgery",
         "description": "",
@@ -34888,7 +34888,7 @@
         ]
       }
     },
-    "/api/v1/surgery/pequenacirurgia/": {
+    "/api/v1/surgery/small_surgery/": {
       "get": {
         "operationId": "listSmallSurgeries",
         "description": "",
@@ -34971,7 +34971,7 @@
         ]
       }
     },
-    "/api/v1/surgery/pequenacirurgia/{id}/": {
+    "/api/v1/surgery/small_surgery/{id}/": {
       "get": {
         "operationId": "retrieveSmallSurgery",
         "description": "",
@@ -35163,314 +35163,6 @@
             "in": "path",
             "required": true,
             "description": "A unique integer value identifying this Pequena cirurgia.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/surgery/procedimentocirurgico/": {
-      "get": {
-        "operationId": "listSurgicalProcedures",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SurgicalProcedure"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createSurgicalProcedure",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SurgicalProcedure"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/surgery/procedimentocirurgico/{id}/": {
-      "get": {
-        "operationId": "retrieveSurgicalProcedure",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SurgicalProcedure"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateSurgicalProcedure",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SurgicalProcedure"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateSurgicalProcedure",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/SurgicalProcedure"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SurgicalProcedure"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroySurgicalProcedure",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
             "schema": {
               "type": "string"
             }
@@ -35779,6 +35471,314 @@
             "in": "path",
             "required": true,
             "description": "A unique integer value identifying this Cirurgia.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/surgical_procedure/": {
+      "get": {
+        "operationId": "listSurgicalProcedures",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SurgicalProcedure"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createSurgicalProcedure",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurgicalProcedure"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/surgery/surgical_procedure/{id}/": {
+      "get": {
+        "operationId": "retrieveSurgicalProcedure",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurgicalProcedure"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateSurgicalProcedure",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurgicalProcedure"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateSurgicalProcedure",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SurgicalProcedure"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurgicalProcedure"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroySurgicalProcedure",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento Cir\u00fargico.",
             "schema": {
               "type": "string"
             }
@@ -50081,7 +50081,7 @@
         ]
       }
     },
-    "/api/v1/surgery/grandecirurgia/{id}/criar_invoice/": {
+    "/api/v1/surgery/large_surgery/{id}/create-invoice/": {
       "post": {
         "operationId": "createInvoiceLargeSurgery",
         "description": "",
@@ -50132,7 +50132,7 @@
         ]
       }
     },
-    "/api/v1/surgery/pequenacirurgia/{id}/criar_invoice/": {
+    "/api/v1/surgery/small_surgery/{id}/create-invoice/": {
       "post": {
         "operationId": "createInvoiceSmallSurgery",
         "description": "",
@@ -50183,7 +50183,7 @@
         ]
       }
     },
-    "/api/v1/surgery/surgery/{id}/criar_invoice/": {
+    "/api/v1/surgery/surgery/{id}/create-invoice/": {
       "post": {
         "operationId": "createInvoiceSurgery",
         "description": "",
@@ -62461,6 +62461,185 @@
           "patient"
         ]
       },
+      "CoveragePlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "order": {
+            "type": "integer"
+          },
+          "coverage_percentage": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": "100.00",
+            "minimum": "0.00",
+            "description": "Percentual de cobertura (0-100)."
+          },
+          "requires_authorization": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "insurer": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "insurer"
+        ]
+      },
+      "Insurer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "order": {
+            "type": "integer"
+          },
+          "external_code": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 60
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "maxLength": 254
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "ProcedureAuthorization": {
         "type": "object",
         "properties": {
@@ -62560,185 +62739,6 @@
         "required": [
           "request_id",
           "plan"
-        ]
-      },
-      "Insurer": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "order": {
-            "type": "integer"
-          },
-          "external_code": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 60
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "nullable": true,
-            "maxLength": 254
-          },
-          "phone": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 30
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "CoveragePlan": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "order": {
-            "type": "integer"
-          },
-          "coverage_percentage": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": "100.00",
-            "minimum": "0.00",
-            "description": "Percentual de cobertura (0-100)."
-          },
-          "requires_authorization": {
-            "type": "boolean"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "insurer": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "name",
-          "insurer"
         ]
       },
       "TenantCoveragePlan": {
@@ -63700,93 +63700,6 @@
           "patient"
         ]
       },
-      "SurgicalProcedure": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "description": {
-            "type": "string"
-          },
-          "base_price": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 10000000000,
-            "minimum": -10000000000
-          },
-          "vat_percentage": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000,
-            "minimum": -1000
-          },
-          "applies_vat_by_default": {
-            "type": "boolean"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
       "Surgery": {
         "type": "object",
         "properties": {
@@ -63937,6 +63850,93 @@
         },
         "required": [
           "patient"
+        ]
+      },
+      "SurgicalProcedure": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string"
+          },
+          "base_price": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 10000000000,
+            "minimum": -10000000000
+          },
+          "vat_percentage": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000,
+            "minimum": -1000
+          },
+          "applies_vat_by_default": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "FamilyDependent": {
