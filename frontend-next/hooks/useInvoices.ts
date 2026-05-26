@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react"
 import {
-    listarFaturas,
-    obterFatura,
-    emitirFatura,
-    anularFatura,
-    gerarPdfFatura,
+    downloadInvoicePdf,
+    issueInvoice,
+    listInvoices,
+    retrieveInvoice,
+    voidInvoice,
 } from "@/lib/api/invoice"
 import { Fatura } from "@/lib/types/invoice"
 
-export function useFaturas () {
-    const [faturas, setFaturas] = useState<Fatura[]>( [] )
+export function useInvoices () {
+    const [invoices, setInvoices] = useState<Fatura[]>( [] )
     const [loading, setLoading] = useState( true )
     const [error, setError] = useState<string | null>( null )
 
-    async function carregar () {
+    async function load () {
         try {
             setLoading( true )
-            const data = await listarFaturas()
-            setFaturas( data )
+            const data = await listInvoices()
+            setInvoices( data )
         } catch ( err: any ) {
             setError( err.message )
         } finally {
@@ -25,26 +25,26 @@ export function useFaturas () {
         }
     }
 
-    async function emitir ( id: number ) {
-        await emitirFatura( id )
-        setFaturas( ( prev ) =>
+    async function issue ( id: number ) {
+        await issueInvoice( id )
+        setInvoices( ( prev ) =>
             prev.map( ( f ) =>
                 f.id === id ? { ...f, estado: "EMIT" } : f
             )
         )
     }
 
-    async function anular ( id: number ) {
-        await anularFatura( id )
-        setFaturas( ( prev ) =>
+    async function voidSelectedInvoice ( id: number ) {
+        await voidInvoice( id )
+        setInvoices( ( prev ) =>
             prev.map( ( f ) =>
                 f.id === id ? { ...f, estado: "ANUL" } : f
             )
         )
     }
 
-    async function baixarPdf ( id: number ) {
-        const blob = await gerarPdfFatura( id )
+    async function downloadPdf ( id: number ) {
+        const blob = await downloadInvoicePdf( id )
         const url = window.URL.createObjectURL( blob )
         const a = document.createElement( "a" )
         a.href = url
@@ -52,22 +52,22 @@ export function useFaturas () {
         a.click()
     }
 
-    async function detalhe ( id: number ) {
-        return await obterFatura( id )
+    async function retrieve ( id: number ) {
+        return await retrieveInvoice( id )
     }
 
     useEffect( () => {
-        carregar()
+        load()
     }, [] )
 
     return {
-        faturas,
+        invoices,
         loading,
         error,
-        carregar,
-        emitir,
-        anular,
-        baixarPdf,
-        detalhe,
+        load,
+        issue,
+        voidSelectedInvoice,
+        downloadPdf,
+        retrieve,
     }
 }

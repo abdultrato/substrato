@@ -24240,7 +24240,7 @@
         ]
       }
     },
-    "/api/v1/billing/invoice/historico_faturamento/": {
+    "/api/v1/billing/invoice/billing-history/": {
       "get": {
         "operationId": "billingHistoryInvoice",
         "description": "Retorna hist\u00f3rico agregado de faturamento por utilizador.",
@@ -24262,7 +24262,7 @@
         ]
       }
     },
-    "/api/v1/billing/invoice/historico_faturamento/pdf/": {
+    "/api/v1/billing/invoice/billing-history/pdf/": {
       "get": {
         "operationId": "billingHistoryPdfInvoice",
         "description": "Emite PDF do hist\u00f3rico agregado de faturamento por utilizador.",
@@ -48117,108 +48117,6 @@
         ]
       }
     },
-    "/api/v1/billing/invoice/{id}/confirm-payment-legacy/": {
-      "post": {
-        "operationId": "confirmPaymentLegacyInvoice",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Fatura.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invoice"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/billing/invoice/{id}/confirmar_pagamento/": {
-      "post": {
-        "operationId": "confirmPaymentPtInvoice",
-        "description": "Alias em portugu\u00eas para confirmar pagamento pendente.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Fatura.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invoice"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
     "/api/v1/billing/invoice/{id}/issue/": {
       "post": {
         "operationId": "issueInvoice",
@@ -48270,111 +48168,9 @@
         ]
       }
     },
-    "/api/v1/billing/invoice/{id}/emitir/": {
-      "post": {
-        "operationId": "issueLegacyInvoice",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Fatura.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invoice"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
     "/api/v1/billing/invoice/{id}/void/": {
       "post": {
         "operationId": "voidInvoice",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Fatura.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Invoice"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Invoice"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/billing/invoice/{id}/anular/": {
-      "post": {
-        "operationId": "voidLegacyInvoice",
         "description": "",
         "parameters": [
           {

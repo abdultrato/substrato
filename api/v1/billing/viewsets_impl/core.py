@@ -495,49 +495,6 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         )
         return Response(self.get_serializer(invoice).data)
 
-    @action(
-        detail=True,
-        methods=["post"],
-        url_path="confirm-payment-legacy",
-        url_name="confirm-payment-legacy",
-    )
-    def confirm_payment_legacy(self, request, pk=None):
-        invoice = self._execute_command(
-            handle_confirm_pending_invoice_payment,
-            ConfirmPendingInvoicePaymentCommand(
-                invoice=self.get_object(),
-                idempotent=True,
-            ),
-        )
-        return Response(self.get_serializer(invoice).data)
-
-    @action(
-        detail=True,
-        methods=["post"],
-        url_path="confirmar_pagamento",
-        url_name="confirmar_pagamento",
-    )
-    def confirm_payment_pt(self, request, pk=None):
-        """Alias em português para confirmar pagamento pendente."""
-        invoice = self._execute_command(
-            handle_confirm_pending_invoice_payment,
-            ConfirmPendingInvoicePaymentCommand(
-                invoice=self.get_object(),
-                idempotent=True,
-            ),
-        )
-        return Response(self.get_serializer(invoice).data)
-
-    @action(detail=True, methods=["post"], url_path="emitir", url_name="emitir")
-    def issue_legacy(self, request, pk=None):
-        # Legacy Portuguese alias.
-        return self.issue(request, pk)
-
-    @action(detail=True, methods=["post"], url_path="anular", url_name="anular")
-    def void_legacy(self, request, pk=None):
-        # Legacy Portuguese alias.
-        return self.void(request, pk)
-
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
         """Gera PDF de fatura (assíncrono)."""
@@ -576,13 +533,13 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             status=202,
         )
 
-    @action(detail=False, methods=["get"], url_path="historico_faturamento", url_name="historico-faturamento")
+    @action(detail=False, methods=["get"], url_path="billing-history", url_name="billing-history")
     def billing_history(self, request):
         """Retorna histórico agregado de faturamento por utilizador."""
         payload = self._build_billing_history_payload(request)
         return Response(payload)
 
-    @action(detail=False, methods=["get"], url_path="historico_faturamento/pdf", url_name="historico-faturamento-pdf")
+    @action(detail=False, methods=["get"], url_path="billing-history/pdf", url_name="billing-history-pdf")
     def billing_history_pdf(self, request):
         """Emite PDF do histórico agregado de faturamento por utilizador."""
         payload = self._build_billing_history_payload(request)

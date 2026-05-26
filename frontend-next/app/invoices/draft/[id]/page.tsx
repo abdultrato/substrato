@@ -476,7 +476,7 @@ export default function FaturaRascunhoPage() {
     }
   }, [carregarItens, faturaId, podeEditar])
 
-  const emitirFatura = useCallback(async () => {
+  const issueInvoiceAction = useCallback(async () => {
     if (!faturaId) return
     if (!podeEditar) {
       setErro("Sem permissão para emitir fatura.")
@@ -484,7 +484,7 @@ export default function FaturaRascunhoPage() {
     }
     try {
       setAcaoId(faturaId)
-      await apiFetch(`/invoices/${faturaId}/emitir/`, { method: "POST" })
+      await apiFetch(`/invoices/${faturaId}/issue/`, { method: "POST" })
       await carregarFatura()
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao emitir fatura."))
@@ -633,7 +633,7 @@ export default function FaturaRascunhoPage() {
     totalFaturaCents,
   ])
 
-  const baixarPdfFatura = useCallback(async () => {
+  const downloadInvoicePdf = useCallback(async () => {
     if (!faturaId) return
     try {
       const blob = await apiFetch<Blob>(`/invoices/${faturaId}/pdf/`, {
@@ -651,7 +651,7 @@ export default function FaturaRascunhoPage() {
     }
   }, [faturaId])
 
-  const baixarPdfRecibo = useCallback(async () => {
+  const downloadReceiptPdf = useCallback(async () => {
     if (!recibo?.id) return
     try {
       const blob = await apiFetch<Blob>(`/payments/receipt/${recibo.id}/pdf/`, {
@@ -836,7 +836,7 @@ export default function FaturaRascunhoPage() {
             {faturaRascunho && podeEditar ? (
               <button
                 className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
-                onClick={emitirFatura}
+                onClick={issueInvoiceAction}
                 disabled={acaoId === fatura.id}
               >
                 Emitir fatura
@@ -852,7 +852,7 @@ export default function FaturaRascunhoPage() {
 
             <button
               className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-              onClick={baixarPdfFatura}
+              onClick={downloadInvoicePdf}
             >
               <PdfActionLabel>PDF da fatura</PdfActionLabel>
             </button>
@@ -860,7 +860,7 @@ export default function FaturaRascunhoPage() {
             {recibo ? (
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
-                onClick={baixarPdfRecibo}
+                onClick={downloadReceiptPdf}
               >
                 <PdfActionLabel>PDF do recibo</PdfActionLabel>
               </button>

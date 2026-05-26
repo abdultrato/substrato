@@ -143,14 +143,14 @@ export default function FaturasPage() {
     carregarUtilizadores()
   }, [carregarUtilizadores])
 
-  const emitir = useCallback(async (id: number) => {
+  const issueInvoiceAction = useCallback(async (id: number) => {
     if (!podeAlterar) {
       setErro("Sem permissão para emitir fatura.")
       return
     }
     try {
       setAcaoId(id)
-      await apiFetch(`/invoices/${id}/emitir/`, { method: "POST" })
+      await apiFetch(`/invoices/${id}/issue/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao emitir fatura."))
@@ -159,7 +159,7 @@ export default function FaturasPage() {
     }
   }, [carregar, podeAlterar])
 
-  const anular = useCallback(async (id: number) => {
+  const voidInvoiceAction = useCallback(async (id: number) => {
     if (!podeAlterar) {
       setErro("Sem permissão para anular fatura.")
       return
@@ -167,7 +167,7 @@ export default function FaturasPage() {
     if (!confirm("Anular esta fatura?")) return
     try {
       setAcaoId(id)
-      await apiFetch(`/invoices/${id}/anular/`, { method: "POST" })
+      await apiFetch(`/invoices/${id}/void/`, { method: "POST" })
       await carregar()
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao anular fatura."))
@@ -176,7 +176,7 @@ export default function FaturasPage() {
     }
   }, [carregar, podeAlterar])
 
-  const baixarPdf = useCallback(async (id: number) => {
+  const downloadPdf = useCallback(async (id: number) => {
     try {
       setAcaoId(id)
       const blob = await apiFetch<Blob>(`/invoices/${id}/pdf/`, {
@@ -196,7 +196,7 @@ export default function FaturasPage() {
     }
   }, [])
 
-  const gerarHistoricoFaturamentoPdf = useCallback(
+  const downloadBillingHistoryPdf = useCallback(
     async (period: "daily" | "monthly" | "quarterly" | "semiannual" | "annual", forceAll = false) => {
       try {
         const loadingKey =
@@ -226,14 +226,14 @@ export default function FaturasPage() {
         if (scope === "user") params.set("user_id", String(reportUserId))
         params.set("limit", "300")
 
-        const blob = await apiFetch<Blob>(`/invoices/historico_faturamento/pdf/?${params.toString()}`, {
+        const blob = await apiFetch<Blob>(`/invoices/billing-history/pdf/?${params.toString()}`, {
           responseType: "blob",
         })
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
         const periodRef = period === "daily" ? reportDate : String(reportYear)
-        a.download = `historico_faturamento_${period}_${scope}_${periodRef}.pdf`
+        a.download = `billing_history_${period}_${scope}_${periodRef}.pdf`
         a.click()
         window.URL.revokeObjectURL(url)
       } catch (e: any) {
@@ -295,7 +295,7 @@ export default function FaturasPage() {
     }
   }, [selectedFatura])
 
-  const confirmarPagamento = useCallback(
+  const confirmPayment = useCallback(
     async (id: number) => {
       if (!podeAlterar) {
         setErro("Sem permissão para confirmar pagamentos.")
@@ -303,7 +303,7 @@ export default function FaturasPage() {
       }
       try {
         setAcaoId(id)
-        await apiFetch(`/invoices/${id}/confirmar_pagamento/`, { method: "POST" })
+        await apiFetch(`/invoices/${id}/confirm-payment/`, { method: "POST" })
         await carregar()
         if (selectedFatura?.id === id) {
           const atual = faturas.find((f) => f.id === id)
@@ -367,7 +367,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={acaoId === f.id}
-                onClick={() => emitir(f.id)}
+                onClick={() => issueInvoiceAction(f.id)}
               >
                 Emitir
               </button>
@@ -375,7 +375,7 @@ export default function FaturasPage() {
             <button
               className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               disabled={acaoId === f.id}
-              onClick={() => baixarPdf(f.id)}
+              onClick={() => downloadPdf(f.id)}
             >
               <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">
                 PDF
@@ -392,7 +392,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                 disabled={acaoId === f.id}
-                onClick={() => anular(f.id)}
+                onClick={() => voidInvoiceAction(f.id)}
               >
                 Anular
               </button>
@@ -403,9 +403,9 @@ export default function FaturasPage() {
     ],
     [
       acaoId,
-      anular,
-      baixarPdf,
-      emitir,
+      downloadPdf,
+      issueInvoiceAction,
+      voidInvoiceAction,
       podeAlterar,
       carregarItens,
       carregandoItens,
@@ -593,7 +593,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("daily")}
+                onClick={() => downloadBillingHistoryPdf("daily")}
               >
                 <PdfActionLabel loading={reportLoading === "daily"} loadingLabel="Gerando...">
                   Gerar histórico diário
@@ -602,7 +602,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("monthly")}
+                onClick={() => downloadBillingHistoryPdf("monthly")}
               >
                 <PdfActionLabel loading={reportLoading === "monthly"} loadingLabel="Gerando...">
                   Gerar histórico mensal
@@ -611,7 +611,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("quarterly")}
+                onClick={() => downloadBillingHistoryPdf("quarterly")}
               >
                 <PdfActionLabel loading={reportLoading === "quarterly"} loadingLabel="Gerando...">
                   Gerar histórico trimestral
@@ -620,7 +620,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("semiannual")}
+                onClick={() => downloadBillingHistoryPdf("semiannual")}
               >
                 <PdfActionLabel loading={reportLoading === "semiannual"} loadingLabel="Gerando...">
                   Gerar histórico semestral
@@ -629,7 +629,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("annual")}
+                onClick={() => downloadBillingHistoryPdf("annual")}
               >
                 <PdfActionLabel loading={reportLoading === "annual"} loadingLabel="Gerando...">
                   Gerar histórico anual
@@ -644,7 +644,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("daily", true)}
+                onClick={() => downloadBillingHistoryPdf("daily", true)}
               >
                 <PdfActionLabel loading={reportLoading === "general-daily"} loadingLabel="Gerando...">
                   Gerar histórico geral diário
@@ -653,7 +653,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("monthly", true)}
+                onClick={() => downloadBillingHistoryPdf("monthly", true)}
               >
                 <PdfActionLabel loading={reportLoading === "general-monthly"} loadingLabel="Gerando...">
                   Gerar histórico geral mensal
@@ -662,7 +662,7 @@ export default function FaturasPage() {
               <button
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
                 disabled={reportLoading !== null}
-                onClick={() => gerarHistoricoFaturamentoPdf("annual", true)}
+                onClick={() => downloadBillingHistoryPdf("annual", true)}
               >
                 <PdfActionLabel loading={reportLoading === "general-annual"} loadingLabel="Gerando...">
                   Gerar histórico geral anual
@@ -718,7 +718,7 @@ export default function FaturasPage() {
                 <button
                   className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                   disabled={acaoId === selectedFatura.id}
-                  onClick={() => confirmarPagamento(selectedFatura.id)}
+                  onClick={() => confirmPayment(selectedFatura.id)}
                 >
                   Confirmar pagamento
                 </button>

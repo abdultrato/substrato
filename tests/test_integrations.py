@@ -142,7 +142,7 @@ def test_clinical_alias_route_exposes_frontend_patient_contract(api_client):
 
 
 @pytest.mark.django_db
-def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
+def test_billing_and_payment_endpoints_use_english_actions(api_client):
     tenant = _tenant()
     _authenticate_admin(tenant, api_client=api_client)
     patient = _patient(tenant)
@@ -217,8 +217,10 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert invoice.total == Decimal("10.00")
     assert invoice.total_a_pagar == Decimal("10.00")
 
-    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
+    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/issue/")
     assert issue_response.status_code == 200
+    legacy_issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
+    assert legacy_issue_response.status_code == 404
 
     payment_response = api_client.post(
         "/api/v1/payments/payment/",
@@ -238,14 +240,16 @@ def test_billing_and_payment_alias_endpoints_support_frontend_flow(api_client):
     assert payment_payload["valor"] == "10.00"
     assert payment_payload["estado"] == "PEN"
 
-    confirm_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirmar_pagamento/")
+    confirm_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirm-payment/")
 
     assert confirm_response.status_code == 200
     assert _response_data(confirm_response)["estado"] == Invoice.Status.PAID
 
-    confirm_again_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirmar_pagamento/")
+    confirm_again_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirm-payment/")
     assert confirm_again_response.status_code == 200
     assert _response_data(confirm_again_response)["estado"] == Invoice.Status.PAID
+    legacy_confirm_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/confirmar_pagamento/")
+    assert legacy_confirm_response.status_code == 404
 
     receipt_response = api_client.get(f"/api/v1/payments/receipt/?fatura={invoice_id}")
 
@@ -288,7 +292,7 @@ def test_payment_api_rejects_confirmed_overpayment_without_change(api_client):
     )
     assert item_response.status_code == 201
 
-    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/emitir/")
+    issue_response = api_client.post(f"/api/v1/billing/invoice/{invoice_id}/issue/")
     assert issue_response.status_code == 200
 
     payment_response = api_client.post(
@@ -496,7 +500,7 @@ def test_billing_history_endpoint_supports_user_general_and_periods(api_client):
     semester = 1 if now.month <= 6 else 2
 
     user_history_response = api_client.get(
-        "/api/v1/billing/invoice/historico_faturamento/",
+        "/api/v1/billing/invoice/billing-history/",
         {
             "scope": "user",
             "user_id": admin_a.id,
@@ -512,7 +516,7 @@ def test_billing_history_endpoint_supports_user_general_and_periods(api_client):
     assert any(row["user_id"] == admin_a.id for row in user_payload["users"])
 
     general_history_response = api_client.get(
-        "/api/v1/billing/invoice/historico_faturamento/",
+        "/api/v1/billing/invoice/billing-history/",
         {
             "scope": "all",
             "period": "annual",
@@ -541,11 +545,14 @@ def test_billing_history_endpoint_supports_user_general_and_periods(api_client):
             "year": year,
             **extra,
         }
-        response = api_client.get("/api/v1/billing/invoice/historico_faturamento/", params)
+        response = api_client.get("/api/v1/billing/invoice/billing-history/", params)
         assert response.status_code == 200
         payload = _response_data(response)
         assert payload["period"]["key"] == period_key
         assert payload["summary"]["invoice_count"] >= 1
+
+    legacy_response = api_client.get("/api/v1/billing/invoice/historico_faturamento/", {"scope": "all"})
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -563,7 +570,7 @@ def test_billing_history_pdf_endpoint_returns_pdf(api_client):
 
     now = timezone.localtime()
     response = api_client.get(
-        "/api/v1/billing/invoice/historico_faturamento/pdf/",
+        "/api/v1/billing/invoice/billing-history/pdf/",
         {
             "scope": "user",
             "user_id": admin.id,
@@ -575,6 +582,9 @@ def test_billing_history_pdf_endpoint_returns_pdf(api_client):
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+    legacy_response = api_client.get("/api/v1/billing/invoice/historico_faturamento/pdf/")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db

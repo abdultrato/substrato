@@ -11252,7 +11252,7 @@ export class ApiService {
     public static billingHistoryInvoice(): CancelablePromise<Invoice> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/billing/invoice/historico_faturamento/',
+            url: '/api/v1/billing/invoice/billing-history/',
         });
     }
     /**
@@ -11263,7 +11263,7 @@ export class ApiService {
     public static billingHistoryPdfInvoice(): CancelablePromise<Invoice> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/billing/invoice/historico_faturamento/pdf/',
+            url: '/api/v1/billing/invoice/billing-history/pdf/',
         });
     }
     /**
@@ -21913,47 +21913,6 @@ export class ApiService {
          * @returns Invoice
          * @throws ApiError
          */
-        public static confirmPaymentLegacyInvoice(
-            id: string,
-            requestBody?: Invoice,
-        ): CancelablePromise<Invoice> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/billing/invoice/{id}/confirm-payment-legacy/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * Alias em português para confirmar pagamento pendente.
-         * @param id A unique integer value identifying this Fatura.
-         * @param requestBody
-         * @returns Invoice
-         * @throws ApiError
-         */
-        public static confirmPaymentPtInvoice(
-            id: string,
-            requestBody?: Invoice,
-        ): CancelablePromise<Invoice> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/billing/invoice/{id}/confirmar_pagamento/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Fatura.
-         * @param requestBody
-         * @returns Invoice
-         * @throws ApiError
-         */
         public static issueInvoice(
             id: string,
             requestBody?: Invoice,
@@ -21974,26 +21933,6 @@ export class ApiService {
          * @returns Invoice
          * @throws ApiError
          */
-        public static issueLegacyInvoice(
-            id: string,
-            requestBody?: Invoice,
-        ): CancelablePromise<Invoice> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/billing/invoice/{id}/emitir/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Fatura.
-         * @param requestBody
-         * @returns Invoice
-         * @throws ApiError
-         */
         public static voidInvoice(
             id: string,
             requestBody?: Invoice,
@@ -22001,26 +21940,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/billing/invoice/{id}/void/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Fatura.
-         * @param requestBody
-         * @returns Invoice
-         * @throws ApiError
-         */
-        public static voidLegacyInvoice(
-            id: string,
-            requestBody?: Invoice,
-        ): CancelablePromise<Invoice> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/billing/invoice/{id}/anular/',
                 path: {
                     'id': id,
                 },
