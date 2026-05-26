@@ -157,7 +157,7 @@ export default function LaboratoryPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Requisições pendentes" value={loading ? "..." : pendingRequestsTotal} />
           <MetricCard label="Aguardando validação" value={loading ? "..." : awaitingValidationTotal} />
-          <MetricCard label="Críticas" value={loading ? "..." : criticalRequestsTotal} hint="Flag has_critical_result" />
+          <MetricCard label="Críticas" value={loading ? "..." : criticalRequestsTotal} hint="Marcadas como críticas" />
           <MetricCard label="Itens de resultado pendentes" value={loading ? "..." : pendingItemsTotal} />
         </div>
 

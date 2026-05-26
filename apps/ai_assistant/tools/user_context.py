@@ -46,7 +46,7 @@ class GetUserContextTool(AiTool):
                 "title_en": "User personal context",
                 "metrics": [
                     {"label_pt": "Login", "label_en": "Login", "value": username or "—"},
-                    {"label_pt": "Tenant", "label_en": "Tenant", "value": tenant_name or "—"},
+                    {"label_pt": "Cliente", "label_en": "Tenant", "value": tenant_name or "—"},
                     {"label_pt": "Grupos", "label_en": "Groups", "value": ", ".join(groups) or "—"},
                     {
                         "label_pt": "Perfil administrativo",
@@ -79,7 +79,7 @@ class GetUserContextTool(AiTool):
             },
             "sources": [
                 {"type": "model", "label": "User", "href": "/api/v1/identity/user/"},
-                {"type": "model", "label": "Tenant", "href": "/api/v1/tenants/tenant/"},
+                {"type": "model", "label": "Cliente", "href": "/api/v1/tenants/tenant/"},
                 {"type": "policy", "label": "RBAC", "href": ""},
             ],
         }

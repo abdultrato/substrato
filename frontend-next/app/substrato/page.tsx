@@ -14,7 +14,7 @@ const slides = [
   },
   {
     title: "Operações e Monitoramento",
-    body: "Dashboards, auditoria de atividades e métricas operacionais para decisões em tempo real.",
+    body: "Painéis, auditoria de atividades e métricas operacionais para decisões em tempo real.",
   },
   {
     title: "Integrações",

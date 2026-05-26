@@ -30,9 +30,9 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
         db_column="turnaround_hours",
 
-        verbose_name="Tempo de resposta (em hours)",
+        verbose_name="Tempo de resposta (em horas)",
         default=24,
-        help_text="Tempo de resposta em hours.",
+        help_text="Tempo de resposta em horas.",
 
     )
 

@@ -119,7 +119,7 @@ export default function NursingPage() {
           />
           <ActionTile
             title={t("Enfermaria", "Ward")}
-            description={t("Dashboard de camas e internamentos.", "Dashboard for beds and admissions.")}
+            description={t("Painel de camas e internamentos.", "Dashboard for beds and admissions.")}
             href="/nursing/ward"
             icon={BedDouble}
           />

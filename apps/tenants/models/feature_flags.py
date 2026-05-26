@@ -17,8 +17,8 @@ class TenantFeatureFlag(NoNameCoreModel):
 
     class Meta:
         db_table = "inquilinos_featureflagtenant"
-        verbose_name = "Feature Flag (Tenant)"
-        verbose_name_plural = "Feature Flags (Tenant)"
+        verbose_name = "Funcionalidade do Cliente"
+        verbose_name_plural = "Funcionalidades do Cliente"
         constraints = [
             models.UniqueConstraint(
                 fields=["tenant", "key"],

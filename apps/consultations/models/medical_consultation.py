@@ -75,7 +75,7 @@ class MedicalConsultation(NoNameCoreModel):
         db_index=True,
     )
 
-    type = models.CharField("Tipo de consultation",
+    type = models.CharField("Tipo de consulta",
 
         db_column="type",
 
@@ -151,7 +151,7 @@ class MedicalConsultation(NoNameCoreModel):
         super().clean()
 
         if not (self.type or "").strip():
-            raise ValidationError({"type": "Informe o type/name do serviço da consultation."})
+            raise ValidationError({"type": "Informe o tipo/nome do serviço da consulta."})
 
         if self.price is None or self.price < Decimal("0.00"):
             raise ValidationError({"price": "Preço inválido."})
@@ -160,13 +160,13 @@ class MedicalConsultation(NoNameCoreModel):
             raise ValidationError({"price_multiplier": "Multiplicador inválido."})
 
         if self.patient_id and self.tenant_id and self.patient.tenant_id != self.tenant_id:
-            raise ValidationError({"patient": "Paciente e consultation devem pertencer ao mesmo tenant."})
+            raise ValidationError({"patient": "Paciente e consulta devem pertencer ao mesmo tenant."})
 
         if self.doctor_id and self.tenant_id and self.doctor.tenant_id != self.tenant_id:
-            raise ValidationError({"doctor": "Médico e consultation devem pertencer ao mesmo tenant."})
+            raise ValidationError({"doctor": "Médico e consulta devem pertencer ao mesmo tenant."})
 
         if self.specialty_id and self.tenant_id and self.specialty.tenant_id != self.tenant_id:
-            raise ValidationError({"specialty": "Especialidade e consultation devem pertencer ao mesmo tenant."})
+            raise ValidationError({"specialty": "Especialidade e consulta devem pertencer ao mesmo tenant."})
 
     def _tenant_timezone(self):
         """

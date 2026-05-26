@@ -441,14 +441,14 @@ class AiOrchestrator:
             summary = (
                 f"Open Command Center filtered to {days} day(s)."
                 if language == "en"
-                else f"Abrir o Command Center filtrado para {days} dia(s)."
+                else f"Abrir o Centro de comando filtrado para {days} dia(s)."
             )
             action = self.audit.create_suggested_action(
                 tenant=tenant,
                 session=session,
                 user=user,
                 action_type="open_filtered_navigation",
-                payload={"href": href, "label_pt": "Abrir Command Center", "label_en": "Open Command Center"},
+                payload={"href": href, "label_pt": "Abrir Centro de comando", "label_en": "Open Command Center"},
                 requires_confirmation=False,
                 confirmation_summary=summary,
                 result_href=href,
@@ -562,7 +562,7 @@ class AiOrchestrator:
             "nursing": ("Relatório de enfermagem operacional", "Nursing operational report"),
             "pharmacy": ("Relatório de farmácia operacional", "Pharmacy operational report"),
             "education": ("Relatório escolar operacional", "Education operational report"),
-            "command_center": ("Relatório do Command Center", "Command Center report"),
+            "command_center": ("Relatório do Centro de comando", "Command Center report"),
         }
         title_pt, title_en = titles.get(report_kind, ("Relatório operacional da IA", "AI operational report"))
         return f"{title_pt} - {days} dia(s)", f"{title_en} - {days} day(s)"

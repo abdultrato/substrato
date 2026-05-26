@@ -136,7 +136,7 @@ class MedicalResultFile(TenantPropagationMixin, NoNameCoreModel):
         max_length=20,
         choices=MedicalExamResultType.choices,
         default=MedicalExamResultType.IMAGEM,
-        verbose_name="Tipo de file",
+        verbose_name="Tipo de arquivo",
     )
 
     description = models.CharField(

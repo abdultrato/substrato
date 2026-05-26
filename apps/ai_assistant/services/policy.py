@@ -48,7 +48,7 @@ class AiPolicyGuard:
         if not user or not getattr(user, "is_authenticated", False):
             raise AiPolicyError("authentication_required", "Autenticação obrigatória para usar a IA.")
         if tenant is None:
-            raise AiPolicyError("tenant_required", "Tenant não resolvido na requisição.")
+            raise AiPolicyError("tenant_required", "Cliente não resolvido na requisição.")
 
         request_tenant_id = getattr(tenant, "id", None)
         user_tenant_id = getattr(user, "tenant_id", None)

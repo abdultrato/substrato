@@ -44,7 +44,7 @@ class TransactionalOutboxEvent(models.Model):
         blank=True,
     )
     tenant_identifier = models.CharField(
-        verbose_name="Tenant",
+        verbose_name="Cliente",
         max_length=80,
         null=True,
         blank=True,
@@ -153,4 +153,3 @@ class TransactionalOutboxEvent(models.Model):
     def requeue(self) -> None:
         self.status = self.Status.PENDING
         self.save(update_fields=["status", "updated_at"])
-

@@ -9,8 +9,8 @@ from core.models.base import NoNameCoreModel
 
 class IntegrationOrder(NoNameCoreModel):
     """
-    Ordem (worklist) que o equipment consome. Geralmente corresponde a uma
-    RequisicaoAnalise agrupada por equipment.
+    Ordem (worklist) que o equipamento consome. Geralmente corresponde a uma
+    requisição de análise agrupada por equipamento.
     """
 
     prefix = "ORD"  # Prefixo para IDs amigáveis
@@ -121,8 +121,8 @@ class IntegrationOrderItem(ScopedPositionMixin, NoNameCoreModel):
 
     class Meta:
         db_table = "integracoes_equipamentos_integracaoordemitem"
-        verbose_name = "Item de order (Integração)"
-        verbose_name_plural = "Itens de order (Integração)"
+        verbose_name = "Item de ordem (Integração)"
+        verbose_name_plural = "Itens de ordem (Integração)"
         ordering = ["order", "position", "id"]
         constraints = [
             models.UniqueConstraint(
@@ -140,7 +140,7 @@ class IntegrationOrderItem(ScopedPositionMixin, NoNameCoreModel):
     def clean(self):
         super().clean()
         if self.order_id and self.request_item_id and self.order.request_id != self.request_item.request_id:
-            raise ValidationError("Item deve pertencer à mesma requisição da order.")
+            raise ValidationError("Item deve pertencer à mesma requisição da ordem.")
 
     def __str__(self) -> str:
         return f"{self.order_id} - item {self.request_item_id}"

@@ -11,6 +11,7 @@ class TenantConfiguration(NoNameCoreModel):
     tenant = models.OneToOneField(
         "inquilinos.Tenant",
         db_column="tenant_id",
+        verbose_name="Cliente",
         on_delete=models.CASCADE,
         related_name="configuracao",
         db_index=True,
@@ -37,7 +38,7 @@ class TenantConfiguration(NoNameCoreModel):
         db_column="user_limit",
         default=1)
 
-    # Consultas: acréscimo percentual aplicado quando a date for marcada como feriado.
+    # Consultas: acréscimo percentual aplicado quando a data for marcada como feriado.
     holiday_consultation_percentage_surcharge = models.DecimalField(
         db_column="holiday_consultation_percentage_surcharge",
         max_digits=6,
@@ -47,8 +48,8 @@ class TenantConfiguration(NoNameCoreModel):
 
     class Meta:
         db_table = "inquilinos_configuracaoinquilino"
-        verbose_name = "Configuração do Inquilino"
-        verbose_name_plural = "Configurações do Inquilino"
+        verbose_name = "Configuração do Cliente"
+        verbose_name_plural = "Configurações do Cliente"
 
     def __str__(self) -> str:
         return f"Config {self.tenant_id}"

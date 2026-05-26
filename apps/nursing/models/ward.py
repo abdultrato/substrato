@@ -54,7 +54,7 @@ class WardBed(NoNameCoreModel):
 
         db_column="number",
 
-        verbose_name="Número da bed",
+        verbose_name="Número da cama",
         max_length=20,
         db_index=True,
     )
@@ -84,7 +84,7 @@ class WardBed(NoNameCoreModel):
     def clean(self):
         super().clean()
         if self.ward_id and self.tenant_id and self.ward.tenant_id != self.tenant_id:
-            raise ValidationError({"ward": "Enfermaria e bed devem pertencer ao mesmo tenant."})
+            raise ValidationError({"ward": "Enfermaria e cama devem pertencer ao mesmo tenant."})
 
     def save(self, *args, **kwargs):
         if not self.tenant_id and self.ward_id:
@@ -130,7 +130,7 @@ class WardAdmission(NoNameCoreModel):
         verbose_name="Tempo estimado de observação (horas)",
         null=True,
         blank=True,
-        help_text="Tempo estimado de observação em hours (quando aplicável).",
+        help_text="Tempo estimado de observação em horas (quando aplicável).",
     )
 
     admission_date = models.DateTimeField(
@@ -258,7 +258,7 @@ class WardAdmission(NoNameCoreModel):
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             if qs.exists():
-                raise ValidationError({"bed": "Esta bed já possui um internamento active."})
+                raise ValidationError({"bed": "Esta cama já possui um internamento ativo."})
 
     def save(self, *args, **kwargs):
         if not self.tenant_id:

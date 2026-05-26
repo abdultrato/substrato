@@ -29,7 +29,7 @@ export default function EducationResourceListPage() {
           <PageHeader
             title={t("Recurso não encontrado", "Resource not found")}
             subtitle={t(
-              "O recurso solicitado não está disponível em Education.",
+              "O recurso solicitado não está disponível em Educação.",
               "The requested resource is not available in Education."
             )}
           />
@@ -45,7 +45,7 @@ export default function EducationResourceListPage() {
 
   return (
     <ResourceListPage
-      title={`Education / ${tr(found.resource.label)}`}
+      title={`Educação / ${tr(found.resource.label)}`}
       subtitle={t(
         "Listagem operacional do recurso selecionado.",
         "Operational listing of the selected resource."
@@ -58,4 +58,3 @@ export default function EducationResourceListPage() {
     />
   )
 }
-

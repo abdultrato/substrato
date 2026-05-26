@@ -447,7 +447,7 @@ class InvoiceAdmin(CoreAdmin):
         except ValidationError as exc:
             messages.error(request, str(exc))
 
-    @admin.action(description="Sincronizar itens com base na origin")
+    @admin.action(description="Sincronizar itens com base na origem")
     def sync_origin_items(self, request, queryset):
         processadas = 0
         erros = 0
@@ -463,10 +463,10 @@ class InvoiceAdmin(CoreAdmin):
         if processadas:
             messages.success(
                 request,
-                f"{processadas} invoice(s) sincronizada(s) com sucesso.",
+                f"{processadas} fatura(s) sincronizada(s) com sucesso.",
             )
         if erros and not processadas:
             messages.warning(
                 request,
-                "Nenhuma invoice foi sincronizada devido a erros de validação.",
+                "Nenhuma fatura foi sincronizada devido a erros de validação.",
             )

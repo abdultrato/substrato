@@ -33,7 +33,7 @@ class UserModelAdmin(UserAdmin):
             {"fields": ("first_name", "last_name", "email", *personal_extra_fields)},
         ),
         (
-            "Tenant",
+            "Cliente",
             {"fields": tenant_fields},
         ),
         (

@@ -206,13 +206,13 @@ const MODULES_BASE: ModuleGroup[] = [
   },
   {
     key: "tenants",
-    label: "Inquilinos",
+    label: "Clientes",
     resources: [
-      { key: "inquilino", label: "Inquilinos", endpoint: "/tenants/tenant/", adminListHref: "/admin/tenants/tenant/" },
+      { key: "inquilino", label: "Clientes", endpoint: "/tenants/tenant/", adminListHref: "/admin/tenants/tenant/" },
       { key: "planoassinatura", label: "Planos", endpoint: "/tenants/planoassinatura/", adminListHref: "/admin/tenants/subscriptionplan/" },
       { key: "configuracaoinquilino", label: "Configurações", endpoint: "/tenants/configuracaoinquilino/", adminListHref: "/admin/tenants/tenantconfiguration/" },
-      { key: "usotenant", label: "Uso do Tenant", endpoint: "/tenants/usotenant/", adminListHref: "/admin/tenants/tenantusage/" },
-      { key: "featureflagtenant", label: "Feature Flags", endpoint: "/tenants/featureflagtenant/", adminListHref: "/admin/tenants/tenantfeatureflag/" },
+      { key: "usotenant", label: "Uso do Cliente", endpoint: "/tenants/usotenant/", adminListHref: "/admin/tenants/tenantusage/" },
+      { key: "featureflagtenant", label: "Funcionalidades do Cliente", endpoint: "/tenants/featureflagtenant/", adminListHref: "/admin/tenants/tenantfeatureflag/" },
     ],
   },
   {

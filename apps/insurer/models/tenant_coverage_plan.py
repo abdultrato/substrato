@@ -10,10 +10,10 @@ from core.models import CoreModel
 
 class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
     """
-    Override de plan por tenant.
+    Sobrescrita de plano por cliente.
 
-    Se existir record active para (tenant, global_plan), usa-se este
-    percentual no calculo de coparticipacao.
+    Se existir registo ativo para (cliente, plano global), usa-se este
+    percentual no cálculo de comparticipação.
     """
 
     prefix = "TPL"  # Prefixo custom_id
@@ -26,7 +26,7 @@ class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
         related_name="overrides_por_tenant",
     )
 
-    override_percentage = models.DecimalField(  # Percentual específico do tenant
+    override_percentage = models.DecimalField(  # Percentual específico do cliente
         db_column="override_percentage",
         verbose_name="Percentual sobrescrito",
         max_digits=5,
@@ -37,7 +37,7 @@ class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Se vazio, usa o percentual do plan global.",
+        help_text="Se vazio, usa o percentual do plano global.",
     )
 
     # Compatibilidade com servicos/filters gerados
@@ -50,8 +50,8 @@ class TenantCoveragePlan(DescriptionMixin, OrderMixin, CoreModel):
 
     class Meta:
         db_table = "seguradora_tenantplanocobertura"  # Nome legado
-        verbose_name = "Plano por Tenant"
-        verbose_name_plural = "Planos por Tenant"
+        verbose_name = "Plano por Cliente"
+        verbose_name_plural = "Planos por Cliente"
         constraints = [
             models.UniqueConstraint(
                 fields=["tenant", "global_plan"],

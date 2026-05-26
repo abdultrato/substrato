@@ -42,7 +42,7 @@ ROTULOS_FIXOS = {
     "services_subtotal": "Subtotal serviços",
     "materials_subtotal": "Subtotal materiais",
     "total": "Total",
-    "status": "Status",
+    "status": "Estado",
     "observation": "Observação",
     "notes": "Observações",
     "patient": "Paciente",

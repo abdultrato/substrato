@@ -48,7 +48,7 @@ class ProcedureCatalog(CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao procedure (0 a 100).",
+        help_text="Taxa de IVA aplicada ao procedimento (0 a 100).",
     )
 
     applies_vat_by_default = models.BooleanField(
@@ -57,7 +57,7 @@ class ProcedureCatalog(CoreModel):
 
         verbose_name="Aplicar IVA por padrão",
         default=True,
-        help_text="Desmarque se este procedure normalmente não deve ter IVA.",
+        help_text="Desmarque se este procedimento normalmente não deve ter IVA.",
     )
 
     estimated_duration_minutes = models.PositiveIntegerField(

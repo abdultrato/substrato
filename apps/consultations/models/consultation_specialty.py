@@ -45,7 +45,7 @@ class ConsultationSpecialty(CoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Taxa de IVA aplicada ao serviço de consultation (0 a 100).",
+        help_text="Taxa de IVA aplicada ao serviço de consulta (0 a 100).",
     )
 
     active = models.BooleanField(

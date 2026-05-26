@@ -59,7 +59,7 @@ export default function WardDashboardPage() {
         setData(normalizeDashboardData(res))
       } catch (e: any) {
         if (!mounted) return
-        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar dashboard da enfermaria."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o painel da enfermaria."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -113,7 +113,7 @@ export default function WardDashboardPage() {
       <div className="space-y-6">
         <PageHeader
           title="Enfermaria"
-          subtitle="Dashboard: ocupação de camas e próximas medicações."
+          subtitle="Painel: ocupação de camas e próximas medicações."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

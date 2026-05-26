@@ -166,7 +166,7 @@ export default function MonitoramentoPage() {
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <ActionTile
-                        title="Command Center"
+                        title="Centro de comando"
                         description="Painel operacional com alertas automáticos, SLO por módulo e rotas críticas."
                         href="/monitoring/command-center"
                         icon={Activity}

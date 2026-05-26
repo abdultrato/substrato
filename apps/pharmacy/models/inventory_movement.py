@@ -127,17 +127,17 @@ class InventoryMovement(CoreModel):
             raise ValidationError("Inquilino do movimento difere do lot.")
 
         if self.sale_item_id and self.tenant_id and self.sale_item.tenant_id != self.tenant_id:
-            raise ValidationError("Inquilino do movimento difere do item de sale.")
+            raise ValidationError("Inquilino do movimento difere do item de venda.")
 
         # coerência origin / type / vínculo de sale
         if self.origin == MovementOrigin.VENDA and self.type != MovementType.SAIDA:
-            raise ValidationError("Movimento com origin em sale deve ser de saída.")
+            raise ValidationError("Movimento com origem em venda deve ser de saída.")
 
         if self.type == MovementType.SAIDA and self.origin == MovementOrigin.VENDA and not self.sale_item:
             raise ValidationError("Movimentos de saída devem estar ligados a um ItemVenda.")
 
         if self.type == MovementType.SAIDA and self.origin != MovementOrigin.VENDA and self.sale_item:
-            raise ValidationError("Saídas que não são de sale não devem estar ligadas a ItemVenda.")
+            raise ValidationError("Saídas que não são de venda não devem estar ligadas a ItemVenda.")
 
         if self.material_request_item_id and self.tenant_id and self.material_request_item.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do movimento difere do item de requisição.")

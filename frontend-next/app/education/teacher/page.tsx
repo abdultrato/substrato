@@ -946,7 +946,7 @@ export default function EducationTeacherAreaPage() {
               href="/education"
               className="inline-flex items-center border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
             >
-              Voltar ao Education
+              Voltar à Educação
             </Link>
           }
         />

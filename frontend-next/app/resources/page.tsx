@@ -38,6 +38,33 @@ const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
   dashboard: "Dashboard",
 }
 
+const MODULE_LABEL_PT_BY_KEY: Record<string, string> = {
+  clinical: "Clínica",
+  reception: "Recepção",
+  equipment: "Equipamentos",
+  entities: "Entidades",
+  billing: "Faturação",
+  payments: "Pagamentos",
+  pharmacy: "Farmácia",
+  bloodbank: "Banco de sangue",
+  nursing: "Enfermagem",
+  insurer: "Seguradora",
+  accounting: "Contabilidade",
+  consultations: "Consultas",
+  education: "Educação",
+  tenants: "Clientes",
+  notifications: "Notificações",
+  identity: "Identidade",
+  medical_records: "Prontuário",
+  maternity: "Maternidade",
+  surgery: "Cirurgia",
+  human_resources: "Recursos humanos",
+  monitoring: "Monitorização",
+  ai_assistant: "IA operacional",
+  audit: "Auditoria",
+  dashboard: "Painel",
+}
+
 export default function RecursosPage() {
   const { loading } = useAuthGuard()
   const { t, tr, isPortuguese } = useLanguage()
@@ -85,7 +112,7 @@ export default function RecursosPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-[var(--text)]">
-                      {isPortuguese ? m.label : (MODULE_LABEL_EN_BY_KEY[m.key] || tr(m.label))}
+                      {isPortuguese ? (MODULE_LABEL_PT_BY_KEY[m.key] || tr(m.label)) : (MODULE_LABEL_EN_BY_KEY[m.key] || tr(m.label))}
                     </div>
                     <div className="mt-1 text-xs text-[var(--gray-500)]">
                       {isPortuguese

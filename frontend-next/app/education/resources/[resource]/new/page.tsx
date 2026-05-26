@@ -63,7 +63,7 @@ export default function EducationResourceCreatePage() {
         <PageHeader
           title={`${t("Novo", "New")} ${tr(found.resource.label)}`}
           subtitle={t(
-            "Criação de registo em Education.",
+            "Criação de registo em Educação.",
             "Create a new Education record."
           )}
           actions={
@@ -87,4 +87,3 @@ export default function EducationResourceCreatePage() {
     </AppLayout>
   )
 }
-

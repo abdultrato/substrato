@@ -235,7 +235,7 @@ class CommandCenterAlertsTool(AiTool):
             "alerts": active_alerts,
             "outbox": {"pending": outbox_pending, "failed_or_dead_letter": outbox_failed},
             "sources": [
-                {"type": "page", "label": "Command Center", "href": f"/monitoring/command-center?days={days}"},
+                {"type": "page", "label": "Centro de comando", "href": f"/monitoring/command-center?days={days}"},
                 {"type": "model", "label": "SystemError", "href": "/monitoring/errors"},
                 {"type": "model", "label": "UserActivity", "href": "/audit"},
                 {"type": "model", "label": "TransactionalOutboxEvent", "href": "/admin/monitoring/transactionaloutboxevent/"},

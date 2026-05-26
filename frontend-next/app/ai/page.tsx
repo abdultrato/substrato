@@ -629,7 +629,7 @@ export default function AiOperationalPage() {
       },
       {
         title: t("Relatórios e prioridades", "Reports and priorities"),
-        description: t("Para Command Center e visão executiva.", "For Command Center and executive view."),
+        description: t("Para o Centro de comando e visão executiva.", "For Command Center and executive view."),
         icon: FileText,
         prompts: [
           t("Gere relatório operacional dos últimos 30 dias.", "Generate an operational report for the last 30 days."),
@@ -854,7 +854,7 @@ export default function AiOperationalPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
               >
                 <ExternalLink size={15} />
-                {t("Abrir Command Center", "Open Command Center")}
+                {t("Abrir Centro de comando", "Open Command Center")}
               </Link>
             </div>
           }
@@ -882,7 +882,7 @@ export default function AiOperationalPage() {
               <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60">
                   <Lock size={14} />
-                  Tenant
+                  Cliente
                 </div>
                 <div className="mt-1 text-sm font-semibold">{t("Escopo actual", "Current scope")}</div>
               </div>

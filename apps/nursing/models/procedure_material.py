@@ -109,13 +109,13 @@ class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
             and self.procedure_item_id
             and self.procedure_item.procedure_id != self.procedure_id
         ):
-            raise ValidationError({"procedure_item": "Item não pertence ao procedure informado."})
+            raise ValidationError({"procedure_item": "Item não pertence ao procedimento informado."})
 
         if self.procedure_id and self.product_id and self.procedure.tenant_id != self.product.tenant_id:
-            raise ValidationError({"product": "Produto e procedure devem pertencer ao mesmo tenant."})
+            raise ValidationError({"product": "Produto e procedimento devem pertencer ao mesmo tenant."})
 
         if self.procedure_id and self.lot_id and self.procedure.tenant_id != self.lot.tenant_id:
-            raise ValidationError({"lot": "Lote e procedure devem pertencer ao mesmo tenant."})
+            raise ValidationError({"lot": "Lote e procedimento devem pertencer ao mesmo tenant."})
 
         # Permitimos manter históricos de consumo mesmo após a expiration_date ter passado,
         # mas não permitimos "baixar" estoque de lot já vencido.

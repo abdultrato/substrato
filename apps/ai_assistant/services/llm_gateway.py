@@ -153,7 +153,7 @@ class LocalLlmGateway:
             )
         else:
             result = (
-                "Este primeiro incremento da IA responde a perguntas operacionais do Command Center: alertas activos, rotas 5xx, estado de SLO e backlog da outbox.\n\n"
+                "Este primeiro incremento da IA responde a perguntas operacionais do Centro de comando: alertas activos, rotas 5xx, estado de SLO e backlog da outbox.\n\n"
                 "Evidência interna usada: registry de ferramentas.\n"
                 "Limitação: só executo ferramentas que correspondem à pergunta e ao seu perfil RBAC.\n"
                 "Próximo passo sugerido: pergunte por alertas activos, requisições clínicas, pendências de enfermagem, financeiro, farmácia ou educação."
@@ -199,9 +199,9 @@ class LocalLlmGateway:
         elif outbox.get("pending"):
             direct += f" A outbox tem {outbox.get('pending')} evento(s) pendente(s)."
 
-        evidence = "Evidência interna usada: Command Center, SystemError, UserActivity e TransactionalOutboxEvent."
+        evidence = "Evidência interna usada: Centro de comando, SystemError, UserActivity e TransactionalOutboxEvent."
         limitations = "Limitação: não consultei logs de infraestrutura fora da base de dados da aplicação."
-        next_step = f"Próximo passo sugerido: abrir o Command Center filtrado para {days} dia(s) e investigar primeiro a rota ou módulo crítico."
+        next_step = f"Próximo passo sugerido: abrir o Centro de comando filtrado para {days} dia(s) e investigar primeiro a rota ou módulo crítico."
         module_text = self._module_summary(modules, language="pt")
         return "\n\n".join(part for part in [direct, module_text, evidence, limitations, next_step] if part)
 
@@ -329,7 +329,7 @@ class LocalLlmGateway:
                 f"Áreas que pode investigar agora: {module_text}.",
                 summary.get("investigation_prompt_pt")
                 or "Diga-me o que quer investigar dentro do projecto.",
-                "Evidência interna usada: User, Tenant, Group e RBAC.",
+                "Evidência interna usada: Utilizador, Cliente, Grupo e RBAC.",
                 "Limitação: só consulto recursos autorizados pelo seu perfil RBAC actual.",
             ]
         )

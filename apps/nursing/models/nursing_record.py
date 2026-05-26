@@ -85,7 +85,7 @@ class NursingRecord(TenantPropagationMixin, CoreModel):
     record_date = models.DateTimeField(  # Data/hora do registro
         db_column="record_date",
         auto_now_add=True,
-        verbose_name="Data do record",
+        verbose_name="Data do registo",
     )
 
     class Meta:

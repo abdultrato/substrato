@@ -21,7 +21,7 @@ interface Props {
 }
 
 const items = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "Painel", href: "/", icon: LayoutDashboard },
     { label: "Recepção", href: "/reception", icon: Briefcase },
     { label: "Pacientes", href: "/patients", icon: Users },
     { label: "Requisições", href: "/requests", icon: ClipboardList },

@@ -79,7 +79,7 @@ class Invoice(NoNameCoreModel):
         verbose_name="Procedimentos (Enfermagem)",
         blank=True,
         related_name="invoices",
-        help_text="Pode associar múltiplos procedures de enfermagem à mesma invoice.",
+        help_text="Pode associar múltiplos procedimentos de enfermagem à mesma fatura.",
     )
     consultations = models.ManyToManyField(
         "consultas.MedicalConsultation",  # Consultas múltiplas
@@ -147,7 +147,7 @@ class Invoice(NoNameCoreModel):
     )
     patient_amount = models.DecimalField(
         db_column="patient_amount",  # Parcela cobrada ao paciente
-        verbose_name="Valor do patient",
+        verbose_name="Valor do paciente",
         max_digits=12,
         decimal_places=2,
         default=0,
@@ -430,7 +430,7 @@ class Invoice(NoNameCoreModel):
         if self.patient_id and self.tenant_id:
             patient_tenant = getattr(self.patient, "tenant_id", None)
             if patient_tenant not in (None, self.tenant_id):
-                raise ValidationError({"patient": "Paciente e invoice devem pertencer ao mesmo tenant."})
+                raise ValidationError({"patient": "Paciente e fatura devem pertencer ao mesmo tenant."})
 
     def sync_items_from_origin(self):
         if self.status != self.Status.DRAFT:
@@ -663,7 +663,7 @@ class Invoice(NoNameCoreModel):
                 raise ValidationError(
                     {
                         "estoque": (
-                            "Estoque insuficiente na farmácia para emitir a invoice. "
+                            "Estoque insuficiente na farmácia para emitir a fatura. "
                             "Atualize o estoque e tente novamente."
                         ),
                         "items": faltas,

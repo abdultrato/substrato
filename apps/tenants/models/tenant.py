@@ -18,14 +18,14 @@ class Tenant(
     SoftDeleteMixin,
     BaseModel,
 ):
-    """Entidade locatária (cliente) com domínio, status comercial e vigência."""
+    """Entidade locatária (cliente) com domínio, estado comercial e vigência."""
     objects = ManagerAtivo()
     all_objects = AllObjectsManager()
 
     prefix = "TN"  # Prefixo para custom_id
 
     class CommercialStatus(models.TextChoices):
-        TRIAL = "TRIAL", "Trial"
+        TRIAL = "TRIAL", "Experimental"
         ACTIVE = "ATIVO", "Ativo"
         SUSPENDED = "SUSPENSO", "Suspenso"
 
@@ -44,7 +44,7 @@ class Tenant(
 
     commercial_status = models.CharField(
         db_column="commercial_status",
-        verbose_name="Status comercial",
+        verbose_name="Estado comercial",
         max_length=10,
         choices=CommercialStatus.choices,
         default=CommercialStatus.TRIAL,
@@ -52,7 +52,7 @@ class Tenant(
     )
     trial_until = models.DateField(
         db_column="trial_until",
-        verbose_name="Trial até",
+        verbose_name="Teste até",
         blank=True, null=True)
     blocked_at = models.DateTimeField(
         db_column="blocked_at",
@@ -61,8 +61,8 @@ class Tenant(
 
     class Meta:
         db_table = "inquilinos_inquilino"
-        verbose_name = "Inquilino"
-        verbose_name_plural = "Inquilinos"
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
         indexes = [
             models.Index(fields=["identifier"]),
             models.Index(fields=["domain"]),

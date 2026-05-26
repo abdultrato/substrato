@@ -44,7 +44,7 @@ export default function HealthcarePage() {
         setError(
           isNotFoundLikeError(e)
             ? null
-            : (e?.message || t("Falha ao carregar o workspace Healthcare.", "Failed to load the Healthcare workspace."))
+            : (e?.message || t("Falha ao carregar a área de Saúde.", "Failed to load the Healthcare workspace."))
         )
       } finally {
         if (mounted) setLoading(false)
@@ -76,40 +76,40 @@ export default function HealthcarePage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Healthcare"
+          title="Substrato Saúde"
           subtitle={t(
-            "Domínio clínico com o mesmo padrão visual do Education.",
+            "Domínio clínico com padrão visual unificado para equipas assistenciais.",
             "Clinical domain with the same visual standard as Education."
           )}
           adminHref="/admin/"
-          secondaryCta={{ href: "/patients", label: t("Abrir Pacientes", "Open Patients") }}
+          secondaryCta={{ href: "/patients", label: t("Abrir pacientes", "Open Patients") }}
           metrics={[
-            { label: "Patients", value: metricValue || patients },
-            { label: "Consultations", value: metricValue || consultations },
-            { label: "Lab Requests", value: metricValue || requests },
-            { label: "Result Items", value: metricValue || results },
+            { label: "Pacientes", value: metricValue || patients },
+            { label: "Consultas", value: metricValue || consultations },
+            { label: "Requisições laboratoriais", value: metricValue || requests },
+            { label: "Itens de resultado", value: metricValue || results },
           ]}
           actions={[
             {
-              title: "Patients",
+              title: "Pacientes",
               description: t("Cadastro e histórico clínico.", "Clinical registration and history."),
               href: "/patients",
               icon: Users,
             },
             {
-              title: "Consultations",
+              title: "Consultas",
               description: t("Agenda clínica e seguimento.", "Clinical schedule and follow-up."),
               href: "/consultations",
               icon: CalendarClock,
             },
             {
-              title: "Requests",
+              title: "Requisições",
               description: t("Pedidos laboratoriais e operacionais.", "Laboratory and operational requests."),
               href: "/requests",
               icon: ClipboardList,
             },
             {
-              title: "Laboratory",
+              title: "Laboratório",
               description: t("Registo e validação de resultados.", "Result registration and validation."),
               href: "/laboratory",
               icon: FlaskConical,

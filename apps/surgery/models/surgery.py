@@ -156,7 +156,7 @@ class Surgery(NoNameCoreModel):
             )
 
         if self.patient_id and self.tenant_id and self.patient.tenant_id != self.tenant_id:
-            raise ValidationError({"patient": "Paciente e surgery devem pertencer ao mesmo tenant."})
+            raise ValidationError({"patient": "Paciente e cirurgia devem pertencer ao mesmo tenant."})
 
         if self.surgeon_id and self.tenant_id and self.surgeon.tenant_id != self.tenant_id:
             raise ValidationError({"surgeon": "Cirurgião e surgery devem pertencer ao mesmo tenant."})

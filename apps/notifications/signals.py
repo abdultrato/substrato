@@ -49,7 +49,7 @@ def notify_result(sender, instance, created, **kwargs):
     request_code = instance.result.request.custom_id or instance.result.request_id
     result_code = instance.result.custom_id or instance.result_id
     subject = "Resultado disponível"
-    message = f"Seu result {result_code} da requisição {request_code} já está disponível para consultation."
+    message = f"Seu resultado {result_code} da requisição {request_code} já está disponível para consulta."
 
     NotificationService().send_to_patient(
         patient=patient,
@@ -76,7 +76,7 @@ def notify_invoice_issued(sender, instance, created, **kwargs):
     invoice_code = instance.custom_id or instance.pk
     total_amount = instance.total or Decimal("0.00")
     subject = "Fatura emitida"
-    message = f"A sua invoice {invoice_code} foi emitida. Valor total: {total_amount:.2f}."
+    message = f"A sua fatura {invoice_code} foi emitida. Valor total: {total_amount:.2f}."
 
     NotificationService().send_to_patient(
         patient=patient,
@@ -103,7 +103,7 @@ def notify_receipt_generated(sender, instance, created, **kwargs):
     invoice_code = instance.invoice.custom_id or instance.invoice_id
     subject = "Recibo disponível"
     message = (
-        f"Seu recibo {instance.number} foi gerado para a invoice {invoice_code}. Valor recebido: {instance.value:.2f}."
+        f"Seu recibo {instance.number} foi gerado para a fatura {invoice_code}. Valor recebido: {instance.value:.2f}."
     )
 
     NotificationService().send_to_patient(

@@ -68,7 +68,7 @@ class Pregnancy(NoNameCoreModel):
         max_length=40,
         blank=True,
         default="",
-        help_text="Número/identificação da bed (quando aplicável).",
+        help_text="Número/identificação da cama (quando aplicável).",
     )
 
     total_deliveries = models.PositiveSmallIntegerField(  # Partos totais (histórico)

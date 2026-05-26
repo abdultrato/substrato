@@ -144,7 +144,7 @@ export default function MonitoringCommandCenterPage() {
         setErrorMessage(
           isNotFoundLikeError(error)
             ? null
-            : error?.message || t("Falha ao carregar Command Center.", "Failed to load Command Center.")
+            : error?.message || t("Falha ao carregar o Centro de comando.", "Failed to load Command Center.")
         )
       } finally {
         if (mounted) setLoading(false)
@@ -231,7 +231,7 @@ export default function MonitoringCommandCenterPage() {
         className: "text-right",
       },
       {
-        header: t("Total requests", "Total requests"),
+        header: t("Total de pedidos", "Total requests"),
         render: (row: ModuleHealthRow) => toNumber(row.total_requests).toLocaleString(),
         className: "text-right",
       },
@@ -291,7 +291,7 @@ export default function MonitoringCommandCenterPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-6">
         <PageHeader
-          title={t("Command Center Operacional", "Operational Command Center")}
+          title={t("Centro de comando operacional", "Operational Command Center")}
           subtitle={t(
             "Observabilidade ativa com alertas automáticos, SLO por módulo e rastreio operacional centralizado.",
             "Active observability with automatic alerts, module-level SLO and centralized operational tracking."
@@ -339,7 +339,7 @@ export default function MonitoringCommandCenterPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label={t("Requests totais", "Total requests")} value={loading ? "..." : toNumber(totals.total_requests).toLocaleString()} />
+          <MetricCard label={t("Total de pedidos", "Total requests")} value={loading ? "..." : toNumber(totals.total_requests).toLocaleString()} />
           <MetricCard label={t("Taxa global de sucesso", "Global success rate")} value={loading ? "..." : fmtPercent(totals.success_rate)} />
           <MetricCard label={t("Alertas ativos", "Active alerts")} value={loading ? "..." : alerts.length} />
           <MetricCard label={t("Módulos abaixo do SLO", "Modules below SLO")} value={loading ? "..." : toNumber(totals.modules_below_slo).toLocaleString()} />

@@ -67,7 +67,7 @@ class PrescriptionItem(ScopedPositionMixin, NoNameCoreModel):
 
     interval_hours = models.PositiveSmallIntegerField(  # Intervalo entre doses
         db_column="interval_hours",
-        verbose_name="Intervalo (hours)",
+        verbose_name="Intervalo (horas)",
         null=True,
         blank=True,
         help_text="Intervalo entre doses. Obrigatório quando houver mais de uma dose.",

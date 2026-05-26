@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import type { LucideIcon } from "lucide-react"
+import { ArrowRight, ShieldCheck, type LucideIcon } from "lucide-react"
 
 import ActionTile from "@/components/ui/ActionTile"
 import Card from "@/components/ui/Card"
@@ -55,15 +55,17 @@ export default function WorkspaceHub({
             {secondaryCta ? (
               <Link
                 href={secondaryCta.href}
-                className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
               >
                 {secondaryCta.label}
+                <ArrowRight size={15} />
               </Link>
             ) : null}
             <Link
               href={adminHref}
-              className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
             >
+              <ShieldCheck size={15} />
               {t("Administração", "Administration")}
             </Link>
           </div>

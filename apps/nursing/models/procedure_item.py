@@ -119,10 +119,10 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
 
         description_informada = bool((self.description or "").strip())
         if not self.catalog_id and not description_informada:
-            raise ValidationError({"description": "Informe a descrição ou selecione um procedure do catálogo."})
+            raise ValidationError({"description": "Informe a descrição ou selecione um procedimento do catálogo."})
 
         if self.procedure_id and self.catalog_id and self.procedure.tenant_id != self.catalog.tenant_id:
-            raise ValidationError({"catalog": "Catálogo e procedure devem pertencer ao mesmo tenant."})
+            raise ValidationError({"catalog": "Catálogo e procedimento devem pertencer ao mesmo tenant."})
 
         # P1.4: Validação cruzada - patient.tenant == item.tenant
         if self.procedure_id and self.procedure.patient_id and self.tenant_id != self.procedure.patient.tenant_id:

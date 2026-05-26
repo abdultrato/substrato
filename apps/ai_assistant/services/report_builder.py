@@ -41,7 +41,7 @@ def build_operational_report_file(
         f"# {title}",
         "",
         f"- Gerado em: {generated_at.isoformat()}",
-        f"- Tenant: {getattr(tenant, 'identifier', '') or getattr(tenant, 'name', '') or '-'}",
+        f"- Cliente: {getattr(tenant, 'identifier', '') or getattr(tenant, 'name', '') or '-'}",
         f"- Utilizador: {getattr(user, 'username', '') or getattr(user, 'email', '') or '-'}",
         f"- Tipo: {payload.get('report_kind') or 'operational'}",
         "",

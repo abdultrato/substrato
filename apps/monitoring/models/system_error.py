@@ -53,7 +53,7 @@ class SystemError(NoNameCoreModel):
         blank=True,
     )
 
-    ip = models.GenericIPAddressField("IP de origin", null=True, blank=True)
+    ip = models.GenericIPAddressField("IP de origem", null=True, blank=True)
     user_agent = models.CharField("User-Agent", max_length=255, blank=True, default="")
 
     view_basename = models.CharField(

@@ -28,9 +28,9 @@ export default function EducationResourcesPage() {
     <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
       <div className="space-y-4">
         <PageHeader
-          title={t("Education • CRUD", "Education • CRUD")}
+          title={t("Educação • Recursos", "Education • Resources")}
           subtitle={t(
-            "Todas as telas de consumo frontend para recursos de Education.",
+            "Todas as telas de consumo frontend para recursos de Educação.",
             "All frontend consumption screens for Education resources."
           )}
           actions={
@@ -46,7 +46,7 @@ export default function EducationResourcesPage() {
         {!resources.length ? (
           <div className="border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {t(
-              "Não foi possível carregar o catálogo de recursos de Education.",
+              "Não foi possível carregar o catálogo de recursos de Educação.",
               "Could not load Education resource catalog."
             )}
           </div>
@@ -83,4 +83,3 @@ export default function EducationResourcesPage() {
     </AppLayout>
   )
 }
-

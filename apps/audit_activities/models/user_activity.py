@@ -66,7 +66,7 @@ class UserActivity(NoNameCoreModel):
     ip = models.GenericIPAddressField(
         null=True,
         blank=True,
-        verbose_name="IP de origin",
+        verbose_name="IP de origem",
     )
     user_agent = models.CharField(
         max_length=255,

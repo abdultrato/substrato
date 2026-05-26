@@ -47,7 +47,7 @@ export default function WorkspacesPage() {
               </div>
               <div className="space-y-1">
                 <div className="font-display text-lg font-semibold text-foreground">
-                  Substrato Healthcare
+                  Substrato Saúde
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {t(
@@ -74,7 +74,7 @@ export default function WorkspacesPage() {
               </div>
               <div className="space-y-1">
                 <div className="font-display text-lg font-semibold text-foreground">
-                  Substrato Education
+                  Substrato Educação
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {t(

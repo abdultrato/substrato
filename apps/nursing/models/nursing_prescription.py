@@ -34,7 +34,7 @@ class NursingPrescription(TenantPropagationMixin, CoreModel):
 
         db_column="active",
 
-        default=True, verbose_name="Prescrição active")
+        default=True, verbose_name="Prescrição ativa")
 
     class Meta:
         db_table = "enfermagem_prescricaoenfermagem"

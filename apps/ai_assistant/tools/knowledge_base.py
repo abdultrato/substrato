@@ -736,7 +736,7 @@ def _module_catalog() -> tuple[dict[str, str], ...]:
         {"key": "bloodbank", "pt": "Banco de Sangue", "en": "Blood bank", "scope": "doações, unidades, armazenamento, stock e transfusões"},
         {"key": "consultations", "pt": "Consultas", "en": "Consultations", "scope": "marcações, especialidades, preços e reagendamento"},
         {"key": "surgery", "pt": "Cirurgia", "en": "Surgery", "scope": "cirurgias, equipas, agenda, estados e materiais"},
-        {"key": "tenants", "pt": "Inquilinos", "en": "Tenants", "scope": "tenants, domínios, configurações e recursos activos"},
+        {"key": "tenants", "pt": "Clientes", "en": "Tenants", "scope": "clientes, domínios, configurações e recursos activos"},
         {"key": "audit_activities", "pt": "Auditoria", "en": "Audit", "scope": "actividade de utilizadores, pedidos, páginas e resultados"},
     )
 
@@ -801,7 +801,7 @@ def _workflow_entries() -> list[KnowledgeEntry]:
         ("consultation-reschedule", "Como reagendar consulta?", "A consulta pode ser reagendada pelo fluxo de consultas. O evento de reagendamento deve aparecer centralizado e acima da página para evitar dúvida do utilizador."),
         ("admin-activity", "Como ver actividade de admin?", "Use Monitoramento/Auditoria para rever pedidos recentes, página, resultado, tempo, utilizador e recurso. Se faltar dado, a origem é o registo UserActivity."),
         ("system-errors", "Como investigar erros do sistema?", "Pergunte por erros 4xx/5xx, rota, período ou módulo. A IA usa dados de monitoramento, actividade e erros do sistema quando o perfil tem acesso."),
-        ("command-center", "O que é o Command Center?", "É a visão operacional para alertas, erros, SLO, outbox, tarefas e prioridades entre módulos."),
+        ("command-center", "O que é o Centro de comando?", "É a visão operacional para alertas, erros, SLO, outbox, tarefas e prioridades entre módulos."),
         ("footer-language", "Onde fica o botão de idioma?", "O botão de idioma deve ficar no rodapé, junto dos controlos globais, e persistir a escolha para as páginas seguintes."),
         ("sidebar", "Como ocultar o menu lateral?", "Use o botão hambúrguer do frontend para ocultar ou mostrar os módulos laterais; o layout e rodapé devem ocupar o espaço disponível."),
         ("education-healthcare", "Porque Education e Healthcare são separados?", "Após login, o sistema deve apresentar divisões principais para Education e Healthcare, evitando mistura de domínios para administradores."),

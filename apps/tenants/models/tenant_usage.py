@@ -9,6 +9,7 @@ class TenantUsage(NoNameCoreModel):
     tenant = models.OneToOneField(
         "inquilinos.Tenant",
         db_column="tenant_id",
+        verbose_name="Cliente",
         on_delete=models.CASCADE,
         related_name="uso",
         db_index=True,
@@ -25,8 +26,8 @@ class TenantUsage(NoNameCoreModel):
 
     class Meta:
         db_table = "inquilinos_usotenant"
-        verbose_name = "Uso do Tenant"
-        verbose_name_plural = "Uso dos Tenants"
+        verbose_name = "Uso do Cliente"
+        verbose_name_plural = "Uso dos Clientes"
 
     def __str__(self) -> str:
         return f"Uso {self.tenant_id}"

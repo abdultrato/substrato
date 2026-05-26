@@ -130,7 +130,7 @@ export default function EducationStudentPage() {
               href="/education"
               className="inline-flex items-center rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
             >
-              Voltar ao Education
+              Voltar à Educação
             </Link>
           }
         />

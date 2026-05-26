@@ -151,13 +151,13 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),
         ],
-        help_text="Deixe em branco para herdar do item (exam/product/procedure).",
+        help_text="Deixe em branco para herdar do item (exame/produto/procedimento).",
     )
 
     class Meta:
         db_table = "faturamento_faturaitem"
         verbose_name = "Item de Fatura"
-        verbose_name_plural = "Invoice Items"
+        verbose_name_plural = "Itens de Fatura"
         ordering = ["invoice", "position", "id"]
         constraints = [
             models.UniqueConstraint(
@@ -529,20 +529,20 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
         # não bloqueamos criação/edição de itens por tipo.
 
         if self.tenant_id and self.invoice_id and self.tenant_id != self.invoice.tenant_id:
-            raise ValidationError("Item e invoice devem pertencer ao mesmo tenant.")
+            raise ValidationError("Item e fatura devem pertencer ao mesmo tenant.")
 
         if self.exam_id and self.invoice.request_id:
             existe_no_contexto = self.invoice.request.items.filter(exam_id=self.exam_id).exists()
             if not existe_no_contexto:
-                raise ValidationError({"exam": "Exame não pertence à requisição da invoice."})
+                raise ValidationError({"exam": "Exame não pertence à requisição da fatura."})
 
         if self.medical_exam_id and self.invoice.request_id:
             existe_no_contexto = self.invoice.request.items.filter(medical_exam_id=self.medical_exam_id).exists()
             if not existe_no_contexto:
-                raise ValidationError({"medical_exam": "Exame médico não pertence à requisição da invoice."})
+                raise ValidationError({"medical_exam": "Exame médico não pertence à requisição da fatura."})
 
         if self.sale_item_id and self.invoice.sale_id and self.sale_item.sale_id != self.invoice.sale_id:
-            raise ValidationError({"sale_item": "Item de sale não pertence à sale da invoice."})
+            raise ValidationError({"sale_item": "Item de venda não pertence à venda da fatura."})
 
         if self.procedure_item_id and self.invoice.origin == self.invoice.Origin.NURSING:
             permitido = False
@@ -556,7 +556,7 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
                 permitido = True
             if not permitido:
                 raise ValidationError(
-                    {"procedure_item": "Item de procedure não pertence aos procedures da invoice."}
+                    {"procedure_item": "Item de procedimento não pertence aos procedimentos da fatura."}
                 )
 
         if self.procedure_material_id and self.invoice.origin == self.invoice.Origin.NURSING:
@@ -573,11 +573,11 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
             ):
                 permitido = True
             if not permitido:
-                raise ValidationError({"procedure_material": "Material não pertence aos procedures da invoice."})
+                raise ValidationError({"procedure_material": "Material não pertence aos procedimentos da fatura."})
 
     def save(self, *args, **kwargs):
         if self.invoice.status != self.invoice.Status.DRAFT:
-            raise ValidationError("Not allowed to change items of an issued invoice.")
+            raise ValidationError("Não é permitido alterar itens de uma fatura emitida.")
 
         if not self.tenant_id and self.invoice_id:
             self.tenant_id = self.invoice.tenant_id

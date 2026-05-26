@@ -101,7 +101,7 @@ class IntegrationCredential(NoNameCoreModel):
         super().clean()
 
         if self.revoked_at and self.active:
-            raise ValidationError({"active": "Credencial revogada não pode ficar active."})
+            raise ValidationError({"active": "Credencial revogada não pode ficar ativa."})
 
         if self.scopes is None:
             self.scopes = []

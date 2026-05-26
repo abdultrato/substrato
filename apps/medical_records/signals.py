@@ -37,7 +37,7 @@ def sync_cardex_consultations(sender, instance, action, pk_set=None, **kwargs):
             if instance.tenant_id and c.tenant_id != instance.tenant_id:
                 raise ValidationError({"consultations": "Consulta e Cardex devem pertencer ao mesmo tenant."})
             if instance.patient_id and c.patient_id != instance.patient_id:
-                raise ValidationError({"consultations": "Consulta e Cardex devem ser do mesmo patient."})
+                raise ValidationError({"consultations": "Consulta e Cardex devem ser do mesmo paciente."})
 
         # valida médico único considerando existentes + novos
         atuais = instance.consultations.all()

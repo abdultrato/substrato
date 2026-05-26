@@ -101,7 +101,7 @@ export default function DashboardPage() {
             <div className="space-y-4 md:space-y-5">
                 <div>
                     <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
-                        Dashboard
+                        Painel
                     </h2>
                     <p className="text-sm text-muted-foreground">Visão geral dos últimos 7 dias.</p>
                 </div>

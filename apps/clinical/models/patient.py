@@ -45,7 +45,7 @@ class Patient(CoreModel):
         verbose_name="Idade gestacional (semanas)",
         null=True,
         blank=True,
-        help_text="Preencher se a patient estiver pregnant.",
+        help_text="Preencher se a paciente estiver grávida.",
     )
 
     birth_date = models.DateField(
@@ -229,8 +229,8 @@ class Patient(CoreModel):
         "entidades.Company",
 
         db_column="origin_company_id",
-        verbose_name="Empresa (origin)",
-        help_text="Para medicina ocupacional, indique a empresa de origin do patient.",
+        verbose_name="Empresa de origem",
+        help_text="Para medicina ocupacional, indique a empresa de origem do paciente.",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

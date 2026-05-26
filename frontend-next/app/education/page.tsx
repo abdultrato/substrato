@@ -57,7 +57,7 @@ export default function EducationPage() {
         setError(
           isNotFoundLikeError(e)
             ? null
-            : (e?.message || t("Falha ao carregar o módulo Education.", "Failed to load the Education module."))
+            : (e?.message || t("Falha ao carregar o módulo de Educação.", "Failed to load the Education module."))
         )
       } finally {
         if (mounted) setLoading(false)
@@ -125,18 +125,18 @@ export default function EducationPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Education"
+          title="Substrato Educação"
           subtitle={t(
-            "Domínio académico no mesmo design operacional do healthcare.",
+            "Domínio académico no mesmo desenho operacional da plataforma.",
             "Academic domain within the same operational design as healthcare."
           )}
           adminHref="/admin/education/"
-          secondaryCta={{ href: "/education/resources", label: t("CRUD Education", "Education CRUD") }}
+          secondaryCta={{ href: "/education/resources", label: t("Recursos de Educação", "Education resources") }}
           metrics={[
-            { label: "Students", value: metricValue || students },
-            { label: "Teachers", value: metricValue || teachers },
-            { label: "Courses", value: metricValue || courses },
-            { label: "Enrollments", value: metricValue || enrollments },
+            { label: "Estudantes", value: metricValue || students },
+            { label: "Professores", value: metricValue || teachers },
+            { label: "Cursos", value: metricValue || courses },
+            { label: "Matrículas", value: metricValue || enrollments },
           ]}
           actions={resourceActions}
           noteTitle={t("Governança da migração", "Migration governance")}
@@ -146,11 +146,11 @@ export default function EducationPage() {
               "Identity and authentication remain centralized in Substrato."
             ),
             t(
-              "Todas as telas de Education para frontend estão disponíveis em /education/resources.",
+              "Todas as telas de Educação para frontend estão disponíveis em /education/resources.",
               "All Education frontend screens are available under /education/resources."
             ),
             t(
-              "Fluxos críticos de Education já executam no domínio novo sem dependência operacional do legado.",
+              "Fluxos críticos de Educação já executam no domínio novo sem dependência operacional do legado.",
               "Critical Education flows now run on the new domain without operational legacy dependency."
             ),
           ]}

@@ -21,7 +21,7 @@ interface Item {
 }
 
 const items: Item[] = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard },
+    { label: "Painel", href: "/", icon: LayoutDashboard },
     { label: "Recepção", href: "/reception", icon: BriefcaseIcon },
     { label: "Pacientes", href: "/patients", icon: Users },
     { label: "Requisições", href: "/requests", icon: ClipboardList },
