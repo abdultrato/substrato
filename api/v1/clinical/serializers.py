@@ -1104,50 +1104,11 @@ class LabRequestItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeri
         }
 
 
-class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+class ResultItemSerializer(serializers.ModelSerializer):
     """
     Serializer para resultados de análises.
     Contém os valores medidos para cada parâmetro.
     """
-
-    legacy_input_aliases = {
-        "id_custom": "custom_id",
-        "posicao": "position",
-        "resultado": "result",
-        "exame_campo": "exam_field",
-        "campo_exame": "exam_field",
-        "campo": "exam_field",
-        "valor": "result_value",
-        "resultado_valor": "result_value",
-        "status_clinico": "clinical_status",
-        "estado_clinico": "clinical_status",
-        "estado_clínico": "clinical_status",
-        "alerta_critico": "critical_alert",
-        "alerta_crítico": "critical_alert",
-        "estado": "status",
-        "validado_por": "validated_by",
-        "data_validacao": "validation_date",
-        "data_validação": "validation_date",
-    }
-    legacy_output_aliases = {
-        "id_custom": "custom_id",
-        "posicao": "position",
-        "resultado": "result",
-        "exame_campo": "exam_field",
-        "campo_exame": "exam_field",
-        "campo": "exam_field",
-        "valor": "result_value",
-        "resultado_valor": "result_value",
-        "status_clinico": "clinical_status",
-        "estado_clinico": "clinical_status",
-        "estado_clínico": "clinical_status",
-        "alerta_critico": "critical_alert",
-        "alerta_crítico": "critical_alert",
-        "estado": "status",
-        "validado_por": "validated_by",
-        "data_validacao": "validation_date",
-        "data_validação": "validation_date",
-    }
 
     class Meta:
         model = ResultItem
@@ -1162,7 +1123,7 @@ class ResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         }
 
 
-class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     """
     Serializer enxuto para a tela do laboratório.
 
@@ -1177,28 +1138,6 @@ class LaboratoryResultItemSerializer(LegacyAliasSerializerMixin, serializers.Mod
     exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
     exam_field_position = serializers.IntegerField(source="exam_field.position", read_only=True)
     exam_field_reference = serializers.CharField(source="exam_field.referencia", read_only=True)
-    legacy_output_aliases = {
-        "id_custom": "custom_id",
-        "resultado": "result",
-        "resultado_valor": "result_value",
-        "status_clinico": "clinical_status",
-        "alerta_critico": "critical_alert",
-        "estado": "status",
-        "validado_por": "validated_by",
-        "data_validacao": "validation_date",
-        "paciente_nome": "patient_name",
-        "requisicao_id": "request_id",
-        "requisicao_codigo": "request_code",
-        "exame_id": "exam_id",
-        "exame_nome": "exam_name",
-        "exame_campo_nome": "exam_field_name",
-        "exame_campo_unidade": "exam_field_unit",
-        "exame_campo_tipo": "exam_field_type",
-        "exame_campo_posicao": "exam_field_position",
-        "exam_field_referencia": "exam_field_reference",
-        "exame_campo_referencia": "exam_field_reference",
-    }
-
     patient_name = serializers.CharField(source="result.request.patient.name", read_only=True)
     request_id = serializers.IntegerField(source="result.request_id", read_only=True)
     request_code = serializers.CharField(source="result.request.custom_id", read_only=True)

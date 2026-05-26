@@ -9,9 +9,9 @@ import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
-type ResultadoItemRow = Record<string, any>
+type ResultItemRow = Record<string, any>
 
-const ESTADOS = [
+const STATUS_OPTIONS = [
   { value: "pendente", label: "Pendente" },
   { value: "em_analise", label: "Em análise" },
   { value: "aguardando_validacao", label: "Aguardando validação" },
@@ -26,27 +26,27 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
-export default function LaboratorioResultadosPage() {
-  const [estado, setEstado] = useState<string>("pendente")
-  const [erro, setErro] = useState<string | null>(null)
+export default function LaboratoryResultsPage() {
+  const [status, setStatus] = useState<string>("pendente")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<ResultadoItemRow[]>([])
+  const [data, setData] = useState<ResultItemRow[]>([])
 
   useEffect(() => {
     let mounted = true
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
+        setErrorMessage(null)
         const res = await apiFetch<any>(
-          `/clinical/resultitem/?estado=${encodeURIComponent(estado)}`
+          `/clinical/resultitem/?status=${encodeURIComponent(status)}`
         )
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
         setData(Array.isArray(items) ? items : [])
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar resultados."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar resultados."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -55,16 +55,16 @@ export default function LaboratorioResultadosPage() {
     return () => {
       mounted = false
     }
-  }, [estado])
+  }, [status])
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: ResultadoItemRow) => r.id_custom || r.id || "-" },
-      { header: "Resultado", render: (r: ResultadoItemRow) => r.resultado || "-" },
-      { header: "Campo", render: (r: ResultadoItemRow) => r.exame_campo || "-" },
-      { header: "Valor", render: (r: ResultadoItemRow) => (r.resultado_valor ?? "-") },
-      { header: "Crítico", render: (r: ResultadoItemRow) => (r.alerta_critico ? "SIM" : "—") },
-      { header: "Validação", render: (r: ResultadoItemRow) => fmtDate(r.data_validacao) },
+      { header: "Código", render: (r: ResultItemRow) => r.custom_id || r.id || "-" },
+      { header: "Resultado", render: (r: ResultItemRow) => r.result || "-" },
+      { header: "Campo", render: (r: ResultItemRow) => r.exam_field || "-" },
+      { header: "Valor", render: (r: ResultItemRow) => (r.result_value ?? "-") },
+      { header: "Crítico", render: (r: ResultItemRow) => (r.critical_alert ? "SIM" : "—") },
+      { header: "Validação", render: (r: ResultItemRow) => fmtDate(r.validation_date) },
     ],
     []
   )
@@ -79,11 +79,11 @@ export default function LaboratorioResultadosPage() {
             <div className="flex items-center gap-2">
               <label className="text-sm text-slate-700">Estado</label>
               <select
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
               >
-                {ESTADOS.map((e) => (
+                {STATUS_OPTIONS.map((e) => (
                   <option key={e.value} value={e.value}>
                     {e.label}
                   </option>
@@ -93,16 +93,16 @@ export default function LaboratorioResultadosPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
         {loading ? (
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
-          <DataTable<ResultadoItemRow>
+          <DataTable<ResultItemRow>
             columns={columns as any}
             data={data}
             emptyMessage="Nenhum item encontrado."

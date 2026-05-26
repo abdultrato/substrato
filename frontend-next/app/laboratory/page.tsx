@@ -21,10 +21,10 @@ import { useAuth } from "@/hooks/useAuth"
 import { apiFetch, extractResults, extractTotalCount } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-type RequisicaoRow = Record<string, any>
+type RequestRow = Record<string, any>
 
-async function abrirPdfResultados(requisicaoId: number) {
-  const blob = await apiFetch<Blob>(`/requests/${requisicaoId}/pdf_resultados/`, {
+async function openResultsPdf(requestId: number) {
+  const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
@@ -32,24 +32,24 @@ async function abrirPdfResultados(requisicaoId: number) {
   setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
 }
 
-export default function LaboratorioPage() {
+export default function LaboratoryPage() {
   const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const [pendentes, setPendentes] = useState<RequisicaoRow[]>([])
-  const [pendentesTotal, setPendentesTotal] = useState<number>(0)
-  const [aguardandoValidacao, setAguardandoValidacao] = useState<number>(0)
-  const [criticas, setCriticas] = useState<number>(0)
-  const [itensPendentes, setItensPendentes] = useState<number>(0)
+  const [pendingRequests, setPendingRequests] = useState<RequestRow[]>([])
+  const [pendingRequestsTotal, setPendingRequestsTotal] = useState<number>(0)
+  const [awaitingValidationTotal, setAwaitingValidationTotal] = useState<number>(0)
+  const [criticalRequestsTotal, setCriticalRequestsTotal] = useState<number>(0)
+  const [pendingItemsTotal, setPendingItemsTotal] = useState<number>(0)
 
   const onPdf = useCallback(async (id: number) => {
     try {
-      await abrirPdfResultados(id)
+      await openResultsPdf(id)
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de resultados."))
+      setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de resultados."))
     }
   }, [])
 
@@ -59,29 +59,29 @@ export default function LaboratorioPage() {
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
+        setErrorMessage(null)
 
         const [
-          reqPendentes,
-          reqAguardando,
-          reqCriticas,
-          resItensPendentes,
+          pendingRequestsResponse,
+          awaitingValidationResponse,
+          criticalRequestsResponse,
+          pendingItemsResponse,
         ] = await Promise.all([
-          apiFetch<any>("/requests/?tipo=LAB&estado=pendente"),
-          apiFetch<any>("/requests/?tipo=LAB&estado=aguardando_validacao"),
-          apiFetch<any>("/requests/?tipo=LAB&possui_resultado_critico=true"),
-          apiFetch<any>("/clinical/resultitem/?estado=pendente"),
+          apiFetch<any>("/requests/?type=LAB&status=pendente"),
+          apiFetch<any>("/requests/?type=LAB&status=aguardando_validacao"),
+          apiFetch<any>("/requests/?type=LAB&has_critical_result=true"),
+          apiFetch<any>("/clinical/resultitem/?status=pendente"),
         ])
 
         if (!mounted) return
-        setPendentes(extractResults<RequisicaoRow>(reqPendentes).slice(0, 10))
-        setPendentesTotal(extractTotalCount(reqPendentes))
-        setAguardandoValidacao(extractTotalCount(reqAguardando))
-        setCriticas(extractTotalCount(reqCriticas))
-        setItensPendentes(extractTotalCount(resItensPendentes))
+        setPendingRequests(extractResults<RequestRow>(pendingRequestsResponse).slice(0, 10))
+        setPendingRequestsTotal(extractTotalCount(pendingRequestsResponse))
+        setAwaitingValidationTotal(extractTotalCount(awaitingValidationResponse))
+        setCriticalRequestsTotal(extractTotalCount(criticalRequestsResponse))
+        setPendingItemsTotal(extractTotalCount(pendingItemsResponse))
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace do laboratório."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace do laboratório."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -95,14 +95,14 @@ export default function LaboratorioPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: RequisicaoRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
-      { header: "Estado", render: (r: RequisicaoRow) => r.estado || "-" },
+      { header: "Código", render: (r: RequestRow) => r.custom_id || r.id || "-" },
+      { header: "Paciente", render: (r: RequestRow) => r.patient_name || r.patient || "-" },
+      { header: "Estado", render: (r: RequestRow) => r.status || "-" },
       {
         header: "Ações",
-        render: (r: RequisicaoRow) => (
+        render: (r: RequestRow) => (
           <div className="flex flex-wrap gap-2">
-            {podeVerAdmin ? (
+            {canViewAdmin ? (
               <Link
                 href={`/admin/clinical/labrequest/${r.id}/change/`}
                 target="_blank"
@@ -126,7 +126,7 @@ export default function LaboratorioPage() {
         ),
       },
     ],
-    [onPdf, podeVerAdmin]
+    [canViewAdmin, onPdf]
   )
 
   return (
@@ -136,7 +136,7 @@ export default function LaboratorioPage() {
           title="Laboratório"
           subtitle="Entrada de resultados, validação e emissão de documentos."
           actions={
-            podeVerAdmin ? (
+            canViewAdmin ? (
               <Link
                 href="/admin/clinical/labrequest/"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
@@ -148,17 +148,17 @@ export default function LaboratorioPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Requisições pendentes" value={loading ? "..." : pendentesTotal} />
-          <MetricCard label="Aguardando validação" value={loading ? "..." : aguardandoValidacao} />
-          <MetricCard label="Críticas" value={loading ? "..." : criticas} hint="Flag possui_resultado_critico" />
-          <MetricCard label="Itens de resultado pendentes" value={loading ? "..." : itensPendentes} />
+          <MetricCard label="Requisições pendentes" value={loading ? "..." : pendingRequestsTotal} />
+          <MetricCard label="Aguardando validação" value={loading ? "..." : awaitingValidationTotal} />
+          <MetricCard label="Críticas" value={loading ? "..." : criticalRequestsTotal} hint="Flag has_critical_result" />
+          <MetricCard label="Itens de resultado pendentes" value={loading ? "..." : pendingItemsTotal} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -174,7 +174,7 @@ export default function LaboratorioPage() {
             href="/laboratory/results"
             icon={ListChecks}
           />
-          {podeVerAdmin ? (
+          {canViewAdmin ? (
             <ActionTile
               title="Resultados (admin)"
               description="Lançar e validar resultados com rastreabilidade (Django admin)."
@@ -203,9 +203,9 @@ export default function LaboratorioPage() {
           {loading ? (
             <div className="text-sm text-gray-500">Carregando...</div>
           ) : (
-            <DataTable<RequisicaoRow>
+            <DataTable<RequestRow>
               columns={columns as any}
-              data={pendentes}
+              data={pendingRequests}
               emptyMessage="Nenhuma requisição pendente."
             />
           )}

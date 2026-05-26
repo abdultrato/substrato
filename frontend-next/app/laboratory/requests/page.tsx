@@ -15,13 +15,13 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-type RequisicaoRow = Record<string, any>
-type RequisicaoList = { items: RequisicaoRow[]; meta: ApiListMeta; raw: any }
+type RequestRow = Record<string, any>
+type RequestList = { items: RequestRow[]; meta: ApiListMeta; raw: any }
 type CriticalFilter = "all" | "critical" | "non_critical"
 type FilterOption = { value: string; labelPt: string; labelEn: string }
 
-async function abrirPdfResultados(requisicaoId: number) {
-  const blob = await apiFetch<Blob>(`/requests/${requisicaoId}/pdf_resultados/`, {
+async function openResultsPdf(requestId: number) {
+  const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
     responseType: "blob",
   })
   const url = window.URL.createObjectURL(blob)
@@ -29,7 +29,7 @@ async function abrirPdfResultados(requisicaoId: number) {
   setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
 }
 
-const ESTADOS: FilterOption[] = [
+const STATUS_OPTIONS: FilterOption[] = [
   { value: "", labelPt: "Todos os estados", labelEn: "All statuses" },
   { value: "pendente", labelPt: "Pendente", labelEn: "Pending" },
   { value: "em_analise", labelPt: "Em análise", labelEn: "In analysis" },
@@ -38,7 +38,7 @@ const ESTADOS: FilterOption[] = [
   { value: "rejeitado", labelPt: "Rejeitado", labelEn: "Rejected" },
 ]
 
-const PRIORIDADES: FilterOption[] = [
+const PRIORITY_OPTIONS: FilterOption[] = [
   { value: "", labelPt: "Todas as prioridades", labelEn: "All priorities" },
   { value: "NAO_URGENTE", labelPt: "Não urgente", labelEn: "Non-urgent" },
   { value: "NORMAL", labelPt: "Normal", labelEn: "Normal" },
@@ -51,7 +51,7 @@ const PRIORIDADES: FilterOption[] = [
   { value: "EMERGENCIA", labelPt: "Emergência", labelEn: "Emergency" },
 ]
 
-const ORDENACOES: FilterOption[] = [
+const ORDERING_OPTIONS: FilterOption[] = [
   { value: "-created_at", labelPt: "Mais recentes", labelEn: "Newest first" },
   { value: "created_at", labelPt: "Mais antigos", labelEn: "Oldest first" },
   { value: "custom_id", labelPt: "Código (A-Z)", labelEn: "Code (A-Z)" },
@@ -64,14 +64,14 @@ function optionLabel(option: FilterOption | undefined, isPortuguese: boolean, fa
   return isPortuguese ? option.labelPt : option.labelEn
 }
 
-export default function LaboratorioRequisicoesPage() {
+export default function LaboratoryRequestsPage() {
   const { user } = useAuth()
   const { t, isPortuguese } = useLanguage()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [search, setSearch] = useState("")
-  const [estado, setEstado] = useState<string>("")
-  const [prioridade, setPrioridade] = useState<string>("")
+  const [status, setStatus] = useState<string>("")
+  const [clinicalPriority, setClinicalPriority] = useState<string>("")
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all")
   const [ordering, setOrdering] = useState<string>("-created_at")
   const [page, setPage] = useState(1)
@@ -85,9 +85,9 @@ export default function LaboratorioRequisicoesPage() {
 
   const queryUrl = useMemo(() => {
     const params = new URLSearchParams()
-    params.set("tipo", "LAB")
-    if (estado) params.set("estado", estado)
-    if (prioridade) params.set("clinical_status", prioridade)
+    params.set("type", "LAB")
+    if (status) params.set("status", status)
+    if (clinicalPriority) params.set("clinical_status", clinicalPriority)
     if (criticalFilter === "critical") params.set("has_critical_result", "true")
     if (criticalFilter === "non_critical") params.set("has_critical_result", "false")
     if (ordering) params.set("ordering", ordering)
@@ -99,15 +99,15 @@ export default function LaboratorioRequisicoesPage() {
       }
     }
     return `/requests/?${params.toString()}`
-  }, [criticalFilter, debouncedSearch, estado, looksLikeRequestCode, ordering, prioridade])
+  }, [clinicalPriority, criticalFilter, debouncedSearch, looksLikeRequestCode, ordering, status])
 
   useEffect(() => {
     setPage(1)
   }, [queryUrl, pageSize])
 
-  const { data, isFetching, isError, error } = useQuery<RequisicaoList>({
+  const { data, isFetching, isError, error } = useQuery<RequestList>({
     queryKey: ["lab-requests", queryUrl, page, pageSize],
-    queryFn: () => apiFetchList<RequisicaoRow>(queryUrl, { page, pageSize }),
+    queryFn: () => apiFetchList<RequestRow>(queryUrl, { page, pageSize }),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
   })
@@ -125,15 +125,15 @@ export default function LaboratorioRequisicoesPage() {
   const activeFilters = useMemo(() => {
     let count = 0
     if (debouncedSearch.trim()) count += 1
-    if (estado) count += 1
-    if (prioridade) count += 1
+    if (status) count += 1
+    if (clinicalPriority) count += 1
     if (criticalFilter !== "all") count += 1
     return count
-  }, [criticalFilter, debouncedSearch, estado, prioridade])
+  }, [clinicalPriority, criticalFilter, debouncedSearch, status])
 
   const onPdf = useCallback(async (id: number) => {
     try {
-      await abrirPdfResultados(id)
+      await openResultsPdf(id)
     } catch (e: any) {
       alert(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
     }
@@ -141,8 +141,8 @@ export default function LaboratorioRequisicoesPage() {
 
   const cleanFilters = useCallback(() => {
     setSearch("")
-    setEstado("")
-    setPrioridade("")
+    setStatus("")
+    setClinicalPriority("")
     setCriticalFilter("all")
     setOrdering("-created_at")
     setPageSize(50)
@@ -151,23 +151,23 @@ export default function LaboratorioRequisicoesPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: RequisicaoRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
+      { header: "Código", render: (r: RequestRow) => r.custom_id || r.id || "-" },
+      { header: "Paciente", render: (r: RequestRow) => r.patient_name || r.patient || "-" },
       {
         header: "Prioridade",
-        render: (r: RequisicaoRow) =>
+        render: (r: RequestRow) =>
           optionLabel(
-            PRIORIDADES.find((item) => item.value === String(r.status_clinico || "").toUpperCase()),
+            PRIORITY_OPTIONS.find((item) => item.value === String(r.clinical_status || "").toUpperCase()),
             isPortuguese,
-            r.status_clinico || "-"
+            r.clinical_status || "-"
           ),
       },
-      { header: "Crítico", render: (r: RequisicaoRow) => (r.possui_resultado_critico ? "SIM" : "—") },
+      { header: "Crítico", render: (r: RequestRow) => (r.has_critical_result ? "SIM" : "—") },
       {
         header: "Ações",
-        render: (r: RequisicaoRow) => (
+        render: (r: RequestRow) => (
           <div className="flex flex-wrap gap-2">
-            {r.id && String(r.estado || "").toLowerCase() !== "validado" ? (
+            {r.id && String(r.status || "").toLowerCase() !== "validado" ? (
               <Link
                 href={`/laboratory/requests/${r.id}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
@@ -185,7 +185,7 @@ export default function LaboratorioRequisicoesPage() {
               </Link>
             ) : null}
 
-            {podeVerAdmin ? (
+            {canViewAdmin ? (
               <Link
                 href={`/admin/clinical/labrequest/${r.id}/change/`}
                 target="_blank"
@@ -197,7 +197,7 @@ export default function LaboratorioRequisicoesPage() {
               </Link>
             ) : null}
 
-            {r.id_custom ? (
+            {r.custom_id ? (
               <button
                 type="button"
                 onClick={() => onPdf(Number(r.id))}
@@ -211,7 +211,7 @@ export default function LaboratorioRequisicoesPage() {
         ),
       },
     ],
-    [isPortuguese, onPdf, podeVerAdmin]
+    [canViewAdmin, isPortuguese, onPdf]
   )
 
   return (
@@ -261,11 +261,11 @@ export default function LaboratorioRequisicoesPage() {
                 {t("Estado", "Status")}
               </span>
               <select
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
               >
-                {ESTADOS.map((item) => (
+                {STATUS_OPTIONS.map((item) => (
                   <option key={item.value || "all"} value={item.value}>
                     {optionLabel(item, isPortuguese, item.value)}
                   </option>
@@ -278,11 +278,11 @@ export default function LaboratorioRequisicoesPage() {
                 {t("Prioridade clínica", "Clinical priority")}
               </span>
               <select
-                value={prioridade}
-                onChange={(e) => setPrioridade(e.target.value)}
+                value={clinicalPriority}
+                onChange={(e) => setClinicalPriority(e.target.value)}
                 className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
               >
-                {PRIORIDADES.map((item) => (
+                {PRIORITY_OPTIONS.map((item) => (
                   <option key={item.value || "all"} value={item.value}>
                     {optionLabel(item, isPortuguese, item.value)}
                   </option>
@@ -316,7 +316,7 @@ export default function LaboratorioRequisicoesPage() {
                 onChange={(e) => setOrdering(e.target.value)}
                 className="rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
               >
-                {ORDENACOES.map((item) => (
+                {ORDERING_OPTIONS.map((item) => (
                   <option key={item.value} value={item.value}>
                     {optionLabel(item, isPortuguese, item.value)}
                   </option>
@@ -364,7 +364,7 @@ export default function LaboratorioRequisicoesPage() {
           <div className="text-sm text-gray-500">{t("Carregando...", "Loading...")}</div>
         ) : (
           <>
-            <DataTable<RequisicaoRow>
+            <DataTable<RequestRow>
               columns={columns as any}
               data={rows}
               emptyMessage={t("Nenhuma requisição encontrada.", "No requests found.")}
@@ -385,4 +385,3 @@ export default function LaboratorioRequisicoesPage() {
     </AppLayout>
   )
 }
-

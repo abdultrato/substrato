@@ -250,14 +250,7 @@ class LabRequestItemFilter(SafeFilterSet):
 
 
 class ResultItemFilter(SafeFilterSet):
-    legacy_filter_aliases = {
-        "campo_exame": "exam_field",
-        "data_validacao": "validation_date",
-        "estado": "status",
-        "requisicao": "request",
-        "status_clinico": "clinical_status",
-        "validado_por": "validated_by",
-    }
+    legacy_filter_aliases = {}
 
     class Meta:
         model = ResultItem

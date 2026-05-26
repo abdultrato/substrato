@@ -1817,7 +1817,7 @@
         ]
       }
     },
-    "/api/v1/clinical/labrequest/{id}/result_itens/": {
+    "/api/v1/clinical/labrequest/{id}/result-items/": {
       "get": {
         "operationId": "resultItemsLabRequest",
         "description": "Return LAB result items with derived fields for inline entry/validation.",
@@ -1849,39 +1849,7 @@
         ]
       }
     },
-    "/api/v1/clinical/labrequest/{id}/resultado_itens/": {
-      "get": {
-        "operationId": "resultItemsLegacyLabRequest",
-        "description": "Alias legado em portugu\u00eas para compatibilidade do frontend.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Requisi\u00e7\u00e3o de exam.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LabRequest"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/clinical/labrequest/{id}/pdf_resultados/": {
+    "/api/v1/clinical/labrequest/{id}/results-pdf/": {
       "get": {
         "operationId": "resultsPdfLabRequest",
         "description": "Generate the institutional PDF for validated laboratory results.\n\nAccess is still restricted via RBAC to avoid accidental exposure.",
@@ -46542,7 +46510,7 @@
         ]
       }
     },
-    "/api/v1/clinical/resultitem/{id}/gravar/": {
+    "/api/v1/clinical/resultitem/{id}/save-result/": {
       "post": {
         "operationId": "saveResultResultItem",
         "description": "Save the result value and move to AGUARDANDO_VALIDACAO.",
@@ -46593,7 +46561,7 @@
         ]
       }
     },
-    "/api/v1/clinical/resultitem/{id}/lancar/": {
+    "/api/v1/clinical/resultitem/{id}/start-analysis/": {
       "post": {
         "operationId": "startAnalysisResultItem",
         "description": "Move the result item to EM_ANALISE.",
@@ -46644,7 +46612,7 @@
         ]
       }
     },
-    "/api/v1/clinical/resultitem/{id}/validar/": {
+    "/api/v1/clinical/resultitem/{id}/validate-result/": {
       "post": {
         "operationId": "validateResultResultItem",
         "description": "Move the result item to VALIDADO.",

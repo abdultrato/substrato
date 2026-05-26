@@ -15,7 +15,7 @@ export async function createResult(payload: any) {
 }
 
 export async function saveResult(id: number, resultValue: string | number) {
-  return apiFetch(`/clinical/resultitem/${id}/gravar/`, {
+  return apiFetch(`/clinical/resultitem/${id}/save-result/`, {
     method: "POST",
     body: JSON.stringify({ result_value: resultValue }),
   })
@@ -26,7 +26,7 @@ export async function deleteResult(id: number) {
 }
 
 export async function validateResult(id: number) {
-  return apiFetch(`/clinical/resultitem/${id}/validar/`, {
+  return apiFetch(`/clinical/resultitem/${id}/validate-result/`, {
     method: "POST",
   })
 }

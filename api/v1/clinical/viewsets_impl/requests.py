@@ -69,7 +69,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     ]
     ordering = ["-created_at"]
 
-    @action(detail=True, methods=["get"], url_path="pdf_resultados", url_name="pdf-resultados")
+    @action(detail=True, methods=["get"], url_path="results-pdf", url_name="results-pdf")
     def results_pdf(self, request, pk=None):
         """
         Generate the institutional PDF for validated laboratory results.
@@ -151,7 +151,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             status=status.HTTP_409_CONFLICT,
         )
 
-    @action(detail=True, methods=["get"], url_path="result_itens", url_name="result-itens")
+    @action(detail=True, methods=["get"], url_path="result-items", url_name="result-items")
     def result_items(self, request, pk=None):
         """
         Return LAB result items with derived fields for inline entry/validation.
@@ -186,11 +186,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         summary = {
             "total": qs.count(),
-            "pendente": qs.filter(status=ResultState.PENDING).count(),
-            "em_analise": qs.filter(status=ResultState.IN_ANALYSIS).count(),
-            "aguardando_validacao": qs.filter(status=ResultState.AWAITING_VALIDATION).count(),
-            "validado": qs.filter(status=ResultState.VALIDATED).count(),
-            "rejeitado": qs.filter(status=ResultState.REJECTED).count(),
+            "pending": qs.filter(status=ResultState.PENDING).count(),
+            "in_analysis": qs.filter(status=ResultState.IN_ANALYSIS).count(),
+            "awaiting_validation": qs.filter(status=ResultState.AWAITING_VALIDATION).count(),
+            "validated": qs.filter(status=ResultState.VALIDATED).count(),
+            "rejected": qs.filter(status=ResultState.REJECTED).count(),
         }
 
         request_payload = {
@@ -202,31 +202,14 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "clinical_status": request_record.clinical_status,
             "has_critical_result": request_record.has_critical_result,
         }
-        requisicao_payload = {
-            "id": request_record.id,
-            "id_custom": request_record.custom_id,
-            "paciente": request_record.patient_id,
-            "paciente_nome": request_record.patient.name,
-            "estado": request_record.status,
-            "status_clinico": request_record.clinical_status,
-            "possui_resultado_critico": request_record.has_critical_result,
-        }
 
         return Response(
             {
                 "request": request_payload,
-                "requisicao": requisicao_payload,
                 "summary": summary,
                 "items": items,
-                "resumo": summary,
-                "itens": items,
             }
         )
-
-    @action(detail=True, methods=["get"], url_path="resultado_itens", url_name="resultado-itens")
-    def result_items_legacy(self, request, pk=None):
-        """Alias legado em português para compatibilidade do frontend."""
-        return self.result_items(request, pk=pk)
 
 
 @extend_schema(

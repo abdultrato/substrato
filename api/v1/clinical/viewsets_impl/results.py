@@ -89,12 +89,12 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
     def update(self, request, *args, **kwargs):
         if not self._is_admin_user(getattr(request, "user", None)):
-            raise PermissionDenied("Use as ações: lancar, gravar e validar.")
+            raise PermissionDenied("Use the actions: start-analysis, save-result and validate-result.")
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         if not self._is_admin_user(getattr(request, "user", None)):
-            raise PermissionDenied("Use as ações: lancar, gravar e validar.")
+            raise PermissionDenied("Use the actions: start-analysis, save-result and validate-result.")
         return super().partial_update(request, *args, **kwargs)
 
     def _execute_command(self, handler, command):
@@ -109,7 +109,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         except Exception as err:
             raise ValidationError(str(err)) from err
 
-    @action(detail=True, methods=["post"], url_path="lancar", url_name="lancar")
+    @action(detail=True, methods=["post"], url_path="start-analysis", url_name="start-analysis")
     def start_analysis(self, request, pk=None):
         """Move the result item to EM_ANALISE."""
         updated = self._execute_command(
@@ -122,17 +122,13 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         )
         return Response(LaboratoryResultItemSerializer(updated).data)
 
-    @action(detail=True, methods=["post"], url_path="gravar", url_name="gravar")
+    @action(detail=True, methods=["post"], url_path="save-result", url_name="save-result")
     def save_result(self, request, pk=None):
         """
         Save the result value and move to AGUARDANDO_VALIDACAO.
         """
         payload = request.data or {}
-        raw = None
-        for field_name in ("result_value", "resultado_valor", "value", "valor"):
-            if payload.get(field_name, None) is not None:
-                raw = payload.get(field_name)
-                break
+        raw = payload.get("result_value")
 
         updated = self._execute_command(
             handle_save_result_value,
@@ -144,7 +140,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         )
         return Response(LaboratoryResultItemSerializer(updated).data)
 
-    @action(detail=True, methods=["post"], url_path="validar", url_name="validar")
+    @action(detail=True, methods=["post"], url_path="validate-result", url_name="validate-result")
     def validate_result(self, request, pk=None):
         """Move the result item to VALIDADO."""
         updated = self._execute_command(

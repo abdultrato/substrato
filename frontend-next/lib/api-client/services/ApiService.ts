@@ -1062,24 +1062,7 @@ export class ApiService {
     ): CancelablePromise<LabRequest> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/labrequest/{id}/result_itens/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * Alias legado em português para compatibilidade do frontend.
-     * @param id A unique integer value identifying this Requisição de exam.
-     * @returns LabRequest
-     * @throws ApiError
-     */
-    public static resultItemsLegacyLabRequest(
-        id: string,
-    ): CancelablePromise<LabRequest> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/clinical/labrequest/{id}/resultado_itens/',
+            url: '/api/v1/clinical/labrequest/{id}/result-items/',
             path: {
                 'id': id,
             },
@@ -1098,7 +1081,7 @@ export class ApiService {
     ): CancelablePromise<LabRequest> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/labrequest/{id}/pdf_resultados/',
+            url: '/api/v1/clinical/labrequest/{id}/results-pdf/',
             path: {
                 'id': id,
             },
@@ -21284,7 +21267,7 @@ export class ApiService {
         ): CancelablePromise<ResultItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/clinical/resultitem/{id}/gravar/',
+                url: '/api/v1/clinical/resultitem/{id}/save-result/',
                 path: {
                     'id': id,
                 },
@@ -21305,7 +21288,7 @@ export class ApiService {
         ): CancelablePromise<ResultItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/clinical/resultitem/{id}/lancar/',
+                url: '/api/v1/clinical/resultitem/{id}/start-analysis/',
                 path: {
                     'id': id,
                 },
@@ -21326,7 +21309,7 @@ export class ApiService {
         ): CancelablePromise<ResultItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/clinical/resultitem/{id}/validar/',
+                url: '/api/v1/clinical/resultitem/{id}/validate-result/',
                 path: {
                     'id': id,
                 },
