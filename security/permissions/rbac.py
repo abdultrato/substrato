@@ -126,6 +126,34 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "pharmacy-requisicaomaterial": pharmacy_crud_methods,
         "pharmacy-requisicaomaterialitem": pharmacy_crud_methods,
     }
+    warehouse_resources = (
+        "cycle_count",
+        "cycle_count_line",
+        "goods_receipt",
+        "goods_receipt_line",
+        "item",
+        "item_category",
+        "lot",
+        "pick_list",
+        "pick_list_line",
+        "purchase_order",
+        "purchase_order_line",
+        "replenishment_plan",
+        "replenishment_suggestion",
+        "sales_order",
+        "sales_order_line",
+        "shipment",
+        "shipment_line",
+        "stock_level",
+        "stock_movement",
+        "stock_reservation",
+        "stock_transfer",
+        "stock_transfer_line",
+        "storage_location",
+        "warehouse",
+    )
+    warehouse_crud = {f"warehouse-{resource}": pharmacy_crud_methods for resource in warehouse_resources}
+    warehouse_read = dict.fromkeys(warehouse_crud, SAFE_METHODS)
     bloodbank_operational = SAFE_METHODS | WRITE_METHODS
     bloodbank_read = SAFE_METHODS
     equipment_read = {
@@ -545,6 +573,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["FARMACIA"]: {
             # Almoxarifado / estoque
             **pharmacy_crud,
+            **warehouse_crud,
             # Logística interna (receber/aviar/arquivar requisições)
             # SGE (somente leitura)
             **equipment_read,
@@ -556,6 +585,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["MANUTENCAO"]: {
             # SGE (somente leitura)
             **equipment_read,
+            **warehouse_read,
             # Planeamento e execução de manutenções próprias do módulo.
             **maintenance_crud,
             # Inspecções diárias são executadas pela manutenção no fluxo operacional.
@@ -611,6 +641,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-requisicaomaterial": SAFE_METHODS | WRITE_METHODS,
+            **warehouse_read,
         },
         g["RECURSOS_HUMANOS"]: {
             # RH (CRUD interno)
@@ -618,6 +649,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # SGE (somente leitura)
             **equipment_read,
             **equipment_integration_read,
+            **warehouse_read,
             # Precisa listar utilizadores/perfis para vincular funcionários.
             **identity_read,
             # Logística interna → requisições à farmácia

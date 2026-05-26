@@ -99,7 +99,7 @@ class WarehouseModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
 
 
 class PostDocumentMixin:
-    @action(detail=True, methods=["post"], url_path="lancar", url_name="lancar")
+    @action(detail=True, methods=["post"], url_path="post", url_name="post")
     def post_document(self, request, pk=None):
         document = self.get_object()
         try:
@@ -111,7 +111,7 @@ class PostDocumentMixin:
 
 
 class SalesOrderWorkflowMixin:
-    @action(detail=True, methods=["post"], url_path="confirmar", url_name="confirmar")
+    @action(detail=True, methods=["post"], url_path="confirm", url_name="confirm")
     def confirm_order(self, request, pk=None):
         order = self.get_object()
         try:
@@ -120,7 +120,7 @@ class SalesOrderWorkflowMixin:
             raise _as_drf_error(exc) from exc
         return Response(SalesOrderSerializer(order, context=self.get_serializer_context()).data)
 
-    @action(detail=True, methods=["post"], url_path="alocar", url_name="alocar")
+    @action(detail=True, methods=["post"], url_path="allocate", url_name="allocate")
     def allocate_order(self, request, pk=None):
         order = self.get_object()
         try:
@@ -129,7 +129,7 @@ class SalesOrderWorkflowMixin:
             raise _as_drf_error(exc) from exc
         return Response(SalesOrderSerializer(order, context=self.get_serializer_context()).data)
 
-    @action(detail=True, methods=["post"], url_path="gerar-separacao", url_name="gerar-separacao")
+    @action(detail=True, methods=["post"], url_path="create-pick-list", url_name="create-pick-list")
     def create_pick_list(self, request, pk=None):
         order = self.get_object()
         try:
@@ -138,7 +138,7 @@ class SalesOrderWorkflowMixin:
             raise _as_drf_error(exc) from exc
         return Response(PickListSerializer(pick_list, context=self.get_serializer_context()).data)
 
-    @action(detail=True, methods=["post"], url_path="expedir", url_name="expedir")
+    @action(detail=True, methods=["post"], url_path="ship", url_name="ship")
     def ship_order(self, request, pk=None):
         order = self.get_object()
         try:
@@ -147,7 +147,7 @@ class SalesOrderWorkflowMixin:
             raise _as_drf_error(exc) from exc
         return Response(ShipmentSerializer(shipment, context=self.get_serializer_context()).data)
 
-    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
     def cancel_order(self, request, pk=None):
         order = self.get_object()
         try:
@@ -237,7 +237,7 @@ class StockReservationViewSet(WarehouseModelViewSet):
     def create(self, request, *args, **kwargs):
         raise ValidationError("Reservas devem ser geradas pelo pedido de venda usando a ação alocar.")
 
-    @action(detail=True, methods=["post"], url_path="liberar", url_name="liberar")
+    @action(detail=True, methods=["post"], url_path="release", url_name="release")
     def release_reservation(self, request, pk=None):
         reservation = self.get_object()
         try:
@@ -253,7 +253,7 @@ class PickListViewSet(WarehouseModelViewSet):
     filterset_class = PickListFilter
     search_fields = ("custom_id", "pick_number", "sales_order__order_number", "sales_order__customer_name")
 
-    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    @action(detail=True, methods=["post"], url_path="complete", url_name="complete")
     def mark_picked(self, request, pk=None):
         pick_list = self.get_object()
         try:
@@ -283,7 +283,7 @@ class ShipmentViewSet(PostDocumentMixin, WarehouseModelViewSet):
     filterset_class = ShipmentFilter
     search_fields = ("custom_id", "shipment_number", "sales_order__order_number", "carrier_name", "tracking_number")
 
-    @action(detail=True, methods=["post"], url_path="expedir", url_name="expedir")
+    @action(detail=True, methods=["post"], url_path="ship", url_name="ship")
     def ship_document(self, request, pk=None):
         return self.post_document(request, pk=pk)
 
@@ -308,7 +308,7 @@ class ReplenishmentPlanViewSet(WarehouseModelViewSet):
     filterset_class = ReplenishmentPlanFilter
     search_fields = ("custom_id", "plan_number", "supplier_name", "purchase_order__order_number")
 
-    @action(detail=True, methods=["post"], url_path="gerar", url_name="gerar")
+    @action(detail=True, methods=["post"], url_path="generate", url_name="generate")
     def generate_plan(self, request, pk=None):
         plan = self.get_object()
         try:
@@ -317,7 +317,7 @@ class ReplenishmentPlanViewSet(WarehouseModelViewSet):
             raise _as_drf_error(exc) from exc
         return Response(self.get_serializer(plan).data)
 
-    @action(detail=True, methods=["post"], url_path="criar-pedido-compra", url_name="criar-pedido-compra")
+    @action(detail=True, methods=["post"], url_path="create-purchase-order", url_name="create-purchase-order")
     def create_purchase_order(self, request, pk=None):
         plan = self.get_object()
         try:
@@ -391,28 +391,28 @@ class CycleCountLineViewSet(WarehouseModelViewSet):
 
 
 VIEWSET_MAP = {
-    "armazem": WarehouseViewSet,
-    "categoriaitem": WarehouseItemCategoryViewSet,
-    "contagemciclica": CycleCountViewSet,
-    "contagemciclicalinha": CycleCountLineViewSet,
-    "expedicao": ShipmentViewSet,
+    "cycle_count": CycleCountViewSet,
+    "cycle_count_line": CycleCountLineViewSet,
+    "goods_receipt": GoodsReceiptViewSet,
+    "goods_receipt_line": GoodsReceiptLineViewSet,
     "item": WarehouseItemViewSet,
-    "linhaexpedicao": ShipmentLineViewSet,
-    "linhaordemcompra": PurchaseOrderLineViewSet,
-    "linharecebimento": GoodsReceiptLineViewSet,
-    "linhapedidovenda": SalesOrderLineViewSet,
-    "linhaseparacao": PickListLineViewSet,
-    "linhatransferencia": StockTransferLineViewSet,
-    "localizacao": StorageLocationViewSet,
-    "lote": WarehouseLotViewSet,
-    "movimento": StockMovementViewSet,
-    "ordemcompra": PurchaseOrderViewSet,
-    "pedidovenda": SalesOrderViewSet,
-    "planoreposicao": ReplenishmentPlanViewSet,
-    "recebimento": GoodsReceiptViewSet,
-    "reserva": StockReservationViewSet,
-    "saldo": StockLevelViewSet,
-    "separacao": PickListViewSet,
-    "sugestaoreposicao": ReplenishmentSuggestionViewSet,
-    "transferencia": StockTransferViewSet,
+    "item_category": WarehouseItemCategoryViewSet,
+    "lot": WarehouseLotViewSet,
+    "pick_list": PickListViewSet,
+    "pick_list_line": PickListLineViewSet,
+    "purchase_order": PurchaseOrderViewSet,
+    "purchase_order_line": PurchaseOrderLineViewSet,
+    "replenishment_plan": ReplenishmentPlanViewSet,
+    "replenishment_suggestion": ReplenishmentSuggestionViewSet,
+    "sales_order": SalesOrderViewSet,
+    "sales_order_line": SalesOrderLineViewSet,
+    "shipment": ShipmentViewSet,
+    "shipment_line": ShipmentLineViewSet,
+    "stock_level": StockLevelViewSet,
+    "stock_movement": StockMovementViewSet,
+    "stock_reservation": StockReservationViewSet,
+    "stock_transfer": StockTransferViewSet,
+    "stock_transfer_line": StockTransferLineViewSet,
+    "storage_location": StorageLocationViewSet,
+    "warehouse": WarehouseViewSet,
 }

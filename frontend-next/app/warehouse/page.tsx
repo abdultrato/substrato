@@ -86,12 +86,12 @@ export default function WarehousePage() {
           replenishmentPlans,
         ] = await Promise.all([
           countEndpoint("/warehouse/item/"),
-          countEndpoint("/warehouse/saldo/"),
-          countEndpoint("/warehouse/pedidovenda/", { status: "CONFIRMED" }),
-          countEndpoint("/warehouse/reserva/", { status: "ACTIVE" }),
-          countEndpoint("/warehouse/expedicao/"),
-          countEndpoint("/warehouse/ordemcompra/"),
-          countEndpoint("/warehouse/planoreposicao/"),
+          countEndpoint("/warehouse/stock_level/"),
+          countEndpoint("/warehouse/sales_order/", { status: "CONFIRMED" }),
+          countEndpoint("/warehouse/stock_reservation/", { status: "ACTIVE" }),
+          countEndpoint("/warehouse/shipment/"),
+          countEndpoint("/warehouse/purchase_order/"),
+          countEndpoint("/warehouse/replenishment_plan/"),
         ])
 
         if (!mounted) return
@@ -171,55 +171,55 @@ export default function WarehousePage() {
           <ActionTile
             title="Pedidos de compra"
             description="Planeie abastecimento, custos e fornecedores."
-            href="/resources/warehouse/ordemcompra"
+            href="/resources/warehouse/purchase_order"
             icon={ClipboardList}
           />
           <ActionTile
             title="Recebimentos"
             description="Dê entrada física por armazém, localização e lote."
-            href="/resources/warehouse/recebimento"
+            href="/resources/warehouse/goods_receipt"
             icon={PackageCheck}
           />
           <ActionTile
             title="Reposição automática"
             description="Calcule faltas por ponto de reposição e gere compra."
-            href="/resources/warehouse/planoreposicao"
+            href="/resources/warehouse/replenishment_plan"
             icon={ClipboardCheck}
           />
           <ActionTile
             title="Pedidos de venda"
             description="Registe demanda, confirme e reserve estoque."
-            href="/resources/warehouse/pedidovenda"
+            href="/resources/warehouse/sales_order"
             icon={ShoppingCart}
           />
           <ActionTile
             title="Reservas"
             description="Acompanhe estoque prometido antes da expedição."
-            href="/resources/warehouse/reserva"
+            href="/resources/warehouse/stock_reservation"
             icon={ClipboardCheck}
           />
           <ActionTile
             title="Separação"
             description="Gere listas de picking por pedido confirmado."
-            href="/resources/warehouse/separacao"
+            href="/resources/warehouse/pick_list"
             icon={PackageSearch}
           />
           <ActionTile
             title="Expedição"
             description="Baixe estoque e feche entregas de clientes."
-            href="/resources/warehouse/expedicao"
+            href="/resources/warehouse/shipment"
             icon={Truck}
           />
           <ActionTile
             title="Transferências"
             description="Movimente estoque entre localizações internas."
-            href="/resources/warehouse/transferencia"
+            href="/resources/warehouse/stock_transfer"
             icon={Repeat}
           />
           <ActionTile
             title="Saldos e inventário"
             description="Audite disponibilidade, reservas e contagens."
-            href="/resources/warehouse/saldo"
+            href="/resources/warehouse/stock_level"
             icon={Boxes}
           />
         </div>

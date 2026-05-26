@@ -85,6 +85,16 @@ describe("modules catalog discovery", () => {
     expect(task?.resource.adminListHref).toBe("/admin/ai_assistant/aioperationaltask/")
   })
 
+  it("exposes warehouse resources with English technical keys and endpoints", () => {
+    const salesOrder = findModuleResource("warehouse", "sales_order", MODULES)
+    const stockLevel = findModuleResource("warehouse", "stock_level", MODULES)
+
+    expect(salesOrder?.resource.label).toBe("Pedidos de Venda")
+    expect(salesOrder?.resource.endpoint).toBe("/warehouse/sales_order/")
+    expect(stockLevel?.resource.label).toBe("Saldos de Estoque")
+    expect(stockLevel?.resource.endpoint).toBe("/warehouse/stock_level/")
+  })
+
   it("infers bloodbank admin path when route comes from backend discovery", () => {
     const discovered = discoverModulesFromApiRoot({
       "bloodbank/transfusao": "/api/v1/bloodbank/transfusao/",

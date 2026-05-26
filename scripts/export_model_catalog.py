@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Exporta um catalogo "fonte de verdade" dos modelos Django (fields, relacoes, choices)
-para alinhar frontend <-> backend e reduzir divergencias.
+Export a source-of-truth catalog for Django models (fields, relations, choices)
+to keep frontend and backend contracts aligned.
 
-Uso (recomendado):
+Recommended usage:
   .venv/bin/python scripts/export_model_catalog.py
 
-Saidas (por default):
+Default output:
   - frontend-next/model_catalog.json
-  - frontend-next/MODEL_CATALOG.md
+
+Optional output:
+  - frontend-next/MODEL_CATALOG.md via --md
 """
 
 from __future__ import annotations
@@ -22,13 +24,13 @@ from pathlib import Path
 import sys
 from typing import Any
 
-import sitecustomize  # noqa: F401
-
 ROOT = Path(__file__).resolve().parent.parent
-# Rodando como "python scripts/..." faz o sys.path[0] apontar para /scripts.
-# Garantimos que o root do projeto esteja no path para importar "platform", "apps", etc.
+# Running "python scripts/..." makes sys.path[0] point to /scripts. Keep the
+# project root importable for "platform", "apps", and other local packages.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+import sitecustomize  # noqa: E402,F401
 
 
 def _safe_str(v: Any) -> str:
@@ -223,33 +225,42 @@ def _model_info(model: Any) -> dict[str, Any]:
 @dataclass(frozen=True)
 class Outputs:
     json_path: Path
-    md_path: Path
+    md_path: Path | None
+
+
+def _display_path(path: Path) -> str:
+    with contextlib.suppress(ValueError):
+        return str(path.relative_to(ROOT))
+    return str(path)
 
 
 def _write_md(catalog: dict[str, Any], out: Outputs) -> None:
+    if out.md_path is None:
+        return
+
     lines: list[str] = []
-    lines.append("# Catalogo de Models (Backend)\n")
-    lines.append("Fonte de verdade para alinhar frontend <-> backend.\n")
+    lines.append("# Backend Model Catalog\n")
+    lines.append("Source of truth for frontend/backend contract alignment.\n")
     lines.append("")
-    lines.append("## Como regenerar\n")
+    lines.append("## Regeneration\n")
     lines.append("```bash")
     lines.append(".venv/bin/python scripts/export_model_catalog.py")
     lines.append("```")
     lines.append("")
-    lines.append(f"- JSON: `{out.json_path}`")
+    lines.append(f"- JSON: `{_display_path(out.json_path)}`")
     lines.append("")
 
     apps = catalog.get("apps") or []
     totals = catalog.get("totals") or {}
-    lines.append("## Totais\n")
+    lines.append("## Totals\n")
     lines.append(f"- apps: {totals.get('apps', 0)}")
     lines.append(f"- models: {totals.get('models', 0)}")
     lines.append(f"- fields: {totals.get('fields', 0)}")
-    lines.append(f"- fields_com_choices: {totals.get('fields_with_choices', 0)}")
-    lines.append(f"- choices_total_itens: {totals.get('choices_total_items', 0)}")
+    lines.append(f"- fields_with_choices: {totals.get('fields_with_choices', 0)}")
+    lines.append(f"- choices_total_items: {totals.get('choices_total_items', 0)}")
     lines.append("")
 
-    lines.append("## Por app/model\n")
+    lines.append("## By app/model\n")
     for app in apps:
         app_label = app.get("app_label") or ""
         lines.append(f"### {app_label}\n")
@@ -264,7 +275,7 @@ def _write_md(catalog: dict[str, Any], out: Outputs) -> None:
             for f in model.get("fields") or []:
                 name = _safe_str(f.get("name"))
                 ftype = _safe_str(f.get("type"))
-                required = "nao" if (f.get("null") or f.get("blank")) else "sim"
+                required = "no" if (f.get("null") or f.get("blank")) else "yes"
                 rel = ""
                 r = f.get("relation")
                 if isinstance(r, dict):
@@ -273,7 +284,7 @@ def _write_md(catalog: dict[str, Any], out: Outputs) -> None:
                 lines.append(f"| {name} | {ftype} | {required} | {rel} | {choices_count} |")
             lines.append("")
 
-            # Explicita as choices (value/label) para compatibilidade frontend<->backend.
+            # Make choices explicit for frontend/backend compatibility.
             fields_with_choices = [f for f in (model.get("fields") or []) if (f.get("choices_count") or 0) > 0]
             if fields_with_choices:
                 lines.append("**Choices**")
@@ -296,17 +307,17 @@ def main() -> int:
     parser.add_argument(
         "--prefix",
         default="apps.",
-        help="Prefixo de apps a incluir (default: apps.)",
+        help="App import prefix to include (default: apps.)",
     )
     parser.add_argument(
         "--json",
         default=str(ROOT / "frontend-next" / "model_catalog.json"),
-        help="Caminho de saida JSON",
+        help="JSON output path",
     )
     parser.add_argument(
         "--md",
-        default=str(ROOT / "frontend-next" / "MODEL_CATALOG.md"),
-        help="Caminho de saida Markdown",
+        default="",
+        help="Optional Markdown output path",
     )
     args = parser.parse_args()
 
@@ -320,7 +331,7 @@ def main() -> int:
 
     prefix = (args.prefix or "").strip()
     json_path = Path(args.json).resolve()
-    md_path = Path(args.md).resolve()
+    md_path = Path(args.md).resolve() if args.md else None
     out = Outputs(json_path=json_path, md_path=md_path)
 
     models = []
@@ -356,7 +367,8 @@ def main() -> int:
     }
 
     json_path.parent.mkdir(parents=True, exist_ok=True)
-    md_path.parent.mkdir(parents=True, exist_ok=True)
+    if md_path is not None:
+        md_path.parent.mkdir(parents=True, exist_ok=True)
 
     # keep ASCII for portability (PT labels remain exact via \\u escapes)
     json_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=True), encoding="utf-8")
