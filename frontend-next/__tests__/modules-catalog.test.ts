@@ -81,8 +81,8 @@ describe("modules catalog discovery", () => {
   })
 
   it("keeps bloodbank admin shortcuts available in static catalog", () => {
-    const donation = findModuleResource("bloodbank", "doacao", MODULES)
-    const maintenance = findModuleResource("bloodbank", "manutencaoarmazenamento", MODULES)
+    const donation = findModuleResource("bloodbank", "donation", MODULES)
+    const maintenance = findModuleResource("bloodbank", "storage_maintenance", MODULES)
 
     expect(donation?.resource.adminListHref).toBe("/admin/bloodbank/blooddonation/")
     expect(maintenance?.resource.adminListHref).toBe("/admin/bloodbank/bloodstoragemaintenance/")
@@ -123,10 +123,10 @@ describe("modules catalog discovery", () => {
 
   it("infers bloodbank admin path when route comes from backend discovery", () => {
     const discovered = discoverModulesFromApiRoot({
-      "bloodbank/transfusao": "/api/v1/bloodbank/transfusao/",
+      "bloodbank/transfusion": "/api/v1/bloodbank/transfusion/",
     })
     const merged = mergeModules(MODULES, discovered)
-    const transfusion = findModuleResource("bloodbank", "transfusao", merged)
+    const transfusion = findModuleResource("bloodbank", "transfusion", merged)
 
     expect(transfusion?.resource.adminListHref).toBe("/admin/bloodbank/bloodtransfusion/")
   })

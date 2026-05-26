@@ -82,6 +82,41 @@ def _create_completed_donation(*, tenant: Tenant, donor: Patient, replacement_fo
 
 
 @pytest.mark.django_db
+def test_bloodbank_api_uses_english_resource_routes(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client)
+
+    from api.v1.bloodbank.filters import FILTER_MAP
+    from api.v1.bloodbank.serializers import SERIALIZER_MAP
+    from api.v1.bloodbank.viewsets import VIEWSET_MAP
+
+    expected = {
+        "donation",
+        "storage",
+        "unit",
+        "transfusion",
+        "stock_movement",
+        "storage_maintenance",
+    }
+    legacy = {
+        "doacao",
+        "armazenamento",
+        "unidade",
+        "transfusao",
+        "movimentoestoque",
+        "manutencaoarmazenamento",
+    }
+
+    assert set(VIEWSET_MAP) == expected
+    assert set(SERIALIZER_MAP) == expected
+    assert set(FILTER_MAP) == expected
+    assert not (set(VIEWSET_MAP) & legacy)
+
+    assert api_client.get("/api/v1/bloodbank/storage/").status_code == 200
+    assert api_client.get("/api/v1/bloodbank/armazenamento/").status_code == 404
+
+
+@pytest.mark.django_db
 def test_blood_donation_rules_for_voluntary_and_replacement():
     tenant = _tenant()
     donor = _patient(tenant, "Doador A")
@@ -179,7 +214,7 @@ def test_unit_forward_and_return_flow_updates_stock_movement(api_client):
     unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
 
     forward_response = api_client.post(
-        f"/api/v1/bloodbank/unidade/{unit.id}/aviar/",
+        f"/api/v1/bloodbank/unit/{unit.id}/forward-to-sector/",
         {"sector": "Enfermaria Geral", "notes": "Enviar para avaliação transfusional"},
         format="json",
     )
@@ -190,7 +225,7 @@ def test_unit_forward_and_return_flow_updates_stock_movement(api_client):
     assert unit.forwarded_to_sector == "Enfermaria Geral"
 
     outcome_response = api_client.post(
-        f"/api/v1/bloodbank/unidade/{unit.id}/registrar_desfecho_aviacao/",
+        f"/api/v1/bloodbank/unit/{unit.id}/register-dispatch-outcome/",
         {"outcome": BloodUnit.DispatchOutcome.RETURNED, "notes": "Paciente estabilizado"},
         format="json",
     )
@@ -223,14 +258,14 @@ def test_transfused_unit_cannot_change_status_and_manual_stock_adjustment_is_blo
     unit = BloodUnit.objects.get(tenant=tenant, donation=donation)
 
     forward_response = api_client.post(
-        f"/api/v1/bloodbank/unidade/{unit.id}/aviar/",
+        f"/api/v1/bloodbank/unit/{unit.id}/forward-to-sector/",
         {"sector": "Enfermaria 2"},
         format="json",
     )
     assert forward_response.status_code == 200
 
     transfuse_response = api_client.post(
-        f"/api/v1/bloodbank/unidade/{unit.id}/registrar_desfecho_aviacao/",
+        f"/api/v1/bloodbank/unit/{unit.id}/register-dispatch-outcome/",
         {
             "outcome": BloodUnit.DispatchOutcome.TRANSFUSED,
             "recipient": recipient.id,
@@ -248,7 +283,7 @@ def test_transfused_unit_cannot_change_status_and_manual_stock_adjustment_is_blo
         unit.save()
 
     movement_response = api_client.post(
-        "/api/v1/bloodbank/movimentoestoque/",
+        "/api/v1/bloodbank/stock_movement/",
         {
             "unit": unit.id,
             "movement_type": BloodStockMovement.MovementType.ADJUSTMENT,
@@ -306,22 +341,22 @@ def test_blood_storage_api_is_read_only(api_client):
         location="Banco de Sangue",
     )
 
-    list_response = api_client.get("/api/v1/bloodbank/armazenamento/")
+    list_response = api_client.get("/api/v1/bloodbank/storage/")
     assert list_response.status_code == 200
 
     create_response = api_client.post(
-        "/api/v1/bloodbank/armazenamento/",
+        "/api/v1/bloodbank/storage/",
         {"name": "Novo Storage", "location": "Bloco 2"},
         format="json",
     )
     assert create_response.status_code == 405
 
     patch_response = api_client.patch(
-        f"/api/v1/bloodbank/armazenamento/{storage.id}/",
+        f"/api/v1/bloodbank/storage/{storage.id}/",
         {"location": "Alterado"},
         format="json",
     )
     assert patch_response.status_code == 405
 
-    delete_response = api_client.delete(f"/api/v1/bloodbank/armazenamento/{storage.id}/")
+    delete_response = api_client.delete(f"/api/v1/bloodbank/storage/{storage.id}/")
     assert delete_response.status_code == 405

@@ -246,11 +246,11 @@ class BloodStorageMaintenanceSerializer(LegacyAliasSerializerMixin, serializers.
 
 
 SERIALIZER_MAP = {
-    "doacao": BloodDonationSerializer,
-    "armazenamento": BloodStorageSerializer,
-    "unidade": BloodUnitSerializer,
-    "transfusao": BloodTransfusionSerializer,
-    "movimentoestoque": BloodStockMovementSerializer,
-    "manutencaoarmazenamento": BloodStorageMaintenanceSerializer,
+    "donation": BloodDonationSerializer,
+    "storage": BloodStorageSerializer,
+    "unit": BloodUnitSerializer,
+    "transfusion": BloodTransfusionSerializer,
+    "stock_movement": BloodStockMovementSerializer,
+    "storage_maintenance": BloodStorageMaintenanceSerializer,
 }
 

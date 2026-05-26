@@ -149,7 +149,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
             raise ValidationError(getattr(err, "message_dict", None) or {"detail": err.messages}) from err
         return transfusion, now
 
-    @action(detail=True, methods=["post"], url_path="reservar", url_name="reservar")
+    @action(detail=True, methods=["post"], url_path="reserve", url_name="reserve")
     @transaction.atomic
     def reserve(self, request, pk=None):
         unit: BloodUnit = self.get_object()
@@ -184,7 +184,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
 
         return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="liberar_reserva", url_name="liberar-reserva")
+    @action(detail=True, methods=["post"], url_path="release", url_name="release")
     @transaction.atomic
     def release(self, request, pk=None):
         unit: BloodUnit = self.get_object()
@@ -208,7 +208,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
 
         return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="aviar", url_name="aviar")
+    @action(detail=True, methods=["post"], url_path="forward-to-sector", url_name="forward-to-sector")
     @transaction.atomic
     def forward_to_sector(self, request, pk=None):
         unit: BloodUnit = self.get_object()
@@ -252,7 +252,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
 
         return Response(BloodUnitSerializer(instance=unit).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="registrar_desfecho_aviacao", url_name="registrar-desfecho-aviacao")
+    @action(detail=True, methods=["post"], url_path="register-dispatch-outcome", url_name="register-dispatch-outcome")
     @transaction.atomic
     def register_dispatch_outcome(self, request, pk=None):
         unit: BloodUnit = self.get_object()
@@ -319,7 +319,7 @@ class BloodUnitViewSet(TenantScopedModelViewSet):
             response_payload["transfusion"] = BloodTransfusionSerializer(instance=transfusion).data
         return Response(response_payload, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="transfundir", url_name="transfundir")
+    @action(detail=True, methods=["post"], url_path="transfuse", url_name="transfuse")
     @transaction.atomic
     def transfuse(self, request, pk=None):
         unit: BloodUnit = self.get_object()
@@ -414,12 +414,12 @@ class BloodStorageMaintenanceViewSet(TenantScopedModelViewSet):
 
 
 VIEWSET_MAP = {
-    "doacao": BloodDonationViewSet,
-    "armazenamento": BloodStorageViewSet,
-    "unidade": BloodUnitViewSet,
-    "transfusao": BloodTransfusionViewSet,
-    "movimentoestoque": BloodStockMovementViewSet,
-    "manutencaoarmazenamento": BloodStorageMaintenanceViewSet,
+    "donation": BloodDonationViewSet,
+    "storage": BloodStorageViewSet,
+    "unit": BloodUnitViewSet,
+    "transfusion": BloodTransfusionViewSet,
+    "stock_movement": BloodStockMovementViewSet,
+    "storage_maintenance": BloodStorageMaintenanceViewSet,
 }
 
 __all__ = [

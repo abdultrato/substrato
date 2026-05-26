@@ -4,40 +4,38 @@ import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 
 describe("bloodbank resource form config", () => {
   it("provides create form config for all bloodbank resources", () => {
-    const doacao = getResourceFormConfig("bloodbank", "doacao", "/bloodbank/doacao/")
-    const armazenamento = getResourceFormConfig("bloodbank", "armazenamento", "/bloodbank/armazenamento/")
-    const unidade = getResourceFormConfig("bloodbank", "unidade", "/bloodbank/unidade/")
-    const transfusao = getResourceFormConfig("bloodbank", "transfusao", "/bloodbank/transfusao/")
-    const movimento = getResourceFormConfig("bloodbank", "movimentoestoque", "/bloodbank/movimentoestoque/")
-    const manutencao = getResourceFormConfig(
+    const donation = getResourceFormConfig("bloodbank", "donation", "/bloodbank/donation/")
+    const storage = getResourceFormConfig("bloodbank", "storage", "/bloodbank/storage/")
+    const unit = getResourceFormConfig("bloodbank", "unit", "/bloodbank/unit/")
+    const transfusion = getResourceFormConfig("bloodbank", "transfusion", "/bloodbank/transfusion/")
+    const stockMovement = getResourceFormConfig("bloodbank", "stock_movement", "/bloodbank/stock_movement/")
+    const storageMaintenance = getResourceFormConfig(
       "bloodbank",
-      "manutencaoarmazenamento",
-      "/bloodbank/manutencaoarmazenamento/"
+      "storage_maintenance",
+      "/bloodbank/storage_maintenance/"
     )
 
-    expect(doacao).not.toBeNull()
-    expect(armazenamento).not.toBeNull()
-    expect(unidade).not.toBeNull()
-    expect(transfusao).not.toBeNull()
-    expect(movimento).not.toBeNull()
-    expect(manutencao).not.toBeNull()
+    expect(donation).not.toBeNull()
+    expect(storage).not.toBeNull()
+    expect(unit).not.toBeNull()
+    expect(transfusion).not.toBeNull()
+    expect(stockMovement).not.toBeNull()
+    expect(storageMaintenance).not.toBeNull()
   })
 
-  it("keeps backward compatibility for legacy group aliases", () => {
-    const legacy = getResourceFormConfig("banco_sangue", "doacao", "/bloodbank/doacao/")
-    const canonical = getResourceFormConfig("bloodbank", "doacao", "/bloodbank/doacao/")
+  it("uses canonical English group keys", () => {
+    const canonical = getResourceFormConfig("bloodbank", "donation", "/bloodbank/donation/")
 
-    expect(legacy).not.toBeNull()
     expect(canonical).not.toBeNull()
-    expect(legacy?.etapas?.length).toBe(canonical?.etapas?.length)
+    expect(canonical?.etapas?.length).toBeGreaterThan(0)
   })
 
   it("keeps tenant readonly and hides internal fields on bloodbank event forms", () => {
-    const movimentacao = getResourceFormConfig("bloodbank", "movimentoestoque", "/bloodbank/movimentoestoque/")
+    const stockMovement = getResourceFormConfig("bloodbank", "stock_movement", "/bloodbank/stock_movement/")
 
-    expect(movimentacao?.somenteLeituraCampos).toContain("tenant")
-    expect(movimentacao?.esconderCampos).toContain("id")
-    expect(movimentacao?.esconderCampos).toContain("created_at")
-    expect(movimentacao?.etapas?.length || 0).toBeGreaterThan(0)
+    expect(stockMovement?.somenteLeituraCampos).toContain("tenant")
+    expect(stockMovement?.esconderCampos).toContain("id")
+    expect(stockMovement?.esconderCampos).toContain("created_at")
+    expect(stockMovement?.etapas?.length || 0).toBeGreaterThan(0)
   })
 })

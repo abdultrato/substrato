@@ -67,12 +67,12 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
     "billing-invoice": ("Faturas", "Invoices"),
     "billing-invoiceitem": ("Itens de fatura", "Invoice items"),
     "billing-invoicehistory": ("Históricos de fatura", "Invoice history"),
-    "bloodbank-doacao": ("Doações de sangue", "Blood donations"),
-    "bloodbank-armazenamento": ("Armazenamentos de sangue", "Blood storage"),
-    "bloodbank-unidade": ("Unidades de sangue", "Blood units"),
-    "bloodbank-transfusao": ("Transfusões de sangue", "Blood transfusions"),
-    "bloodbank-movimentoestoque": ("Movimentações de stock de sangue", "Blood stock movements"),
-    "bloodbank-manutencaoarmazenamento": ("Manutenções de armazenamento", "Storage maintenance"),
+    "bloodbank-donation": ("Doações de sangue", "Blood donations"),
+    "bloodbank-storage": ("Armazenamentos de sangue", "Blood storage"),
+    "bloodbank-unit": ("Unidades de sangue", "Blood units"),
+    "bloodbank-transfusion": ("Transfusões de sangue", "Blood transfusions"),
+    "bloodbank-stock_movement": ("Movimentações de stock de sangue", "Blood stock movements"),
+    "bloodbank-storage_maintenance": ("Manutenções de armazenamento", "Storage maintenance"),
     "insurer-insurer": ("Seguradoras", "Insurers"),
     "insurer-planocobertura": ("Planos de cobertura", "Coverage plans"),
     "insurer-tenantplanocobertura": ("Planos de cobertura por tenant", "Tenant coverage plans"),
@@ -376,8 +376,8 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "invoice history",
         "billing history",
     ),
-    "bloodbank-doacao": (
-        "doacao",
+    "bloodbank-donation": (
+        "donation",
         "doação",
         "doacoes",
         "doações",
@@ -393,8 +393,8 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "donation",
         "donations",
     ),
-    "bloodbank-armazenamento": (
-        "armazenamento",
+    "bloodbank-storage": (
+        "storage",
         "armazenamentos",
         "armazenamento de sangue",
         "banco de sangue",
@@ -404,8 +404,8 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "blood storage",
         "storage",
     ),
-    "bloodbank-unidade": (
-        "unidade",
+    "bloodbank-unit": (
+        "unit",
         "unidades",
         "unidade de sangue",
         "unidades de sangue",
@@ -417,8 +417,8 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "blood unit",
         "blood units",
     ),
-    "bloodbank-transfusao": (
-        "transfusao",
+    "bloodbank-transfusion": (
+        "transfusion",
         "transfusão",
         "transfusoes",
         "transfusões",
@@ -428,7 +428,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "blood transfusions",
         "transfusion",
     ),
-    "bloodbank-movimentoestoque": (
+    "bloodbank-stock_movement": (
         "movimento de stock",
         "movimentos de stock",
         "movimento de estoque",
@@ -440,7 +440,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "blood stock movement",
         "blood stock movements",
     ),
-    "bloodbank-manutencaoarmazenamento": (
+    "bloodbank-storage_maintenance": (
         "manutencao de armazenamento",
         "manutenção de armazenamento",
         "manutencoes de armazenamento",

@@ -11686,144 +11686,6 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns BloodStorage
-     * @throws ApiError
-     */
-    public static listBloodStorages(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<BloodStorage>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/bloodbank/armazenamento/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns BloodStorage
-     * @throws ApiError
-     */
-    public static createBloodStorage(
-        requestBody?: BloodStorage,
-    ): CancelablePromise<BloodStorage> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/bloodbank/armazenamento/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Armazenamento de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns BloodStorage
-     * @throws ApiError
-     */
-    public static retrieveBloodStorage(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<BloodStorage> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/bloodbank/armazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Armazenamento de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns BloodStorage
-     * @throws ApiError
-     */
-    public static updateBloodStorage(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: BloodStorage,
-    ): CancelablePromise<BloodStorage> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/bloodbank/armazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Armazenamento de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns BloodStorage
-     * @throws ApiError
-     */
-    public static partialUpdateBloodStorage(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: BloodStorage,
-    ): CancelablePromise<BloodStorage> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/bloodbank/armazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Armazenamento de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyBloodStorage(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/bloodbank/armazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
      * @returns BloodDonation
      * @throws ApiError
      */
@@ -11833,7 +11695,7 @@ export class ApiService {
     ): CancelablePromise<Array<BloodDonation>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/doacao/',
+            url: '/api/v1/bloodbank/donation/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -11850,7 +11712,7 @@ export class ApiService {
     ): CancelablePromise<BloodDonation> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/bloodbank/doacao/',
+            url: '/api/v1/bloodbank/donation/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -11869,7 +11731,7 @@ export class ApiService {
     ): CancelablePromise<BloodDonation> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/doacao/{id}/',
+            url: '/api/v1/bloodbank/donation/{id}/',
             path: {
                 'id': id,
             },
@@ -11895,7 +11757,7 @@ export class ApiService {
     ): CancelablePromise<BloodDonation> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/bloodbank/doacao/{id}/',
+            url: '/api/v1/bloodbank/donation/{id}/',
             path: {
                 'id': id,
             },
@@ -11923,7 +11785,7 @@ export class ApiService {
     ): CancelablePromise<BloodDonation> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/bloodbank/doacao/{id}/',
+            url: '/api/v1/bloodbank/donation/{id}/',
             path: {
                 'id': id,
             },
@@ -11949,145 +11811,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/bloodbank/doacao/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns BloodStorageMaintenance
-     * @throws ApiError
-     */
-    public static listBloodStorageMaintenances(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<BloodStorageMaintenance>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns BloodStorageMaintenance
-     * @throws ApiError
-     */
-    public static createBloodStorageMaintenance(
-        requestBody?: BloodStorageMaintenance,
-    ): CancelablePromise<BloodStorageMaintenance> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Manutenção de banco de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns BloodStorageMaintenance
-     * @throws ApiError
-     */
-    public static retrieveBloodStorageMaintenance(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<BloodStorageMaintenance> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Manutenção de banco de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns BloodStorageMaintenance
-     * @throws ApiError
-     */
-    public static updateBloodStorageMaintenance(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: BloodStorageMaintenance,
-    ): CancelablePromise<BloodStorageMaintenance> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Manutenção de banco de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns BloodStorageMaintenance
-     * @throws ApiError
-     */
-    public static partialUpdateBloodStorageMaintenance(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: BloodStorageMaintenance,
-    ): CancelablePromise<BloodStorageMaintenance> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Manutenção de banco de sangue.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyBloodStorageMaintenance(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/bloodbank/manutencaoarmazenamento/{id}/',
+            url: '/api/v1/bloodbank/donation/{id}/',
             path: {
                 'id': id,
             },
@@ -12109,7 +11833,7 @@ export class ApiService {
     ): CancelablePromise<Array<BloodStockMovement>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/movimentoestoque/',
+            url: '/api/v1/bloodbank/stock_movement/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -12126,7 +11850,7 @@ export class ApiService {
     ): CancelablePromise<BloodStockMovement> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/bloodbank/movimentoestoque/',
+            url: '/api/v1/bloodbank/stock_movement/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -12145,7 +11869,7 @@ export class ApiService {
     ): CancelablePromise<BloodStockMovement> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/movimentoestoque/{id}/',
+            url: '/api/v1/bloodbank/stock_movement/{id}/',
             path: {
                 'id': id,
             },
@@ -12171,7 +11895,7 @@ export class ApiService {
     ): CancelablePromise<BloodStockMovement> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/bloodbank/movimentoestoque/{id}/',
+            url: '/api/v1/bloodbank/stock_movement/{id}/',
             path: {
                 'id': id,
             },
@@ -12199,7 +11923,7 @@ export class ApiService {
     ): CancelablePromise<BloodStockMovement> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/bloodbank/movimentoestoque/{id}/',
+            url: '/api/v1/bloodbank/stock_movement/{id}/',
             path: {
                 'id': id,
             },
@@ -12225,7 +11949,283 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/bloodbank/movimentoestoque/{id}/',
+            url: '/api/v1/bloodbank/stock_movement/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns BloodStorage
+     * @throws ApiError
+     */
+    public static listBloodStorages(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<BloodStorage>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/bloodbank/storage/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns BloodStorage
+     * @throws ApiError
+     */
+    public static createBloodStorage(
+        requestBody?: BloodStorage,
+    ): CancelablePromise<BloodStorage> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bloodbank/storage/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Armazenamento de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns BloodStorage
+     * @throws ApiError
+     */
+    public static retrieveBloodStorage(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<BloodStorage> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/bloodbank/storage/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Armazenamento de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns BloodStorage
+     * @throws ApiError
+     */
+    public static updateBloodStorage(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: BloodStorage,
+    ): CancelablePromise<BloodStorage> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/bloodbank/storage/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Armazenamento de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns BloodStorage
+     * @throws ApiError
+     */
+    public static partialUpdateBloodStorage(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: BloodStorage,
+    ): CancelablePromise<BloodStorage> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bloodbank/storage/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Armazenamento de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyBloodStorage(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/bloodbank/storage/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns BloodStorageMaintenance
+     * @throws ApiError
+     */
+    public static listBloodStorageMaintenances(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<BloodStorageMaintenance>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/bloodbank/storage_maintenance/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns BloodStorageMaintenance
+     * @throws ApiError
+     */
+    public static createBloodStorageMaintenance(
+        requestBody?: BloodStorageMaintenance,
+    ): CancelablePromise<BloodStorageMaintenance> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/bloodbank/storage_maintenance/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Manutenção de banco de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns BloodStorageMaintenance
+     * @throws ApiError
+     */
+    public static retrieveBloodStorageMaintenance(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<BloodStorageMaintenance> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/bloodbank/storage_maintenance/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Manutenção de banco de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns BloodStorageMaintenance
+     * @throws ApiError
+     */
+    public static updateBloodStorageMaintenance(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: BloodStorageMaintenance,
+    ): CancelablePromise<BloodStorageMaintenance> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/bloodbank/storage_maintenance/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Manutenção de banco de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns BloodStorageMaintenance
+     * @throws ApiError
+     */
+    public static partialUpdateBloodStorageMaintenance(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: BloodStorageMaintenance,
+    ): CancelablePromise<BloodStorageMaintenance> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/bloodbank/storage_maintenance/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Manutenção de banco de sangue.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyBloodStorageMaintenance(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/bloodbank/storage_maintenance/{id}/',
             path: {
                 'id': id,
             },
@@ -12247,7 +12247,7 @@ export class ApiService {
     ): CancelablePromise<Array<BloodTransfusion>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/transfusao/',
+            url: '/api/v1/bloodbank/transfusion/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -12264,7 +12264,7 @@ export class ApiService {
     ): CancelablePromise<BloodTransfusion> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/bloodbank/transfusao/',
+            url: '/api/v1/bloodbank/transfusion/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -12283,7 +12283,7 @@ export class ApiService {
     ): CancelablePromise<BloodTransfusion> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/transfusao/{id}/',
+            url: '/api/v1/bloodbank/transfusion/{id}/',
             path: {
                 'id': id,
             },
@@ -12309,7 +12309,7 @@ export class ApiService {
     ): CancelablePromise<BloodTransfusion> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/bloodbank/transfusao/{id}/',
+            url: '/api/v1/bloodbank/transfusion/{id}/',
             path: {
                 'id': id,
             },
@@ -12337,7 +12337,7 @@ export class ApiService {
     ): CancelablePromise<BloodTransfusion> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/bloodbank/transfusao/{id}/',
+            url: '/api/v1/bloodbank/transfusion/{id}/',
             path: {
                 'id': id,
             },
@@ -12363,7 +12363,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/bloodbank/transfusao/{id}/',
+            url: '/api/v1/bloodbank/transfusion/{id}/',
             path: {
                 'id': id,
             },
@@ -12385,7 +12385,7 @@ export class ApiService {
     ): CancelablePromise<Array<BloodUnit>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/unidade/',
+            url: '/api/v1/bloodbank/unit/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -12402,7 +12402,7 @@ export class ApiService {
     ): CancelablePromise<BloodUnit> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/bloodbank/unidade/',
+            url: '/api/v1/bloodbank/unit/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -12421,7 +12421,7 @@ export class ApiService {
     ): CancelablePromise<BloodUnit> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/bloodbank/unidade/{id}/',
+            url: '/api/v1/bloodbank/unit/{id}/',
             path: {
                 'id': id,
             },
@@ -12447,7 +12447,7 @@ export class ApiService {
     ): CancelablePromise<BloodUnit> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/bloodbank/unidade/{id}/',
+            url: '/api/v1/bloodbank/unit/{id}/',
             path: {
                 'id': id,
             },
@@ -12475,7 +12475,7 @@ export class ApiService {
     ): CancelablePromise<BloodUnit> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/bloodbank/unidade/{id}/',
+            url: '/api/v1/bloodbank/unit/{id}/',
             path: {
                 'id': id,
             },
@@ -12501,7 +12501,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/bloodbank/unidade/{id}/',
+            url: '/api/v1/bloodbank/unit/{id}/',
             path: {
                 'id': id,
             },
@@ -22140,7 +22140,7 @@ export class ApiService {
         ): CancelablePromise<BloodUnit> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/bloodbank/unidade/{id}/aviar/',
+                url: '/api/v1/bloodbank/unit/{id}/forward-to-sector/',
                 path: {
                     'id': id,
                 },
@@ -22160,7 +22160,7 @@ export class ApiService {
         ): CancelablePromise<BloodUnit> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/bloodbank/unidade/{id}/registrar_desfecho_aviacao/',
+                url: '/api/v1/bloodbank/unit/{id}/register-dispatch-outcome/',
                 path: {
                     'id': id,
                 },
@@ -22180,7 +22180,7 @@ export class ApiService {
         ): CancelablePromise<BloodUnit> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/bloodbank/unidade/{id}/liberar_reserva/',
+                url: '/api/v1/bloodbank/unit/{id}/release/',
                 path: {
                     'id': id,
                 },
@@ -22200,7 +22200,7 @@ export class ApiService {
         ): CancelablePromise<BloodUnit> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/bloodbank/unidade/{id}/reservar/',
+                url: '/api/v1/bloodbank/unit/{id}/reserve/',
                 path: {
                     'id': id,
                 },
@@ -22220,7 +22220,7 @@ export class ApiService {
         ): CancelablePromise<BloodUnit> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/bloodbank/unidade/{id}/transfundir/',
+                url: '/api/v1/bloodbank/unit/{id}/transfuse/',
                 path: {
                     'id': id,
                 },

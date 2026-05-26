@@ -95,9 +95,9 @@ RESOURCE_METHOD_BLOCKLIST = {
     # Estes recursos têm transições próprias no domínio. A IA pode consultar e,
     # quando permitido, alterar campos seguros, mas não deve preparar operações
     # que os próprios ViewSets rejeitam como manuais.
-    "bloodbank-armazenamento": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
-    "bloodbank-unidade": frozenset({"POST", "DELETE"}),
-    "bloodbank-movimentoestoque": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    "bloodbank-storage": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
+    "bloodbank-unit": frozenset({"POST", "DELETE"}),
+    "bloodbank-stock_movement": frozenset({"POST", "PUT", "PATCH", "DELETE"}),
     # Clinical request items and results are generated/advanced by domain
     # workflows. Direct CRUD would bypass result creation and validation states.
     "clinical-labrequestitem": frozenset({"POST", "PUT", "PATCH", "DELETE"}),

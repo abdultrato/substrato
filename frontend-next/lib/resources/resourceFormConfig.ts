@@ -429,7 +429,7 @@ function educationScheduleProgressConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankDoacaoConfig(): ResourceFormConfig {
+function bloodbankDonationConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -549,7 +549,7 @@ function bloodbankDoacaoConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankArmazenamentoConfig(): ResourceFormConfig {
+function bloodbankStorageConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -601,7 +601,7 @@ function bloodbankArmazenamentoConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankUnidadeConfig(): ResourceFormConfig {
+function bloodbankUnitConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -664,7 +664,7 @@ function bloodbankUnidadeConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankTransfusaoConfig(): ResourceFormConfig {
+function bloodbankTransfusionConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -724,7 +724,7 @@ function bloodbankTransfusaoConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankMovimentoConfig(): ResourceFormConfig {
+function bloodbankStockMovementConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -776,7 +776,7 @@ function bloodbankMovimentoConfig(): ResourceFormConfig {
   }
 }
 
-function bloodbankManutencaoConfig(): ResourceFormConfig {
+function bloodbankStorageMaintenanceConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
@@ -982,23 +982,23 @@ export function getResourceFormConfig(
 
   if (g !== "bloodbank") return null
 
-  if (r === "doacao" || ep === "/bloodbank/doacao/") {
-    return bloodbankDoacaoConfig()
+  if (r === "donation" || ep === "/bloodbank/donation/") {
+    return bloodbankDonationConfig()
   }
-  if (r === "armazenamento" || ep === "/bloodbank/armazenamento/") {
-    return bloodbankArmazenamentoConfig()
+  if (r === "storage" || ep === "/bloodbank/storage/") {
+    return bloodbankStorageConfig()
   }
-  if (r === "unidade" || ep === "/bloodbank/unidade/") {
-    return bloodbankUnidadeConfig()
+  if (r === "unit" || ep === "/bloodbank/unit/") {
+    return bloodbankUnitConfig()
   }
-  if (r === "transfusao" || ep === "/bloodbank/transfusao/") {
-    return bloodbankTransfusaoConfig()
+  if (r === "transfusion" || ep === "/bloodbank/transfusion/") {
+    return bloodbankTransfusionConfig()
   }
-  if (r === "movimentoestoque" || ep === "/bloodbank/movimentoestoque/") {
-    return bloodbankMovimentoConfig()
+  if (r === "stock_movement" || ep === "/bloodbank/stock_movement/") {
+    return bloodbankStockMovementConfig()
   }
-  if (r === "manutencaoarmazenamento" || ep === "/bloodbank/manutencaoarmazenamento/") {
-    return bloodbankManutencaoConfig()
+  if (r === "storage_maintenance" || ep === "/bloodbank/storage_maintenance/") {
+    return bloodbankStorageMaintenanceConfig()
   }
 
   return null

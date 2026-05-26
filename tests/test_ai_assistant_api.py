@@ -4091,7 +4091,7 @@ def test_ai_bloodbank_crud_creates_donation_for_laboratory_group(api_client):
     data = _response_data(response)
     action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
     action = AiSuggestedAction.objects.get(id=action_payload["id"])
-    assert action.payload["basename"] == "bloodbank-doacao"
+    assert action.payload["basename"] == "bloodbank-donation"
     assert action.payload["data"]["donor"] == donor.id
     assert action.payload["data"]["bag_identifier"] == "BLD-IA-001"
     assert action.payload["data"]["blood_type"] == "O+"
@@ -4150,7 +4150,7 @@ def test_ai_bloodbank_crud_updates_donation_by_bag_identifier(api_client):
     data = _response_data(response)
     action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_update")
     action = AiSuggestedAction.objects.get(id=action_payload["id"])
-    assert action.payload["basename"] == "bloodbank-doacao"
+    assert action.payload["basename"] == "bloodbank-donation"
     assert action.payload["object_ref"] == "BLD-UPD-001"
     assert action.payload["data"]["notes"] == "Seguimento actualizado"
 
@@ -4210,7 +4210,7 @@ def test_ai_bloodbank_crud_creates_transfusion_for_nursing_group(api_client):
     data = _response_data(response)
     action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
     action = AiSuggestedAction.objects.get(id=action_payload["id"])
-    assert action.payload["basename"] == "bloodbank-transfusao"
+    assert action.payload["basename"] == "bloodbank-transfusion"
     assert action.payload["data"]["recipient"] == recipient.id
     assert action.payload["data"]["blood_unit"] == unit.id
     assert action.payload["data"]["status"] == BloodTransfusion.TransfusionStatus.REQUESTED
@@ -4256,7 +4256,7 @@ def test_ai_bloodbank_crud_creates_storage_maintenance(api_client):
     data = _response_data(response)
     action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_create")
     action = AiSuggestedAction.objects.get(id=action_payload["id"])
-    assert action.payload["basename"] == "bloodbank-manutencaoarmazenamento"
+    assert action.payload["basename"] == "bloodbank-storage_maintenance"
     assert action.payload["data"]["storage"] == storage.id
     assert action.payload["data"]["maintenance_type"] == BloodStorageMaintenance.MaintenanceType.CALIBRATION
     assert action.payload["data"]["technician_name"] == "João Matias"
@@ -4308,7 +4308,7 @@ def test_ai_bloodbank_crud_deletes_donation_for_admin(api_client):
     data = _response_data(response)
     action_payload = next(action for action in data["suggested_actions"] if action["action_type"] == "ai_crud_delete")
     action = AiSuggestedAction.objects.get(id=action_payload["id"])
-    assert action.payload["basename"] == "bloodbank-doacao"
+    assert action.payload["basename"] == "bloodbank-donation"
 
     confirm_response = api_client.post(
         f"/api/v1/ai/assistant/actions/{action.id}/confirm/",

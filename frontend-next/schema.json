@@ -25201,315 +25201,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/armazenamento/": {
-      "get": {
-        "operationId": "listBloodStorages",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BloodStorage"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createBloodStorage",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorage"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/bloodbank/armazenamento/{id}/": {
-      "get": {
-        "operationId": "retrieveBloodStorage",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Armazenamento de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorage"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateBloodStorage",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Armazenamento de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorage"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateBloodStorage",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Armazenamento de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorage"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorage"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyBloodStorage",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Armazenamento de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/bloodbank/doacao/": {
+    "/api/v1/bloodbank/donation/": {
       "get": {
         "operationId": "listBloodDonations",
         "description": "",
@@ -25592,7 +25284,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/doacao/{id}/": {
+    "/api/v1/bloodbank/donation/{id}/": {
       "get": {
         "operationId": "retrieveBloodDonation",
         "description": "",
@@ -25817,315 +25509,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/manutencaoarmazenamento/": {
-      "get": {
-        "operationId": "listBloodStorageMaintenances",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BloodStorageMaintenance"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createBloodStorageMaintenance",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorageMaintenance"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/bloodbank/manutencaoarmazenamento/{id}/": {
-      "get": {
-        "operationId": "retrieveBloodStorageMaintenance",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorageMaintenance"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateBloodStorageMaintenance",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorageMaintenance"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateBloodStorageMaintenance",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/BloodStorageMaintenance"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BloodStorageMaintenance"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyBloodStorageMaintenance",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/bloodbank/movimentoestoque/": {
+    "/api/v1/bloodbank/stock_movement/": {
       "get": {
         "operationId": "listBloodStockMovements",
         "description": "",
@@ -26208,7 +25592,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/movimentoestoque/{id}/": {
+    "/api/v1/bloodbank/stock_movement/{id}/": {
       "get": {
         "operationId": "retrieveBloodStockMovement",
         "description": "",
@@ -26433,7 +25817,623 @@
         ]
       }
     },
-    "/api/v1/bloodbank/transfusao/": {
+    "/api/v1/bloodbank/storage/": {
+      "get": {
+        "operationId": "listBloodStorages",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BloodStorage"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createBloodStorage",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorage"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/bloodbank/storage/{id}/": {
+      "get": {
+        "operationId": "retrieveBloodStorage",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Armazenamento de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorage"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateBloodStorage",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Armazenamento de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorage"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateBloodStorage",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Armazenamento de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorage"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyBloodStorage",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Armazenamento de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/bloodbank/storage_maintenance/": {
+      "get": {
+        "operationId": "listBloodStorageMaintenances",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BloodStorageMaintenance"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createBloodStorageMaintenance",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorageMaintenance"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/bloodbank/storage_maintenance/{id}/": {
+      "get": {
+        "operationId": "retrieveBloodStorageMaintenance",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorageMaintenance"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateBloodStorageMaintenance",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorageMaintenance"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateBloodStorageMaintenance",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/BloodStorageMaintenance"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BloodStorageMaintenance"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyBloodStorageMaintenance",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Manuten\u00e7\u00e3o de banco de sangue.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/bloodbank/transfusion/": {
       "get": {
         "operationId": "listBloodTransfusions",
         "description": "",
@@ -26516,7 +26516,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/transfusao/{id}/": {
+    "/api/v1/bloodbank/transfusion/{id}/": {
       "get": {
         "operationId": "retrieveBloodTransfusion",
         "description": "",
@@ -26741,7 +26741,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/": {
+    "/api/v1/bloodbank/unit/": {
       "get": {
         "operationId": "listBloodUnits",
         "description": "",
@@ -26824,7 +26824,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/": {
+    "/api/v1/bloodbank/unit/{id}/": {
       "get": {
         "operationId": "retrieveBloodUnit",
         "description": "",
@@ -48671,7 +48671,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/aviar/": {
+    "/api/v1/bloodbank/unit/{id}/forward-to-sector/": {
       "post": {
         "operationId": "forwardToSectorBloodUnit",
         "description": "",
@@ -48722,7 +48722,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/registrar_desfecho_aviacao/": {
+    "/api/v1/bloodbank/unit/{id}/register-dispatch-outcome/": {
       "post": {
         "operationId": "registerDispatchOutcomeBloodUnit",
         "description": "",
@@ -48773,7 +48773,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/liberar_reserva/": {
+    "/api/v1/bloodbank/unit/{id}/release/": {
       "post": {
         "operationId": "releaseBloodUnit",
         "description": "",
@@ -48824,7 +48824,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/reservar/": {
+    "/api/v1/bloodbank/unit/{id}/reserve/": {
       "post": {
         "operationId": "reserveBloodUnit",
         "description": "",
@@ -48875,7 +48875,7 @@
         ]
       }
     },
-    "/api/v1/bloodbank/unidade/{id}/transfundir/": {
+    "/api/v1/bloodbank/unit/{id}/transfuse/": {
       "post": {
         "operationId": "transfuseBloodUnit",
         "description": "",
@@ -60511,102 +60511,6 @@
           "invoice"
         ]
       },
-      "BloodStorage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "location": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "capacity_units": {
-            "type": "integer"
-          },
-          "temperature_min_c": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.1,
-            "maximum": 1000,
-            "minimum": -1000
-          },
-          "temperature_max_c": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.1,
-            "maximum": 1000,
-            "minimum": -1000
-          },
-          "is_active": {
-            "type": "boolean"
-          },
-          "last_validation_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "notes": {
-            "type": "string"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
       "BloodDonation": {
         "type": "object",
         "properties": {
@@ -60839,6 +60743,204 @@
           "donor"
         ]
       },
+      "BloodStockMovement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "movement_type": {
+            "enum": [
+              "INB",
+              "OUT",
+              "TRF",
+              "RSV",
+              "RLS",
+              "FWD",
+              "RTN",
+              "DSC",
+              "EXP",
+              "ADJ"
+            ],
+            "type": "string"
+          },
+          "moved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "unit": {
+            "type": "integer"
+          },
+          "source_storage": {
+            "type": "integer",
+            "nullable": true
+          },
+          "destination_storage": {
+            "type": "integer",
+            "nullable": true
+          },
+          "performed_by": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "movement_type",
+          "unit"
+        ]
+      },
+      "BloodStorage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "capacity_units": {
+            "type": "integer"
+          },
+          "temperature_min_c": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.1,
+            "maximum": 1000,
+            "minimum": -1000
+          },
+          "temperature_max_c": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.1,
+            "maximum": 1000,
+            "minimum": -1000
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "last_validation_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "BloodStorageMaintenance": {
         "type": "object",
         "properties": {
@@ -60946,108 +61048,6 @@
         },
         "required": [
           "storage"
-        ]
-      },
-      "BloodStockMovement": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "movement_type": {
-            "enum": [
-              "INB",
-              "OUT",
-              "TRF",
-              "RSV",
-              "RLS",
-              "FWD",
-              "RTN",
-              "DSC",
-              "EXP",
-              "ADJ"
-            ],
-            "type": "string"
-          },
-          "moved_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "notes": {
-            "type": "string"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "unit": {
-            "type": "integer"
-          },
-          "source_storage": {
-            "type": "integer",
-            "nullable": true
-          },
-          "destination_storage": {
-            "type": "integer",
-            "nullable": true
-          },
-          "performed_by": {
-            "type": "integer",
-            "nullable": true
-          }
-        },
-        "required": [
-          "movement_type",
-          "unit"
         ]
       },
       "BloodTransfusion": {

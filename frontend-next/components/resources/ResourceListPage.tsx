@@ -121,7 +121,7 @@ export default function ResourceListPage({
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const { t, tr } = useLanguage()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const canCreateIdentityUsers = userHasAnyGroup(user, [
     GROUPS.ADMIN,
     GROUPS.DIRETOR_ESCOLA,
@@ -157,7 +157,7 @@ export default function ResourceListPage({
   const isIdentityUserResource =
     normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
   const needsBloodStorageLookup =
-    bloodbankResource === "manutencaoarmazenamento" || bloodbankResource === "unidade" || bloodbankResource === "movimentoestoque"
+    bloodbankResource === "storage_maintenance" || bloodbankResource === "unit" || bloodbankResource === "stock_movement"
 
   const requestUrl = useMemo(() => {
     const parsed = new URL(endpoint, "http://local")
@@ -207,7 +207,7 @@ export default function ResourceListPage({
     async function loadStorages() {
       if (!needsBloodStorageLookup) return
       try {
-        const res = await apiFetch<any>("/bloodbank/armazenamento/")
+        const res = await apiFetch<any>("/bloodbank/storage/")
         const items = res && (res as any).results ? (res as any).results : res
         const map: Record<number, string> = {}
         if (Array.isArray(items)) {
@@ -312,7 +312,7 @@ export default function ResourceListPage({
                 ) : null
               ) : null}
 
-              {adminListHref && podeVerAdmin ? (
+              {adminListHref && canViewAdmin ? (
                 <Link
                   href={adminListHref}
                   className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"

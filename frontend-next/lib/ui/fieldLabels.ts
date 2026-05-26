@@ -39,7 +39,7 @@ const COMMON_LABELS: LabelsByField = {
 }
 
 const BLOODBANK_LABELS: Record<string, LabelsByField> = {
-  armazenamento: {
+  storage: {
     name: "Nome",
     location: "Localização",
     capacity_units: "Capacidade (unidades)",
@@ -49,7 +49,7 @@ const BLOODBANK_LABELS: Record<string, LabelsByField> = {
     last_validation_at: "Última validação",
     notes: "Observações",
   },
-  manutencaoarmazenamento: {
+  storage_maintenance: {
     storage: "Armazenamento",
     maintenance_type: "Tipo de manutenção",
     status: "Estado",
@@ -61,7 +61,7 @@ const BLOODBANK_LABELS: Record<string, LabelsByField> = {
     actions_taken: "Ações executadas",
     notes: "Observações",
   },
-  doacao: {
+  donation: {
     bag_identifier: "Bolsa (identificador)",
     donor: "Doador",
     donor_role: "Tipo de doador",
@@ -74,7 +74,7 @@ const BLOODBANK_LABELS: Record<string, LabelsByField> = {
     volume_ml: "Volume (mL)",
     notes: "Observações",
   },
-  unidade: {
+  unit: {
     unit_number: "Número da unidade",
     component_type: "Componente",
     status: "Estado",
@@ -85,7 +85,7 @@ const BLOODBANK_LABELS: Record<string, LabelsByField> = {
     expires_at: "Validade",
     notes: "Observações",
   },
-  transfusao: {
+  transfusion: {
     recipient: "Paciente",
     blood_unit: "Unidade",
     status: "Estado",
@@ -95,7 +95,7 @@ const BLOODBANK_LABELS: Record<string, LabelsByField> = {
     indication: "Indicação",
     notes: "Observações",
   },
-  movimentoestoque: {
+  stock_movement: {
     movement_type: "Tipo de movimento",
     unit: "Unidade",
     source_storage: "Origem",
@@ -114,8 +114,8 @@ function normalizeEndpoint(endpoint?: string): string {
 export function bloodbankResourceKeyFromEndpoint(endpoint?: string): string | null {
   const e = normalizeEndpoint(endpoint)
   // Matches both collection and detail endpoints:
-  // - /bloodbank/armazenamento/
-  // - /bloodbank/armazenamento/123/
+  // - /bloodbank/storage/
+  // - /bloodbank/storage/123/
   const m = e.match(/\/bloodbank\/([^/]+)(?:\/|$)/)
   return m?.[1] || null
 }

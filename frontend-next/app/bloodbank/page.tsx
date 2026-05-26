@@ -21,38 +21,38 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleGroup } from "@/lib/modules"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-export default function BancoSanguePage() {
+export default function BloodBankPage() {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const { modules } = useModulesCatalog()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const group = findModuleGroup("bloodbank", modules)
 
   if (loading) return null
 
   const tiles: Record<string, { icon: LucideIcon; description: string }> = {
-    doacao: {
+    donation: {
       icon: Droplet,
       description: "Registrar e acompanhar doacoes e triagem.",
     },
-    unidade: {
+    unit: {
       icon: Layers,
       description: "Controle de bolsas e hemocomponentes por estado.",
     },
-    transfusao: {
+    transfusion: {
       icon: HeartPulse,
       description: "Registros de transfusoes e pacientes receptores.",
     },
-    armazenamento: {
+    storage: {
       icon: Package,
       description: "Geladeiras, freezers e locais de armazenamento.",
     },
-    movimentoestoque: {
+    stock_movement: {
       icon: ArrowLeftRight,
       description: "Entradas, saidas, reservas e transferencias.",
     },
-    manutencaoarmazenamento: {
+    storage_maintenance: {
       icon: Settings,
       description: "Agendar e registrar manutencoes dos armazenamentos.",
     },
@@ -60,21 +60,21 @@ export default function BancoSanguePage() {
 
   const eventCreateLinks = [
     {
-      key: "movimentoestoque",
+      key: "stock_movement",
       label: "Novo evento de movimento",
-      href: "/resources/bloodbank/movimentoestoque/new",
+      href: "/resources/bloodbank/stock_movement/new",
       description: "Entrada, saida, transferencia, reserva, liberacao, descarte e ajustes.",
     },
     {
-      key: "transfusao",
+      key: "transfusion",
       label: "Nova transfusao",
-      href: "/resources/bloodbank/transfusao/new",
+      href: "/resources/bloodbank/transfusion/new",
       description: "Solicitacao e execucao de transfusao com validacoes clinicas.",
     },
     {
-      key: "manutencaoarmazenamento",
+      key: "storage_maintenance",
       label: "Nova manutencao",
-      href: "/resources/bloodbank/manutencaoarmazenamento/new",
+      href: "/resources/bloodbank/storage_maintenance/new",
       description: "Plano preventivo/corretivo e registo de execucao tecnica.",
     },
   ]
@@ -86,7 +86,7 @@ export default function BancoSanguePage() {
           title="Banco de Sangue"
           subtitle="Doações, unidades, transfusões, armazenamentos e manutenções."
           actions={
-            podeVerAdmin ? (
+            canViewAdmin ? (
               <Link
                 href="/admin/bloodbank/"
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"

@@ -123,12 +123,12 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "bloodbank",
     label: "Banco de Sangue",
     resources: [
-      { key: "doacao", label: "Doações", endpoint: "/bloodbank/doacao/", adminListHref: "/admin/bloodbank/blooddonation/" },
-      { key: "unidade", label: "Unidades", endpoint: "/bloodbank/unidade/", adminListHref: "/admin/bloodbank/bloodunit/" },
-      { key: "transfusao", label: "Transfusões", endpoint: "/bloodbank/transfusao/", adminListHref: "/admin/bloodbank/bloodtransfusion/" },
-      { key: "armazenamento", label: "Armazenamentos", endpoint: "/bloodbank/armazenamento/", adminListHref: "/admin/bloodbank/bloodstorage/" },
-      { key: "movimentoestoque", label: "Movimentos", endpoint: "/bloodbank/movimentoestoque/", adminListHref: "/admin/bloodbank/bloodstockmovement/" },
-      { key: "manutencaoarmazenamento", label: "Manutenções", endpoint: "/bloodbank/manutencaoarmazenamento/", adminListHref: "/admin/bloodbank/bloodstoragemaintenance/" },
+      { key: "donation", label: "Doações", endpoint: "/bloodbank/donation/", adminListHref: "/admin/bloodbank/blooddonation/" },
+      { key: "unit", label: "Unidades", endpoint: "/bloodbank/unit/", adminListHref: "/admin/bloodbank/bloodunit/" },
+      { key: "transfusion", label: "Transfusões", endpoint: "/bloodbank/transfusion/", adminListHref: "/admin/bloodbank/bloodtransfusion/" },
+      { key: "storage", label: "Armazenamentos", endpoint: "/bloodbank/storage/", adminListHref: "/admin/bloodbank/bloodstorage/" },
+      { key: "stock_movement", label: "Movimentos", endpoint: "/bloodbank/stock_movement/", adminListHref: "/admin/bloodbank/bloodstockmovement/" },
+      { key: "storage_maintenance", label: "Manutenções", endpoint: "/bloodbank/storage_maintenance/", adminListHref: "/admin/bloodbank/bloodstoragemaintenance/" },
     ],
   },
   {
@@ -346,12 +346,12 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/warehouse/cycle_count/": "/admin/warehouse/cyclecount/",
   "/warehouse/cycle_count_line/": "/admin/warehouse/cyclecountline/",
   // Bloodbank
-  "/bloodbank/doacao/": "/admin/bloodbank/blooddonation/",
-  "/bloodbank/unidade/": "/admin/bloodbank/bloodunit/",
-  "/bloodbank/transfusao/": "/admin/bloodbank/bloodtransfusion/",
-  "/bloodbank/armazenamento/": "/admin/bloodbank/bloodstorage/",
-  "/bloodbank/movimentoestoque/": "/admin/bloodbank/bloodstockmovement/",
-  "/bloodbank/manutencaoarmazenamento/": "/admin/bloodbank/bloodstoragemaintenance/",
+  "/bloodbank/donation/": "/admin/bloodbank/blooddonation/",
+  "/bloodbank/unit/": "/admin/bloodbank/bloodunit/",
+  "/bloodbank/transfusion/": "/admin/bloodbank/bloodtransfusion/",
+  "/bloodbank/storage/": "/admin/bloodbank/bloodstorage/",
+  "/bloodbank/stock_movement/": "/admin/bloodbank/bloodstockmovement/",
+  "/bloodbank/storage_maintenance/": "/admin/bloodbank/bloodstoragemaintenance/",
   // Nursing
   "/nursing/procedimento/": "/admin/nursing/procedure/",
   "/nursing/procedimentocatalogo/": "/admin/nursing/procedurecatalog/",
@@ -535,7 +535,6 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   identity: "identity",
   identidade: "identity",
   bloodbank: "bloodbank",
-  banco_sangue: "bloodbank",
 }
 
 function normalizeResourceKey(value: string): string {

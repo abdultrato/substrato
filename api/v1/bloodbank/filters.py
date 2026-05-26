@@ -46,11 +46,11 @@ class BloodStorageMaintenanceFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "doacao": BloodDonationFilter,
-    "armazenamento": BloodStorageFilter,
-    "unidade": BloodUnitFilter,
-    "transfusao": BloodTransfusionFilter,
-    "movimentoestoque": BloodStockMovementFilter,
-    "manutencaoarmazenamento": BloodStorageMaintenanceFilter,
+    "donation": BloodDonationFilter,
+    "storage": BloodStorageFilter,
+    "unit": BloodUnitFilter,
+    "transfusion": BloodTransfusionFilter,
+    "stock_movement": BloodStockMovementFilter,
+    "storage_maintenance": BloodStorageMaintenanceFilter,
 }
 

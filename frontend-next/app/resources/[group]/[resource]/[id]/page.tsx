@@ -83,7 +83,7 @@ export default function RecursoDetalhePage() {
     const basePath = `/resources/${groupKey}/${resourceKey}`
     const isBloodUnit =
         canonicalGroupKey === "bloodbank" &&
-        resourceKey.toLocaleLowerCase() === "unidade"
+        resourceKey.toLocaleLowerCase() === "unit"
     const isBloodbank = canonicalGroupKey === "bloodbank"
     const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
     const isIdentityUserResource =
@@ -118,7 +118,7 @@ export default function RecursoDetalhePage() {
         }
     }, [data?.fatura_id])
 
-    const reservarUnidade = useCallback(async () => {
+    const reserveUnit = useCallback(async () => {
         const recipientRaw = prompt("ID do paciente receptor para reserva:")
         if (!recipientRaw) return
         const recipient = Number(recipientRaw)
@@ -129,7 +129,7 @@ export default function RecursoDetalhePage() {
 
         try {
             setActionId(recipient)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/reservar/`
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/reserve/`
             await apiFetch(endpoint, { method: "POST", body: JSON.stringify({ recipient }) })
             await reloadResource()
         } catch (e: any) {
@@ -139,10 +139,10 @@ export default function RecursoDetalhePage() {
         }
     }, [found, id, reloadResource])
 
-    const liberarReserva = useCallback(async () => {
+    const releaseReservation = useCallback(async () => {
         try {
             setActionId(-1)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/liberar_reserva/`
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/release/`
             await apiFetch(endpoint, { method: "POST" })
             await reloadResource()
         } catch (e: any) {
@@ -152,7 +152,7 @@ export default function RecursoDetalhePage() {
         }
     }, [found, id, reloadResource])
 
-    const transfundirUnidade = useCallback(async () => {
+    const transfuseUnit = useCallback(async () => {
         const recipientRaw = prompt("ID do paciente receptor para transfusão:")
         if (!recipientRaw) return
         const recipient = Number(recipientRaw)
@@ -165,7 +165,7 @@ export default function RecursoDetalhePage() {
 
         try {
             setActionId(recipient)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/transfundir/`
+            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/transfuse/`
             await apiFetch(endpoint, {
                 method: "POST",
                 body: JSON.stringify({ recipient, indication }),
@@ -210,21 +210,21 @@ export default function RecursoDetalhePage() {
                             {isBloodUnit ? (
                                 <>
                                     <button
-                                        onClick={reservarUnidade}
+                                        onClick={reserveUnit}
                                         disabled={actionId !== null}
                                         className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
                                         Reservar
                                     </button>
                                     <button
-                                        onClick={liberarReserva}
+                                        onClick={releaseReservation}
                                         disabled={actionId !== null}
                                         className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
                                         Liberar reserva
                                     </button>
                                     <button
-                                        onClick={transfundirUnidade}
+                                        onClick={transfuseUnit}
                                         disabled={actionId !== null}
                                         className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
