@@ -182,3 +182,26 @@ def test_warehouse_required_modular_boundaries_are_present_in_english():
     missing = sorted(path for path in expected_directories if not (WAREHOUSE_ROOT / path).is_dir())
 
     assert missing == []
+
+
+def test_warehouse_analytics_and_intelligence_do_not_import_operational_django_models():
+    isolated_roots = (
+        WAREHOUSE_ROOT / "analytics",
+        WAREHOUSE_ROOT / "intelligence",
+    )
+    forbidden_fragments = (
+        "from apps.warehouse.models",
+        "import apps.warehouse.models",
+        "from django.db",
+        "from django.conf",
+    )
+    violations = []
+
+    for root in isolated_roots:
+        for source_file in root.rglob("*.py"):
+            content = source_file.read_text(encoding="utf-8")
+            for fragment in forbidden_fragments:
+                if fragment in content:
+                    violations.append(f"{source_file.relative_to(REPOSITORY_ROOT).as_posix()} imports {fragment}")
+
+    assert violations == []
