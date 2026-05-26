@@ -643,6 +643,27 @@ class StockMovement(CoreModel):
                 )
             movement.posted_at = timezone.now()
             movement.save(update_fields=["posted_at", "updated_at"])
+            movement.evaluate_replenishment_after_stock_change()
+
+    def evaluate_replenishment_after_stock_change(self):
+        if not self.item_id or not self.tenant_id:
+            return []
+
+        warehouse_ids = []
+        if self.source_location_id:
+            warehouse_ids.append(self.source_location.warehouse_id)
+        if self.destination_location_id:
+            warehouse_ids.append(self.destination_location.warehouse_id)
+        if not warehouse_ids:
+            warehouse_ids.append(None)
+
+        from apps.warehouse.workflows.automations.replenishment import trigger_replenishment_for_stock_change
+
+        return trigger_replenishment_for_stock_change(
+            sku=self.item.sku,
+            tenant_id=self.tenant_id,
+            warehouse_ids=warehouse_ids,
+        )
 
     def _default_name(self) -> str:
         item = self.item.sku if self.item_id else "item"

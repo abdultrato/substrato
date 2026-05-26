@@ -302,6 +302,37 @@ class WarehouseStockTests(TestCase):
         self.assertEqual(reserved_lots, ["LOT-FEFO-001", "LOT-FEFO-002", None])
         self.assertFalse(StockReservation.objects.filter(lot=blocked_lot).exists())
 
+    def test_stock_issue_triggers_automatic_replenishment_when_balance_drops_below_minimum(self):
+        self.item.reorder_point = Decimal("5")
+        self.item.reorder_quantity = Decimal("10")
+        self.item.save(update_fields=["reorder_point", "reorder_quantity", "updated_at"])
+        StockMovement.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            destination_location=self.location,
+            movement_type=StockMovement.MovementType.RECEIPT,
+            quantity=Decimal("6"),
+            name="Entrada acima do mínimo",
+        )
+        self.assertFalse(ReplenishmentPlan.objects.exists())
+
+        StockMovement.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            source_location=self.location,
+            movement_type=StockMovement.MovementType.ISSUE,
+            quantity=Decimal("3"),
+            name="Saída abaixo do mínimo",
+        )
+
+        plan = ReplenishmentPlan.objects.get(plan_number__startswith="RPL-AUTO-")
+        suggestion = plan.suggestions.get()
+        self.assertEqual(plan.status, ReplenishmentStatus.GENERATED)
+        self.assertEqual(suggestion.current_quantity, Decimal("3.0000"))
+        self.assertEqual(suggestion.available_quantity, Decimal("3.0000"))
+        self.assertEqual(suggestion.reorder_point, Decimal("5.0000"))
+        self.assertEqual(suggestion.recommended_quantity, Decimal("10.0000"))
+
     def test_automatic_replenishment_records_real_balance_and_reuses_open_plan(self):
         self.item.reorder_point = Decimal("5")
         self.item.reorder_quantity = Decimal("10")
