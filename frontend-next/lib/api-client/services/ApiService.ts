@@ -1713,14 +1713,14 @@ export class ApiService {
     }
     /**
      * Busca História Clínica por número de documento.
-     * Ex.: /api/v1/clinical/patient/historia_clinica/?document_number=...
+     * Ex.: /api/v1/clinical/patient/clinical-history/?document_number=...
      * @returns Patient
      * @throws ApiError
      */
-    public static historiaClinicaBuscaPatient(): CancelablePromise<Patient> {
+    public static clinicalHistoryByDocumentPatient(): CancelablePromise<Patient> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/patient/historia_clinica/',
+            url: '/api/v1/clinical/patient/clinical-history/',
         });
     }
     /**
@@ -1868,23 +1868,6 @@ export class ApiService {
         });
     }
     /**
-     * Alias em inglês para emissão do PDF de história clínica.
-     * @param id A unique integer value identifying this Entrada.
-     * @returns Patient
-     * @throws ApiError
-     */
-    public static clinicalHistoryPdfPatient(
-        id: string,
-    ): CancelablePromise<Patient> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/clinical_history/pdf/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
      * ViewSet para gerenciar pacientes.
      *
      * Campos principais:
@@ -1899,12 +1882,12 @@ export class ApiService {
      * @returns Patient
      * @throws ApiError
      */
-    public static historiaClinicaPatient(
+    public static clinicalHistoryPatient(
         id: string,
     ): CancelablePromise<Patient> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/historia_clinica/',
+            url: '/api/v1/clinical/patient/{id}/clinical-history/',
             path: {
                 'id': id,
             },
@@ -1916,12 +1899,12 @@ export class ApiService {
      * @returns Patient
      * @throws ApiError
      */
-    public static historiaClinicaPdfPatient(
+    public static clinicalHistoryPdfPatient(
         id: string,
     ): CancelablePromise<Patient> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/historia_clinica/pdf/',
+            url: '/api/v1/clinical/patient/{id}/clinical-history/pdf/',
             path: {
                 'id': id,
             },
@@ -1933,12 +1916,12 @@ export class ApiService {
      * @returns Patient
      * @throws ApiError
      */
-    public static historiaFaturasPdfPatient(
+    public static invoiceHistoryPdfPatient(
         id: string,
     ): CancelablePromise<Patient> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/historia_faturas/pdf/',
+            url: '/api/v1/clinical/patient/{id}/invoice-history/pdf/',
             path: {
                 'id': id,
             },
@@ -1950,46 +1933,12 @@ export class ApiService {
      * @returns Patient
      * @throws ApiError
      */
-    public static historiaPagamentosPdfPatient(
-        id: string,
-    ): CancelablePromise<Patient> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/historia_pagamentos/pdf/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * Alias em inglês para emissão do PDF de histórico de faturas.
-     * @param id A unique integer value identifying this Entrada.
-     * @returns Patient
-     * @throws ApiError
-     */
-    public static invoiceHistoryPdfPatient(
-        id: string,
-    ): CancelablePromise<Patient> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/invoice_history/pdf/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * Alias em inglês para emissão do PDF de histórico de pagamentos.
-     * @param id A unique integer value identifying this Entrada.
-     * @returns Patient
-     * @throws ApiError
-     */
     public static paymentHistoryPdfPatient(
         id: string,
     ): CancelablePromise<Patient> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/clinical/patient/{id}/payment_history/pdf/',
+            url: '/api/v1/clinical/patient/{id}/payment-history/pdf/',
             path: {
                 'id': id,
             },
@@ -2449,6 +2398,10 @@ export class ApiService {
         });
     }
     /**
+     * Retorna a história clínica agregada do paciente desta consulta.
+     *
+     * Este endpoint existe para evitar que o frontend faça várias chamadas e
+     * consolide dados sensíveis localmente.
      * @param id A unique integer value identifying this Consulta Médica.
      * @returns MedicalConsultation
      * @throws ApiError
@@ -2458,44 +2411,7 @@ export class ApiService {
     ): CancelablePromise<MedicalConsultation> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/consultations/consultation/{id}/clinical_history/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * Alias em inglês para emissão do PDF de história clínica por consulta.
-     * @param id A unique integer value identifying this Consulta Médica.
-     * @returns MedicalConsultation
-     * @throws ApiError
-     */
-    public static clinicalHistoryPdfMedicalConsultation(
-        id: string,
-    ): CancelablePromise<MedicalConsultation> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/consultations/consultation/{id}/clinical_history/pdf/',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * Retorna a história clínica agregada do paciente desta consulta.
-     *
-     * Este endpoint existe para evitar que o frontend faça várias chamadas e
-     * consolide dados sensíveis localmente.
-     * @param id A unique integer value identifying this Consulta Médica.
-     * @returns MedicalConsultation
-     * @throws ApiError
-     */
-    public static historiaClinicaMedicalConsultation(
-        id: string,
-    ): CancelablePromise<MedicalConsultation> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/consultations/consultation/{id}/historia_clinica/',
+            url: '/api/v1/consultations/consultation/{id}/clinical-history/',
             path: {
                 'id': id,
             },
@@ -2507,12 +2423,12 @@ export class ApiService {
      * @returns MedicalConsultation
      * @throws ApiError
      */
-    public static historiaClinicaPdfMedicalConsultation(
+    public static clinicalHistoryPdfMedicalConsultation(
         id: string,
     ): CancelablePromise<MedicalConsultation> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/consultations/consultation/{id}/historia_clinica/pdf/',
+            url: '/api/v1/consultations/consultation/{id}/clinical-history/pdf/',
             path: {
                 'id': id,
             },

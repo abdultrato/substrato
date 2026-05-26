@@ -17,7 +17,7 @@ import { apiFetch } from "@/lib/api"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
-type HistoriaClinicaPayload = {
+type ClinicalHistoryPayload = {
   patient?: any
   referencia?: any
   cardex?: any[]
@@ -52,11 +52,11 @@ function money(v: any): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function HistoriaClinicaPage() {
+export default function MedicalHistoryPage() {
   const routeParams = useParams()
   const id = routeParamToString((routeParams as any)?.id)
   const { loading } = useAuthGuard()
-  const [payload, setPayload] = useState<HistoriaClinicaPayload | null>(null)
+  const [payload, setPayload] = useState<ClinicalHistoryPayload | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [exportandoPdf, setExportandoPdf] = useState<null | "medical" | "invoices" | "payments">(null)
@@ -67,8 +67,8 @@ export default function HistoriaClinicaPage() {
       try {
         setCarregando(true)
         setErro(null)
-        const res = await apiFetch<HistoriaClinicaPayload>(
-          `/patients/${id}/historia_clinica/?limit=200`
+        const res = await apiFetch<ClinicalHistoryPayload>(
+          `/patients/${id}/clinical-history/?limit=200`
         )
         if (!mounted) return
         setPayload(res || null)
@@ -85,7 +85,7 @@ export default function HistoriaClinicaPage() {
     }
   }, [id])
 
-  async function baixarPdfHistorico(
+  async function downloadHistoryPdf(
     type: "medical" | "invoices" | "payments",
     endpoint: string,
     filenamePrefix: string
@@ -111,27 +111,27 @@ export default function HistoriaClinicaPage() {
     }
   }
 
-  function exportarHistoricoMedicoPdf() {
-    return baixarPdfHistorico(
+  function exportMedicalHistoryPdf() {
+    return downloadHistoryPdf(
       "medical",
-      `/patients/${id}/historia_clinica/pdf/?limit=200`,
-      "historia_clinica"
+      `/patients/${id}/clinical-history/pdf/?limit=200`,
+      "clinical_history"
     )
   }
 
-  function exportarHistoricoFaturasPdf() {
-    return baixarPdfHistorico(
+  function exportInvoiceHistoryPdf() {
+    return downloadHistoryPdf(
       "invoices",
-      `/patients/${id}/historia_faturas/pdf/?limit=200`,
-      "historia_faturas"
+      `/patients/${id}/invoice-history/pdf/?limit=200`,
+      "invoice_history"
     )
   }
 
-  function exportarHistoricoPagamentosPdf() {
-    return baixarPdfHistorico(
+  function exportPaymentHistoryPdf() {
+    return downloadHistoryPdf(
       "payments",
-      `/patients/${id}/historia_pagamentos/pdf/?limit=200`,
-      "historia_pagamentos"
+      `/patients/${id}/payment-history/pdf/?limit=200`,
+      "payment_history"
     )
   }
 
@@ -305,7 +305,7 @@ export default function HistoriaClinicaPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={exportarHistoricoFaturasPdf}
+                onClick={exportInvoiceHistoryPdf}
                 disabled={exportandoPdf !== null}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
@@ -315,7 +315,7 @@ export default function HistoriaClinicaPage() {
               </button>
               <button
                 type="button"
-                onClick={exportarHistoricoPagamentosPdf}
+                onClick={exportPaymentHistoryPdf}
                 disabled={exportandoPdf !== null}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >
@@ -325,7 +325,7 @@ export default function HistoriaClinicaPage() {
               </button>
               <button
                 type="button"
-                onClick={exportarHistoricoMedicoPdf}
+                onClick={exportMedicalHistoryPdf}
                 disabled={exportandoPdf !== null}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
               >

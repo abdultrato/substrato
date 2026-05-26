@@ -84,8 +84,8 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     ordering_fields = ["scheduled_for", "created_at", "type", "status", "price"]
     ordering = ["-scheduled_for", "-created_at"]
 
-    @action(detail=True, methods=["get"], url_path="historia_clinica", url_name="historia-clinica")
-    def historia_clinica(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="clinical-history", url_name="clinical-history")
+    def clinical_history(self, request, pk=None):
         """
         Retorna a história clínica agregada do paciente desta consulta.
 
@@ -102,13 +102,8 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         return Response(build_patient_clinical_history(request, patient))
 
-    # English alias (stable for SDKs), keep Portuguese as canonical.
-    @action(detail=True, methods=["get"], url_path="clinical_history", url_name="clinical-history")
-    def clinical_history(self, request, pk=None):
-        return self.historia_clinica(request, pk)
-
-    @action(detail=True, methods=["get"], url_path="historia_clinica/pdf", url_name="historia-clinica-pdf")
-    def historia_clinica_pdf(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="clinical-history/pdf", url_name="clinical-history-pdf")
+    def clinical_history_pdf(self, request, pk=None):
         """
         Emite o PDF da história clínica agregada do paciente desta consulta.
         """
@@ -136,11 +131,6 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
-
-    @action(detail=True, methods=["get"], url_path="clinical_history/pdf", url_name="clinical-history-pdf")
-    def clinical_history_pdf(self, request, pk=None):
-        """Alias em inglês para emissão do PDF de história clínica por consulta."""
-        return self.historia_clinica_pdf(request, pk=pk)
 
     @action(detail=False, methods=["get"], url_path="price", url_name="price")
     def price_preview(self, request):

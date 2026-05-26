@@ -374,12 +374,15 @@ def test_clinical_history_endpoint_allows_doctor(api_client):
     patient = _patient(tenant)
     _authenticate_doctor(tenant, api_client=api_client)
 
-    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/?limit=5")
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/clinical-history/?limit=5")
 
     assert response.status_code == 200
     payload = _response_data(response)
     assert "patient" in payload
     assert payload["patient"]["id"] == patient.id
+
+    legacy_response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/?limit=5")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -388,11 +391,14 @@ def test_clinical_history_pdf_endpoint_returns_pdf_for_doctor(api_client):
     patient = _patient(tenant)
     _authenticate_doctor(tenant, api_client=api_client)
 
-    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/pdf/?limit=5")
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/clinical-history/pdf/?limit=5")
 
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+    legacy_response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_clinica/pdf/?limit=5")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -401,11 +407,14 @@ def test_patient_invoice_history_pdf_endpoint_returns_pdf_for_doctor(api_client)
     patient = _patient(tenant)
     _authenticate_doctor(tenant, api_client=api_client)
 
-    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_faturas/pdf/?limit=5")
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/invoice-history/pdf/?limit=5")
 
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+    legacy_response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_faturas/pdf/?limit=5")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -414,11 +423,14 @@ def test_patient_payment_history_pdf_endpoint_returns_pdf_for_doctor(api_client)
     patient = _patient(tenant)
     _authenticate_doctor(tenant, api_client=api_client)
 
-    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_pagamentos/pdf/?limit=5")
+    response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/payment-history/pdf/?limit=5")
 
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+    legacy_response = api_client.get(f"/api/v1/clinical/patient/{patient.id}/historia_pagamentos/pdf/?limit=5")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -434,12 +446,15 @@ def test_consultation_clinical_history_endpoint_returns_patient_aggregate(api_cl
         price=Decimal("0.00"),
     )
 
-    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/?limit=5")
+    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/clinical-history/?limit=5")
 
     assert response.status_code == 200
     payload = _response_data(response)
     assert "patient" in payload
     assert payload["patient"]["id"] == patient.id
+
+    legacy_response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/?limit=5")
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -455,11 +470,16 @@ def test_consultation_clinical_history_pdf_endpoint_returns_pdf(api_client):
         price=Decimal("0.00"),
     )
 
-    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/pdf/?limit=5")
+    response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/clinical-history/pdf/?limit=5")
 
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
+
+    legacy_response = api_client.get(
+        f"/api/v1/consultations/consultation/{consultation.id}/historia_clinica/pdf/?limit=5"
+    )
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db

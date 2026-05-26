@@ -3228,10 +3228,10 @@
         ]
       }
     },
-    "/api/v1/clinical/patient/historia_clinica/": {
+    "/api/v1/clinical/patient/clinical-history/": {
       "get": {
-        "operationId": "historiaClinicaBuscaPatient",
-        "description": "Busca Hist\u00f3ria Cl\u00ednica por n\u00famero de documento.\nEx.: /api/v1/clinical/patient/historia_clinica/?document_number=...",
+        "operationId": "clinicalHistoryByDocumentPatient",
+        "description": "Busca Hist\u00f3ria Cl\u00ednica por n\u00famero de documento.\nEx.: /api/v1/clinical/patient/clinical-history/?document_number=...",
         "parameters": [],
         "responses": {
           "200": {
@@ -3475,41 +3475,9 @@
         ]
       }
     },
-    "/api/v1/clinical/patient/{id}/clinical_history/pdf/": {
+    "/api/v1/clinical/patient/{id}/clinical-history/": {
       "get": {
-        "operationId": "clinicalHistoryPdfPatient",
-        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3ria cl\u00ednica.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Entrada.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Patient"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/clinical/patient/{id}/historia_clinica/": {
-      "get": {
-        "operationId": "historiaClinicaPatient",
+        "operationId": "clinicalHistoryPatient",
         "description": "ViewSet para gerenciar pacientes.\n\nCampos principais:\n- name: Nome completo (obrigat\u00f3rio)\n- email: Email \u00fanico para contato\n- birth_date: Data de nascimento (para c\u00e1lculo de idade)\n- gender: G\u00eanero (M/F)\n- document_number: Documento de identidade (\u00fanico)\n- address: Endere\u00e7o residencial\n- pregnant: Indicador de gesta\u00e7\u00e3o",
         "parameters": [
           {
@@ -3539,9 +3507,9 @@
         ]
       }
     },
-    "/api/v1/clinical/patient/{id}/historia_clinica/pdf/": {
+    "/api/v1/clinical/patient/{id}/clinical-history/pdf/": {
       "get": {
-        "operationId": "historiaClinicaPdfPatient",
+        "operationId": "clinicalHistoryPdfPatient",
         "description": "Emite PDF do hist\u00f3rico cl\u00ednico agregado do paciente.",
         "parameters": [
           {
@@ -3571,9 +3539,9 @@
         ]
       }
     },
-    "/api/v1/clinical/patient/{id}/historia_faturas/pdf/": {
+    "/api/v1/clinical/patient/{id}/invoice-history/pdf/": {
       "get": {
-        "operationId": "historiaFaturasPdfPatient",
+        "operationId": "invoiceHistoryPdfPatient",
         "description": "Emite PDF com hist\u00f3rico de faturas do paciente.",
         "parameters": [
           {
@@ -3603,74 +3571,10 @@
         ]
       }
     },
-    "/api/v1/clinical/patient/{id}/historia_pagamentos/pdf/": {
-      "get": {
-        "operationId": "historiaPagamentosPdfPatient",
-        "description": "Emite PDF com hist\u00f3rico de pagamentos do paciente.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Entrada.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Patient"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/clinical/patient/{id}/invoice_history/pdf/": {
-      "get": {
-        "operationId": "invoiceHistoryPdfPatient",
-        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3rico de faturas.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Entrada.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Patient"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/clinical/patient/{id}/payment_history/pdf/": {
+    "/api/v1/clinical/patient/{id}/payment-history/pdf/": {
       "get": {
         "operationId": "paymentHistoryPdfPatient",
-        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3rico de pagamentos.",
+        "description": "Emite PDF com hist\u00f3rico de pagamentos do paciente.",
         "parameters": [
           {
             "name": "id",
@@ -4667,73 +4571,9 @@
         ]
       }
     },
-    "/api/v1/consultations/consultation/{id}/clinical_history/": {
+    "/api/v1/consultations/consultation/{id}/clinical-history/": {
       "get": {
         "operationId": "clinicalHistoryMedicalConsultation",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Consulta M\u00e9dica.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MedicalConsultation"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/consultations/consultation/{id}/clinical_history/pdf/": {
-      "get": {
-        "operationId": "clinicalHistoryPdfMedicalConsultation",
-        "description": "Alias em ingl\u00eas para emiss\u00e3o do PDF de hist\u00f3ria cl\u00ednica por consulta.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Consulta M\u00e9dica.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MedicalConsultation"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/consultations/consultation/{id}/historia_clinica/": {
-      "get": {
-        "operationId": "historiaClinicaMedicalConsultation",
         "description": "Retorna a hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.\n\nEste endpoint existe para evitar que o frontend fa\u00e7a v\u00e1rias chamadas e\nconsolide dados sens\u00edveis localmente.",
         "parameters": [
           {
@@ -4763,9 +4603,9 @@
         ]
       }
     },
-    "/api/v1/consultations/consultation/{id}/historia_clinica/pdf/": {
+    "/api/v1/consultations/consultation/{id}/clinical-history/pdf/": {
       "get": {
-        "operationId": "historiaClinicaPdfMedicalConsultation",
+        "operationId": "clinicalHistoryPdfMedicalConsultation",
         "description": "Emite o PDF da hist\u00f3ria cl\u00ednica agregada do paciente desta consulta.",
         "parameters": [
           {

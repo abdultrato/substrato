@@ -118,32 +118,32 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    def _user_pode_ver_historia_clinica(self, user) -> bool:
+    def _user_can_view_clinical_history(self, user) -> bool:
         return user_can_view_clinical_history(user)
 
-    def _montar_historia_clinica(self, request, patient: Patient) -> dict:
+    def _build_clinical_history(self, request, patient: Patient) -> dict:
         return build_patient_clinical_history(request, patient)
 
     @extend_schema(operation_id="v1_clinical_patient_clinical_history_by_id")
-    @action(detail=True, methods=["get"])
-    def historia_clinica(self, request, pk=None):
-        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+    @action(detail=True, methods=["get"], url_path="clinical-history", url_name="clinical-history")
+    def clinical_history(self, request, pk=None):
+        if not self._user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
 
         patient = self.get_object()
-        return Response(self._montar_historia_clinica(request, patient))
+        return Response(self._build_clinical_history(request, patient))
 
     @extend_schema(operation_id="v1_clinical_patient_clinical_history_pdf_by_id")
-    @action(detail=True, methods=["get"], url_path="historia_clinica/pdf", url_name="historia-clinica-pdf")
-    def historia_clinica_pdf(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="clinical-history/pdf", url_name="clinical-history-pdf")
+    def clinical_history_pdf(self, request, pk=None):
         """
         Emite PDF do histórico clínico agregado do paciente.
         """
-        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+        if not self._user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir a história clínica.")
 
         patient = self.get_object()
-        payload = self._montar_historia_clinica(request, patient)
+        payload = self._build_clinical_history(request, patient)
         queued = queue_export_if_requested(
             request,
             export_key="patient_history_pdf",
@@ -160,21 +160,15 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
-    @extend_schema(operation_id="v1_clinical_patient_clinical_history_pdf_by_id_en")
-    @action(detail=True, methods=["get"], url_path="clinical_history/pdf", url_name="clinical-history-pdf")
-    def clinical_history_pdf(self, request, pk=None):
-        """Alias em inglês para emissão do PDF de história clínica."""
-        return self.historia_clinica_pdf(request, pk=pk)
-
     @extend_schema(operation_id="v1_clinical_patient_invoice_history_pdf_by_id")
-    @action(detail=True, methods=["get"], url_path="historia_faturas/pdf", url_name="historia-faturas-pdf")
-    def historia_faturas_pdf(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="invoice-history/pdf", url_name="invoice-history-pdf")
+    def invoice_history_pdf(self, request, pk=None):
         """Emite PDF com histórico de faturas do paciente."""
-        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+        if not self._user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para emitir o histórico de faturas.")
 
         patient = self.get_object()
-        payload = self._montar_historia_clinica(request, patient)
+        payload = self._build_clinical_history(request, patient)
         queued = queue_export_if_requested(
             request,
             export_key="patient_invoice_history_pdf",
@@ -192,16 +186,16 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         return response
 
     @extend_schema(operation_id="v1_clinical_patient_payment_history_pdf_by_id")
-    @action(detail=True, methods=["get"], url_path="historia_pagamentos/pdf", url_name="historia-pagamentos-pdf")
-    def historia_pagamentos_pdf(self, request, pk=None):
+    @action(detail=True, methods=["get"], url_path="payment-history/pdf", url_name="payment-history-pdf")
+    def payment_history_pdf(self, request, pk=None):
         """Emite PDF com histórico de pagamentos do paciente."""
-        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+        if not self._user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied(
                 "Requer Médico/Medicina Ocupacional/Administrador para emitir o histórico de pagamentos."
             )
 
         patient = self.get_object()
-        payload = self._montar_historia_clinica(request, patient)
+        payload = self._build_clinical_history(request, patient)
         queued = queue_export_if_requested(
             request,
             export_key="patient_payment_history_pdf",
@@ -218,26 +212,14 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
-    @extend_schema(operation_id="v1_clinical_patient_invoice_history_pdf_by_id_en")
-    @action(detail=True, methods=["get"], url_path="invoice_history/pdf", url_name="invoice-history-pdf")
-    def invoice_history_pdf(self, request, pk=None):
-        """Alias em inglês para emissão do PDF de histórico de faturas."""
-        return self.historia_faturas_pdf(request, pk=pk)
-
-    @extend_schema(operation_id="v1_clinical_patient_payment_history_pdf_by_id_en")
-    @action(detail=True, methods=["get"], url_path="payment_history/pdf", url_name="payment-history-pdf")
-    def payment_history_pdf(self, request, pk=None):
-        """Alias em inglês para emissão do PDF de histórico de pagamentos."""
-        return self.historia_pagamentos_pdf(request, pk=pk)
-
     @extend_schema(operation_id="v1_clinical_patient_clinical_history_by_document")
-    @action(detail=False, methods=["get"], url_path="historia_clinica")
-    def historia_clinica_busca(self, request):
+    @action(detail=False, methods=["get"], url_path="clinical-history", url_name="clinical-history-by-document")
+    def clinical_history_by_document(self, request):
         """
         Busca História Clínica por número de documento.
-        Ex.: /api/v1/clinical/patient/historia_clinica/?document_number=...
+        Ex.: /api/v1/clinical/patient/clinical-history/?document_number=...
         """
-        if not self._user_pode_ver_historia_clinica(getattr(request, "user", None)):
+        if not self._user_can_view_clinical_history(getattr(request, "user", None)):
             raise PermissionDenied("Requer Médico/Medicina Ocupacional/Administrador para ver a história clínica.")
 
         document_number = (request.query_params.get("document_number") or "").strip()
@@ -253,5 +235,5 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         if not patient:
             raise NotFound("Paciente não encontrado para este número de documento.")
 
-        return Response(self._montar_historia_clinica(request, patient))
+        return Response(self._build_clinical_history(request, patient))
 

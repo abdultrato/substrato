@@ -45,7 +45,7 @@ export default function PacienteDetalhePage() {
         GROUPS.MEDICINA_OCUPACIONAL,
     ]);
 
-    const podeVerHistoriaClinica = userHasAnyGroup(user, [
+    const canViewClinicalHistory = userHasAnyGroup(user, [
         GROUPS.ADMIN,
         GROUPS.MEDICINA,
         GROUPS.MEDICINA_OCUPACIONAL,
@@ -156,7 +156,7 @@ export default function PacienteDetalhePage() {
                         ← Voltar
                     </button>
 
-                    {podeVerHistoriaClinica ? (
+                    {canViewClinicalHistory ? (
                         <button
                             className="btn-secondary"
                             onClick={() => router.push(`/patients/${idStr}/medical-history`)}
