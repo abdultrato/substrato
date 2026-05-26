@@ -12,27 +12,23 @@ Fixes implementados:
 - P1.4: Validação multi-tenant
 """
 
+from datetime import timedelta
 from decimal import Decimal
-from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
-from django.test import TestCase
-from django.db import transaction
-
 import pytest
 
 from apps.clinical.models import Patient
 from apps.nursing.models import (
     Procedure,
-    ProcedureItem,
     ProcedureCatalog,
+    ProcedureItem,
     Ward,
-    WardBed,
     WardAdmission,
+    WardBed,
 )
 from apps.tenants.models import Tenant
-
 
 # ============================================================================
 # FIXTURES
@@ -234,18 +230,16 @@ class TestP03ValidateDischargePendingProcedures:
         """Não pode dar alta com procedure em status REQUESTED."""
         assert procedure.workflow_status == Procedure.WorkflowStatus.REQUESTED
 
-        admission = WardAdmission.objects.create(
-            tenant=tenant,
-            bed=ward_bed,
-            patient=patient,
-            admission_date=timezone.now(),
-            discharged_at=timezone.now(),  # Tentando dar alta
-        )
-
         with pytest.raises(DjangoValidationError) as exc_info:
-            admission.full_clean()
+            WardAdmission.objects.create(
+                tenant=tenant,
+                bed=ward_bed,
+                patient=patient,
+                admission_date=timezone.now(),
+                discharged_at=timezone.now(),  # Tentando dar alta
+            )
 
-        assert "procedure" in str(exc_info.value).lower()
+        assert "procedimento" in str(exc_info.value).lower()
         assert "não concluído" in str(exc_info.value).lower()
 
     def test_cannot_discharge_with_executed_procedure(
@@ -254,18 +248,16 @@ class TestP03ValidateDischargePendingProcedures:
         """Não pode dar alta com procedure em status EXECUTED."""
         procedure_item.mark_executed()
 
-        admission = WardAdmission.objects.create(
-            tenant=tenant,
-            bed=ward_bed,
-            patient=patient,
-            admission_date=timezone.now(),
-            discharged_at=timezone.now(),
-        )
-
         with pytest.raises(DjangoValidationError) as exc_info:
-            admission.full_clean()
+            WardAdmission.objects.create(
+                tenant=tenant,
+                bed=ward_bed,
+                patient=patient,
+                admission_date=timezone.now(),
+                discharged_at=timezone.now(),
+            )
 
-        assert "procedure" in str(exc_info.value).lower()
+        assert "procedimento" in str(exc_info.value).lower()
 
     def test_cannot_discharge_with_partial_procedure(
         self, tenant, patient, ward_bed, procedure, procedure_catalog
@@ -279,7 +271,7 @@ class TestP03ValidateDischargePendingProcedures:
             quantity=1,
             unit_price=Decimal("50.00"),
         )
-        item2 = ProcedureItem.objects.create(
+        ProcedureItem.objects.create(
             tenant=tenant,
             procedure=procedure,
             catalog=procedure_catalog,
@@ -295,18 +287,16 @@ class TestP03ValidateDischargePendingProcedures:
         procedure.refresh_from_db()
         assert procedure.workflow_status == Procedure.WorkflowStatus.PARTIAL
 
-        admission = WardAdmission.objects.create(
-            tenant=tenant,
-            bed=ward_bed,
-            patient=patient,
-            admission_date=timezone.now(),
-            discharged_at=timezone.now(),
-        )
-
         with pytest.raises(DjangoValidationError) as exc_info:
-            admission.full_clean()
+            WardAdmission.objects.create(
+                tenant=tenant,
+                bed=ward_bed,
+                patient=patient,
+                admission_date=timezone.now(),
+                discharged_at=timezone.now(),
+            )
 
-        assert "procedure" in str(exc_info.value).lower()
+        assert "procedimento" in str(exc_info.value).lower()
 
     def test_can_discharge_with_completed_procedure(
         self, tenant, patient, ward_bed, procedure_item
@@ -329,6 +319,7 @@ class TestP03ValidateDischargePendingProcedures:
         admission.save()
 
         assert admission.discharged_at is not None
+        assert admission.active is False
 
     def test_can_discharge_with_not_completed_procedure(
         self, tenant, patient, ward_bed, procedure_item
@@ -351,6 +342,7 @@ class TestP03ValidateDischargePendingProcedures:
         admission.save()
 
         assert admission.discharged_at is not None
+        assert admission.active is False
 
 
 # ============================================================================
@@ -599,6 +591,7 @@ class TestIntegrationFullProcedureLifecycle:
         admission.save()
 
         assert admission.discharged_at is not None
+        assert admission.active is False
 
 
 if __name__ == "__main__":

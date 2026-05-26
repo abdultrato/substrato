@@ -266,6 +266,11 @@ class WardAdmission(NoNameCoreModel):
                 self.tenant_id = self.bed.tenant_id
             elif self.patient_id:
                 self.tenant_id = self.patient.tenant_id
+        if self.discharged_at:
+            self.active = False
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {"active"}
         self.full_clean()
         return super().save(*args, **kwargs)
 
