@@ -39,7 +39,7 @@ export default function NursingPage() {
         setErrorMessage(null)
 
         const [requests, procedureResponse] = await Promise.all([
-          apiFetch<any>("/requests/?tipo=LAB&estado=pendente"),
+          apiFetch<any>("/requests/?type=LAB&status=pendente"),
           apiFetch<any>("/nursing/procedure/"),
         ])
 

@@ -182,32 +182,30 @@ export default function WardDashboardPage() {
 }
 
 function normalizeDashboardData(raw: any): DashboardData {
-  const summary = raw?.summary ?? raw?.resumo ?? {}
-  const beds = raw?.beds ?? raw?.camas ?? []
+  const summary = raw?.summary ?? {}
+  const beds = raw?.beds ?? []
 
   return {
     summary: {
-      patients: Number(summary?.patients ?? summary?.pacientes ?? 0),
-      total_beds: Number(summary?.total_beds ?? summary?.camas_total ?? 0),
-      occupied_beds: Number(summary?.occupied_beds ?? summary?.camas_ocupadas ?? 0),
-      available_beds: Number(summary?.available_beds ?? summary?.camas_livres ?? 0),
+      patients: Number(summary?.patients ?? 0),
+      total_beds: Number(summary?.total_beds ?? 0),
+      occupied_beds: Number(summary?.occupied_beds ?? 0),
+      available_beds: Number(summary?.available_beds ?? 0),
     },
     beds: Array.isArray(beds)
       ? beds.map((bed: any) => ({
-          admission_id: Number(bed?.admission_id ?? bed?.internamento_id ?? 0),
-          admission_code: String(bed?.admission_code ?? bed?.internamento_code ?? bed?.internamento_codigo ?? ""),
-          ward: String(bed?.ward ?? bed?.enfermaria ?? ""),
-          bed_id: Number(bed?.bed_id ?? bed?.cama_id ?? 0),
-          bed_number: String(bed?.bed_number ?? bed?.cama_numero ?? ""),
-          patient_id: Number(bed?.patient_id ?? bed?.paciente_id ?? 0),
-          patient_name: String(bed?.patient_name ?? bed?.paciente_nome ?? ""),
-          admission_date: bed?.admission_date ?? bed?.data_internamento ?? null,
-          expected_discharge_date: bed?.expected_discharge_date ?? bed?.data_prevista_alta ?? null,
-          estimated_observation_hours:
-            bed?.estimated_observation_hours ?? bed?.tempo_estimado_observacao_horas ?? null,
-          next_medication_at: bed?.next_medication_at ?? bed?.proxima_medicacao_em ?? null,
-          next_medication_description:
-            String(bed?.next_medication_description ?? bed?.proxima_medicacao_descricao ?? ""),
+          admission_id: Number(bed?.admission_id ?? 0),
+          admission_code: String(bed?.admission_code ?? ""),
+          ward: String(bed?.ward ?? ""),
+          bed_id: Number(bed?.bed_id ?? 0),
+          bed_number: String(bed?.bed_number ?? ""),
+          patient_id: Number(bed?.patient_id ?? 0),
+          patient_name: String(bed?.patient_name ?? ""),
+          admission_date: bed?.admission_date ?? null,
+          expected_discharge_date: bed?.expected_discharge_date ?? null,
+          estimated_observation_hours: bed?.estimated_observation_hours ?? null,
+          next_medication_at: bed?.next_medication_at ?? null,
+          next_medication_description: String(bed?.next_medication_description ?? ""),
         }))
       : [],
   }

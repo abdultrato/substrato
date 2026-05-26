@@ -1,4 +1,4 @@
-export const metodoExameMedicoOptions = [
+export const medicalExamMethodOptions = [
   { value: "USG", label: "Ultrassonografia / Ecografia" },
   { value: "RX", label: "Raio-X Convencional" },
   { value: "CT", label: "Tomografia Computorizada (CT)" },
@@ -17,7 +17,7 @@ export const metodoExameMedicoOptions = [
   { value: "OUT", label: "Outro" },
 ];
 
-export const setorExameMedicoOptions = [
+export const medicalExamSectorOptions = [
   { value: "Radiologia", label: "Radiologia" },
   { value: "DiagnosticoImagem", label: "Diagnóstico por Imagem" },
   { value: "Cardiologia", label: "Cardiologia" },
@@ -31,7 +31,7 @@ export const setorExameMedicoOptions = [
   { value: "Outro", label: "Outro" },
 ];
 
-export const tipoResultadoMedicoOptions = [
+export const medicalResultTypeOptions = [
   { value: "PDF", label: "Laudo/Relatório (PDF)" },
   { value: "IMAGEM", label: "Imagem (JPEG/PNG)" },
   { value: "DICOM", label: "DICOM" },
@@ -40,7 +40,7 @@ export const tipoResultadoMedicoOptions = [
   { value: "NUMERICO", label: "Valor numérico" },
 ];
 
-export const tiposResultadoMedicoPorMetodo: Record<string, string[]> = {
+export const medicalResultTypesByMethod: Record<string, string[]> = {
   USG: ["IMAGEM", "PDF", "VIDEO"],
   RX: ["IMAGEM", "PDF"],
   CT: ["DICOM", "IMAGEM", "PDF"],
@@ -59,14 +59,14 @@ export const tiposResultadoMedicoPorMetodo: Record<string, string[]> = {
   OUT: ["PDF", "IMAGEM"],
 };
 
-export const tipoResultadoMedicoAcceptMap: Record<string, string> = {
+export const medicalResultTypeAcceptMap: Record<string, string> = {
   PDF: ".pdf,application/pdf",
   IMAGEM: "image/*",
   DICOM: ".dcm,application/dicom",
   VIDEO: "video/*",
 };
 
-export function getTiposResultadoMedicoPorMetodo(metodo?: string) {
-  if (!metodo) return tipoResultadoMedicoOptions.map((opt) => opt.value);
-  return tiposResultadoMedicoPorMetodo[metodo] ?? tipoResultadoMedicoOptions.map((opt) => opt.value);
+export function getMedicalResultTypesByMethod(method?: string) {
+  if (!method) return medicalResultTypeOptions.map((option) => option.value);
+  return medicalResultTypesByMethod[method] ?? medicalResultTypeOptions.map((option) => option.value);
 }

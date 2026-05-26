@@ -45,8 +45,8 @@ export default function NursingRequestsPage() {
         setLoading(true)
         setErrorMessage(null)
         const params = new URLSearchParams()
-        params.set("tipo", "LAB")
-        if (status) params.set("estado", status)
+        params.set("type", "LAB")
+        if (status) params.set("status", status)
         if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim())
         const url = `/requests/?${params.toString()}`
         const res = await apiFetchList<RequestRow>(url, { page, pageSize })
@@ -75,14 +75,14 @@ export default function NursingRequestsPage() {
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: RequestRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequestRow) => r.paciente_nome || r.paciente || "-" },
-      { header: "Prioridade", render: (r: RequestRow) => r.status_clinico || "-" },
-      { header: "Crítico", render: (r: RequestRow) => (r.possui_resultado_critico ? "SIM" : "—") },
+      { header: "Código", render: (r: RequestRow) => r.custom_id || r.id || "-" },
+      { header: "Paciente", render: (r: RequestRow) => r.patient_name || r.patient || "-" },
+      { header: "Prioridade", render: (r: RequestRow) => r.clinical_status || "-" },
+      { header: "Crítico", render: (r: RequestRow) => (r.has_critical_result ? "SIM" : "—") },
       {
         header: "Guia de coleta",
         render: (r: RequestRow) => {
-          const guidance = (r.guia_colheita || r.guia_coleta || r.collection_guidance || []) as Array<any>
+          const guidance = (r.collection_guidance || []) as Array<any>
           if (!Array.isArray(guidance) || guidance.length === 0) {
             return <span className="text-xs text-slate-500">Sem orientação disponível.</span>
           }

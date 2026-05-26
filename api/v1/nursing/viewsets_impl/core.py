@@ -9,7 +9,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.utils.async_exports import queue_export_if_requested
-from api.v1.compat import LegacyAliasSerializerMixin
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.nursing.models import (
     NursingEvolution,
@@ -67,20 +66,14 @@ class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     permission_classes = [IsAuthenticated]
 
 
-class WardDashboardSummarySerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+class WardDashboardSummarySerializer(serializers.Serializer):
     patients = serializers.IntegerField()
     total_beds = serializers.IntegerField()
     occupied_beds = serializers.IntegerField()
     available_beds = serializers.IntegerField()
-    legacy_output_aliases = {
-        "pacientes": "patients",
-        "camas_total": "total_beds",
-        "camas_ocupadas": "occupied_beds",
-        "camas_livres": "available_beds",
-    }
 
 
-class WardDashboardBedSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+class WardDashboardBedSerializer(serializers.Serializer):
     admission_id = serializers.IntegerField()
     admission_code = serializers.CharField(allow_blank=True)
     ward = serializers.CharField(allow_blank=True)
@@ -93,29 +86,11 @@ class WardDashboardBedSerializer(LegacyAliasSerializerMixin, serializers.Seriali
     estimated_observation_hours = serializers.IntegerField(required=False, allow_null=True)
     next_medication_at = serializers.DateTimeField(required=False, allow_null=True)
     next_medication_description = serializers.CharField(required=False, allow_blank=True)
-    legacy_output_aliases = {
-        "internamento_id": "admission_id",
-        "internamento_code": "admission_code",
-        "enfermaria": "ward",
-        "cama_id": "bed_id",
-        "cama_numero": "bed_number",
-        "paciente_id": "patient_id",
-        "paciente_nome": "patient_name",
-        "data_internamento": "admission_date",
-        "data_prevista_alta": "expected_discharge_date",
-        "tempo_estimado_observacao_horas": "estimated_observation_hours",
-        "proxima_medicacao_em": "next_medication_at",
-        "proxima_medicacao_descricao": "next_medication_description",
-    }
 
 
-class WardDashboardResponseSerializer(LegacyAliasSerializerMixin, serializers.Serializer):
+class WardDashboardResponseSerializer(serializers.Serializer):
     summary = WardDashboardSummarySerializer()
     beds = WardDashboardBedSerializer(many=True)
-    legacy_output_aliases = {
-        "resumo": "summary",
-        "camas": "beds",
-    }
 
 
 class NursingRecordViewSet(TenantScopedModelViewSet):

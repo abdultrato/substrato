@@ -22,6 +22,9 @@ from apps.nursing.models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
+    Ward,
+    WardAdmission,
+    WardBed,
 )
 from apps.payments.models.payment import Payment
 from apps.pharmacy.models.lot import Lot
@@ -463,6 +466,39 @@ def test_nursing_api_uses_english_resource_routes(api_client):
 
     assert api_client.get("/api/v1/nursing/procedure_item/").status_code == 200
     assert api_client.get("/api/v1/nursing/procedimentoitem/").status_code == 404
+
+
+@pytest.mark.django_db
+def test_ward_dashboard_contract_uses_english_payload(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+    ward = Ward.objects.create(tenant=tenant, name="Ward A")
+    bed = WardBed.objects.create(tenant=tenant, ward=ward, number="A1")
+    WardAdmission.objects.create(
+        tenant=tenant,
+        bed=bed,
+        patient=patient,
+        next_medication_at=timezone.now() + timedelta(hours=2),
+        next_medication_description="Analgesic",
+    )
+
+    response = api_client.get("/api/v1/nursing/ward_dashboard/")
+
+    assert response.status_code == 200
+    assert set(response.data) == {"summary", "beds"}
+    assert "resumo" not in response.data
+    assert "camas" not in response.data
+    assert set(response.data["summary"]) == {"patients", "total_beds", "occupied_beds", "available_beds"}
+    assert "pacientes" not in response.data["summary"]
+
+    bed_payload = response.data["beds"][0]
+    assert "patient_name" in bed_payload
+    assert "bed_number" in bed_payload
+    assert "next_medication_description" in bed_payload
+    assert "paciente_nome" not in bed_payload
+    assert "cama_numero" not in bed_payload
+    assert "proxima_medicacao_descricao" not in bed_payload
 
 
 @pytest.mark.django_db
