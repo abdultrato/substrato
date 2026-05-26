@@ -87,9 +87,5 @@ class IncidentFilter(SafeFilterSet):
 FILTER_MAP = {
     "equipment": EquipmentFilter,
     "daily_inspection": DailyInspectionFilter,
-    "maintenance": MaintenanceFilter,
     "incident": IncidentFilter,
-    "inspecaodiaria": DailyInspectionFilter,
-    "manutencao": MaintenanceFilter,
-    "ocorrencia": IncidentFilter,
 }

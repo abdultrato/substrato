@@ -9,9 +9,6 @@ const OPENAPI = schema as OpenApiDoc
 const STATIC_COLLECTION_ALIASES: Record<string, string> = {
   "/audit_activities/user-activities/": "/audit/atividade/",
   "/external_entities/companies/": "/external_entities/empresa/",
-  "/incidents/incidents/": "/equipment/incident/",
-  "/inspections/daily-inspections/": "/equipment/daily_inspection/",
-  "/maintenance/maintenances/": "/maintenance/maintenance/",
   "/tenants/tenant-feature-flags/": "/tenants/featureflagtenant/",
   "/accounting/legacy-entries/": "/accounting/entry/",
   "/accounting/legacy-movements/": "/accounting/movement/",

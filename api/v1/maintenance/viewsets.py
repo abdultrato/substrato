@@ -4,7 +4,6 @@ from api.v1.equipment.viewsets import MaintenanceViewSet
 
 VIEWSET_MAP = {
     "maintenance": MaintenanceViewSet,
-    "manutencao": MaintenanceViewSet,
 }
 
 __all__ = [

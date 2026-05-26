@@ -359,9 +359,5 @@ class IncidentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer
 SERIALIZER_MAP = {
     "equipment": EquipmentSerializer,
     "daily_inspection": DailyInspectionSerializer,
-    "maintenance": MaintenanceSerializer,
     "incident": IncidentSerializer,
-    "inspecaodiaria": DailyInspectionSerializer,
-    "manutencao": MaintenanceSerializer,
-    "ocorrencia": IncidentSerializer,
 }

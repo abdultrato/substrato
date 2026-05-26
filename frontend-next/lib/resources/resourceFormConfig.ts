@@ -966,20 +966,14 @@ export function getResourceFormConfig(
 
   if (g === "equipment") {
     if (
-      r === "manutencao" ||
       r === "maintenance" ||
-      ep === "/maintenance/maintenances/" ||
-      ep === "/equipment/maintenance/" ||
-      ep === "/equipamentos/manutencao/"
+      ep === "/maintenance/maintenance/"
     ) {
       return equipmentMaintenanceConfig()
     }
     if (
-      r === "ocorrencia" ||
       r === "incident" ||
-      ep === "/incidents/incidents/" ||
-      ep === "/equipment/incident/" ||
-      ep === "/equipamentos/ocorrencia/"
+      ep === "/equipment/incident/"
     ) {
       return equipmentIncidentConfig()
     }

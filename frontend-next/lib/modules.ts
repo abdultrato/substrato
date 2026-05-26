@@ -44,10 +44,10 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "equipment",
     label: "Equipamentos",
     resources: [
-      { key: "equipamento", label: "Equipamentos", endpoint: "/equipamentos/equipamento/", adminListHref: "/admin/equipamentos/equipamento/" },
-      { key: "inspecaodiaria", label: "Inspeções Diárias", endpoint: "/equipamentos/inspecaodiaria/", adminListHref: "/admin/inspecoes/inspecaodiaria/" },
-      { key: "manutencao", label: "Manutenções", endpoint: "/equipamentos/manutencao/", adminListHref: "/admin/manutencoes/manutencao/" },
-      { key: "ocorrencia", label: "Ocorrências", endpoint: "/equipamentos/ocorrencia/", adminListHref: "/admin/ocorrencias/ocorrencia/" },
+      { key: "equipment", label: "Equipamentos", endpoint: "/equipment/equipment/", adminListHref: "/admin/equipment/equipment/" },
+      { key: "daily_inspection", label: "Inspeções Diárias", endpoint: "/equipment/daily_inspection/", adminListHref: "/admin/inspections/dailyinspection/" },
+      { key: "maintenance", label: "Manutenções", endpoint: "/maintenance/maintenance/", adminListHref: "/admin/maintenance/maintenance/" },
+      { key: "incident", label: "Ocorrências", endpoint: "/equipment/incident/", adminListHref: "/admin/incidents/incident/" },
     ],
   },
   {
@@ -299,13 +299,9 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/clinical/resultitem/": "/admin/clinical/result/",
   "/clinical/result/": "/admin/clinical/result/",
   // Equipment
-  "/equipamentos/equipamento/": "/admin/equipment/equipment/",
   "/equipment/equipment/": "/admin/equipment/equipment/",
-  "/equipamentos/inspecaodiaria/": "/admin/inspections/dailyinspection/",
   "/equipment/daily_inspection/": "/admin/inspections/dailyinspection/",
-  "/equipamentos/manutencao/": "/admin/maintenance/maintenance/",
-  "/equipment/maintenance/": "/admin/maintenance/maintenance/",
-  "/equipamentos/ocorrencia/": "/admin/incidents/incident/",
+  "/maintenance/maintenance/": "/admin/maintenance/maintenance/",
   "/equipment/incident/": "/admin/incidents/incident/",
   // External entities
   "/entities/company/": "/admin/externall-entities/company/",

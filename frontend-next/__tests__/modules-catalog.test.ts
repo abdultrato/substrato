@@ -95,6 +95,19 @@ describe("modules catalog discovery", () => {
     expect(stockLevel?.resource.endpoint).toBe("/warehouse/stock_level/")
   })
 
+  it("exposes equipment resources with English technical keys and endpoints", () => {
+    const inspection = findModuleResource("equipment", "daily_inspection", MODULES)
+    const incident = findModuleResource("equipment", "incident", MODULES)
+    const maintenance = findModuleResource("equipment", "maintenance", MODULES)
+
+    expect(inspection?.resource.label).toBe("Inspeções Diárias")
+    expect(inspection?.resource.endpoint).toBe("/equipment/daily_inspection/")
+    expect(incident?.resource.label).toBe("Ocorrências")
+    expect(incident?.resource.endpoint).toBe("/equipment/incident/")
+    expect(maintenance?.resource.label).toBe("Manutenções")
+    expect(maintenance?.resource.endpoint).toBe("/maintenance/maintenance/")
+  })
+
   it("infers bloodbank admin path when route comes from backend discovery", () => {
     const discovered = discoverModulesFromApiRoot({
       "bloodbank/transfusao": "/api/v1/bloodbank/transfusao/",

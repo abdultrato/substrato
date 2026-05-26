@@ -140,7 +140,7 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     ]
     ordering = ["-date", "-created_at"]
 
-    @action(detail=True, methods=["post"], url_path="realizar-manutencao")
+    @action(detail=True, methods=["post"], url_path="perform-maintenance")
     def perform_maintenance(self, request, pk=None):
         incident = self.get_object()
         if not incident.equipment_id:
@@ -189,11 +189,7 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
 VIEWSET_MAP = {
     "equipment": EquipmentViewSet,
     "daily_inspection": DailyInspectionViewSet,
-    "maintenance": MaintenanceViewSet,
     "incident": IncidentViewSet,
-    "inspecaodiaria": DailyInspectionViewSet,
-    "manutencao": MaintenanceViewSet,
-    "ocorrencia": IncidentViewSet,
 }
 
 __all__ = [

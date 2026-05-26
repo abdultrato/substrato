@@ -81,7 +81,7 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         client.defaults["HTTP_HOST"] = self.tenant.domain
         client.force_authenticate(user=user)
         response = client.post(
-            f"/api/v1/equipment/incident/{incident.id}/realizar-manutencao/",
+            f"/api/v1/equipment/incident/{incident.id}/perform-maintenance/",
             {
                 "maintenance_type": Maintenance.MaintenanceType.CORRECTIVE,
                 "type": Maintenance.Type.MONTHLY,
@@ -132,7 +132,7 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         client.defaults["HTTP_HOST"] = self.tenant.domain
         client.force_authenticate(user=user)
         response = client.post(
-            f"/api/v1/equipment/incident/{incident.id}/realizar-manutencao/",
+            f"/api/v1/equipment/incident/{incident.id}/perform-maintenance/",
             {
                 "type": Maintenance.Type.MONTHLY,
                 "scheduled_date": "2026-05-25",
@@ -172,7 +172,7 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         client = APIClient()
         client.defaults["HTTP_HOST"] = self.tenant.domain
         client.force_authenticate(user=user)
-        response = client.get("/api/v1/equipment/maintenance/pending-requests/")
+        response = client.get("/api/v1/maintenance/maintenance/pending-requests/")
 
         self.assertEqual(response.status_code, 200, response.content)
         payload = response.data.get("results", response.data) if isinstance(response.data, dict) else response.data
@@ -183,3 +183,41 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         self.assertEqual(payload[0]["equipment_serial_number"], self.equipment.serial_number)
         self.assertEqual(payload[0]["post_incident_actions"], "Equipamento isolado e sinalizado.")
         self.assertEqual(payload[0]["maintenance_status"], "Manutenção pendente")
+
+    def test_equipment_maintenance_api_contract_uses_english_routes(self):
+        from api.v1.equipment.filters import FILTER_MAP
+        from api.v1.equipment.serializers import SERIALIZER_MAP
+        from api.v1.equipment.viewsets import VIEWSET_MAP
+
+        legacy_keys = {"inspecaodiaria", "manutencao", "ocorrencia"}
+        self.assertFalse(legacy_keys & set(VIEWSET_MAP))
+        self.assertFalse(legacy_keys & set(SERIALIZER_MAP))
+        self.assertFalse(legacy_keys & set(FILTER_MAP))
+
+        user = get_user_model().objects.create_superuser(
+            username="maintenance-contract",
+            email="maintenance-contract@example.com",
+            password="test-pass",
+            tenant=self.tenant,
+        )
+        incident = Incident.objects.create(
+            tenant=self.tenant,
+            equipment=self.equipment,
+            description="Falha usada para validar contrato técnico.",
+        )
+
+        client = APIClient()
+        client.defaults["HTTP_HOST"] = self.tenant.domain
+        client.force_authenticate(user=user)
+
+        self.assertEqual(client.get("/api/v1/equipment/incident/").status_code, 200)
+        self.assertEqual(client.get("/api/v1/equipment/ocorrencia/").status_code, 404)
+        self.assertEqual(client.get("/api/v1/equipment/maintenance/").status_code, 404)
+        self.assertEqual(
+            client.post(
+                f"/api/v1/equipment/incident/{incident.id}/realizar-manutencao/",
+                {"maintenance_type": Maintenance.MaintenanceType.CORRECTIVE},
+                format="json",
+            ).status_code,
+            404,
+        )

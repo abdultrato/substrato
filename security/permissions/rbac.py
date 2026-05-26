@@ -157,39 +157,23 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
     bloodbank_operational = SAFE_METHODS | WRITE_METHODS
     bloodbank_read = SAFE_METHODS
     equipment_read = {
-        "equipamentos-equipment": SAFE_METHODS,
-        "equipamentos-inspecaodiaria": SAFE_METHODS,
-        "equipamentos-manutencao": SAFE_METHODS,
-        "equipamentos-ocorrencia": SAFE_METHODS,
         "equipment-equipment": SAFE_METHODS,
         "equipment-daily_inspection": SAFE_METHODS,
-        "equipment-inspecaodiaria": SAFE_METHODS,
-        "equipment-maintenance": SAFE_METHODS,
-        "equipment-manutencao": SAFE_METHODS,
         "equipment-incident": SAFE_METHODS,
-        "equipment-ocorrencia": SAFE_METHODS,
         "maintenance-maintenance": SAFE_METHODS,
-        "maintenance-manutencao": SAFE_METHODS,
     }
     incident_crud = {
-        "equipamentos-ocorrencia": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "equipment-incident": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
-        "equipment-ocorrencia": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
     }
     inspection_crud = {
-        "equipamentos-inspecaodiaria": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "equipment-daily_inspection": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
-        "equipment-inspecaodiaria": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
     }
     equipment_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in equipment_read
     }
     maintenance_crud = {
-        "equipment-maintenance": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
-        "equipment-manutencao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
         "maintenance-maintenance": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
-        "maintenance-manutencao": SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"}),
     }
     equipment_integration_read = {
         "equipment_integrations-equipment": SAFE_METHODS,

@@ -118,11 +118,11 @@ export default function MaintenanceMaintenancesPage() {
     setError(null)
     try {
       const [incidentRes, maintenanceRes] = await Promise.all([
-        apiFetchList<IncidentRow>("/incidents/incidents/?requires_maintenance=true&resolved=false", {
+        apiFetchList<IncidentRow>("/maintenance/maintenance/pending-requests/", {
           pageSize: 100,
           clientCache: false,
         }),
-        apiFetchList<MaintenanceRow>("/maintenance/maintenances/", {
+        apiFetchList<MaintenanceRow>("/maintenance/maintenance/", {
           pageSize: 50,
           clientCache: false,
         }),
@@ -164,7 +164,7 @@ export default function MaintenanceMaintenancesPage() {
     setError(null)
     setMessage(null)
     try {
-      await apiFetch(`/equipment/incident/${selectedIncident.id}/realizar-manutencao/`, {
+      await apiFetch(`/equipment/incident/${selectedIncident.id}/perform-maintenance/`, {
         method: "POST",
         clientCache: false,
         body: JSON.stringify(form),

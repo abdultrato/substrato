@@ -6,7 +6,7 @@ import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResou
 export default function DailyInspectionsEditPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/inspections/daily-inspections/" />
+      <GeneratedResourceEditPage endpoint="/equipment/daily_inspection/" />
     </Suspense>
   );
 }
